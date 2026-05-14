@@ -23,6 +23,7 @@
   "dependencies": {
     "@clerk/clerk-expo": "^2.19.31",
     "@expo/vector-icons": "~14.0.4",
+    "ajv": "^8.17.0",
     "@google/generative-ai": "^0.24.1",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/bottom-tabs": "^7.0.0",
@@ -80,6 +81,9 @@
     "eslint": "^8.57.0",
     "eslint-config-expo": "~8.0.1",
     "typescript": "~5.3.3"
+  },
+  "overrides": {
+    "ajv": "^8.17.0"
   },
   "private": true
 }
