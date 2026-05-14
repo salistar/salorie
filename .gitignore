@@ -31,7 +31,17 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
+.env.local
 .env*.local
+!.env.example
+
+# CI/CD watcher state
+.gh-watch-state
+.gh-artifacts/
+
+# Claude Code worktrees
+.claude/
 
 # typescript
 *.tsbuildinfo
