@@ -1,0 +1,15 @@
+appId: com.idriss.kriouile.salorie
+name: Log water intake (authenticated)
+tags:
+  - manual
+---
+- runFlow: subflows/sign-in.yaml
+# Open the add-water screen (route app/add-water.tsx). Try a few entry points.
+- tapOn:
+    text: ".*[Ww]ater.*"
+    optional: true
+- assertVisible:
+    text: ".*[Gg]lass.*|.*ml.*|.*[Ww]ater.*"
+    timeout: 10000
+- takeScreenshot: 06-water
+- back

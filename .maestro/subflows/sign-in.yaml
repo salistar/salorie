@@ -1,0 +1,29 @@
+appId: com.idriss.kriouile.salorie
+name: Sign in (reusable)
+---
+# Reusable sign-in subflow. Provide credentials via env:
+#   maestro test --env EMAIL=you@test.com --env PASSWORD=secret .maestro/04-home-dashboard.yaml
+# Used by the authenticated flows. Assumes the app starts on Welcome/Auth.
+- launchApp
+- runFlow:
+    when:
+      visible:
+        text: "Get Started"
+    commands:
+      - tapOn:
+          text: "Get Started"
+      - tapOn:
+          text: "Sign In"
+          optional: true
+- tapOn:
+    text: "Email Address"
+- inputText: ${EMAIL}
+- tapOn:
+    text: "Password"
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn:
+    text: "Sign In"
+- assertVisible:
+    text: "Home"
+    timeout: 20000

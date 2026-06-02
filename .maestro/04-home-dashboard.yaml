@@ -1,0 +1,16 @@
+appId: com.idriss.kriouile.salorie
+name: Home dashboard (authenticated)
+tags:
+  - manual   # needs a real Clerk test account (--env EMAIL/PASSWORD)
+---
+- runFlow: subflows/sign-in.yaml
+- assertVisible:
+    text: "Home"
+- assertVisible:
+    text: ".*[Cc]alorie.*"
+- takeScreenshot: 05-home
+# Bottom tabs are reachable
+- assertVisible:
+    text: "Analytics"
+- assertVisible:
+    text: "Profile"
