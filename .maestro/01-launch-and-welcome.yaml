@@ -1,0 +1,21 @@
+appId: com.idriss.kriouile.salorie
+name: Launch & Welcome
+tags:
+  - smoke
+---
+# Cold-start the app and verify the splash resolves into the Welcome screen.
+- launchApp:
+    clearState: true
+- assertVisible: "Salorie"
+- assertVisible:
+    text: "Get Started"
+- assertVisible: "Smart calorie tracking"
+- assertVisible: "Hydration reminders"
+- assertVisible: "Workout & activity logs"
+- takeScreenshot: 01-welcome
+# Navigate to sign-up
+- tapOn:
+    text: "Get Started"
+- assertVisible:
+    text: ".*Sign Up.*|.*Get Started.*"
+- takeScreenshot: 02-signup

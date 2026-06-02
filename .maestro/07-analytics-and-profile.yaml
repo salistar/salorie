@@ -1,0 +1,25 @@
+appId: com.idriss.kriouile.salorie
+name: Analytics & Profile tabs (authenticated)
+tags:
+  - manual
+---
+- runFlow: subflows/sign-in.yaml
+# Analytics tab
+- tapOn:
+    text: "Analytics"
+- assertVisible:
+    text: ".*[Ww]eight.*|.*[Tt]rend.*|.*[Cc]alorie.*"
+    timeout: 10000
+- takeScreenshot: 08-analytics
+# Profile tab
+- tapOn:
+    text: "Profile"
+- assertVisible:
+    text: "Personal Details"
+- assertVisible:
+    text: "Preferences"
+- assertVisible:
+    text: "Privacy Policy"
+- assertVisible:
+    text: "Log Out"
+- takeScreenshot: 09-profile
