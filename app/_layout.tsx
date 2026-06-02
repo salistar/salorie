@@ -30,6 +30,7 @@ import { PurchasesService } from '../lib/PurchasesService';
 import LogModal from '../components/LogModal';
 import ScreenBackground from '../components/ScreenBackground';
 import ActionMenu from '../components/ActionMenu';
+import SplashIntro from '../components/SplashIntro';
 
 const tokenCache = {
   async getToken(key: string) {
@@ -491,6 +492,7 @@ function InitialLayout() {
       <Slot />
       <ActionMenu />
       <LogModal />
+      <SplashIntro />
       {showLoading && (
         <View style={{
           position: 'absolute',
