@@ -137,7 +137,7 @@ async function offSearchOnce(query: string): Promise<any[] | null> {
           _kcal: kcal,
         };
       })
-      .filter((x: any) => x.food_name && x._kcal > 0)
+      .filter((x: any) => x.food_name && x._kcal > 0 && x._kcal <= 900)
       .slice(0, 15);
   } catch {
     return null; // timeout / network → retryable
@@ -185,7 +185,9 @@ async function fetchProductItem(code: string, fallbackName: string): Promise<any
     const p = data.product;
     const n = p.nutriments || {};
     const kcal = round100(n['energy-kcal_100g']);
-    if (!(kcal > 0)) return null;
+    // Reject implausible energy: nothing exceeds ~900 kcal/100g (pure fat). OFF
+    // sometimes stores per-serving values mislabeled as per-100g (e.g. 1900).
+    if (!(kcal > 0) || kcal > 900) return null;
     const name = [p.product_name || fallbackName, (p.brands || '').split(',')[0]].filter(Boolean).join(' ').trim();
     return {
       food_id: code,
