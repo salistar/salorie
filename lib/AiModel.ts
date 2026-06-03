@@ -318,3 +318,99 @@ export const generateBentoInsights = async (
     };
   }
 };
+
+// ───────────────────────── AI MEAL PLANNER ─────────────────────────
+export interface MealPlanMeal {
+  type: string;        // Breakfast / Lunch / Dinner / Snack (localized)
+  title: string;       // dish name
+  items: string[];     // ingredients / components
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+export interface Micro { name: string; amount: string; pct: number; } // pct of RDA (0-100+)
+export interface MealPlan {
+  meals: MealPlanMeal[];
+  totals: { calories: number; protein: number; carbs: number; fat: number };
+  micros: Micro[];
+  tip: string;
+}
+
+export interface MealPlanInput {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  goal?: string;
+  diet?: string;            // e.g. "balanced", "high-protein", "vegetarian", "halal"...
+  language?: 'en' | 'fr' | 'ar';
+}
+
+const langName = (l?: string) => (l === 'fr' ? 'French' : l === 'ar' ? 'Arabic' : 'English');
+
+export const generateMealPlan = async (input: MealPlanInput): Promise<MealPlan> => {
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const lang = input.language || 'en';
+  const prompt = `
+You are a registered dietitian. Build a realistic, tasty ONE-DAY meal plan.
+
+Daily targets:
+- Calories: ${input.calories} kcal
+- Protein: ${input.protein} g
+- Carbs: ${input.carbs} g
+- Fat: ${input.fat} g
+Goal: ${input.goal || 'maintain'}
+Diet preference: ${input.diet || 'balanced, no restriction'}
+
+Write ALL human-readable text (meal types, titles, items, micro names, tip) in ${langName(lang)}.
+Return ONLY strict JSON (no backticks, no commentary) with this exact shape:
+{
+  "meals": [
+    { "type": "Breakfast", "title": "...", "items": ["...","..."], "calories": 0, "protein": 0, "carbs": 0, "fat": 0 },
+    { "type": "Lunch", "title": "...", "items": ["..."], "calories": 0, "protein": 0, "carbs": 0, "fat": 0 },
+    { "type": "Dinner", "title": "...", "items": ["..."], "calories": 0, "protein": 0, "carbs": 0, "fat": 0 },
+    { "type": "Snack", "title": "...", "items": ["..."], "calories": 0, "protein": 0, "carbs": 0, "fat": 0 }
+  ],
+  "totals": { "calories": 0, "protein": 0, "carbs": 0, "fat": 0 },
+  "micros": [
+    { "name": "Fiber", "amount": "30 g", "pct": 100 },
+    { "name": "Sodium", "amount": "1800 mg", "pct": 78 },
+    { "name": "Potassium", "amount": "3500 mg", "pct": 74 },
+    { "name": "Calcium", "amount": "1000 mg", "pct": 100 },
+    { "name": "Iron", "amount": "14 mg", "pct": 78 },
+    { "name": "Vitamin C", "amount": "90 mg", "pct": 100 },
+    { "name": "Vitamin D", "amount": "12 mcg", "pct": 60 }
+  ],
+  "tip": "..."
+}
+
+Rules:
+- The 4 meals' calories/macros MUST sum close (±5%) to the daily targets.
+- "micros": estimate the day's key micronutrients with realistic amounts and pct of the adult RDA.
+- "tip": one short actionable sentence (< 20 words).
+- Keep dishes simple and commonly available.`;
+
+  try {
+    console.log('[API->Gemini] generateMealPlan REQUEST', { calories: input.calories, lang });
+    const t0 = Date.now();
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    console.log('[API<-Gemini] generateMealPlan RESPONSE', { ms: Date.now() - t0, chars: text.length });
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('Invalid AI response');
+    const parsed = JSON.parse(m[0]) as MealPlan;
+    if (!parsed.meals || !Array.isArray(parsed.meals)) throw new Error('No meals in response');
+    parsed.micros = Array.isArray(parsed.micros) ? parsed.micros : [];
+    if (!parsed.totals) {
+      parsed.totals = parsed.meals.reduce(
+        (a, x) => ({ calories: a.calories + (x.calories || 0), protein: a.protein + (x.protein || 0), carbs: a.carbs + (x.carbs || 0), fat: a.fat + (x.fat || 0) }),
+        { calories: 0, protein: 0, carbs: 0, fat: 0 }
+      );
+    }
+    return parsed;
+  } catch (error) {
+    console.error('[API<-Gemini] generateMealPlan FAILED:', (error as Error).message);
+    throw error;
+  }
+};
