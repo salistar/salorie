@@ -188,7 +188,14 @@ export default function SignUpScreen() {
 
       console.warn('[Google SSO sign-up] No session created');
     } catch (err: any) {
-      console.error('\x1b[34m[API←Clerk] Google Sign Up FAILED:\x1b[0m', JSON.stringify(err, null, 2));
+      const code = err?.errors?.[0]?.code || err?.code;
+      // Deja connecte (Google a renvoye une session existante) -> on entre dans l app.
+      if (code === 'session_exists') {
+        console.log('[Google SSO sign-up] session_exists -> deja connecte, on entre dans l app');
+        router.replace('/(tabs)' as any);
+        return;
+      }
+      console.error('[API<-Clerk] Google Sign Up FAILED:', JSON.stringify(err, null, 2));
       alert(err.errors?.[0]?.message || err?.message || 'Google sign up failed');
     }
   };
