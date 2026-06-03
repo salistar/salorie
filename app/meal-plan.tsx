@@ -16,7 +16,7 @@ const DEFAULTS = { calories: 2000, protein: 150, carbs: 220, fat: 65 };
 export default function MealPlanScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
-  const { language } = useTranslation() as any;
+  const { t, language } = useTranslation() as any;
   const isDark = resolved === 'dark';
 
   const [targets, setTargets] = useState(DEFAULTS);
@@ -93,32 +93,32 @@ export default function MealPlanScreen() {
 
         <View style={styles.titleRow}>
           <Sparkles size={26} color={Colors.light.primary} />
-          <Text style={[styles.title, { color: text }]}>Meal Plan</Text>
+          <Text style={[styles.title, { color: text }]}>{t('mealplan.title')}</Text>
         </View>
         <Text style={[styles.subtitle, { color: sub }]}>
-          An AI day of meals built around your targets — {targets.calories} kcal · {targets.protein}P / {targets.carbs}C / {targets.fat}F
-          {usingDefaults ? '  (default — set yours in Personal Details)' : ''}
+          {t('mealplan.subtitle_prefix')} — {targets.calories} kcal · {targets.protein}P / {targets.carbs}C / {targets.fat}F
+          {usingDefaults ? '  ' + t('mealplan.default_note') : ''}
         </Text>
 
         {!plan && !loading && (
           <TouchableOpacity style={styles.generateBtn} onPress={generate}>
             <Sparkles size={20} color="#fff" />
-            <Text style={styles.generateText}>Generate my meal plan</Text>
+            <Text style={styles.generateText}>{t('mealplan.generate')}</Text>
           </TouchableOpacity>
         )}
 
         {loading && (
           <View style={styles.loadingBox}>
             <ActivityIndicator size="large" color={Colors.light.primary} />
-            <Text style={[styles.loadingText, { color: sub }]}>Cooking up your plan…</Text>
+            <Text style={[styles.loadingText, { color: sub }]}>{t('mealplan.cooking')}</Text>
           </View>
         )}
 
         {error && !loading && (
           <View style={[styles.errorBox, { backgroundColor: card }]}>
-            <Text style={{ color: Colors.light.error, fontWeight: '600' }}>{error}</Text>
+            <Text style={{ color: Colors.light.error, fontWeight: '600' }}>{t('mealplan.error')}</Text>
             <TouchableOpacity style={styles.generateBtn} onPress={generate}>
-              <RefreshCw size={18} color="#fff" /><Text style={styles.generateText}>Retry</Text>
+              <RefreshCw size={18} color="#fff" /><Text style={styles.generateText}>{t('mealplan.retry')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -139,7 +139,7 @@ export default function MealPlanScreen() {
                   <Text style={[styles.macro, { color: sub }]}>F {Math.round(m.fat)}g</Text>
                   <View style={{ flex: 1 }} />
                   <TouchableOpacity style={styles.logBtn} onPress={() => logMeal(m)}>
-                    <Plus size={16} color="#fff" /><Text style={styles.logBtnText}>Log</Text>
+                    <Plus size={16} color="#fff" /><Text style={styles.logBtnText}>{t('mealplan.log')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -147,7 +147,7 @@ export default function MealPlanScreen() {
 
             {/* Totals */}
             <View style={[styles.totalsCard, { backgroundColor: Colors.light.primaryLight }]}>
-              <Text style={[styles.totalsTitle, { color: Colors.light.primaryDark }]}>Daily total</Text>
+              <Text style={[styles.totalsTitle, { color: Colors.light.primaryDark }]}>{t('mealplan.daily_total')}</Text>
               <Text style={[styles.totalsValue, { color: Colors.light.primaryDark }]}>
                 {Math.round(plan.totals.calories)} kcal · {Math.round(plan.totals.protein)}P / {Math.round(plan.totals.carbs)}C / {Math.round(plan.totals.fat)}F
               </Text>
@@ -156,7 +156,7 @@ export default function MealPlanScreen() {
             {/* Micronutrients */}
             {!!plan.micros?.length && (
               <>
-                <Text style={[styles.section, { color: text }]}>Micronutrients (est. % of daily needs)</Text>
+                <Text style={[styles.section, { color: text }]}>{t('mealplan.micros')}</Text>
                 <View style={[styles.microCard, { backgroundColor: card }]}>
                   {plan.micros.map((mi, i) => (
                     <View key={i} style={styles.microRow}>
@@ -180,7 +180,7 @@ export default function MealPlanScreen() {
             )}
 
             <TouchableOpacity style={[styles.regenBtn]} onPress={generate}>
-              <RefreshCw size={18} color={Colors.light.primary} /><Text style={styles.regenText}>Regenerate</Text>
+              <RefreshCw size={18} color={Colors.light.primary} /><Text style={styles.regenText}>{t('mealplan.regenerate')}</Text>
             </TouchableOpacity>
           </>
         )}

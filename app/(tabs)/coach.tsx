@@ -7,13 +7,13 @@ import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, C
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
+import { useTranslation } from '../../lib/i18n';
 import { loadEngagement, EngagementData } from '../../lib/engagement';
-
-const CONF_LABEL: Record<string, string> = { low: 'Building…', medium: 'Good', high: 'High' };
 
 export default function CoachScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
+  const { t, language } = useTranslation();
   const isDark = resolved === 'dark';
   const [data, setData] = useState<EngagementData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,7 +23,7 @@ export default function CoachScreen() {
     const email = user?.primaryEmailAddress?.emailAddress || '';
     if (!email) { setLoading(false); return; }
     try {
-      const d = await loadEngagement(email);
+      const d = await loadEngagement(email, language);
       setData(d);
     } catch (e) {
       console.warn('[Coach] load failed', e);
@@ -31,7 +31,7 @@ export default function CoachScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user]);
+  }, [user, language]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
@@ -67,23 +67,23 @@ export default function CoachScreen() {
 
         <View style={styles.titleRow}>
           <Sparkles size={26} color={Colors.light.primary} />
-          <Text style={[styles.title, { color: text }]}>Your Coach</Text>
+          <Text style={[styles.title, { color: text }]}>{t('coach.title')}</Text>
         </View>
 
         {/* ── Adaptive target hero ── */}
         <LinearGradient colors={[Colors.light.primary, Colors.light.primaryDark]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
-          <Text style={styles.heroLabel}>ADAPTIVE DAILY TARGET</Text>
+          <Text style={styles.heroLabel}>{t('coach.adaptive_label')}</Text>
           {hasPlan ? (
             <>
               <Text style={styles.heroValue}>{d.recommendedTarget}<Text style={styles.heroUnit}> kcal</Text></Text>
               <View style={styles.heroRow}>
                 <View style={styles.heroStat}>
-                  <Text style={styles.heroStatLabel}>Real burn (TDEE)</Text>
+                  <Text style={styles.heroStatLabel}>{t('coach.real_burn')}</Text>
                   <Text style={styles.heroStatValue}>{d.adaptiveTDEE} kcal</Text>
                 </View>
                 <View style={styles.heroDivider} />
                 <View style={styles.heroStat}>
-                  <Text style={styles.heroStatLabel}>Weight trend</Text>
+                  <Text style={styles.heroStatLabel}>{t('coach.weight_trend')}</Text>
                   <View style={styles.trendRow}>
                     <TrendIcon size={16} color="#fff" />
                     <Text style={styles.heroStatValue}>{trend != null ? `${trend > 0 ? '+' : ''}${trend} kg/wk` : '—'}</Text>
@@ -91,19 +91,17 @@ export default function CoachScreen() {
                 </View>
               </View>
               <View style={styles.confChip}>
-                <Text style={styles.confText}>Confidence: {CONF_LABEL[d.confidence]}</Text>
+                <Text style={styles.confText}>{t('coach.confidence')}: {t(`coach.conf_${d.confidence}` as any)}</Text>
               </View>
             </>
           ) : (
             <>
-              <Text style={styles.heroBuilding}>Building your plan…</Text>
-              <Text style={styles.heroBuildingSub}>
-                Log meals and weigh in for ~1 week and Salorie computes your REAL calorie burn from your trend — then adapts your target automatically (no guessing).
-              </Text>
+              <Text style={styles.heroBuilding}>{t('coach.building_title')}</Text>
+              <Text style={styles.heroBuildingSub}>{t('coach.building_sub')}</Text>
               <View style={styles.progressTrack}>
                 <View style={[styles.progressFill, { width: `${Math.min(100, (d.daysTracked / 7) * 100)}%` }]} />
               </View>
-              <Text style={styles.heroBuildingSub}>{Math.min(d.daysTracked, 7)}/7 days tracked</Text>
+              <Text style={styles.heroBuildingSub}>{Math.min(d.daysTracked, 7)}/7 {t('coach.days_tracked')}</Text>
             </>
           )}
         </LinearGradient>
@@ -112,8 +110,8 @@ export default function CoachScreen() {
         <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/meal-plan' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
           <View style={styles.mealCtaIcon}><ChefHat size={24} color={Colors.light.primary} /></View>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>Your meal plan</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>AI menu built around your targets — log in one tap</Text>
+            <Text style={[styles.mealCtaTitle, { color: text }]}>{t('coach.meal_title')}</Text>
+            <Text style={[styles.mealCtaSub, { color: sub }]}>{t('coach.meal_sub')}</Text>
           </View>
           <ChevronRight size={22} color={sub} />
         </TouchableOpacity>
@@ -122,8 +120,8 @@ export default function CoachScreen() {
         <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/nutrients' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
           <View style={styles.mealCtaIcon}><Apple size={24} color={Colors.light.primary} /></View>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>Today's nutrients</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>Vitamins & minerals from what you logged today</Text>
+            <Text style={[styles.mealCtaTitle, { color: text }]}>{t('coach.nutrients_title')}</Text>
+            <Text style={[styles.mealCtaSub, { color: sub }]}>{t('coach.nutrients_sub')}</Text>
           </View>
           <ChevronRight size={22} color={sub} />
         </TouchableOpacity>
@@ -132,16 +130,16 @@ export default function CoachScreen() {
         <View style={[styles.streakCard, { backgroundColor: card }]}>
           <View style={styles.streakIcon}><Flame size={28} color="#f59e0b" /></View>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.streakValue, { color: text }]}>{d.streak} day{d.streak === 1 ? '' : 's'} streak</Text>
+            <Text style={[styles.streakValue, { color: text }]}>{d.streak} {t('coach.streak_suffix')}</Text>
             <Text style={[styles.streakSub, { color: sub }]}>
-              {d.streak === 0 ? 'Log a meal today to start your streak 🔥' : d.streak < 3 ? 'Keep it going — momentum is everything.' : 'You\'re building a real habit. Don\'t break the chain!'}
+              {d.streak === 0 ? t('coach.streak_0') : d.streak < 3 ? t('coach.streak_low') : t('coach.streak_high')}
             </Text>
           </View>
         </View>
 
         {/* ── Achievements ── */}
         <View style={styles.sectionRow}>
-          <Text style={[styles.section, { color: text }]}>Achievements</Text>
+          <Text style={[styles.section, { color: text }]}>{t('coach.achievements')}</Text>
           <Text style={[styles.sectionCount, { color: sub }]}>{unlocked}/{d.achievements.length}</Text>
         </View>
         <View style={styles.badgeGrid}>
@@ -156,7 +154,7 @@ export default function CoachScreen() {
 
         {/* ── Daily lesson ── */}
         <View style={styles.sectionRow}>
-          <Text style={[styles.section, { color: text }]}>Today's lesson</Text>
+          <Text style={[styles.section, { color: text }]}>{t('coach.lesson_title')}</Text>
         </View>
         <View style={[styles.lessonCard, { backgroundColor: card }]}>
           <View style={styles.lessonIcon}><Lightbulb size={22} color={Colors.light.primary} /></View>

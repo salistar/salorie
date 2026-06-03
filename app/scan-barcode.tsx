@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 import { ArrowLeft, ScanBarcode, RefreshCw } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { Colors } from '../constants/Colors';
+import { useTranslation } from '../lib/i18n';
 
 type Found = {
   name: string;
@@ -19,6 +20,7 @@ type Found = {
 };
 
 export default function ScanBarcodeScreen() {
+  const { t } = useTranslation();
   const [permission, requestPermission] = useCameraPermissions();
   const [status, setStatus] = useState<'scanning' | 'loading' | 'found' | 'notfound'>('scanning');
   const [found, setFound] = useState<Found | null>(null);
@@ -85,12 +87,12 @@ export default function ScanBarcodeScreen() {
     return (
       <View style={styles.permWrap}>
         <ScanBarcode size={56} color={Colors.light.primary} />
-        <Text style={styles.permTitle}>Scan barcodes</Text>
-        <Text style={styles.permText}>Allow camera access to scan product barcodes and log them instantly.</Text>
+        <Text style={styles.permTitle}>{t('barcode.perm_title')}</Text>
+        <Text style={styles.permText}>{t('barcode.perm_text')}</Text>
         <TouchableOpacity style={styles.primaryBtn} onPress={requestPermission}>
-          <Text style={styles.primaryBtnText}>Allow Camera</Text>
+          <Text style={styles.primaryBtnText}>{t('barcode.allow')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.back()}><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()}><Text style={styles.cancelText}>{t('barcode.cancel')}</Text></TouchableOpacity>
       </View>
     );
   }
@@ -109,7 +111,7 @@ export default function ScanBarcodeScreen() {
         <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
           <ArrowLeft size={22} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.topTitle}>Scan Barcode</Text>
+        <Text style={styles.topTitle}>{t('barcode.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -117,7 +119,7 @@ export default function ScanBarcodeScreen() {
       {status === 'scanning' && (
         <View style={styles.overlay} pointerEvents="none">
           <View style={styles.scanWindow} />
-          <Text style={styles.hint}>Point the camera at a product barcode</Text>
+          <Text style={styles.hint}>{t('barcode.hint')}</Text>
         </View>
       )}
 
@@ -125,18 +127,18 @@ export default function ScanBarcodeScreen() {
       {status === 'loading' && (
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#fff" />
-          <Text style={styles.hint}>Looking up {code}…</Text>
+          <Text style={styles.hint}>{t('barcode.looking_up')} {code}…</Text>
         </View>
       )}
 
       {/* Not found */}
       {status === 'notfound' && (
         <View style={styles.sheet}>
-          <Text style={styles.sheetTitle}>Product not found</Text>
-          <Text style={styles.sheetSub}>No data for barcode {code}. Try again or add it manually.</Text>
+          <Text style={styles.sheetTitle}>{t('barcode.not_found_title')}</Text>
+          <Text style={styles.sheetSub}>{t('barcode.not_found_sub')}</Text>
           <TouchableOpacity style={styles.primaryBtn} onPress={rescan}>
             <RefreshCw size={18} color="#fff" />
-            <Text style={styles.primaryBtnText}>Scan again</Text>
+            <Text style={styles.primaryBtnText}>{t('barcode.scan_again')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -152,11 +154,11 @@ export default function ScanBarcodeScreen() {
             </View>
           </View>
           <TouchableOpacity style={styles.primaryBtn} onPress={logIt}>
-            <Text style={styles.primaryBtnText}>Log this food</Text>
+            <Text style={styles.primaryBtnText}>{t('barcode.log_food')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.ghostBtn} onPress={rescan}>
             <RefreshCw size={16} color={Colors.light.primary} />
-            <Text style={styles.ghostBtnText}>Scan another</Text>
+            <Text style={styles.ghostBtnText}>{t('barcode.scan_another')}</Text>
           </TouchableOpacity>
         </View>
       )}
