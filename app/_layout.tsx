@@ -334,13 +334,11 @@ function InitialLayout() {
         }
       } catch (err) {
         console.warn('Onboarding check failed:', err);
-        // On network error don't force "not-onboarded" (would flash gender
-        // picker for a valid user offline). Fall back to optimistic or pending.
-        if (optimisticOnboarded === true) {
-          setStatus('onboarded');
-        } else {
-          setStatus('pending');
-        }
+        // Firestore est injoignable (permission-denied, reseau, regles...). On ne
+        // doit JAMAIS rester bloque sur un ecran transparent : un utilisateur
+        // connecte entre dans l'app (les ecrans gerent les donnees manquantes via
+        // le cache local). C'est le garde anti "ecran blanc".
+        setStatus('onboarded');
       }
     };
 
@@ -349,6 +347,25 @@ function InitialLayout() {
       checkFirebase();
     }
   }, [isLoaded, isSignedIn, user?.id, status]);
+
+  // ---- WATCHDOG anti "ecran blanc" --------------------------------------
+  // Si pour une raison quelconque le statut reste 'pending' alors que Clerk
+  // confirme une session (Firestore lent/injoignable, promesse perdue...),
+  // on force l'entree dans l'app apres 8s. L'app ne doit JAMAIS rester figee
+  // sur un ecran transparent.
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || status !== 'pending') return;
+    const t = setTimeout(() => {
+      setStatus((prev) => {
+        if (prev === 'pending') {
+          console.warn('[Watchdog] statut bloque sur pending 8s -> fallback /(tabs)');
+          return 'onboarded';
+        }
+        return prev;
+      });
+    }, 8000);
+    return () => clearTimeout(t);
+  }, [isLoaded, isSignedIn, status]);
 
   // ---- Sync forcee a CHAQUE sign-in, independamment de `status` ----------
   // Sans cela, quand le fast-path onboarded_{email}=true court-circuite la

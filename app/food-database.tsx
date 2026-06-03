@@ -11,7 +11,7 @@ import {
   Keyboard,
 } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, Search, Plus, Utensils } from 'lucide-react-native';
+import { ArrowLeft, Search, Plus, Utensils, ScanBarcode } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { searchFood } from '../lib/fatsecret';
 import { useLogging } from '../lib/LoggingContext';
@@ -111,6 +111,10 @@ export default function FoodDatabaseScreen() {
           <ArrowLeft size={28} color={Colors.light.gray[900]} strokeWidth={2.5} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Food Database</Text>
+        <View style={{ flex: 1 }} />
+        <TouchableOpacity style={styles.scanBtn} onPress={() => router.push('/scan-barcode' as any)}>
+          <ScanBarcode size={24} color={Colors.light.primary} strokeWidth={2.5} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.searchContainer}>
@@ -165,6 +169,14 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '800',
     color: Colors.light.gray[900],
+  },
+  scanBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.light.primaryLight,
   },
   backBtn: {
     width: 48,
