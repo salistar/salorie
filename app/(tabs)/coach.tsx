@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Re
 import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
@@ -114,6 +114,16 @@ export default function CoachScreen() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.mealCtaTitle, { color: text }]}>Your meal plan</Text>
             <Text style={[styles.mealCtaSub, { color: sub }]}>AI menu built around your targets — log in one tap</Text>
+          </View>
+          <ChevronRight size={22} color={sub} />
+        </TouchableOpacity>
+
+        {/* ── Today's nutrients CTA ── */}
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/nutrients' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
+          <View style={styles.mealCtaIcon}><Apple size={24} color={Colors.light.primary} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.mealCtaTitle, { color: text }]}>Today's nutrients</Text>
+            <Text style={[styles.mealCtaSub, { color: sub }]}>Vitamins & minerals from what you logged today</Text>
           </View>
           <ChevronRight size={22} color={sub} />
         </TouchableOpacity>

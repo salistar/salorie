@@ -414,3 +414,64 @@ Rules:
     throw error;
   }
 };
+
+// ──────────────── MICRONUTRIENTS for LOGGED foods ────────────────
+export interface MicroReport {
+  micros: Micro[];     // estimated day total, pct = % of adult RDA
+  highlight: string;   // best-covered nutrient (short)
+  gap: string;         // most lacking nutrient + a quick fix (short)
+}
+
+export const estimateMicros = async (
+  foods: { name: string; calories?: number }[],
+  language: 'en' | 'fr' | 'ar' = 'en'
+): Promise<MicroReport> => {
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const list = foods.map(f => `- ${f.name}${f.calories ? ` (${Math.round(f.calories)} kcal)` : ''}`).join('\n');
+  const prompt = `
+You are a registered dietitian. Estimate the TOTAL micronutrients a person consumed today from these logged foods:
+${list || '(no foods)'}
+
+Write ALL human-readable text in ${langName(language)}.
+Return ONLY strict JSON (no backticks):
+{
+  "micros": [
+    { "name": "Fiber", "amount": "22 g", "pct": 73 },
+    { "name": "Sodium", "amount": "1600 mg", "pct": 70 },
+    { "name": "Potassium", "amount": "2600 mg", "pct": 55 },
+    { "name": "Calcium", "amount": "780 mg", "pct": 78 },
+    { "name": "Iron", "amount": "9 mg", "pct": 64 },
+    { "name": "Magnesium", "amount": "260 mg", "pct": 62 },
+    { "name": "Vitamin C", "amount": "70 mg", "pct": 78 },
+    { "name": "Vitamin D", "amount": "3 mcg", "pct": 20 },
+    { "name": "Vitamin A", "amount": "600 mcg", "pct": 67 },
+    { "name": "Vitamin B12", "amount": "2 mcg", "pct": 83 }
+  ],
+  "highlight": "...",
+  "gap": "..."
+}
+
+Rules:
+- pct = % of the adult Recommended Daily Allowance (can exceed 100).
+- Base the estimate on the foods listed; if the list is empty, return all pct = 0.
+- "highlight": the best-covered nutrient, < 12 words.
+- "gap": the most lacking nutrient + one food to fix it, < 18 words.`;
+
+  try {
+    console.log('[API->Gemini] estimateMicros REQUEST', { foods: foods.length, language });
+    const t0 = Date.now();
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    console.log('[API<-Gemini] estimateMicros RESPONSE', { ms: Date.now() - t0, chars: text.length });
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('Invalid AI response');
+    const parsed = JSON.parse(m[0]) as MicroReport;
+    parsed.micros = Array.isArray(parsed.micros) ? parsed.micros : [];
+    parsed.highlight = parsed.highlight || '';
+    parsed.gap = parsed.gap || '';
+    return parsed;
+  } catch (error) {
+    console.error('[API<-Gemini] estimateMicros FAILED:', (error as Error).message);
+    throw error;
+  }
+};
