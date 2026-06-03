@@ -37,8 +37,11 @@ export default function FoodDatabaseScreen() {
     setLoading(false);
   };
 
+  // Long debounce (OpenFoodFacts limits search to ~10 req/min and BLOCKS
+  // search-as-you-type). We wait until the user pauses typing, and also expose
+  // an immediate search on keyboard submit.
   const debouncedSearch = useCallback(
-    debounce((text: string) => performSearch(text), 500),
+    debounce((text: string) => performSearch(text), 1100),
     []
   );
 
@@ -126,6 +129,7 @@ export default function FoodDatabaseScreen() {
           onChangeText={handleSearch}
           placeholderTextColor={Colors.light.gray[400]}
           returnKeyType="search"
+          onSubmitEditing={() => performSearch(query)}
         />
         {loading && <ActivityIndicator size="small" color={Colors.light.primary} style={styles.loader} />}
       </View>
