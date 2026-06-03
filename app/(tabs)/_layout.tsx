@@ -41,7 +41,7 @@ function TabsContent() {
         <Tabs.Screen
           name="coach"
           options={{
-            tabBarLabel: 'Coach',
+            tabBarLabel: t('tabs.coach'),
             tabBarIcon: ({ color }) => <Sparkles size={22} color={color} />,
           }}
         />

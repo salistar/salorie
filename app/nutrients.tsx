@@ -19,7 +19,7 @@ function todayStr() {
 export default function NutrientsScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
-  const { language } = useTranslation() as any;
+  const { t, language } = useTranslation() as any;
   const isDark = resolved === 'dark';
 
   const [foods, setFoods] = useState<{ name: string; calories?: number }[]>([]);
@@ -80,42 +80,42 @@ export default function NutrientsScreen() {
 
         <View style={styles.titleRow}>
           <Apple size={26} color={Colors.light.primary} />
-          <Text style={[styles.title, { color: text }]}>Today's Nutrients</Text>
+          <Text style={[styles.title, { color: text }]}>{t('nutrients.title')}</Text>
         </View>
         <Text style={[styles.subtitle, { color: sub }]}>
-          Estimated micronutrients from what you actually logged today.
+          {t('nutrients.subtitle')}
         </Text>
 
         {loading && (
           <View style={styles.loadingBox}>
             <ActivityIndicator size="large" color={Colors.light.primary} />
-            <Text style={[styles.loadingText, { color: sub }]}>Analyzing your meals…</Text>
+            <Text style={[styles.loadingText, { color: sub }]}>{t('nutrients.analyzing')}</Text>
           </View>
         )}
 
         {!loading && foods.length === 0 && (
           <View style={[styles.emptyBox, { backgroundColor: card }]}>
             <Apple size={40} color={Colors.light.gray[300]} />
-            <Text style={[styles.emptyTitle, { color: text }]}>No meals logged today</Text>
-            <Text style={[styles.emptySub, { color: sub }]}>Log a meal and come back to see your vitamin & mineral coverage.</Text>
+            <Text style={[styles.emptyTitle, { color: text }]}>{t('nutrients.empty_title')}</Text>
+            <Text style={[styles.emptySub, { color: sub }]}>{t('nutrients.empty_sub')}</Text>
             <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/food-database' as any)}>
-              <Text style={styles.primaryBtnText}>Log food</Text>
+              <Text style={styles.primaryBtnText}>{t('nutrients.log_food')}</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {!loading && error && foods.length > 0 && (
           <View style={[styles.emptyBox, { backgroundColor: card }]}>
-            <Text style={{ color: Colors.light.error, fontWeight: '600', textAlign: 'center' }}>{error}</Text>
+            <Text style={{ color: Colors.light.error, fontWeight: '600', textAlign: 'center' }}>{t('nutrients.error')}</Text>
             <TouchableOpacity style={styles.primaryBtn} onPress={() => run(true)}>
-              <RefreshCw size={18} color="#fff" /><Text style={styles.primaryBtnText}>Retry</Text>
+              <RefreshCw size={18} color="#fff" /><Text style={styles.primaryBtnText}>{t('nutrients.retry')}</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {!loading && report && (
           <>
-            <Text style={[styles.basedOn, { color: sub }]}>Based on {foods.length} item{foods.length === 1 ? '' : 's'}: {foods.map(f => f.name).join(', ')}</Text>
+            <Text style={[styles.basedOn, { color: sub }]}>{t('nutrients.based_on')} {foods.length} {t('nutrients.items')}: {foods.map(f => f.name).join(', ')}</Text>
 
             <View style={[styles.microCard, { backgroundColor: card }]}>
               {report.micros.map((mi, i) => (
@@ -143,9 +143,9 @@ export default function NutrientsScreen() {
             )}
 
             <TouchableOpacity style={styles.regenBtn} onPress={() => run(true)}>
-              <RefreshCw size={18} color={Colors.light.primary} /><Text style={styles.regenText}>Recalculate</Text>
+              <RefreshCw size={18} color={Colors.light.primary} /><Text style={styles.regenText}>{t('nutrients.recalculate')}</Text>
             </TouchableOpacity>
-            <Text style={[styles.disclaimer, { color: sub }]}>AI estimate · % of adult daily needs · not medical advice.</Text>
+            <Text style={[styles.disclaimer, { color: sub }]}>{t('nutrients.disclaimer')}</Text>
           </>
         )}
       </ScrollView>
