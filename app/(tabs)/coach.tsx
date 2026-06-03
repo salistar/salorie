@@ -1,9 +1,9 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
+import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
@@ -108,6 +108,16 @@ export default function CoachScreen() {
           )}
         </LinearGradient>
 
+        {/* ── Meal plan CTA ── */}
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/meal-plan' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
+          <View style={styles.mealCtaIcon}><ChefHat size={24} color={Colors.light.primary} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.mealCtaTitle, { color: text }]}>Your meal plan</Text>
+            <Text style={[styles.mealCtaSub, { color: sub }]}>AI menu built around your targets — log in one tap</Text>
+          </View>
+          <ChevronRight size={22} color={sub} />
+        </TouchableOpacity>
+
         {/* ── Streak ── */}
         <View style={[styles.streakCard, { backgroundColor: card }]}>
           <View style={styles.streakIcon}><Flame size={28} color="#f59e0b" /></View>
@@ -172,6 +182,10 @@ const styles = StyleSheet.create({
   progressTrack: { height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.25)', marginTop: 14, overflow: 'hidden' },
   progressFill: { height: 8, borderRadius: 4, backgroundColor: '#fff' },
 
+  mealCta: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, padding: 16, marginBottom: 14, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  mealCtaIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center' },
+  mealCtaTitle: { fontSize: 17, fontWeight: '800' },
+  mealCtaSub: { fontSize: 13, marginTop: 3, lineHeight: 18 },
   streakCard: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, padding: 18, marginBottom: 22, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
   streakIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#FEF3E0', alignItems: 'center', justifyContent: 'center' },
   streakValue: { fontSize: 20, fontWeight: '900' },
