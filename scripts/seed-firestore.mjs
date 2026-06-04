@@ -103,14 +103,41 @@ async function main() {
     await addDoc(weightRef, { weight: w, date: ds(i), timestamp: Date.now() });
   }
 
-  // profile: targets + goal + name + current weight
+  // ---- Demo friends + leaderboard (so Social is populated) ----
+  const FRIENDS = [
+    { email: 'alex.demo@salorie.app', name: 'Alex Martin', streak: 23, daysTracked: 41 },
+    { email: 'sara.demo@salorie.app', name: 'Sara Bennani', streak: 12, daysTracked: 19 },
+    { email: 'youssef.demo@salorie.app', name: 'Youssef K.', streak: 7, daysTracked: 9 },
+    { email: 'lina.demo@salorie.app', name: 'Lina R.', streak: 4, daysTracked: 6 },
+  ];
+  for (const f of FRIENDS) {
+    await setDoc(doc(db, 'users', f.email), {
+      email: f.email,
+      firstName: f.name.split(' ')[0],
+      lastName: f.name.split(' ').slice(1).join(' '),
+      onboarded: true,
+      imageUrl: `https://i.pravatar.cc/150?u=${encodeURIComponent(f.email)}`,
+      publicStats: {
+        name: f.name,
+        imageUrl: `https://i.pravatar.cc/150?u=${encodeURIComponent(f.email)}`,
+        streak: f.streak,
+        daysTracked: f.daysTracked,
+        email: f.email,
+        updatedAt: Date.now(),
+      },
+    }, { merge: true });
+  }
+
+  // profile: targets + goal + name + current weight + friends + my publicStats
   await setDoc(doc(db, 'users', docId), {
     firstName: 'Salistar', lastName: 'Company', onboarded: true, goal: 'lose',
     weight: 76.3, targetWeight: 72,
     nutritionalPlan: { calories: 2200, protein: 160, carbs: 230, fat: 70 },
+    friends: FRIENDS.map((f) => f.email),
+    publicStats: { name: 'Salistar Company', imageUrl: '', streak: 14, daysTracked: 14, email: docId, updatedAt: Date.now() },
   }, { merge: true });
 
-  console.log(`Done. ${n} logs + weight trend + profile targets seeded.`);
+  console.log(`Done. ${n} logs + weight trend + profile targets + ${FRIENDS.length} friends seeded.`);
   process.exit(0);
 }
 main().catch((e) => { console.error('SEED FAILED:', e?.message || e); process.exit(1); });
