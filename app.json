@@ -18,7 +18,13 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "package": "com.idriss.kriouile.salorie"
+      "package": "com.idriss.kriouile.salorie",
+      "permissions": [
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
+        "android.permission.health.READ_TOTAL_CALORIES_BURNED",
+        "android.permission.health.READ_WEIGHT"
+      ]
     },
     "web": {
       "output": "static",
@@ -40,7 +46,16 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "react-native-health-connect",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
