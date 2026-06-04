@@ -3,12 +3,13 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Re
 import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { loadEngagement, EngagementData } from '../../lib/engagement';
+import { publishStats } from '../../lib/social';
 
 export default function CoachScreen() {
   const { user } = useUser();
@@ -25,6 +26,9 @@ export default function CoachScreen() {
     try {
       const d = await loadEngagement(email, language);
       setData(d);
+      // Publish public stats so friends' leaderboards stay fresh.
+      const name = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.fullName || email.split('@')[0];
+      publishStats(email, { name, imageUrl: user?.imageUrl || undefined, streak: d.streak, daysTracked: d.daysTracked }).catch(() => {});
     } catch (e) {
       console.warn('[Coach] load failed', e);
     } finally {
@@ -122,6 +126,16 @@ export default function CoachScreen() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.mealCtaTitle, { color: text }]}>{t('coach.nutrients_title')}</Text>
             <Text style={[styles.mealCtaSub, { color: sub }]}>{t('coach.nutrients_sub')}</Text>
+          </View>
+          <ChevronRight size={22} color={sub} />
+        </TouchableOpacity>
+
+        {/* ── Social / leaderboard CTA ── */}
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/social' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
+          <View style={styles.mealCtaIcon}><Trophy size={24} color={Colors.light.primary} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.mealCtaTitle, { color: text }]}>{t('coach.social_title')}</Text>
+            <Text style={[styles.mealCtaSub, { color: sub }]}>{t('coach.social_sub')}</Text>
           </View>
           <ChevronRight size={22} color={sub} />
         </TouchableOpacity>
