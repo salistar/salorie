@@ -24,8 +24,9 @@ import {
   CheckCircle2
 } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db, emailToDocId } from '../lib/firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 
 export default function PersonalDetailsScreen() {
@@ -45,7 +46,10 @@ export default function PersonalDetailsScreen() {
     const fetchGoals = async () => {
       if (!user) return;
       try {
-        const userDoc = await getDoc(doc(db, 'users', user.id));
+        // Email-keyed doc (consistent with the rest of the app: logs, weight,
+        // nutritionalPlan are all stored under users/{emailToDocId}).
+        const email = user.primaryEmailAddress?.emailAddress || '';
+        const userDoc = await getDoc(doc(db, 'users', emailToDocId(email)));
         if (userDoc.exists()) {
           const data = userDoc.data();
           const plan = data.nutritionalPlan || {};
@@ -70,15 +74,26 @@ export default function PersonalDetailsScreen() {
     if (!user) return;
     setSaving(true);
     try {
-      const updates = {
-        'nutritionalPlan.calories': Number(goals.calories),
-        'nutritionalPlan.protein': Number(goals.protein),
-        'nutritionalPlan.carbs': Number(goals.carbs),
-        'nutritionalPlan.fat': Number(goals.fat),
-        'nutritionalPlan.water': Number(goals.water),
+      const email = user.primaryEmailAddress?.emailAddress || '';
+      const docId = emailToDocId(email);
+      const nutritionalPlan = {
+        calories: Number(goals.calories),
+        protein: Number(goals.protein),
+        carbs: Number(goals.carbs),
+        fat: Number(goals.fat),
+        water: Number(goals.water),
       };
 
-      await updateDoc(doc(db, 'users', user.id), updates);
+      // Email-keyed + merge so it always works and stays consistent app-wide.
+      await setDoc(doc(db, 'users', docId), { nutritionalPlan }, { merge: true });
+      // Refresh the local profile cache so Coach / Meal Plan pick up new targets.
+      try {
+        const key = `profile_${docId}`;
+        const raw = await AsyncStorage.getItem(key);
+        const prof = raw ? JSON.parse(raw) : {};
+        prof.nutritionalPlan = { ...(prof.nutritionalPlan || {}), ...nutritionalPlan };
+        await AsyncStorage.setItem(key, JSON.stringify(prof));
+      } catch {}
       
       Alert.alert('Success', 'Your personal details have been updated.', [
         { text: 'OK', onPress: () => router.back() }
