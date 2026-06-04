@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Re
 import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
@@ -136,6 +136,16 @@ export default function CoachScreen() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.mealCtaTitle, { color: text }]}>{t('coach.social_title')}</Text>
             <Text style={[styles.mealCtaSub, { color: sub }]}>{t('coach.social_sub')}</Text>
+          </View>
+          <ChevronRight size={22} color={sub} />
+        </TouchableOpacity>
+
+        {/* ── Health sync CTA ── */}
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/health' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
+          <View style={styles.mealCtaIcon}><HeartPulse size={24} color={Colors.light.primary} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.mealCtaTitle, { color: text }]}>{t('coach.health_title')}</Text>
+            <Text style={[styles.mealCtaSub, { color: sub }]}>{t('coach.health_sub')}</Text>
           </View>
           <ChevronRight size={22} color={sub} />
         </TouchableOpacity>
