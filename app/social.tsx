@@ -75,7 +75,7 @@ export default function SocialScreen() {
           <Text style={[styles.title, { color: text }]}>{t('social.title')}</Text>
         </View>
         <Text style={[styles.subtitle, { color: sub }]}>{t('social.subtitle')}</Text>
-        <Image source={require('../assets/images/illustrations/weightlifting.jpg')} style={styles.hero} resizeMode="cover" />
+        <Image source={require('../assets/images/illustrations/workout.jpg')} style={styles.hero} resizeMode="cover" />
 
         {/* Add friend */}
         <Text style={[styles.section, { color: text }]}>{t('social.add_friend')}</Text>
