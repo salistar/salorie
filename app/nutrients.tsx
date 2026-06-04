@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -85,6 +85,7 @@ export default function NutrientsScreen() {
         <Text style={[styles.subtitle, { color: sub }]}>
           {t('nutrients.subtitle')}
         </Text>
+        <Image source={require('../assets/images/illustrations/splash_bg.jpg')} style={styles.hero} resizeMode="cover" />
 
         {loading && (
           <View style={styles.loadingBox}>
@@ -160,7 +161,8 @@ const styles = StyleSheet.create({
   backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.light.gray[50] },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 28, fontWeight: '900', letterSpacing: -1 },
-  subtitle: { fontSize: 14, marginTop: 8, marginBottom: 18, lineHeight: 20 },
+  subtitle: { fontSize: 14, marginTop: 8, marginBottom: 14, lineHeight: 20 },
+  hero: { width: '100%', height: 130, borderRadius: 18, marginBottom: 16 },
   loadingBox: { alignItems: 'center', gap: 12, paddingVertical: 60 },
   loadingText: { fontSize: 15, fontWeight: '600' },
   emptyBox: { borderRadius: 20, padding: 28, alignItems: 'center', gap: 12, marginTop: 10 },

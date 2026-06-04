@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -99,6 +99,7 @@ export default function MealPlanScreen() {
           {t('mealplan.subtitle_prefix')} — {targets.calories} kcal · {targets.protein}P / {targets.carbs}C / {targets.fat}F
           {usingDefaults ? '  ' + t('mealplan.default_note') : ''}
         </Text>
+        <Image source={require('../assets/images/illustrations/healthy_food.jpg')} style={styles.hero} resizeMode="cover" />
 
         {!plan && !loading && (
           <TouchableOpacity style={styles.generateBtn} onPress={generate}>
@@ -196,7 +197,8 @@ const styles = StyleSheet.create({
   backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.light.gray[50] },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 30, fontWeight: '900', letterSpacing: -1 },
-  subtitle: { fontSize: 14, marginTop: 8, marginBottom: 20, lineHeight: 20 },
+  subtitle: { fontSize: 14, marginTop: 8, marginBottom: 14, lineHeight: 20 },
+  hero: { width: '100%', height: 140, borderRadius: 18, marginBottom: 18 },
   generateBtn: { flexDirection: 'row', gap: 8, backgroundColor: Colors.light.primary, paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   generateText: { color: '#fff', fontSize: 16, fontWeight: '800' },
   loadingBox: { alignItems: 'center', gap: 12, paddingVertical: 60 },
