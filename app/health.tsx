@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, Footprints, Flame, Scale, RefreshCw, HeartPulse, Plus } from 'lucide-react-native';
@@ -80,6 +80,7 @@ export default function HealthScreen() {
           <Text style={[styles.title, { color: text }]}>{t('health.title')}</Text>
         </View>
         <Text style={[styles.subtitle, { color: sub }]}>{t('health.subtitle')}</Text>
+        <Image source={require('../assets/images/illustrations/running.jpg')} style={styles.hero} resizeMode="cover" />
 
         {available === false && (
           <View style={[styles.box, { backgroundColor: card }]}>
@@ -130,7 +131,8 @@ const styles = StyleSheet.create({
   backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.light.gray[50] },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 28, fontWeight: '900', letterSpacing: -1 },
-  subtitle: { fontSize: 14, marginTop: 8, marginBottom: 20, lineHeight: 20 },
+  subtitle: { fontSize: 14, marginTop: 8, marginBottom: 14, lineHeight: 20 },
+  hero: { width: '100%', height: 130, borderRadius: 18, marginBottom: 18 },
   box: { borderRadius: 16, padding: 20 },
   boxText: { fontSize: 14, lineHeight: 20 },
   primaryBtn: { flexDirection: 'row', gap: 8, backgroundColor: Colors.light.primary, paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 8 },

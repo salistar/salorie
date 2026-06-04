@@ -75,6 +75,7 @@ export default function SocialScreen() {
           <Text style={[styles.title, { color: text }]}>{t('social.title')}</Text>
         </View>
         <Text style={[styles.subtitle, { color: sub }]}>{t('social.subtitle')}</Text>
+        <Image source={require('../assets/images/illustrations/weightlifting.jpg')} style={styles.hero} resizeMode="cover" />
 
         {/* Add friend */}
         <Text style={[styles.section, { color: text }]}>{t('social.add_friend')}</Text>
@@ -138,7 +139,8 @@ const styles = StyleSheet.create({
   backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.light.gray[50] },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 30, fontWeight: '900', letterSpacing: -1 },
-  subtitle: { fontSize: 14, marginTop: 8, marginBottom: 18, lineHeight: 20 },
+  subtitle: { fontSize: 14, marginTop: 8, marginBottom: 14, lineHeight: 20 },
+  hero: { width: '100%', height: 130, borderRadius: 18, marginBottom: 18 },
   section: { fontSize: 16, fontWeight: '800', marginBottom: 10 },
   addRow: { flexDirection: 'row', gap: 10 },
   input: { flex: 1, height: 50, borderRadius: 14, paddingHorizontal: 16, fontSize: 15, fontWeight: '600' },
