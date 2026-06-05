@@ -1,0 +1,27 @@
+# Turnkey deployment for the Salorie Clerk->Firebase token endpoint.
+#
+# On the VPS:
+#   1. copy this folder (or just docker-compose.yml + your .env)
+#   2. create .env from .env.example (fill FIREBASE_SERVICE_ACCOUNT + CLERK_*)
+#   3. docker compose up -d
+#   4. put it behind your reverse proxy (Caddy/Nginx/Traefik) with TLS at
+#      https://api.salistar.com/firebase-token  ->  http://127.0.0.1:8787
+#
+# Or pull the prebuilt image from GHCR instead of building:
+#   image: ghcr.io/salistar/salorie-firebase-token:latest
+services:
+  firebase-token:
+    build: .
+    image: ghcr.io/salistar/salorie-firebase-token:latest
+    container_name: salorie-firebase-token
+    restart: unless-stopped
+    # Bind to localhost only — TLS termination is handled by your reverse proxy.
+    ports:
+      - "127.0.0.1:8787:8787"
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8787/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

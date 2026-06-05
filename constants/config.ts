@@ -12,4 +12,8 @@ export const CONFIG = {
   },
   revenueCatApiKeyAndroid: process.env.EXPO_PUBLIC_REVENUE_CAT_API_KEY_ANDROID || '',
   revenueCatApiKeyIos: process.env.EXPO_PUBLIC_REVENUE_CAT_API_KEY_IOS || '',
+  // Backend endpoint that exchanges a Clerk session token for a Firebase
+  // custom token (mints uid = sanitized email). When empty, the app keeps
+  // working without Firebase Auth (open rules) — the bridge is a no-op.
+  firebaseTokenUrl: process.env.EXPO_PUBLIC_FIREBASE_TOKEN_URL || '',
 };

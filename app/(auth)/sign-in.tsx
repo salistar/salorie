@@ -156,6 +156,14 @@ export default function SignInScreen() {
 
       console.warn('[Google SSO] No session created — annule par utilisateur, redirect mismatch, ou compte Google inconnu');
     } catch (err: any) {
+      const code = err?.errors?.[0]?.code || err?.code;
+      // "Session already exists" = l'utilisateur EST deja connecte (retry, double-tap,
+      // ou session persistee). Ne JAMAIS afficher d'erreur — on entre dans l'app.
+      if (code === 'session_exists') {
+        console.log('[Google SSO] session_exists -> deja connecte, on entre dans l app');
+        router.replace('/(tabs)' as any);
+        return;
+      }
       console.error('[Google SSO] Error:', JSON.stringify(err, null, 2));
       alert(err.errors?.[0]?.message || err?.message || 'Google sign in failed');
     }

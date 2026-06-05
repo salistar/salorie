@@ -1,0 +1,25 @@
+appId: com.idriss.kriouile.salorie
+name: Auth screens (sign-up / sign-in)
+tags:
+  - smoke
+---
+# Verify both auth screens render their fields and the Google option,
+# without actually creating an account (no network side effects).
+- launchApp:
+    clearState: true
+- tapOn:
+    text: "Get Started"
+- assertVisible: "Email Address"
+- assertVisible: "Password"
+- assertVisible: "Continue with Google"
+- takeScreenshot: 03-signup-fields
+# Go to Sign In
+- tapOn:
+    text: "Sign In"
+    optional: true
+- assertVisible:
+    text: "Sign in to continue your fitness journey"
+    optional: true
+- assertVisible: "Email Address"
+- assertVisible: "Password"
+- takeScreenshot: 04-signin-fields

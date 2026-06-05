@@ -15,6 +15,7 @@ import {
   emailToDocId,
 } from '../lib/firebase';
 import { syncAllUserData, printLogLegend } from '../lib/LocalDataStore';
+import { signInToFirebase } from '../lib/firebaseAuth';
 
 // Imprime la legende des couleurs UNE FOIS au demarrage du module (avant
 // meme que React ne monte) — comme ca tout developpeur qui ouvre Metro voit
@@ -30,6 +31,7 @@ import { PurchasesService } from '../lib/PurchasesService';
 import LogModal from '../components/LogModal';
 import ScreenBackground from '../components/ScreenBackground';
 import ActionMenu from '../components/ActionMenu';
+import SplashIntro from '../components/SplashIntro';
 
 const tokenCache = {
   async getToken(key: string) {
@@ -65,9 +67,18 @@ if (!publishableKey) {
 }
 
 function InitialLayout() {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const { session } = useSession();
+
+  // ---- Firebase Auth bridge ---------------------------------------------
+  // As soon as Clerk confirms the session, exchange the Clerk token for a
+  // Firebase custom token so Firestore reads/writes carry request.auth.
+  // No-op until EXPO_PUBLIC_FIREBASE_TOKEN_URL is configured (safe to ship).
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    signInToFirebase(() => getToken()).catch(() => {});
+  }, [isLoaded, isSignedIn, user?.id]);
 
   // ---- GLOBAL Linking diagnostic ----------------------------------------
   // Logue TOUTE URL entrante (deep link) — utile pour diagnostiquer le retour
@@ -333,13 +344,11 @@ function InitialLayout() {
         }
       } catch (err) {
         console.warn('Onboarding check failed:', err);
-        // On network error don't force "not-onboarded" (would flash gender
-        // picker for a valid user offline). Fall back to optimistic or pending.
-        if (optimisticOnboarded === true) {
-          setStatus('onboarded');
-        } else {
-          setStatus('pending');
-        }
+        // Firestore est injoignable (permission-denied, reseau, regles...). On ne
+        // doit JAMAIS rester bloque sur un ecran transparent : un utilisateur
+        // connecte entre dans l'app (les ecrans gerent les donnees manquantes via
+        // le cache local). C'est le garde anti "ecran blanc".
+        setStatus('onboarded');
       }
     };
 
@@ -348,6 +357,25 @@ function InitialLayout() {
       checkFirebase();
     }
   }, [isLoaded, isSignedIn, user?.id, status]);
+
+  // ---- WATCHDOG anti "ecran blanc" --------------------------------------
+  // Si pour une raison quelconque le statut reste 'pending' alors que Clerk
+  // confirme une session (Firestore lent/injoignable, promesse perdue...),
+  // on force l'entree dans l'app apres 8s. L'app ne doit JAMAIS rester figee
+  // sur un ecran transparent.
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || status !== 'pending') return;
+    const t = setTimeout(() => {
+      setStatus((prev) => {
+        if (prev === 'pending') {
+          console.warn('[Watchdog] statut bloque sur pending 8s -> fallback /(tabs)');
+          return 'onboarded';
+        }
+        return prev;
+      });
+    }, 8000);
+    return () => clearTimeout(t);
+  }, [isLoaded, isSignedIn, status]);
 
   // ---- Sync forcee a CHAQUE sign-in, independamment de `status` ----------
   // Sans cela, quand le fast-path onboarded_{email}=true court-circuite la
@@ -491,6 +519,7 @@ function InitialLayout() {
       <Slot />
       <ActionMenu />
       <LogModal />
+      <SplashIntro />
       {showLoading && (
         <View style={{
           position: 'absolute',

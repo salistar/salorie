@@ -18,11 +18,18 @@ export default function ScreenBackground() {
   }
 
   return (
-    <LinearGradient
-      colors={[Colors.light.white, '#e8f5ec', Colors.light.primaryLight]}
-      locations={[0, 0.55, 1]}
-      style={StyleSheet.absoluteFillObject}
-      pointerEvents="none"
-    />
+    <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+      <LinearGradient
+        colors={[Colors.light.white, '#e8f5ec', Colors.light.primaryLight]}
+        locations={[0, 0.55, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
+      {/* subtle brand glow anchored top-centre for depth */}
+      <LinearGradient
+        colors={['rgba(41,143,80,0.10)', 'rgba(41,143,80,0)']}
+        locations={[0, 1]}
+        style={[StyleSheet.absoluteFillObject, { height: 220 }]}
+      />
+    </View>
   );
 }

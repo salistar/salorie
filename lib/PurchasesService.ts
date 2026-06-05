@@ -6,25 +6,44 @@ import PurchasesUI from 'react-native-purchases-ui';
 
 const isExpoGo = Constants.executionEnvironment === 'storeClient';
 
+/**
+ * RevenueCat ferme l'app en build *release* si on lui passe une clé "Test Store"
+ * (préfixe `test_`) — c'est un garde-fou natif que le try/catch JS n'attrape pas.
+ * On ne configure donc le SDK que pour une vraie clé publique de production :
+ *   - Android : `goog_...`
+ *   - iOS     : `appl_...`
+ *   - Amazon  : `amzn_...`
+ * Tant qu'une clé de prod n'est pas fournie, on saute l'init proprement
+ * (l'app tourne, le paywall est juste désactivé).
+ */
+function isProductionKey(key: string | undefined): key is string {
+  if (!key) return false;
+  if (key.startsWith('test_')) return false; // RevenueCat Test Store → interdit en release
+  return /^(goog_|appl_|amzn_|rcb_)/.test(key);
+}
+
 export class PurchasesService {
+  static configured = false;
+
   static async initialize() {
     try {
       console.log('\x1b[32m[API→RevenueCat] configure REQUEST\x1b[0m', {
         platform: Platform.OS, isExpoGo,
       });
-      Purchases.setLogLevel(LOG_LEVEL.DEBUG);
 
-      if (Platform.OS === 'ios') {
-        if (CONFIG.revenueCatApiKeyIos) {
-          Purchases.configure({ apiKey: CONFIG.revenueCatApiKeyIos });
-          console.log('\x1b[34m[API←RevenueCat] configure OK (iOS)\x1b[0m');
-        }
-      } else if (Platform.OS === 'android') {
-        if (CONFIG.revenueCatApiKeyAndroid) {
-          Purchases.configure({ apiKey: CONFIG.revenueCatApiKeyAndroid });
-          console.log('\x1b[34m[API←RevenueCat] configure OK (Android)\x1b[0m');
-        }
+      const key = Platform.OS === 'ios'
+        ? CONFIG.revenueCatApiKeyIos
+        : CONFIG.revenueCatApiKeyAndroid;
+
+      if (!isProductionKey(key)) {
+        console.log('\x1b[33m[RevenueCat] SKIP configure — clé de production absente ou clé de test (paywall désactivé)\x1b[0m');
+        return;
       }
+
+      Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+      Purchases.configure({ apiKey: key });
+      PurchasesService.configured = true;
+      console.log(`\x1b[34m[API←RevenueCat] configure OK (${Platform.OS})\x1b[0m`);
     } catch (error) {
       console.log('\x1b[34m[API←RevenueCat] configure FAILED (Expo Go or missing native module):\x1b[0m', (error as Error).message);
     }
@@ -32,8 +51,8 @@ export class PurchasesService {
 
   static async isPremium(): Promise<boolean> {
     try {
-      if (isExpoGo) {
-        console.log('\x1b[32m[API→RevenueCat] isPremium SKIPPED (Expo Go)\x1b[0m');
+      if (isExpoGo || !PurchasesService.configured) {
+        console.log('\x1b[32m[API→RevenueCat] isPremium SKIPPED (Expo Go / non configuré)\x1b[0m');
         return false;
       }
       console.log('\x1b[32m[API→RevenueCat] getCustomerInfo REQUEST\x1b[0m');
@@ -55,8 +74,8 @@ export class PurchasesService {
 
   static async showPaywall() {
     try {
-      if (isExpoGo) {
-        console.log('\x1b[32m[API→RevenueCat] presentPaywall SKIPPED (Expo Go)\x1b[0m');
+      if (isExpoGo || !PurchasesService.configured) {
+        console.log('\x1b[32m[API→RevenueCat] presentPaywall SKIPPED (Expo Go / non configuré)\x1b[0m');
         return;
       }
       const isPremium = await this.isPremium();

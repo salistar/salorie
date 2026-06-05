@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, User, BarChart3, Plus } from 'lucide-react-native';
+import { Home, User, BarChart3, Plus, Sparkles } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { LoggingProvider, useLogging } from '../../lib/LoggingContext';
@@ -36,6 +36,13 @@ function TabsContent() {
           options={{
             tabBarLabel: t('tabs.home'),
             tabBarIcon: ({ color }) => <Home size={22} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="coach"
+          options={{
+            tabBarLabel: t('tabs.coach'),
+            tabBarIcon: ({ color }) => <Sparkles size={22} color={color} />,
           }}
         />
         <Tabs.Screen

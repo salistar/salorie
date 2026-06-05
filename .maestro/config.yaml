@@ -1,0 +1,13 @@
+# Maestro workspace config for Salorie E2E
+# Docs: https://maestro.mobile.dev
+#
+# Run the whole suite:   maestro test .maestro
+# Run one flow:          maestro test .maestro/01-launch-and-welcome.yaml
+#
+# Flows assume the UI language is ENGLISH. Set the device/app language to
+# English before running, or the text assertions below won't match.
+flows:
+  - "*.yaml"
+includeTags: []
+excludeTags:
+  - manual   # flows that need a real Clerk test account / OTP
