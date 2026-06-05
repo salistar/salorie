@@ -388,7 +388,7 @@ Output a single integer (e.g. 247). No explanation.`;
               directement en card inline (auto-play, loop, muted, controls natifs).
               Sinon on retombe sur l image statique. Plus de bouton/modal separe. */}
           <View style={[styles.heroImgWrap, { backgroundColor: cardBg }]}>
-            {type === 'lifting' && getLocalVideo(selected.id) ? (
+            {getLocalVideo(selected.id) ? (
               <Video
                 key={selected.id}
                 source={getLocalVideo(selected.id)}
@@ -480,7 +480,7 @@ Output a single integer (e.g. 247). No explanation.`;
             </Text>
             <View style={[styles.sliderCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
               <View style={styles.sliderTrack}>
-                <View style={[styles.sliderFill, { width: `${(intensity / 2) * 100}%` }]} />
+                <View style={[styles.sliderFill, { width: `${(intensity / 2) * 100}%`, left: isRTL ? undefined : 0, right: isRTL ? 0 : undefined }]} />
                 <View style={styles.sliderPoints}>
                   {[0, 1, 2].map((point) => (
                     <TouchableOpacity
@@ -687,7 +687,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.primary,
     borderRadius: 3,
     position: 'absolute',
-    left: 0,
+    // left/right set inline based on isRTL so the fill grows from the correct side
   },
   sliderPoints: {
     flexDirection: 'row',
