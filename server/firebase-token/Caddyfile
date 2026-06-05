@@ -1,0 +1,41 @@
+# Caddy reverse proxy for the Salorie Clerk->Firebase token endpoint.
+# Caddy obtains and renews a Let's Encrypt TLS certificate automatically.
+#
+# Place this on the VPS at /etc/caddy/Caddyfile (or import it from your main
+# Caddyfile) and run:  sudo systemctl reload caddy
+# ---------------------------------------------------------------------------
+
+# ---- Option A (recommended): a dedicated subdomain --------------------------
+# DNS: create an A record   auth.salistar.com  ->  <VPS_PUBLIC_IP>
+auth.salistar.com {
+	encode gzip
+
+	# Only expose the two routes the service actually serves.
+	@api path /firebase-token /health
+	handle @api {
+		reverse_proxy 127.0.0.1:8787
+	}
+
+	# Everything else returns 404 (don't leak that anything else exists).
+	handle {
+		respond "Not found" 404
+	}
+
+	log {
+		output file /var/log/caddy/firebase-token.log
+		format json
+	}
+}
+
+# ---- Option B: add a path to an EXISTING api.salistar.com block -------------
+# If api.salistar.com already serves your NestJS backend through Caddy, do NOT
+# duplicate the site block — instead add this handle INSIDE the existing
+# `api.salistar.com { ... }` block, BEFORE the catch-all reverse_proxy:
+#
+# api.salistar.com {
+#     handle /firebase-token* {
+#         reverse_proxy 127.0.0.1:8787
+#     }
+#     # ... your existing backend routes ...
+#     reverse_proxy 127.0.0.1:4200   # example: existing NestJS
+# }
