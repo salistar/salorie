@@ -1,13 +1,47 @@
 rules_version = '2';
 
-// ⚠️ Règles ouvertes (équivalent test-mode) — restaure le fonctionnement de
-// l'app qui authentifie via Clerk (pas Firebase Auth), donc Firestore ne voit
-// pas request.auth. À durcir plus tard via un bridge Clerk → Firebase custom
-// token (template JWT) pour pouvoir conditionner sur request.auth.uid.
+// Salorie — SECURED Firestore rules (deploy after the Clerk→Firebase bridge is live).
+// ---------------------------------------------------------------------------
+// Auth model: the app signs into Firebase with a custom token whose uid is the
+// user's sanitized email (= emailToDocId(email)), minted by /server/firebase-token
+// after verifying the Clerk session. So request.auth.uid IS the user doc key.
+//
+// DEPLOY ONLY AFTER:
+//   1. the token endpoint is live, and
+//   2. a build that calls signInToFirebase() is installed,
+// otherwise existing clients (no Firebase Auth yet) get permission-denied.
+//
+// Deploy:  firebase deploy --only firestore:rules
+//   (point firebase.json "firestore.rules" at this file, or copy it over
+//    firestore.rules once you're ready to cut over.)
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      // The top-level user doc holds public-ish fields (name, avatar,
+      // publicStats) the Social leaderboard reads for friends.
+      // Readable by any signed-in user; writable only by the owner.
+      allow read: if signedIn();
+      allow create, update, delete: if isOwner(userId);
+
+      // Everything private (logs, weight_history, ai_insights, notifications…)
+      // is readable/writable ONLY by the owner — friends never see your meals.
+      match /{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Admin config is read-only to clients; writes happen server-side only.
+    match /admin/{doc} {
+      allow read: if signedIn();
+      allow write: if false;
     }
   }
 }
