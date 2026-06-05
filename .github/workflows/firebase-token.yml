@@ -1,0 +1,67 @@
+name: firebase-token service
+
+# Builds the Clerk->Firebase token endpoint image, pushes it to GHCR, and
+# (optionally) deploys it to the VPS over SSH when the VPS_* secrets are set.
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths:
+      - "server/firebase-token/**"
+      - ".github/workflows/firebase-token.yml"
+  workflow_dispatch:
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/salorie-firebase-token
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      VPS_PATH: ${{ secrets.VPS_PATH }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push image
+        uses: docker/build-push-action@v6
+        with:
+          context: server/firebase-token
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ---- Optional VPS deploy (runs only if VPS secrets are configured) ----
+      - name: Deploy to VPS
+        if: ${{ env.VPS_HOST != '' }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ${{ secrets.VPS_PATH }}
+            docker compose pull
+            docker compose up -d
+            docker image prune -f
+
+      - name: Deploy skipped notice
+        if: ${{ env.VPS_HOST == '' }}
+        run: echo "VPS_* secrets not set — image pushed to GHCR, skipping SSH deploy. Add VPS_HOST/VPS_USER/VPS_SSH_KEY/VPS_PATH to enable auto-deploy."
