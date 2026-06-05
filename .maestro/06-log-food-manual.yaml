@@ -1,0 +1,22 @@
+appId: com.idriss.kriouile.salorie
+name: Log food manually (authenticated)
+tags:
+  - manual
+---
+- runFlow: subflows/sign-in.yaml
+# Open the logging action menu (the central "+" / Log button on Home),
+# then choose manual entry (route app/log-manual.tsx).
+- tapOn:
+    id: "log-fab"
+    optional: true
+- tapOn:
+    text: ".*[Aa]dd.*|.*[Ll]og.*"
+    optional: true
+- tapOn:
+    text: ".*[Mm]anual.*"
+    optional: true
+- assertVisible:
+    text: ".*[Cc]alorie.*|.*[Pp]rotein.*|.*[Nn]ame.*"
+    timeout: 10000
+- takeScreenshot: 07-log-food
+- back

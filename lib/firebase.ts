@@ -15,9 +15,10 @@ import {
   limit as firestoreLimit
 } from 'firebase/firestore';
 import { CONFIG } from '../constants/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Initialize Firebase
-const app = initializeApp(CONFIG.firebaseConfig);
+export const app = initializeApp(CONFIG.firebaseConfig);
 export const db = getFirestore(app);
 
 /**
@@ -346,6 +347,16 @@ export const addNutritionLog = async (log: Omit<NutritionLog, 'id' | 'timestamp'
       timestamp: serverTimestamp(),
     });
     console.log('\x1b[34m[API←Firestore] logs/add OK\x1b[0m', { docId, ms: Date.now() - t0 });
+    // Keep the LOCAL cache in sync so dashboards that read logs_{docId}
+    // (nutrients, analytics, Coach streak) see the new entry IMMEDIATELY,
+    // before the next full Firestore sync.
+    try {
+      const key = `logs_${docId}`;
+      const raw = await AsyncStorage.getItem(key);
+      const arr = raw ? JSON.parse(raw) : [];
+      arr.push({ ...log, userId: docId });
+      await AsyncStorage.setItem(key, JSON.stringify(arr));
+    } catch {}
     // Fire-and-forget: flip stale=true on week/month/all insight docs so the
     // next analytics open regenerates. Lazy import to avoid a cycle.
     try {

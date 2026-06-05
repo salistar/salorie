@@ -1,0 +1,16 @@
+node_modules
+.env
+*.json
+!package.json
+!package-lock.json
+README.md
+.env.example
+Dockerfile
+.dockerignore
+docker-compose.yml
+init-auth.mjs
+setup-env.mjs
+validate-sa.mjs
+firebase-token.controller.ts
+firebase-token.service.ts
+firebase-token.module.ts

@@ -318,3 +318,160 @@ export const generateBentoInsights = async (
     };
   }
 };
+
+// ───────────────────────── AI MEAL PLANNER ─────────────────────────
+export interface MealPlanMeal {
+  type: string;        // Breakfast / Lunch / Dinner / Snack (localized)
+  title: string;       // dish name
+  items: string[];     // ingredients / components
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+export interface Micro { name: string; amount: string; pct: number; } // pct of RDA (0-100+)
+export interface MealPlan {
+  meals: MealPlanMeal[];
+  totals: { calories: number; protein: number; carbs: number; fat: number };
+  micros: Micro[];
+  tip: string;
+}
+
+export interface MealPlanInput {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  goal?: string;
+  diet?: string;            // e.g. "balanced", "high-protein", "vegetarian", "halal"...
+  language?: 'en' | 'fr' | 'ar';
+}
+
+const langName = (l?: string) => (l === 'fr' ? 'French' : l === 'ar' ? 'Arabic' : 'English');
+
+export const generateMealPlan = async (input: MealPlanInput): Promise<MealPlan> => {
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const lang = input.language || 'en';
+  const prompt = `
+You are a registered dietitian. Build a realistic, tasty ONE-DAY meal plan.
+
+Daily targets:
+- Calories: ${input.calories} kcal
+- Protein: ${input.protein} g
+- Carbs: ${input.carbs} g
+- Fat: ${input.fat} g
+Goal: ${input.goal || 'maintain'}
+Diet preference: ${input.diet || 'balanced, no restriction'}
+
+Write ALL human-readable text (meal types, titles, items, micro names, tip) in ${langName(lang)}.
+Return ONLY strict JSON (no backticks, no commentary) with this exact shape:
+{
+  "meals": [
+    { "type": "Breakfast", "title": "...", "items": ["...","..."], "calories": 0, "protein": 0, "carbs": 0, "fat": 0 },
+    { "type": "Lunch", "title": "...", "items": ["..."], "calories": 0, "protein": 0, "carbs": 0, "fat": 0 },
+    { "type": "Dinner", "title": "...", "items": ["..."], "calories": 0, "protein": 0, "carbs": 0, "fat": 0 },
+    { "type": "Snack", "title": "...", "items": ["..."], "calories": 0, "protein": 0, "carbs": 0, "fat": 0 }
+  ],
+  "totals": { "calories": 0, "protein": 0, "carbs": 0, "fat": 0 },
+  "micros": [
+    { "name": "Fiber", "amount": "30 g", "pct": 100 },
+    { "name": "Sodium", "amount": "1800 mg", "pct": 78 },
+    { "name": "Potassium", "amount": "3500 mg", "pct": 74 },
+    { "name": "Calcium", "amount": "1000 mg", "pct": 100 },
+    { "name": "Iron", "amount": "14 mg", "pct": 78 },
+    { "name": "Vitamin C", "amount": "90 mg", "pct": 100 },
+    { "name": "Vitamin D", "amount": "12 mcg", "pct": 60 }
+  ],
+  "tip": "..."
+}
+
+Rules:
+- The 4 meals' calories/macros MUST sum close (±5%) to the daily targets.
+- "micros": estimate the day's key micronutrients with realistic amounts and pct of the adult RDA.
+- "tip": one short actionable sentence (< 20 words).
+- Keep dishes simple and commonly available.`;
+
+  try {
+    console.log('[API->Gemini] generateMealPlan REQUEST', { calories: input.calories, lang });
+    const t0 = Date.now();
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    console.log('[API<-Gemini] generateMealPlan RESPONSE', { ms: Date.now() - t0, chars: text.length });
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('Invalid AI response');
+    const parsed = JSON.parse(m[0]) as MealPlan;
+    if (!parsed.meals || !Array.isArray(parsed.meals)) throw new Error('No meals in response');
+    parsed.micros = Array.isArray(parsed.micros) ? parsed.micros : [];
+    if (!parsed.totals) {
+      parsed.totals = parsed.meals.reduce(
+        (a, x) => ({ calories: a.calories + (x.calories || 0), protein: a.protein + (x.protein || 0), carbs: a.carbs + (x.carbs || 0), fat: a.fat + (x.fat || 0) }),
+        { calories: 0, protein: 0, carbs: 0, fat: 0 }
+      );
+    }
+    return parsed;
+  } catch (error) {
+    console.error('[API<-Gemini] generateMealPlan FAILED:', (error as Error).message);
+    throw error;
+  }
+};
+
+// ──────────────── MICRONUTRIENTS for LOGGED foods ────────────────
+export interface MicroReport {
+  micros: Micro[];     // estimated day total, pct = % of adult RDA
+  highlight: string;   // best-covered nutrient (short)
+  gap: string;         // most lacking nutrient + a quick fix (short)
+}
+
+export const estimateMicros = async (
+  foods: { name: string; calories?: number }[],
+  language: 'en' | 'fr' | 'ar' = 'en'
+): Promise<MicroReport> => {
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const list = foods.map(f => `- ${f.name}${f.calories ? ` (${Math.round(f.calories)} kcal)` : ''}`).join('\n');
+  const prompt = `
+You are a registered dietitian. Estimate the TOTAL micronutrients a person consumed today from these logged foods:
+${list || '(no foods)'}
+
+Write ALL human-readable text in ${langName(language)}.
+Return ONLY strict JSON (no backticks):
+{
+  "micros": [
+    { "name": "Fiber", "amount": "22 g", "pct": 73 },
+    { "name": "Sodium", "amount": "1600 mg", "pct": 70 },
+    { "name": "Potassium", "amount": "2600 mg", "pct": 55 },
+    { "name": "Calcium", "amount": "780 mg", "pct": 78 },
+    { "name": "Iron", "amount": "9 mg", "pct": 64 },
+    { "name": "Magnesium", "amount": "260 mg", "pct": 62 },
+    { "name": "Vitamin C", "amount": "70 mg", "pct": 78 },
+    { "name": "Vitamin D", "amount": "3 mcg", "pct": 20 },
+    { "name": "Vitamin A", "amount": "600 mcg", "pct": 67 },
+    { "name": "Vitamin B12", "amount": "2 mcg", "pct": 83 }
+  ],
+  "highlight": "...",
+  "gap": "..."
+}
+
+Rules:
+- pct = % of the adult Recommended Daily Allowance (can exceed 100).
+- Base the estimate on the foods listed; if the list is empty, return all pct = 0.
+- "highlight": the best-covered nutrient, < 12 words.
+- "gap": the most lacking nutrient + one food to fix it, < 18 words.`;
+
+  try {
+    console.log('[API->Gemini] estimateMicros REQUEST', { foods: foods.length, language });
+    const t0 = Date.now();
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    console.log('[API<-Gemini] estimateMicros RESPONSE', { ms: Date.now() - t0, chars: text.length });
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('Invalid AI response');
+    const parsed = JSON.parse(m[0]) as MicroReport;
+    parsed.micros = Array.isArray(parsed.micros) ? parsed.micros : [];
+    parsed.highlight = parsed.highlight || '';
+    parsed.gap = parsed.gap || '';
+    return parsed;
+  } catch (error) {
+    console.error('[API<-Gemini] estimateMicros FAILED:', (error as Error).message);
+    throw error;
+  }
+};
