@@ -28,8 +28,107 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db, emailToDocId } from '../lib/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+import { useTranslation } from '../lib/i18n';
+import { useTheme } from '../lib/ThemeContext';
+
+const TXT: Record<string, {
+  headerTitle: string;
+  introTitle: string;
+  introDesc: string;
+  calories: string;
+  proteins: string;
+  carbs: string;
+  fats: string;
+  water: string;
+  caloriesPh: string;
+  proteinsPh: string;
+  carbsPh: string;
+  fatsPh: string;
+  waterPh: string;
+  saveChanges: string;
+  successTitle: string;
+  successMsg: string;
+  ok: string;
+  errorTitle: string;
+  errorMsg: string;
+}> = {
+  en: {
+    headerTitle: 'Personal Details',
+    introTitle: 'Nutritional Targets',
+    introDesc: 'Adjust your daily goals for optimal performance.',
+    calories: 'Daily Calories',
+    proteins: 'Proteins',
+    carbs: 'Carbohydrates',
+    fats: 'Fats',
+    water: 'Daily Water',
+    caloriesPh: 'e.g. 2500',
+    proteinsPh: 'e.g. 150',
+    carbsPh: 'e.g. 250',
+    fatsPh: 'e.g. 70',
+    waterPh: 'e.g. 2500',
+    saveChanges: 'Save Changes',
+    successTitle: 'Success',
+    successMsg: 'Your personal details have been updated.',
+    ok: 'OK',
+    errorTitle: 'Error',
+    errorMsg: 'Failed to update details. Please try again.',
+  },
+  fr: {
+    headerTitle: 'Informations personnelles',
+    introTitle: 'Objectifs nutritionnels',
+    introDesc: 'Ajustez vos objectifs quotidiens pour des performances optimales.',
+    calories: 'Calories quotidiennes',
+    proteins: 'Protéines',
+    carbs: 'Glucides',
+    fats: 'Lipides',
+    water: 'Eau quotidienne',
+    caloriesPh: 'ex. 2500',
+    proteinsPh: 'ex. 150',
+    carbsPh: 'ex. 250',
+    fatsPh: 'ex. 70',
+    waterPh: 'ex. 2500',
+    saveChanges: 'Enregistrer',
+    successTitle: 'Succès',
+    successMsg: 'Vos informations personnelles ont été mises à jour.',
+    ok: 'OK',
+    errorTitle: 'Erreur',
+    errorMsg: 'Échec de la mise à jour. Veuillez réessayer.',
+  },
+  ar: {
+    headerTitle: 'المعلومات الشخصية',
+    introTitle: 'الأهداف الغذائية',
+    introDesc: 'اضبط أهدافك اليومية للحصول على أداء مثالي.',
+    calories: 'السعرات اليومية',
+    proteins: 'البروتينات',
+    carbs: 'الكربوهيدرات',
+    fats: 'الدهون',
+    water: 'الماء اليومي',
+    caloriesPh: 'مثال: 2500',
+    proteinsPh: 'مثال: 150',
+    carbsPh: 'مثال: 250',
+    fatsPh: 'مثال: 70',
+    waterPh: 'مثال: 2500',
+    saveChanges: 'حفظ التغييرات',
+    successTitle: 'تم بنجاح',
+    successMsg: 'تم تحديث معلوماتك الشخصية.',
+    ok: 'موافق',
+    errorTitle: 'خطأ',
+    errorMsg: 'فشل تحديث المعلومات. يرجى المحاولة مرة أخرى.',
+  },
+};
 
 export default function PersonalDetailsScreen() {
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+
+  const pageBg = isDark ? '#000' : Colors.light.white;
+  const cardBg = isDark ? Colors.dark.card : Colors.light.gray[50];
+  const primaryText = isDark ? '#fff' : Colors.light.gray[900];
+  const secondaryText = isDark ? '#9BA1A6' : Colors.light.gray[500];
+  const borderColor = isDark ? Colors.dark.gray[100] : Colors.light.gray[100];
+
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -95,12 +194,12 @@ export default function PersonalDetailsScreen() {
         await AsyncStorage.setItem(key, JSON.stringify(prof));
       } catch {}
       
-      Alert.alert('Success', 'Your personal details have been updated.', [
-        { text: 'OK', onPress: () => router.back() }
+      Alert.alert(t.successTitle, t.successMsg, [
+        { text: t.ok, onPress: () => router.back() }
       ]);
     } catch (error) {
       console.error('Error saving goals:', error);
-      Alert.alert('Error', 'Failed to update details. Please try again.');
+      Alert.alert(t.errorTitle, t.errorMsg);
     } finally {
       setSaving(false);
     }
@@ -108,19 +207,19 @@ export default function PersonalDetailsScreen() {
 
   const InputField = ({ label, value, onChangeText, placeholder, icon: Icon, unit, delay = 0 }: any) => (
     <Animated.View entering={FadeInRight.delay(delay).duration(600)} style={styles.inputContainer}>
-      <View style={styles.labelRow}>
-        <View style={styles.iconBackground}>
+      <View style={[styles.labelRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        <View style={[styles.iconBackground, isRTL ? { marginRight: 0, marginLeft: 10 } : null]}>
           <Icon size={18} color={Colors.light.primary} />
         </View>
-        <Text style={styles.inputLabel}>{label}</Text>
+        <Text style={[styles.inputLabel, { color: secondaryText, textAlign: isRTL ? 'right' : 'left' }]}>{label}</Text>
       </View>
-      <View style={styles.textInputWrapper}>
+      <View style={[styles.textInputWrapper, { backgroundColor: cardBg, borderColor, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <TextInput
-          style={styles.textInput}
+          style={[styles.textInput, { color: primaryText, textAlign: isRTL ? 'right' : 'left' }]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={Colors.light.gray[300]}
+          placeholderTextColor={isDark ? Colors.dark.gray[400] : Colors.light.gray[300]}
           keyboardType="numeric"
         />
         <Text style={styles.unitText}>{unit}</Text>
@@ -129,19 +228,19 @@ export default function PersonalDetailsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
+    <SafeAreaView style={[styles.container, { backgroundColor: pageBg }]}>
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton} 
+        <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+          <TouchableOpacity
+            style={[styles.backButton, { backgroundColor: cardBg }]}
             onPress={() => router.back()}
           >
-            <ChevronLeft size={24} color={Colors.light.gray[900]} />
+            <ChevronLeft size={24} color={primaryText} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Personal Details</Text>
+          <Text style={[styles.headerTitle, { color: primaryText }]}>{t.headerTitle}</Text>
           <View style={{ width: 44 }} />
         </View>
 
@@ -155,55 +254,55 @@ export default function PersonalDetailsScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.introSection}>
-              <Text style={styles.introTitle}>Nutritional Targets</Text>
-              <Text style={styles.introDesc}>Adjust your daily goals for optimal performance.</Text>
+              <Text style={[styles.introTitle, { color: primaryText, textAlign: isRTL ? 'right' : 'left' }]}>{t.introTitle}</Text>
+              <Text style={[styles.introDesc, { color: secondaryText, textAlign: isRTL ? 'right' : 'left' }]}>{t.introDesc}</Text>
             </View>
 
-            <InputField 
-              label="Daily Calories" 
+            <InputField
+              label={t.calories}
               value={goals.calories}
               onChangeText={(text: string) => setGoals({ ...goals, calories: text })}
-              placeholder="e.g. 2500"
+              placeholder={t.caloriesPh}
               icon={Flame}
               unit="kcal"
               delay={100}
             />
 
-            <InputField 
-              label="Proteins" 
+            <InputField
+              label={t.proteins}
               value={goals.protein}
               onChangeText={(text: string) => setGoals({ ...goals, protein: text })}
-              placeholder="e.g. 150"
+              placeholder={t.proteinsPh}
               icon={Beef}
               unit="g"
               delay={200}
             />
 
-            <InputField 
-              label="Carbohydrates" 
+            <InputField
+              label={t.carbs}
               value={goals.carbs}
               onChangeText={(text: string) => setGoals({ ...goals, carbs: text })}
-              placeholder="e.g. 250"
+              placeholder={t.carbsPh}
               icon={Cherry}
               unit="g"
               delay={300}
             />
 
-            <InputField 
-              label="Fats" 
+            <InputField
+              label={t.fats}
               value={goals.fat}
               onChangeText={(text: string) => setGoals({ ...goals, fat: text })}
-              placeholder="e.g. 70"
+              placeholder={t.fatsPh}
               icon={Zap}
               unit="g"
               delay={400}
             />
 
-            <InputField 
-              label="Daily Water" 
+            <InputField
+              label={t.water}
               value={goals.water}
               onChangeText={(text: string) => setGoals({ ...goals, water: text })}
-              placeholder="e.g. 2500"
+              placeholder={t.waterPh}
               icon={Droplet}
               unit="ml"
               delay={500}
@@ -220,7 +319,7 @@ export default function PersonalDetailsScreen() {
                 ) : (
                   <>
                     <CheckCircle2 color={Colors.light.white} size={20} />
-                    <Text style={styles.saveButtonText}>Save Changes</Text>
+                    <Text style={styles.saveButtonText}>{t.saveChanges}</Text>
                   </>
                 )}
               </TouchableOpacity>

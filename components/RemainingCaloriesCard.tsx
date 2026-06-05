@@ -15,6 +15,44 @@ import HalfProgress from './HalfProgress';
 import { useTranslation } from '../lib/i18n';
 import { useTheme } from '../lib/ThemeContext';
 
+const TXT: Record<string, {
+  dailyTargets: string;
+  adjustGoals: string;
+  dailyCalories: string;
+  protein: string;
+  carbs: string;
+  fats: string;
+  updateGoals: string;
+}> = {
+  en: {
+    dailyTargets: 'Daily Targets',
+    adjustGoals: 'Adjust your nutritional goals',
+    dailyCalories: 'Daily Calories',
+    protein: 'Protein',
+    carbs: 'Carbs',
+    fats: 'Fats',
+    updateGoals: 'Update Daily Goals',
+  },
+  fr: {
+    dailyTargets: 'Objectifs quotidiens',
+    adjustGoals: 'Ajustez vos objectifs nutritionnels',
+    dailyCalories: 'Calories quotidiennes',
+    protein: 'Protéines',
+    carbs: 'Glucides',
+    fats: 'Lipides',
+    updateGoals: 'Mettre à jour les objectifs',
+  },
+  ar: {
+    dailyTargets: 'الأهداف اليومية',
+    adjustGoals: 'اضبط أهدافك الغذائية',
+    dailyCalories: 'السعرات الحرارية اليومية',
+    protein: 'البروتين',
+    carbs: 'الكربوهيدرات',
+    fats: 'الدهون',
+    updateGoals: 'تحديث الأهداف اليومية',
+  },
+};
+
 interface RemainingCaloriesCardProps {
   consumed?: number;
   goal?: number;
@@ -43,8 +81,10 @@ export default function RemainingCaloriesCard({
   fatGoal = 70,
   onGoalUpdate,
 }: RemainingCaloriesCardProps) {
-  const { t } = useTranslation();
+  const { t, language, isRTL } = useTranslation() as any;
+  const tx = TXT[language] || TXT.en;
   const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
   const [modalVisible, setModalVisible] = useState(false);
   const [inputs, setInputs] = useState({
     calories: String(goal),
@@ -169,13 +209,13 @@ export default function RemainingCaloriesCard({
           style={styles.modalOverlay}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
+          <View style={[styles.modalCard, isDark && { backgroundColor: Colors.dark.card }]}>
+            <View style={[styles.modalHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
               <View>
-                <Text style={styles.modalTitle}>Daily Targets</Text>
-                <Text style={styles.modalSubtitle}>Adjust your nutritional goals</Text>
+                <Text style={[styles.modalTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{tx.dailyTargets}</Text>
+                <Text style={[styles.modalSubtitle, { color: isDark ? '#9BA1A6' : Colors.light.gray[400], textAlign: isRTL ? 'right' : 'left' }]}>{tx.adjustGoals}</Text>
               </View>
-              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeBtn}>
+              <TouchableOpacity onPress={() => setModalVisible(false)} style={[styles.closeBtn, isDark && { backgroundColor: Colors.dark.gray[50] }]}>
                 <X size={24} color={Colors.light.gray[400]} />
               </TouchableOpacity>
             </View>
@@ -183,40 +223,42 @@ export default function RemainingCaloriesCard({
             <View style={styles.inputSection}>
               {/* Calories Input */}
               <View style={styles.inputGroup}>
-                <View style={styles.labelRow}>
+                <View style={[styles.labelRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                   <View style={[styles.miniIconCircle, { backgroundColor: 'rgba(41, 143, 80, 0.1)' }]}>
                     <Flame size={16} color={Colors.light.primary} />
                   </View>
-                  <Text style={styles.inputLabel}>Daily Calories</Text>
+                  <Text style={[styles.inputLabel, { color: isDark ? '#9BA1A6' : Colors.light.gray[600], textAlign: isRTL ? 'right' : 'left' }]}>{tx.dailyCalories}</Text>
                 </View>
-                <View style={styles.textInputWrapper}>
+                <View style={[styles.textInputWrapper, isDark && { backgroundColor: Colors.dark.gray[50], borderColor: Colors.dark.gray[100] }]}>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}
                     value={inputs.calories}
                     onChangeText={(v) => setInputs(prev => ({ ...prev, calories: v }))}
                     keyboardType="numeric"
                     placeholder="2000"
+                    placeholderTextColor={isDark ? '#9BA1A6' : undefined}
                   />
                   <Text style={styles.unitText}>kcal</Text>
                 </View>
               </View>
 
-              <View style={styles.multiInputRow}>
+              <View style={[styles.multiInputRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 {/* Protein Input */}
                 <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <View style={styles.labelRow}>
+                  <View style={[styles.labelRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                     <View style={[styles.miniIconCircle, { backgroundColor: 'rgba(255, 92, 92, 0.1)' }]}>
                       <Beef size={14} color="#FF5C5C" />
                     </View>
-                    <Text style={styles.inputLabel}>Protein</Text>
+                    <Text style={[styles.inputLabel, { color: isDark ? '#9BA1A6' : Colors.light.gray[600], textAlign: isRTL ? 'right' : 'left' }]}>{tx.protein}</Text>
                   </View>
-                  <View style={styles.textInputWrapper}>
+                  <View style={[styles.textInputWrapper, isDark && { backgroundColor: Colors.dark.gray[50], borderColor: Colors.dark.gray[100] }]}>
                     <TextInput
-                      style={[styles.textInput, { fontSize: 16 }]}
+                      style={[styles.textInput, { fontSize: 16, color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}
                       value={inputs.protein}
                       onChangeText={(v) => setInputs(prev => ({ ...prev, protein: v }))}
                       keyboardType="numeric"
                       placeholder="g"
+                      placeholderTextColor={isDark ? '#9BA1A6' : undefined}
                     />
                     <Text style={styles.unitText}>g</Text>
                   </View>
@@ -224,19 +266,20 @@ export default function RemainingCaloriesCard({
 
                 {/* Carbs Input */}
                 <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <View style={styles.labelRow}>
+                  <View style={[styles.labelRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                     <View style={[styles.miniIconCircle, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
                       <Wheat size={14} color="#F59E0B" />
                     </View>
-                    <Text style={styles.inputLabel}>Carbs</Text>
+                    <Text style={[styles.inputLabel, { color: isDark ? '#9BA1A6' : Colors.light.gray[600], textAlign: isRTL ? 'right' : 'left' }]}>{tx.carbs}</Text>
                   </View>
-                  <View style={styles.textInputWrapper}>
+                  <View style={[styles.textInputWrapper, isDark && { backgroundColor: Colors.dark.gray[50], borderColor: Colors.dark.gray[100] }]}>
                     <TextInput
-                      style={[styles.textInput, { fontSize: 16 }]}
+                      style={[styles.textInput, { fontSize: 16, color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}
                       value={inputs.carbs}
                       onChangeText={(v) => setInputs(prev => ({ ...prev, carbs: v }))}
                       keyboardType="numeric"
                       placeholder="g"
+                      placeholderTextColor={isDark ? '#9BA1A6' : undefined}
                     />
                     <Text style={styles.unitText}>g</Text>
                   </View>
@@ -244,19 +287,20 @@ export default function RemainingCaloriesCard({
 
                 {/* Fats Input */}
                 <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <View style={styles.labelRow}>
+                  <View style={[styles.labelRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                     <View style={[styles.miniIconCircle, { backgroundColor: 'rgba(14, 165, 233, 0.1)' }]}>
                       <Droplets size={14} color="#0EA5E9" />
                     </View>
-                    <Text style={styles.inputLabel}>Fats</Text>
+                    <Text style={[styles.inputLabel, { color: isDark ? '#9BA1A6' : Colors.light.gray[600], textAlign: isRTL ? 'right' : 'left' }]}>{tx.fats}</Text>
                   </View>
-                  <View style={styles.textInputWrapper}>
+                  <View style={[styles.textInputWrapper, isDark && { backgroundColor: Colors.dark.gray[50], borderColor: Colors.dark.gray[100] }]}>
                     <TextInput
-                      style={[styles.textInput, { fontSize: 16 }]}
+                      style={[styles.textInput, { fontSize: 16, color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}
                       value={inputs.fats}
                       onChangeText={(v) => setInputs(prev => ({ ...prev, fats: v }))}
                       keyboardType="numeric"
                       placeholder="g"
+                      placeholderTextColor={isDark ? '#9BA1A6' : undefined}
                     />
                     <Text style={styles.unitText}>g</Text>
                   </View>
@@ -264,9 +308,9 @@ export default function RemainingCaloriesCard({
               </View>
             </View>
 
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.8}>
+            <TouchableOpacity style={[styles.saveBtn, { flexDirection: isRTL ? 'row-reverse' : 'row' }]} onPress={handleSave} activeOpacity={0.8}>
               <Check size={20} color="#fff" strokeWidth={3} />
-              <Text style={styles.saveBtnText}>Update Daily Goals</Text>
+              <Text style={styles.saveBtnText}>{tx.updateGoals}</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>

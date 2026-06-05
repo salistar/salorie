@@ -15,8 +15,58 @@ import { RulerPicker } from 'react-native-ruler-picker';
 import { useUser } from '@clerk/clerk-expo';
 import { saveUserToFirestore, addWeightLog } from '../lib/firebase';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useTranslation } from '../lib/i18n';
+import { useTheme } from '../lib/ThemeContext';
+
+const TXT: Record<string, {
+  title: string;
+  subtitle: string;
+  updateWeight: string;
+  successTitle: string;
+  successMsg: string;
+  errorTitle: string;
+  errorMsg: string;
+}> = {
+  en: {
+    title: 'Update Weight',
+    subtitle: 'Select your current body weight in kg',
+    updateWeight: 'Update Weight',
+    successTitle: 'Success',
+    successMsg: 'Your weight has been updated!',
+    errorTitle: 'Error',
+    errorMsg: 'Failed to update weight. Please try again.',
+  },
+  fr: {
+    title: 'Mettre à jour le poids',
+    subtitle: 'Sélectionnez votre poids actuel en kg',
+    updateWeight: 'Mettre à jour le poids',
+    successTitle: 'Succès',
+    successMsg: 'Votre poids a été mis à jour !',
+    errorTitle: 'Erreur',
+    errorMsg: 'Échec de la mise à jour du poids. Veuillez réessayer.',
+  },
+  ar: {
+    title: 'تحديث الوزن',
+    subtitle: 'اختر وزن جسمك الحالي بالكيلوغرام',
+    updateWeight: 'تحديث الوزن',
+    successTitle: 'تم بنجاح',
+    successMsg: 'تم تحديث وزنك!',
+    errorTitle: 'خطأ',
+    errorMsg: 'فشل تحديث الوزن. يرجى المحاولة مرة أخرى.',
+  },
+};
 
 export default function UpdateWeightScreen() {
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+
+  const pageBg = isDark ? '#000' : Colors.light.white;
+  const cardBg = isDark ? Colors.dark.card : Colors.light.gray[50];
+  const primaryText = isDark ? '#fff' : Colors.light.gray[900];
+  const secondaryText = isDark ? '#9BA1A6' : Colors.light.gray[400];
+
   const { user } = useUser();
   const params = useLocalSearchParams();
   const initialWeight = parseFloat(params.currentWeight as string) || 70;
@@ -40,33 +90,33 @@ export default function UpdateWeightScreen() {
       // 2. Log historical entry for trend tracking
       await addWeightLog(email, weight);
 
-      Alert.alert('Success', 'Your weight has been updated!');
+      Alert.alert(t.successTitle, t.successMsg);
       router.back();
     } catch (error) {
       console.error('Error updating weight:', error);
-      Alert.alert('Error', 'Failed to update weight. Please try again.');
+      Alert.alert(t.errorTitle, t.errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ArrowLeft size={28} color={Colors.light.gray[900]} strokeWidth={2.5} />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: pageBg }]}>
+      <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        <TouchableOpacity style={[styles.backBtn, { backgroundColor: cardBg }]} onPress={() => router.back()}>
+          <ArrowLeft size={28} color={primaryText} strokeWidth={2.5} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
         </TouchableOpacity>
         <View style={{ width: 48 }} />
       </View>
 
       <View style={styles.titleSection}>
-        <Text style={styles.title}>Update Weight</Text>
-        <Text style={styles.subtitle}>Select your current body weight in kg</Text>
+        <Text style={[styles.title, { color: primaryText, textAlign: isRTL ? 'right' : 'left' }]}>{t.title}</Text>
+        <Text style={[styles.subtitle, { color: secondaryText, textAlign: isRTL ? 'right' : 'left' }]}>{t.subtitle}</Text>
       </View>
 
       <View style={styles.content}>
         <Animated.View entering={FadeInDown.duration(800)} style={styles.pickerContainer}>
-          <View style={styles.iconContainer}>
+          <View style={[styles.iconContainer, isDark ? { backgroundColor: cardBg } : null]}>
             <Scale size={32} color={Colors.light.primary} />
           </View>
           
@@ -81,15 +131,15 @@ export default function UpdateWeightScreen() {
             width={300}
             height={150}
             indicatorColor={Colors.light.primary}
-            valueTextStyle={styles.rulerValueText}
-            unitTextStyle={styles.rulerUnitText}
+            valueTextStyle={[styles.rulerValueText, { color: primaryText }]}
+            unitTextStyle={[styles.rulerUnitText, { color: secondaryText }]}
           />
         </Animated.View>
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity 
-          style={[styles.updateBtn, loading && styles.disabledBtn]} 
+        <TouchableOpacity
+          style={[styles.updateBtn, { flexDirection: isRTL ? 'row-reverse' : 'row' }, loading && styles.disabledBtn]}
           onPress={handleUpdate}
           disabled={loading}
         >
@@ -98,7 +148,7 @@ export default function UpdateWeightScreen() {
           ) : (
             <>
               <Check size={24} color={Colors.light.white} strokeWidth={3} />
-              <Text style={styles.updateText}>Update Weight</Text>
+              <Text style={styles.updateText}>{t.updateWeight}</Text>
             </>
           )}
         </TouchableOpacity>

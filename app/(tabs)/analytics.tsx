@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Image, TouchableOpacity, Modal, Dimensions } from 'react-native';
-import { TrendingUp, Scale, Check, Circle, ChevronRight, X } from 'lucide-react-native';
+import { TrendingUp, TrendingDown, Minus, Scale, Check, Circle, ChevronRight, X } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { useAnalyticsData } from '../../hooks/useAnalyticsData';
 import { router, useFocusEffect } from 'expo-router';
@@ -8,6 +8,8 @@ import { BentoInsight } from '../../lib/AiModel';
 import { useTranslation } from '../../lib/i18n';
 import { translate } from '../../lib/translator';
 import { getInsights, pickLang, StoredInsight, InsightScope } from '../../lib/InsightsService';
+import { emailToDocId, fetchAllUserData } from '../../lib/firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useTheme } from '../../lib/ThemeContext';
 import { useUser } from '@clerk/clerk-expo';
@@ -41,6 +43,88 @@ export default function AnalyticsScreen() {
   const [monthIns, setMonthIns] = useState<StoredInsight | null>(null);
   const [allIns, setAllIns] = useState<StoredInsight | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
+
+  // Real user goal (lose / maintain / gain) and the longer-range data the
+  // weekly hook doesn't expose. Loaded once from the cached profile, then
+  // upgraded from Firestore. Drives BOTH the AI profile passed to insight
+  // generation AND the weight-trend badge below.
+  const [goal, setGoal] = useState<'lose' | 'maintain' | 'gain'>('maintain');
+  const [weightHistory, setWeightHistory] = useState<Array<{ weight: number; date?: string; timestamp?: number }>>([]);
+  // Logs covering ~30 days (and the broadest history we fetch). Used so the
+  // month / all-time insight cards aren't graded on just the 7-day window.
+  const [extendedLogs, setExtendedLogs] = useState<any[]>([]);
+
+  const normalizeGoal = (g: any): 'lose' | 'maintain' | 'gain' => {
+    const s = String(g || '').toLowerCase();
+    if (s.includes('lose') || s.includes('lose_weight') || s.includes('cut')) return 'lose';
+    if (s.includes('gain') || s.includes('bulk') || s.includes('muscle')) return 'gain';
+    return 'maintain';
+  };
+
+  // Load the real goal + weight history + extended logs. Cache-first (instant),
+  // then Firestore for fresh data. Falls back to 'maintain' only if nothing is
+  // available.
+  useEffect(() => {
+    const email = user?.primaryEmailAddress?.emailAddress || '';
+    if (!email) return;
+    let cancelled = false;
+
+    (async () => {
+      // 1. Cache-first: the analytics hook already caches `profile_${docId}`.
+      try {
+        const raw = await AsyncStorage.getItem(`profile_${emailToDocId(email)}`);
+        if (raw && !cancelled) {
+          const p = JSON.parse(raw);
+          if (p?.goal) setGoal(normalizeGoal(p.goal));
+        }
+      } catch (e) {
+        console.warn('[Analytics] cached profile read failed:', e);
+      }
+
+      // 2. Firestore: real profile.goal + weight_history + 30-day logs.
+      try {
+        const all = await fetchAllUserData(email);
+        if (cancelled || !all) return;
+        if (all.profile?.goal) setGoal(normalizeGoal(all.profile.goal));
+        if (Array.isArray(all.weightHistory)) setWeightHistory(all.weightHistory);
+        if (Array.isArray(all.logs)) setExtendedLogs(all.logs);
+      } catch (e) {
+        console.warn('[Analytics] fetchAllUserData failed:', e);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [user]);
+
+  // Weight trend derived from real weight_history. `weightHistory` is ordered
+  // newest-first (fetchAllUserData uses orderBy timestamp desc). We compare the
+  // average of the recent half vs the older half so a single noisy weigh-in
+  // doesn't flip the badge.
+  const weightTrend = useMemo(() => {
+    const series = weightHistory
+      .map(w => (typeof w?.weight === 'number' ? w.weight : null))
+      .filter((w): w is number => w != null);
+    if (series.length < 2) return null; // not enough data to judge a direction
+
+    const recentFirst = series; // newest → oldest
+    const half = Math.max(1, Math.floor(recentFirst.length / 2));
+    const recentAvg = recentFirst.slice(0, half).reduce((a, b) => a + b, 0) / half;
+    const olderSlice = recentFirst.slice(recentFirst.length - half);
+    const olderAvg = olderSlice.reduce((a, b) => a + b, 0) / olderSlice.length;
+    const delta = recentAvg - olderAvg; // >0 rising, <0 falling
+
+    // Treat tiny changes as flat (< ~0.3 kg of net movement).
+    const direction: 'rising' | 'falling' | 'stable' =
+      Math.abs(delta) < 0.3 ? 'stable' : delta > 0 ? 'rising' : 'falling';
+
+    // Is this direction good given the user's goal?
+    let good: boolean;
+    if (goal === 'lose') good = direction === 'falling';
+    else if (goal === 'gain') good = direction === 'rising';
+    else good = direction === 'stable'; // maintain
+
+    return { direction, good, delta };
+  }, [weightHistory, goal]);
 
   // Kept for compatibility with the existing Bento grid below: read the week
   // doc in the user's language.
