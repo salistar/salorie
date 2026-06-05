@@ -126,7 +126,7 @@ function InitialLayout() {
   const router = useRouter();
   const rootNavState = useRootNavigationState();
   const { resolved } = useTheme();
-  const { language, setLanguage } = useTranslation();
+  const { language, setLanguage, isRTL } = useTranslation();
   // Single source of truth for routing. `not-onboarded` is NEVER set without
   // an explicit confirmation from Firebase — this prevents the brief flash of
   // the gender picker that was caused by a stale `isOnboarded=false` being
@@ -514,7 +514,9 @@ function InitialLayout() {
   const bgColor = resolved === 'dark' ? '#000000' : Colors.light.white;
 
   return (
-    <View style={{ flex: 1, backgroundColor: bgColor }}>
+    // `direction` drives RTL/LTR reactively — switching to/from Arabic flips the
+    // whole layout instantly, with no app restart.
+    <View style={{ flex: 1, backgroundColor: bgColor, direction: isRTL ? 'rtl' : 'ltr' }}>
       {resolved === 'light' && <ScreenBackground />}
       <Slot />
       <ActionMenu />

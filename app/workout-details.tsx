@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ArrowLeft, Clock } from 'lucide-react-native';
+import { ArrowLeft, Clock, Dumbbell } from 'lucide-react-native';
 import { Video, ResizeMode } from 'expo-av';
 import { getLocalVideo } from '../assets/videos/registry';
 import { Colors } from '../constants/Colors';
@@ -133,6 +133,8 @@ export default function WorkoutDetailsScreen() {
   const [weight, setWeight] = useState(70);
   const [intensity, setIntensity] = useState(1); // 0 low, 1 medium, 2 high
   const [duration, setDuration] = useState('30');
+  // Track exercises whose remote image failed to load so we can fall back to text.
+  const [erroredImgs, setErroredImgs] = useState<Set<string>>(new Set());
   const [customDuration, setCustomDuration] = useState('');
   const [selectedId, setSelectedId] = useState<string>(
     type === 'run' ? RUN_ACTIVITIES[0].id : LIFT_EXERCISES[0].id
@@ -410,21 +412,21 @@ Output a single integer (e.g. 247). No explanation.`;
                   })
                 }
               />
-            ) : (
+            ) : (selected as any).image && !erroredImgs.has(selected.id) ? (
               <Image
-                source={{ uri: selected.image }}
+                source={{ uri: (selected as any).image }}
                 style={styles.heroImg}
                 resizeMode="cover"
-                onError={(e) =>
-                  console.log(
-                    '\x1b[31m[WorkoutDetails] hero Image ERROR:\x1b[0m',
-                    e.nativeEvent?.error,
-                    'url:',
-                    selected.image
-                  )
-                }
-                onLoad={() => console.log('\x1b[32m[WorkoutDetails] hero Image LOADED\x1b[0m')}
+                onError={() => setErroredImgs((s) => new Set(s).add(selected.id))}
               />
+            ) : (
+              // No video and no (working) image → text-only placeholder.
+              <View style={styles.heroFallback}>
+                <Dumbbell size={46} color={Colors.light.primary} />
+                <Text style={[styles.heroFallbackTxt, { color: textPrimary }]} numberOfLines={2}>
+                  {(selected as any).labelKey ? t((selected as any).labelKey) : selected.id}
+                </Text>
+              </View>
             )}
           </View>
 
@@ -609,6 +611,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   heroImg: { width: '100%', height: '100%' },
+  heroFallback: { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 20 },
+  heroFallbackTxt: { fontSize: 18, fontWeight: '800', textAlign: 'center' },
   videoBtn: {
     flexDirection: 'row',
     alignItems: 'center',

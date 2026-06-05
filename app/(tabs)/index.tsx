@@ -151,7 +151,7 @@ export default function HomeScreen() {
         {/* ── Dashboard Cover Image ──────────────── */}
         <Image
           source={require('../../assets/images/illustrations/dashboard_cover.jpg')}
-          style={{ width: '90%', height: 120, borderRadius: 20, alignSelf: 'center', marginBottom: 12 }}
+          style={{ width: '90%', height: 120, borderRadius: 20, alignSelf: 'center', marginBottom: 2 }}
         />
 
         {/* ── Week Calendar Strip ────────────────── */}
@@ -174,8 +174,11 @@ export default function HomeScreen() {
           </View>
         ) : (
           <>
-            <RemainingCaloriesCard 
-              consumed={consumed.calories} 
+            {/* Steps first — premium card */}
+            <StepsCard />
+
+            <RemainingCaloriesCard
+              consumed={consumed.calories}
               goal={goals.calories}
               protein={consumed.protein}
               proteinGoal={goals.protein}
@@ -193,8 +196,6 @@ export default function HomeScreen() {
                 router.push('/add-water' as any);
               }}
             />
-
-            <StepsCard />
 
             <ActivityList
               logs={logs}
@@ -220,13 +221,15 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   calendarWrapper: {
-    marginVertical: 16,
+    marginTop: 6,
+    marginBottom: 4,
   },
   contentHeader: {
     paddingHorizontal: 24,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginTop: 4,
+    marginBottom: 12,
     gap: 12,
   },
   dateLabel: {

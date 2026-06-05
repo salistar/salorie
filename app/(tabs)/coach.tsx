@@ -3,7 +3,13 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Re
 import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell } from 'lucide-react-native';
+
+const PLANS_CTA: Record<string, { t: string; s: string }> = {
+  en: { t: 'Workout plans', s: 'Ready-made training programs' },
+  fr: { t: 'Plans sportifs', s: "Des programmes d'entraînement prêts à l'emploi" },
+  ar: { t: 'برامج رياضية', s: 'برامج تدريب جاهزة' },
+};
 
 // Small inline strings (avoid editing the large i18n dictionary) for the
 // achievements tap-affordance + detail modal.
@@ -156,6 +162,16 @@ export default function CoachScreen() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.mealCtaTitle, { color: text }]}>{t('coach.health_title')}</Text>
             <Text style={[styles.mealCtaSub, { color: sub }]}>{t('coach.health_sub')}</Text>
+          </View>
+          <ChevronRight size={22} color={sub} />
+        </TouchableOpacity>
+
+        {/* ── Workout plans CTA ── */}
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/workout-plans' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
+          <View style={styles.mealCtaIcon}><Dumbbell size={24} color={Colors.light.primary} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.mealCtaTitle, { color: text }]}>{(PLANS_CTA[language] || PLANS_CTA.en).t}</Text>
+            <Text style={[styles.mealCtaSub, { color: sub }]}>{(PLANS_CTA[language] || PLANS_CTA.en).s}</Text>
           </View>
           <ChevronRight size={22} color={sub} />
         </TouchableOpacity>
