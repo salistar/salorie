@@ -48,7 +48,9 @@ export default function NutrientsScreen() {
       if (meals.length === 0) { setReport(null); setLoading(false); return; }
 
       const hash = meals.map((m) => `${m.name}:${Math.round(m.calories || 0)}`).sort().join('|');
-      const cacheKey = `micros_${docId}_${today}`;
+      // Cache PER LANGUAGE — otherwise switching language would return the
+      // micronutrient names/insights generated in the previous language.
+      const cacheKey = `micros_${docId}_${today}_${language}`;
       if (!force) {
         const cachedRaw = await AsyncStorage.getItem(cacheKey);
         if (cachedRaw) {
