@@ -15,6 +15,7 @@ import {
   emailToDocId,
 } from '../lib/firebase';
 import { syncAllUserData, printLogLegend } from '../lib/LocalDataStore';
+import { signInToFirebase } from '../lib/firebaseAuth';
 
 // Imprime la legende des couleurs UNE FOIS au demarrage du module (avant
 // meme que React ne monte) — comme ca tout developpeur qui ouvre Metro voit
@@ -66,9 +67,18 @@ if (!publishableKey) {
 }
 
 function InitialLayout() {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const { session } = useSession();
+
+  // ---- Firebase Auth bridge ---------------------------------------------
+  // As soon as Clerk confirms the session, exchange the Clerk token for a
+  // Firebase custom token so Firestore reads/writes carry request.auth.
+  // No-op until EXPO_PUBLIC_FIREBASE_TOKEN_URL is configured (safe to ship).
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    signInToFirebase(() => getToken()).catch(() => {});
+  }, [isLoaded, isSignedIn, user?.id]);
 
   // ---- GLOBAL Linking diagnostic ----------------------------------------
   // Logue TOUTE URL entrante (deep link) — utile pour diagnostiquer le retour
