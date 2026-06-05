@@ -34,6 +34,98 @@ import {
 } from 'firebase/firestore';
 import { db, emailToDocId } from '../lib/firebase';
 import Animated, { FadeInDown, Layout } from 'react-native-reanimated';
+import { useTranslation } from '../lib/i18n';
+import { useTheme } from '../lib/ThemeContext';
+
+const TXT: Record<string, {
+  notifications: string;
+  inboxEmpty: string;
+  inboxSubtitle: string;
+  calorieTarget: string;
+  calories: string;
+  protein: string;
+  carbs: string;
+  fats: string;
+  hydrationGoal: string;
+  dailyGoal: string;
+  logWater: string;
+  weeklyAnalytics: string;
+  analyticsHint: string;
+  goToAnalytics: string;
+  yourProfile: string;
+  name: string;
+  email: string;
+  goal: string;
+  weight: string;
+  language: string;
+}> = {
+  en: {
+    notifications: 'Notifications',
+    inboxEmpty: 'Your inbox is empty',
+    inboxSubtitle: 'All your future updates and reminders will appear here.',
+    calorieTarget: 'Daily Calorie Target',
+    calories: 'Calories',
+    protein: 'Protein',
+    carbs: 'Carbs',
+    fats: 'Fats',
+    hydrationGoal: 'Hydration Goal',
+    dailyGoal: 'Daily goal',
+    logWater: 'Log water intake →',
+    weeklyAnalytics: 'Weekly Analytics',
+    analyticsHint: 'Open your dashboard for the full AI insights.',
+    goToAnalytics: 'Go to Analytics →',
+    yourProfile: 'Your Profile',
+    name: 'Name',
+    email: 'Email',
+    goal: 'Goal',
+    weight: 'Weight',
+    language: 'Language',
+  },
+  fr: {
+    notifications: 'Notifications',
+    inboxEmpty: 'Votre boîte de réception est vide',
+    inboxSubtitle: 'Toutes vos futures mises à jour et rappels apparaîtront ici.',
+    calorieTarget: 'Objectif calorique quotidien',
+    calories: 'Calories',
+    protein: 'Protéines',
+    carbs: 'Glucides',
+    fats: 'Lipides',
+    hydrationGoal: 'Objectif d’hydratation',
+    dailyGoal: 'Objectif quotidien',
+    logWater: 'Enregistrer la consommation d’eau →',
+    weeklyAnalytics: 'Analyses hebdomadaires',
+    analyticsHint: 'Ouvrez votre tableau de bord pour les analyses IA complètes.',
+    goToAnalytics: 'Aller aux analyses →',
+    yourProfile: 'Votre profil',
+    name: 'Nom',
+    email: 'E-mail',
+    goal: 'Objectif',
+    weight: 'Poids',
+    language: 'Langue',
+  },
+  ar: {
+    notifications: 'الإشعارات',
+    inboxEmpty: 'صندوق الوارد فارغ',
+    inboxSubtitle: 'ستظهر هنا جميع تحديثاتك وتذكيراتك المستقبلية.',
+    calorieTarget: 'هدف السعرات الحرارية اليومي',
+    calories: 'السعرات الحرارية',
+    protein: 'البروتين',
+    carbs: 'الكربوهيدرات',
+    fats: 'الدهون',
+    hydrationGoal: 'هدف الترطيب',
+    dailyGoal: 'الهدف اليومي',
+    logWater: '← تسجيل شرب الماء',
+    weeklyAnalytics: 'التحليلات الأسبوعية',
+    analyticsHint: 'افتح لوحة التحكم للحصول على تحليلات الذكاء الاصطناعي الكاملة.',
+    goToAnalytics: '← الذهاب إلى التحليلات',
+    yourProfile: 'ملفك الشخصي',
+    name: 'الاسم',
+    email: 'البريد الإلكتروني',
+    goal: 'الهدف',
+    weight: 'الوزن',
+    language: 'اللغة',
+  },
+};
 
 interface NotificationItem {
   id: string;
@@ -45,6 +137,10 @@ interface NotificationItem {
 }
 
 export default function NotificationsScreen() {
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const docId = emailToDocId(email);
@@ -120,25 +216,31 @@ export default function NotificationsScreen() {
     const kind = selected.data?.kind;
     const plan = cachedProfile?.nutritionalPlan || {};
 
+    const detailCardStyle = [styles.detailCard, isDark && { backgroundColor: Colors.dark.card }];
+    const detailTitleStyle = [styles.detailTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' as const : 'left' as const }];
+    const detailRowStyle = [styles.detailRow, { flexDirection: isRTL ? 'row-reverse' as const : 'row' as const }];
+    const detailLabelStyle = [styles.detailLabel, { color: isDark ? '#9BA1A6' : Colors.light.gray[500], textAlign: isRTL ? 'right' as const : 'left' as const }];
+    const detailValueStyle = [styles.detailValue, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' as const : 'left' as const }];
+
     if (kind === 'calories') {
       return (
-        <View style={styles.detailCard}>
-          <Text style={styles.detailTitle}>Daily Calorie Target</Text>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Calories</Text>
-            <Text style={styles.detailValue}>{plan.dailyCalories || plan.calories || '--'} kcal</Text>
+        <View style={detailCardStyle}>
+          <Text style={detailTitleStyle}>{t.calorieTarget}</Text>
+          <View style={detailRowStyle}>
+            <Text style={detailLabelStyle}>{t.calories}</Text>
+            <Text style={detailValueStyle}>{plan.dailyCalories || plan.calories || '--'} kcal</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Protein</Text>
-            <Text style={styles.detailValue}>{plan.proteins || plan.protein || '--'} g</Text>
+          <View style={detailRowStyle}>
+            <Text style={detailLabelStyle}>{t.protein}</Text>
+            <Text style={detailValueStyle}>{plan.proteins || plan.protein || '--'} g</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Carbs</Text>
-            <Text style={styles.detailValue}>{plan.carbs || '--'} g</Text>
+          <View style={detailRowStyle}>
+            <Text style={detailLabelStyle}>{t.carbs}</Text>
+            <Text style={detailValueStyle}>{plan.carbs || '--'} g</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Fats</Text>
-            <Text style={styles.detailValue}>{plan.fats || plan.fat || '--'} g</Text>
+          <View style={detailRowStyle}>
+            <Text style={detailLabelStyle}>{t.fats}</Text>
+            <Text style={detailValueStyle}>{plan.fats || plan.fat || '--'} g</Text>
           </View>
         </View>
       );
@@ -146,11 +248,11 @@ export default function NotificationsScreen() {
 
     if (kind === 'water') {
       return (
-        <View style={styles.detailCard}>
-          <Text style={styles.detailTitle}>Hydration Goal</Text>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Daily goal</Text>
-            <Text style={styles.detailValue}>{plan.water || 2500} ml</Text>
+        <View style={detailCardStyle}>
+          <Text style={detailTitleStyle}>{t.hydrationGoal}</Text>
+          <View style={detailRowStyle}>
+            <Text style={detailLabelStyle}>{t.dailyGoal}</Text>
+            <Text style={detailValueStyle}>{plan.water || 2500} ml</Text>
           </View>
           <TouchableOpacity
             style={styles.detailAction}
@@ -159,7 +261,7 @@ export default function NotificationsScreen() {
               router.push('/add-water' as any);
             }}
           >
-            <Text style={styles.detailActionText}>Log water intake →</Text>
+            <Text style={styles.detailActionText}>{t.logWater}</Text>
           </TouchableOpacity>
         </View>
       );
@@ -167,9 +269,9 @@ export default function NotificationsScreen() {
 
     if (kind === 'analytics') {
       return (
-        <View style={styles.detailCard}>
-          <Text style={styles.detailTitle}>Weekly Analytics</Text>
-          <Text style={styles.detailLabel}>Open your dashboard for the full AI insights.</Text>
+        <View style={detailCardStyle}>
+          <Text style={detailTitleStyle}>{t.weeklyAnalytics}</Text>
+          <Text style={detailLabelStyle}>{t.analyticsHint}</Text>
           <TouchableOpacity
             style={styles.detailAction}
             onPress={() => {
@@ -177,7 +279,7 @@ export default function NotificationsScreen() {
               router.push('/(tabs)/analytics' as any);
             }}
           >
-            <Text style={styles.detailActionText}>Go to Analytics →</Text>
+            <Text style={styles.detailActionText}>{t.goToAnalytics}</Text>
           </TouchableOpacity>
         </View>
       );
@@ -185,29 +287,29 @@ export default function NotificationsScreen() {
 
     // Default: profile card
     return (
-      <View style={styles.detailCard}>
-        <Text style={styles.detailTitle}>Your Profile</Text>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Name</Text>
-          <Text style={styles.detailValue}>
+      <View style={detailCardStyle}>
+        <Text style={detailTitleStyle}>{t.yourProfile}</Text>
+        <View style={detailRowStyle}>
+          <Text style={detailLabelStyle}>{t.name}</Text>
+          <Text style={detailValueStyle}>
             {cachedProfile?.firstName || ''} {cachedProfile?.lastName || ''}
           </Text>
         </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Email</Text>
-          <Text style={styles.detailValue}>{cachedProfile?.email || email}</Text>
+        <View style={detailRowStyle}>
+          <Text style={detailLabelStyle}>{t.email}</Text>
+          <Text style={detailValueStyle}>{cachedProfile?.email || email}</Text>
         </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Goal</Text>
-          <Text style={styles.detailValue}>{cachedProfile?.goal || '--'}</Text>
+        <View style={detailRowStyle}>
+          <Text style={detailLabelStyle}>{t.goal}</Text>
+          <Text style={detailValueStyle}>{cachedProfile?.goal || '--'}</Text>
         </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Weight</Text>
-          <Text style={styles.detailValue}>{cachedProfile?.weight || '--'} kg</Text>
+        <View style={detailRowStyle}>
+          <Text style={detailLabelStyle}>{t.weight}</Text>
+          <Text style={detailValueStyle}>{cachedProfile?.weight || '--'} kg</Text>
         </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Language</Text>
-          <Text style={styles.detailValue}>{cachedProfile?.language || 'en'}</Text>
+        <View style={detailRowStyle}>
+          <Text style={detailLabelStyle}>{t.language}</Text>
+          <Text style={detailValueStyle}>{cachedProfile?.language || 'en'}</Text>
         </View>
       </View>
     );
@@ -227,15 +329,20 @@ export default function NotificationsScreen() {
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => openNotification(item)}
-        style={[styles.card, !item.read && styles.cardUnread]}
+        style={[
+          styles.card,
+          { flexDirection: isRTL ? 'row-reverse' : 'row' },
+          isDark && { backgroundColor: Colors.dark.card, borderColor: Colors.dark.gray[100] },
+          !item.read && styles.cardUnread,
+        ]}
       >
-        <View style={styles.iconWrapper}>
+        <View style={[styles.iconWrapper, isRTL ? { marginRight: 0, marginLeft: 16 } : null, isDark && { backgroundColor: Colors.dark.gray[100] }]}>
           <Bell size={20} color={Colors.light.primary} />
         </View>
         <View style={styles.content}>
-          <Text style={styles.notifTitle}>{item.title}</Text>
-          <Text style={styles.notifBody}>{item.body}</Text>
-          <View style={styles.footer}>
+          <Text style={[styles.notifTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{item.title}</Text>
+          <Text style={[styles.notifBody, { color: isDark ? '#9BA1A6' : Colors.light.gray[500], textAlign: isRTL ? 'right' : 'left' }]}>{item.body}</Text>
+          <View style={[styles.footer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <Clock size={12} color={Colors.light.gray[400]} />
             <Text style={styles.timeText}>
               {new Date(item.receivedAt).toLocaleTimeString([], {
@@ -263,12 +370,12 @@ export default function NotificationsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ChevronLeft size={24} color={Colors.light.gray[900]} />
+    <SafeAreaView style={[styles.container, isDark && { backgroundColor: '#000' }]}>
+      <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        <TouchableOpacity style={[styles.backButton, isDark && { backgroundColor: Colors.dark.gray[50] }]} onPress={() => router.back()}>
+          <ChevronLeft size={24} color={isDark ? '#fff' : Colors.light.gray[900]} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notifications</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{t.notifications}</Text>
         <TouchableOpacity style={styles.clearButton} onPress={clearAll}>
           <Trash2
             size={20}
@@ -283,12 +390,12 @@ export default function NotificationsScreen() {
         </View>
       ) : notifications.length === 0 ? (
         <View style={styles.emptyState}>
-          <View style={styles.emptyIconCircle}>
+          <View style={[styles.emptyIconCircle, isDark && { backgroundColor: Colors.dark.gray[50] }]}>
             <Inbox size={48} color={Colors.light.gray[200]} />
           </View>
-          <Text style={styles.emptyTitle}>Your inbox is empty</Text>
-          <Text style={styles.emptySubtitle}>
-            All your future updates and reminders will appear here.
+          <Text style={[styles.emptyTitle, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{t.inboxEmpty}</Text>
+          <Text style={[styles.emptySubtitle, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>
+            {t.inboxSubtitle}
           </Text>
         </View>
       ) : (
@@ -311,15 +418,15 @@ export default function NotificationsScreen() {
         onRequestClose={() => setSelected(null)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{selected?.title}</Text>
+          <View style={[styles.modalContent, isDark && { backgroundColor: Colors.dark.card }]}>
+            <View style={[styles.modalHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+              <Text style={[styles.modalTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{selected?.title}</Text>
               <TouchableOpacity onPress={() => setSelected(null)}>
-                <X size={24} color={Colors.light.gray[500]} />
+                <X size={24} color={isDark ? '#9BA1A6' : Colors.light.gray[500]} />
               </TouchableOpacity>
             </View>
             <ScrollView>
-              <Text style={styles.modalBody}>{selected?.body}</Text>
+              <Text style={[styles.modalBody, { color: isDark ? '#9BA1A6' : Colors.light.gray[600], textAlign: isRTL ? 'right' : 'left' }]}>{selected?.body}</Text>
               {renderCardDetail()}
             </ScrollView>
           </View>
