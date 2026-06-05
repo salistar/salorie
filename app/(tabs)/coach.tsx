@@ -1,9 +1,17 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl, TouchableOpacity, Modal, Pressable } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X } from 'lucide-react-native';
+
+// Small inline strings (avoid editing the large i18n dictionary) for the
+// achievements tap-affordance + detail modal.
+const ACH_STR: Record<string, { hint: string; unlocked: string; locked: string; lockedMsg: string }> = {
+  en: { hint: 'Tap a trophy to see how to unlock it', unlocked: 'Unlocked', locked: 'Locked', lockedMsg: 'Keep going to unlock this trophy!' },
+  fr: { hint: 'Touche un trophée pour voir comment le débloquer', unlocked: 'Débloqué', locked: 'Verrouillé', lockedMsg: 'Continue comme ça pour débloquer ce trophée !' },
+  ar: { hint: 'اضغط على وسام لمعرفة كيفية فتحه', unlocked: 'مفتوح', locked: 'مقفل', lockedMsg: 'واصل لفتح هذا الوسام!' },
+};
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
@@ -19,6 +27,8 @@ export default function CoachScreen() {
   const [data, setData] = useState<EngagementData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [selAch, setSelAch] = useState<any>(null);
+  const astr = ACH_STR[language] || ACH_STR.en;
 
   const load = useCallback(async () => {
     const email = user?.primaryEmailAddress?.emailAddress || '';
@@ -166,15 +176,44 @@ export default function CoachScreen() {
           <Text style={[styles.section, { color: text }]}>{t('coach.achievements')}</Text>
           <Text style={[styles.sectionCount, { color: sub }]}>{unlocked}/{d.achievements.length}</Text>
         </View>
+        <Text style={[styles.achHint, { color: sub }]}>{astr.hint}</Text>
         <View style={styles.badgeGrid}>
           {d.achievements.map(a => (
-            <View key={a.id} style={[styles.badge, { backgroundColor: card }, !a.unlocked && styles.badgeLocked]}>
+            <TouchableOpacity
+              key={a.id}
+              activeOpacity={0.8}
+              onPress={() => setSelAch(a)}
+              style={[styles.badge, { backgroundColor: card }, !a.unlocked && styles.badgeLocked]}
+            >
+              {/* status corner: check when unlocked, lock when not */}
+              <View style={styles.badgeCorner}>
+                {a.unlocked ? <CheckCircle2 size={16} color={Colors.light.primary} /> : <Lock size={14} color={sub} />}
+              </View>
               <Text style={[styles.badgeIcon, !a.unlocked && styles.badgeIconLocked]}>{a.icon}</Text>
               <Text style={[styles.badgeTitle, { color: a.unlocked ? text : sub }]} numberOfLines={1}>{a.title}</Text>
               <Text style={[styles.badgeDesc, { color: sub }]} numberOfLines={2}>{a.desc}</Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
+
+        {/* ── Achievement detail modal ── */}
+        <Modal visible={!!selAch} transparent animationType="fade" onRequestClose={() => setSelAch(null)}>
+          <Pressable style={styles.modalOverlay} onPress={() => setSelAch(null)}>
+            <Pressable style={[styles.modalCard, { backgroundColor: card }]} onPress={() => {}}>
+              <TouchableOpacity style={styles.modalClose} onPress={() => setSelAch(null)}><X size={20} color={sub} /></TouchableOpacity>
+              <Text style={styles.modalIcon}>{selAch?.icon}</Text>
+              <Text style={[styles.modalTitle, { color: text }]}>{selAch?.title}</Text>
+              <Text style={[styles.modalDesc, { color: sub }]}>{selAch?.desc}</Text>
+              <View style={[styles.statusPill, { backgroundColor: selAch?.unlocked ? 'rgba(41,143,80,0.15)' : 'rgba(120,140,130,0.15)' }]}>
+                {selAch?.unlocked ? <CheckCircle2 size={16} color={Colors.light.primary} /> : <Lock size={14} color={sub} />}
+                <Text style={[styles.statusText, { color: selAch?.unlocked ? Colors.light.primaryDark : sub }]}>
+                  {selAch?.unlocked ? astr.unlocked : astr.locked}
+                </Text>
+              </View>
+              {!selAch?.unlocked && <Text style={[styles.modalHint, { color: sub }]}>{astr.lockedMsg}</Text>}
+            </Pressable>
+          </Pressable>
+        </Modal>
 
         {/* ── Daily lesson ── */}
         <View style={styles.sectionRow}>
@@ -226,13 +265,25 @@ const styles = StyleSheet.create({
   sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   section: { fontSize: 20, fontWeight: '800' },
   sectionCount: { fontSize: 14, fontWeight: '700' },
+  achHint: { fontSize: 12.5, fontWeight: '600', marginTop: -4, marginBottom: 12 },
   badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
-  badge: { width: '47%', borderRadius: 18, padding: 14, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 1 },
-  badgeLocked: { opacity: 0.55 },
+  badge: { width: '47%', borderRadius: 18, padding: 14, position: 'relative', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 1 },
+  badgeLocked: { opacity: 0.6 },
+  badgeCorner: { position: 'absolute', top: 10, right: 10 },
   badgeIcon: { fontSize: 28 },
   badgeIconLocked: { opacity: 0.4 },
   badgeTitle: { fontSize: 15, fontWeight: '800', marginTop: 8 },
   badgeDesc: { fontSize: 12, marginTop: 2, lineHeight: 16 },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: 32 },
+  modalCard: { width: '100%', maxWidth: 360, borderRadius: 24, padding: 28, alignItems: 'center' },
+  modalClose: { position: 'absolute', top: 14, right: 14, padding: 6 },
+  modalIcon: { fontSize: 56, marginTop: 6 },
+  modalTitle: { fontSize: 22, fontWeight: '900', marginTop: 12, textAlign: 'center' },
+  modalDesc: { fontSize: 15, marginTop: 8, textAlign: 'center', lineHeight: 21 },
+  statusPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999, marginTop: 18 },
+  statusText: { fontSize: 14, fontWeight: '800' },
+  modalHint: { fontSize: 13, marginTop: 14, textAlign: 'center', lineHeight: 18 },
 
   lessonCard: { borderRadius: 20, padding: 20, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
   lessonIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },

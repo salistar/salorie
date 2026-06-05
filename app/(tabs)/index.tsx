@@ -7,6 +7,7 @@ import HomeHeader from '../../components/HomeHeader';
 import WeekCalendar from '../../components/WeekCalendar';
 import RemainingCaloriesCard from '../../components/RemainingCaloriesCard';
 import WaterIntakeCard from '../../components/WaterIntakeCard';
+import StepsCard from '../../components/StepsCard';
 import { useLogging } from '../../lib/LoggingContext';
 import { useNutritionData } from '../../hooks/useNutritionData';
 import { saveUserToFirestore } from '../../lib/firebase';
@@ -193,9 +194,11 @@ export default function HomeScreen() {
               }}
             />
 
-            <ActivityList 
-              logs={logs} 
-              onAddPress={() => showLogModal()} 
+            <StepsCard />
+
+            <ActivityList
+              logs={logs}
+              onAddPress={() => showLogModal()}
             />
           </>
         )}

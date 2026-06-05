@@ -1,6 +1,14 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { I18nManager } from 'react-native';
+import { I18nManager, Alert, DevSettings } from 'react-native';
+
+// Messages shown when the reading direction (RTL <-> LTR) changes and a restart
+// is needed for React Native to fully apply the new native layout direction.
+const RESTART_MSG: Record<Language, { title: string; msg: string }> = {
+  en: { title: 'Restart required', msg: 'Close and reopen Salorie to apply the new reading direction.' },
+  fr: { title: 'Redémarrage requis', msg: "Ferme et rouvre Salorie pour appliquer le nouveau sens de lecture." },
+  ar: { title: 'يلزم إعادة التشغيل', msg: 'أغلق سالوري وأعد فتحه لتطبيق اتجاه القراءة الجديد.' },
+};
 
 export type Language = 'en' | 'fr' | 'ar';
 
@@ -1369,16 +1377,29 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setLanguage = async (lang: Language) => {
+    const targetRTL = lang === 'ar';
+    // Whether the native layout direction actually flips (AR<->non-AR).
+    const directionChanges = I18nManager.isRTL !== targetRTL;
     setLanguageState(lang);
-    try {
-      await AsyncStorage.setItem(LANG_KEY, lang);
-      // Apply RTL/LTR direction
-      const isRTL = lang === 'ar';
-      if (I18nManager.isRTL !== isRTL) {
-        I18nManager.allowRTL(isRTL);
-        I18nManager.forceRTL(isRTL);
+    try { await AsyncStorage.setItem(LANG_KEY, lang); } catch {}
+
+    if (directionChanges) {
+      // forceRTL changes the NATIVE layout direction, but it only takes full
+      // effect after the JS bundle reloads. Without that reload the previous
+      // direction sticks — this is exactly the bug where AR -> FR stayed RTL.
+      try {
+        I18nManager.allowRTL(targetRTL);
+        I18nManager.forceRTL(targetRTL);
+      } catch {}
+      // Dev: reload immediately so the change is seamless.
+      if (__DEV__ && DevSettings?.reload) {
+        setTimeout(() => { try { DevSettings.reload(); } catch {} }, 250);
+        return;
       }
-    } catch {}
+      // Release: ask the user to restart (the persisted forceRTL applies on next launch).
+      const m = RESTART_MSG[lang] || RESTART_MSG.en;
+      Alert.alert(m.title, m.msg);
+    }
   };
 
   const t = (key: TranslationKey): string => {
