@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView,
-  Image, Modal, Dimensions,
+  Image, Modal, Dimensions, Alert,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { WebView } from 'react-native-webview';
 import * as Haptics from 'expo-haptics';
-import { ArrowLeft, Flag, Play, Square, Camera, MapPin, X, ChevronRight } from 'lucide-react-native';
+import * as Location from 'expo-location';
+import { ArrowLeft, Flag, Play, Square, Camera, MapPin, X, Navigation2 } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
@@ -38,6 +39,10 @@ const TXT: Record<string, any> = {
     stops: 'Landmarks on the route', youAreHere: 'You are here', reached: 'Reached',
     locked: 'Reach it to unlock', tapToView: 'Tap to view', viewLandmark: 'View this place',
     navHint: 'Follow the route — photos appear as you pass each landmark.',
+    simMode: 'Simulation', realMode: 'Live (GPS)',
+    simHint: 'Simulation — replaying the route.',
+    realHint: 'Live GPS — move to advance. Stand still and nothing moves.',
+    locNeeded: 'Enable location to use live GPS navigation.',
   },
   fr: {
     title: 'Défi', join: 'Rejoindre le défi', joined: 'Rejoint !', joining: 'Connexion…',
@@ -48,6 +53,10 @@ const TXT: Record<string, any> = {
     stops: 'Lieux sur le parcours', youAreHere: 'Vous êtes ici', reached: 'Atteint',
     locked: 'Atteins-le pour débloquer', tapToView: 'Toucher pour voir', viewLandmark: 'Voir ce lieu',
     navHint: 'Suis le parcours — les photos apparaissent à chaque lieu franchi.',
+    simMode: 'Simulation', realMode: 'Réel (GPS)',
+    simHint: 'Simulation — rejoue le parcours.',
+    realHint: 'GPS réel — bouge pour avancer. Si tu ne bouges pas, rien ne bouge.',
+    locNeeded: 'Active la localisation pour la navigation GPS réelle.',
   },
   ar: {
     title: 'التحدي', join: 'انضم إلى التحدي', joined: 'تم الانضمام!', joining: 'جارٍ الانضمام…',
@@ -58,6 +67,10 @@ const TXT: Record<string, any> = {
     stops: 'معالم على المسار', youAreHere: 'أنت هنا', reached: 'تم الوصول',
     locked: 'صِل إليه لفتحه', tapToView: 'اضغط للعرض', viewLandmark: 'عرض هذا المكان',
     navHint: 'اتبع المسار — تظهر الصور عند تجاوز كل معلم.',
+    simMode: 'محاكاة', realMode: 'مباشر (GPS)',
+    simHint: 'محاكاة — إعادة تشغيل المسار.',
+    realHint: 'GPS مباشر — تحرّك للتقدّم. إن لم تتحرّك لا شيء يتحرّك.',
+    locNeeded: 'فعّل الموقع لاستخدام ملاحة GPS المباشرة.',
   },
 };
 
@@ -209,6 +222,21 @@ function buildHtml(route: LatLng[], me: LatLng, color: string): string {
       window._fit(window._poly.getPath().getArray().map(function(p){return {lat:p.lat(),lng:p.lng()};}));
     };
 
+    // Real-GPS navigation: switch to the arrow + street-level zoom and wait for
+    // positions. Nothing moves until navReal() is called with a new location.
+    window.enterReal = function(){
+      if(navRAF){ cancelAnimationFrame(navRAF); navRAF=null; }
+      window._me.setIcon({ path: ARROW, scale: 1.7, fillColor:'${color}', fillOpacity:1, strokeColor:'#fff', strokeWeight:1.5, rotation:0, anchor:new google.maps.Point(0,0) });
+      window._me.setZIndex(9999);
+      map.setZoom(17);
+    };
+    window.navReal = function(lat,lng,heading){
+      window._me.setPosition({lat:lat,lng:lng});
+      window._me.setIcon({ path: ARROW, scale: 1.7, fillColor:'${color}', fillOpacity:1, strokeColor:'#fff', strokeWeight:1.5, rotation:(heading||0), anchor:new google.maps.Point(0,0) });
+      map.panTo({lat:lat,lng:lng});
+      if(map.getZoom()<16) map.setZoom(17);
+    };
+
     if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage('ready');
   }
   window.gm_authFailure=function(){ document.body.innerHTML='<div style="color:#b91c1c;font-family:sans-serif;padding:24px;text-align:center">Google Maps key error.</div>'; };
@@ -247,10 +275,12 @@ export default function ChallengeScreen() {
   const [mapReady, setMapReady] = useState(false);
   const [roadPath, setRoadPath] = useState<LatLng[]>([]);
   const [navMode, setNavMode] = useState(false);
+  const [navKind, setNavKind] = useState<'sim' | 'real'>('sim');
   const [reached, setReached] = useState<Record<number, boolean>>({});
   const [activePoi, setActivePoi] = useState<number | null>(null); // photo card during nav
   const [viewerPoi, setViewerPoi] = useState<number | null>(null); // fullscreen viewer
   const webRef = useRef<WebView | null>(null);
+  const locWatch = useRef<Location.LocationSubscription | null>(null);
 
   const pois: ChallengePOI[] = (challenge?.pois as ChallengePOI[]) || [];
 
@@ -358,32 +388,69 @@ export default function ChallengeScreen() {
     }
   };
 
-  const startNav = () => {
+  // SIMULATION: replays the full route as a guided fly-through (does NOT close
+  // on its own — stays open until you tap Stop).
+  const startSim = () => {
     if (!mapReady) return;
     setReached({});
     setActivePoi(null);
+    if (locWatch.current) { locWatch.current.remove(); locWatch.current = null; }
+    setNavKind('sim');
     setNavMode(true);
-    // Navigation follows your REAL progress: it replays the distance you have
-    // actually covered (0 → your current point), never the whole route.
-    const coveredKm = totalKm * fraction;
-    const duration = fraction <= 0 ? 1400 : Math.max(5000, Math.min(22000, coveredKm * 1300));
+    const duration = Math.max(9000, Math.min(30000, Math.max(1, totalKm) * 1100));
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-    webRef.current?.injectJavaScript(`window.startNav && window.startNav(0, ${fraction}, ${duration}); true;`);
+    webRef.current?.injectJavaScript(`window.startNav && window.startNav(0, 1, ${duration}); true;`);
+  };
+
+  // REAL (GPS): follows your true position. While you don't move, nothing moves.
+  const startReal = async () => {
+    if (!mapReady) return;
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') { Alert.alert(t.realMode, t.locNeeded); return; }
+      setReached({});
+      setActivePoi(null);
+      setNavKind('real');
+      setNavMode(true);
+      webRef.current?.injectJavaScript(`window.enterReal && window.enterReal(); true;`);
+      // Seed with the current position immediately, then watch for movement.
+      try {
+        const cur = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+        const h = cur.coords.heading != null && cur.coords.heading >= 0 ? cur.coords.heading : 0;
+        webRef.current?.injectJavaScript(`window.navReal && window.navReal(${cur.coords.latitude}, ${cur.coords.longitude}, ${h}); true;`);
+      } catch {}
+      locWatch.current = await Location.watchPositionAsync(
+        { accuracy: Location.Accuracy.High, distanceInterval: 2, timeInterval: 1000 },
+        (pos) => {
+          const { latitude, longitude, heading } = pos.coords;
+          const h = heading != null && heading >= 0 ? heading : 0;
+          webRef.current?.injectJavaScript(`window.navReal && window.navReal(${latitude}, ${longitude}, ${h}); true;`);
+        }
+      );
+    } catch (e) {
+      console.warn('[challenge] real nav failed', e);
+      Alert.alert(t.realMode, t.locNeeded);
+      setNavMode(false);
+    }
   };
 
   const stopNav = () => {
     setNavMode(false);
     setActivePoi(null);
+    if (locWatch.current) { locWatch.current.remove(); locWatch.current = null; }
     webRef.current?.injectJavaScript(`window.stopNav && window.stopNav(); true;`);
   };
+
+  // Clean up the GPS watch if we leave the screen mid-navigation.
+  useEffect(() => () => { if (locWatch.current) { locWatch.current.remove(); locWatch.current = null; } }, []);
 
   const onMessage = (e: any) => {
     const d = String(e.nativeEvent.data || '');
     if (d === 'ready') { setMapReady(true); return; }
     if (d === 'navdone') {
-      setNavMode(false);
+      // Simulation reached the finish — stay in nav view (do NOT auto-close);
+      // the arrow rests at the end until the user taps Stop.
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      webRef.current?.injectJavaScript(`window.stopNav && window.stopNav(); true;`);
       return;
     }
     if (d.startsWith('poi:')) {
@@ -451,8 +518,8 @@ export default function ChallengeScreen() {
         {navMode && (
           <>
             <View style={styles.navBanner} pointerEvents="none">
-              <MapPin size={15} color="#fff" />
-              <Text style={styles.navBannerTxt} numberOfLines={1}>{t.navHint}</Text>
+              {navKind === 'real' ? <Navigation2 size={15} color="#fff" /> : <MapPin size={15} color="#fff" />}
+              <Text style={styles.navBannerTxt} numberOfLines={2}>{navKind === 'real' ? t.realHint : t.simHint}</Text>
             </View>
             {activePoi !== null && pois[activePoi] && (
               <TouchableOpacity
@@ -496,27 +563,35 @@ export default function ChallengeScreen() {
           </TouchableOpacity>
         )}
 
-        {/* Start navigation + AR (after joining) */}
+        {/* Navigation modes + AR (after joining) */}
         {joined && (
-          <View style={[styles.actionRow, rtlRow]}>
+          <View style={{ marginHorizontal: 16, marginTop: 16 }}>
             {!navMode ? (
-              <TouchableOpacity style={[styles.navBtn, { backgroundColor: PRIMARY }]} onPress={startNav}>
-                <Play size={18} color="#fff" fill="#fff" />
-                <Text style={styles.navBtnTxt}>{t.startNav}</Text>
-              </TouchableOpacity>
+              <>
+                <View style={[styles.actionRow, rtlRow, { marginHorizontal: 0, marginTop: 0 }]}>
+                  <TouchableOpacity style={[styles.navBtn, { backgroundColor: PRIMARY }]} onPress={startSim}>
+                    <Play size={17} color="#fff" fill="#fff" />
+                    <Text style={styles.navBtnTxt}>{t.simMode}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.navBtn, { backgroundColor: '#0ea5e9' }]} onPress={startReal}>
+                    <Navigation2 size={17} color="#fff" />
+                    <Text style={styles.navBtnTxt}>{t.realMode}</Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity
+                  style={[styles.arBtnWide, { borderColor: PRIMARY }]}
+                  onPress={() => router.push(`/challenge-ar?id=${challengeId}` as any)}
+                >
+                  <Camera size={18} color={PRIMARY} />
+                  <Text style={[styles.arBtnTxt, { color: PRIMARY }]}>{t.arMode}</Text>
+                </TouchableOpacity>
+              </>
             ) : (
-              <TouchableOpacity style={[styles.navBtn, { backgroundColor: '#ef4444' }]} onPress={stopNav}>
+              <TouchableOpacity style={[styles.navBtn, { backgroundColor: '#ef4444', marginTop: 0 }]} onPress={stopNav}>
                 <Square size={16} color="#fff" fill="#fff" />
-                <Text style={styles.navBtnTxt}>{t.stopNav}</Text>
+                <Text style={styles.navBtnTxt}>{t.stopNav} · {navKind === 'sim' ? t.simMode : t.realMode}</Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity
-              style={[styles.arBtn, { borderColor: PRIMARY }]}
-              onPress={() => router.push(`/challenge-ar?id=${challengeId}` as any)}
-            >
-              <Camera size={18} color={PRIMARY} />
-              <Text style={[styles.arBtnTxt, { color: PRIMARY }]}>{t.arMode}</Text>
-            </TouchableOpacity>
           </View>
         )}
 
@@ -656,6 +731,7 @@ const styles = StyleSheet.create({
   navBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 14 },
   navBtnTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
   arBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingVertical: 15, paddingHorizontal: 16, borderRadius: 14, borderWidth: 2 },
+  arBtnWide: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14, borderWidth: 2, marginTop: 10 },
   arBtnTxt: { fontSize: 15, fontWeight: '800' },
 
   hint: { fontSize: 13, fontWeight: '500', marginHorizontal: 16, marginTop: 14, lineHeight: 18 },
