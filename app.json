@@ -49,6 +49,12 @@
       "expo-secure-store",
       "react-native-health-connect",
       [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Salorie uses your location to track your runs (distance, pace, route)."
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "android": {
