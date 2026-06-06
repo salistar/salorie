@@ -54,6 +54,22 @@ function haversine(a: LatLng, b: LatLng): number {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
+// Decode a Google "encoded polyline" into LatLng[] (Directions overview_polyline).
+function decodePolyline(enc: string): LatLng[] {
+  let idx = 0, lat = 0, lng = 0;
+  const pts: LatLng[] = [];
+  while (idx < enc.length) {
+    let b, shift = 0, result = 0;
+    do { b = enc.charCodeAt(idx++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lat += result & 1 ? ~(result >> 1) : result >> 1;
+    shift = 0; result = 0;
+    do { b = enc.charCodeAt(idx++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lng += result & 1 ? ~(result >> 1) : result >> 1;
+    pts.push({ lat: lat / 1e5, lng: lng / 1e5 });
+  }
+  return pts;
+}
+
 // Interpolate a LatLng at a 0..1 fraction of the total distance along the route.
 // Walks the route segment by segment (cumulative segment length via haversine).
 function pointAtFraction(route: LatLng[], fraction: number): LatLng {
@@ -101,16 +117,17 @@ function buildHtml(route: LatLng[], me: LatLng, color: string): string {
       disableDefaultUI: true, clickableIcons: false, gestureHandling: 'greedy'
     });
     window._map = map;
-    new google.maps.Polyline({ map: map, path: ROUTE, geodesic: true, strokeColor: '${color}', strokeOpacity: 1, strokeWeight: 7 });
-    new google.maps.Marker({ position: START, map: map, title: 'Start',
+    window._poly = new google.maps.Polyline({ map: map, path: ROUTE, geodesic: false, strokeColor: '${color}', strokeOpacity: 1, strokeWeight: 6 });
+    window._start = new google.maps.Marker({ position: START, map: map, title: 'Start',
       icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#22c55e', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3 } });
-    new google.maps.Marker({ position: END, map: map, title: 'Finish',
+    window._end = new google.maps.Marker({ position: END, map: map, title: 'Finish',
       icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#ef4444', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3 } });
     window._me = new google.maps.Marker({ position: ME, map: map, title: 'You', zIndex: 999,
       icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '${color}', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 4 } });
-    var bounds = new google.maps.LatLngBounds();
-    ROUTE.forEach(function(p){ bounds.extend(p); });
-    map.fitBounds(bounds, 60);
+    function fit(path){ var b = new google.maps.LatLngBounds(); path.forEach(function(p){ b.extend(p); }); map.fitBounds(b, 60); }
+    fit(ROUTE);
+    // Replace the straight placeholder line with a real road-following path (Directions).
+    window.setRoute = function(path){ if(!path||!path.length) return; window._poly.setPath(path); window._start.setPosition(path[0]); window._end.setPosition(path[path.length-1]); fit(path); };
     window.moveMe = function(lat,lng){ window._me.setPosition({lat:lat,lng:lng}); };
     if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage('ready');
   }
@@ -141,7 +158,31 @@ export default function ChallengeScreen() {
   const [myKm, setMyKm] = useState<number | null>(null);
   const [joining, setJoining] = useState(false);
   const [mapReady, setMapReady] = useState(false);
+  const [roadPath, setRoadPath] = useState<LatLng[]>([]);
   const webRef = useRef<WebView | null>(null);
+
+  // Fetch a real road-following route (Google Directions, walking) so the line
+  // follows streets instead of cutting straight across the sea / buildings.
+  useEffect(() => {
+    if (!challenge) return;
+    let alive = true;
+    (async () => {
+      try {
+        const r = challenge.route as LatLng[];
+        if (r.length < 2) return;
+        const origin = `${r[0].lat},${r[0].lng}`;
+        const dest = `${r[r.length - 1].lat},${r[r.length - 1].lng}`;
+        const wp = r.slice(1, -1).map((p) => `${p.lat},${p.lng}`).join('|');
+        const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${dest}${wp ? `&waypoints=${wp}` : ''}&mode=walking&key=${GOOGLE_MAPS_KEY}`;
+        const res = await fetch(url);
+        const j = await res.json();
+        if (alive && j.status === 'OK' && j.routes?.[0]?.overview_polyline?.points) {
+          setRoadPath(decodePolyline(j.routes[0].overview_polyline.points));
+        }
+      } catch (e) { console.warn('[challenge] directions failed', e); }
+    })();
+    return () => { alive = false; };
+  }, [challengeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initial progress fetch.
   useEffect(() => {
@@ -176,10 +217,12 @@ export default function ChallengeScreen() {
   const pct = Math.round(fraction * 100);
   const joined = myKm !== null;
 
+  // Use the real road path once loaded; fall back to the raw waypoints meanwhile.
+  const effectiveRoute = roadPath.length > 1 ? roadPath : ((challenge?.route as LatLng[]) || []);
   const mePoint = useMemo<LatLng>(() => {
-    if (!challenge) return { lat: 0, lng: 0 };
-    return pointAtFraction(challenge.route as LatLng[], fraction);
-  }, [challenge, fraction]);
+    if (!challenge || !effectiveRoute.length) return { lat: 0, lng: 0 };
+    return pointAtFraction(effectiveRoute, fraction);
+  }, [challenge, effectiveRoute, fraction]);
 
   // Build HTML once for the route + initial me position.
   const html = useMemo(
@@ -187,6 +230,13 @@ export default function ChallengeScreen() {
     // route is static per challenge; initial me position only.
     [challengeId] // eslint-disable-line react-hooks/exhaustive-deps
   );
+
+  // Draw the real road-following route once it's loaded + the map is ready.
+  useEffect(() => {
+    if (mapReady && roadPath.length > 1) {
+      webRef.current?.injectJavaScript(`window.setRoute && window.setRoute(${JSON.stringify(roadPath)}); true;`);
+    }
+  }, [mapReady, roadPath]);
 
   // Move the "you" marker when my progress changes (after the map is ready).
   useEffect(() => {
