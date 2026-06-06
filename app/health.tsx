@@ -7,7 +7,7 @@ import ScreenTopBar from '../components/ScreenTopBar';
 import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
-import { isHealthAvailable, connectHealth, readToday, HealthToday } from '../lib/health';
+import { isHealthAvailable, connectHealthStatus, openHealthConnectInstall, readToday, HealthToday } from '../lib/health';
 import { addNutritionLog } from '../lib/firebase';
 import { getStepsMode, setStepsMode, getSimSteps, addSimSteps, resetSimSteps, getActivitySteps } from '../lib/steps';
 
@@ -72,10 +72,24 @@ export default function HealthScreen() {
 
   const connect = useCallback(async () => {
     setBusy(true); setMsg(null);
-    const ok = await connectHealth();
-    setConnected(ok);
-    if (ok) setData(await readToday());
-    setBusy(false);
+    try {
+      const res = await connectHealthStatus();
+      if (res === 'ok') {
+        setConnected(true);
+        setData(await readToday());
+      } else if (res === 'unavailable' || res === 'update_required') {
+        setMsg('Health Connect doit être installé / mis à jour. Ouverture du Play Store…');
+        openHealthConnectInstall();
+      } else if (res === 'denied') {
+        setMsg('Permissions refusées. Autorise les pas dans Health Connect.');
+      } else {
+        setMsg('Connexion impossible. Réessaie ou utilise le mode Simulation.');
+      }
+    } catch {
+      setMsg('Connexion impossible. Réessaie ou utilise le mode Simulation.');
+    } finally {
+      setBusy(false);
+    }
   }, []);
 
   const refresh = useCallback(async () => {

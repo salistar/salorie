@@ -12,6 +12,7 @@ import { useTranslation } from '../lib/i18n';
 import { addNutritionLog, emailToDocId } from '../lib/firebase';
 import { addDistanceToJoinedChallenges } from '../lib/races';
 import { addActivitySteps } from '../lib/steps';
+import { refreshStepsNotification } from '../lib/stepsNotif';
 
 // Google Maps JS in a WebView — same approach as the Sally apps (the JS API key
 // works in a WebView with a baseUrl; react-native-maps would need a Maps SDK for
@@ -174,8 +175,8 @@ export default function RunScreen() {
         await addNutritionLog({ userId: email, type: 'activity', name: `${t.title} · ${km.toFixed(2)} km`, calories: kcal, protein: 0, carbs: 0, fat: 0, date, duration: Math.round(secs / 60), intensity: 'medium' } as any);
         // Phase 3 sync: a solo run also advances every virtual challenge you joined.
         addDistanceToJoinedChallenges(email, km).catch(() => {});
-        // Steps from this run are added to today's Home step count.
-        addActivitySteps(email, km).catch(() => {});
+        // Steps from this run are added to today's Home step count + notification.
+        addActivitySteps(email, km).then(() => refreshStepsNotification()).catch(() => {});
       } catch (e) { console.warn('[run] save failed', e); }
     }
     // Reset for the next run, refresh the history list, and stay on the screen.
