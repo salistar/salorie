@@ -8,7 +8,9 @@ import { useUser } from '@clerk/clerk-expo';
 import { WebView } from 'react-native-webview';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ArrowLeft, Flag, Play, Square, Camera, MapPin, X, Navigation2 } from 'lucide-react-native';
+import { addNutritionLog, emailToDocId } from '../lib/firebase';
 import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
@@ -289,6 +291,9 @@ export default function ChallengeScreen() {
   const sessionKm = useRef(0);         // distance moved this real-nav session
   const lastReal = useRef<LatLng | null>(null);
   const lastWrite = useRef(0);         // throttle Firestore writes (ms)
+  const navStartKm = useRef(0);        // progress when this nav session started
+  const segmentLogged = useRef(false); // guard so a segment is logged to activity once
+  const [weight, setWeight] = useState(70);
 
   const pois: ChallengePOI[] = (challenge?.pois as ChallengePOI[]) || [];
 
@@ -313,6 +318,18 @@ export default function ChallengeScreen() {
     })();
     return () => { alive = false; };
   }, [challengeId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load body weight (for the calorie estimate when a segment is logged).
+  useEffect(() => {
+    (async () => {
+      if (!email) return;
+      try {
+        const raw = await AsyncStorage.getItem(`profile_${emailToDocId(email)}`);
+        const p = raw ? JSON.parse(raw) : null;
+        if (p?.weight) setWeight(Number(p.weight) || 70);
+      } catch {}
+    })();
+  }, [email]);
 
   // Initial progress fetch.
   useEffect(() => {
@@ -407,6 +424,24 @@ export default function ChallengeScreen() {
     setChallengeProgress(challengeId, email, clamped);
   };
 
+  // Finishing a navigation segment → log the distance covered to recent activity
+  // (calories + Firestore), once per session.
+  const logSegment = (currentKm: number) => {
+    if (segmentLogged.current || !challenge || !email) return;
+    const covered = Math.max(0, currentKm - navStartKm.current);
+    if (covered < 0.05) return;
+    segmentLogged.current = true;
+    const kcal = Math.max(1, Math.round(weight * covered * 1.036));
+    const d = new Date();
+    const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    addNutritionLog({
+      userId: email, type: 'activity',
+      name: `${challenge.emoji} ${challenge.name} · ${covered.toFixed(1)} km`,
+      calories: kcal, protein: 0, carbs: 0, fat: 0, date,
+      duration: Math.round(covered * 6), intensity: 'medium',
+    } as any).catch((e) => console.warn('[challenge] log segment failed', e));
+  };
+
   // SIMULATION: replays the full route as a guided fly-through. Advances the
   // distance/progression live as the arrow moves. Stays open until you tap Stop.
   const startSim = () => {
@@ -417,9 +452,11 @@ export default function ChallengeScreen() {
     setNavKind('sim');
     setLiveKm(baseKm);
     lastWrite.current = 0;
+    navStartKm.current = baseKm;
+    segmentLogged.current = false;
     setNavMode(true);
-    // Slower so you can actually watch the route + landmarks (~3.2s per km, clamped).
-    const duration = Math.max(16000, Math.min(55000, Math.max(1, totalKm) * 3200));
+    // Simulation advances at 10 m/s (≈100 s per km) — the standard sim pace.
+    const duration = Math.max(2000, Math.round(Math.max(0.1, totalKm) * 100000));
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     webRef.current?.injectJavaScript(`window.startNav && window.startNav(0, 1, ${duration}); true;`);
   };
@@ -438,6 +475,8 @@ export default function ChallengeScreen() {
       sessionKm.current = 0;
       lastReal.current = null;
       lastWrite.current = 0;
+      navStartKm.current = baseKm;
+      segmentLogged.current = false;
       setLiveKm(baseKm);
       setNavMode(true);
       webRef.current?.injectJavaScript(`window.enterReal && window.enterReal(); true;`);
@@ -473,7 +512,7 @@ export default function ChallengeScreen() {
   };
 
   const stopNav = () => {
-    if (liveKm != null) maybeWrite(liveKm, true); // persist final distance
+    if (liveKm != null) { maybeWrite(liveKm, true); logSegment(liveKm); } // persist + log to activity
     setNavMode(false);
     setActivePoi(null);
     setLiveKm(null);
@@ -491,7 +530,7 @@ export default function ChallengeScreen() {
       // Simulation reached the finish — record full progress and stay in nav view
       // (do NOT auto-close); the arrow rests at the end until the user taps Stop.
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      if (navKind === 'sim') { setLiveKm(totalKm); maybeWrite(totalKm, true); }
+      if (navKind === 'sim') { setLiveKm(totalKm); maybeWrite(totalKm, true); logSegment(totalKm); }
       return;
     }
     if (d.startsWith('frac:')) {

@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, TextInput, ActivityIndicator, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
-import { ArrowLeft, Trophy, Users, Plus, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, Trophy, Users, Plus, ChevronRight, MapPin, CheckCircle2 } from 'lucide-react-native';
+import { poiPhoto } from '../assets/challenges/registry';
 import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
@@ -281,16 +282,30 @@ export default function RacesScreen() {
                 const p = progress[c.id];
                 const joined = p != null;
                 const pct = joined ? Math.min(1, (p as number) / c.totalKm) : 0;
+                const done = pct >= 1;
+                const hero = poiPhoto(c.id, 0);
+                const stops = (c.pois as any[])?.length || 0;
                 return (
-                  <TouchableOpacity key={c.id} style={[styles.challengeCard, { backgroundColor: card }]} onPress={() => router.push('/challenge?id=' + c.id)}>
-                    <View style={[styles.challengeTop, { flexDirection: rowDir }]}>
-                      <Text style={styles.emoji}>{c.emoji}</Text>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.challengeName, { color: text, textAlign: align }]} numberOfLines={1}>{c.name}</Text>
-                        <Text style={[styles.challengeMeta, { color: sub, textAlign: align }]}>{c.totalKm} {t.km}</Text>
+                  <TouchableOpacity key={c.id} activeOpacity={0.9} style={[styles.challengeCard, { backgroundColor: card }]} onPress={() => router.push('/challenge?id=' + c.id)}>
+                    {/* Hero photo */}
+                    <View style={styles.heroWrap}>
+                      {hero ? <Image source={hero} style={styles.hero} resizeMode="cover" /> : <View style={[styles.hero, { backgroundColor: '#cbd5e1' }]} />}
+                      <View style={styles.heroShade} />
+                      <View style={styles.heroEmoji}><Text style={{ fontSize: 22 }}>{c.emoji}</Text></View>
+                      <View style={styles.heroBottom}>
+                        <Text style={styles.heroName} numberOfLines={1}>{c.name}</Text>
+                        <View style={styles.heroChips}>
+                          <View style={styles.heroChip}><Text style={styles.heroChipTxt}>{c.totalKm} {t.km}</Text></View>
+                          {stops > 0 && (
+                            <View style={styles.heroChip}><MapPin size={11} color="#fff" /><Text style={styles.heroChipTxt}> {stops}</Text></View>
+                          )}
+                          {done && (
+                            <View style={[styles.heroChip, { backgroundColor: 'rgba(34,197,94,0.9)' }]}><CheckCircle2 size={11} color="#fff" /><Text style={styles.heroChipTxt}> 100%</Text></View>
+                          )}
+                        </View>
                       </View>
                       {!joined && (
-                        <TouchableOpacity style={styles.joinBtn} onPress={(e) => { e.stopPropagation?.(); onJoinChallenge(c.id); }} disabled={!!busy[c.id]}>
+                        <TouchableOpacity style={styles.heroJoin} onPress={(e) => { e.stopPropagation?.(); onJoinChallenge(c.id); }} disabled={!!busy[c.id]}>
                           {busy[c.id] ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.joinBtnTxt}>{t.join}</Text>}
                         </TouchableOpacity>
                       )}
@@ -298,10 +313,10 @@ export default function RacesScreen() {
                     {joined && (
                       <View style={styles.progressWrap}>
                         <View style={[styles.progressTrack, { backgroundColor: track }]}>
-                          <View style={[styles.progressFill, { width: `${pct * 100}%` }]} />
+                          <View style={[styles.progressFill, { width: `${pct * 100}%`, backgroundColor: done ? '#22c55e' : PRIMARY }]} />
                         </View>
                         <Text style={[styles.progressTxt, { color: sub, textAlign: align }]}>
-                          {t.progress}: {(p as number).toFixed(1)} / {c.totalKm} {t.km}
+                          {t.progress}: {(p as number).toFixed(1)} / {c.totalKm} {t.km} · {Math.round(pct * 100)}%
                         </Text>
                       </View>
                     )}
@@ -345,14 +360,23 @@ const styles = StyleSheet.create({
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: Colors.light.primaryLight },
   badgeLive: { backgroundColor: PRIMARY },
   badgeTxt: { fontSize: 11, fontWeight: '800', color: PRIMARY },
-  challengeCard: { borderRadius: 18, padding: 16, marginBottom: 12 },
-  challengeTop: { alignItems: 'center', gap: 12 },
+  challengeCard: { borderRadius: 20, marginBottom: 14, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
+  heroWrap: { height: 150, width: '100%', justifyContent: 'flex-end' },
+  hero: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
+  heroShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.28)' },
+  heroEmoji: { position: 'absolute', top: 12, left: 12, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.92)', alignItems: 'center', justifyContent: 'center' },
+  heroBottom: { padding: 14 },
+  heroName: { color: '#fff', fontSize: 19, fontWeight: '900', letterSpacing: -0.3, textShadowColor: 'rgba(0,0,0,0.4)', textShadowRadius: 6 },
+  heroChips: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  heroChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.45)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
+  heroChipTxt: { color: '#fff', fontSize: 12, fontWeight: '800' },
+  heroJoin: { position: 'absolute', top: 12, right: 12, backgroundColor: PRIMARY, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 12, minWidth: 64, alignItems: 'center', justifyContent: 'center' },
   emoji: { fontSize: 30 },
   challengeName: { fontSize: 16, fontWeight: '800' },
   challengeMeta: { fontSize: 12, marginTop: 3 },
   joinBtn: { backgroundColor: PRIMARY, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 12, minWidth: 64, alignItems: 'center', justifyContent: 'center' },
   joinBtnTxt: { color: '#fff', fontSize: 14, fontWeight: '800' },
-  progressWrap: { marginTop: 14 },
+  progressWrap: { padding: 14, paddingTop: 12 },
   progressTrack: { height: 10, borderRadius: 5, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 5, backgroundColor: PRIMARY },
   progressTxt: { fontSize: 12, fontWeight: '700', marginTop: 6 },
