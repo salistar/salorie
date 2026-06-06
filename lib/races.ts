@@ -84,7 +84,7 @@ export interface ChallengeProgress { email: string; name: string; imageUrl?: str
 
 // Preset virtual routes (inspired by The Conqueror). Routes are illustrative paths.
 export const CHALLENGES: Challenge[] = [
-  { id: 'casa-loop', name: 'Casablanca Corniche', totalKm: 10, emoji: '🌊', route: [{ lat: 33.5899, lng: -7.6680 }, { lat: 33.6050, lng: -7.6900 }, { lat: 33.6150, lng: -7.7100 }] },
+  { id: 'casa-loop', name: 'Casablanca Corniche', totalKm: 10, emoji: '🌊', route: [{ lat: 33.6065, lng: -7.6360 }, { lat: 33.5980, lng: -7.6700 }, { lat: 33.5930, lng: -7.6880 }] },
   { id: 'paris-marathon', name: 'Paris Marathon', totalKm: 42, emoji: '🗼', route: [{ lat: 48.8738, lng: 2.2950 }, { lat: 48.8606, lng: 2.3376 }, { lat: 48.8462, lng: 2.3372 }, { lat: 48.8530, lng: 2.3700 }] },
   { id: 'great-wall', name: 'Great Wall of China', totalKm: 21, emoji: '🧱', route: [{ lat: 40.4319, lng: 116.5704 }, { lat: 40.4400, lng: 116.5900 }, { lat: 40.4500, lng: 116.6100 }] },
   { id: 'route66', name: 'Route 66 (mini)', totalKm: 30, emoji: '🛣️', route: [{ lat: 35.0844, lng: -106.6504 }, { lat: 35.1107, lng: -106.6100 }, { lat: 35.2000, lng: -106.5000 }] },
