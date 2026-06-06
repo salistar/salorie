@@ -17,6 +17,7 @@ import {
   getMyChallengeProgress,
   joinChallenge,
   listenChallengeBoard,
+  setChallengeProgress,
   Challenge,
   ChallengeProgress,
   ChallengePOI,
@@ -198,7 +199,7 @@ function buildHtml(route: LatLng[], me: LatLng, color: string): string {
       window._me.setIcon({ path: ARROW, scale: 1.7, fillColor:'${color}', fillOpacity:1, strokeColor:'#fff', strokeWeight:1.5, rotation:0, anchor:new google.maps.Point(0,0) });
       window._me.setZIndex(9999);
       map.setZoom(17);
-      var t0 = null;
+      var t0 = null, navLastSent = -1;
       function frame(ts){
         if(t0===null) t0=ts;
         var lin = Math.min(1,(ts-t0)/durationMs);
@@ -211,6 +212,8 @@ function buildHtml(route: LatLng[], me: LatLng, color: string): string {
         map.panTo({lat:pos.lat,lng:pos.lng});
         // fire poi events
         for(var i=0;i<POIS.length;i++){ if(!navFired[i] && POIS[i].frac<=frac){ navFired[i]=1; if(window.ReactNativeWebView) window.ReactNativeWebView.postMessage('poi:'+i); } }
+        // report progress fraction (throttled to ~1% steps) so RN can advance distance.
+        if(frac - navLastSent >= 0.01 || lin>=1){ navLastSent=frac; if(window.ReactNativeWebView) window.ReactNativeWebView.postMessage('frac:'+frac.toFixed(4)); }
         if(lin<1){ navRAF=requestAnimationFrame(frame); } else { navRAF=null; if(window.ReactNativeWebView) window.ReactNativeWebView.postMessage('navdone'); }
       }
       navRAF = requestAnimationFrame(frame);
@@ -281,6 +284,11 @@ export default function ChallengeScreen() {
   const [viewerPoi, setViewerPoi] = useState<number | null>(null); // fullscreen viewer
   const webRef = useRef<WebView | null>(null);
   const locWatch = useRef<Location.LocationSubscription | null>(null);
+  const [liveKm, setLiveKm] = useState<number | null>(null); // distance shown live during nav
+  const sessionBaseKm = useRef(0);     // progress at the moment real-nav started
+  const sessionKm = useRef(0);         // distance moved this real-nav session
+  const lastReal = useRef<LatLng | null>(null);
+  const lastWrite = useRef(0);         // throttle Firestore writes (ms)
 
   const pois: ChallengePOI[] = (challenge?.pois as ChallengePOI[]) || [];
 
@@ -334,7 +342,9 @@ export default function ChallengeScreen() {
   }, [board, email]);
 
   const totalKm = challenge?.totalKm || 0;
-  const myCumulativeKm = myKm ?? 0;
+  const baseKm = myKm ?? 0;
+  // While navigating, show the live distance (sim or GPS); otherwise the saved value.
+  const myCumulativeKm = navMode && liveKm != null ? liveKm : baseKm;
   const fraction = totalKm > 0 ? Math.min(1, myCumulativeKm / totalKm) : 0;
   const pct = Math.round(fraction * 100);
   const joined = myKm !== null;
@@ -388,21 +398,34 @@ export default function ChallengeScreen() {
     }
   };
 
-  // SIMULATION: replays the full route as a guided fly-through (does NOT close
-  // on its own — stays open until you tap Stop).
+  // Push progress to Firestore, throttled, never below the saved value, capped at total.
+  const maybeWrite = (km: number, force = false) => {
+    const now = Date.now();
+    if (!force && now - lastWrite.current < 1500) return;
+    lastWrite.current = now;
+    const clamped = Math.min(totalKm || km, Math.max(baseKm, km));
+    setChallengeProgress(challengeId, email, clamped);
+  };
+
+  // SIMULATION: replays the full route as a guided fly-through. Advances the
+  // distance/progression live as the arrow moves. Stays open until you tap Stop.
   const startSim = () => {
     if (!mapReady) return;
     setReached({});
     setActivePoi(null);
     if (locWatch.current) { locWatch.current.remove(); locWatch.current = null; }
     setNavKind('sim');
+    setLiveKm(baseKm);
+    lastWrite.current = 0;
     setNavMode(true);
-    const duration = Math.max(9000, Math.min(30000, Math.max(1, totalKm) * 1100));
+    // Slower so you can actually watch the route + landmarks (~3.2s per km, clamped).
+    const duration = Math.max(16000, Math.min(55000, Math.max(1, totalKm) * 3200));
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     webRef.current?.injectJavaScript(`window.startNav && window.startNav(0, 1, ${duration}); true;`);
   };
 
-  // REAL (GPS): follows your true position. While you don't move, nothing moves.
+  // REAL (GPS): follows your true position and adds the distance you actually
+  // move to your progression. While you don't move, nothing changes.
   const startReal = async () => {
     if (!mapReady) return;
     try {
@@ -411,11 +434,17 @@ export default function ChallengeScreen() {
       setReached({});
       setActivePoi(null);
       setNavKind('real');
+      sessionBaseKm.current = baseKm;
+      sessionKm.current = 0;
+      lastReal.current = null;
+      lastWrite.current = 0;
+      setLiveKm(baseKm);
       setNavMode(true);
       webRef.current?.injectJavaScript(`window.enterReal && window.enterReal(); true;`);
       // Seed with the current position immediately, then watch for movement.
       try {
         const cur = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+        lastReal.current = { lat: cur.coords.latitude, lng: cur.coords.longitude };
         const h = cur.coords.heading != null && cur.coords.heading >= 0 ? cur.coords.heading : 0;
         webRef.current?.injectJavaScript(`window.navReal && window.navReal(${cur.coords.latitude}, ${cur.coords.longitude}, ${h}); true;`);
       } catch {}
@@ -423,8 +452,17 @@ export default function ChallengeScreen() {
         { accuracy: Location.Accuracy.High, distanceInterval: 2, timeInterval: 1000 },
         (pos) => {
           const { latitude, longitude, heading } = pos.coords;
+          const cur = { lat: latitude, lng: longitude };
+          if (lastReal.current) {
+            const dKm = haversine(lastReal.current, cur) / 1000;
+            if (dKm > 0.0008) sessionKm.current += dKm; // ignore GPS jitter < ~0.8m
+          }
+          lastReal.current = cur;
+          const total = sessionBaseKm.current + sessionKm.current;
+          setLiveKm(total);
           const h = heading != null && heading >= 0 ? heading : 0;
           webRef.current?.injectJavaScript(`window.navReal && window.navReal(${latitude}, ${longitude}, ${h}); true;`);
+          maybeWrite(total);
         }
       );
     } catch (e) {
@@ -435,8 +473,10 @@ export default function ChallengeScreen() {
   };
 
   const stopNav = () => {
+    if (liveKm != null) maybeWrite(liveKm, true); // persist final distance
     setNavMode(false);
     setActivePoi(null);
+    setLiveKm(null);
     if (locWatch.current) { locWatch.current.remove(); locWatch.current = null; }
     webRef.current?.injectJavaScript(`window.stopNav && window.stopNav(); true;`);
   };
@@ -448,9 +488,19 @@ export default function ChallengeScreen() {
     const d = String(e.nativeEvent.data || '');
     if (d === 'ready') { setMapReady(true); return; }
     if (d === 'navdone') {
-      // Simulation reached the finish — stay in nav view (do NOT auto-close);
-      // the arrow rests at the end until the user taps Stop.
+      // Simulation reached the finish — record full progress and stay in nav view
+      // (do NOT auto-close); the arrow rests at the end until the user taps Stop.
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      if (navKind === 'sim') { setLiveKm(totalKm); maybeWrite(totalKm, true); }
+      return;
+    }
+    if (d.startsWith('frac:')) {
+      const f = parseFloat(d.slice(5));
+      if (!Number.isNaN(f) && navKind === 'sim') {
+        const km = f * totalKm;
+        setLiveKm(km);
+        maybeWrite(km);
+      }
       return;
     }
     if (d.startsWith('poi:')) {
