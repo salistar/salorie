@@ -55,6 +55,12 @@
         }
       ],
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Salorie uses the camera for the AR challenge experience (point your phone to see landmarks along your route)."
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "android": {
