@@ -1,9 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import {
+  View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView,
+  Image, Modal, Dimensions,
+} from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { WebView } from 'react-native-webview';
-import { ArrowLeft, Flag } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
+import { ArrowLeft, Flag, Play, Square, Camera, MapPin, X, ChevronRight } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
@@ -12,14 +16,18 @@ import {
   getMyChallengeProgress,
   joinChallenge,
   listenChallengeBoard,
+  streetViewUrl,
+  staticMapUrl,
   Challenge,
   ChallengeProgress,
+  ChallengePOI,
 } from '../lib/races';
 
 // Google Maps JS in a WebView — same approach as run.tsx (the JS API key works in a
 // WebView with a baseUrl; react-native-maps would need a Maps SDK for Android key).
 const GOOGLE_MAPS_KEY = 'AIzaSyAa1lBSroSXA-Om4mio84-SWAcmzQgYv8w';
 const PRIMARY = Colors.light.primary;
+const { width: SCREEN_W } = Dimensions.get('window');
 
 const TXT: Record<string, any> = {
   en: {
@@ -27,18 +35,30 @@ const TXT: Record<string, any> = {
     leaderboard: 'Leaderboard', you: 'You', of: 'of', km: 'km', notFound: 'Challenge not found',
     hint: 'Your runs add to your progress automatically.', start: 'Start', finish: 'Finish',
     progress: 'Progress', participants: 'participants',
+    startNav: 'Start navigation', stopNav: 'Stop', arMode: 'AR mode',
+    stops: 'Landmarks on the route', youAreHere: 'You are here', reached: 'Reached',
+    locked: 'Reach it to unlock', tapToView: 'Tap to view', viewLandmark: 'View this place',
+    navHint: 'Follow the route — photos appear as you pass each landmark.',
   },
   fr: {
     title: 'Défi', join: 'Rejoindre le défi', joined: 'Rejoint !', joining: 'Connexion…',
     leaderboard: 'Classement', you: 'Toi', of: 'sur', km: 'km', notFound: 'Défi introuvable',
     hint: 'Tes courses augmentent ta progression automatiquement.', start: 'Départ', finish: 'Arrivée',
     progress: 'Progression', participants: 'participants',
+    startNav: 'Démarrer la navigation', stopNav: 'Arrêter', arMode: 'Mode AR',
+    stops: 'Lieux sur le parcours', youAreHere: 'Vous êtes ici', reached: 'Atteint',
+    locked: 'Atteins-le pour débloquer', tapToView: 'Toucher pour voir', viewLandmark: 'Voir ce lieu',
+    navHint: 'Suis le parcours — les photos apparaissent à chaque lieu franchi.',
   },
   ar: {
     title: 'التحدي', join: 'انضم إلى التحدي', joined: 'تم الانضمام!', joining: 'جارٍ الانضمام…',
     leaderboard: 'المتصدّرون', you: 'أنت', of: 'من', km: 'كم', notFound: 'التحدي غير موجود',
     hint: 'تُضاف جريك إلى تقدّمك تلقائيًا.', start: 'البداية', finish: 'النهاية',
     progress: 'التقدّم', participants: 'مشارك',
+    startNav: 'بدء الملاحة', stopNav: 'إيقاف', arMode: 'الواقع المعزّز',
+    stops: 'معالم على المسار', youAreHere: 'أنت هنا', reached: 'تم الوصول',
+    locked: 'صِل إليه لفتحه', tapToView: 'اضغط للعرض', viewLandmark: 'عرض هذا المكان',
+    navHint: 'اتبع المسار — تظهر الصور عند تجاوز كل معلم.',
   },
 };
 
@@ -71,12 +91,10 @@ function decodePolyline(enc: string): LatLng[] {
 }
 
 // Interpolate a LatLng at a 0..1 fraction of the total distance along the route.
-// Walks the route segment by segment (cumulative segment length via haversine).
 function pointAtFraction(route: LatLng[], fraction: number): LatLng {
   if (!route.length) return { lat: 0, lng: 0 };
   if (route.length === 1) return route[0];
   const f = Math.max(0, Math.min(1, fraction));
-  // total length + per-segment lengths
   const segs: number[] = [];
   let total = 0;
   for (let i = 0; i < route.length - 1; i++) {
@@ -87,7 +105,7 @@ function pointAtFraction(route: LatLng[], fraction: number): LatLng {
   if (total === 0) return route[0];
   if (f <= 0) return route[0];
   if (f >= 1) return route[route.length - 1];
-  let target = f * total; // meters to walk
+  let target = f * total;
   for (let i = 0; i < segs.length; i++) {
     if (target <= segs[i] || i === segs.length - 1) {
       const r = segs[i] > 0 ? target / segs[i] : 0;
@@ -112,9 +130,19 @@ function buildHtml(route: LatLng[], me: LatLng, color: string): string {
   var ME = ${JSON.stringify(me)};
   var START = ${JSON.stringify(start)};
   var END = ${JSON.stringify(end)};
+  var POIS = [];        // [{name,lat,lng,frac}]
+  var poiMarkers = [];
+  var navRAF = null, navFired = {};
+  var ARROW = 'M 0 -11 L 7 9 L 0 4 L -7 9 Z';
+
+  function hav(a,b){var R=6371000,dLat=(b.lat-a.lat)*Math.PI/180,dLng=(b.lng-a.lng)*Math.PI/180,la1=a.lat*Math.PI/180,la2=b.lat*Math.PI/180;var h=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(la1)*Math.cos(la2)*Math.sin(dLng/2)*Math.sin(dLng/2);return 2*R*Math.asin(Math.sqrt(h));}
+  function bearing(a,b){var y=Math.sin((b.lng-a.lng)*Math.PI/180)*Math.cos(b.lat*Math.PI/180);var x=Math.cos(a.lat*Math.PI/180)*Math.sin(b.lat*Math.PI/180)-Math.sin(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.cos((b.lng-a.lng)*Math.PI/180);return (Math.atan2(y,x)*180/Math.PI+360)%360;}
+  function segInfo(path){var segs=[],total=0;for(var i=0;i<path.length-1;i++){var d=hav(path[i],path[i+1]);segs.push(d);total+=d;}return {segs:segs,total:total};}
+  function ptAt(path,segs,total,f){if(f<=0)return {lat:path[0].lat,lng:path[0].lng,seg:0};if(f>=1)return {lat:path[path.length-1].lat,lng:path[path.length-1].lng,seg:path.length-2};var target=f*total;for(var i=0;i<segs.length;i++){if(target<=segs[i]||i===segs.length-1){var r=segs[i]>0?target/segs[i]:0;return {lat:path[i].lat+(path[i+1].lat-path[i].lat)*r,lng:path[i].lng+(path[i+1].lng-path[i].lng)*r,seg:i};}target-=segs[i];}return {lat:path[path.length-1].lat,lng:path[path.length-1].lng,seg:path.length-2};}
+
   function initMap(){
     var map = new google.maps.Map(document.getElementById('map'), {
-      disableDefaultUI: true, clickableIcons: false, gestureHandling: 'greedy'
+      disableDefaultUI: true, clickableIcons: false, gestureHandling: 'greedy', zoom: 13
     });
     window._map = map;
     window._poly = new google.maps.Polyline({ map: map, path: ROUTE, geodesic: false, strokeColor: '${color}', strokeOpacity: 1, strokeWeight: 6 });
@@ -125,16 +153,75 @@ function buildHtml(route: LatLng[], me: LatLng, color: string): string {
     window._me = new google.maps.Marker({ position: ME, map: map, title: 'You', zIndex: 999,
       icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '${color}', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 4 } });
     function fit(path){ var b = new google.maps.LatLngBounds(); path.forEach(function(p){ b.extend(p); }); map.fitBounds(b, 60); }
-    fit(ROUTE);
-    // Replace the straight placeholder line with a real road-following path (Directions).
+    window._fit = fit; fit(ROUTE);
+
     window.setRoute = function(path){ if(!path||!path.length) return; window._poly.setPath(path); window._start.setPosition(path[0]); window._end.setPosition(path[path.length-1]); fit(path); };
     window.moveMe = function(lat,lng){ window._me.setPosition({lat:lat,lng:lng}); };
+
+    // Drop numbered landmark pins.
+    window.setPois = function(list){
+      POIS = list || [];
+      poiMarkers.forEach(function(m){ m.setMap(null); }); poiMarkers = [];
+      POIS.forEach(function(p,i){
+        var m = new google.maps.Marker({ position:{lat:p.lat,lng:p.lng}, map:map, title:p.name, zIndex:500,
+          label:{ text:String(i+1), color:'#fff', fontSize:'12px', fontWeight:'700' },
+          icon:{ path: google.maps.SymbolPath.CIRCLE, scale:13, fillColor:'#0ea5e9', fillOpacity:1, strokeColor:'#fff', strokeWeight:3 } });
+        m.addListener('click', function(){ if(window.ReactNativeWebView) window.ReactNativeWebView.postMessage('poiTap:'+i); });
+        poiMarkers.push(m);
+      });
+    };
+
+    window.focusPoi = function(i){ if(!POIS[i]) return; map.panTo({lat:POIS[i].lat,lng:POIS[i].lng}); map.setZoom(17); };
+
+    // Cinematic navigation: fly the arrow from fromFrac -> 1 over durationMs,
+    // following with the camera and firing poi events as we pass each landmark.
+    window.startNav = function(fromFrac, durationMs){
+      if(navRAF){ cancelAnimationFrame(navRAF); navRAF=null; }
+      navFired = {};
+      var path = window._poly.getPath().getArray().map(function(p){return {lat:p.lat(),lng:p.lng()};});
+      if(path.length<2){ if(window.ReactNativeWebView) window.ReactNativeWebView.postMessage('navdone'); return; }
+      var info = segInfo(path);
+      // arrow icon
+      window._me.setIcon({ path: ARROW, scale: 1.7, fillColor:'${color}', fillOpacity:1, strokeColor:'#fff', strokeWeight:1.5, rotation:0, anchor:new google.maps.Point(0,0) });
+      window._me.setZIndex(9999);
+      map.setZoom(17);
+      var t0 = null;
+      function frame(ts){
+        if(t0===null) t0=ts;
+        var lin = Math.min(1,(ts-t0)/durationMs);
+        var frac = fromFrac + lin*(1-fromFrac);
+        var pos = ptAt(path, info.segs, info.total, frac);
+        var nextI = Math.min(pos.seg+1, path.length-1);
+        var hdg = bearing(path[pos.seg], path[nextI]);
+        window._me.setPosition({lat:pos.lat,lng:pos.lng});
+        window._me.setIcon({ path: ARROW, scale: 1.7, fillColor:'${color}', fillOpacity:1, strokeColor:'#fff', strokeWeight:1.5, rotation:hdg, anchor:new google.maps.Point(0,0) });
+        map.panTo({lat:pos.lat,lng:pos.lng});
+        // fire poi events
+        for(var i=0;i<POIS.length;i++){ if(!navFired[i] && POIS[i].frac<=frac){ navFired[i]=1; if(window.ReactNativeWebView) window.ReactNativeWebView.postMessage('poi:'+i); } }
+        if(lin<1){ navRAF=requestAnimationFrame(frame); } else { navRAF=null; if(window.ReactNativeWebView) window.ReactNativeWebView.postMessage('navdone'); }
+      }
+      navRAF = requestAnimationFrame(frame);
+    };
+
+    window.stopNav = function(){
+      if(navRAF){ cancelAnimationFrame(navRAF); navRAF=null; }
+      window._me.setIcon({ path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor:'${color}', fillOpacity:1, strokeColor:'#fff', strokeWeight:4 });
+      window._fit(window._poly.getPath().getArray().map(function(p){return {lat:p.lat(),lng:p.lng()};}));
+    };
+
     if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage('ready');
   }
   window.gm_authFailure=function(){ document.body.innerHTML='<div style="color:#b91c1c;font-family:sans-serif;padding:24px;text-align:center">Google Maps key error.</div>'; };
 </script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&callback=initMap"></script>
 </body></html>`;
+}
+
+// A POI photo with graceful fallback: Street View → satellite static map.
+function PoiPhoto({ poi, style, w, h }: { poi: ChallengePOI; style?: any; w: number; h: number }) {
+  const [failed, setFailed] = useState(false);
+  const uri = failed ? staticMapUrl(poi.lat, poi.lng, w, h) : streetViewUrl(poi.lat, poi.lng, w, h);
+  return <Image source={{ uri }} style={style} onError={() => setFailed(true)} resizeMode="cover" />;
 }
 
 export default function ChallengeScreen() {
@@ -159,10 +246,15 @@ export default function ChallengeScreen() {
   const [joining, setJoining] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [roadPath, setRoadPath] = useState<LatLng[]>([]);
+  const [navMode, setNavMode] = useState(false);
+  const [reached, setReached] = useState<Record<number, boolean>>({});
+  const [activePoi, setActivePoi] = useState<number | null>(null); // photo card during nav
+  const [viewerPoi, setViewerPoi] = useState<number | null>(null); // fullscreen viewer
   const webRef = useRef<WebView | null>(null);
 
-  // Fetch a real road-following route (Google Directions, walking) so the line
-  // follows streets instead of cutting straight across the sea / buildings.
+  const pois: ChallengePOI[] = (challenge?.pois as ChallengePOI[]) || [];
+
+  // Fetch a real road-following route (Google Directions, walking).
   useEffect(() => {
     if (!challenge) return;
     let alive = true;
@@ -217,17 +309,14 @@ export default function ChallengeScreen() {
   const pct = Math.round(fraction * 100);
   const joined = myKm !== null;
 
-  // Use the real road path once loaded; fall back to the raw waypoints meanwhile.
   const effectiveRoute = roadPath.length > 1 ? roadPath : ((challenge?.route as LatLng[]) || []);
   const mePoint = useMemo<LatLng>(() => {
     if (!challenge || !effectiveRoute.length) return { lat: 0, lng: 0 };
     return pointAtFraction(effectiveRoute, fraction);
   }, [challenge, effectiveRoute, fraction]);
 
-  // Build HTML once for the route + initial me position.
   const html = useMemo(
     () => (challenge ? buildHtml(challenge.route as LatLng[], mePoint, PRIMARY) : ''),
-    // route is static per challenge; initial me position only.
     [challengeId] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
@@ -238,12 +327,23 @@ export default function ChallengeScreen() {
     }
   }, [mapReady, roadPath]);
 
-  // Move the "you" marker when my progress changes (after the map is ready).
+  // Push POIs (with their fraction along the route) to the map.
   useEffect(() => {
-    if (mapReady && challenge) {
+    if (mapReady && pois.length) {
+      const payload = pois.map((p) => ({
+        name: p.name, lat: p.lat, lng: p.lng,
+        frac: totalKm > 0 ? Math.min(1, p.atKm / totalKm) : 0,
+      }));
+      webRef.current?.injectJavaScript(`window.setPois && window.setPois(${JSON.stringify(payload)}); true;`);
+    }
+  }, [mapReady, challengeId, totalKm]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Move the "you" marker when my progress changes (when not navigating).
+  useEffect(() => {
+    if (mapReady && challenge && !navMode) {
       webRef.current?.injectJavaScript(`window.moveMe && window.moveMe(${mePoint.lat},${mePoint.lng}); true;`);
     }
-  }, [mePoint, mapReady, challenge]);
+  }, [mePoint, mapReady, challenge, navMode]);
 
   const onJoin = async () => {
     if (!challengeId || !email || joining) return;
@@ -255,6 +355,48 @@ export default function ChallengeScreen() {
       console.warn('[challenge] join failed', e);
     } finally {
       setJoining(false);
+    }
+  };
+
+  const startNav = () => {
+    if (!mapReady) return;
+    setReached({});
+    setActivePoi(null);
+    setNavMode(true);
+    const remainingKm = Math.max(1, totalKm * (1 - fraction));
+    const duration = Math.max(9000, Math.min(32000, remainingKm * 1100));
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    webRef.current?.injectJavaScript(`window.startNav && window.startNav(${fraction}, ${duration}); true;`);
+  };
+
+  const stopNav = () => {
+    setNavMode(false);
+    setActivePoi(null);
+    webRef.current?.injectJavaScript(`window.stopNav && window.stopNav(); true;`);
+  };
+
+  const onMessage = (e: any) => {
+    const d = String(e.nativeEvent.data || '');
+    if (d === 'ready') { setMapReady(true); return; }
+    if (d === 'navdone') {
+      setNavMode(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      webRef.current?.injectJavaScript(`window.stopNav && window.stopNav(); true;`);
+      return;
+    }
+    if (d.startsWith('poi:')) {
+      const i = parseInt(d.slice(4), 10);
+      if (!Number.isNaN(i)) {
+        setReached((r) => ({ ...r, [i]: true }));
+        setActivePoi(i);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      }
+      return;
+    }
+    if (d.startsWith('poiTap:')) {
+      const i = parseInt(d.slice(7), 10);
+      if (!Number.isNaN(i)) setViewerPoi(i);
+      return;
     }
   };
 
@@ -279,10 +421,11 @@ export default function ChallengeScreen() {
   }
 
   const medals = ['🥇', '🥈', '🥉'];
+  const mapH = navMode ? 460 : 280;
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
-      <View style={styles.mapWrap}>
+      <View style={[styles.mapWrap, { height: mapH }]}>
         <WebView
           ref={webRef}
           originWhitelist={['*']}
@@ -290,7 +433,7 @@ export default function ChallengeScreen() {
           style={StyleSheet.absoluteFill}
           javaScriptEnabled
           domStorageEnabled
-          onMessage={(e) => { if (e.nativeEvent.data === 'ready') setMapReady(true); }}
+          onMessage={onMessage}
           startInLoadingState
           renderLoading={() => (
             <View style={[StyleSheet.absoluteFill, styles.center]}>
@@ -301,6 +444,30 @@ export default function ChallengeScreen() {
         <TouchableOpacity style={[styles.back, { backgroundColor: card }]} onPress={() => router.back()}>
           <ArrowLeft size={22} color={text} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
         </TouchableOpacity>
+
+        {/* Navigation banner + active landmark photo card */}
+        {navMode && (
+          <>
+            <View style={styles.navBanner} pointerEvents="none">
+              <MapPin size={15} color="#fff" />
+              <Text style={styles.navBannerTxt} numberOfLines={1}>{t.navHint}</Text>
+            </View>
+            {activePoi !== null && pois[activePoi] && (
+              <TouchableOpacity
+                activeOpacity={0.9}
+                style={styles.navCard}
+                onPress={() => setViewerPoi(activePoi)}
+              >
+                <PoiPhoto poi={pois[activePoi]} style={styles.navCardImg} w={360} h={220} />
+                <View style={styles.navCardBody}>
+                  <Text style={styles.navCardKicker}>📍 {t.youAreHere}</Text>
+                  <Text style={styles.navCardName} numberOfLines={1}>{pois[activePoi].name}</Text>
+                  <Text style={styles.navCardView}>{t.viewLandmark} ›</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          </>
+        )}
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
@@ -327,8 +494,78 @@ export default function ChallengeScreen() {
           </TouchableOpacity>
         )}
 
+        {/* Start navigation + AR (after joining) */}
+        {joined && (
+          <View style={[styles.actionRow, rtlRow]}>
+            {!navMode ? (
+              <TouchableOpacity style={[styles.navBtn, { backgroundColor: PRIMARY }]} onPress={startNav}>
+                <Play size={18} color="#fff" fill="#fff" />
+                <Text style={styles.navBtnTxt}>{t.startNav}</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={[styles.navBtn, { backgroundColor: '#ef4444' }]} onPress={stopNav}>
+                <Square size={16} color="#fff" fill="#fff" />
+                <Text style={styles.navBtnTxt}>{t.stopNav}</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={[styles.arBtn, { borderColor: PRIMARY }]}
+              onPress={() => router.push(`/challenge-ar?id=${challengeId}` as any)}
+            >
+              <Camera size={18} color={PRIMARY} />
+              <Text style={[styles.arBtnTxt, { color: PRIMARY }]}>{t.arMode}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Hint */}
         <Text style={[styles.hint, { color: sub }, align]}>{t.hint}</Text>
+
+        {/* Landmarks along the route */}
+        {pois.length > 0 && (
+          <>
+            <View style={[styles.lbHeader, rtlRow]}>
+              <Text style={[styles.lbTitle, { color: text }]}>{t.stops}</Text>
+              <Text style={[styles.lbCount, { color: sub }]}>{pois.length}</Text>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+              style={{ marginBottom: 6 }}
+            >
+              {pois.map((p, i) => {
+                const isReached = reached[i] || fraction >= (totalKm > 0 ? p.atKm / totalKm : 0);
+                return (
+                  <TouchableOpacity
+                    key={i}
+                    activeOpacity={0.9}
+                    style={[styles.poiCard, { backgroundColor: card }]}
+                    onPress={() => setViewerPoi(i)}
+                  >
+                    <View style={styles.poiImgWrap}>
+                      <PoiPhoto poi={p} style={styles.poiImg} w={320} h={180} />
+                      {!isReached && (
+                        <View style={styles.poiLock}>
+                          <Text style={styles.poiLockTxt}>{t.locked}</Text>
+                        </View>
+                      )}
+                      <View style={styles.poiBadge}>
+                        <Text style={styles.poiBadgeTxt}>{i + 1}</Text>
+                      </View>
+                    </View>
+                    <View style={{ padding: 10 }}>
+                      <Text style={[styles.poiName, { color: text }]} numberOfLines={1}>{p.name}</Text>
+                      <Text style={[styles.poiKm, { color: isReached ? PRIMARY : sub }]}>
+                        {isReached ? `✓ ${t.reached}` : `${p.atKm} ${t.km}`}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </>
+        )}
 
         {/* Leaderboard */}
         <View style={[styles.lbHeader, rtlRow]}>
@@ -362,6 +599,24 @@ export default function ChallengeScreen() {
           );
         })}
       </ScrollView>
+
+      {/* Fullscreen landmark viewer (Street View photo) */}
+      <Modal visible={viewerPoi !== null} animationType="slide" transparent onRequestClose={() => setViewerPoi(null)}>
+        <View style={styles.viewerWrap}>
+          {viewerPoi !== null && pois[viewerPoi] && (
+            <>
+              <PoiPhoto poi={pois[viewerPoi]} style={styles.viewerImg} w={Math.round(SCREEN_W)} h={Math.round(SCREEN_W * 1.1)} />
+              <View style={styles.viewerInfo}>
+                <Text style={styles.viewerName}>{pois[viewerPoi].name}</Text>
+                <Text style={styles.viewerKm}>{challenge.emoji} {challenge.name} · {pois[viewerPoi].atKm} {t.km}</Text>
+              </View>
+              <TouchableOpacity style={styles.viewerClose} onPress={() => setViewerPoi(null)}>
+                <X size={26} color="#fff" />
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -371,8 +626,18 @@ const styles = StyleSheet.create({
   notFound: { fontSize: 17, fontWeight: '700', textAlign: 'center', marginTop: 16, marginBottom: 20 },
   primaryBtn: { backgroundColor: PRIMARY, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
   primaryBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
-  mapWrap: { height: 280, width: '100%' },
+  mapWrap: { width: '100%' },
   back: { position: 'absolute', top: 50, left: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
+
+  navBanner: { position: 'absolute', top: 50, left: 72, right: 16, backgroundColor: 'rgba(15,23,42,0.85)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  navBannerTxt: { color: '#fff', fontSize: 12, fontWeight: '600', flex: 1 },
+  navCard: { position: 'absolute', bottom: 14, left: 14, right: 14, backgroundColor: '#fff', borderRadius: 16, flexDirection: 'row', overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 12, elevation: 10 },
+  navCardImg: { width: 120, height: 92 },
+  navCardBody: { flex: 1, padding: 12, justifyContent: 'center' },
+  navCardKicker: { fontSize: 11, fontWeight: '800', color: '#0ea5e9' },
+  navCardName: { fontSize: 16, fontWeight: '900', color: '#111', marginTop: 2 },
+  navCardView: { fontSize: 12, fontWeight: '700', color: PRIMARY, marginTop: 4 },
+
   header: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18, marginHorizontal: 16, marginTop: -20, borderRadius: 22, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
   emoji: { fontSize: 40 },
   chName: { fontSize: 17, fontWeight: '800' },
@@ -381,15 +646,42 @@ const styles = StyleSheet.create({
   track: { height: 10, borderRadius: 5, overflow: 'hidden', marginTop: 10 },
   fill: { height: 10, borderRadius: 5, backgroundColor: PRIMARY },
   pctTxt: { fontSize: 12, fontWeight: '600', marginTop: 6 },
+
   joinBtn: { backgroundColor: PRIMARY, marginHorizontal: 16, marginTop: 16, paddingVertical: 16, borderRadius: 16, alignItems: 'center' },
   joinBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
+
+  actionRow: { flexDirection: 'row', gap: 10, marginHorizontal: 16, marginTop: 16 },
+  navBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 14 },
+  navBtnTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  arBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingVertical: 15, paddingHorizontal: 16, borderRadius: 14, borderWidth: 2 },
+  arBtnTxt: { fontSize: 15, fontWeight: '800' },
+
   hint: { fontSize: 13, fontWeight: '500', marginHorizontal: 16, marginTop: 14, lineHeight: 18 },
+
   lbHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 16, marginTop: 22, marginBottom: 10 },
   lbTitle: { fontSize: 18, fontWeight: '800' },
   lbCount: { fontSize: 13, fontWeight: '600' },
+
+  poiCard: { width: 200, borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 },
+  poiImgWrap: { width: '100%', height: 112, backgroundColor: '#e5e7eb' },
+  poiImg: { width: '100%', height: '100%' },
+  poiLock: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(17,24,39,0.55)', alignItems: 'center', justifyContent: 'center' },
+  poiLockTxt: { color: '#fff', fontSize: 12, fontWeight: '700', paddingHorizontal: 10, textAlign: 'center' },
+  poiBadge: { position: 'absolute', top: 8, left: 8, width: 24, height: 24, borderRadius: 12, backgroundColor: '#0ea5e9', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' },
+  poiBadgeTxt: { color: '#fff', fontSize: 12, fontWeight: '800' },
+  poiName: { fontSize: 14, fontWeight: '800' },
+  poiKm: { fontSize: 12, fontWeight: '700', marginTop: 2 },
+
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 16, marginHorizontal: 16, marginBottom: 8, borderRadius: 16 },
   rank: { fontSize: 18, fontWeight: '800', width: 30, textAlign: 'center', color: '#888' },
   rowName: { fontSize: 15, fontWeight: '700' },
   rowKm: { fontSize: 15, fontWeight: '800' },
   rowKmSub: { fontSize: 12, fontWeight: '600' },
+
+  viewerWrap: { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', alignItems: 'center', justifyContent: 'center' },
+  viewerImg: { width: '100%', height: '70%' },
+  viewerInfo: { position: 'absolute', bottom: 60, left: 24, right: 24 },
+  viewerName: { color: '#fff', fontSize: 24, fontWeight: '900' },
+  viewerKm: { color: '#cbd5e1', fontSize: 14, fontWeight: '600', marginTop: 6 },
+  viewerClose: { position: 'absolute', top: 54, right: 20, width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
 });
