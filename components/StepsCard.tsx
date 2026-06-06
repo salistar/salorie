@@ -8,6 +8,7 @@ import { Colors } from '../constants/Colors';
 import { useTranslation } from '../lib/i18n';
 import { isHealthAvailable, readToday } from '../lib/health';
 import { getStepsMode, getActivitySteps, getSimSteps } from '../lib/steps';
+import { rememberEmail, ensureNotifPermission, registerStepsBackground, updateStepsNotification } from '../lib/stepsNotif';
 
 const TXT: Record<string, { steps: string; today: string; kcal: string; goal: string; connect: string }> = {
   en: { steps: 'Steps', today: 'Today', kcal: 'kcal', goal: 'Goal 10,000', connect: 'Connect Health Connect →' },
@@ -52,6 +53,13 @@ export default function StepsCard() {
           setSteps(total);
           setKcal(activeKcal);
           setConnected(total > 0);
+          // Keep the persistent steps notification in sync + ensure the
+          // background refresher is running (so it counts while app is closed).
+          if (email) {
+            rememberEmail(email);
+            updateStepsNotification(total);
+            ensureNotifPermission().then((ok) => { if (ok) registerStepsBackground(); });
+          }
         } catch { /* show connect CTA */ }
         finally { if (alive) setLoading(false); }
       })();

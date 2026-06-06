@@ -1,6 +1,7 @@
 // Health Connect (Android) — lit pas, calories actives et poids du jour.
 // Sur Android 14+ Health Connect est integre au systeme ; sinon c'est une app
 // separee (com.google.android.apps.healthdata).
+import { Linking } from 'react-native';
 import {
   initialize,
   requestPermission,
@@ -24,20 +25,43 @@ export async function isHealthAvailable(): Promise<boolean> {
   }
 }
 
-export async function connectHealth(): Promise<boolean> {
+export type ConnectResult = 'ok' | 'denied' | 'unavailable' | 'update_required' | 'error';
+
+// Robust connect: check the SDK status BEFORE touching any native API. Calling
+// initialize()/requestPermission() when the Health Connect provider is missing
+// or needs an update is what crashed the app — now we bail out gracefully and
+// let the UI offer to install/update Health Connect instead.
+export async function connectHealthStatus(): Promise<ConnectResult> {
   try {
+    let status: number | undefined;
+    try { status = await getSdkStatus(); } catch { return 'unavailable'; }
+    if (status === SdkAvailabilityStatus.SDK_UNAVAILABLE) return 'unavailable';
+    if (status === SdkAvailabilityStatus.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED) return 'update_required';
+
     const ok = await initialize();
-    if (!ok) return false;
-    await requestPermission([
+    if (!ok) return 'error';
+    const granted = await requestPermission([
       { accessType: 'read', recordType: 'Steps' },
       { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
       { accessType: 'read', recordType: 'Weight' },
     ]);
-    return true;
+    return Array.isArray(granted) && granted.length > 0 ? 'ok' : 'denied';
   } catch (e) {
     console.warn('[health] connect failed', e);
-    return false;
+    return 'error';
   }
+}
+
+// Back-compat boolean wrapper.
+export async function connectHealth(): Promise<boolean> {
+  return (await connectHealthStatus()) === 'ok';
+}
+
+// Open the Play Store page for Health Connect (install / update).
+export async function openHealthConnectInstall(): Promise<void> {
+  const id = 'com.google.android.apps.healthdata';
+  try { await Linking.openURL(`market://details?id=${id}`); }
+  catch { try { await Linking.openURL(`https://play.google.com/store/apps/details?id=${id}`); } catch {} }
 }
 
 export async function readToday(): Promise<HealthToday> {
