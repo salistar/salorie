@@ -36,8 +36,13 @@ export async function joinRace(raceId: string, email: string, name: string, imag
 }
 
 export function listenOpenRaces(cb: (races: Race[]) => void) {
-  const q = query(collection(db, 'races'), where('status', 'in', ['open', 'live']), orderBy('createdAt', 'desc'), limit(30));
-  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))), () => cb([]));
+  // Single-field where-in (no composite index needed); sort client-side.
+  const q = query(collection(db, 'races'), where('status', 'in', ['open', 'live']), limit(30));
+  return onSnapshot(q, (snap) => {
+    const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Race[];
+    list.sort((a, b) => ((b.createdAt as any) || 0) - ((a.createdAt as any) || 0));
+    cb(list);
+  }, (e) => { console.warn('[races] listen failed', e); cb([]); });
 }
 
 export async function getRace(raceId: string): Promise<Race | null> {
