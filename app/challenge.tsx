@@ -11,6 +11,7 @@ import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ArrowLeft, Flag, Play, Square, Camera, MapPin, X, Navigation2 } from 'lucide-react-native';
 import { addNutritionLog, emailToDocId } from '../lib/firebase';
+import { addActivitySteps } from '../lib/steps';
 import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
@@ -440,6 +441,8 @@ export default function ChallengeScreen() {
       calories: kcal, protein: 0, carbs: 0, fat: 0, date,
       duration: Math.round(covered * 6), intensity: 'medium',
     } as any).catch((e) => console.warn('[challenge] log segment failed', e));
+    // Steps from this race segment are added to today's Home step count.
+    addActivitySteps(email, covered).catch(() => {});
   };
 
   // SIMULATION: replays the full route as a guided fly-through. Advances the

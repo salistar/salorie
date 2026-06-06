@@ -1,11 +1,13 @@
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Footprints, Flame, ChevronRight } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { useTranslation } from '../lib/i18n';
 import { isHealthAvailable, readToday } from '../lib/health';
+import { getStepsMode, getActivitySteps, getSimSteps } from '../lib/steps';
 
 const TXT: Record<string, { steps: string; today: string; kcal: string; goal: string; connect: string }> = {
   en: { steps: 'Steps', today: 'Today', kcal: 'kcal', goal: 'Goal 10,000', connect: 'Connect Health Connect →' },
@@ -16,31 +18,46 @@ const GOAL = 10000;
 
 export default function StepsCard() {
   const router = useRouter();
+  const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
+  const email = user?.primaryEmailAddress?.emailAddress || '';
 
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
   const [steps, setSteps] = useState(0);
   const [kcal, setKcal] = useState(0);
+  const [mode, setMode] = useState<'real' | 'sim'>('real');
 
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const avail = await isHealthAvailable();
-        if (avail) {
-          const d = await readToday();
+  // Re-read on every focus so steps added by a run / challenge show immediately.
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      (async () => {
+        try {
+          const m = await getStepsMode();
+          const activity = await getActivitySteps(email);
+          let base = 0;
+          let activeKcal = 0;
+          if (m === 'sim') {
+            base = await getSimSteps(email);
+          } else if (await isHealthAvailable()) {
+            const d = await readToday();
+            base = d.steps || 0;
+            activeKcal = d.activeKcal || 0;
+          }
           if (!alive) return;
-          setSteps(d.steps || 0);
-          setKcal(d.activeKcal || 0);
-          setConnected((d.steps || 0) > 0);
-        }
-      } catch { /* show connect CTA */ }
-      finally { if (alive) setLoading(false); }
-    })();
-    return () => { alive = false; };
-  }, []);
+          const total = base + activity;
+          setMode(m);
+          setSteps(total);
+          setKcal(activeKcal);
+          setConnected(total > 0);
+        } catch { /* show connect CTA */ }
+        finally { if (alive) setLoading(false); }
+      })();
+      return () => { alive = false; };
+    }, [email])
+  );
 
   const pct = Math.min(100, Math.round((steps / GOAL) * 100));
   const row = (rev = false): any => ({ flexDirection: isRTL ? (rev ? 'row' : 'row-reverse') : (rev ? 'row-reverse' : 'row') });
@@ -64,7 +81,10 @@ export default function StepsCard() {
                   <Text style={styles.today}>{t.today}</Text>
                 </View>
               </View>
-              <ChevronRight size={22} color="rgba(255,255,255,0.9)" style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+              <View style={[styles.head, row(), { gap: 8 }]}>
+                <View style={styles.modePill}><Text style={styles.modePillTxt}>{mode === 'sim' ? 'SIM' : 'RÉEL'}</Text></View>
+                <ChevronRight size={22} color="rgba(255,255,255,0.9)" style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+              </View>
             </View>
 
             <View style={[styles.valueRow, row()]}>
@@ -109,4 +129,6 @@ const styles = StyleSheet.create({
   pill: { alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.18)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 },
   pillTxt: { color: '#fff', fontSize: 13, fontWeight: '800' },
   goalTxt: { color: 'rgba(255,255,255,0.92)', fontSize: 12.5, fontWeight: '700' },
+  modePill: { backgroundColor: 'rgba(255,255,255,0.22)', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999 },
+  modePillTxt: { color: '#fff', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
 });
