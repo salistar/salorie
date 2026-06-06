@@ -3,12 +3,17 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Re
 import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin } from 'lucide-react-native';
 
 const PLANS_CTA: Record<string, { t: string; s: string }> = {
   en: { t: 'Workout plans', s: 'Ready-made training programs' },
   fr: { t: 'Plans sportifs', s: "Des programmes d'entraînement prêts à l'emploi" },
   ar: { t: 'برامج رياضية', s: 'برامج تدريب جاهزة' },
+};
+const RUN_CTA: Record<string, { t: string; s: string }> = {
+  en: { t: 'Solo run (GPS)', s: 'Track distance, pace & calories on the map' },
+  fr: { t: 'Course solo (GPS)', s: 'Distance, allure & calories sur la carte' },
+  ar: { t: 'جري فردي (GPS)', s: 'المسافة والإيقاع والسعرات على الخريطة' },
 };
 
 // Small inline strings (avoid editing the large i18n dictionary) for the
@@ -172,6 +177,16 @@ export default function CoachScreen() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.mealCtaTitle, { color: text }]}>{(PLANS_CTA[language] || PLANS_CTA.en).t}</Text>
             <Text style={[styles.mealCtaSub, { color: sub }]}>{(PLANS_CTA[language] || PLANS_CTA.en).s}</Text>
+          </View>
+          <ChevronRight size={22} color={sub} />
+        </TouchableOpacity>
+
+        {/* ── Solo run (GPS) CTA ── */}
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/run' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
+          <View style={styles.mealCtaIcon}><MapPin size={24} color={Colors.light.primary} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.mealCtaTitle, { color: text }]}>{(RUN_CTA[language] || RUN_CTA.en).t}</Text>
+            <Text style={[styles.mealCtaSub, { color: sub }]}>{(RUN_CTA[language] || RUN_CTA.en).s}</Text>
           </View>
           <ChevronRight size={22} color={sub} />
         </TouchableOpacity>
