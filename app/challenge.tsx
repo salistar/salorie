@@ -16,12 +16,11 @@ import {
   getMyChallengeProgress,
   joinChallenge,
   listenChallengeBoard,
-  streetViewUrl,
-  staticMapUrl,
   Challenge,
   ChallengeProgress,
   ChallengePOI,
 } from '../lib/races';
+import { poiPhoto } from '../assets/challenges/registry';
 
 // Google Maps JS in a WebView — same approach as run.tsx (the JS API key works in a
 // WebView with a baseUrl; react-native-maps would need a Maps SDK for Android key).
@@ -173,9 +172,10 @@ function buildHtml(route: LatLng[], me: LatLng, color: string): string {
 
     window.focusPoi = function(i){ if(!POIS[i]) return; map.panTo({lat:POIS[i].lat,lng:POIS[i].lng}); map.setZoom(17); };
 
-    // Cinematic navigation: fly the arrow from fromFrac -> 1 over durationMs,
-    // following with the camera and firing poi events as we pass each landmark.
-    window.startNav = function(fromFrac, durationMs){
+    // Navigation that mirrors your REAL progress: fly the arrow from fromFrac ->
+    // toFrac (your current distance) over durationMs, following with the camera and
+    // firing poi events only for landmarks you have actually reached.
+    window.startNav = function(fromFrac, toFrac, durationMs){
       if(navRAF){ cancelAnimationFrame(navRAF); navRAF=null; }
       navFired = {};
       var path = window._poly.getPath().getArray().map(function(p){return {lat:p.lat(),lng:p.lng()};});
@@ -189,7 +189,7 @@ function buildHtml(route: LatLng[], me: LatLng, color: string): string {
       function frame(ts){
         if(t0===null) t0=ts;
         var lin = Math.min(1,(ts-t0)/durationMs);
-        var frac = fromFrac + lin*(1-fromFrac);
+        var frac = fromFrac + lin*(toFrac-fromFrac);
         var pos = ptAt(path, info.segs, info.total, frac);
         var nextI = Math.min(pos.seg+1, path.length-1);
         var hdg = bearing(path[pos.seg], path[nextI]);
@@ -217,11 +217,11 @@ function buildHtml(route: LatLng[], me: LatLng, color: string): string {
 </body></html>`;
 }
 
-// A POI photo with graceful fallback: Street View → satellite static map.
-function PoiPhoto({ poi, style, w, h }: { poi: ChallengePOI; style?: any; w: number; h: number }) {
-  const [failed, setFailed] = useState(false);
-  const uri = failed ? staticMapUrl(poi.lat, poi.lng, w, h) : streetViewUrl(poi.lat, poi.lng, w, h);
-  return <Image source={{ uri }} style={style} onError={() => setFailed(true)} resizeMode="cover" />;
+// A bundled landmark photo (always available offline).
+function PoiPhoto({ challengeId, index, style }: { challengeId: string; index: number; style?: any }) {
+  const src = poiPhoto(challengeId, index);
+  if (!src) return <View style={[style, { backgroundColor: '#cbd5e1' }]} />;
+  return <Image source={src} style={style} resizeMode="cover" />;
 }
 
 export default function ChallengeScreen() {
@@ -363,10 +363,12 @@ export default function ChallengeScreen() {
     setReached({});
     setActivePoi(null);
     setNavMode(true);
-    const remainingKm = Math.max(1, totalKm * (1 - fraction));
-    const duration = Math.max(9000, Math.min(32000, remainingKm * 1100));
+    // Navigation follows your REAL progress: it replays the distance you have
+    // actually covered (0 → your current point), never the whole route.
+    const coveredKm = totalKm * fraction;
+    const duration = fraction <= 0 ? 1400 : Math.max(5000, Math.min(22000, coveredKm * 1300));
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-    webRef.current?.injectJavaScript(`window.startNav && window.startNav(${fraction}, ${duration}); true;`);
+    webRef.current?.injectJavaScript(`window.startNav && window.startNav(0, ${fraction}, ${duration}); true;`);
   };
 
   const stopNav = () => {
@@ -458,7 +460,7 @@ export default function ChallengeScreen() {
                 style={styles.navCard}
                 onPress={() => setViewerPoi(activePoi)}
               >
-                <PoiPhoto poi={pois[activePoi]} style={styles.navCardImg} w={360} h={220} />
+                <PoiPhoto challengeId={challengeId} index={activePoi} style={styles.navCardImg} />
                 <View style={styles.navCardBody}>
                   <Text style={styles.navCardKicker}>📍 {t.youAreHere}</Text>
                   <Text style={styles.navCardName} numberOfLines={1}>{pois[activePoi].name}</Text>
@@ -544,7 +546,7 @@ export default function ChallengeScreen() {
                     onPress={() => setViewerPoi(i)}
                   >
                     <View style={styles.poiImgWrap}>
-                      <PoiPhoto poi={p} style={styles.poiImg} w={320} h={180} />
+                      <PoiPhoto challengeId={challengeId} index={i} style={styles.poiImg} />
                       {!isReached && (
                         <View style={styles.poiLock}>
                           <Text style={styles.poiLockTxt}>{t.locked}</Text>
@@ -605,7 +607,7 @@ export default function ChallengeScreen() {
         <View style={styles.viewerWrap}>
           {viewerPoi !== null && pois[viewerPoi] && (
             <>
-              <PoiPhoto poi={pois[viewerPoi]} style={styles.viewerImg} w={Math.round(SCREEN_W)} h={Math.round(SCREEN_W * 1.1)} />
+              <PoiPhoto challengeId={challengeId} index={viewerPoi} style={styles.viewerImg} />
               <View style={styles.viewerInfo}>
                 <Text style={styles.viewerName}>{pois[viewerPoi].name}</Text>
                 <Text style={styles.viewerKm}>{challenge.emoji} {challenge.name} · {pois[viewerPoi].atKm} {t.km}</Text>

@@ -7,7 +7,8 @@ import * as Haptics from 'expo-haptics';
 import { ArrowLeft, X, Navigation2, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { useTranslation } from '../lib/i18n';
-import { getChallenge, streetViewUrl, staticMapUrl, Challenge, ChallengePOI } from '../lib/races';
+import { getChallenge, Challenge, ChallengePOI } from '../lib/races';
+import { poiPhoto } from '../assets/challenges/registry';
 import { Dimensions } from 'react-native';
 
 const PRIMARY = Colors.light.primary;
@@ -62,10 +63,10 @@ function fmtDist(km: number, kmLabel: string): string {
   return `${Math.round(km).toLocaleString()} ${kmLabel}`;
 }
 
-function ArThumb({ poi }: { poi: ChallengePOI }) {
-  const [failed, setFailed] = useState(false);
-  const uri = failed ? staticMapUrl(poi.lat, poi.lng, 160, 160, 15) : streetViewUrl(poi.lat, poi.lng, 160, 160);
-  return <Image source={{ uri }} style={styles.thumb} onError={() => setFailed(true)} />;
+function ArThumb({ challengeId, index }: { challengeId: string; index: number }) {
+  const src = poiPhoto(challengeId, index);
+  if (!src) return <View style={[styles.thumb, { backgroundColor: '#334155' }]} />;
+  return <Image source={src} style={styles.thumb} />;
 }
 
 export default function ChallengeARScreen() {
@@ -179,7 +180,7 @@ export default function ChallengeARScreen() {
         return (
           <View key={it.i} style={[styles.tag, { left: Math.max(8, Math.min(W - 188, it.x - 90)), top }]} pointerEvents="none">
             <View style={styles.tagInner}>
-              <ArThumb poi={it.p} />
+              <ArThumb challengeId={String(id || '')} index={it.i} />
               <View style={{ flex: 1, paddingHorizontal: 8 }}>
                 <Text style={styles.tagName} numberOfLines={1}>{it.p.name}</Text>
                 <Text style={styles.tagDist}>↗ {fmtDist(it.dist, t.km)}</Text>
