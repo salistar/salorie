@@ -7,7 +7,7 @@ import ScreenTopBar from '../components/ScreenTopBar';
 import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
-import { isHealthAvailable, connectHealthStatus, openHealthConnectInstall, readToday, HealthToday } from '../lib/health';
+import { isHealthAvailable, connectHealthStatus, openHealthConnectInstall, openHealthSettings, hasStepsPermission, readToday, HealthToday } from '../lib/health';
 import { addNutritionLog } from '../lib/firebase';
 import { getStepsMode, setStepsMode, getSimSteps, addSimSteps, resetSimSteps, getActivitySteps } from '../lib/steps';
 
@@ -34,7 +34,17 @@ export default function HealthScreen() {
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const walkRef = React.useRef<any>(null);
 
-  useEffect(() => { isHealthAvailable().then(setAvailable); }, []);
+  useEffect(() => {
+    (async () => {
+      const avail = await isHealthAvailable();
+      setAvailable(avail);
+      // Auto-connect if Steps access was already granted before.
+      if (avail && (await hasStepsPermission())) {
+        setConnected(true);
+        try { setData(await readToday()); } catch {}
+      }
+    })();
+  }, []);
   useEffect(() => {
     (async () => {
       setMode(await getStepsMode());
@@ -77,13 +87,14 @@ export default function HealthScreen() {
       if (res === 'ok') {
         setConnected(true);
         setData(await readToday());
+        setMsg(null);
       } else if (res === 'unavailable' || res === 'update_required') {
         setMsg('Health Connect doit être installé / mis à jour. Ouverture du Play Store…');
         openHealthConnectInstall();
       } else if (res === 'denied') {
-        setMsg('Permissions refusées. Autorise les pas dans Health Connect.');
+        setMsg('Autorise l\'accès aux « Pas » pour Salorie dans Health Connect, puis reviens.');
       } else {
-        setMsg('Connexion impossible. Réessaie ou utilise le mode Simulation.');
+        setMsg('Connexion impossible. Réessaie, ouvre Health Connect, ou utilise le mode Simulation.');
       }
     } catch {
       setMsg('Connexion impossible. Réessaie ou utilise le mode Simulation.');
@@ -180,9 +191,19 @@ export default function HealthScreen() {
         )}
 
         {mode === 'real' && available !== false && !connected && (
-          <TouchableOpacity style={styles.primaryBtn} onPress={connect} disabled={busy}>
-            {busy ? <ActivityIndicator color="#fff" /> : <><HeartPulse size={20} color="#fff" /><Text style={styles.primaryBtnText}>{t('health.connect')}</Text></>}
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity style={styles.primaryBtn} onPress={connect} disabled={busy}>
+              {busy ? <ActivityIndicator color="#fff" /> : <><HeartPulse size={20} color="#fff" /><Text style={styles.primaryBtnText}>{t('health.connect')}</Text></>}
+            </TouchableOpacity>
+            {!!msg && <Text style={[styles.msg, { color: sub }]}>{msg}</Text>}
+            <TouchableOpacity style={styles.ghostBtn} onPress={openHealthSettings}>
+              <HeartPulse size={18} color={Colors.light.primary} />
+              <Text style={styles.ghostText}>Ouvrir Health Connect</Text>
+            </TouchableOpacity>
+            <Text style={[styles.msg, { color: sub }]}>
+              Astuce : dans Health Connect → Autorisations des applications → Salorie, active « Pas ».
+            </Text>
+          </>
         )}
 
         {mode === 'real' && connected && (

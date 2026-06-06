@@ -5,6 +5,8 @@ import { Linking } from 'react-native';
 import {
   initialize,
   requestPermission,
+  getGrantedPermissions,
+  openHealthConnectSettings,
   readRecords,
   getSdkStatus,
   SdkAvailabilityStatus,
@@ -40,16 +42,40 @@ export async function connectHealthStatus(): Promise<ConnectResult> {
 
     const ok = await initialize();
     if (!ok) return 'error';
-    const granted = await requestPermission([
-      { accessType: 'read', recordType: 'Steps' },
-      { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
-      { accessType: 'read', recordType: 'Weight' },
-    ]);
-    return Array.isArray(granted) && granted.length > 0 ? 'ok' : 'denied';
+    const perms = [
+      { accessType: 'read' as const, recordType: 'Steps' as const },
+      { accessType: 'read' as const, recordType: 'ActiveCaloriesBurned' as const },
+      { accessType: 'read' as const, recordType: 'Weight' as const },
+    ];
+    let granted: any[] = [];
+    try { granted = (await requestPermission(perms)) || []; } catch { granted = []; }
+    // The result of requestPermission can be empty even when the user granted in
+    // the system UI (delivery quirks) — re-check the actually-granted set.
+    if (!granted.length) {
+      try { granted = (await getGrantedPermissions()) || []; } catch {}
+    }
+    const hasSteps = granted.some((p: any) => p?.recordType === 'Steps');
+    return hasSteps ? 'ok' : 'denied';
   } catch (e) {
     console.warn('[health] connect failed', e);
     return 'error';
   }
+}
+
+// Has the user already granted Steps access? (used to auto-connect on open)
+export async function hasStepsPermission(): Promise<boolean> {
+  try {
+    const status = await getSdkStatus();
+    if (status !== SdkAvailabilityStatus.SDK_AVAILABLE) return false;
+    await initialize();
+    const granted = (await getGrantedPermissions()) || [];
+    return granted.some((p: any) => p?.recordType === 'Steps');
+  } catch { return false; }
+}
+
+// Open the Health Connect screen where the user can toggle Salorie's access.
+export async function openHealthSettings(): Promise<void> {
+  try { await openHealthConnectSettings(); } catch (e) { console.warn('[health] open settings failed', e); }
 }
 
 // Back-compat boolean wrapper.
