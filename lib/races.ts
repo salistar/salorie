@@ -151,6 +151,20 @@ export async function joinChallenge(challengeId: string, email: string, name: st
   }, { merge: true });
 }
 
+// Set the absolute cumulative distance for a challenge (used by the live/sim
+// navigation to push progress as you advance). Merges so it works even if the
+// participant doc is sparse.
+export async function setChallengeProgress(challengeId: string, email: string, km: number) {
+  if (!challengeId || !email) return;
+  try {
+    await setDoc(
+      doc(db, 'challenges', challengeId, 'participants', emailToDocId(email)),
+      { cumulativeKm: Math.max(0, km), updatedAt: serverTimestamp() },
+      { merge: true }
+    );
+  } catch (e) { console.warn('[challenge] setChallengeProgress failed', e); }
+}
+
 export async function getMyChallengeProgress(challengeId: string, email: string): Promise<number | null> {
   const s = await getDoc(doc(db, 'challenges', challengeId, 'participants', emailToDocId(email)));
   return s.exists() ? ((s.data() as any).cumulativeKm || 0) : null;
