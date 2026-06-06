@@ -1,52 +1,67 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, ChevronDown, Dumbbell, Clock, BarChart3, Flame } from 'lucide-react-native';
+import { useUser } from '@clerk/clerk-expo';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ArrowLeft, ChevronDown, Dumbbell, Clock, BarChart3, Flame, CheckCircle2 } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
+import { addNutritionLog, emailToDocId } from '../lib/firebase';
 
 type Plan = {
-  emoji: string; color: string; title: string; level: string; duration: string; focus: string;
+  emoji: string; color: string; title: string; level: string; duration: string; focus: string; met: number;
   exercises: { name: string; detail: string }[];
 };
 
-const TXT: Record<string, { title: string; sub: string; cta: string; exercises: string }> = {
-  en: { title: 'Workout plans', sub: 'Ready-made programs — pick one and start training.', cta: 'Log a workout', exercises: 'Exercises' },
-  fr: { title: 'Plans sportifs', sub: 'Des programmes prêts à l\'emploi — choisis et commence à t\'entraîner.', cta: 'Enregistrer une séance', exercises: 'Exercices' },
-  ar: { title: 'برامج رياضية', sub: 'برامج جاهزة — اختر وابدأ التمرين.', cta: 'تسجيل تمرين', exercises: 'التمارين' },
+const TXT: Record<string, { title: string; sub: string; cta: string; exercises: string; done: string; doneTitle: string; doneMsg: string }> = {
+  en: { title: 'Workout plans', sub: 'Ready-made programs — pick one and start training.', cta: 'Log a workout', exercises: 'Exercises', done: 'I did this workout', doneTitle: 'Workout logged 💪', doneMsg: 'kcal added to your activity for today.' },
+  fr: { title: 'Plans sportifs', sub: 'Des programmes prêts à l\'emploi — choisis et commence à t\'entraîner.', cta: 'Enregistrer une séance', exercises: 'Exercices', done: 'J\'ai effectué ce plan', doneTitle: 'Séance enregistrée 💪', doneMsg: 'kcal ajoutées à ton activité du jour.' },
+  ar: { title: 'برامج رياضية', sub: 'برامج جاهزة — اختر وابدأ التمرين.', cta: 'تسجيل تمرين', exercises: 'التمارين', done: 'أنجزت هذا البرنامج', doneTitle: 'تم تسجيل التمرين 💪', doneMsg: 'سعرة أُضيفت إلى نشاط اليوم.' },
 };
 
 const PLANS: Record<string, Plan[]> = {
   en: [
-    { emoji: '💪', color: '#298f50', title: 'Full Body', level: 'Beginner', duration: '40 min', focus: 'Whole body', exercises: [
+    { emoji: '💪', color: '#298f50', title: 'Full Body', level: 'Beginner', duration: '40 min', focus: 'Whole body', met: 5, exercises: [
       { name: 'Squat', detail: '3 × 10' }, { name: 'Bench Press', detail: '3 × 10' }, { name: 'Dumbbell Row', detail: '3 × 12' }, { name: 'Shoulder Press', detail: '3 × 10' }, { name: 'Plank', detail: '3 × 30s' } ] },
-    { emoji: '🏋️', color: '#2563eb', title: 'Push / Pull / Legs', level: 'Intermediate', duration: '55 min', focus: 'Strength split', exercises: [
+    { emoji: '🏋️', color: '#2563eb', title: 'Push / Pull / Legs', level: 'Intermediate', duration: '55 min', focus: 'Strength split', met: 5.5, exercises: [
       { name: 'Bench Press', detail: '4 × 8' }, { name: 'Lat Pulldown', detail: '4 × 10' }, { name: 'Deadlift', detail: '3 × 6' }, { name: 'Lunges', detail: '3 × 12' }, { name: 'Lateral Raise', detail: '3 × 15' } ] },
-    { emoji: '🔥', color: '#f59e0b', title: 'HIIT Cardio', level: 'All levels', duration: '25 min', focus: 'Fat burn', exercises: [
+    { emoji: '🔥', color: '#f59e0b', title: 'HIIT Cardio', level: 'All levels', duration: '25 min', focus: 'Fat burn', met: 9, exercises: [
       { name: 'Running', detail: '5 min' }, { name: 'Cycling', detail: '8 min' }, { name: 'HIIT intervals', detail: '6 × 1 min' }, { name: 'Walking (cooldown)', detail: '5 min' } ] },
-    { emoji: '⚡', color: '#7c3aed', title: 'Muscle Gain', level: 'Advanced', duration: '60 min', focus: 'Hypertrophy', exercises: [
+    { emoji: '⚡', color: '#7c3aed', title: 'Muscle Gain', level: 'Advanced', duration: '60 min', focus: 'Hypertrophy', met: 6, exercises: [
       { name: 'Deadlift', detail: '4 × 6' }, { name: 'Squat', detail: '4 × 8' }, { name: 'Bench Press', detail: '4 × 8' }, { name: 'Pull-up', detail: '4 × max' }, { name: 'Barbell Row', detail: '4 × 10' } ] },
+    { emoji: '🧘', color: '#0ea5e9', title: 'Core & Abs', level: 'All levels', duration: '20 min', focus: 'Core', met: 4.5, exercises: [
+      { name: 'Plank', detail: '3 × 45s' }, { name: 'Crunches', detail: '3 × 20' }, { name: 'Russian Twist', detail: '3 × 30' }, { name: 'Hanging Knee Raise', detail: '3 × 12' } ] },
+    { emoji: '🤸', color: '#db2777', title: 'Mobility & Stretch', level: 'Recovery', duration: '15 min', focus: 'Flexibility', met: 2.8, exercises: [
+      { name: 'Dynamic warm-up', detail: '5 min' }, { name: 'Hip openers', detail: '4 min' }, { name: 'Hamstring stretch', detail: '3 min' }, { name: 'Shoulder mobility', detail: '3 min' } ] },
   ],
   fr: [
-    { emoji: '💪', color: '#298f50', title: 'Full Body', level: 'Débutant', duration: '40 min', focus: 'Corps entier', exercises: [
+    { emoji: '💪', color: '#298f50', title: 'Full Body', level: 'Débutant', duration: '40 min', focus: 'Corps entier', met: 5, exercises: [
       { name: 'Squat', detail: '3 × 10' }, { name: 'Développé couché', detail: '3 × 10' }, { name: 'Rowing haltère', detail: '3 × 12' }, { name: 'Développé épaules', detail: '3 × 10' }, { name: 'Gainage', detail: '3 × 30s' } ] },
-    { emoji: '🏋️', color: '#2563eb', title: 'Push / Pull / Legs', level: 'Intermédiaire', duration: '55 min', focus: 'Split force', exercises: [
+    { emoji: '🏋️', color: '#2563eb', title: 'Push / Pull / Legs', level: 'Intermédiaire', duration: '55 min', focus: 'Split force', met: 5.5, exercises: [
       { name: 'Développé couché', detail: '4 × 8' }, { name: 'Tirage vertical', detail: '4 × 10' }, { name: 'Soulevé de terre', detail: '3 × 6' }, { name: 'Fentes', detail: '3 × 12' }, { name: 'Élévations latérales', detail: '3 × 15' } ] },
-    { emoji: '🔥', color: '#f59e0b', title: 'HIIT Cardio', level: 'Tous niveaux', duration: '25 min', focus: 'Brûle-graisse', exercises: [
+    { emoji: '🔥', color: '#f59e0b', title: 'HIIT Cardio', level: 'Tous niveaux', duration: '25 min', focus: 'Brûle-graisse', met: 9, exercises: [
       { name: 'Course', detail: '5 min' }, { name: 'Vélo', detail: '8 min' }, { name: 'Intervalles HIIT', detail: '6 × 1 min' }, { name: 'Marche (retour au calme)', detail: '5 min' } ] },
-    { emoji: '⚡', color: '#7c3aed', title: 'Prise de muscle', level: 'Avancé', duration: '60 min', focus: 'Hypertrophie', exercises: [
+    { emoji: '⚡', color: '#7c3aed', title: 'Prise de muscle', level: 'Avancé', duration: '60 min', focus: 'Hypertrophie', met: 6, exercises: [
       { name: 'Soulevé de terre', detail: '4 × 6' }, { name: 'Squat', detail: '4 × 8' }, { name: 'Développé couché', detail: '4 × 8' }, { name: 'Tractions', detail: '4 × max' }, { name: 'Rowing barre', detail: '4 × 10' } ] },
+    { emoji: '🧘', color: '#0ea5e9', title: 'Abdos & Gainage', level: 'Tous niveaux', duration: '20 min', focus: 'Ceinture abdo', met: 4.5, exercises: [
+      { name: 'Gainage', detail: '3 × 45s' }, { name: 'Crunchs', detail: '3 × 20' }, { name: 'Russian Twist', detail: '3 × 30' }, { name: 'Relevé de genoux suspendu', detail: '3 × 12' } ] },
+    { emoji: '🤸', color: '#db2777', title: 'Mobilité & Étirements', level: 'Récupération', duration: '15 min', focus: 'Souplesse', met: 2.8, exercises: [
+      { name: 'Échauffement dynamique', detail: '5 min' }, { name: 'Ouverture des hanches', detail: '4 min' }, { name: 'Étirement ischios', detail: '3 min' }, { name: 'Mobilité épaules', detail: '3 min' } ] },
   ],
   ar: [
-    { emoji: '💪', color: '#298f50', title: 'الجسم كامل', level: 'مبتدئ', duration: '40 د', focus: 'الجسم بالكامل', exercises: [
+    { emoji: '💪', color: '#298f50', title: 'الجسم كامل', level: 'مبتدئ', duration: '40 د', focus: 'الجسم بالكامل', met: 5, exercises: [
       { name: 'سكوات', detail: '3 × 10' }, { name: 'بنش برس', detail: '3 × 10' }, { name: 'تجديف دمبل', detail: '3 × 12' }, { name: 'ضغط الأكتاف', detail: '3 × 10' }, { name: 'بلانك', detail: '3 × 30ث' } ] },
-    { emoji: '🏋️', color: '#2563eb', title: 'دفع / سحب / أرجل', level: 'متوسط', duration: '55 د', focus: 'تقسيم القوة', exercises: [
+    { emoji: '🏋️', color: '#2563eb', title: 'دفع / سحب / أرجل', level: 'متوسط', duration: '55 د', focus: 'تقسيم القوة', met: 5.5, exercises: [
       { name: 'بنش برس', detail: '4 × 8' }, { name: 'سحب علوي', detail: '4 × 10' }, { name: 'رفعة ميتة', detail: '3 × 6' }, { name: 'لانجز', detail: '3 × 12' }, { name: 'رفرفة جانبية', detail: '3 × 15' } ] },
-    { emoji: '🔥', color: '#f59e0b', title: 'كارديو HIIT', level: 'كل المستويات', duration: '25 د', focus: 'حرق الدهون', exercises: [
+    { emoji: '🔥', color: '#f59e0b', title: 'كارديو HIIT', level: 'كل المستويات', duration: '25 د', focus: 'حرق الدهون', met: 9, exercises: [
       { name: 'جري', detail: '5 د' }, { name: 'دراجة', detail: '8 د' }, { name: 'فترات HIIT', detail: '6 × دقيقة' }, { name: 'مشي (تهدئة)', detail: '5 د' } ] },
-    { emoji: '⚡', color: '#7c3aed', title: 'بناء العضلات', level: 'متقدم', duration: '60 د', focus: 'تضخيم', exercises: [
+    { emoji: '⚡', color: '#7c3aed', title: 'بناء العضلات', level: 'متقدم', duration: '60 د', focus: 'تضخيم', met: 6, exercises: [
       { name: 'رفعة ميتة', detail: '4 × 6' }, { name: 'سكوات', detail: '4 × 8' }, { name: 'بنش برس', detail: '4 × 8' }, { name: 'عقلة', detail: '4 × أقصى' }, { name: 'تجديف بار', detail: '4 × 10' } ] },
+    { emoji: '🧘', color: '#0ea5e9', title: 'البطن والثبات', level: 'كل المستويات', duration: '20 د', focus: 'عضلات الcore', met: 4.5, exercises: [
+      { name: 'بلانك', detail: '3 × 45ث' }, { name: 'كرنش', detail: '3 × 20' }, { name: 'التواء روسي', detail: '3 × 30' }, { name: 'رفع الركبتين معلقًا', detail: '3 × 12' } ] },
+    { emoji: '🤸', color: '#db2777', title: 'مرونة وإطالة', level: 'استشفاء', duration: '15 د', focus: 'المرونة', met: 2.8, exercises: [
+      { name: 'إحماء ديناميكي', detail: '5 د' }, { name: 'فتح الورك', detail: '4 د' }, { name: 'إطالة أوتار الركبة', detail: '3 د' }, { name: 'مرونة الكتف', detail: '3 د' } ] },
   ],
 };
 
@@ -57,6 +72,33 @@ export default function WorkoutPlansScreen() {
   const t = TXT[language] || TXT.en;
   const plans = PLANS[language] || PLANS.en;
   const [open, setOpen] = useState<number | null>(0);
+  const { user } = useUser();
+  const [weight, setWeight] = useState(70);
+  const [busy, setBusy] = useState<number | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const email = user?.primaryEmailAddress?.emailAddress || '';
+      if (!email) return;
+      try { const raw = await AsyncStorage.getItem(`profile_${emailToDocId(email)}`); const p = raw ? JSON.parse(raw) : null; if (p?.weight) setWeight(Number(p.weight) || 70); } catch {}
+    })();
+  }, [user]);
+
+  // "I did this plan" → estimate calories (MET formula) → log as an activity → history.
+  const doPlan = async (p: Plan, idx: number) => {
+    const email = user?.primaryEmailAddress?.emailAddress || '';
+    if (!email) return;
+    const min = parseInt(String(p.duration).replace(/[^0-9]/g, '')) || 30;
+    const kcal = Math.max(1, Math.round(((p.met * 3.5 * weight) / 200) * min));
+    setBusy(idx);
+    try {
+      const d = new Date();
+      const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      await addNutritionLog({ userId: email, type: 'activity', name: `${p.emoji} ${p.title}`, calories: kcal, protein: 0, carbs: 0, fat: 0, date, duration: min, intensity: 'medium' } as any);
+      Alert.alert(t.doneTitle, `${kcal} ${t.doneMsg}`);
+    } catch (e) { console.warn('[plans] log failed', e); }
+    finally { setBusy(null); }
+  };
 
   const text = isDark ? '#fff' : Colors.light.gray[900];
   const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
@@ -107,6 +149,9 @@ export default function WorkoutPlansScreen() {
                       <Text style={[styles.exDetail, { color: p.color }]}>{ex.detail}</Text>
                     </View>
                   ))}
+                  <TouchableOpacity style={[styles.doneBtn, { backgroundColor: p.color }]} onPress={() => doPlan(p, i)} disabled={busy === i} activeOpacity={0.85}>
+                    {busy === i ? <ActivityIndicator color="#fff" /> : (<><CheckCircle2 size={18} color="#fff" /><Text style={styles.doneBtnTxt}>{t.done}</Text></>)}
+                  </TouchableOpacity>
                 </View>
               )}
             </View>
@@ -144,6 +189,8 @@ const styles = StyleSheet.create({
   exDot: { width: 7, height: 7, borderRadius: 4 },
   exName: { flex: 1, fontSize: 15, fontWeight: '600' },
   exDetail: { fontSize: 14, fontWeight: '800' },
+  doneBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 14, paddingVertical: 13, borderRadius: 14 },
+  doneBtnTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
   cta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: Colors.light.primary, paddingVertical: 16, borderRadius: 16, marginTop: 10, shadowColor: Colors.light.primary, shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
   ctaTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
 });
