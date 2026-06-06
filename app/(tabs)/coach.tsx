@@ -15,6 +15,11 @@ const RUN_CTA: Record<string, { t: string; s: string }> = {
   fr: { t: 'Course solo (GPS)', s: 'Distance, allure & calories sur la carte' },
   ar: { t: 'جري فردي (GPS)', s: 'المسافة والإيقاع والسعرات على الخريطة' },
 };
+const RACES_CTA: Record<string, { t: string; s: string }> = {
+  en: { t: 'Races & challenges', s: 'Live group races + virtual distance challenges' },
+  fr: { t: 'Courses & défis', s: 'Courses groupe en direct + défis distance virtuels' },
+  ar: { t: 'سباقات وتحديات', s: 'سباقات جماعية مباشرة + تحديات مسافة افتراضية' },
+};
 
 // Small inline strings (avoid editing the large i18n dictionary) for the
 // achievements tap-affordance + detail modal.
@@ -187,6 +192,16 @@ export default function CoachScreen() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.mealCtaTitle, { color: text }]}>{(RUN_CTA[language] || RUN_CTA.en).t}</Text>
             <Text style={[styles.mealCtaSub, { color: sub }]}>{(RUN_CTA[language] || RUN_CTA.en).s}</Text>
+          </View>
+          <ChevronRight size={22} color={sub} />
+        </TouchableOpacity>
+
+        {/* ── Races & challenges CTA (Phase 2 + 3) ── */}
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/races' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
+          <View style={styles.mealCtaIcon}><Trophy size={24} color={Colors.light.primary} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.mealCtaTitle, { color: text }]}>{(RACES_CTA[language] || RACES_CTA.en).t}</Text>
+            <Text style={[styles.mealCtaSub, { color: sub }]}>{(RACES_CTA[language] || RACES_CTA.en).s}</Text>
           </View>
           <ChevronRight size={22} color={sub} />
         </TouchableOpacity>
