@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
-import { ArrowLeft, Play, Pause, Square, MapPin } from 'lucide-react-native';
+import { ArrowLeft, Play, Pause, Square, MapPin, Zap, Navigation, History } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
@@ -19,9 +19,9 @@ const GOOGLE_MAPS_KEY = 'AIzaSyAa1lBSroSXA-Om4mio84-SWAcmzQgYv8w';
 const PRIMARY = Colors.light.primary;
 
 const TXT: Record<string, any> = {
-  en: { title: 'Solo Run', perm: 'Location permission is required to track your run.', grant: 'Grant access', dist: 'Distance', time: 'Time', pace: 'Pace', kcal: 'Calories', start: 'Start', pause: 'Pause', resume: 'Resume', finish: 'Finish', saved: 'Run saved', savedMsg: 'kcal added to your activity for today.', waiting: 'Getting your location…' },
-  fr: { title: 'Course solo', perm: 'La permission de localisation est requise pour suivre ta course.', grant: 'Autoriser', dist: 'Distance', time: 'Temps', pace: 'Allure', kcal: 'Calories', start: 'Démarrer', pause: 'Pause', resume: 'Reprendre', finish: 'Terminer', saved: 'Course enregistrée', savedMsg: 'kcal ajoutées à ton activité du jour.', waiting: 'Localisation en cours…' },
-  ar: { title: 'جري فردي', perm: 'إذن الموقع مطلوب لتتبّع جريك.', grant: 'السماح', dist: 'المسافة', time: 'الوقت', pace: 'الإيقاع', kcal: 'سعرات', start: 'ابدأ', pause: 'إيقاف', resume: 'استئناف', finish: 'إنهاء', saved: 'تم حفظ الجري', savedMsg: 'سعرة أُضيفت إلى نشاط اليوم.', waiting: 'جارٍ تحديد موقعك…' },
+  en: { title: 'Solo Run', perm: 'Location permission is required to track your run.', grant: 'Grant access', dist: 'Distance', time: 'Time', pace: 'Pace', kcal: 'Calories', start: 'Start', pause: 'Pause', resume: 'Resume', finish: 'Finish', saved: 'Run saved', savedMsg: 'kcal added to your activity for today.', waiting: 'Getting your location…', gps: 'GPS', sim: 'Simulation', history: 'Recent runs', noHistory: 'No runs yet — start one above.' },
+  fr: { title: 'Course solo', perm: 'La permission de localisation est requise pour suivre ta course.', grant: 'Autoriser', dist: 'Distance', time: 'Temps', pace: 'Allure', kcal: 'Calories', start: 'Démarrer', pause: 'Pause', resume: 'Reprendre', finish: 'Terminer', saved: 'Course enregistrée', savedMsg: 'kcal ajoutées à ton activité du jour.', waiting: 'Localisation en cours…', gps: 'GPS', sim: 'Simulation', history: 'Courses récentes', noHistory: 'Aucune course — démarres-en une ci-dessus.' },
+  ar: { title: 'جري فردي', perm: 'إذن الموقع مطلوب لتتبّع جريك.', grant: 'السماح', dist: 'المسافة', time: 'الوقت', pace: 'الإيقاع', kcal: 'سعرات', start: 'ابدأ', pause: 'إيقاف', resume: 'استئناف', finish: 'إنهاء', saved: 'تم حفظ الجري', savedMsg: 'سعرة أُضيفت إلى نشاط اليوم.', waiting: 'جارٍ تحديد موقعك…', gps: 'GPS', sim: 'محاكاة', history: 'الجريات الأخيرة', noHistory: 'لا جريات بعد — ابدأ واحدة بالأعلى.' },
 };
 
 type LatLng = { lat: number; lng: number };
@@ -53,6 +53,7 @@ function buildHtml(center: LatLng, color: string): string {
     window._poly = new google.maps.Polyline({ map: window._map, path: window._path, geodesic: true, strokeColor: '${color}', strokeOpacity: 1, strokeWeight: 7 });
     window.addPoint = function(lat,lng){ var p={lat:lat,lng:lng}; window._path.push(p); window._poly.setPath(window._path); window._me.setPosition(p); window._map.panTo(p); };
     window.recenter = function(lat,lng){ window._map.setCenter({lat:lat,lng:lng}); };
+    window.resetPath = function(){ window._path=[C]; window._poly.setPath(window._path); window._me.setPosition(C); window._map.setCenter(C); };
     if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage('ready');
   }
   window.gm_authFailure=function(){ document.body.innerHTML='<div style="color:#b91c1c;font-family:sans-serif;padding:24px;text-align:center">Google Maps key error.</div>'; };
@@ -74,12 +75,17 @@ export default function RunScreen() {
   const [secs, setSecs] = useState(0);
   const [status, setStatus] = useState<'idle' | 'running' | 'paused'>('idle');
   const [weight, setWeight] = useState(70);
+  const [mode, setMode] = useState<'gps' | 'sim'>('gps');
+  const [history, setHistory] = useState<{ name: string; date: string; calories: number; duration?: number }[]>([]);
 
   const subRef = useRef<Location.LocationSubscription | null>(null);
   const lastPt = useRef<LatLng | null>(null);
   const timerRef = useRef<any>(null);
   const webRef = useRef<WebView | null>(null);
   const mapReady = useRef(false);
+  const simTimer = useRef<any>(null);
+  const simHeading = useRef(45);
+  const simStep = useRef(0);
 
   useEffect(() => {
     (async () => {
@@ -98,13 +104,47 @@ export default function RunScreen() {
         setCenter({ lat: loc.coords.latitude, lng: loc.coords.longitude });
       } catch { setCenter({ lat: 33.5731, lng: -7.5898 }); }
       setPerm('ok');
+      loadHistory();
     })();
-    return () => { subRef.current?.remove(); if (timerRef.current) clearInterval(timerRef.current); };
+    return () => { subRef.current?.remove(); if (timerRef.current) clearInterval(timerRef.current); if (simTimer.current) clearInterval(simTimer.current); };
   }, []);
+
+  // Recent runs from the local log cache (activities whose name starts with the run title).
+  const loadHistory = async () => {
+    try {
+      const email = user?.primaryEmailAddress?.emailAddress || '';
+      if (!email) return;
+      const raw = await AsyncStorage.getItem(`logs_${emailToDocId(email)}`);
+      const arr: any[] = raw ? JSON.parse(raw) : [];
+      const runs = arr
+        .filter((l) => l?.type === 'activity' && typeof l?.name === 'string' && l.name.includes(t.title))
+        .slice(-12).reverse()
+        .map((l) => ({ name: l.name, date: l.date, calories: l.calories || 0, duration: l.duration }));
+      setHistory(runs);
+    } catch {}
+  };
 
   const startTracking = async () => {
     setStatus('running');
     timerRef.current = setInterval(() => setSecs((s) => s + 1), 1000);
+    if (mode === 'sim') {
+      // Simulation: advance 10 m every second (10 m/s) along a gently curving path.
+      if (!lastPt.current) lastPt.current = center;
+      simTimer.current = setInterval(() => {
+        const from = lastPt.current || center;
+        if (!from) return;
+        simStep.current += 1;
+        simHeading.current += Math.sin(simStep.current / 5) * 12; // gentle wander
+        const brg = (simHeading.current * Math.PI) / 180;
+        const dLat = (10 / 111111) * Math.cos(brg);
+        const dLng = (10 / (111111 * Math.cos((from.lat * Math.PI) / 180))) * Math.sin(brg);
+        const pt = { lat: from.lat + dLat, lng: from.lng + dLng };
+        lastPt.current = pt;
+        setMeters((m) => m + 10);
+        if (mapReady.current) webRef.current?.injectJavaScript(`window.addPoint && window.addPoint(${pt.lat},${pt.lng}); true;`);
+      }, 1000);
+      return;
+    }
     subRef.current = await Location.watchPositionAsync(
       { accuracy: Location.Accuracy.BestForNavigation, distanceInterval: 5, timeInterval: 2000 },
       (loc) => {
@@ -118,7 +158,7 @@ export default function RunScreen() {
       }
     );
   };
-  const pause = () => { setStatus('paused'); subRef.current?.remove(); subRef.current = null; if (timerRef.current) clearInterval(timerRef.current); };
+  const pause = () => { setStatus('paused'); subRef.current?.remove(); subRef.current = null; if (timerRef.current) clearInterval(timerRef.current); if (simTimer.current) { clearInterval(simTimer.current); simTimer.current = null; } };
 
   const finish = async () => {
     pause();
@@ -135,7 +175,11 @@ export default function RunScreen() {
         addDistanceToJoinedChallenges(email, km).catch(() => {});
       } catch (e) { console.warn('[run] save failed', e); }
     }
-    Alert.alert(t.saved, `${kcal} ${t.savedMsg}`, [{ text: 'OK', onPress: () => router.back() }]);
+    // Reset for the next run, refresh the history list, and stay on the screen.
+    setMeters(0); setSecs(0); lastPt.current = null; simStep.current = 0;
+    if (mapReady.current) webRef.current?.injectJavaScript(`window.resetPath && window.resetPath(); true;`);
+    await loadHistory();
+    Alert.alert(t.saved, `${kcal} ${t.savedMsg}`);
   };
 
   const km = meters / 1000;
@@ -186,6 +230,26 @@ export default function RunScreen() {
       </TouchableOpacity>
 
       <View style={[styles.panel, { backgroundColor: card }]}>
+        {/* Mode switch (only before a run starts) */}
+        {status === 'idle' && (
+          <View style={[styles.modeRow, { backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }]}>
+            <TouchableOpacity
+              style={[styles.modeBtn, mode === 'gps' && { backgroundColor: card, shadowOpacity: 0.12 }]}
+              onPress={() => setMode('gps')}
+            >
+              <Navigation size={16} color={mode === 'gps' ? PRIMARY : sub} />
+              <Text style={[styles.modeTxt, { color: mode === 'gps' ? PRIMARY : sub }]}>{t.gps}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modeBtn, mode === 'sim' && { backgroundColor: card, shadowOpacity: 0.12 }]}
+              onPress={() => setMode('sim')}
+            >
+              <Zap size={16} color={mode === 'sim' ? '#0ea5e9' : sub} />
+              <Text style={[styles.modeTxt, { color: mode === 'sim' ? '#0ea5e9' : sub }]}>{t.sim}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View style={styles.statsRow}>
           <Stat label={t.dist} value={km.toFixed(2)} unit="km" text={text} sub={sub} />
           <Stat label={t.time} value={mmss} unit="" text={text} sub={sub} />
@@ -194,7 +258,10 @@ export default function RunScreen() {
         </View>
         <View style={styles.controls}>
           {status === 'idle' && (
-            <TouchableOpacity style={styles.bigBtn} onPress={startTracking}><Play size={26} color="#fff" fill="#fff" /><Text style={styles.bigBtnTxt}>{t.start}</Text></TouchableOpacity>
+            <TouchableOpacity style={[styles.bigBtn, mode === 'sim' && { backgroundColor: '#0ea5e9' }]} onPress={startTracking}>
+              {mode === 'sim' ? <Zap size={24} color="#fff" fill="#fff" /> : <Play size={26} color="#fff" fill="#fff" />}
+              <Text style={styles.bigBtnTxt}>{mode === 'sim' ? `${t.start} · ${t.sim}` : t.start}</Text>
+            </TouchableOpacity>
           )}
           {status === 'running' && (
             <TouchableOpacity style={[styles.bigBtn, { backgroundColor: '#f59e0b' }]} onPress={pause}><Pause size={26} color="#fff" fill="#fff" /><Text style={styles.bigBtnTxt}>{t.pause}</Text></TouchableOpacity>
@@ -206,6 +273,31 @@ export default function RunScreen() {
             </>
           )}
         </View>
+
+        {/* Recent runs history (only when idle) */}
+        {status === 'idle' && (
+          <View style={styles.histWrap}>
+            <View style={styles.histHead}>
+              <History size={15} color={sub} />
+              <Text style={[styles.histTitle, { color: text }]}>{t.history}</Text>
+            </View>
+            {history.length === 0 ? (
+              <Text style={[styles.histEmpty, { color: sub }]}>{t.noHistory}</Text>
+            ) : (
+              <ScrollView style={{ maxHeight: 168 }} showsVerticalScrollIndicator={false}>
+                {history.map((h, i) => (
+                  <View key={i} style={[styles.histRow, { borderTopColor: isDark ? '#1e293b' : '#f1f5f9' }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.histName, { color: text }]} numberOfLines={1}>{h.name}</Text>
+                      <Text style={[styles.histDate, { color: sub }]}>{h.date}{h.duration ? ` · ${h.duration} min` : ''}</Text>
+                    </View>
+                    <Text style={[styles.histKcal, { color: PRIMARY }]}>{h.calories} kcal</Text>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        )}
       </View>
     </View>
   );
@@ -234,4 +326,15 @@ const styles = StyleSheet.create({
   controls: { flexDirection: 'row', gap: 12 },
   bigBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: PRIMARY, paddingVertical: 18, borderRadius: 18 },
   bigBtnTxt: { color: '#fff', fontSize: 17, fontWeight: '800' },
+  modeRow: { flexDirection: 'row', borderRadius: 14, padding: 4, marginBottom: 16, gap: 4 },
+  modeBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 11, shadowColor: '#000', shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
+  modeTxt: { fontSize: 14, fontWeight: '800' },
+  histWrap: { marginTop: 18 },
+  histHead: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 6 },
+  histTitle: { fontSize: 15, fontWeight: '800' },
+  histEmpty: { fontSize: 13, fontWeight: '500', paddingVertical: 8 },
+  histRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderTopWidth: 1 },
+  histName: { fontSize: 14, fontWeight: '700' },
+  histDate: { fontSize: 12, fontWeight: '500', marginTop: 2 },
+  histKcal: { fontSize: 14, fontWeight: '800' },
 });

@@ -84,7 +84,8 @@ export default function WorkoutPlansScreen() {
     })();
   }, [user]);
 
-  // "I did this plan" → estimate calories (MET formula) → log as an activity → history.
+  // "I did this plan" → estimate calories (MET formula) → log directly as an
+  // activity (recent activity + calories + Firestore). No detour to a form.
   const doPlan = async (p: Plan, idx: number) => {
     const email = user?.primaryEmailAddress?.emailAddress || '';
     if (!email) return;
@@ -95,7 +96,8 @@ export default function WorkoutPlansScreen() {
       const d = new Date();
       const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       await addNutritionLog({ userId: email, type: 'activity', name: `${p.emoji} ${p.title}`, calories: kcal, protein: 0, carbs: 0, fat: 0, date, duration: min, intensity: 'medium' } as any);
-      Alert.alert(t.doneTitle, `${kcal} ${t.doneMsg}`);
+      // Go straight to Home so the new entry shows in "Activité récente" + calories update.
+      Alert.alert(t.doneTitle, `${kcal} ${t.doneMsg}`, [{ text: 'OK', onPress: () => router.replace('/(tabs)' as any) }]);
     } catch (e) { console.warn('[plans] log failed', e); }
     finally { setBusy(null); }
   };
@@ -158,9 +160,12 @@ export default function WorkoutPlansScreen() {
           );
         })}
 
-        <TouchableOpacity style={styles.cta} onPress={() => router.push('/log-exercise' as any)}>
-          <Dumbbell size={18} color="#fff" />
-          <Text style={styles.ctaTxt}>{t.cta}</Text>
+        <TouchableOpacity
+          style={styles.cta}
+          onPress={() => { const i = open ?? 0; setOpen(i); doPlan(plans[i], i); }}
+          disabled={busy !== null}
+        >
+          {busy !== null ? <ActivityIndicator color="#fff" /> : (<><Dumbbell size={18} color="#fff" /><Text style={styles.ctaTxt}>{t.cta}</Text></>)}
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
