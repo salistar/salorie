@@ -7,8 +7,8 @@ import { Footprints, Flame, ChevronRight } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { useTranslation } from '../lib/i18n';
 import { isHealthAvailable, readToday } from '../lib/health';
-import { getStepsMode, getActivitySteps, getSimSteps } from '../lib/steps';
-import { rememberEmail, ensureNotifPermission, registerStepsBackground, updateStepsNotification } from '../lib/stepsNotif';
+import { getStepsMode, getActivitySteps, getSimSteps, getNativeDeviceSteps, syncActivityFile } from '../lib/steps';
+import { rememberEmail, ensureNotifPermission } from '../lib/stepsNotif';
 
 const TXT: Record<string, { steps: string; today: string; kcal: string; goal: string; connect: string }> = {
   en: { steps: 'Steps', today: 'Today', kcal: 'kcal', goal: 'Goal 10,000', connect: 'Connect Health Connect →' },
@@ -30,40 +30,43 @@ export default function StepsCard() {
   const [kcal, setKcal] = useState(0);
   const [mode, setMode] = useState<'real' | 'sim'>('real');
 
-  // Re-read on every focus so steps added by a run / challenge show immediately.
+  // Re-read on focus + poll every few seconds so steps from the native sensor
+  // service and from runs/challenges show live. The persistent notification is
+  // owned by the native foreground service (counts even when the app is closed).
   useFocusEffect(
     useCallback(() => {
       let alive = true;
-      (async () => {
+      let hcKcal = 0;
+      let hcRead = false;
+      const load = async () => {
         try {
           const m = await getStepsMode();
           const activity = await getActivitySteps(email);
           let base = 0;
-          let activeKcal = 0;
           if (m === 'sim') {
             base = await getSimSteps(email);
-          } else if (await isHealthAvailable()) {
-            const d = await readToday();
-            base = d.steps || 0;
-            activeKcal = d.activeKcal || 0;
+          } else {
+            const device = await getNativeDeviceSteps();
+            let hc = 0;
+            if (!hcRead) {
+              hcRead = true;
+              try { if (await isHealthAvailable()) { const d = await readToday(); hc = d.steps || 0; hcKcal = d.activeKcal || 0; } } catch {}
+            }
+            base = Math.max(device, hc);
           }
           if (!alive) return;
           const total = base + activity;
           setMode(m);
           setSteps(total);
-          setKcal(activeKcal);
+          setKcal(hcKcal);
           setConnected(total > 0);
-          // Keep the persistent steps notification in sync + ensure the
-          // background refresher is running (so it counts while app is closed).
-          if (email) {
-            rememberEmail(email);
-            updateStepsNotification(total);
-            ensureNotifPermission().then((ok) => { if (ok) registerStepsBackground(); });
-          }
         } catch { /* show connect CTA */ }
         finally { if (alive) setLoading(false); }
-      })();
-      return () => { alive = false; };
+      };
+      if (email) { rememberEmail(email); ensureNotifPermission(); syncActivityFile(email); }
+      load();
+      const timer = setInterval(load, 3000);
+      return () => { alive = false; clearInterval(timer); };
     }, [email])
   );
 

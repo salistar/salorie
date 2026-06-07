@@ -9,7 +9,40 @@
 // Two modes (persisted): 'real' (Health Connect + activity) and 'sim'
 // (a simulated pedometer + activity) for testing without a physical device.
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system';
 import { emailToDocId } from './firebase';
+
+// Files shared with the native foreground step service (same app filesDir):
+//  - native_steps.json  : written by the native service (device sensor steps)
+//  - activity_steps.json: written by JS (steps from runs/challenges) so the
+//    native notification can include them in its total.
+const NATIVE_FILE = (FileSystem.documentDirectory || '') + 'native_steps.json';
+const ACTIVITY_FILE = (FileSystem.documentDirectory || '') + 'activity_steps.json';
+
+// Today's device steps counted by the native foreground service (0 if none yet).
+export async function getNativeDeviceSteps(date = stepsDay()): Promise<number> {
+  try {
+    const info = await FileSystem.getInfoAsync(NATIVE_FILE);
+    if (!info.exists) return 0;
+    const raw = await FileSystem.readAsStringAsync(NATIVE_FILE);
+    const o = JSON.parse(raw);
+    return o?.date === date ? Number(o.steps) || 0 : 0;
+  } catch { return 0; }
+}
+
+async function writeActivityFile(steps: number) {
+  try {
+    await FileSystem.writeAsStringAsync(ACTIVITY_FILE, JSON.stringify({ date: stepsDay(), steps }));
+  } catch {}
+}
+
+// Mirror the stored activity steps to the file the native service reads, so the
+// persistent notification total includes runs/challenges (called on app open).
+export async function syncActivityFile(email: string): Promise<void> {
+  if (!email) return;
+  const steps = await getActivitySteps(email);
+  await writeActivityFile(steps);
+}
 
 // ~0.762 m average stride → ≈1312 steps per km.
 export const STEPS_PER_KM = 1312;
@@ -33,6 +66,7 @@ export async function addActivitySteps(email: string, km: number): Promise<numbe
     const prev = Number((await AsyncStorage.getItem(key)) || '0');
     const next = prev + kmToSteps(km);
     await AsyncStorage.setItem(key, String(next));
+    writeActivityFile(next); // share with the native step service notification
     return next;
   } catch { return 0; }
 }
