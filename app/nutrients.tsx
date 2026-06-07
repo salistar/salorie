@@ -67,8 +67,24 @@ export default function NutrientsScreen() {
           setLoading(false); return;
         }
       }
-      // 3) generate with Gemini, then persist to local cache + Firestore
-      const rep = await estimateMicros(meals, (language as any) || 'en');
+      // 3) DETERMINISTIC backend (0 AI — computed from OpenFoodFacts, Redis-cached)
+      //    if configured; otherwise fall back to Gemini.
+      let rep: any = null;
+      const apiUrl = (process.env.EXPO_PUBLIC_API_URL || '').trim();
+      if (apiUrl) {
+        try {
+          const ctrl = new AbortController();
+          const to = setTimeout(() => ctrl.abort(), 4000);
+          const res = await fetch(`${apiUrl}/nutrition/micros`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ foods: meals, lang: language }), signal: ctrl.signal,
+          });
+          clearTimeout(to);
+          const j = await res.json();
+          if (j?.micros?.length) rep = { micros: j.micros, highlight: j.good || '', gap: j.lack || '' };
+        } catch { /* backend unreachable → Gemini */ }
+      }
+      if (!rep) rep = await estimateMicros(meals, (language as any) || 'en');
       setReport(rep);
       await AsyncStorage.setItem(cacheKey, JSON.stringify({ hash, report: rep })).catch(() => {});
       saveMicrosReport(email, today, language, hash, rep);
