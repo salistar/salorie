@@ -10,6 +10,7 @@ import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
 import { emailToDocId } from '../lib/firebase';
 import { estimateMicros, MicroReport } from '../lib/AiModel';
+import { getMicrosReport, saveMicrosReport } from '../lib/aiStore';
 
 function todayStr() {
   const d = new Date();
@@ -52,15 +53,25 @@ export default function NutrientsScreen() {
       // micronutrient names/insights generated in the previous language.
       const cacheKey = `micros_${docId}_${today}_${language}`;
       if (!force) {
+        // 1) local cache
         const cachedRaw = await AsyncStorage.getItem(cacheKey);
         if (cachedRaw) {
           const cached = JSON.parse(cachedRaw);
           if (cached.hash === hash && cached.report) { setReport(cached.report); setLoading(false); return; }
         }
+        // 2) Firestore (DB table) — survives reinstall / other devices
+        const dbReport = await getMicrosReport(email, today, language, hash);
+        if (dbReport) {
+          setReport(dbReport);
+          await AsyncStorage.setItem(cacheKey, JSON.stringify({ hash, report: dbReport })).catch(() => {});
+          setLoading(false); return;
+        }
       }
+      // 3) generate with Gemini, then persist to local cache + Firestore
       const rep = await estimateMicros(meals, (language as any) || 'en');
       setReport(rep);
       await AsyncStorage.setItem(cacheKey, JSON.stringify({ hash, report: rep })).catch(() => {});
+      saveMicrosReport(email, today, language, hash, rep);
     } catch (e) {
       setError('Could not estimate nutrients. Check your connection and retry.');
     } finally {
