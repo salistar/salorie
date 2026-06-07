@@ -67,9 +67,15 @@ export async function getCustomProduct(barcode: string): Promise<CustomProduct |
 }
 export async function saveCustomProduct(p: CustomProduct, email?: string): Promise<void> {
   if (!p.barcode) return;
+  // Firestore rejects `undefined` field values — build the doc with only defined keys.
+  const data: any = {
+    barcode: p.barcode, name: p.name, brand: p.brand || '',
+    calories: p.calories || '0', protein: p.protein || '0', carbs: p.carbs || '0', fat: p.fat || '0',
+    createdBy: email ? emailToDocId(email) : null, createdAt: serverTimestamp(),
+  };
+  if (p.productImage) data.productImage = p.productImage;
+  if (p.barcodeImage) data.barcodeImage = p.barcodeImage;
   try {
-    await setDoc(doc(db, 'custom_products', p.barcode), {
-      ...p, createdBy: email ? emailToDocId(email) : null, createdAt: serverTimestamp(),
-    }, { merge: true });
+    await setDoc(doc(db, 'custom_products', p.barcode), data, { merge: true });
   } catch (e) { console.warn('[aiStore] saveCustomProduct failed', e); throw e; }
 }

@@ -9,6 +9,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
 import { ArrowLeft, Camera, Check, ScanBarcode } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
@@ -55,6 +56,29 @@ export default function RegisterProductScreen() {
     setCapMode(mode);
   };
 
+  // Pick an existing photo (e.g. from Downloads / gallery).
+  const pickFromGallery = async (mode: 'product' | 'barcode') => {
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) { Alert.alert('Galerie', 'Autorise l\'accès aux photos pour choisir une image.'); return; }
+      const res = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.25, base64: true,
+      });
+      if (!res.canceled && res.assets?.[0]?.base64) {
+        const uri = `data:image/jpeg;base64,${res.assets[0].base64}`;
+        if (mode === 'product') setProductImage(uri); else setBarcodeImage(uri);
+      }
+    } catch { Alert.alert('Galerie', 'Impossible d\'ouvrir la galerie.'); }
+  };
+
+  const choosePhoto = (mode: 'product' | 'barcode') => {
+    Alert.alert(mode === 'product' ? 'Photo du produit' : 'Photo du code-barres', 'Source de l\'image', [
+      { text: '📷 Caméra', onPress: () => openCam(mode) },
+      { text: '🖼️ Galerie / Téléchargements', onPress: () => pickFromGallery(mode) },
+      { text: 'Annuler', style: 'cancel' },
+    ]);
+  };
+
   const save = async () => {
     if (!barcode) { Alert.alert('Erreur', 'Code-barres manquant.'); return; }
     if (!name.trim()) { Alert.alert('Nom requis', 'Indique au moins le nom du produit.'); return; }
@@ -97,10 +121,10 @@ export default function RegisterProductScreen() {
 
           {/* Photos */}
           <View style={styles.photoRow}>
-            <TouchableOpacity style={[styles.photoBox, { backgroundColor: inputBg }]} onPress={() => openCam('product')}>
+            <TouchableOpacity style={[styles.photoBox, { backgroundColor: inputBg }]} onPress={() => choosePhoto('product')}>
               {productImage ? <Image source={{ uri: productImage }} style={styles.photo} /> : <><Camera size={26} color={sub} /><Text style={[styles.photoTxt, { color: sub }]}>Photo produit</Text></>}
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.photoBox, { backgroundColor: inputBg }]} onPress={() => openCam('barcode')}>
+            <TouchableOpacity style={[styles.photoBox, { backgroundColor: inputBg }]} onPress={() => choosePhoto('barcode')}>
               {barcodeImage ? <Image source={{ uri: barcodeImage }} style={styles.photo} /> : <><ScanBarcode size={26} color={sub} /><Text style={[styles.photoTxt, { color: sub }]}>Photo code-barres</Text></>}
             </TouchableOpacity>
           </View>
