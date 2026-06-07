@@ -1,8 +1,14 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { CONFIG } from '../constants/config';
 import { UserProfile } from './firebase';
+import { computeNutritionTargets, nutritionAdvice } from './nutrition';
 
 const genAI = new GoogleGenerativeAI(CONFIG.geminiApiKey);
+
+// Model tiers — use the cheap/fast model for simple structured tasks (micros,
+// insights, tips) and reserve the standard flash model for richer generation.
+const MODEL = process.env.EXPO_PUBLIC_GEMINI_MODEL || 'gemini-2.5-flash';
+const MODEL_LITE = process.env.EXPO_PUBLIC_GEMINI_LITE_MODEL || 'gemini-2.0-flash-lite';
 
 export interface NutritionalPlan {
   dailyCalories: number;
@@ -13,61 +19,19 @@ export interface NutritionalPlan {
   advice: string[];
 }
 
+// Fully DETERMINISTIC now — Mifflin-St Jeor + macro rules + canned localized
+// advice. Zero Gemini calls (this used to be one AI round-trip per onboarding).
 export const generateNutritionalPlan = async (userProfile: Partial<UserProfile>, language: 'en' | 'fr' | 'ar' = 'en'): Promise<NutritionalPlan> => {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
-  const langLabel = language === 'fr' ? 'French' : language === 'ar' ? 'Arabic' : 'English';
-
-  const prompt = `
-    Analyze this user profile for a fitness and nutrition plan:
-    - Gender: ${userProfile.gender}
-    - Goal: ${userProfile.goal} (e.g., lose, gain, maintain weight)
-    - Workout Frequency: ${userProfile.workoutFrequency}
-    - Birthdate: ${userProfile.birthdate}
-    - Height: ${userProfile.height?.feet} feet ${userProfile.height?.inches} inches
-    - Weight: ${userProfile.weight} kg
-
-    Based on this data, provide a structured nutritional plan in JSON format.
-    Return ONLY the JSON object with the following keys:
-    {
-      "dailyCalories": number,
-      "proteins": number (in grams),
-      "carbs": number (in grams),
-      "fats": number (in grams),
-      "waterIntake": number (in liters),
-      "advice": [string, string, string]
-    }
-    IMPORTANT: The "advice" array strings MUST be written in ${langLabel}.
-    Be accurate and professional. Use the Mifflin-St Jeor Equation for BMR and apply Activity Factor.
-  `;
-
-  try {
-    console.log('\x1b[32m[API→Gemini] generateNutritionalPlan REQUEST\x1b[0m', {
-      model: 'gemini-2.5-flash',
-      language,
-      profile: userProfile,
-      promptChars: prompt.length,
-    });
-    const t0 = Date.now();
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-    console.log('\x1b[34m[API←Gemini] generateNutritionalPlan RESPONSE\x1b[0m', {
-      ms: Date.now() - t0,
-      chars: text.length,
-      preview: text.slice(0, 300),
-    });
-
-    // Extract JSON from the response (sometimes Gemini wraps JSON in code blocks)
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('Invalid AI response');
-
-    const parsed = JSON.parse(jsonMatch[0]);
-    console.log('\x1b[34m[API←Gemini] generateNutritionalPlan PARSED\x1b[0m', parsed);
-    return parsed;
-  } catch (error) {
-    console.warn('\x1b[34m[API←Gemini] generateNutritionalPlan FAILED:\x1b[0m', (error as Error).message);
-    throw error;
-  }
+  const t = computeNutritionTargets(userProfile);
+  console.log('[nutrition] computed targets (no AI)', t);
+  return {
+    dailyCalories: t.dailyCalories,
+    proteins: t.proteins,
+    carbs: t.carbs,
+    fats: t.fats,
+    waterIntake: t.waterIntake,
+    advice: nutritionAdvice((userProfile as any).goal, language),
+  };
 };
 
 export interface BentoInsight {
@@ -103,7 +67,7 @@ export const generateMultilangBentoInsights = async (
   logs: any[],
   periodLabel: string,
 ): Promise<MultilangBentoInsight> => {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = genAI.getGenerativeModel({ model: MODEL_LITE });
   const logsSummary = logs
     .slice(-200)
     .map(l => `${l.date}: ${l.name} (${l.calories} ${l.type === 'water' ? 'ml' : 'kcal'}, ${l.type}${l.intensity ? ', ' + l.intensity : ''})`)
@@ -262,7 +226,7 @@ export const generateBentoInsights = async (
   logs: any[],
   language: 'en' | 'fr' | 'ar' = 'en'
 ): Promise<BentoInsight> => {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = genAI.getGenerativeModel({ model: MODEL_LITE });
 
   const langLabel = language === 'fr' ? 'French' : language === 'ar' ? 'Arabic' : 'English';
   const logsSummary = logs.map(l => `${l.date}: ${l.name} (${l.calories} kcal, ${l.type})`).join('\n');
@@ -350,7 +314,7 @@ export interface MealPlanInput {
 const langName = (l?: string) => (l === 'fr' ? 'French' : l === 'ar' ? 'Arabic' : 'English');
 
 export const generateMealPlan = async (input: MealPlanInput): Promise<MealPlan> => {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = genAI.getGenerativeModel({ model: MODEL });
   const lang = input.language || 'en';
   const prompt = `
 You are a registered dietitian. Build a realistic, tasty ONE-DAY meal plan.
@@ -426,7 +390,7 @@ export const estimateMicros = async (
   foods: { name: string; calories?: number }[],
   language: 'en' | 'fr' | 'ar' = 'en'
 ): Promise<MicroReport> => {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = genAI.getGenerativeModel({ model: MODEL_LITE });
   const list = foods.map(f => `- ${f.name}${f.calories ? ` (${Math.round(f.calories)} kcal)` : ''}`).join('\n');
   const prompt = `
 You are a registered dietitian. Estimate the TOTAL micronutrients a person consumed today from these logged foods:
