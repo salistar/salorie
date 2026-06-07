@@ -64,5 +64,12 @@ service cloud.firestore {
         allow write: if isOwner(pid);
       }
     }
+
+    // Community custom products (barcodes not found in OpenFoodFacts). Any
+    // signed-in user can read them and contribute new ones.
+    match /custom_products/{barcode} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+    }
   }
 }

@@ -5,10 +5,11 @@ import React, { useCallback, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
-import { ArrowLeft, ScanBarcode, RefreshCw } from 'lucide-react-native';
+import { ArrowLeft, ScanBarcode, RefreshCw, PlusCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { Colors } from '../constants/Colors';
 import { useTranslation } from '../lib/i18n';
+import { getCustomProduct } from '../lib/aiStore';
 
 type Found = {
   name: string;
@@ -31,6 +32,18 @@ export default function ScanBarcodeScreen() {
     setStatus('loading');
     setCode(barcode);
     try {
+      // 1) Community custom products DB first (user-contributed barcodes).
+      const custom = await getCustomProduct(barcode);
+      if (custom) {
+        setFound({
+          name: [custom.name, custom.brand].filter(Boolean).join(' · '),
+          calories: custom.calories, protein: custom.protein, carbs: custom.carbs, fat: custom.fat,
+          image: custom.productImage,
+        });
+        setStatus('found');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        return;
+      }
       const res = await fetch(
         `https://world.openfoodfacts.org/api/v2/product/${barcode}.json?fields=product_name,brands,nutriments,image_front_small_url`,
         { headers: { 'User-Agent': 'Salorie/1.0 (salorie.salistar.com)' } }
@@ -136,9 +149,13 @@ export default function ScanBarcodeScreen() {
         <View style={styles.sheet}>
           <Text style={styles.sheetTitle}>{t('barcode.not_found_title')}</Text>
           <Text style={styles.sheetSub}>{t('barcode.not_found_sub')}</Text>
-          <TouchableOpacity style={styles.primaryBtn} onPress={rescan}>
-            <RefreshCw size={18} color="#fff" />
-            <Text style={styles.primaryBtnText}>{t('barcode.scan_again')}</Text>
+          <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push(('/register-product?code=' + code) as any)}>
+            <PlusCircle size={18} color="#fff" />
+            <Text style={styles.primaryBtnText}>Enregistrer ce produit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.ghostBtn} onPress={rescan}>
+            <RefreshCw size={16} color={Colors.light.primary} />
+            <Text style={styles.ghostBtnText}>{t('barcode.scan_again')}</Text>
           </TouchableOpacity>
         </View>
       )}
