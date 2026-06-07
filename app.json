@@ -27,7 +27,9 @@
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.WAKE_LOCK",
         "android.permission.RECEIVE_BOOT_COMPLETED",
-        "android.permission.ACTIVITY_RECOGNITION"
+        "android.permission.ACTIVITY_RECOGNITION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_HEALTH"
       ]
     },
     "web": {
@@ -53,6 +55,7 @@
       "expo-secure-store",
       "react-native-health-connect",
       "./plugins/withHealthConnectPermissionDelegate",
+      "./plugins/withStepCounterService",
       [
         "expo-location",
         {
