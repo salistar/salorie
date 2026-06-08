@@ -32,6 +32,10 @@ services:
       REDIS_URL: redis://redis:6379
       UPLOAD_DIR: /data/uploads
       FIREBASE_SERVICE_ACCOUNT: ${FIREBASE_SERVICE_ACCOUNT}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      USDA_API_KEY: ${USDA_API_KEY:-DEMO_KEY}
+      GEMINI_LITE_MODEL: gemini-2.0-flash-lite
+      INSIGHTS_CRON: 0 3 * * *
     volumes: [salorie_uploads:/data/uploads]
     ports: ["4000:4000"]
 
