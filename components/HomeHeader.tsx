@@ -25,8 +25,10 @@ export default function HomeHeader() {
     const email = user?.primaryEmailAddress?.emailAddress || '';
     if (!email) return;
     getNotificationsHistory(email).then((items: any[]) => {
+      // Count only genuinely-unread items (read === false). Previously fell back
+      // to items.length, which showed every notification as unread.
       const unread = items.filter((i) => i.read === false).length;
-      setUnreadCount(unread || items.length);
+      setUnreadCount(unread);
     });
   }, [user?.primaryEmailAddress?.emailAddress]);
 

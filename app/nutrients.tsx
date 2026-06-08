@@ -10,6 +10,7 @@ import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
 import { emailToDocId } from '../lib/firebase';
 import { estimateMicros, MicroReport } from '../lib/AiModel';
+import { getMicrosReport, saveMicrosReport } from '../lib/aiStore';
 
 function todayStr() {
   const d = new Date();
@@ -52,15 +53,41 @@ export default function NutrientsScreen() {
       // micronutrient names/insights generated in the previous language.
       const cacheKey = `micros_${docId}_${today}_${language}`;
       if (!force) {
+        // 1) local cache
         const cachedRaw = await AsyncStorage.getItem(cacheKey);
         if (cachedRaw) {
           const cached = JSON.parse(cachedRaw);
           if (cached.hash === hash && cached.report) { setReport(cached.report); setLoading(false); return; }
         }
+        // 2) Firestore (DB table) — survives reinstall / other devices
+        const dbReport = await getMicrosReport(email, today, language, hash);
+        if (dbReport) {
+          setReport(dbReport);
+          await AsyncStorage.setItem(cacheKey, JSON.stringify({ hash, report: dbReport })).catch(() => {});
+          setLoading(false); return;
+        }
       }
-      const rep = await estimateMicros(meals, (language as any) || 'en');
+      // 3) DETERMINISTIC backend (0 AI — computed from OpenFoodFacts, Redis-cached)
+      //    if configured; otherwise fall back to Gemini.
+      let rep: any = null;
+      const apiUrl = (process.env.EXPO_PUBLIC_API_URL || '').trim();
+      if (apiUrl) {
+        try {
+          const ctrl = new AbortController();
+          const to = setTimeout(() => ctrl.abort(), 4000);
+          const res = await fetch(`${apiUrl}/nutrition/micros`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ foods: meals, lang: language }), signal: ctrl.signal,
+          });
+          clearTimeout(to);
+          const j = await res.json();
+          if (j?.micros?.length) rep = { micros: j.micros, highlight: j.good || '', gap: j.lack || '' };
+        } catch { /* backend unreachable → Gemini */ }
+      }
+      if (!rep) rep = await estimateMicros(meals, (language as any) || 'en');
       setReport(rep);
       await AsyncStorage.setItem(cacheKey, JSON.stringify({ hash, report: rep })).catch(() => {});
+      saveMicrosReport(email, today, language, hash, rep);
     } catch (e) {
       setError('Could not estimate nutrients. Check your connection and retry.');
     } finally {

@@ -17,10 +17,58 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { X, Circle, RotateCw } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { colorLog, explain } from '../lib/LocalDataStore';
+import { useTranslation } from '../lib/i18n';
+import { useTheme } from '../lib/ThemeContext';
 
 const PENDING_SCAN_KEY = 'pending_scan_v1';
 
+const TXT: Record<string, {
+  loading: string;
+  accessTitle: string;
+  accessText: string;
+  grant: string;
+  cancel: string;
+  scanFood: string;
+  processing: string;
+  tapToCapture: string;
+}> = {
+  en: {
+    loading: 'Loading camera...',
+    accessTitle: 'Camera Access Needed',
+    accessText: 'We need camera access to scan your food photos.',
+    grant: 'Grant Access',
+    cancel: 'Cancel',
+    scanFood: 'Scan Food',
+    processing: 'Processing…',
+    tapToCapture: 'Tap to capture',
+  },
+  fr: {
+    loading: 'Chargement de la caméra...',
+    accessTitle: 'Accès à la caméra requis',
+    accessText: 'Nous avons besoin d\'accéder à la caméra pour scanner vos photos de repas.',
+    grant: 'Autoriser l\'accès',
+    cancel: 'Annuler',
+    scanFood: 'Scanner un aliment',
+    processing: 'Traitement…',
+    tapToCapture: 'Appuyez pour capturer',
+  },
+  ar: {
+    loading: 'جارٍ تحميل الكاميرا...',
+    accessTitle: 'الوصول إلى الكاميرا مطلوب',
+    accessText: 'نحتاج إلى الوصول إلى الكاميرا لمسح صور طعامك.',
+    grant: 'منح الإذن',
+    cancel: 'إلغاء',
+    scanFood: 'مسح الطعام',
+    processing: 'جارٍ المعالجة…',
+    tapToCapture: 'اضغط للالتقاط',
+  },
+};
+
 export default function ScanCameraScreen() {
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing] = useState<'back' | 'front'>('back');
@@ -42,7 +90,7 @@ export default function ScanCameraScreen() {
     return (
       <View style={styles.loadingWrap}>
         <ActivityIndicator size="large" color={Colors.light.primary} />
-        <Text style={styles.loadingText}>Loading camera...</Text>
+        <Text style={styles.loadingText}>{t.loading}</Text>
       </View>
     );
   }
@@ -50,18 +98,18 @@ export default function ScanCameraScreen() {
   if (!permission.granted) {
     return (
       <View style={styles.permissionWrap}>
-        <Text style={styles.permissionTitle}>Camera Access Needed</Text>
-        <Text style={styles.permissionText}>
-          We need camera access to scan your food photos.
+        <Text style={[styles.permissionTitle, { textAlign: isRTL ? 'right' : 'center' }]}>{t.accessTitle}</Text>
+        <Text style={[styles.permissionText, { textAlign: isRTL ? 'right' : 'center' }]}>
+          {t.accessText}
         </Text>
         <TouchableOpacity style={styles.permissionBtn} onPress={requestPermission}>
-          <Text style={styles.permissionBtnText}>Grant Access</Text>
+          <Text style={styles.permissionBtnText}>{t.grant}</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.permissionBtn, { backgroundColor: Colors.light.gray[200] }]}
+          style={[styles.permissionBtn, { backgroundColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200] }]}
           onPress={() => router.back()}
         >
-          <Text style={[styles.permissionBtnText, { color: Colors.light.gray[900] }]}>Cancel</Text>
+          <Text style={[styles.permissionBtnText, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{t.cancel}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -131,7 +179,7 @@ export default function ScanCameraScreen() {
         {/* Overlay UI */}
         <View style={styles.overlay}>
           {/* Top bar */}
-          <View style={styles.topBar}>
+          <View style={[styles.topBar, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <TouchableOpacity
               style={styles.iconBtn}
               onPress={() => router.back()}
@@ -139,13 +187,13 @@ export default function ScanCameraScreen() {
             >
               <X size={28} color="#fff" />
             </TouchableOpacity>
-            <Text style={styles.title}>Scan Food</Text>
+            <Text style={styles.title}>{t.scanFood}</Text>
             <TouchableOpacity
               style={styles.iconBtn}
               onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
               disabled={capturing}
             >
-              <RotateCw size={24} color="#fff" />
+              <RotateCw size={24} color="#fff" style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
             </TouchableOpacity>
           </View>
 
@@ -164,7 +212,7 @@ export default function ScanCameraScreen() {
               )}
             </TouchableOpacity>
             <Text style={styles.hint}>
-              {capturing ? 'Processing…' : 'Tap to capture'}
+              {capturing ? t.processing : t.tapToCapture}
             </Text>
           </View>
         </View>

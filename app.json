@@ -23,7 +23,13 @@
         "android.permission.health.READ_STEPS",
         "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
         "android.permission.health.READ_TOTAL_CALORIES_BURNED",
-        "android.permission.health.READ_WEIGHT"
+        "android.permission.health.READ_WEIGHT",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.WAKE_LOCK",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.ACTIVITY_RECOGNITION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_HEALTH"
       ]
     },
     "web": {
@@ -48,6 +54,21 @@
       ],
       "expo-secure-store",
       "react-native-health-connect",
+      "./plugins/withHealthConnectPermissionDelegate",
+      "./plugins/withStepCounterService",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Salorie uses your location to track your runs (distance, pace, route)."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Salorie uses the camera for the AR challenge experience (point your phone to see landmarks along your route)."
+        }
+      ],
+      "expo-notifications",
       [
         "expo-build-properties",
         {

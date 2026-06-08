@@ -18,8 +18,40 @@ import { useLogging } from '../lib/LoggingContext';
 import { addNutritionLog } from '../lib/firebase';
 import { useUser } from '@clerk/clerk-expo';
 import { debounce } from 'lodash';
+import { useTranslation } from '../lib/i18n';
+import { useTheme } from '../lib/ThemeContext';
+
+const TXT: Record<string, {
+  title: string;
+  searchPlaceholder: string;
+  noResults: string;
+  keepTyping: string;
+}> = {
+  en: {
+    title: 'Food Database',
+    searchPlaceholder: 'Search food (e.g. Apple, Chicken...)',
+    noResults: 'No results found for',
+    keepTyping: 'Keep typing to search...',
+  },
+  fr: {
+    title: 'Base d\'aliments',
+    searchPlaceholder: 'Rechercher un aliment (ex. Pomme, Poulet...)',
+    noResults: 'Aucun résultat pour',
+    keepTyping: 'Continuez à taper pour rechercher...',
+  },
+  ar: {
+    title: 'قاعدة بيانات الأطعمة',
+    searchPlaceholder: 'ابحث عن طعام (مثال: تفاح، دجاج...)',
+    noResults: 'لا توجد نتائج لـ',
+    keepTyping: 'استمر في الكتابة للبحث...',
+  },
+};
 
 export default function FoodDatabaseScreen() {
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
   const { user } = useUser();
   const { selectedDate, triggerRefresh } = useLogging();
   const [query, setQuery] = useState('');
@@ -91,14 +123,14 @@ export default function FoodDatabaseScreen() {
     const { serving, calories } = parseDescription(item.food_description);
 
     return (
-      <TouchableOpacity 
-        style={styles.card} 
+      <TouchableOpacity
+        style={[styles.card, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: isDark ? Colors.dark.card : Colors.light.white, borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[100] }]}
         onPress={() => handleAddFood(item)}
         activeOpacity={0.7}
       >
-        <View style={styles.cardLeft}>
-          <Text style={styles.foodName}>{item.food_name}</Text>
-          <Text style={styles.foodInfo}>{serving} • {calories} kcal</Text>
+        <View style={[styles.cardLeft, isRTL && { marginRight: 0, marginLeft: 12 }]}>
+          <Text style={[styles.foodName, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{item.food_name}</Text>
+          <Text style={[styles.foodInfo, { color: isDark ? '#9BA1A6' : Colors.light.gray[400], textAlign: isRTL ? 'right' : 'left' }]}>{serving} • {calories} kcal</Text>
         </View>
         <View style={styles.addBtn}>
           <Plus size={24} color={Colors.light.white} strokeWidth={3} />
@@ -108,30 +140,30 @@ export default function FoodDatabaseScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ArrowLeft size={28} color={Colors.light.gray[900]} strokeWidth={2.5} />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#000' : Colors.light.white }]}>
+      <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        <TouchableOpacity style={[styles.backBtn, { backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] }]} onPress={() => router.back()}>
+          <ArrowLeft size={28} color={isDark ? '#fff' : Colors.light.gray[900]} strokeWidth={2.5} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Food Database</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{t.title}</Text>
         <View style={{ flex: 1 }} />
         <TouchableOpacity style={styles.scanBtn} onPress={() => router.push('/scan-barcode' as any)}>
           <ScanBarcode size={24} color={Colors.light.primary} strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.searchContainer}>
-        <Search size={20} color={Colors.light.gray[400]} style={styles.searchIcon} />
+      <View style={[styles.searchContainer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        <Search size={20} color={isDark ? '#9BA1A6' : Colors.light.gray[400]} style={[styles.searchIcon, isRTL ? { left: undefined, right: 36 } : undefined]} />
         <TextInput
-          style={styles.input}
-          placeholder="Search food (e.g. Apple, Chicken...)"
+          style={[styles.input, { backgroundColor: isDark ? Colors.dark.card : Colors.light.gray[50], color: isDark ? '#fff' : Colors.light.gray[900], borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[100], textAlign: isRTL ? 'right' : 'left', paddingLeft: isRTL ? 48 : 52, paddingRight: isRTL ? 52 : 48 }]}
+          placeholder={t.searchPlaceholder}
           value={query}
           onChangeText={handleSearch}
-          placeholderTextColor={Colors.light.gray[400]}
+          placeholderTextColor={isDark ? '#9BA1A6' : Colors.light.gray[400]}
           returnKeyType="search"
           onSubmitEditing={() => performSearch(query)}
         />
-        {loading && <ActivityIndicator size="small" color={Colors.light.primary} style={styles.loader} />}
+        {loading && <ActivityIndicator size="small" color={Colors.light.primary} style={[styles.loader, isRTL ? { right: undefined, left: 36 } : undefined]} />}
       </View>
 
       <FlatList
@@ -142,12 +174,12 @@ export default function FoodDatabaseScreen() {
         ListEmptyComponent={() => (
           !loading && query.length >= 3 ? (
             <View style={styles.emptyState}>
-              <Utensils size={48} color={Colors.light.gray[200]} />
-              <Text style={styles.emptyText}>No results found for "{query}"</Text>
+              <Utensils size={48} color={isDark ? Colors.dark.gray[200] : Colors.light.gray[200]} />
+              <Text style={[styles.emptyText, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>{t.noResults} "{query}"</Text>
             </View>
           ) : query.length > 0 && query.length < 3 ? (
              <View style={styles.emptyState}>
-              <Text style={styles.hintText}>Keep typing to search...</Text>
+              <Text style={[styles.hintText, { color: isDark ? '#9BA1A6' : Colors.light.gray[300] }]}>{t.keepTyping}</Text>
             </View>
           ) : null
         )}

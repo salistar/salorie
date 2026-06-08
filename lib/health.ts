@@ -1,9 +1,12 @@
 // Health Connect (Android) — lit pas, calories actives et poids du jour.
 // Sur Android 14+ Health Connect est integre au systeme ; sinon c'est une app
 // separee (com.google.android.apps.healthdata).
+import { Linking } from 'react-native';
 import {
   initialize,
   requestPermission,
+  getGrantedPermissions,
+  openHealthConnectSettings,
   readRecords,
   getSdkStatus,
   SdkAvailabilityStatus,
@@ -24,20 +27,67 @@ export async function isHealthAvailable(): Promise<boolean> {
   }
 }
 
-export async function connectHealth(): Promise<boolean> {
+export type ConnectResult = 'ok' | 'denied' | 'unavailable' | 'update_required' | 'error';
+
+// Robust connect: check the SDK status BEFORE touching any native API. Calling
+// initialize()/requestPermission() when the Health Connect provider is missing
+// or needs an update is what crashed the app — now we bail out gracefully and
+// let the UI offer to install/update Health Connect instead.
+export async function connectHealthStatus(): Promise<ConnectResult> {
   try {
+    let status: number | undefined;
+    try { status = await getSdkStatus(); } catch { return 'unavailable'; }
+    if (status === SdkAvailabilityStatus.SDK_UNAVAILABLE) return 'unavailable';
+    if (status === SdkAvailabilityStatus.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED) return 'update_required';
+
     const ok = await initialize();
-    if (!ok) return false;
-    await requestPermission([
-      { accessType: 'read', recordType: 'Steps' },
-      { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
-      { accessType: 'read', recordType: 'Weight' },
-    ]);
-    return true;
+    if (!ok) return 'error';
+    const perms = [
+      { accessType: 'read' as const, recordType: 'Steps' as const },
+      { accessType: 'read' as const, recordType: 'ActiveCaloriesBurned' as const },
+      { accessType: 'read' as const, recordType: 'Weight' as const },
+    ];
+    let granted: any[] = [];
+    try { granted = (await requestPermission(perms)) || []; } catch { granted = []; }
+    // The result of requestPermission can be empty even when the user granted in
+    // the system UI (delivery quirks) — re-check the actually-granted set.
+    if (!granted.length) {
+      try { granted = (await getGrantedPermissions()) || []; } catch {}
+    }
+    const hasSteps = granted.some((p: any) => p?.recordType === 'Steps');
+    return hasSteps ? 'ok' : 'denied';
   } catch (e) {
     console.warn('[health] connect failed', e);
-    return false;
+    return 'error';
   }
+}
+
+// Has the user already granted Steps access? (used to auto-connect on open)
+export async function hasStepsPermission(): Promise<boolean> {
+  try {
+    const status = await getSdkStatus();
+    if (status !== SdkAvailabilityStatus.SDK_AVAILABLE) return false;
+    await initialize();
+    const granted = (await getGrantedPermissions()) || [];
+    return granted.some((p: any) => p?.recordType === 'Steps');
+  } catch { return false; }
+}
+
+// Open the Health Connect screen where the user can toggle Salorie's access.
+export async function openHealthSettings(): Promise<void> {
+  try { await openHealthConnectSettings(); } catch (e) { console.warn('[health] open settings failed', e); }
+}
+
+// Back-compat boolean wrapper.
+export async function connectHealth(): Promise<boolean> {
+  return (await connectHealthStatus()) === 'ok';
+}
+
+// Open the Play Store page for Health Connect (install / update).
+export async function openHealthConnectInstall(): Promise<void> {
+  const id = 'com.google.android.apps.healthdata';
+  try { await Linking.openURL(`market://details?id=${id}`); }
+  catch { try { await Linking.openURL(`https://play.google.com/store/apps/details?id=${id}`); } catch {} }
 }
 
 export async function readToday(): Promise<HealthToday> {
