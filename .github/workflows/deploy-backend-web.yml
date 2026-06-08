@@ -1,6 +1,7 @@
 name: Deploy backend + admin web to VPS
 
-# Sync flow: local → push to GitHub (main) → CI builds → SSH deploy to VPS (docker compose).
+# GitHub (not a local agent) deploys to the VPS. Trigger: push to main touching
+# backend/web, OR manual "Run workflow" (workflow_dispatch).
 on:
   push:
     branches: [main]
@@ -27,16 +28,35 @@ jobs:
     needs: build-check
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy over SSH (pull + docker compose up)
+      - uses: actions/checkout@v4
+
+      # 1) Copy the stack to the VPS (source only — node_modules/.next are .dockerignored).
+      - name: Copy files to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "backend/,web/,docker-compose.yml"
+          target: ${{ secrets.VPS_APP_DIR }}
+          rm: false
+          overwrite: true
+
+      # 2) Build + start the containers on the VPS, secrets injected as env.
+      - name: docker compose up on VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          envs: FIREBASE_SERVICE_ACCOUNT,GEMINI_API_KEY,USDA_API_KEY
           script: |
             set -e
-            cd ${{ secrets.VPS_APP_DIR || '/opt/salorie' }}
-            git pull origin main
+            cd ${{ secrets.VPS_APP_DIR }}
             export FIREBASE_SERVICE_ACCOUNT='${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+            export GEMINI_API_KEY='${{ secrets.GEMINI_API_KEY }}'
+            export USDA_API_KEY='${{ secrets.USDA_API_KEY }}'
             docker compose up -d --build
+            docker compose ps
             docker image prune -f
+            echo "Deployed. API → :4000  Admin web → :3000"
