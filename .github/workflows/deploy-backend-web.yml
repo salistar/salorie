@@ -58,6 +58,8 @@ jobs:
             printf '%s\n' 'FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > .env
             printf '%s\n' 'GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}' >> .env
             printf '%s\n' 'USDA_API_KEY=${{ secrets.USDA_API_KEY }}' >> .env
+            printf '%s\n' 'ADMIN_USER=${{ secrets.ADMIN_USER }}' >> .env
+            printf '%s\n' 'ADMIN_PASS=${{ secrets.ADMIN_PASS }}' >> .env
             docker compose up -d --build --remove-orphans
             docker compose ps
             docker image prune -f
