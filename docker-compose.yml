@@ -1,16 +1,19 @@
 # Salorie full stack: MongoDB + Redis + MinIO (file storage) + NestJS API + Next.js admin.
 # Usage:  FIREBASE_SERVICE_ACCOUNT='<json>' docker compose up -d --build
 services:
+  # Datastores are NOT published to the host — only the backend reaches them over
+  # the internal docker network (mongo:27017, redis:6379, minio:9000). Keeps them
+  # off the public internet.
   mongo:
     image: mongo:7
     restart: unless-stopped
     volumes: [salorie_mongo:/data/db]
-    ports: ["27017:27017"]
+    expose: ["27017"]
 
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    ports: ["6379:6379"]
+    expose: ["6379"]
 
   minio:
     image: minio/minio:latest
@@ -20,7 +23,7 @@ services:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-salorie}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-salorie-secret}
     volumes: [salorie_minio:/data]
-    ports: ["9000:9000", "9001:9001"]
+    expose: ["9000", "9001"]
 
   backend:
     build: ./backend
