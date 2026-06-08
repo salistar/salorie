@@ -3,13 +3,15 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Act
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ArrowLeft, Sparkles, RefreshCw, Plus, Lightbulb } from 'lucide-react-native';
+import { ArrowLeft, Sparkles, RefreshCw, Plus, Lightbulb, Save, History, Check } from 'lucide-react-native';
+import { Alert } from 'react-native';
 import ScreenTopBar from '../components/ScreenTopBar';
 import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
 import { emailToDocId } from '../lib/firebase';
 import { generateMealPlan, MealPlan } from '../lib/AiModel';
+import { saveMealPlan } from '../lib/aiStore';
 
 const DEFAULTS = { calories: 2000, protein: 150, carbs: 220, fat: 65 };
 
@@ -25,6 +27,18 @@ export default function MealPlanScreen() {
   const [plan, setPlan] = useState<MealPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const saveAll = async () => {
+    const email = user?.primaryEmailAddress?.emailAddress || '';
+    if (!email || !plan || saving) return;
+    setSaving(true);
+    const id = await saveMealPlan(email, plan, targets);
+    setSaving(false);
+    if (id) { setSaved(true); Alert.alert('✅', 'Plan enregistré dans ton historique.'); }
+    else Alert.alert('Oups', 'Échec de l\'enregistrement. Réessaie.');
+  };
 
   const text = isDark ? '#fff' : Colors.light.gray[900];
   const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
@@ -56,7 +70,7 @@ export default function MealPlanScreen() {
   }, [user]);
 
   const generate = useCallback(async () => {
-    setLoading(true); setError(null);
+    setLoading(true); setError(null); setSaved(false);
     try {
       const p = await generateMealPlan({ ...targets, goal, language: (language as any) || 'en' });
       setPlan(p);
@@ -102,10 +116,16 @@ export default function MealPlanScreen() {
         <Image source={require('../assets/images/illustrations/healthy_food.jpg')} style={styles.hero} resizeMode="cover" />
 
         {!plan && !loading && (
-          <TouchableOpacity style={styles.generateBtn} onPress={generate}>
-            <Sparkles size={20} color="#fff" />
-            <Text style={styles.generateText}>{t('mealplan.generate')}</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity style={styles.generateBtn} onPress={generate}>
+              <Sparkles size={20} color="#fff" />
+              <Text style={styles.generateText}>{t('mealplan.generate')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.histLink} onPress={() => router.push('/meal-plan-history' as any)}>
+              <History size={18} color={Colors.light.primary} />
+              <Text style={styles.histLinkTxt}>Plans enregistrés</Text>
+            </TouchableOpacity>
+          </>
         )}
 
         {loading && (
@@ -180,9 +200,19 @@ export default function MealPlanScreen() {
               </View>
             )}
 
-            <TouchableOpacity style={[styles.regenBtn]} onPress={generate}>
-              <RefreshCw size={18} color={Colors.light.primary} /><Text style={styles.regenText}>{t('mealplan.regenerate')}</Text>
+            <TouchableOpacity style={[styles.saveAllBtn, saved && { backgroundColor: '#16a34a' }]} onPress={saveAll} disabled={saving || saved}>
+              {saving ? <ActivityIndicator color="#fff" /> : (saved ? <Check size={18} color="#fff" /> : <Save size={18} color="#fff" />)}
+              <Text style={styles.saveAllText}>{saved ? 'Plan enregistré' : 'Enregistrer tout le plan'}</Text>
             </TouchableOpacity>
+
+            <View style={styles.rowBtns}>
+              <TouchableOpacity style={[styles.regenBtn, { flex: 1 }]} onPress={generate}>
+                <RefreshCw size={18} color={Colors.light.primary} /><Text style={styles.regenText}>{t('mealplan.regenerate')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.regenBtn, { flex: 1 }]} onPress={() => router.push('/meal-plan-history' as any)}>
+                <History size={18} color={Colors.light.primary} /><Text style={styles.regenText}>Historique</Text>
+              </TouchableOpacity>
+            </View>
           </>
         )}
       </ScrollView>
@@ -228,4 +258,9 @@ const styles = StyleSheet.create({
   tipText: { flex: 1, fontSize: 14, lineHeight: 20, fontWeight: '600' },
   regenBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', paddingVertical: 12 },
   regenText: { color: Colors.light.primary, fontSize: 15, fontWeight: '700' },
+  histLink: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', paddingVertical: 14, marginTop: 6 },
+  histLinkTxt: { color: Colors.light.primary, fontSize: 15, fontWeight: '800' },
+  saveAllBtn: { flexDirection: 'row', gap: 8, backgroundColor: Colors.light.primary, paddingVertical: 15, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
+  saveAllText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  rowBtns: { flexDirection: 'row', gap: 8, marginTop: 4 },
 });

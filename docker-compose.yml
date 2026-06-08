@@ -1,0 +1,54 @@
+# Salorie full stack: MongoDB + Redis + MinIO (file storage) + NestJS API + Next.js admin.
+# Usage:  FIREBASE_SERVICE_ACCOUNT='<json>' docker compose up -d --build
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes: [salorie_mongo:/data/db]
+    ports: ["27017:27017"]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports: ["6379:6379"]
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-salorie}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-salorie-secret}
+    volumes: [salorie_minio:/data]
+    ports: ["9000:9000", "9001:9001"]
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on: [mongo, redis, minio]
+    environment:
+      PORT: 4000
+      MONGO_URI: mongodb://mongo:27017/salorie
+      REDIS_URL: redis://redis:6379
+      UPLOAD_DIR: /data/uploads
+      FIREBASE_SERVICE_ACCOUNT: ${FIREBASE_SERVICE_ACCOUNT}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      USDA_API_KEY: ${USDA_API_KEY:-DEMO_KEY}
+      GEMINI_LITE_MODEL: gemini-2.0-flash-lite
+      INSIGHTS_CRON: 0 3 * * *
+    volumes: [salorie_uploads:/data/uploads]
+    ports: ["4000:4000"]
+
+  web:
+    build: ./web
+    restart: unless-stopped
+    depends_on: [backend]
+    environment:
+      FIREBASE_SERVICE_ACCOUNT: ${FIREBASE_SERVICE_ACCOUNT}
+      NEXT_PUBLIC_API_URL: http://backend:4000
+    ports: ["3000:3000"]
+
+volumes:
+  salorie_mongo:
+  salorie_minio:
+  salorie_uploads:

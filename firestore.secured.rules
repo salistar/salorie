@@ -43,5 +43,33 @@ service cloud.firestore {
       allow read: if signedIn();
       allow write: if false;
     }
+
+    // Group races (live): any signed-in user can read the race + create/join.
+    // A participant doc id == the user's email doc id, so you can only write your own.
+    match /races/{raceId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+      match /participants/{pid} {
+        allow read: if signedIn();
+        allow write: if isOwner(pid);
+      }
+    }
+
+    // Virtual challenges (Conqueror): readable by any signed-in user; you can
+    // only write your own progress doc.
+    match /challenges/{challengeId} {
+      allow read: if signedIn();
+      match /participants/{pid} {
+        allow read: if signedIn();
+        allow write: if isOwner(pid);
+      }
+    }
+
+    // Community custom products (barcodes not found in OpenFoodFacts). Any
+    // signed-in user can read them and contribute new ones.
+    match /custom_products/{barcode} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+    }
   }
 }

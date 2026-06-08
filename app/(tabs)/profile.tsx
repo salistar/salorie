@@ -293,30 +293,32 @@ export default function ProfileScreen() {
           />
         </Animated.View>
 
-        {/* Trigger Seeded Notifications */}
-        <TouchableOpacity
-          style={[styles.logoutBtn, { backgroundColor: '#EEF2FF', borderColor: '#C7D2FE', marginBottom: 12 }]}
-          onPress={handleTriggerNotifications}
-        >
-          <BellRing size={20} color="#4338CA" />
-          <Text style={[styles.logoutText, { color: '#4338CA' }]}>
-            🔔 Trigger 10 Notifications
-          </Text>
-        </TouchableOpacity>
+        {/* Developer-only tools — hidden in production builds */}
+        {__DEV__ && (
+          <>
+            <TouchableOpacity
+              style={[styles.logoutBtn, { backgroundColor: '#EEF2FF', borderColor: '#C7D2FE', marginBottom: 12 }]}
+              onPress={handleTriggerNotifications}
+            >
+              <BellRing size={20} color="#4338CA" />
+              <Text style={[styles.logoutText, { color: '#4338CA' }]}>
+                🔔 Trigger 10 Notifications
+              </Text>
+            </TouchableOpacity>
 
-        {/* Dev: Seed Demo Data */}
-        <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: Colors.light.primaryLight, marginBottom: 12 }]} onPress={handleSeedData}>
-          <Text style={[styles.logoutText, { color: Colors.light.primary }]}>🌱 {t('common.seed_btn')}</Text>
-        </TouchableOpacity>
+            <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: Colors.light.primaryLight, marginBottom: 12 }]} onPress={handleSeedData}>
+              <Text style={[styles.logoutText, { color: Colors.light.primary }]}>🌱 {t('common.seed_btn')}</Text>
+            </TouchableOpacity>
 
-        {/* Dev: Clear All Local Cache */}
-        <TouchableOpacity
-          style={[styles.logoutBtn, { backgroundColor: '#FEF3C7', borderColor: '#FCD34D', marginBottom: 12 }]}
-          onPress={handleClearCache}
-        >
-          <Trash2 size={20} color="#92400E" />
-          <Text style={[styles.logoutText, { color: '#92400E' }]}>🗑️ Clear Cache</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.logoutBtn, { backgroundColor: '#FEF3C7', borderColor: '#FCD34D', marginBottom: 12 }]}
+              onPress={handleClearCache}
+            >
+              <Trash2 size={20} color="#92400E" />
+              <Text style={[styles.logoutText, { color: '#92400E' }]}>🗑️ Clear Cache</Text>
+            </TouchableOpacity>
+          </>
+        )}
 
         {/* Logout Button */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>

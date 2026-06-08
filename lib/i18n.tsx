@@ -1353,32 +1353,21 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('en');
 
   useEffect(() => {
+    // Keep the NATIVE engine in LTR base so the root `direction` style drives
+    // flipping reactively (and reset any forceRTL persisted by older builds).
+    try { if (I18nManager.isRTL) { I18nManager.allowRTL(false); I18nManager.forceRTL(false); } } catch {}
     AsyncStorage.getItem(LANG_KEY)
-      .then((v) => {
-        if (v === 'en' || v === 'fr' || v === 'ar') {
-          setLanguageState(v);
-          // Apply direction on initial load
-          const isRTL = v === 'ar';
-          if (I18nManager.isRTL !== isRTL) {
-            I18nManager.allowRTL(isRTL);
-            I18nManager.forceRTL(isRTL);
-          }
-        }
-      })
+      .then((v) => { if (v === 'en' || v === 'fr' || v === 'ar') setLanguageState(v); })
       .catch(() => {});
   }, []);
 
   const setLanguage = async (lang: Language) => {
+    // Direction is applied REACTIVELY via the `direction` style at the app root
+    // (see app/_layout.tsx) — switching language flips the layout instantly,
+    // with NO app restart. We deliberately do NOT call I18nManager.forceRTL
+    // (which would require a reload).
     setLanguageState(lang);
-    try {
-      await AsyncStorage.setItem(LANG_KEY, lang);
-      // Apply RTL/LTR direction
-      const isRTL = lang === 'ar';
-      if (I18nManager.isRTL !== isRTL) {
-        I18nManager.allowRTL(isRTL);
-        I18nManager.forceRTL(isRTL);
-      }
-    } catch {}
+    try { await AsyncStorage.setItem(LANG_KEY, lang); } catch {}
   };
 
   const t = (key: TranslationKey): string => {

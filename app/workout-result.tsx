@@ -16,12 +16,24 @@ import { useLogging } from '../lib/LoggingContext';
 import { addNutritionLog } from '../lib/firebase';
 import { useUser } from '@clerk/clerk-expo';
 import Animated, { FadeInUp, ZoomIn } from 'react-native-reanimated';
+import { useTranslation } from '../lib/i18n';
+import { useTheme } from '../lib/ThemeContext';
+
+const TXT: Record<string, { burned: string; logWorkout: string }> = {
+  en: { burned: 'Your workout burned', logWorkout: 'Log Workout' },
+  fr: { burned: 'Calories brûlées', logWorkout: 'Enregistrer' },
+  ar: { burned: 'تمرينك أحرق', logWorkout: 'تسجيل التمرين' },
+};
 
 const { width } = Dimensions.get('window');
 
 export default function WorkoutResultScreen() {
   const { user } = useUser();
   const { selectedDate, triggerRefresh } = useLogging();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
   const params = useLocalSearchParams();
   const { calories, name, duration } = params;
 
@@ -55,15 +67,15 @@ export default function WorkoutResultScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ArrowLeft size={28} color={Colors.light.gray[900]} strokeWidth={2.5} />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#000' : Colors.light.white }]}>
+      <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        <TouchableOpacity style={[styles.backBtn, { backgroundColor: isDark ? Colors.dark.card : Colors.light.gray[50] }]} onPress={() => router.back()}>
+          <ArrowLeft size={28} color={isDark ? '#fff' : Colors.light.gray[900]} strokeWidth={2.5} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
-        <Animated.View 
+        <Animated.View
           entering={ZoomIn.duration(600).springify()}
           style={styles.fireWrapper}
         >
@@ -73,15 +85,15 @@ export default function WorkoutResultScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(300).duration(600)}>
-          <Text style={styles.subtitle}>Your workout burned</Text>
-          <Text style={styles.calories}>{calories} kcal</Text>
-          <Text style={styles.info}>{name} • {duration} min</Text>
+          <Text style={[styles.subtitle, { color: isDark ? '#9BA1A6' : Colors.light.gray[500] }]}>{t.burned}</Text>
+          <Text style={[styles.calories, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{calories} kcal</Text>
+          <Text style={[styles.info, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>{name} • {duration} min</Text>
         </Animated.View>
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity 
-          style={[styles.logBtn, loading && styles.disabledBtn]}
+        <TouchableOpacity
+          style={[styles.logBtn, { flexDirection: isRTL ? 'row-reverse' : 'row' }, loading && styles.disabledBtn]}
           onPress={handleLog}
           disabled={loading}
         >
@@ -90,7 +102,7 @@ export default function WorkoutResultScreen() {
           ) : (
             <>
               <Check size={24} color={Colors.light.white} strokeWidth={3} />
-              <Text style={styles.logText}>Log Workout</Text>
+              <Text style={styles.logText}>{t.logWorkout}</Text>
             </>
           )}
         </TouchableOpacity>
