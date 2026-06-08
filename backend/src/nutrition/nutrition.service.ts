@@ -1,7 +1,30 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 import { RedisService } from '../redis.service';
 
 export interface FoodInput { name: string; calories?: number; barcode?: string; }
+
+function norm(s: string): string {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// Curated CIQUAL (ANSES) subset, loaded once → name → micros/100g (RDI units).
+const CIQUAL: Map<string, { micros100: Record<string, number>; kcal100: number }> = (() => {
+  const map = new Map<string, any>();
+  try {
+    const raw = fs.readFileSync(path.join(process.cwd(), 'data', 'ciqual.json'), 'utf8');
+    const j = JSON.parse(raw);
+    const labels: string[] = j.labels;
+    for (const f of j.foods || []) {
+      const micros100: Record<string, number> = {};
+      labels.forEach((lab, i) => { micros100[lab] = Number(f.m[i]) || 0; });
+      const entry = { micros100, kcal100: Number(f.kcal) || 0 };
+      for (const n of f.names) map.set(norm(n), entry);
+    }
+  } catch (e) { new Logger('CIQUAL').warn('ciqual.json not loaded: ' + (e as Error).message); }
+  return map;
+})();
 
 // Reference Daily Intake (adult) used to express % of needs.
 const RDI: Record<string, { rdi: number; unit: string }> = {
@@ -64,6 +87,14 @@ export class NutritionService {
         }
       }
     } catch {}
+
+    // 1.5) Curated CIQUAL (ANSES) — instant, offline, FR-first for generic foods.
+    if (!found && food.name) {
+      const key = norm(food.name);
+      let c = CIQUAL.get(key);
+      if (!c && key) { for (const [k, v] of CIQUAL) { if (key.includes(k) || k.includes(key)) { c = v; break; } } }
+      if (c) { micros100 = { ...c.micros100 }; kcal100 = c.kcal100; found = true; }
+    }
 
     // 2) Generic name → USDA FoodData Central (rich micronutrients for whole foods)
     if (!found && food.name) {
