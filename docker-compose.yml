@@ -49,6 +49,8 @@ services:
     environment:
       FIREBASE_SERVICE_ACCOUNT: ${FIREBASE_SERVICE_ACCOUNT}
       NEXT_PUBLIC_API_URL: http://backend:4000
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASS: ${ADMIN_PASS:-}
     ports: ["3000:3000"]
 
 volumes:
