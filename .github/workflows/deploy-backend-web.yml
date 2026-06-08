@@ -42,21 +42,23 @@ jobs:
           rm: false
           overwrite: true
 
-      # 2) Build + start the containers on the VPS, secrets injected as env.
+      # 2) Build + start the containers on the VPS. Secrets are written to a
+      #    .env file (docker compose auto-loads it) — avoids shell-quoting issues.
       - name: docker compose up on VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          envs: FIREBASE_SERVICE_ACCOUNT,GEMINI_API_KEY,USDA_API_KEY
+          command_timeout: 25m
           script: |
             set -e
-            cd ${{ secrets.VPS_APP_DIR }}
-            export FIREBASE_SERVICE_ACCOUNT='${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
-            export GEMINI_API_KEY='${{ secrets.GEMINI_API_KEY }}'
-            export USDA_API_KEY='${{ secrets.USDA_API_KEY }}'
-            docker compose up -d --build
+            cd "${{ secrets.VPS_APP_DIR }}"
+            umask 077
+            printf '%s\n' 'FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > .env
+            printf '%s\n' 'GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}' >> .env
+            printf '%s\n' 'USDA_API_KEY=${{ secrets.USDA_API_KEY }}' >> .env
+            docker compose up -d --build --remove-orphans
             docker compose ps
             docker image prune -f
-            echo "Deployed. API → :4000  Admin web → :3000"
+            echo "Deployed. API -> :4000  Admin web -> :3000"
