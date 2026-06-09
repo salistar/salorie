@@ -1,6 +1,8 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { NutritionService, FoodInput } from './nutrition.service';
+import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 
+@UseGuards(FirebaseAuthGuard)
 @Controller('nutrition')
 export class NutritionController {
   constructor(private nutrition: NutritionService) {}

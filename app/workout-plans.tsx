@@ -5,6 +5,7 @@ import { useUser } from '@clerk/clerk-expo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ArrowLeft, ChevronDown, Dumbbell, Clock, BarChart3, Flame, CheckCircle2 } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
+import ScreenTopBar from '../components/ScreenTopBar';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
 import { addNutritionLog, emailToDocId } from '../lib/firebase';
@@ -112,11 +113,7 @@ export default function WorkoutPlansScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.topRow, row()]}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <ArrowLeft size={22} color={text} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
-          </TouchableOpacity>
-        </View>
+        <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
         <View style={[styles.titleRow, row()]}>
           <Dumbbell size={26} color={Colors.light.primary} />

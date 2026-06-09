@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ArrowLeft, Check, Scale } from 'lucide-react-native';
+import ScreenTopBar from '../components/ScreenTopBar';
 import { Colors } from '../constants/Colors';
 import { RulerPicker } from 'react-native-ruler-picker';
 import { useUser } from '@clerk/clerk-expo';
@@ -102,12 +103,7 @@ export default function UpdateWeightScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: pageBg }]}>
-      <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-        <TouchableOpacity style={[styles.backBtn, { backgroundColor: cardBg }]} onPress={() => router.back()}>
-          <ArrowLeft size={28} color={primaryText} strokeWidth={2.5} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
-        </TouchableOpacity>
-        <View style={{ width: 48 }} />
-      </View>
+      <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
       <View style={styles.titleSection}>
         <Text style={[styles.title, { color: primaryText, textAlign: isRTL ? 'right' : 'left' }]}>{t.title}</Text>
@@ -131,8 +127,8 @@ export default function UpdateWeightScreen() {
             width={300}
             height={150}
             indicatorColor={Colors.light.primary}
-            valueTextStyle={[styles.rulerValueText, { color: primaryText }]}
-            unitTextStyle={[styles.rulerUnitText, { color: secondaryText }]}
+            valueTextStyle={StyleSheet.flatten([styles.rulerValueText, { color: primaryText }])}
+            unitTextStyle={StyleSheet.flatten([styles.rulerUnitText, { color: secondaryText }])}
           />
         </Animated.View>
       </View>

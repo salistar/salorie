@@ -12,6 +12,10 @@ import { NutritionController } from './nutrition/nutrition.controller';
 import { NutritionService } from './nutrition/nutrition.service';
 import { InsightsController } from './insights/insights.controller';
 import { InsightsService } from './insights/insights.service';
+import { AiController } from './ai/ai.controller';
+import { AiService } from './ai/ai.service';
+import { MlController } from './ml/ml.controller';
+import { MlService } from './ml/ml.service';
 
 @Module({
   imports: [
@@ -21,7 +25,7 @@ import { InsightsService } from './insights/insights.service';
     // so the API boots standalone for Firestore/OFF/Redis-only endpoints.
     ...(process.env.MONGO_URI ? [MongooseModule.forRoot(process.env.MONGO_URI)] : []),
   ],
-  controllers: [HealthController, UsersController, FilesController, NutritionController, InsightsController],
-  providers: [FirebaseService, RedisService, UsersService, NutritionService, InsightsService],
+  controllers: [HealthController, UsersController, FilesController, NutritionController, InsightsController, AiController, MlController],
+  providers: [FirebaseService, RedisService, UsersService, NutritionService, InsightsService, AiService, MlService],
 })
 export class AppModule {}

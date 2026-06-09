@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ScrollView,
+  Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowLeft, Footprints, Weight, Settings2, ChevronRight } from 'lucide-react-native';
@@ -69,26 +70,13 @@ export default function LogExerciseScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: bg }]}>
-      <ScreenTopBar showBrand showNotif={false} />
-
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.backBtn, { backgroundColor: backBtnBg }]}
-          onPress={() => router.back()}
-        >
-          <ArrowLeft
-            size={24}
-            color={textPrimary}
-            strokeWidth={2.5}
-            style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}
-          />
-        </TouchableOpacity>
-      </View>
+      <ScreenTopBar showBack showBrand showNotif={false} />
 
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={[styles.title, { color: textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
           {t('logex.title')}
         </Text>
+        <Image source={require('../assets/images/illustrations/workout.jpg')} style={styles.hero} resizeMode="cover" />
 
         <View style={styles.optionsList}>
           {options.map((option) => (
@@ -139,7 +127,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: { paddingHorizontal: 24, paddingBottom: 40 },
-  title: { fontSize: 34, fontWeight: '900', letterSpacing: -1, marginBottom: 24, marginTop: 4 },
+  title: { fontSize: 34, fontWeight: '900', letterSpacing: -1, marginBottom: 16, marginTop: 4 },
+  hero: { width: '100%', height: 150, borderRadius: 18, marginBottom: 20 },
   optionsList: { gap: 14 },
   optionCard: {
     alignItems: 'center',

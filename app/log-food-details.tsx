@@ -151,23 +151,7 @@ export default function LogFoodDetailsScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <ScreenTopBar showBrand showNotif={false} />
-
-        <View style={[styles.header, isRTL && { flexDirection: 'row-reverse' }]}>
-          <TouchableOpacity
-            style={[styles.backBtn, { backgroundColor: cardBg }]}
-            onPress={() => router.back()}
-          >
-            <ArrowLeft
-              size={24}
-              color={textPrimary}
-              strokeWidth={2.5}
-              style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}
-            />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: textPrimary }]}>{t('logfood.title')}</Text>
-          <View style={{ width: 44 }} />
-        </View>
+        <ScreenTopBar showBack title={t('logfood.title')} showBrand={false} showNotif={false} />
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Captured image preview */}

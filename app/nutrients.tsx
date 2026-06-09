@@ -9,6 +9,7 @@ import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
 import { emailToDocId } from '../lib/firebase';
+import { auth } from '../lib/firebaseAuth';
 import { estimateMicros, MicroReport } from '../lib/AiModel';
 import { getMicrosReport, saveMicrosReport } from '../lib/aiStore';
 
@@ -75,8 +76,10 @@ export default function NutrientsScreen() {
         try {
           const ctrl = new AbortController();
           const to = setTimeout(() => ctrl.abort(), 4000);
+          const tok = await auth.currentUser?.getIdToken().catch(() => null);
           const res = await fetch(`${apiUrl}/nutrition/micros`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
             body: JSON.stringify({ foods: meals, lang: language }), signal: ctrl.signal,
           });
           clearTimeout(to);
@@ -100,12 +103,7 @@ export default function NutrientsScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.topRow}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <ArrowLeft size={22} color={text} />
-          </TouchableOpacity>
-          <View style={{ flex: 1 }}><ScreenTopBar showBrand={false} showNotif={false} /></View>
-        </View>
+        <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
         <View style={styles.titleRow}>
           <Apple size={26} color={Colors.light.primary} />

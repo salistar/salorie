@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ArrowLeft, Clock, Dumbbell } from 'lucide-react-native';
+import { Clock, Dumbbell } from 'lucide-react-native';
 import { Video, ResizeMode } from 'expo-av';
 import { getLocalVideo } from '../assets/videos/registry';
 import { Colors } from '../constants/Colors';
@@ -25,12 +25,14 @@ import ScreenTopBar from '../components/ScreenTopBar';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
 import { colorLog, explain } from '../lib/LocalDataStore';
+import { geminiShim } from '../lib/aiProxy';
 
 const { width } = Dimensions.get('window');
 console.log('\x1b[35m[workout-details.tsx] MODULE LOADED\x1b[0m');
 
-const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+// Gemini runs server-side via the backend /ai proxy — no key in the client.
+const GEMINI_API_KEY = 'proxied';
+const genAI = geminiShim;
 
 // Images stock (Unsplash — libres de droit) pour chaque activite / exercice.
 // NOTE : si une URL casse, l'Image onError log et on garde le fond couleur.
@@ -348,21 +350,7 @@ Output a single integer (e.g. 247). No explanation.`;
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScreenTopBar showBrand showNotif={false} />
-
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={[styles.backBtn, { backgroundColor: cardBg }]}
-            onPress={() => router.back()}
-          >
-            <ArrowLeft
-              size={24}
-              color={textPrimary}
-              strokeWidth={2.5}
-              style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}
-            />
-          </TouchableOpacity>
-        </View>
+        <ScreenTopBar showBack showBrand showNotif={false} />
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <Text

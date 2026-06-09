@@ -11,6 +11,7 @@ import { getInsights, pickLang, StoredInsight, InsightScope } from '../../lib/In
 import { emailToDocId, fetchAllUserData } from '../../lib/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import BrandBanner from '../../components/BrandBanner';
 import { useTheme } from '../../lib/ThemeContext';
 import { useUser } from '@clerk/clerk-expo';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
@@ -24,6 +25,15 @@ export default function AnalyticsScreen() {
   const { user } = useUser();
   const { t, language } = useTranslation();
 
+  // Local FR/EN/AR strings for the score explanation (D3) + empty-state CTA (D4).
+  // Inline to avoid touching the shared i18n file.
+  const ASTR: Record<string, Record<string, string>> = {
+    en: { banner_title: 'Your Progress', banner_sub: 'Trends, streaks and AI insights from your week.', score_hint: 'What is this?', score_info_title: 'Your Health Score', score_info_body: 'A 0–100 score based on your consistency, nutrition balance, hydration and activity this week. Log meals, water and workouts to raise it.', log_workout: 'Log a workout', close: 'Got it' },
+    fr: { banner_title: 'Ta progression', banner_sub: 'Tendances, séries et insights IA de ta semaine.', score_hint: "C'est quoi ?", score_info_title: 'Ton Score Santé', score_info_body: "Un score de 0 à 100 basé sur ta régularité, l'équilibre nutritionnel, l'hydratation et l'activité cette semaine. Logge tes repas, ton eau et tes séances pour le faire monter.", log_workout: 'Logger une séance', close: 'Compris' },
+    ar: { banner_title: 'تقدّمك', banner_sub: 'الاتجاهات والسلاسل ورؤى الذكاء لأسبوعك.', score_hint: 'ما هذا؟', score_info_title: 'نقاط صحتك', score_info_body: 'نتيجة من 0 إلى 100 تعتمد على انتظامك وتوازن تغذيتك وترطيبك ونشاطك هذا الأسبوع. سجّل وجباتك ومياهك وتمارينك لرفعها.', log_workout: 'سجّل تمرينًا', close: 'حسنًا' },
+  };
+  const A_ = (k: string) => (ASTR[String(language)] || ASTR.en)[k] || ASTR.en[k] || k;
+
   // Map 'Mon'/'Tue'/... (produced by useAnalyticsData) to translated short day
   // names via i18n. Keeps chart labels in the user's language.
   const translateDayShort = (en: string) => {
@@ -31,10 +41,19 @@ export default function AnalyticsScreen() {
     const v = t(k);
     return v && v !== k ? v : en;
   };
-  const { resolved } = useTheme();
-  const bgColor = resolved === 'dark' ? '#000000' : 'transparent';
+  const { resolved, colors } = useTheme();
+  const isDark = resolved === 'dark';
+  const bgColor = isDark ? '#000000' : 'transparent';
+  // Premium + dark-aware palette (P2/P4): one accent (green) + neutral surfaces,
+  // instead of the loud pink/blue/amber cards. All surfaces/text adapt to theme.
+  const surface = isDark ? colors.card : '#fff';
+  const surfaceSoft = isDark ? '#161c23' : Colors.light.gray[50];
+  const tPrimary = isDark ? '#fff' : Colors.light.gray[900];
+  const tMuted = isDark ? '#9BA1A6' : Colors.light.gray[500];
+  const greenSoft = isDark ? 'rgba(74,222,128,0.12)' : Colors.light.primaryLight;
   const { loading, streakData, weight, weeklyLogs, refresh } = useAnalyticsData();
   const [isStreakModalVisible, setIsStreakModalVisible] = useState(false);
+  const [scoreInfoVisible, setScoreInfoVisible] = useState(false);
   // Three period-scoped insight docs. Each holds all 3 languages in one doc,
   // so switching language is free after the first generation. Data flow is
   // handled by InsightsService: cache-first → server compare → regenerate
@@ -207,12 +226,12 @@ export default function AnalyticsScreen() {
   const netEnergy = totalWeekConsumed - totalWeekBurned;
 
   const chartConfig = {
-    backgroundColor: Colors.light.white,
-    backgroundGradientFrom: Colors.light.white,
-    backgroundGradientTo: Colors.light.white,
+    backgroundColor: surface,
+    backgroundGradientFrom: surface,
+    backgroundGradientTo: surface,
     decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(132, 94, 194, ${opacity})`, 
-    labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
+    color: (opacity = 1) => `rgba(132, 94, 194, ${opacity})`,
+    labelColor: (opacity = 1) => isDark ? `rgba(155,161,166,${opacity})` : `rgba(107, 114, 128, ${opacity})`,
     style: {
       borderRadius: 16
     },
@@ -231,10 +250,7 @@ export default function AnalyticsScreen() {
             {t('analytics.progress')}
           </Text>
         </View>
-        <Image
-          source={require('../../assets/images/illustrations/analytics_cover.jpg')}
-          style={{ width: '100%', height: 140, borderRadius: 20, marginBottom: 16 }}
-        />
+        <BrandBanner title={A_('banner_title')} subtitle={A_('banner_sub')} height={120} style={{ marginBottom: 16 }} />
 
 
         {/* Bento Grid Insights */}
@@ -250,69 +266,55 @@ export default function AnalyticsScreen() {
               )}
             </Animated.View>
 
-            {/* Cell 2: Health Score (Small) */}
-            <Animated.View entering={FadeInDown.delay(100).duration(800)} style={styles.bentoScoreCard}>
-              <Text style={styles.bentoLabel}>{t('analytics.score')}</Text>
-              <Text style={styles.bentoScoreValue}>{healthScore || '--'}</Text>
-              <View style={styles.scoreIndicator}>
-                <View style={[styles.scoreFill, { width: `${healthScore}%` }]} />
-              </View>
-            </Animated.View>
+            {/* Cell 2: Health Score (Small) — tappable, explains the score (D3) */}
+            <TouchableOpacity style={{ flex: 1 }} activeOpacity={0.85} onPress={() => setScoreInfoVisible(true)}>
+              <Animated.View entering={FadeInDown.delay(100).duration(800)} style={styles.bentoScoreCard}>
+                <Text style={styles.bentoLabel}>{t('analytics.score')}</Text>
+                <Text style={styles.bentoScoreValue}>{healthScore || '--'}</Text>
+                <View style={styles.scoreIndicator}>
+                  <View style={[styles.scoreFill, { width: `${healthScore}%` }]} />
+                </View>
+                <Text style={styles.scoreHint}>{A_('score_hint')}</Text>
+              </Animated.View>
+            </TouchableOpacity>
           </View>
 
           {/* Cell 6 (promoted to top — right under Weekly Outlook): Exercise
               Insight. Kept as plain View (no reanimated) so it cannot get
               stuck at opacity 0 under Bridgeless / Expo Go. */}
-          <View style={[styles.bentoFullCard, { backgroundColor: '#ECFDF5', borderColor: '#047857', borderWidth: 2 }]}>
-             <View style={[styles.aiBadge, { backgroundColor: '#065F46' }]}>
+          <View style={[styles.bentoFullCard, { backgroundColor: greenSoft, borderColor: colors.primary, borderWidth: 1.5 }]}>
+             <View style={[styles.aiBadge, { backgroundColor: colors.primary }]}>
                 <Text style={styles.aiBadgeText}>{t('analytics.exercise_insight')}</Text>
              </View>
-             <Text style={[styles.bentoRecommendation, { color: '#065F46' }]}>
+             <Text style={[styles.bentoRecommendation, { color: tPrimary }]}>
                 {ai('exerciseAnalysis') || t('analytics.waiting')}
              </Text>
+             {/* D4: actionable empty-state CTA */}
+             <TouchableOpacity style={styles.exerciseCta} activeOpacity={0.85} onPress={() => router.push('/log-exercise' as any)}>
+                <Text style={styles.exerciseCtaTxt}>{A_('log_workout')}</Text>
+             </TouchableOpacity>
           </View>
 
           <View style={styles.bentoRow}>
              {/* Cell 3: Top Food */}
-             <Animated.View entering={FadeInDown.delay(200).duration(800)} style={styles.bentoCommonCard}>
+             <Animated.View entering={FadeInDown.delay(200).duration(800)} style={[styles.bentoCommonCard, { backgroundColor: surfaceSoft, borderColor: isDark ? colors.gray[200] : Colors.light.gray[100] }]}>
                 <Text style={styles.bentoLabel}>{t('analytics.top_logged')}</Text>
-                <Text style={styles.bentoSmallValue}>{ai('topFood') || '...'}</Text>
+                <Text style={[styles.bentoSmallValue, { color: tPrimary }]}>{ai('topFood') || '...'}</Text>
              </Animated.View>
 
              {/* Cell 4: Hydration */}
-             <Animated.View entering={FadeInDown.delay(300).duration(800)} style={[styles.bentoCommonCard, { backgroundColor: '#F0F9FF' }]}>
-                <Text style={[styles.bentoLabel, { color: '#007AFF' }]}>{t('analytics.hydration')}</Text>
-                <Text style={[styles.bentoSmallValue, { color: '#007AFF' }]}>{ai('hydrationStatus') || '...'}</Text>
+             <Animated.View entering={FadeInDown.delay(300).duration(800)} style={[styles.bentoCommonCard, { backgroundColor: surfaceSoft, borderColor: isDark ? colors.gray[200] : Colors.light.gray[100] }]}>
+                <Text style={[styles.bentoLabel, { color: colors.primary }]}>{t('analytics.hydration')}</Text>
+                <Text style={[styles.bentoSmallValue, { color: tPrimary }]}>{ai('hydrationStatus') || '...'}</Text>
              </Animated.View>
           </View>
 
           {/* Cell 5: Recommendation (Wide) */}
-          <Animated.View entering={FadeInDown.delay(400).duration(800)} style={styles.bentoFullCard}>
-             <View style={styles.aiBadge}>
+          <Animated.View entering={FadeInDown.delay(400).duration(800)} style={[styles.bentoFullCard, { backgroundColor: greenSoft, borderColor: colors.primary }]}>
+             <View style={[styles.aiBadge, { backgroundColor: colors.primary }]}>
                 <Text style={styles.aiBadgeText}>{t('analytics.ai_badge')}</Text>
              </View>
-             <Text style={styles.bentoRecommendation}>{ai('recommendation') || t('analytics.waiting')}</Text>
-          </Animated.View>
-
-          {/* Cell 7: Monthly Outlook — month-scoped doc. Same 3-language
-              storage pattern; picks fr/ar/en from the cached doc. */}
-          <Animated.View entering={FadeInDown.delay(600).duration(800)} style={[styles.bentoFullCard, { backgroundColor: '#EFF6FF', borderColor: '#DBEAFE' }]}>
-             <View style={[styles.aiBadge, { backgroundColor: '#1E40AF' }]}>
-                <Text style={styles.aiBadgeText}>{t('analytics.monthly_outlook')}</Text>
-             </View>
-             <Text style={[styles.bentoRecommendation, { color: '#1E3A8A' }]}>
-                {(pickLang(monthIns, language as any) as any)?.summary || t('analytics.waiting')}
-             </Text>
-          </Animated.View>
-
-          {/* Cell 8: All-time Overview */}
-          <Animated.View entering={FadeInDown.delay(700).duration(800)} style={[styles.bentoFullCard, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}>
-             <View style={[styles.aiBadge, { backgroundColor: '#92400E' }]}>
-                <Text style={styles.aiBadgeText}>{t('analytics.all_time_outlook')}</Text>
-             </View>
-             <Text style={[styles.bentoRecommendation, { color: '#78350F' }]}>
-                {(pickLang(allIns, language as any) as any)?.summary || t('analytics.waiting')}
-             </Text>
+             <Text style={[styles.bentoRecommendation, { color: tPrimary }]}>{ai('recommendation') || t('analytics.waiting')}</Text>
           </Animated.View>
         </View>
 
@@ -323,10 +325,10 @@ export default function AnalyticsScreen() {
         ) : (
           <>
             {/* Calories Chart Card */}
-            <Animated.View entering={FadeInDown.duration(600)} style={styles.chartCard}>
+            <Animated.View entering={FadeInDown.duration(600)} style={[styles.chartCard, { backgroundColor: surface, borderColor: isDark ? colors.gray[200] : Colors.light.gray[50] }]}>
               <View style={styles.chartHeader}>
-                <Text style={styles.chartTitle}>{t('analytics.weekly_calories')}</Text>
-                <Text style={styles.chartSubtitle}>{t('analytics.daily_consumption')}</Text>
+                <Text style={[styles.chartTitle, { color: tPrimary }]}>{t('analytics.weekly_calories')}</Text>
+                <Text style={[styles.chartSubtitle, { color: tMuted }]}>{t('analytics.daily_consumption')}</Text>
               </View>
               
               <View style={styles.chartContainer}>
@@ -349,10 +351,10 @@ export default function AnalyticsScreen() {
             </Animated.View>
 
             {/* Weekly Energy Card */}
-            <Animated.View entering={FadeInDown.delay(100).duration(600)} style={[styles.chartCard, { marginBottom: 32 }]}>
+            <Animated.View entering={FadeInDown.delay(100).duration(600)} style={[styles.chartCard, { backgroundColor: surface, borderColor: isDark ? colors.gray[200] : Colors.light.gray[50], marginBottom: 32 }]}>
               <View style={styles.chartHeader}>
-                <Text style={styles.chartTitle}>{t('analytics.weekly_energy')}</Text>
-                <Text style={styles.chartSubtitle}>{t('analytics.calorie_balance')}</Text>
+                <Text style={[styles.chartTitle, { color: tPrimary }]}>{t('analytics.weekly_energy')}</Text>
+                <Text style={[styles.chartSubtitle, { color: tMuted }]}>{t('analytics.calorie_balance')}</Text>
               </View>
 
               <View style={styles.energySummaryRow}>
@@ -405,10 +407,10 @@ export default function AnalyticsScreen() {
             </Animated.View>
 
             {/* Water Intake Card */}
-            <Animated.View entering={FadeInDown.delay(200).duration(600)} style={styles.chartCard}>
+            <Animated.View entering={FadeInDown.delay(200).duration(600)} style={[styles.chartCard, { backgroundColor: surface, borderColor: isDark ? colors.gray[200] : Colors.light.gray[50] }]}>
               <View style={styles.chartHeader}>
-                <Text style={styles.chartTitle}>{t('analytics.water_intake')}</Text>
-                <Text style={styles.chartSubtitle}>{t('analytics.hydration_levels')}</Text>
+                <Text style={[styles.chartTitle, { color: tPrimary }]}>{t('analytics.water_intake')}</Text>
+                <Text style={[styles.chartSubtitle, { color: tMuted }]}>{t('analytics.hydration_levels')}</Text>
               </View>
 
               <View style={styles.waterSummaryRow}>
@@ -512,10 +514,20 @@ export default function AnalyticsScreen() {
                 </View>
                 <Text style={styles.weightLabel}>{t('analytics.my_weight')}</Text>
                 
-                <View style={[styles.trendBadge, { backgroundColor: '#F0FDF4' }]}>
-                  <TrendingUp size={14} color="#22C55E" />
-                  <Text style={styles.trendText}>{t('analytics.on_track')}</Text>
-                </View>
+                {(() => {
+                  const tr = weightTrend;
+                  const good = !tr || tr.good;
+                  const Icon = !tr || tr.direction === 'stable' ? Minus : tr.direction === 'rising' ? TrendingUp : TrendingDown;
+                  const c = good ? '#22C55E' : '#F59E0B';
+                  const bgc = good ? '#F0FDF4' : '#FFFBEB';
+                  const label = good ? t('analytics.on_track') : `${tr!.delta > 0 ? '+' : ''}${tr!.delta.toFixed(1)} kg`;
+                  return (
+                    <View style={[styles.trendBadge, { backgroundColor: bgc }]}>
+                      <Icon size={14} color={c} />
+                      <Text style={[styles.trendText, { color: c }]}>{label}</Text>
+                    </View>
+                  );
+                })()}
 
                 <View style={styles.nextIconContainer}>
                   <ChevronRight size={18} color={Colors.light.gray[300]} strokeWidth={3} />
@@ -523,16 +535,6 @@ export default function AnalyticsScreen() {
               </Animated.View>
             </TouchableOpacity>
           </View>
-
-            {/* Exercise Analysis — now wired to the same weekly AI insight
-                (`exerciseAnalysis` field). Replaces the legacy hardcoded
-                "coming soon" placeholder that was what the user kept seeing. */}
-            <View style={[styles.comingSoonCard, { marginTop: 16, backgroundColor: '#ECFDF5', borderColor: '#047857', borderWidth: 1 }]}>
-              <Text style={[styles.comingSoonTitle, { color: '#065F46' }]}>{t('analytics.exercise_analysis')}</Text>
-              <Text style={[styles.comingSoonDesc, { color: '#065F46' }]}>
-                {ai('exerciseAnalysis') || t('analytics.exercise_soon')}
-              </Text>
-            </View>
           </>
         )}
       </ScrollView>
@@ -598,6 +600,34 @@ export default function AnalyticsScreen() {
                 ))}
               </View>
             </View>
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Health Score explanation modal (D3) */}
+      <Modal
+        visible={scoreInfoVisible}
+        transparent
+        animationType="none"
+        onRequestClose={() => setScoreInfoVisible(false)}
+      >
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setScoreInfoVisible(false)}>
+          <Animated.View entering={FadeIn.duration(200)} style={styles.modalBg} />
+          <Animated.View entering={FadeIn.duration(400)} style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{A_('score_info_title')}</Text>
+              <TouchableOpacity onPress={() => setScoreInfoVisible(false)}>
+                <X size={24} color={Colors.light.gray[400]} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.scoreInfoBig}>
+              <Text style={styles.scoreInfoBigValue}>{healthScore || '--'}</Text>
+              <Text style={styles.scoreInfoBigMax}>/ 100</Text>
+            </View>
+            <Text style={styles.scoreInfoBody}>{A_('score_info_body')}</Text>
+            <TouchableOpacity style={styles.scoreInfoBtn} onPress={() => setScoreInfoVisible(false)}>
+              <Text style={styles.scoreInfoBtnTxt}>{A_('close')}</Text>
+            </TouchableOpacity>
           </Animated.View>
         </TouchableOpacity>
       </Modal>
@@ -705,6 +735,62 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: Colors.light.white,
     borderRadius: 2,
+  },
+  scoreHint: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 6,
+    textDecorationLine: 'underline',
+  },
+  exerciseCta: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
+    backgroundColor: '#065F46',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  exerciseCtaTxt: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  scoreInfoBig: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'center',
+    gap: 4,
+    marginBottom: 12,
+  },
+  scoreInfoBigValue: {
+    fontSize: 56,
+    fontWeight: '900',
+    color: Colors.light.primary,
+  },
+  scoreInfoBigMax: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: Colors.light.gray[400],
+  },
+  scoreInfoBody: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.light.gray[600],
+    lineHeight: 22,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  scoreInfoBtn: {
+    backgroundColor: Colors.light.primary,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+  scoreInfoBtnTxt: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 15,
   },
   aiBadge: {
     alignSelf: 'flex-start',

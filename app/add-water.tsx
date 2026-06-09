@@ -116,23 +116,7 @@ export default function AddWaterScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: bg }]}>
-      <ScreenTopBar showBrand showNotif={false} />
-
-      <View style={[styles.header, isRTL && { flexDirection: 'row-reverse' }]}>
-        <TouchableOpacity
-          style={[styles.backBtn, { backgroundColor: cardBg }]}
-          onPress={() => router.back()}
-        >
-          <ArrowLeft
-            size={24}
-            color={textPrimary}
-            strokeWidth={2.5}
-            style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}
-          />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: textPrimary }]}>{t('water.title')}</Text>
-        <View style={{ width: 44 }} />
-      </View>
+      <ScreenTopBar showBack title={t('water.title')} showBrand={false} showNotif={false} />
 
       <View style={styles.content}>
         <View style={styles.displayArea}>{renderGlasses()}</View>

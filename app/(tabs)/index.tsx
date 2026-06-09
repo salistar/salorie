@@ -1,9 +1,10 @@
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../../constants/Colors';
 import HomeHeader from '../../components/HomeHeader';
+import BrandBanner from '../../components/BrandBanner';
 import WeekCalendar from '../../components/WeekCalendar';
 import RemainingCaloriesCard from '../../components/RemainingCaloriesCard';
 import WaterIntakeCard from '../../components/WaterIntakeCard';
@@ -25,8 +26,15 @@ import { useTheme } from '../../lib/ThemeContext';
 export default function HomeScreen() {
   const { user } = useUser();
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation() as any;
   const { resolved } = useTheme();
+  // Local FR/EN/AR tagline for the brand banner (D2 — replaces stock cover photo).
+  const HSTR: Record<string, { sub: string }> = {
+    en: { sub: 'Track. Eat smart. Reach your goal.' },
+    fr: { sub: 'Suis. Mange malin. Atteins ton objectif.' },
+    ar: { sub: 'تتبّع. كل بذكاء. حقّق هدفك.' },
+  };
+  const bannerSub = (HSTR[String(language)] || HSTR.en).sub;
   const bgColor = resolved === 'dark' ? '#000000' : 'transparent';
   const { selectedDate, refreshCount, showLogModal } = useLogging();
   const { loading, goals, consumed, logs, refresh } = useNutritionData(selectedDate);
@@ -148,11 +156,10 @@ export default function HomeScreen() {
         {/* ── Top Header (brand + language + theme + notif) ──── */}
         <HomeHeader />
 
-        {/* ── Dashboard Cover Image ──────────────── */}
-        <Image
-          source={require('../../assets/images/illustrations/dashboard_cover.jpg')}
-          style={{ width: '90%', height: 120, borderRadius: 20, alignSelf: 'center', marginBottom: 2 }}
-        />
+        {/* ── Brand Banner (replaces stock cover photo, D2) ──────────────── */}
+        <View style={{ paddingHorizontal: 24 }}>
+          <BrandBanner title="Salorie" subtitle={bannerSub} height={110} />
+        </View>
 
         {/* ── Week Calendar Strip ────────────────── */}
         <View style={styles.calendarWrapper}>

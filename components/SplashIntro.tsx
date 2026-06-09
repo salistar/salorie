@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Image, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 /**
  * Full-bleed in-app intro splash.
@@ -39,14 +40,19 @@ export default function SplashIntro({ duration = 1700 }: { duration?: number }) 
       pointerEvents="none"
       style={[StyleSheet.absoluteFillObject, { opacity, zIndex: 10000, backgroundColor: '#0f3a22' }]}
     >
-      {/* Food photo background, full-bleed */}
-      <Image
-        source={require('../assets/images/illustrations/splash_bg.jpg')}
+      {/* Mixed sport + nutrition background: healthy food (left) + running
+          (right), so the splash represents BOTH sides of the app. */}
+      <View style={[StyleSheet.absoluteFillObject, { flexDirection: 'row' }]}>
+        <Image source={require('../assets/images/illustrations/healthy_food.jpg')} style={{ flex: 1, height: '100%' }} resizeMode="cover" />
+        <Image source={require('../assets/images/illustrations/running.jpg')} style={{ flex: 1, height: '100%' }} resizeMode="cover" />
+      </View>
+      {/* Green brand veil for contrast + cohesion across the two photos */}
+      <LinearGradient
+        colors={['rgba(15,58,34,0.50)', 'rgba(10,40,24,0.70)', 'rgba(7,33,20,0.90)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
         style={StyleSheet.absoluteFillObject}
-        resizeMode="cover"
       />
-      {/* Green brand veil for contrast */}
-      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(15,58,34,0.74)' }]} />
 
       {/* Centered branding */}
       <View style={styles.center}>
@@ -56,7 +62,7 @@ export default function SplashIntro({ duration = 1700 }: { duration?: number }) 
           resizeMode="contain"
         />
         <Text style={styles.brand}>Salorie</Text>
-        <Text style={styles.tagline}>Track calories. Burn smarter.</Text>
+        <Text style={styles.tagline}>Eat well. Train hard. Track it all.</Text>
       </View>
     </Animated.View>
   );

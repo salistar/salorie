@@ -5,6 +5,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
+import BrandOverlay from '../components/BrandOverlay';
 import { ArrowLeft, ScanBarcode, RefreshCw, PlusCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { Colors } from '../constants/Colors';
@@ -112,6 +113,7 @@ export default function ScanBarcodeScreen() {
 
   return (
     <View style={styles.black}>
+      <BrandOverlay />
       <CameraView
         style={StyleSheet.absoluteFillObject}
         facing="back"

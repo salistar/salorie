@@ -5,6 +5,8 @@ import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, History, ChevronDown } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
+import { useTranslation } from '../lib/i18n';
+import ScreenTopBar from '../components/ScreenTopBar';
 import { listMealPlans, SavedMealPlan } from '../lib/aiStore';
 
 function fmtDate(ts: any): string {
@@ -18,7 +20,9 @@ function fmtDate(ts: any): string {
 export default function MealPlanHistoryScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
+  const { language } = useTranslation() as any;
   const isDark = resolved === 'dark';
+  const savedTitle = language === 'fr' ? 'Plans enregistrés' : language === 'ar' ? 'الخطط المحفوظة' : 'Saved plans';
   const [plans, setPlans] = useState<SavedMealPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState<number | null>(0);
@@ -40,10 +44,7 @@ export default function MealPlanHistoryScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.topRow}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}><ArrowLeft size={22} color={text} /></TouchableOpacity>
-          <View style={styles.titleRow}><History size={24} color={Colors.light.primary} /><Text style={[styles.title, { color: text }]}>Plans enregistrés</Text></View>
-        </View>
+        <ScreenTopBar showBack title={savedTitle} showBrand={false} showNotif={false} />
 
         {loading ? (
           <View style={{ paddingVertical: 60, alignItems: 'center' }}><ActivityIndicator size="large" color={Colors.light.primary} /></View>

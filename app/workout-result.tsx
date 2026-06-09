@@ -12,6 +12,7 @@ import {
 import { useLocalSearchParams, router } from 'expo-router';
 import { Flame, Check, ArrowLeft } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
+import ScreenTopBar from '../components/ScreenTopBar';
 import { useLogging } from '../lib/LoggingContext';
 import { addNutritionLog } from '../lib/firebase';
 import { useUser } from '@clerk/clerk-expo';
@@ -68,11 +69,7 @@ export default function WorkoutResultScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#000' : Colors.light.white }]}>
-      <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-        <TouchableOpacity style={[styles.backBtn, { backgroundColor: isDark ? Colors.dark.card : Colors.light.gray[50] }]} onPress={() => router.back()}>
-          <ArrowLeft size={28} color={isDark ? '#fff' : Colors.light.gray[900]} strokeWidth={2.5} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
-        </TouchableOpacity>
-      </View>
+      <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
       <View style={styles.content}>
         <Animated.View

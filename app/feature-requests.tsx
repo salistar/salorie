@@ -24,6 +24,9 @@ import {
   CheckCircle2
 } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
+import ScreenTopBar from '../components/ScreenTopBar';
+import { useTheme } from '../lib/ThemeContext';
+import { useTranslation } from '../lib/i18n';
 import { 
   collection, 
   query, 
@@ -53,6 +56,15 @@ interface FeatureRequest {
 
 export default function FeatureRequestsScreen() {
   const { user } = useUser();
+  const { resolved } = useTheme();
+  const { language } = useTranslation() as any;
+  const tPrimary = resolved === 'dark' ? '#fff' : Colors.light.gray[900];
+  const tMuted = resolved === 'dark' ? '#9BA1A6' : Colors.light.gray[500];
+  const FL = ({
+    en: { board: 'Feature Board', shape: 'Shape the Future', vote: 'Vote for features you want to see or suggest your own.', empty: 'No requests yet. Be the first!' },
+    fr: { board: 'Idées & votes', shape: 'Façonnez le futur', vote: 'Votez pour les fonctionnalités souhaitées ou proposez les vôtres.', empty: "Aucune demande pour l'instant. Soyez le premier !" },
+    ar: { board: 'لوحة الأفكار', shape: 'اصنع المستقبل', vote: 'صوّت على الميزات التي تريدها أو اقترح ميزتك.', empty: 'لا توجد طلبات بعد. كن الأول!' },
+  } as any)[String(language)] || { board: 'Feature Board', shape: 'Shape the Future', vote: 'Vote for features you want to see or suggest your own.', empty: 'No requests yet. Be the first!' };
   const [requests, setRequests] = useState<FeatureRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -156,18 +168,12 @@ export default function FeatureRequestsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ChevronLeft size={24} color={Colors.light.gray[900]} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Feature Board</Text>
-        <View style={{ width: 44 }} />
-      </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: resolved === 'dark' ? '#0f1419' : Colors.light.white }]}>
+      <ScreenTopBar showBack title={FL.board} showBrand={false} showNotif={false} />
 
       <View style={styles.topInfo}>
-        <Text style={styles.title}>Shape the Future</Text>
-        <Text style={styles.subtitle}>Vote for features you want to see or suggest your own.</Text>
+        <Text style={[styles.title, { color: tPrimary }]}>{FL.shape}</Text>
+        <Text style={[styles.subtitle, { color: tMuted }]}>{FL.vote}</Text>
       </View>
 
       {loading ? (
@@ -183,7 +189,7 @@ export default function FeatureRequestsScreen() {
           {requests.length === 0 && (
             <View style={styles.emptyState}>
               <Lightbulb size={48} color={Colors.light.gray[200]} />
-              <Text style={styles.emptyText}>No requests yet. Be the first!</Text>
+              <Text style={[styles.emptyText, { color: tMuted }]}>{FL.empty}</Text>
             </View>
           )}
         </ScrollView>

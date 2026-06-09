@@ -1,6 +1,8 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 
+@UseGuards(FirebaseAuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(private users: UsersService) {}

@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
+import BrandOverlay from '../components/BrandOverlay';
 import { WebView } from 'react-native-webview';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
@@ -587,6 +588,7 @@ export default function ChallengeScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
+      <BrandOverlay />
       <View style={[styles.mapWrap, { height: mapH }]}>
         <WebView
           ref={webRef}
