@@ -86,26 +86,12 @@ export default function LogManualExerciseScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: bg }]}>
-      <ScreenTopBar showBrand showNotif={false} />
+      <ScreenTopBar showBack showBrand showNotif={false} />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={[styles.header, isRTL && { flexDirection: 'row-reverse' }]}>
-          <TouchableOpacity
-            style={[styles.backBtn, { backgroundColor: cardBg }]}
-            onPress={() => router.back()}
-          >
-            <ArrowLeft
-              size={24}
-              color={textPrimary}
-              strokeWidth={2.5}
-              style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}
-            />
-          </TouchableOpacity>
-        </View>
-
         <ScrollView contentContainerStyle={styles.content}>
           <Image source={{ uri: HERO_IMAGE }} style={styles.hero} resizeMode="cover" />
 

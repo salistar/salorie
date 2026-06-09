@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Pressable } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Modal, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Bell, Sun, Moon, Smartphone, Globe } from 'lucide-react-native';
+import { Bell, Sun, Moon, Smartphone, Globe, ArrowLeft } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { useTheme, ThemeMode } from '../lib/ThemeContext';
 import { useTranslation, Language } from '../lib/i18n';
@@ -10,9 +10,15 @@ import AppBrand from './AppBrand';
 interface ScreenTopBarProps {
   showBrand?: boolean;
   showNotif?: boolean;
+  /** D5 — unified header: show a back button on the leading edge. */
+  showBack?: boolean;
+  /** D5 — unified header: screen title shown next to the back button. */
+  title?: string;
+  /** Custom back handler (defaults to router.back()). */
+  onBack?: () => void;
 }
 
-export default function ScreenTopBar({ showBrand = true, showNotif = true }: ScreenTopBarProps) {
+export default function ScreenTopBar({ showBrand = true, showNotif = true, showBack = false, title, onBack }: ScreenTopBarProps) {
   const router = useRouter();
   const { mode, setMode, resolved, colors } = useTheme();
   const { language, setLanguage, isRTL } = useTranslation();
@@ -31,8 +37,34 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true }: Scr
   const ThemeIcon = themeIcons[mode];
 
   return (
-    <View style={styles.row}>
-      {showBrand && <AppBrand size="small" />}
+    <View style={[styles.row, isRTL && { flexDirection: 'row-reverse' }]}>
+      <View style={[styles.leading, isRTL && { flexDirection: 'row-reverse' }]}>
+        {showBack && (
+          <TouchableOpacity
+            style={[styles.backBtn, { backgroundColor: btnBg, borderColor: btnBorder }]}
+            onPress={() => (onBack ? onBack() : router.back())}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+          >
+            <ArrowLeft size={20} color={iconColor} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+          </TouchableOpacity>
+        )}
+        {/* Flame logo — ALWAYS shown so the brand is present on every screen.
+            Solid high-contrast tile so it reads clearly on any background/theme. */}
+        <View style={[styles.brandLogoWrap, { backgroundColor: resolved === 'dark' ? colors.card : '#fff', borderColor: resolved === 'dark' ? colors.gray[200] : Colors.light.gray[200] }]}>
+          <Image source={require('../assets/images/fire.png')} style={styles.brandLogo} resizeMode="contain" />
+        </View>
+        {title ? (
+          <Text
+            style={[styles.screenTitle, { color: resolved === 'dark' ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}
+            numberOfLines={1}
+          >
+            {title}
+          </Text>
+        ) : (
+          showBrand && <Text style={[styles.brandWord, { color: colors.primary }]}>Salorie</Text>
+        )}
+      </View>
       <View style={styles.actions}>
         {/* Language pill */}
         <TouchableOpacity
@@ -126,6 +158,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 8,
+  },
+  leading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+    minWidth: 0,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  brandLogoWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brandLogo: {
+    width: 26,
+    height: 26,
+  },
+  brandWord: {
+    fontSize: 20,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  screenTitle: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   actions: {
     flexDirection: 'row',

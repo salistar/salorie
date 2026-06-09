@@ -334,6 +334,8 @@ export default function NotificationsScreen() {
           { flexDirection: isRTL ? 'row-reverse' : 'row' },
           isDark && { backgroundColor: Colors.dark.card, borderColor: Colors.dark.gray[100] },
           !item.read && styles.cardUnread,
+          // Dark mode: keep unread cards dark (cardUnread forces white otherwise).
+          isDark && !item.read && { backgroundColor: Colors.dark.card, borderColor: Colors.light.primary + '55' },
         ]}
       >
         <View style={[styles.iconWrapper, isRTL ? { marginRight: 0, marginLeft: 16 } : null, isDark && { backgroundColor: Colors.dark.gray[100] }]}>

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
+import BrandOverlay from '../components/BrandOverlay';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
@@ -244,6 +245,7 @@ export default function RaceLiveScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
+      <BrandOverlay />
       {center ? (
         <WebView
           ref={webRef}

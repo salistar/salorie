@@ -61,14 +61,13 @@ function TabsContent() {
         />
       </Tabs>
 
-      {/* Floating Plus Button */}
+      {/* Floating quick-add button (D6: labelled for accessibility) */}
       <TouchableOpacity
         style={styles.floatingButton}
         activeOpacity={0.8}
-        onPress={() => {
-          console.log('[TabsLayout] floating + pressed → showActionMenu');
-          showActionMenu();
-        }}
+        accessibilityRole="button"
+        accessibilityLabel="Quick add"
+        onPress={() => showActionMenu()}
       >
         <Plus size={32} color={Colors.light.white} strokeWidth={3} />
       </TouchableOpacity>

@@ -13,13 +13,13 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { CONFIG } from '../constants/config';
 import { db } from './firebase';
+import { geminiShim } from './aiProxy';
 
 export type Lang = 'en' | 'fr' | 'ar';
 
-const genAI = new GoogleGenerativeAI(CONFIG.geminiApiKey);
+// Gemini via backend /ai proxy (no client key).
+const genAI = geminiShim;
 
 function hash(s: string): string {
   // djb2 — small, fast, stable; fine as a cache key

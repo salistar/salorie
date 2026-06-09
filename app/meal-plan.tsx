@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ArrowLeft, Sparkles, RefreshCw, Plus, Lightbulb, Save, History, Check } from 'lucide-react-native';
+import { Sparkles, RefreshCw, Plus, Lightbulb, Save, History, Check } from 'lucide-react-native';
 import { Alert } from 'react-native';
 import ScreenTopBar from '../components/ScreenTopBar';
+import BrandBanner from '../components/BrandBanner';
 import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
@@ -20,6 +21,15 @@ export default function MealPlanScreen() {
   const { resolved } = useTheme();
   const { t, language } = useTranslation() as any;
   const isDark = resolved === 'dark';
+
+  // Local FR/EN/AR strings for the pre-generation preview (D1). Kept inline so
+  // we don't touch the shared i18n file — zero risk of breaking other screens.
+  const LSTR: Record<string, Record<string, string>> = {
+    en: { banner_title: 'AI Meal Plan', banner_sub: 'A full day of meals, built around your goals.', targets_title: "Today's targets", protein: 'Protein', carbs: 'Carbs', fat: 'Fat', how_title: 'How it works', step1: 'We build a full day of meals around your calorie & macro targets.', step2: 'Tap "Log" on any meal to add it to your day in one tap.', step3: 'Save the whole plan to your history to reuse it anytime.' },
+    fr: { banner_title: 'Plan de repas IA', banner_sub: 'Une journée de repas calée sur tes objectifs.', targets_title: 'Tes objectifs du jour', protein: 'Protéines', carbs: 'Glucides', fat: 'Lipides', how_title: 'Comment ça marche', step1: 'On construit une journée de repas calée sur tes calories et macros.', step2: 'Touche « Logger » sur un repas pour l\'ajouter en un tap.', step3: 'Enregistre tout le plan dans ton historique pour le réutiliser.' },
+    ar: { banner_title: 'خطة وجبات بالذكاء', banner_sub: 'يوم كامل من الوجبات وفق أهدافك.', targets_title: 'أهداف اليوم', protein: 'بروتين', carbs: 'كربوهيدرات', fat: 'دهون', how_title: 'كيف يعمل', step1: 'نُنشئ يومًا كاملًا من الوجبات وفق سعراتك ووحداتك الكبرى.', step2: 'اضغط «تسجيل» على أي وجبة لإضافتها بنقرة واحدة.', step3: 'احفظ الخطة كاملة في سجلّك لإعادة استخدامها.' },
+  };
+  const L = (k: string) => (LSTR[String(language)] || LSTR.en)[k] || LSTR.en[k] || k;
 
   const [targets, setTargets] = useState(DEFAULTS);
   const [usingDefaults, setUsingDefaults] = useState(true);
@@ -98,12 +108,7 @@ export default function MealPlanScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.topRow}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <ArrowLeft size={22} color={text} />
-          </TouchableOpacity>
-          <View style={{ flex: 1 }}><ScreenTopBar showBrand={false} showNotif={false} /></View>
-        </View>
+        <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
         <View style={styles.titleRow}>
           <Sparkles size={26} color={Colors.light.primary} />
@@ -113,10 +118,44 @@ export default function MealPlanScreen() {
           {t('mealplan.subtitle_prefix')} — {targets.calories} kcal · {targets.protein}P / {targets.carbs}C / {targets.fat}F
           {usingDefaults ? '  ' + t('mealplan.default_note') : ''}
         </Text>
-        <Image source={require('../assets/images/illustrations/healthy_food.jpg')} style={styles.hero} resizeMode="cover" />
+        <BrandBanner title={L('banner_title')} subtitle={L('banner_sub')} height={120} style={{ marginBottom: 18 }} />
 
         {!plan && !loading && (
           <>
+            {/* D1: pre-generation preview — targets + how-it-works fill the empty
+                space and set expectations before the AI plan is generated. */}
+            <View style={styles.targetsCard}>
+              <Text style={styles.targetsTitle}>{L('targets_title')}</Text>
+              <View style={styles.targetsRow}>
+                <View style={styles.targetTile}>
+                  <Text style={styles.targetVal}>{targets.calories}</Text>
+                  <Text style={styles.targetLbl}>kcal</Text>
+                </View>
+                <View style={styles.targetTile}>
+                  <Text style={[styles.targetVal, { color: '#0ea5e9' }]}>{targets.protein}g</Text>
+                  <Text style={styles.targetLbl}>{L('protein')}</Text>
+                </View>
+                <View style={styles.targetTile}>
+                  <Text style={[styles.targetVal, { color: '#f59e0b' }]}>{targets.carbs}g</Text>
+                  <Text style={styles.targetLbl}>{L('carbs')}</Text>
+                </View>
+                <View style={styles.targetTile}>
+                  <Text style={[styles.targetVal, { color: '#ef4444' }]}>{targets.fat}g</Text>
+                  <Text style={styles.targetLbl}>{L('fat')}</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={[styles.stepsCard, { backgroundColor: card }]}>
+              <Text style={[styles.stepsTitle, { color: text }]}>{L('how_title')}</Text>
+              {[L('step1'), L('step2'), L('step3')].map((s, i) => (
+                <View key={i} style={styles.stepRow}>
+                  <View style={styles.stepNum}><Text style={styles.stepNumTxt}>{i + 1}</Text></View>
+                  <Text style={[styles.stepTxt, { color: sub }]}>{s}</Text>
+                </View>
+              ))}
+            </View>
+
             <TouchableOpacity style={styles.generateBtn} onPress={generate}>
               <Sparkles size={20} color="#fff" />
               <Text style={styles.generateText}>{t('mealplan.generate')}</Text>
@@ -229,6 +268,18 @@ const styles = StyleSheet.create({
   title: { fontSize: 30, fontWeight: '900', letterSpacing: -1 },
   subtitle: { fontSize: 14, marginTop: 8, marginBottom: 14, lineHeight: 20 },
   hero: { width: '100%', height: 140, borderRadius: 18, marginBottom: 18 },
+  targetsCard: { backgroundColor: Colors.light.primaryLight, borderRadius: 18, padding: 16, marginTop: 2, marginBottom: 14 },
+  targetsTitle: { fontSize: 12, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase', color: Colors.light.primaryDark, marginBottom: 14 },
+  targetsRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  targetTile: { alignItems: 'center', flex: 1 },
+  targetVal: { fontSize: 20, fontWeight: '900', color: Colors.light.primaryDark },
+  targetLbl: { fontSize: 11, fontWeight: '700', color: Colors.light.gray[500], marginTop: 2 },
+  stepsCard: { borderRadius: 18, padding: 16, marginBottom: 16, gap: 12, borderWidth: 1, borderColor: Colors.light.gray[100] },
+  stepsTitle: { fontSize: 14, fontWeight: '800', marginBottom: 2 },
+  stepRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  stepNum: { width: 26, height: 26, borderRadius: 13, backgroundColor: Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center' },
+  stepNumTxt: { color: Colors.light.primary, fontWeight: '900', fontSize: 13 },
+  stepTxt: { flex: 1, fontSize: 13, fontWeight: '600', lineHeight: 18 },
   generateBtn: { flexDirection: 'row', gap: 8, backgroundColor: Colors.light.primary, paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   generateText: { color: '#fff', fontSize: 16, fontWeight: '800' },
   loadingBox: { alignItems: 'center', gap: 12, paddingVertical: 60 },

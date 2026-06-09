@@ -2,6 +2,7 @@
 // qui lance un Intent Android et fait tuer l activite RN par l OS en Expo Go.
 // Ici la camera est un composant RN, pas d Intent, pas de kill, pas de reload.
 import { useRef, useState, useEffect } from 'react';
+import BrandOverlay from '../components/BrandOverlay';
 import {
   View,
   Text,
@@ -169,6 +170,7 @@ export default function ScanCameraScreen() {
 
   return (
     <SafeAreaView style={styles.root}>
+      <BrandOverlay />
       <CameraView
         ref={cameraRef}
         style={styles.camera}

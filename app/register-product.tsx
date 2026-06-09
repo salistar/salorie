@@ -11,8 +11,10 @@ import { useUser } from '@clerk/clerk-expo';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { ArrowLeft, Camera, Check, ScanBarcode } from 'lucide-react-native';
+import ScreenTopBar from '../components/ScreenTopBar';
 import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
+import { useTranslation } from '../lib/i18n';
 import { saveCustomProduct } from '../lib/aiStore';
 
 export default function RegisterProductScreen() {
@@ -20,7 +22,9 @@ export default function RegisterProductScreen() {
   const barcode = String(code || '');
   const { user } = useUser();
   const { resolved } = useTheme();
+  const { language } = useTranslation() as any;
   const isDark = resolved === 'dark';
+  const newProductTitle = language === 'fr' ? 'Nouveau produit' : language === 'ar' ? 'منتج جديد' : 'New product';
   const [permission, requestPermission] = useCameraPermissions();
 
   const [name, setName] = useState('');
@@ -113,10 +117,7 @@ export default function RegisterProductScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <View style={styles.topRow}>
-            <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}><ArrowLeft size={22} color={text} /></TouchableOpacity>
-            <Text style={[styles.title, { color: text }]}>Nouveau produit</Text>
-          </View>
+          <ScreenTopBar showBack title={newProductTitle} showBrand={false} showNotif={false} />
           <Text style={[styles.codeLine, { color: sub }]}><ScanBarcode size={14} color={sub} /> Code-barres : {barcode}</Text>
 
           {/* Photos */}

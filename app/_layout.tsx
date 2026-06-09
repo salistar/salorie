@@ -1,8 +1,8 @@
 import * as SecureStore from 'expo-secure-store';
 import * as Linking from 'expo-linking';
-import { ClerkProvider, ClerkLoaded, useAuth, useUser, useSession } from '@clerk/clerk-expo';
+import { ClerkProvider, ClerkLoaded, ClerkLoading, useAuth, useUser, useSession } from '@clerk/clerk-expo';
 import { Slot, useRouter, useSegments, useRootNavigationState } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Component } from 'react';
 import { ActivityIndicator, View, Text, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CONFIG } from '../constants/config';
@@ -32,6 +32,7 @@ import LogModal from '../components/LogModal';
 import ScreenBackground from '../components/ScreenBackground';
 import ActionMenu from '../components/ActionMenu';
 import SplashIntro from '../components/SplashIntro';
+import * as SplashScreen from 'expo-splash-screen';
 
 const tokenCache = {
   async getToken(key: string) {
@@ -187,10 +188,13 @@ function InitialLayout() {
         AsyncStorage.getItem(`onboarded_${email}`)
           .then((v) => {
             if (v === 'true') {
-              setStatus('onboarded');
-            } else if (optimisticOnboarded === true) {
+              // Cet utilisateur PRÉCIS a déjà été onboardé sur ce device → direct home.
               setStatus('onboarded');
             } else {
+              // Pas de cache pour CET email (nouvel/autre utilisateur) → 'pending'
+              // (loader) en attendant la confirmation Firebase. On n'applique PAS
+              // le flag optimiste GLOBAL ici : il vient d'un AUTRE user onboardé et
+              // provoquait un flash du Home avant l'onboarding du nouvel utilisateur.
               setStatus((prev) => (prev === 'onboarded' ? 'onboarded' : 'pending'));
             }
           })
@@ -200,7 +204,7 @@ function InitialLayout() {
       } else {
         setStatus((prev) => {
           if (prev === 'onboarded') return 'onboarded';
-          if (optimisticOnboarded === true) return 'onboarded';
+          // Pas de flag optimiste global ici non plus (évite le flash Home).
           return 'pending';
         });
       }
@@ -278,21 +282,24 @@ function InitialLayout() {
         // meme si signup precedent etait avec un autre email/provider.
         const data = await getUserFromFirestore(email, user.id, allEmails);
 
-        // Ensure the Firestore doc is synced/migrated (by email) AFTER le read, pour ne PAS
-        // ecraser le doc existant avant qu'on l'ait lu. Skip si user deja onboarde — sinon
-        // on risque de creer un doc vide qui shadow celui existant.
-        // On preserve absolument `onboarded: true` si trouve.
-        await saveUserToFirestore({
-          id: user.id,
-          email,
-          firstName: user.firstName || data?.firstName || '',
-          lastName: user.lastName || data?.lastName || '',
-          imageUrl: user.imageUrl || data?.imageUrl || '',
-          ...(language ? { language } : {}),
-          // Si on a trouve un doc avec onboarded=true ailleurs, on s'assure qu'il est ecrit
-          // aussi dans le doc canonique pour les prochaines lectures fast-path.
-          ...(data?.onboarded ? { onboarded: true } : {}),
-        } as any);
+        // IMPORTANT : on ne crée/sync le doc QUE si l'utilisateur existe DÉJÀ
+        // (migration par email + préservation de `onboarded`). Pour un NOUVEL
+        // utilisateur (data null), on NE crée AUCUN doc ici — il ne sera écrit
+        // qu'à la FIN de l'onboarding (completeOnboarding). Ainsi, un utilisateur
+        // qui se connecte mais ABANDONNE l'onboarding ne laisse PAS de doc fantôme
+        // en base.
+        if (data) {
+          await saveUserToFirestore({
+            id: user.id,
+            email,
+            firstName: user.firstName || data?.firstName || '',
+            lastName: user.lastName || data?.lastName || '',
+            imageUrl: user.imageUrl || data?.imageUrl || '',
+            ...(language ? { language } : {}),
+            // Préserve `onboarded: true` s'il a été trouvé ailleurs (fast-path).
+            ...(data?.onboarded ? { onboarded: true } : {}),
+          } as any);
+        }
         const onboarded = !!data?.onboarded;
         console.log('[Onboarding] Firebase for', email, '→', onboarded);
         setStatus(onboarded ? 'onboarded' : 'not-onboarded');
@@ -348,7 +355,10 @@ function InitialLayout() {
         // doit JAMAIS rester bloque sur un ecran transparent : un utilisateur
         // connecte entre dans l'app (les ecrans gerent les donnees manquantes via
         // le cache local). C'est le garde anti "ecran blanc".
-        setStatus('onboarded');
+        // MAIS: un NOUVEL utilisateur (sans session precedente onboardee) ne doit
+        // PAS etre envoye au Home vide — il doit voir l'onboarding. On ne force
+        // 'onboarded' que si une session precedente l'avait deja confirme.
+        setStatus(optimisticOnboarded === true ? 'onboarded' : 'not-onboarded');
       }
     };
 
@@ -356,7 +366,7 @@ function InitialLayout() {
     if (status === 'pending') {
       checkFirebase();
     }
-  }, [isLoaded, isSignedIn, user?.id, status]);
+  }, [isLoaded, isSignedIn, user?.id, status, optimisticOnboarded]);
 
   // ---- WATCHDOG anti "ecran blanc" --------------------------------------
   // Si pour une raison quelconque le statut reste 'pending' alors que Clerk
@@ -368,14 +378,16 @@ function InitialLayout() {
     const t = setTimeout(() => {
       setStatus((prev) => {
         if (prev === 'pending') {
-          console.warn('[Watchdog] statut bloque sur pending 8s -> fallback /(tabs)');
-          return 'onboarded';
+          // Returning user (session precedente onboardee) -> Home ; sinon -> onboarding.
+          const fallback = optimisticOnboarded === true ? 'onboarded' : 'not-onboarded';
+          console.warn('[Watchdog] statut bloque sur pending 8s -> fallback', fallback);
+          return fallback;
         }
         return prev;
       });
     }, 8000);
     return () => clearTimeout(t);
-  }, [isLoaded, isSignedIn, status]);
+  }, [isLoaded, isSignedIn, status, optimisticOnboarded]);
 
   // ---- Sync forcee a CHAQUE sign-in, independamment de `status` ----------
   // Sans cela, quand le fast-path onboarded_{email}=true court-circuite la
@@ -558,11 +570,49 @@ function InitialLayout() {
   );
 }
 
+// Affiche l'erreur a l'ecran au lieu d'un blanc (revele les crashes de rendu en release).
+class ErrorBoundary extends Component<{ children: any }, { error: Error | null }> {
+  state: { error: Error | null } = { error: null };
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  componentDidCatch(error: Error) { try { console.log('[ErrorBoundary]', error?.message, error?.stack); } catch {} }
+  render() {
+    if (this.state.error) {
+      return (
+        <View style={{ flex: 1, backgroundColor: '#0f3a22', padding: 24, justifyContent: 'center' }}>
+          <Text style={{ color: '#fff', fontSize: 18, fontWeight: '800', marginBottom: 12 }}>Salorie — erreur de démarrage</Text>
+          <Text style={{ color: '#ffe08a', fontSize: 13 }} selectable>{String(this.state.error?.message || this.state.error)}</Text>
+          <Text style={{ color: '#9fe0b8', fontSize: 10, marginTop: 12 }} selectable>{String(this.state.error?.stack || '').slice(0, 1000)}</Text>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function RootLayout() {
+  // Cache le splash natif TOT (avant que Clerk ne charge). Sinon le splash natif
+  // (blanc) reste au-dessus de tout tant que <ClerkLoaded> n'a pas fire -> ecran
+  // blanc. Avec ce hideAsync, on voit le fallback <ClerkLoading> (vert) pendant
+  // l'init Clerk au lieu d'un blanc.
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
   return (
+    <ErrorBoundary>
     <ThemeProvider>
       <I18nProvider>
         <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
+          {/* Fallback brandé pendant l'init de Clerk (evite l'ecran BLANC :
+              la 1ere init de l'instance prod peut prendre quelques secondes en 4G). */}
+          <ClerkLoading>
+            <View style={{ flex: 1, backgroundColor: Colors.light.primary, justifyContent: 'center', alignItems: 'center', gap: 20 }}>
+              <View style={{ width: 120, height: 120, borderRadius: 32, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)' }}>
+                <Image source={require('../assets/images/fire.png')} style={{ width: 80, height: 80 }} resizeMode="contain" />
+              </View>
+              <Text style={{ fontSize: 36, fontWeight: '900', color: '#fff', letterSpacing: -1 }}>Salorie</Text>
+              <ActivityIndicator size="large" color="#ffffff" />
+            </View>
+          </ClerkLoading>
           <ClerkLoaded>
             <LoggingProvider>
               <InitialLayout />
@@ -571,5 +621,6 @@ export default function RootLayout() {
         </ClerkProvider>
       </I18nProvider>
     </ThemeProvider>
+    </ErrorBoundary>
   );
 }

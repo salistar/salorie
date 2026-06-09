@@ -129,12 +129,7 @@ export default function HealthScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.topRow}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <ArrowLeft size={22} color={text} />
-          </TouchableOpacity>
-          <View style={{ flex: 1 }}><ScreenTopBar showBrand={false} showNotif={false} /></View>
-        </View>
+        <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
         <View style={styles.titleRow}>
           <HeartPulse size={26} color={Colors.light.primary} />

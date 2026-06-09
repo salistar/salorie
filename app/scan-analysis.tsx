@@ -29,6 +29,7 @@ import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
 import { useLogging } from '../lib/LoggingContext';
 import { colorLog, explain } from '../lib/LocalDataStore';
+import { geminiShim } from '../lib/aiProxy';
 
 const PENDING_SCAN_KEY = 'pending_scan_v1';
 
@@ -36,8 +37,10 @@ const PENDING_SCAN_KEY = 'pending_scan_v1';
 // bien ete evalue par le bundler.
 console.log('\x1b[35m[scan-analysis.tsx] MODULE LOADED\x1b[0m');
 
-const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+// Gemini runs server-side via the backend /ai proxy — no key in the client.
+// Marker stays truthy so the existing "key present?" guards keep passing.
+const GEMINI_API_KEY = 'proxied';
+const genAI = geminiShim;
 console.log(
   '\x1b[35m[scan-analysis.tsx] GEMINI_API_KEY present?\x1b[0m',
   !!GEMINI_API_KEY,

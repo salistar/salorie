@@ -3,28 +3,33 @@ import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } fr
 import { router } from 'expo-router';
 import { ChevronLeft, ShieldCheck, Fingerprint } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
+import ScreenTopBar from '../components/ScreenTopBar';
+import { useTheme } from '../lib/ThemeContext';
+import { useTranslation } from '../lib/i18n';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function PrivacyScreen() {
+  const { resolved } = useTheme();
+  const { language } = useTranslation() as any;
+  const isDark = resolved === 'dark';
+  const ttl = language === 'fr' ? 'Confidentialité' : language === 'ar' ? 'الخصوصية' : 'Privacy Policy';
+  const hero = language === 'fr' ? 'Votre vie privée compte' : language === 'ar' ? 'خصوصيتك تهمنا' : 'Your Privacy Matters';
+  const bg = isDark ? '#0f1419' : '#fff';
+  const tPrimary = isDark ? '#fff' : Colors.light.gray[900];
+  const tMuted = isDark ? '#9BA1A6' : Colors.light.gray[500];
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ChevronLeft size={24} color={Colors.light.gray[900]} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Privacy Policy</Text>
-        <View style={{ width: 44 }} />
-      </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
+      <ScreenTopBar showBack title={ttl} showBrand={false} showNotif={false} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.duration(600)}>
           <View style={styles.iconHero}>
             <ShieldCheck size={64} color="#10B981" />
           </View>
-          <Text style={styles.title}>Your Privacy Matters</Text>
-          <Text style={styles.date}>Last Updated: April 15, 2026</Text>
+          <Text style={[styles.title, { color: tPrimary }]}>{hero}</Text>
+          <Text style={[styles.date, { color: tMuted }]}>Last Updated: April 15, 2026</Text>
 
-          <Text style={styles.paragraph}>
+          <Text style={[styles.paragraph, { color: tMuted }]}>
             At Salorie, your privacy is our top priority. We implement industry-leading security measures to ensure your health journey remains private and secure.
           </Text>
 
@@ -33,18 +38,18 @@ export default function PrivacyScreen() {
              <Text style={styles.infoBoxText}>We use end-to-end encryption for all user logs and profile data stored in Firestore.</Text>
           </View>
 
-          <Text style={styles.subTitle}>What We Collect</Text>
-          <Text style={styles.paragraph}>
+          <Text style={[styles.subTitle, { color: tPrimary }]}>What We Collect</Text>
+          <Text style={[styles.paragraph, { color: tMuted }]}>
             We only collect information necessary for the app's functionality: profile details (handled by Clerk), nutritional targets, and daily meal/activity logs.
           </Text>
 
-          <Text style={styles.subTitle}>Security</Text>
-          <Text style={styles.paragraph}>
+          <Text style={[styles.subTitle, { color: tPrimary }]}>Security</Text>
+          <Text style={[styles.paragraph, { color: tMuted }]}>
             Your data is hosted on secure Firebase infrastructure and protected by Clerk's enterprise-grade authentication system.
           </Text>
 
-          <Text style={styles.subTitle}>Control</Text>
-          <Text style={styles.paragraph}>
+          <Text style={[styles.subTitle, { color: tPrimary }]}>Control</Text>
+          <Text style={[styles.paragraph, { color: tMuted }]}>
             You can delete your account and all associated data at any time through our support channel.
           </Text>
         </Animated.View>

@@ -24,6 +24,7 @@ import {
   CheckCircle2
 } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
+import ScreenTopBar from '../components/ScreenTopBar';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db, emailToDocId } from '../lib/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -233,16 +234,7 @@ export default function PersonalDetailsScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-          <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: cardBg }]}
-            onPress={() => router.back()}
-          >
-            <ChevronLeft size={24} color={primaryText} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: primaryText }]}>{t.headerTitle}</Text>
-          <View style={{ width: 44 }} />
-        </View>
+        <ScreenTopBar showBack title={t.headerTitle} showBrand={false} showNotif={false} />
 
         {loading ? (
           <View style={styles.loadingWrapper}>

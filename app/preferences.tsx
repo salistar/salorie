@@ -23,6 +23,7 @@ import {
   CheckCircle2
 } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
+import ScreenTopBar from '../components/ScreenTopBar';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -31,7 +32,9 @@ import { useTranslation, Language, getLanguageName } from '../lib/i18n';
 
 export default function PreferencesScreen() {
   const { user } = useUser();
-  const { mode: theme, setMode: setTheme, colors } = useTheme();
+  const { mode: theme, setMode: setTheme, colors, resolved } = useTheme();
+  const tPrimary = resolved === 'dark' ? '#fff' : Colors.light.gray[900];
+  const tMuted = resolved === 'dark' ? '#9BA1A6' : Colors.light.gray[500];
   const { language, setLanguage, t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState(true);
@@ -99,14 +102,8 @@ export default function PreferencesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ChevronLeft size={24} color={Colors.light.gray[900]} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('prefs.title')}</Text>
-        <View style={{ width: 44 }} />
-      </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: resolved === 'dark' ? '#0f1419' : Colors.light.white }]}>
+      <ScreenTopBar showBack title={t('prefs.title')} showBrand={false} showNotif={false} />
 
       {loading ? (
         <View style={styles.loadingWrapper}>
@@ -115,8 +112,8 @@ export default function PreferencesScreen() {
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('prefs.appearance')}</Text>
-            <Text style={styles.sectionDesc}>{t('prefs.appearance_desc')}</Text>
+            <Text style={[styles.sectionTitle, { color: tPrimary }]}>{t('prefs.appearance')}</Text>
+            <Text style={[styles.sectionDesc, { color: tMuted }]}>{t('prefs.appearance_desc')}</Text>
           </View>
 
           <View style={styles.themeRow}>
@@ -126,8 +123,8 @@ export default function PreferencesScreen() {
           </View>
 
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('prefs.language')}</Text>
-            <Text style={styles.sectionDesc}>{t('prefs.language_desc')}</Text>
+            <Text style={[styles.sectionTitle, { color: tPrimary }]}>{t('prefs.language')}</Text>
+            <Text style={[styles.sectionDesc, { color: tMuted }]}>{t('prefs.language_desc')}</Text>
           </View>
 
           <View style={styles.themeRow}>
@@ -151,7 +148,7 @@ export default function PreferencesScreen() {
           </View>
 
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('prefs.notifications')}</Text>
+            <Text style={[styles.sectionTitle, { color: tPrimary }]}>{t('prefs.notifications')}</Text>
           </View>
 
           <Animated.View entering={FadeInDown.delay(200).duration(600)} style={styles.notificationCard}>

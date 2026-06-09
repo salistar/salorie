@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -116,6 +116,10 @@ export default function ResultsScreen() {
     { label: t.step4, status: 'pending' },
   ]);
 
+  // Données prêtes à sauvegarder UNIQUEMENT quand l'utilisateur appuie sur "Finish".
+  const pendingSave = useRef<{ profile: any; plan: any } | null>(null);
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
     const processData = async () => {
       try {
@@ -151,22 +155,13 @@ export default function ResultsScreen() {
         setPlan(aiPlan);
         setSteps(prev => prev.map((s, i) => i === 1 ? { ...s, status: 'completed' } : i === 2 ? { ...s, status: 'loading' } : s));
 
-        // 3. Save ALL user data + plan to Firebase
+        // 3. Plan calculé : on CACHE seulement en local (affichage). On NE
+        //    sauvegarde PAS onboarded:true ici — sinon un utilisateur qui atteint
+        //    cet écran mais n'appuie PAS sur "Finish" serait marqué onboardé et
+        //    enregistré en base. La sauvegarde Firestore se fait sur "Finish".
         await new Promise(resolve => setTimeout(resolve, 1000));
-        const email = user?.primaryEmailAddress?.emailAddress || '';
-        if (user && email) {
-          await saveUserToFirestore({
-            id: user.id,
-            email,
-            ...userProfile,
-            nutritionalPlan: aiPlan,
-            onboarded: true,
-          });
-        }
         await AsyncStorage.setItem('user_nutritional_plan', JSON.stringify(aiPlan));
-        if (email) {
-          await AsyncStorage.setItem(`onboarded_${email.toLowerCase()}`, 'true');
-        }
+        pendingSave.current = { profile: userProfile, plan: aiPlan };
         setSteps(prev => prev.map((s, i) => i === 2 ? { ...s, status: 'completed' } : i === 3 ? { ...s, status: 'loading' } : s));
 
         // 4. Finish
@@ -279,7 +274,22 @@ export default function ResultsScreen() {
       </ScrollView>
 
       <View style={[styles.bottomBar, { backgroundColor: isDark ? Colors.dark.card : Colors.light.gray[50] }]}>
-        <TouchableOpacity style={[styles.finishButton, { flexDirection: isRTL ? 'row-reverse' : 'row' }]} onPress={() => router.replace('/(tabs)' as any)}>
+        <TouchableOpacity disabled={saving} style={[styles.finishButton, { flexDirection: isRTL ? 'row-reverse' : 'row', opacity: saving ? 0.7 : 1 }]} onPress={async () => {
+          // C'EST ICI qu'on valide réellement l'onboarding : sauvegarde Firestore
+          // + flag local. Tant que l'utilisateur n'a pas appuyé, RIEN n'est en base.
+          if (saving) return;
+          setSaving(true);
+          try {
+            const ps = pendingSave.current;
+            const email = user?.primaryEmailAddress?.emailAddress || '';
+            if (user && email && ps) {
+              await saveUserToFirestore({ id: user.id, email, ...ps.profile, nutritionalPlan: ps.plan, onboarded: true });
+              await AsyncStorage.setItem(`onboarded_${email.toLowerCase()}`, 'true');
+              await AsyncStorage.setItem('last_session_onboarded', 'true');
+            }
+          } catch (e) { console.warn('[Onboarding] finish save failed', e); }
+          router.replace('/(tabs)' as any);
+        }}>
           <Text style={styles.finishButtonText}>{t.goToDashboard}</Text>
           <ArrowRight size={24} color={Colors.light.white} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
         </TouchableOpacity>
