@@ -145,8 +145,7 @@ export default function FoodDatabaseScreen() {
         <TouchableOpacity style={[styles.backBtn, { backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] }]} onPress={() => router.back()}>
           <ArrowLeft size={28} color={isDark ? '#fff' : Colors.light.gray[900]} strokeWidth={2.5} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{t.title}</Text>
-        <View style={{ flex: 1 }} />
+        <Text numberOfLines={1} style={[styles.headerTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{t.title}</Text>
         <TouchableOpacity style={styles.scanBtn} onPress={() => router.push('/scan-barcode' as any)}>
           <ScanBarcode size={24} color={Colors.light.primary} strokeWidth={2.5} />
         </TouchableOpacity>
@@ -202,6 +201,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   headerTitle: {
+    flex: 1,
     fontSize: 24,
     fontWeight: '800',
     color: Colors.light.gray[900],

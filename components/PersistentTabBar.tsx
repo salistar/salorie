@@ -1,8 +1,8 @@
 // Barre de navigation persistante pour les écrans du groupe (app)/ (écrans poussés).
 // Rendue par app/(app)/_layout.tsx. PAS de usePathname (évite la boucle de re-render
 // au niveau routeur) : 4 boutons qui ramènent aux onglets principaux.
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Keyboard } from 'react-native';
 import { router } from 'expo-router';
 import { Home, Sparkles, BarChart3, User } from 'lucide-react-native';
 
@@ -16,6 +16,15 @@ const TABS = [
 ];
 
 export default function PersistentTabBar() {
+  // Masque la barre quand le clavier est ouvert (sinon elle flotte au-dessus).
+  const [kbOpen, setKbOpen] = useState(false);
+  useEffect(() => {
+    const s = Keyboard.addListener('keyboardDidShow', () => setKbOpen(true));
+    const h = Keyboard.addListener('keyboardDidHide', () => setKbOpen(false));
+    return () => { s.remove(); h.remove(); };
+  }, []);
+  if (kbOpen) return null;
+
   return (
     <View style={styles.bar} pointerEvents="box-none">
       <View style={styles.inner}>
