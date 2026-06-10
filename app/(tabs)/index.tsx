@@ -13,6 +13,7 @@ import DailyHealthScore from '../../components/DailyHealthScore';
 import OfflineBanner from '../../components/OfflineBanner';
 import { useLogging } from '../../lib/LoggingContext';
 import { useNutritionData } from '../../hooks/useNutritionData';
+import { updateWidgetData } from '../../lib/widgetData';
 import { saveUserToFirestore } from '../../lib/firebase';
 import { useUser } from '@clerk/clerk-expo';
 import { isCacheEmpty, syncAllUserData } from '../../lib/LocalDataStore';
@@ -40,6 +41,11 @@ export default function HomeScreen() {
   const bgColor = resolved === 'dark' ? '#000000' : 'transparent';
   const { selectedDate, refreshCount, showLogModal } = useLogging();
   const { loading, goals, consumed, logs, refresh } = useNutritionData(selectedDate);
+
+  // Synchronise le widget écran d'accueil (calories + eau du jour) à chaque màj.
+  useEffect(() => {
+    updateWidgetData({ calories: consumed.calories, water: consumed.water });
+  }, [consumed.calories, consumed.water]);
 
   // Si l app a ete tuee par Android pendant qu on prenait une photo,
   // ActionMenu a persiste l URI dans AsyncStorage (pending_scan_v1). On

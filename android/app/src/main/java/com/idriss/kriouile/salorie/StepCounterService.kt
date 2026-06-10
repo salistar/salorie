@@ -50,6 +50,8 @@ class StepCounterService : Service(), SensorEventListener {
       val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
       nm.notify(NOTIF_ID, buildNotification(currentTotal()))
     } catch (_: Exception) {}
+    // Rafraîchit aussi le widget écran d'accueil (pas du jour) ~toutes les 30s.
+    try { SalorieWidget.updateAll(this) } catch (_: Exception) {}
   }
 
   companion object {
