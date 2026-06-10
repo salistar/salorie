@@ -198,6 +198,10 @@ export default function HealthScreen() {
             <Text style={[styles.msg, { color: sub }]}>
               Astuce : dans Health Connect → Autorisations des applications → Salorie, active « Pas ».
             </Text>
+            <Text style={[styles.msg, { color: sub, marginTop: 8 }]}>
+              ⌚ Montres compatibles : Garmin, Fitbit, Samsung Health, Google Fit — connecte-les dans
+              Health Connect et leurs données (pas, calories, poids) arrivent automatiquement ici.
+            </Text>
           </>
         )}
 
