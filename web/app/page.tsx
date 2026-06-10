@@ -40,13 +40,12 @@ export default async function Home() {
         </div>
       ) : (
         <>
+          <h1>Vue d'ensemble</h1>
           <div className="stats">
             <div className="stat"><div className="num">{users.length}</div><div className="lab">Utilisateurs</div></div>
             <div className="stat"><div className="num">{withGoal}</div><div className="lab">Avec objectif défini</div></div>
             <div className="stat"><div className="num">{withWeight}</div><div className="lab">Avec poids enregistré</div></div>
           </div>
-
-          <p className="foot"><a href="/flags" style={{ color: '#2E8B57', fontWeight: 700 }}>⚙️ Feature Flags →</a></p>
 
           <h2>Utilisateurs</h2>
           <div className="card">

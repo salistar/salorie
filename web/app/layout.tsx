@@ -1,5 +1,6 @@
 import './globals.css';
 import type { ReactNode } from 'react';
+import Sidebar from './Sidebar';
 
 export const metadata = {
   title: 'Salorie Admin',
@@ -10,11 +11,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr">
       <body>
-        <div className="topbar">
-          <div className="brand"><span className="dot">🥗</span> Salorie Admin</div>
-          <div style={{ opacity: 0.9, fontSize: 13, fontWeight: 600 }}>Back-office</div>
+        <div className="shell">
+          <Sidebar />
+          <main className="content">{children}</main>
         </div>
-        {children}
       </body>
     </html>
   );
