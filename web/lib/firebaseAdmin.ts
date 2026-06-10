@@ -67,6 +67,36 @@ export interface Overview {
   goals: Record<string, number>; recent: AdminUser[];
 }
 
+// ── Étape 3 : Feature Flags (doc config/features) ──
+
+// Clés = routes des features (sans le slash) — doivent matcher l'app (Coach).
+export const FLAG_KEYS: { key: string; label: string }[] = [
+  { key: 'meal-plan', label: 'Plan de repas' },
+  { key: 'nutrients', label: 'Nutriments du jour' },
+  { key: 'meal-builder', label: 'Composer un repas' },
+  { key: 'food-recognition', label: 'Reconnaissance d\'aliment (IA)' },
+  { key: 'label-scan', label: 'Scanner étiquette (OCR)' },
+  { key: 'rep-counter', label: 'Compteur de reps' },
+  { key: 'run', label: 'Course solo (GPS)' },
+  { key: 'workout-plans', label: 'Plans d\'entraînement' },
+  { key: 'fasting', label: 'Jeûne intermittent' },
+  { key: 'ai-coach', label: 'Coach IA' },
+  { key: 'social', label: 'Classement / social' },
+  { key: 'races', label: 'Courses & défis' },
+  { key: 'health', label: 'Health Connect / wearables' },
+];
+
+export async function getFlags(): Promise<Record<string, boolean>> {
+  try {
+    const d = await db().collection('config').doc('features').get();
+    return (d.exists ? (d.data() as any) : {}) || {};
+  } catch { return {}; }
+}
+
+export async function setFlag(key: string, value: boolean): Promise<void> {
+  await db().collection('config').doc('features').set({ [key]: value }, { merge: true });
+}
+
 // ── Étape 2 : Event Bus — flux d'événements (collection `events`) ──
 
 export async function getRecentEvents(max = 60): Promise<any[]> {
