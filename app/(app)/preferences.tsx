@@ -91,7 +91,7 @@ export default function PreferencesScreen() {
         <View style={[styles.themeIconWrapper, isSelected && { backgroundColor: Colors.light.primary }]}>
           <Icon size={24} color={isSelected ? Colors.light.white : Colors.light.gray[400]} />
         </View>
-        <Text style={[styles.themeLabel, isSelected && styles.themeLabelSelected]}>{label}</Text>
+        <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.themeLabel, isSelected && styles.themeLabelSelected]}>{label}</Text>
         {isSelected && (
           <View style={styles.selectedBadge}>
             <CheckCircle2 size={12} color={Colors.light.white} />
@@ -140,7 +140,7 @@ export default function PreferencesScreen() {
                 <Text style={[styles.themeLabel, language === lang && styles.themeLabelSelected, { fontSize: 20 }]}>
                   {lang === 'en' ? '🇬🇧' : lang === 'fr' ? '🇫🇷' : '🇸🇦'}
                 </Text>
-                <Text style={[styles.themeLabel, language === lang && styles.themeLabelSelected]}>
+                <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.themeLabel, language === lang && styles.themeLabelSelected]}>
                   {getLanguageName(lang)}
                 </Text>
               </TouchableOpacity>
