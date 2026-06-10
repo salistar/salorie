@@ -176,6 +176,16 @@ export default function CoachScreen() {
           <ChevronRight size={22} color={sub} />
         </TouchableOpacity>
 
+        {/* ── Compteur de reps on-device (accéléromètre) ── */}
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/rep-counter' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
+          <View style={styles.mealCtaIcon}><Dumbbell size={24} color={Colors.light.primary} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.mealCtaTitle, { color: text }]}>Compteur de reps</Text>
+            <Text style={[styles.mealCtaSub, { color: sub }]}>Compte tes répétitions en temps réel (on-device)</Text>
+          </View>
+          <ChevronRight size={22} color={sub} />
+        </TouchableOpacity>
+
         {/* ── Workout plans CTA ── */}
         <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/workout-plans' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
           <View style={styles.mealCtaIcon}><Dumbbell size={24} color={Colors.light.primary} /></View>
