@@ -4,6 +4,7 @@ import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer } from 'lucide-react-native';
+import { useFeatureFlags, isEnabled } from '../../lib/featureFlags';
 
 const PLANS_CTA: Record<string, { t: string; s: string }> = {
   en: { t: 'Workout plans', s: 'Ready-made training programs' },
@@ -44,6 +45,7 @@ export default function CoachScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selAch, setSelAch] = useState<any>(null);
+  const flags = useFeatureFlags(); // Feature Flags (Étape 3) — masque les features désactivées par l'admin
   const astr = ACH_STR[language] || ACH_STR.en;
 
   const load = useCallback(async () => {
@@ -161,7 +163,7 @@ export default function CoachScreen() {
           <View key={group.sec}>
             <Text style={[styles.gridSection, { color: sub }]}>{group.sec}</Text>
             <View style={styles.featGrid}>
-              {group.items.map((it) => {
+              {group.items.filter((it) => isEnabled(flags, it.route.replace(/^\//, ''))).map((it) => {
                 const Icon = it.Icon;
                 return (
                   <TouchableOpacity key={it.route} activeOpacity={0.85} onPress={() => router.push(it.route as any)} style={[styles.featCard, { backgroundColor: card }]}>
