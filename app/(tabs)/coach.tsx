@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Re
 import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer, Wallet, Refrigerator, Replace, Ruler, Moon, Smile, Droplets, BookmarkPlus, Award, ShoppingCart, Link2 } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer, Wallet, Refrigerator, Replace, Ruler, Moon, Smile, Droplets, BookmarkPlus, Award, ShoppingCart, Link2, UtensilsCrossed, Receipt, FileText, Swords } from 'lucide-react-native';
 import { useFeatureFlags, isEnabled } from '../../lib/featureFlags';
 
 const PLANS_CTA: Record<string, { t: string; s: string }> = {
@@ -179,6 +179,13 @@ export default function CoachScreen() {
             { Icon: Link2, label: 'Importer recette', route: '/import-recipe' },
             { Icon: ShoppingCart, label: 'Liste de courses', route: '/shopping-list' },
             { Icon: ScanText, label: 'Scan code-barres', route: '/scan-barcode' },
+          ]},
+          { sec: 'Outils avancés', items: [
+            { Icon: UtensilsCrossed, label: 'Mode resto', route: '/restaurant-mode' },
+            { Icon: Receipt, label: 'Ticket de caisse', route: '/receipt-ocr' },
+            { Icon: Sparkles, label: 'Plan repas IA', route: '/ai-meal-plan' },
+            { Icon: Swords, label: 'Battle 1v1', route: '/battle' },
+            { Icon: FileText, label: 'Export médecin', route: '/doctor-export' },
           ]},
         ].map((group) => (
           <View key={group.sec}>
