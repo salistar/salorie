@@ -49,11 +49,14 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
             <ArrowLeft size={20} color={iconColor} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
           </TouchableOpacity>
         )}
-        {/* Flame logo — ALWAYS shown so the brand is present on every screen.
-            Solid high-contrast tile so it reads clearly on any background/theme. */}
-        <View style={[styles.brandLogoWrap, { backgroundColor: resolved === 'dark' ? colors.card : '#fff', borderColor: resolved === 'dark' ? colors.gray[200] : Colors.light.gray[200] }]}>
-          <Image source={require('../assets/images/fire.png')} style={styles.brandLogo} resizeMode="contain" />
-        </View>
+        {/* Flame logo — affiché quand il n'y a PAS de titre d'écran (sinon le logo
+            mange la largeur et tronque le titre type « Sa… »). Sur les sous-écrans,
+            back + titre suffisent comme en-tête. */}
+        {!title && (
+          <View style={[styles.brandLogoWrap, { backgroundColor: resolved === 'dark' ? colors.card : '#fff', borderColor: resolved === 'dark' ? colors.gray[200] : Colors.light.gray[200] }]}>
+            <Image source={require('../assets/images/fire.png')} style={styles.brandLogo} resizeMode="contain" />
+          </View>
+        )}
         {title ? (
           <Text
             style={[styles.screenTitle, { color: resolved === 'dark' ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}
@@ -193,7 +196,7 @@ const styles = StyleSheet.create({
   },
   screenTitle: {
     flex: 1,
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '900',
     letterSpacing: -0.5,
   },
