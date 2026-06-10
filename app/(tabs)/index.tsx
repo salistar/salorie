@@ -10,6 +10,7 @@ import RemainingCaloriesCard from '../../components/RemainingCaloriesCard';
 import WaterIntakeCard from '../../components/WaterIntakeCard';
 import StepsCard from '../../components/StepsCard';
 import DailyHealthScore from '../../components/DailyHealthScore';
+import OfflineBanner from '../../components/OfflineBanner';
 import { useLogging } from '../../lib/LoggingContext';
 import { useNutritionData } from '../../hooks/useNutritionData';
 import { saveUserToFirestore } from '../../lib/firebase';
@@ -149,6 +150,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: bgColor }]}>
+      <OfflineBanner />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
