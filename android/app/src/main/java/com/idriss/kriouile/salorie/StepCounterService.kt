@@ -1,5 +1,6 @@
 package com.idriss.kriouile.salorie
 
+import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -17,6 +18,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import androidx.core.app.NotificationCompat
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.util.Calendar
@@ -79,13 +81,29 @@ class StepCounterService : Service(), SensorEventListener {
     }
     sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
     stepSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
-    stepSensor?.let { sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL) }
+    stepSensor?.let { sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_FASTEST) }
     handler.postDelayed(ticker, 30000)
   }
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     repost() // refresh immediately (e.g. after JS updated activity_steps.json)
     return START_STICKY
+  }
+
+  /**
+   * Quand l'utilisateur SWIPE l'app depuis les récents, certains OEM (Samsung) tuent
+   * le service + sa notification. On programme une relance ~1s plus tard via AlarmManager
+   * pour que le compteur de pas + la notification PERSISTENT app fermée.
+   */
+  override fun onTaskRemoved(rootIntent: Intent?) {
+    try {
+      val restart = Intent(applicationContext, StepCounterService::class.java)
+      val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+      val pi = PendingIntent.getService(this, 1, restart, flags)
+      val am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+      am.set(AlarmManager.RTC, System.currentTimeMillis() + 1000, pi)
+    } catch (_: Exception) {}
+    super.onTaskRemoved(rootIntent)
   }
 
   override fun onBind(intent: Intent?): IBinder? = null
@@ -105,6 +123,11 @@ class StepCounterService : Service(), SensorEventListener {
     var baseline = p.getLong("baseline", -1L)
     // New day, first run, or device rebooted (counter reset) → re-baseline.
     if (savedDay != today || baseline < 0 || total < baseline) {
+      // Changement de jour réel → on archive le total de la veille pour que le JS
+      // le logge (historique Home + base de données).
+      if (savedDay != null && savedDay != today) {
+        appendDayHistory(savedDay, p.getInt("steps", 0))
+      }
       baseline = total
       p.edit().putString("day", today).putLong("baseline", baseline).apply()
     }
@@ -112,7 +135,7 @@ class StepCounterService : Service(), SensorEventListener {
     p.edit().putInt("steps", steps).apply()
     writeNativeSteps(today, steps)
     val now = System.currentTimeMillis()
-    if (now - lastNotif > 1500) {
+    if (now - lastNotif > 300) {
       lastNotif = now
       val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
       nm.notify(NOTIF_ID, buildNotification(steps + activitySteps()))
@@ -148,6 +171,20 @@ class StepCounterService : Service(), SensorEventListener {
       File(filesDir, "native_steps.json").writeText(
         JSONObject().put("date", day).put("steps", steps).toString()
       )
+    } catch (_: Exception) {}
+  }
+
+  /** Archive le total d'un jour terminé dans step_history.json (le JS le logge en DB). */
+  private fun appendDayHistory(day: String, steps: Int) {
+    if (steps <= 0) return
+    try {
+      val f = File(filesDir, "step_history.json")
+      val arr = if (f.exists()) JSONArray(f.readText()) else JSONArray()
+      for (i in 0 until arr.length()) {
+        if (arr.getJSONObject(i).optString("date") == day) return // déjà archivé
+      }
+      arr.put(JSONObject().put("date", day).put("steps", steps).put("ts", System.currentTimeMillis()))
+      f.writeText(arr.toString())
     } catch (_: Exception) {}
   }
 

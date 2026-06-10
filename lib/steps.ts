@@ -44,6 +44,40 @@ export async function syncActivityFile(email: string): Promise<void> {
   await writeActivityFile(steps);
 }
 
+// Fichier des jours TERMINÉS archivés par le service natif (StepCounterService).
+const HISTORY_FILE = (FileSystem.documentDirectory || '') + 'step_history.json';
+
+/**
+ * Au lancement : logge dans Firestore (+ historique Home) les jours de pas terminés
+ * que le service natif a archivés (fin de journée). Idempotent (marque loggedToDb).
+ */
+export async function flushStepHistory(email: string): Promise<number> {
+  if (!email) return 0;
+  try {
+    const info = await FileSystem.getInfoAsync(HISTORY_FILE);
+    if (!info.exists) return 0;
+    const arr = JSON.parse(await FileSystem.readAsStringAsync(HISTORY_FILE)) as
+      { date: string; steps: number; loggedToDb?: boolean }[];
+    if (!Array.isArray(arr) || !arr.length) return 0;
+    const { addNutritionLog } = await import('./firebase');
+    let logged = 0;
+    for (const e of arr) {
+      if (e.loggedToDb || !e.steps) continue;
+      const kcal = Math.round(e.steps * 0.04); // ≈0.04 kcal/pas
+      try {
+        await addNutritionLog({
+          userId: email, type: 'activity', name: `Pas du jour · ${e.steps}`,
+          calories: kcal, protein: 0, carbs: 0, fat: 0, date: e.date,
+        } as any);
+        e.loggedToDb = true;
+        logged++;
+      } catch { /* sera retenté au prochain lancement */ }
+    }
+    if (logged) await FileSystem.writeAsStringAsync(HISTORY_FILE, JSON.stringify(arr));
+    return logged;
+  } catch { return 0; }
+}
+
 // ~0.762 m average stride → ≈1312 steps per km.
 export const STEPS_PER_KM = 1312;
 export function kmToSteps(km: number): number {

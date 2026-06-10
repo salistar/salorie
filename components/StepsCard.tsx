@@ -7,7 +7,7 @@ import { Footprints, Flame, ChevronRight } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { useTranslation } from '../lib/i18n';
 import { isHealthAvailable, readToday } from '../lib/health';
-import { getStepsMode, getActivitySteps, getSimSteps, getNativeDeviceSteps, syncActivityFile } from '../lib/steps';
+import { getStepsMode, getActivitySteps, getSimSteps, getNativeDeviceSteps, syncActivityFile, flushStepHistory } from '../lib/steps';
 import { rememberEmail, ensureNotifPermission } from '../lib/stepsNotif';
 
 const TXT: Record<string, { steps: string; today: string; kcal: string; goal: string; connect: string }> = {
@@ -63,7 +63,7 @@ export default function StepsCard() {
         } catch { /* show connect CTA */ }
         finally { if (alive) setLoading(false); }
       };
-      if (email) { rememberEmail(email); ensureNotifPermission(); syncActivityFile(email); }
+      if (email) { rememberEmail(email); ensureNotifPermission(); syncActivityFile(email); flushStepHistory(email); }
       load();
       const timer = setInterval(load, 3000);
       return () => { alive = false; clearInterval(timer); };
