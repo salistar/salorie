@@ -33,7 +33,9 @@ async function buildContext(goals: any, consumed: any): Promise<string> {
 
 export default function AiCoachScreen() {
   const data: any = useNutritionData();
-  const [msgs, setMsgs] = useState<Msg[]>([]);
+  const [msgs, setMsgs] = useState<Msg[]>([
+    { role: 'coach', text: 'Salut 👋 Je suis ton coach IA. Pose-moi une question, ou regarde tes conseils personnalisés du jour juste en dessous.' },
+  ]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState('');
   const scroll = useRef<ScrollView>(null);
