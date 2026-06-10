@@ -1,5 +1,10 @@
-import { getUser, getUserLogs, getUserWeights, getUserNotifs } from '../../../lib/firebaseAdmin';
+import { getUser, getUserLogs, getUserWeights, getUserNotifs, getUserEvents } from '../../../lib/firebaseAdmin';
 import AutoRefresh from '../../AutoRefresh';
+
+function evLabel(t: string): string {
+  const m: Record<string, string> = { meal_logged: '🍽️ Repas', activity_logged: '👟 Activité', weight_logged: '⚖️ Poids' };
+  return m[t] || t;
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -12,10 +17,10 @@ function fmt(ts: any): string {
 
 export default async function UserDetail({ params }: { params: { id: string } }) {
   const id = decodeURIComponent(params.id);
-  let user: any = null, logs: any[] = [], weights: any[] = [], notifs: any[] = [], error: string | null = null;
+  let user: any = null, logs: any[] = [], weights: any[] = [], notifs: any[] = [], events: any[] = [], error: string | null = null;
   try {
-    [user, logs, weights, notifs] = await Promise.all([
-      getUser(id), getUserLogs(id), getUserWeights(id), getUserNotifs(id),
+    [user, logs, weights, notifs, events] = await Promise.all([
+      getUser(id), getUserLogs(id), getUserWeights(id), getUserNotifs(id), getUserEvents(id),
     ]);
   } catch (e: any) { error = e?.message || String(e); }
 
@@ -82,6 +87,24 @@ export default async function UserDetail({ params }: { params: { id: string } })
                   <td className="umail">{l.date || fmt(l.timestamp)}</td>
                   <td>{l.name || '—'}</td>
                   <td>{l.calories != null ? `${Math.round(l.calories)} kcal` : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <h2>Événements (Event Bus)</h2>
+      <div className="card">
+        {events.length === 0 ? <div className="empty">Aucun événement.</div> : (
+          <table>
+            <thead><tr><th>Type</th><th>Détail</th><th>Date</th></tr></thead>
+            <tbody>
+              {events.slice(0, 40).map((e) => (
+                <tr key={e.id}>
+                  <td><span className="badge">{evLabel(e.type)}</span></td>
+                  <td className="umail">{e.data?.name || (e.data?.weight != null ? `${e.data.weight} kg` : '—')}{e.data?.calories != null ? ` · ${Math.round(e.data.calories)} kcal` : ''}</td>
+                  <td className="umail">{fmt(e.timestamp)}</td>
                 </tr>
               ))}
             </tbody>

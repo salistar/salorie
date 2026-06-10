@@ -385,6 +385,11 @@ export const addNutritionLog = async (log: Omit<NutritionLog, 'id' | 'timestamp'
     const { markInsightsStale } = await import('./InsightsService');
     markInsightsStale(log.userId).catch(() => {});
   } catch {}
+
+  // 4) Event Bus (Étape 2) — émet un événement typé (fire-and-forget, network-safe).
+  logEvent(log.userId, log.type === 'activity' ? 'activity_logged' : 'meal_logged', {
+    name: (log as any).name, calories: (log as any).calories, mealType: log.type,
+  });
 };
 
 /** Nombre de logs en attente de synchronisation (hors-ligne). */
@@ -439,10 +444,31 @@ export const addWeightLog = async (email: string, weight: number) => {
       timestamp: serverTimestamp(),
     });
     console.log('\x1b[34m[API←Firestore] weight_history/add OK\x1b[0m', { docId, ms: Date.now() - t0 });
+    logEvent(email, 'weight_logged', { weight }); // Event Bus (fire-and-forget)
   } catch (error) {
     console.error('Error logging weight:', error);
     throw error;
   }
+};
+
+/**
+ * Event Bus (Lot 4 / Étape 2) — émet un événement typé dans la collection `events`.
+ * Best-effort + network-safe (ne lance addDoc QUE en ligne → pas de hang offline) +
+ * fire-and-forget (les appelants ne l'attendent pas). Consommé par l'admin web.
+ */
+export const logEvent = async (email: string, type: string, data: Record<string, any> = {}) => {
+  try {
+    const docId = emailToDocId(email);
+    if (!docId) return;
+    let online = true;
+    try {
+      const Network = await import('expo-network');
+      const s = await Network.getNetworkStateAsync();
+      online = s?.isConnected !== false;
+    } catch { online = true; }
+    if (!online) return; // événements best-effort : on saute hors-ligne (pas de blocage)
+    await addDoc(collection(db, 'events'), { userId: docId, type, data, timestamp: serverTimestamp() });
+  } catch { /* best-effort */ }
 };
 
 /**
