@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Re
 import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer, Wallet, Refrigerator, Replace } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer, Wallet, Refrigerator, Replace, Ruler, Moon, Smile, Droplets, BookmarkPlus } from 'lucide-react-native';
 import { useFeatureFlags, isEnabled } from '../../lib/featureFlags';
 
 const PLANS_CTA: Record<string, { t: string; s: string }> = {
@@ -165,6 +165,14 @@ export default function CoachScreen() {
             { Icon: Flame, label: 'Mes séries', route: '/streaks' },
             { Icon: Refrigerator, label: 'Frigo → recettes', route: '/fridge-recipes' },
             { Icon: Replace, label: 'Substitutions', route: '/substitutions' },
+          ]},
+          { sec: 'Suivi', items: [
+            { Icon: Ruler, label: 'Mesures corporelles', route: '/body-measurements' },
+            { Icon: Moon, label: 'Sommeil', route: '/sleep-tracker' },
+            { Icon: Smile, label: 'Humeur & énergie', route: '/mood-tracker' },
+            { Icon: Droplets, label: 'Hydratation intelligente', route: '/smart-hydration' },
+            { Icon: BookmarkPlus, label: 'Repas types', route: '/meal-templates' },
+            { Icon: TrendingUp, label: 'Photos de progression', route: '/progress-photos' },
           ]},
         ].map((group) => (
           <View key={group.sec}>
