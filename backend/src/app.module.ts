@@ -16,20 +16,31 @@ import { AiController } from './ai/ai.controller';
 import { AiService } from './ai/ai.service';
 import { MlController } from './ml/ml.controller';
 import { MlService } from './ml/ml.service';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { PipelineController } from './pipeline/pipeline.controller';
 import { PipelineService } from './pipeline/pipeline.service';
+import { PipelineResolver } from './pipeline/pipeline.resolver';
 import { MirrorEvent, MirrorEventSchema, MirrorUser, MirrorUserSchema, FeatureStore, FeatureStoreSchema, OutboxItem, OutboxItemSchema } from './pipeline/pipeline.schemas';
 
 // Pipeline analytics (CDC Firestore→Mongo + feature store + outbox + multi-tenant)
 // — activé uniquement si Mongo est configuré (sinon DI échoue au boot standalone).
 const HAS_MONGO = !!process.env.MONGO_URI;
 const PIPELINE_FEATURES = HAS_MONGO
-  ? [MongooseModule.forFeature([
-      { name: MirrorEvent.name, schema: MirrorEventSchema },
-      { name: MirrorUser.name, schema: MirrorUserSchema },
-      { name: FeatureStore.name, schema: FeatureStoreSchema },
-      { name: OutboxItem.name, schema: OutboxItemSchema },
-    ])]
+  ? [
+      MongooseModule.forFeature([
+        { name: MirrorEvent.name, schema: MirrorEventSchema },
+        { name: MirrorUser.name, schema: MirrorUserSchema },
+        { name: FeatureStore.name, schema: FeatureStoreSchema },
+        { name: OutboxItem.name, schema: OutboxItemSchema },
+      ]),
+      // Gateway GraphQL (code-first, /graphql) sur le pipeline.
+      GraphQLModule.forRoot<ApolloDriverConfig>({
+        driver: ApolloDriver,
+        autoSchemaFile: true,
+        path: '/graphql',
+      }),
+    ]
   : [];
 
 @Module({
@@ -42,6 +53,6 @@ const PIPELINE_FEATURES = HAS_MONGO
     ...PIPELINE_FEATURES,
   ],
   controllers: [HealthController, UsersController, FilesController, NutritionController, InsightsController, AiController, MlController, ...(HAS_MONGO ? [PipelineController] : [])],
-  providers: [FirebaseService, RedisService, UsersService, NutritionService, InsightsService, AiService, MlService, ...(HAS_MONGO ? [PipelineService] : [])],
+  providers: [FirebaseService, RedisService, UsersService, NutritionService, InsightsService, AiService, MlService, ...(HAS_MONGO ? [PipelineService, PipelineResolver] : [])],
 })
 export class AppModule {}
