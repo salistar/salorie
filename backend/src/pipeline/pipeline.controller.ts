@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Query, Headers, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Headers, Body, ForbiddenException } from '@nestjs/common';
 import { PipelineService } from './pipeline.service';
 
 // Gateway de lecture (CQRS read-side) sur le miroir Mongo. Protégé par X-Admin-Key
@@ -31,4 +31,15 @@ export class PipelineController {
   // Déclenche un cycle CDC à la demande (admin).
   @Post('sync')
   async sync(@Headers('x-admin-key') k?: string) { this.auth(k); return this.pipeline.runCdc(); }
+
+  // Webhook sink interne (reçoit les livraisons outbox). Ouvert (consommateur démo).
+  @Post('webhook-sink')
+  sink(@Body() body: any) { this.pipeline.recordWebhook(body); return { ok: true }; }
+
+  @Get('webhook-received')
+  received(@Headers('x-admin-key') k?: string) { this.auth(k); return this.pipeline.getReceived(); }
+
+  // Enqueue + livre un webhook de test (vérifie la chaîne outbox→livraison).
+  @Post('test-outbox')
+  testOutbox(@Headers('x-admin-key') k?: string) { this.auth(k); return this.pipeline.enqueueTest(); }
 }

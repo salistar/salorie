@@ -9,7 +9,9 @@ import { MirrorEvent, MirrorUser, FeatureStore, OutboxItem } from './pipeline.sc
 export class PipelineService {
   private readonly logger = new Logger('Pipeline');
   private readonly TENANT = process.env.TENANT_ID || 'salorie';
-  private readonly WEBHOOK_URL = process.env.OUTBOX_WEBHOOK_URL || '';
+  // Par défaut : sink interne (livre + enregistre) → l'outbox ne reste pas "skipped".
+  // Override via OUTBOX_WEBHOOK_URL pour un vrai endpoint externe.
+  private readonly WEBHOOK_URL = process.env.OUTBOX_WEBHOOK_URL || 'http://localhost:4000/pipeline/webhook-sink';
 
   constructor(
     private fb: FirebaseService,
@@ -147,4 +149,18 @@ export class PipelineService {
   getFeatures(userId: string) { return this.features.findOne({ userId }).lean(); }
   recentEvents(limit = 50) { return this.events.find({ tenantId: this.TENANT }).sort({ eventTs: -1 }).limit(limit).lean(); }
   outboxItems(limit = 50) { return this.outbox.find({ tenantId: this.TENANT }).sort({ createdAt: -1 }).limit(limit).lean(); }
+
+  // ── Webhook sink interne (consommateur de démo) + test ──
+  private static received: any[] = [];
+  recordWebhook(body: any) {
+    PipelineService.received.unshift({ ...body, receivedAt: Date.now() });
+    if (PipelineService.received.length > 50) PipelineService.received.pop();
+  }
+  getReceived() { return PipelineService.received; }
+  // Enqueue un item de test (dédup unique) puis livre tout de suite.
+  async enqueueTest() {
+    await this.enqueueOutbox('test.webhook', 'demo', { hello: 'salorie' }, 'test:' + Date.now());
+    await this.deliverOutbox();
+    return { enqueued: true, webhookUrl: this.WEBHOOK_URL || '(non défini → skipped)' };
+  }
 }
