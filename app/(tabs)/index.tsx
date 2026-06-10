@@ -11,6 +11,7 @@ import WaterIntakeCard from '../../components/WaterIntakeCard';
 import StepsCard from '../../components/StepsCard';
 import DailyHealthScore from '../../components/DailyHealthScore';
 import OfflineBanner from '../../components/OfflineBanner';
+import HomeQuickActions from '../../components/HomeQuickActions';
 import { useLogging } from '../../lib/LoggingContext';
 import { useNutritionData } from '../../hooks/useNutritionData';
 import { updateWidgetData } from '../../lib/widgetData';
@@ -174,6 +175,9 @@ export default function HomeScreen() {
         <View style={styles.calendarWrapper}>
           <WeekCalendar />
         </View>
+
+        {/* Lance-toi : courses virtuelles / groupe / défis + notifs */}
+        <HomeQuickActions />
 
         {/* Score santé quotidien — hook de rétention */}
         <DailyHealthScore />
