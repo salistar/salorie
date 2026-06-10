@@ -345,15 +345,11 @@ export const addNutritionLog = async (log: Omit<NutritionLog, 'id' | 'timestamp'
     await AsyncStorage.setItem(key, JSON.stringify(arr));
   } catch {}
 
-  // 2) Écriture distante. Si elle échoue (hors-ligne), on met en FILE D'ATTENTE
-  //    (pending_logs_{docId}) pour synchroniser au retour réseau — au lieu de perdre le repas.
-  try {
-    const logsRef = collection(db, 'users', docId, 'logs');
-    const t0 = Date.now();
-    await addDoc(logsRef, { ...log, userId: docId, timestamp: serverTimestamp() });
-    console.log('\x1b[34m[API←Firestore] logs/add OK\x1b[0m', { docId, ms: Date.now() - t0 });
-  } catch (error: any) {
-    console.warn('[offline] addNutritionLog → mis en file de sync:', error?.message || error);
+  // 2) On détecte l'état réseau AVANT d'écrire. Hors-ligne, on NE lance PAS addDoc
+  //    (Firestore RN ne rejette pas hors-ligne → l'await bloquerait l'UI) : on met
+  //    directement en FILE D'ATTENTE. En ligne, addDoc normal (file si échec réel).
+  //    → jamais de blocage UI, jamais de doublon.
+  const enqueue = async () => {
     try {
       const qkey = `pending_logs_${docId}`;
       const raw = await AsyncStorage.getItem(qkey);
@@ -361,7 +357,27 @@ export const addNutritionLog = async (log: Omit<NutritionLog, 'id' | 'timestamp'
       q.push({ ...log, userId: docId, queuedAt: Date.now() });
       await AsyncStorage.setItem(qkey, JSON.stringify(q));
     } catch {}
-    // offline-first : on NE rethrow PAS — le repas est en cache + en file de sync.
+  };
+  let online = true;
+  try {
+    const Network = await import('expo-network');
+    const s = await Network.getNetworkStateAsync();
+    online = s?.isConnected !== false;
+  } catch { online = true; }
+
+  if (online) {
+    try {
+      const logsRef = collection(db, 'users', docId, 'logs');
+      const t0 = Date.now();
+      await addDoc(logsRef, { ...log, userId: docId, timestamp: serverTimestamp() });
+      console.log('\x1b[34m[API←Firestore] logs/add OK\x1b[0m', { docId, ms: Date.now() - t0 });
+    } catch (error: any) {
+      console.warn('[offline] addNutritionLog échec en ligne → file de sync:', error?.message || error);
+      await enqueue();
+    }
+  } else {
+    console.warn('[offline] addNutritionLog hors-ligne → mis en file de sync');
+    await enqueue();
   }
 
   // 3) Best-effort : marquer les insights périmés (lazy import pour éviter un cycle).
