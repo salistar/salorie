@@ -3,7 +3,8 @@
 // Conseils auto au chargement + question libre. 100% via backend (clé Gemini serveur).
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, TextInput } from 'react-native';
-import { Sparkles, Send, RefreshCw } from 'lucide-react-native';
+import { Sparkles, Send, RefreshCw, Volume2, VolumeX } from 'lucide-react-native';
+import * as Speech from 'expo-speech';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { aiGenerate } from '../../lib/aiProxy';
 import { useNutritionData } from '../../hooks/useNutritionData';
@@ -39,6 +40,9 @@ export default function AiCoachScreen() {
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState('');
   const scroll = useRef<ScrollView>(null);
+  const [voice, setVoice] = useState(false);
+  const voiceRef = useRef(false);
+  const toggleVoice = () => { const n = !voice; setVoice(n); voiceRef.current = n; if (!n) Speech.stop(); };
 
   const ask = async (question: string, isAuto = false) => {
     if (loading) return;
@@ -51,6 +55,7 @@ export default function AiCoachScreen() {
         : `Tu es un coach nutrition & sport. Contexte: ${ctx} Question de l'utilisateur: "${question}". Réponds en français, court et actionnable.`;
       const text = await aiGenerate(prompt);
       setMsgs((m) => [...m, { role: 'coach', text: text.trim() }]);
+      if (voiceRef.current) Speech.speak(text.trim(), { language: 'fr-FR' }); // coach vocal
     } catch (e: any) {
       setMsgs((m) => [...m, { role: 'coach', text: `Coach indisponible (${e?.message || 'erreur'}).` }]);
     } finally {
@@ -69,7 +74,10 @@ export default function AiCoachScreen() {
       <View style={styles.head}>
         <Sparkles size={22} color={GREEN} />
         <Text style={styles.title}>Coach IA</Text>
-        <TouchableOpacity onPress={() => ask('', true)} style={{ marginLeft: 'auto' }} hitSlop={10}><RefreshCw size={18} color="#94A3B8" /></TouchableOpacity>
+        <TouchableOpacity onPress={toggleVoice} style={{ marginLeft: 'auto' }} hitSlop={10}>
+          {voice ? <Volume2 size={20} color={GREEN} /> : <VolumeX size={20} color="#94A3B8" />}
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => ask('', true)} style={{ marginLeft: 14 }} hitSlop={10}><RefreshCw size={18} color="#94A3B8" /></TouchableOpacity>
       </View>
       <ScrollView ref={scroll} contentContainerStyle={styles.body}>
         {msgs.map((m, i) => (

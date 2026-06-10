@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Re
 import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer, Wallet, Refrigerator, Replace, Ruler, Moon, Smile, Droplets, BookmarkPlus, Award, ShoppingCart, Link2, UtensilsCrossed, Receipt, FileText, Swords } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer, Wallet, Refrigerator, Replace, Ruler, Moon, Smile, Droplets, BookmarkPlus, Award, ShoppingCart, Link2, UtensilsCrossed, Receipt, FileText, Swords, Droplet, Activity, PersonStanding } from 'lucide-react-native';
 import { useFeatureFlags, isEnabled } from '../../lib/featureFlags';
 
 const PLANS_CTA: Record<string, { t: string; s: string }> = {
@@ -186,6 +186,11 @@ export default function CoachScreen() {
             { Icon: Sparkles, label: 'Plan repas IA', route: '/ai-meal-plan' },
             { Icon: Swords, label: 'Battle 1v1', route: '/battle' },
             { Icon: FileText, label: 'Export médecin', route: '/doctor-export' },
+          ]},
+          { sec: 'Santé +', items: [
+            { Icon: Droplet, label: 'Glycémie', route: '/glucose-tracker' },
+            { Icon: Activity, label: 'Microbiote', route: '/microbiome' },
+            { Icon: PersonStanding, label: 'Composition corporelle', route: '/body-composition' },
           ]},
         ].map((group) => (
           <View key={group.sec}>
