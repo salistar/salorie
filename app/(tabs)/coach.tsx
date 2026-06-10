@@ -136,135 +136,43 @@ export default function CoachScreen() {
           )}
         </LinearGradient>
 
-        {/* ── Meal plan CTA ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/meal-plan' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><ChefHat size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>{t('coach.meal_title')}</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>{t('coach.meal_sub')}</Text>
+        {/* ── Outils & features — grille compacte organisée (toutes les features conservées) ── */}
+        {[
+          { sec: 'Nutrition', items: [
+            { Icon: ChefHat, label: t('coach.meal_title'), route: '/meal-plan' },
+            { Icon: Apple, label: t('coach.nutrients_title'), route: '/nutrients' },
+            { Icon: ChefHat, label: 'Composer un repas', route: '/meal-builder' },
+            { Icon: Apple, label: 'Reconnaître un aliment', route: '/food-recognition' },
+            { Icon: ScanText, label: 'Scanner étiquette', route: '/label-scan' },
+          ]},
+          { sec: 'Activité', items: [
+            { Icon: Dumbbell, label: 'Compteur de reps', route: '/rep-counter' },
+            { Icon: MapPin, label: (RUN_CTA[language] || RUN_CTA.en).t, route: '/run' },
+            { Icon: Dumbbell, label: (PLANS_CTA[language] || PLANS_CTA.en).t, route: '/workout-plans' },
+            { Icon: Timer, label: 'Jeûne intermittent', route: '/fasting' },
+          ]},
+          { sec: 'Communauté & santé', items: [
+            { Icon: Sparkles, label: 'Coach IA', route: '/ai-coach' },
+            { Icon: Trophy, label: t('coach.social_title'), route: '/social' },
+            { Icon: Trophy, label: (RACES_CTA[language] || RACES_CTA.en).t, route: '/races' },
+            { Icon: HeartPulse, label: t('coach.health_title'), route: '/health' },
+          ]},
+        ].map((group) => (
+          <View key={group.sec}>
+            <Text style={[styles.gridSection, { color: sub }]}>{group.sec}</Text>
+            <View style={styles.featGrid}>
+              {group.items.map((it) => {
+                const Icon = it.Icon;
+                return (
+                  <TouchableOpacity key={it.route} activeOpacity={0.85} onPress={() => router.push(it.route as any)} style={[styles.featCard, { backgroundColor: card }]}>
+                    <View style={styles.mealCtaIcon}><Icon size={22} color={Colors.light.primary} /></View>
+                    <Text style={[styles.featLabel, { color: text }]} numberOfLines={2}>{it.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
-
-        {/* ── Today's nutrients CTA ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/nutrients' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><Apple size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>{t('coach.nutrients_title')}</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>{t('coach.nutrients_sub')}</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
-
-        {/* ── Social / leaderboard CTA ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/social' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><Trophy size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>{t('coach.social_title')}</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>{t('coach.social_sub')}</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
-
-        {/* ── Health sync CTA ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/health' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><HeartPulse size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>{t('coach.health_title')}</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>{t('coach.health_sub')}</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
-
-        {/* ── Compteur de reps on-device (accéléromètre) ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/rep-counter' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><Dumbbell size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>Compteur de reps</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>Compte tes répétitions en temps réel (on-device)</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
-
-        {/* ── Scanner d'étiquette OCR on-device (MLKit) ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/label-scan' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><ScanText size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>Scanner une étiquette</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>Lis le tableau nutritionnel par OCR (on-device)</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
-
-        {/* ── Reconnaissance d'aliments TFLite on-device ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/food-recognition' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><Apple size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>Reconnaître un aliment</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>Classe ton plat par photo (TFLite on-device)</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
-
-        {/* ── Jeûne intermittent ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/fasting' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><Timer size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>Jeûne intermittent</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>Minuteur 16:8 · 18:6 · 20:4 (on-device)</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
-
-        {/* ── Coach IA contextuel ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/ai-coach' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><Sparkles size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>Coach IA</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>Conseils personnalisés selon ton contexte du jour</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
-
-        {/* ── Meal-builder / recettes ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/meal-builder' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><ChefHat size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>Composer un repas</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>Recette : cherche des ingrédients, total macros en direct</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
-
-        {/* ── Workout plans CTA ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/workout-plans' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><Dumbbell size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>{(PLANS_CTA[language] || PLANS_CTA.en).t}</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>{(PLANS_CTA[language] || PLANS_CTA.en).s}</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
-
-        {/* ── Solo run (GPS) CTA ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/run' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><MapPin size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>{(RUN_CTA[language] || RUN_CTA.en).t}</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>{(RUN_CTA[language] || RUN_CTA.en).s}</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
-
-        {/* ── Races & challenges CTA (Phase 2 + 3) ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/races' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><Trophy size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>{(RACES_CTA[language] || RACES_CTA.en).t}</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>{(RACES_CTA[language] || RACES_CTA.en).s}</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
+        ))}
 
         {/* ── Streak ── */}
         <View style={[styles.streakCard, { backgroundColor: card }]}>
@@ -363,6 +271,11 @@ const styles = StyleSheet.create({
   mealCtaIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center' },
   mealCtaTitle: { fontSize: 17, fontWeight: '800' },
   mealCtaSub: { fontSize: 13, marginTop: 3, lineHeight: 18 },
+  // Grille compacte (Coach allégé) — 2 colonnes, sections
+  gridSection: { fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 14, marginBottom: 8, opacity: 0.7 },
+  featGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  featCard: { width: '48%', alignItems: 'center', borderRadius: 16, paddingVertical: 16, paddingHorizontal: 8, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  featLabel: { fontSize: 13, fontWeight: '700', marginTop: 8, textAlign: 'center' },
   streakCard: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, padding: 18, marginBottom: 22, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
   streakIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#FEF3E0', alignItems: 'center', justifyContent: 'center' },
   streakValue: { fontSize: 20, fontWeight: '900' },
