@@ -4,7 +4,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Play, Square, Timer, Utensils } from 'lucide-react-native';
+import { useUser } from '@clerk/clerk-expo';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { logEvent } from '../../lib/firebase';
 
 const GREEN = '#2E8B57';
 const KEY = 'fasting_state_v1';
@@ -23,6 +25,7 @@ function fmt(ms: number) {
 }
 
 export default function FastingScreen() {
+  const { user } = useUser();
   const [proto, setProto] = useState(PROTOCOLS[0]);
   const [startTs, setStartTs] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
@@ -53,6 +56,12 @@ export default function FastingScreen() {
     try { await AsyncStorage.setItem(KEY, JSON.stringify({ startTs: ts, protoId: proto.id })); } catch {}
   };
   const stop = async () => {
+    // Event Bus : émet fast_completed UNIQUEMENT si le jeûne a atteint son objectif.
+    const elapsedMs = startTs ? Date.now() - startTs : 0;
+    if (startTs && elapsedMs >= proto.fast * 3600 * 1000) {
+      const email = user?.primaryEmailAddress?.emailAddress;
+      if (email) logEvent(email, 'fast_completed', { protocol: proto.id, hours: Math.round(elapsedMs / 3600000) });
+    }
     setStartTs(null);
     if (timer.current) clearInterval(timer.current);
     try { await AsyncStorage.removeItem(KEY); } catch {}
