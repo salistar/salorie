@@ -73,7 +73,10 @@ export class PipelineService {
         activities: { $sum: { $cond: [{ $eq: ['$type', 'activity_logged'] }, 1, 0] } },
         weighIns: { $sum: { $cond: [{ $eq: ['$type', 'weight_logged'] }, 1, 0] } },
         runs: { $sum: { $cond: [{ $eq: ['$type', 'run_completed'] }, 1, 0] } },
+        races: { $sum: { $cond: [{ $eq: ['$type', 'race_completed'] }, 1, 0] } },
         fasts: { $sum: { $cond: [{ $eq: ['$type', 'fast_completed'] }, 1, 0] } },
+        racesJoined: { $sum: { $cond: [{ $eq: ['$type', 'race_joined'] }, 1, 0] } },
+        challengesJoined: { $sum: { $cond: [{ $eq: ['$type', 'challenge_joined'] }, 1, 0] } },
         events7d: { $sum: { $cond: [{ $gte: ['$eventTs', weekAgo] }, 1, 0] } },
         lastActiveTs: { $max: '$eventTs' },
       } },
@@ -82,7 +85,9 @@ export class PipelineService {
       if (!a._id) continue;
       const features = {
         events: a.events, mealsLogged: a.mealsLogged, activities: a.activities,
-        weighIns: a.weighIns, runs: a.runs, fasts: a.fasts, events7d: a.events7d, lastActiveTs: a.lastActiveTs,
+        weighIns: a.weighIns, runs: a.runs, races: a.races, fasts: a.fasts,
+        racesJoined: a.racesJoined, challengesJoined: a.challengesJoined,
+        events7d: a.events7d, lastActiveTs: a.lastActiveTs,
       };
       await this.features.updateOne(
         { userId: a._id },

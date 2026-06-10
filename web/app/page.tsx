@@ -8,7 +8,11 @@ function evTime(ts: any): string {
   return s ? new Date(s * 1000).toLocaleString('fr-FR') : '—';
 }
 function evLabel(t: string): string {
-  const m: Record<string, string> = { meal_logged: '🍽️ Repas', activity_logged: '👟 Activité', weight_logged: '⚖️ Poids' };
+  const m: Record<string, string> = {
+    meal_logged: '🍽️ Repas', activity_logged: '👟 Activité', weight_logged: '⚖️ Poids',
+    run_completed: '🏃 Course', race_completed: '🏁 Course live', fast_completed: '⏱️ Jeûne',
+    race_joined: '➕ Course rejointe', challenge_joined: '➕ Défi rejoint',
+  };
   return m[t] || t;
 }
 
