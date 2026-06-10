@@ -12,6 +12,7 @@ import { emailToDocId, fetchAllUserData } from '../../lib/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import BrandBanner from '../../components/BrandBanner';
+import MlInsightsCard from '../../components/MlInsightsCard';
 import { useTheme } from '../../lib/ThemeContext';
 import { useUser } from '@clerk/clerk-expo';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
@@ -252,6 +253,8 @@ export default function AnalyticsScreen() {
         </View>
         <BrandBanner title={A_('banner_title')} subtitle={A_('banner_sub')} height={120} style={{ marginBottom: 16 }} />
 
+        {/* Insights IA — modèles ML backend (prévision poids + reco repas) */}
+        <MlInsightsCard />
 
         {/* Bento Grid Insights */}
         <View style={styles.bentoContainer}>
