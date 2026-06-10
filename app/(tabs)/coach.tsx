@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Re
 import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText } from 'lucide-react-native';
 
 const PLANS_CTA: Record<string, { t: string; s: string }> = {
   en: { t: 'Workout plans', s: 'Ready-made training programs' },
@@ -182,6 +182,26 @@ export default function CoachScreen() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.mealCtaTitle, { color: text }]}>Compteur de reps</Text>
             <Text style={[styles.mealCtaSub, { color: sub }]}>Compte tes répétitions en temps réel (on-device)</Text>
+          </View>
+          <ChevronRight size={22} color={sub} />
+        </TouchableOpacity>
+
+        {/* ── Scanner d'étiquette OCR on-device (MLKit) ── */}
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/label-scan' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
+          <View style={styles.mealCtaIcon}><ScanText size={24} color={Colors.light.primary} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.mealCtaTitle, { color: text }]}>Scanner une étiquette</Text>
+            <Text style={[styles.mealCtaSub, { color: sub }]}>Lis le tableau nutritionnel par OCR (on-device)</Text>
+          </View>
+          <ChevronRight size={22} color={sub} />
+        </TouchableOpacity>
+
+        {/* ── Reconnaissance d'aliments TFLite on-device ── */}
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/food-recognition' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
+          <View style={styles.mealCtaIcon}><Apple size={24} color={Colors.light.primary} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.mealCtaTitle, { color: text }]}>Reconnaître un aliment</Text>
+            <Text style={[styles.mealCtaSub, { color: sub }]}>Classe ton plat par photo (TFLite on-device)</Text>
           </View>
           <ChevronRight size={22} color={sub} />
         </TouchableOpacity>
