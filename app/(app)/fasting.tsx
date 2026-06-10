@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Play, Square, Timer, Utensils } from 'lucide-react-native';
-import ScreenTopBar from '../components/ScreenTopBar';
+import ScreenTopBar from '../../components/ScreenTopBar';
 
 const GREEN = '#2E8B57';
 const KEY = 'fasting_state_v1';

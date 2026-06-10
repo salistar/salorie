@@ -1,12 +1,11 @@
-// Barre de navigation persistante affichée sur TOUS les écrans hors-tabs (les ~40
-// écrans poussés). Les écrans du groupe (tabs) gardent leur barre native — on se
-// cache là (+ onboarding/auth). Rendu une seule fois au niveau racine (_layout).
+// Barre de navigation persistante pour les écrans du groupe (app)/ (écrans poussés).
+// Rendue par app/(app)/_layout.tsx. PAS de usePathname (évite la boucle de re-render
+// au niveau routeur) : 4 boutons qui ramènent aux onglets principaux.
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { router, usePathname } from 'expo-router';
+import { router } from 'expo-router';
 import { Home, Sparkles, BarChart3, User } from 'lucide-react-native';
 
-const GREEN = '#2E8B57';
 const GREY = '#94A3B8';
 
 const TABS = [
@@ -16,38 +15,28 @@ const TABS = [
   { key: 'profile', label: 'Profile', icon: User, route: '/(tabs)/profile' },
 ];
 
-// Routes où la barre NE doit PAS s'afficher (les tabs ont déjà la barre native).
-const HIDE_ON = ['/', '/coach', '/analytics', '/profile'];
-
 export default function PersistentTabBar() {
-  const path = usePathname() || '/';
-  const hidden =
-    HIDE_ON.includes(path) ||
-    path.includes('onboarding') ||
-    path.includes('oauth') ||
-    path.includes('not-found');
-  if (hidden) return null;
-
   return (
-    <View style={styles.bar}>
-      {TABS.map((t) => {
-        const Icon = t.icon;
-        return (
-          <TouchableOpacity key={t.key} style={styles.item} activeOpacity={0.7}
-            onPress={() => { try { router.navigate(t.route as any); } catch { router.push(t.route as any); } }}>
-            <Icon size={22} color={GREY} />
-            <Text style={styles.label}>{t.label}</Text>
-          </TouchableOpacity>
-        );
-      })}
+    <View style={styles.bar} pointerEvents="box-none">
+      <View style={styles.inner}>
+        {TABS.map((t) => {
+          const Icon = t.icon;
+          return (
+            <TouchableOpacity key={t.key} style={styles.item} activeOpacity={0.7}
+              onPress={() => { try { router.navigate(t.route as any); } catch { router.replace(t.route as any); } }}>
+              <Icon size={22} color={GREY} />
+              <Text style={styles.label}>{t.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: {
-    position: 'absolute',
-    left: 12, right: 12, bottom: Platform.OS === 'ios' ? 28 : 14,
+  bar: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 12, paddingBottom: Platform.OS === 'ios' ? 26 : 12 },
+  inner: {
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderRadius: 22,
