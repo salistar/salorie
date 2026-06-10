@@ -216,6 +216,26 @@ export default function CoachScreen() {
           <ChevronRight size={22} color={sub} />
         </TouchableOpacity>
 
+        {/* ── Coach IA contextuel ── */}
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/ai-coach' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
+          <View style={styles.mealCtaIcon}><Sparkles size={24} color={Colors.light.primary} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.mealCtaTitle, { color: text }]}>Coach IA</Text>
+            <Text style={[styles.mealCtaSub, { color: sub }]}>Conseils personnalisés selon ton contexte du jour</Text>
+          </View>
+          <ChevronRight size={22} color={sub} />
+        </TouchableOpacity>
+
+        {/* ── Meal-builder / recettes ── */}
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/meal-builder' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
+          <View style={styles.mealCtaIcon}><ChefHat size={24} color={Colors.light.primary} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.mealCtaTitle, { color: text }]}>Composer un repas</Text>
+            <Text style={[styles.mealCtaSub, { color: sub }]}>Recette : cherche des ingrédients, total macros en direct</Text>
+          </View>
+          <ChevronRight size={22} color={sub} />
+        </TouchableOpacity>
+
         {/* ── Workout plans CTA ── */}
         <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/workout-plans' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
           <View style={styles.mealCtaIcon}><Dumbbell size={24} color={Colors.light.primary} /></View>
