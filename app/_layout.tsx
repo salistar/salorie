@@ -32,7 +32,6 @@ import LogModal from '../components/LogModal';
 import ScreenBackground from '../components/ScreenBackground';
 import ActionMenu from '../components/ActionMenu';
 import SplashIntro from '../components/SplashIntro';
-import PersistentTabBar from '../components/PersistentTabBar';
 import * as SplashScreen from 'expo-splash-screen';
 
 const tokenCache = {
@@ -535,7 +534,6 @@ function InitialLayout() {
       <ActionMenu />
       <LogModal />
       <SplashIntro />
-      <PersistentTabBar />
       {showLoading && (
         <View style={{
           position: 'absolute',
