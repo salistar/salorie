@@ -14,6 +14,7 @@ import ScreenTopBar from '../../components/ScreenTopBar';
 import BrandBanner from '../../components/BrandBanner';
 import MlInsightsCard from '../../components/MlInsightsCard';
 import MacroTargets from '../../components/MacroTargets';
+import CollapsibleSection from '../../components/CollapsibleSection';
 import { useTheme } from '../../lib/ThemeContext';
 import { useUser } from '@clerk/clerk-expo';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
@@ -331,6 +332,7 @@ export default function AnalyticsScreen() {
           </View>
         ) : (
           <>
+            <CollapsibleSection title="Graphes détaillés">
             {/* Calories Chart Card */}
             <Animated.View entering={FadeInDown.duration(600)} style={[styles.chartCard, { backgroundColor: surface, borderColor: isDark ? colors.gray[200] : Colors.light.gray[50] }]}>
               <View style={styles.chartHeader}>
@@ -462,6 +464,7 @@ export default function AnalyticsScreen() {
                 />
               </View>
             </Animated.View>
+            </CollapsibleSection>
 
             {/* Stats Row */}
             <View style={styles.statsRow}>

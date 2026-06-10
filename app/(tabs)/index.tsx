@@ -12,6 +12,7 @@ import StepsCard from '../../components/StepsCard';
 import DailyHealthScore from '../../components/DailyHealthScore';
 import OfflineBanner from '../../components/OfflineBanner';
 import HomeQuickActions from '../../components/HomeQuickActions';
+import CollapsibleSection from '../../components/CollapsibleSection';
 import { useLogging } from '../../lib/LoggingContext';
 import { useNutritionData } from '../../hooks/useNutritionData';
 import { updateWidgetData } from '../../lib/widgetData';
@@ -220,10 +221,12 @@ export default function HomeScreen() {
               }}
             />
 
-            <ActivityList
-              logs={logs}
-              onAddPress={() => showLogModal()}
-            />
+            <CollapsibleSection title="Activité récente">
+              <ActivityList
+                logs={logs}
+                onAddPress={() => showLogModal()}
+              />
+            </CollapsibleSection>
           </>
         )}
       </ScrollView>
