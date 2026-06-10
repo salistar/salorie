@@ -493,7 +493,8 @@ export default function ChallengeScreen() {
         webRef.current?.injectJavaScript(`window.navReal && window.navReal(${cur.coords.latitude}, ${cur.coords.longitude}, ${h}); true;`);
       } catch {}
       locWatch.current = await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.High, distanceInterval: 2, timeInterval: 1000 },
+        // Énergie : on espace les relevés (2s/4m au lieu de 1s/2m) hors sprint.
+        { accuracy: Location.Accuracy.High, distanceInterval: 4, timeInterval: 2000 },
         (pos) => {
           const { latitude, longitude, heading } = pos.coords;
           const cur = { lat: latitude, lng: longitude };

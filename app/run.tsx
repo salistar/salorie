@@ -149,7 +149,9 @@ export default function RunScreen() {
       return;
     }
     subRef.current = await Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.BestForNavigation, distanceInterval: 5, timeInterval: 2000 },
+      // Énergie : High (≈10m) suffit pour le suivi de course et consomme bien moins
+      // que BestForNavigation (réservé au turn-by-turn). +intervalle espacé.
+      { accuracy: Location.Accuracy.High, distanceInterval: 6, timeInterval: 3000 },
       (loc) => {
         const pt = { lat: loc.coords.latitude, lng: loc.coords.longitude };
         if (lastPt.current) {
