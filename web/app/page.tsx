@@ -1,4 +1,5 @@
 import { listUsers, AdminUser } from '../lib/firebaseAdmin';
+import AutoRefresh from './AutoRefresh';
 
 export const dynamic = 'force-dynamic'; // always read fresh from Firestore
 
@@ -20,6 +21,7 @@ export default async function Home() {
 
   return (
     <main className="container">
+      <AutoRefresh seconds={15} />
       {error ? (
         <div className="card empty">
           ⚠️ Impossible de lire Firestore : {error}
@@ -46,13 +48,13 @@ export default async function Home() {
                   {users.map((u) => (
                     <tr key={u.id}>
                       <td>
-                        <div className="userRow">
+                        <a href={`/users/${encodeURIComponent(u.id)}`} className="userRow" style={{ textDecoration: 'none', color: 'inherit' }}>
                           <div className="avatar">{initials(u)}</div>
                           <div>
-                            <div className="uname">{displayName(u)}</div>
+                            <div className="uname">{displayName(u)} ↗</div>
                             <div className="umail">{u.id}</div>
                           </div>
-                        </div>
+                        </a>
                       </td>
                       <td className="umail">{u.email || '—'}</td>
                       <td>{u.goal ? <span className="badge">{u.goal}</span> : '—'}</td>
