@@ -467,7 +467,9 @@ export const logEvent = async (email: string, type: string, data: Record<string,
       online = s?.isConnected !== false;
     } catch { online = true; }
     if (!online) return; // événements best-effort : on saute hors-ligne (pas de blocage)
-    await addDoc(collection(db, 'events'), { userId: docId, type, data, timestamp: serverTimestamp() });
+    // Sous-collection users/{docId}/events (autorisée par les règles Firestore ;
+    // la collection top-level `events` est refusée). Le CDC lit via collectionGroup.
+    await addDoc(collection(db, 'users', docId, 'events'), { userId: docId, type, data, timestamp: serverTimestamp() });
   } catch { /* best-effort */ }
 };
 

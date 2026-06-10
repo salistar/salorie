@@ -37,16 +37,17 @@ export class PipelineService {
       );
       mUsers++;
     }
-    // 2) Miroir events (Event Bus) — dédup par firestoreId (idempotent)
-    const evSnap = await db.collection('events').orderBy('timestamp', 'desc').limit(1000).get().catch(() => null);
+    // 2) Miroir events (Event Bus) — sous-collections users/{id}/events lues via
+    // collectionGroup (sans orderBy → pas d'index requis) ; dédup par chemin Firestore.
+    const evSnap = await db.collectionGroup('events').limit(2000).get().catch(() => null);
     let mEvents = 0;
     if (evSnap) {
       for (const e of evSnap.docs) {
         const d = e.data() as any;
         const ts = d.timestamp?._seconds ? d.timestamp._seconds * 1000 : (d.timestamp?.toMillis?.() ?? Date.now());
         const r = await this.events.updateOne(
-          { firestoreId: e.id },
-          { $set: { tenantId: this.TENANT, userId: d.userId, type: d.type, data: d.data || {}, firestoreId: e.id, eventTs: ts } },
+          { firestoreId: e.ref.path },
+          { $set: { tenantId: this.TENANT, userId: d.userId, type: d.type, data: d.data || {}, firestoreId: e.ref.path, eventTs: ts } },
           { upsert: true },
         );
         if ((r as any).upsertedCount) mEvents++;
