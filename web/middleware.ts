@@ -1,28 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyToken, AUTH_COOKIE } from './lib/jwt';
 
-// HTTP Basic Auth gate for the whole admin. Credentials from env
-// (ADMIN_USER / ADMIN_PASS). If ADMIN_PASS is unset, the admin stays open
-// (local dev) — in production the deploy always sets it.
-export function middleware(req: NextRequest) {
-  const USER = process.env.ADMIN_USER || 'admin';
-  const PASS = process.env.ADMIN_PASS || '';
-  if (!PASS) return NextResponse.next();
+// Auth gate basée sur un JWT cookie (login/register custom + MongoDB).
+// Remplace l'ancien HTTP Basic Auth. Edge-safe (jose uniquement, pas de mongoose).
+const PUBLIC = ['/login', '/register'];
 
-  const header = req.headers.get('authorization') || '';
-  const [scheme, encoded] = header.split(' ');
-  if (scheme === 'Basic' && encoded) {
-    try {
-      const [u, p] = atob(encoded).split(':');
-      if (u === USER && p === PASS) return NextResponse.next();
-    } catch {}
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  // Routes publiques : pages d'auth + API d'auth
+  if (pathname.startsWith('/api/auth') || PUBLIC.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
+    return NextResponse.next();
   }
-  return new NextResponse('Authentification requise', {
-    status: 401,
-    headers: { 'WWW-Authenticate': 'Basic realm="Salorie Admin", charset="UTF-8"' },
-  });
+  const token = req.cookies.get(AUTH_COOKIE)?.value;
+  const payload = token ? await verifyToken(token) : null;
+  if (!payload) {
+    const url = req.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
+  }
+  return NextResponse.next();
 }
 
 export const config = {
-  // Protect everything except Next internals + favicon.
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

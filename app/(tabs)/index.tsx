@@ -9,6 +9,7 @@ import WeekCalendar from '../../components/WeekCalendar';
 import RemainingCaloriesCard from '../../components/RemainingCaloriesCard';
 import WaterIntakeCard from '../../components/WaterIntakeCard';
 import StepsCard from '../../components/StepsCard';
+import DailyHealthScore from '../../components/DailyHealthScore';
 import { useLogging } from '../../lib/LoggingContext';
 import { useNutritionData } from '../../hooks/useNutritionData';
 import { saveUserToFirestore } from '../../lib/firebase';
@@ -165,6 +166,9 @@ export default function HomeScreen() {
         <View style={styles.calendarWrapper}>
           <WeekCalendar />
         </View>
+
+        {/* Score santé quotidien — hook de rétention */}
+        <DailyHealthScore />
 
         {/* ── Scrollable Content ─────────────────── */}
         <View style={styles.contentHeader}>

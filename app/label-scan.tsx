@@ -14,14 +14,40 @@ type Parsed = { calories?: number; protein?: number; carbs?: number; fat?: numbe
 function parseNutrition(text: string): Parsed {
   const flat = text.replace(/\n/g, ' ').toLowerCase().replace(/,/g, '.');
   const out: Parsed = {};
-  // Calories : ancré sur l'unité kcal (robuste quel que soit l'ordre de lecture OCR)
+  // Calories : ancré sur l'unité kcal (le plus fiable, quel que soit l'ordre OCR)
   const kcal = flat.match(/(\d{2,4})\s*k?cal/) || flat.match(/(?:calories|[ée]nergie)[^\d]{0,20}(\d{2,4})/);
   if (kcal) out.calories = parseFloat(kcal[1]);
-  // Macros : mot-clé puis le PROCHAIN "nombre g" (ancré sur l'unité g pour éviter les valeurs croisées)
-  const macro = (re: RegExp) => { const m = flat.match(re); return m ? parseFloat(m[1]) : undefined; };
-  out.protein = macro(/(?:prot[eé]ines?|protein)[^\d]{0,24}(\d{1,3}(?:\.\d)?)\s*g/);
-  out.carbs = macro(/(?:glucides|carbohydrates?|carbs)[^\d]{0,24}(\d{1,3}(?:\.\d)?)\s*g/);
-  out.fat = macro(/(?:lipides|fat|graisses)[^\d]{0,24}(\d{1,3}(?:\.\d)?)\s*g/);
+
+  // Macros : appariement POSITIONNEL. MLKit lit souvent l'étiquette en colonnes
+  // (tous les libellés, puis toutes les valeurs). On collecte les libellés DANS
+  // L'ORDRE et les valeurs "N g" DANS L'ORDRE, puis on les apparie par index — ce
+  // qui marche aussi en lecture ligne-à-ligne (même ordre relatif).
+  // On démarre à "Calories" pour ignorer l'en-tête (ex "Pour 100 g") qui injecterait
+  // un faux "100 g" et décalerait tout l'appariement.
+  const startIdx = flat.search(/calor|[ée]nergie/);
+  const body = startIdx >= 0 ? flat.slice(startIdx) : flat;
+  const keys: (('protein' | 'carbs' | 'fat' | null))[] = [];
+  const keyRe = /(prot[eé]ine|glucide|carbohydrate|carb\b|lipide|graisse|\bfat\b|sucre|\bsel\b|sodium|fibre)/g;
+  let m: RegExpExecArray | null;
+  while ((m = keyRe.exec(body))) {
+    const k = m[1];
+    if (/prot/.test(k)) keys.push('protein');
+    else if (/glucide|carb/.test(k)) keys.push('carbs');
+    else if (/lipide|graisse|fat/.test(k)) keys.push('fat');
+    else keys.push(null); // sucre / sel / sodium / fibre → occupent une position mais pas une macro
+  }
+  const vals: number[] = [];
+  const valRe = /(\d{1,3}(?:\.\d{1,2})?)\s*g\b/g;
+  while ((m = valRe.exec(body))) vals.push(parseFloat(m[1]));
+
+  keys.forEach((key, i) => {
+    if (key && vals[i] != null && out[key] == null) out[key] = vals[i];
+  });
+  // Repli : si l'appariement positionnel n'a rien donné, mot-clé → prochain "N g"
+  const near = (re: RegExp) => { const x = flat.match(re); return x ? parseFloat(x[1]) : undefined; };
+  if (out.protein == null) out.protein = near(/(?:prot[eé]ines?|protein)[^\d]{0,24}(\d{1,3}(?:\.\d)?)\s*g/);
+  if (out.carbs == null) out.carbs = near(/(?:glucides|carbohydrates?|carbs)[^\d]{0,24}(\d{1,3}(?:\.\d)?)\s*g/);
+  if (out.fat == null) out.fat = near(/(?:lipides|fat|graisses)[^\d]{0,24}(\d{1,3}(?:\.\d)?)\s*g/);
   return out;
 }
 

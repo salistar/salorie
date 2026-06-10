@@ -169,7 +169,8 @@ export default function RaceLiveScreen() {
     setStatus('running');
     timerRef.current = setInterval(() => setSecs((s) => s + 1), 1000);
     subRef.current = await Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.BestForNavigation, distanceInterval: 5, timeInterval: 2000 },
+      // Énergie : High suffit pour la course/race et consomme bien moins que BestForNavigation.
+      { accuracy: Location.Accuracy.High, distanceInterval: 6, timeInterval: 3000 },
       (loc) => {
         const pt = { lat: loc.coords.latitude, lng: loc.coords.longitude };
         if (lastPt.current) {
