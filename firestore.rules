@@ -43,5 +43,12 @@ service cloud.firestore {
       allow read: if signedIn();
       allow write: if false;
     }
+
+    // Feature flags (config/features) — lus par l'app (client), écrits uniquement
+    // par l'admin (firebase-admin SDK, qui bypass les règles).
+    match /config/{doc} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
   }
 }
