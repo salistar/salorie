@@ -37,3 +37,47 @@ export async function countSub(userId: string, sub: string): Promise<number> {
     return s.data().count;
   } catch { return 0; }
 }
+
+// ── Étape 1 : lecture complète des données d'un user (Firestore) pour l'admin ──
+
+export async function getUser(id: string): Promise<AdminUser | null> {
+  const d = await db().collection('users').doc(id).get();
+  return d.exists ? ({ id: d.id, ...(d.data() as any) }) : null;
+}
+
+async function readSub(id: string, sub: string, orderField: string, max: number) {
+  try {
+    const s = await db().collection('users').doc(id).collection(sub).orderBy(orderField, 'desc').limit(max).get();
+    return s.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+  } catch {
+    // pas d'index / champ absent → fallback sans tri
+    try {
+      const s = await db().collection('users').doc(id).collection(sub).limit(max).get();
+      return s.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+    } catch { return []; }
+  }
+}
+
+export const getUserLogs = (id: string, max = 60) => readSub(id, 'logs', 'timestamp', max);
+export const getUserWeights = (id: string, max = 60) => readSub(id, 'weight_history', 'timestamp', max);
+export const getUserNotifs = (id: string, max = 40) => readSub(id, 'notifications_history', 'timestamp', max);
+
+export interface Overview {
+  total: number; withGoal: number; withWeight: number;
+  goals: Record<string, number>; recent: AdminUser[];
+}
+
+export async function getOverview(): Promise<Overview> {
+  const users = await listUsers(500);
+  const goals: Record<string, number> = {};
+  for (const u of users) { if (u.goal) goals[u.goal] = (goals[u.goal] || 0) + 1; }
+  const recent = [...users].sort((a, b) => {
+    const ta = a.createdAt?._seconds || 0; const tb = b.createdAt?._seconds || 0; return tb - ta;
+  }).slice(0, 10);
+  return {
+    total: users.length,
+    withGoal: users.filter((u) => u.goal).length,
+    withWeight: users.filter((u) => u.weight).length,
+    goals, recent,
+  };
+}
