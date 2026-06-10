@@ -1,7 +1,16 @@
-import { listUsers, AdminUser } from '../lib/firebaseAdmin';
+import { listUsers, getRecentEvents, AdminUser } from '../lib/firebaseAdmin';
 import AutoRefresh from './AutoRefresh';
 
 export const dynamic = 'force-dynamic'; // always read fresh from Firestore
+
+function evTime(ts: any): string {
+  const s = ts?._seconds ?? ts?.seconds;
+  return s ? new Date(s * 1000).toLocaleString('fr-FR') : '—';
+}
+function evLabel(t: string): string {
+  const m: Record<string, string> = { meal_logged: '🍽️ Repas', activity_logged: '👟 Activité', weight_logged: '⚖️ Poids' };
+  return m[t] || t;
+}
 
 function initials(u: AdminUser): string {
   const a = (u.firstName || u.email || u.id || '?').trim();
@@ -13,8 +22,10 @@ function displayName(u: AdminUser): string {
 
 export default async function Home() {
   let users: AdminUser[] = [];
+  let events: any[] = [];
   let error: string | null = null;
   try { users = await listUsers(); } catch (e: any) { error = e?.message || String(e); }
+  try { events = await getRecentEvents(40); } catch {}
 
   const withGoal = users.filter((u) => u.goal).length;
   const withWeight = users.filter((u) => u.weight).length;
@@ -65,6 +76,27 @@ export default async function Home() {
               </table>
             )}
           </div>
+          <h2>Flux d'événements (Event Bus)</h2>
+          <div className="card">
+            {events.length === 0 ? (
+              <div className="empty">Aucun événement encore (l'app en émet à chaque repas / activité / poids).</div>
+            ) : (
+              <table>
+                <thead><tr><th>Événement</th><th>Détail</th><th>Utilisateur</th><th>Quand</th></tr></thead>
+                <tbody>
+                  {events.map((e) => (
+                    <tr key={e.id}>
+                      <td><span className="badge">{evLabel(e.type)}</span></td>
+                      <td className="umail">{e.data?.name || (e.data?.weight != null ? `${e.data.weight} kg` : '—')}{e.data?.calories != null ? ` · ${Math.round(e.data.calories)} kcal` : ''}</td>
+                      <td><a href={`/users/${encodeURIComponent(e.userId)}`} className="umail" style={{ color: '#2E8B57' }}>{e.userId}</a></td>
+                      <td className="umail">{evTime(e.timestamp)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
           <p className="foot">Salorie Admin · données Firebase Firestore en direct · {new Date().getFullYear()}</p>
         </>
       )}

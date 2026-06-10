@@ -67,6 +67,26 @@ export interface Overview {
   goals: Record<string, number>; recent: AdminUser[];
 }
 
+// ── Étape 2 : Event Bus — flux d'événements (collection `events`) ──
+
+export async function getRecentEvents(max = 60): Promise<any[]> {
+  try {
+    const s = await db().collection('events').orderBy('timestamp', 'desc').limit(max).get();
+    return s.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+  } catch { return []; }
+}
+
+export async function getUserEvents(id: string, max = 40): Promise<any[]> {
+  try {
+    const s = await db().collection('events').where('userId', '==', id).orderBy('timestamp', 'desc').limit(max).get();
+    return s.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+  } catch {
+    // pas d'index composite → fallback : filtrer le flux récent
+    const all = await getRecentEvents(400);
+    return all.filter((e) => e.userId === id).slice(0, max);
+  }
+}
+
 export async function getOverview(): Promise<Overview> {
   const users = await listUsers(500);
   const goals: Record<string, number> = {};
