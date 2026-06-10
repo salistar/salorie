@@ -10,7 +10,7 @@ import { ArrowLeft, Play, Pause, Square, MapPin, Zap, Navigation, History } from
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
-import { addNutritionLog, emailToDocId } from '../../lib/firebase';
+import { addNutritionLog, emailToDocId, logEvent } from '../../lib/firebase';
 import { addDistanceToJoinedChallenges } from '../../lib/races';
 import { addActivitySteps } from '../../lib/steps';
 import { refreshStepsNotification } from '../../lib/stepsNotif';
@@ -176,6 +176,8 @@ export default function RunScreen() {
         const d = new Date();
         const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         await addNutritionLog({ userId: email, type: 'activity', name: `${t.title} · ${km.toFixed(2)} km`, calories: kcal, protein: 0, carbs: 0, fat: 0, date, duration: Math.round(secs / 60), intensity: 'medium' } as any);
+        logEvent(email, 'run_completed', { km: +km.toFixed(2), kcal, durationMin: Math.round(secs / 60) }); // Event Bus
+
         // Phase 3 sync: a solo run also advances every virtual challenge you joined.
         addDistanceToJoinedChallenges(email, km).catch(() => {});
         // Steps from this run are added to today's Home step count + notification.

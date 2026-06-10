@@ -7,7 +7,7 @@ import {
   collection, doc, setDoc, getDoc, getDocs, onSnapshot, query, where,
   orderBy, serverTimestamp, updateDoc, addDoc, increment, limit,
 } from 'firebase/firestore';
-import { db, emailToDocId } from './firebase';
+import { db, emailToDocId, logEvent } from './firebase';
 
 export interface RaceParticipant {
   email: string; name: string; imageUrl?: string;
@@ -33,6 +33,7 @@ export async function joinRace(raceId: string, email: string, name: string, imag
   await setDoc(doc(db, 'races', raceId, 'participants', emailToDocId(email)), {
     email, name, imageUrl: imageUrl || '', distanceM: 0, finished: false, updatedAt: serverTimestamp(),
   }, { merge: true });
+  logEvent(email, 'race_joined', { raceId }); // Event Bus
 }
 
 export function listenOpenRaces(cb: (races: Race[]) => void) {
@@ -149,6 +150,7 @@ export async function joinChallenge(challengeId: string, email: string, name: st
   await setDoc(doc(db, 'challenges', challengeId, 'participants', emailToDocId(email)), {
     email, name, imageUrl: imageUrl || '', cumulativeKm: 0, updatedAt: serverTimestamp(),
   }, { merge: true });
+  logEvent(email, 'challenge_joined', { challengeId }); // Event Bus
 }
 
 // Set the absolute cumulative distance for a challenge (used by the live/sim

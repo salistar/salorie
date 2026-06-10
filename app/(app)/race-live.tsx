@@ -10,7 +10,7 @@ import { ArrowLeft, Play, Pause, Square, MapPin } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
-import { addNutritionLog, emailToDocId } from '../../lib/firebase';
+import { addNutritionLog, emailToDocId, logEvent } from '../../lib/firebase';
 import {
   listenRaceParticipants, updateRaceProgress, finishMyRace,
   addDistanceToJoinedChallenges, RaceParticipant,
@@ -204,6 +204,7 @@ export default function RaceLiveScreen() {
         const d = new Date();
         const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         await addNutritionLog({ userId: email, type: 'activity', name: `Race · ${km.toFixed(2)} km`, calories: kcal, protein: 0, carbs: 0, fat: 0, date, duration: Math.round(secs / 60), intensity: 'medium' } as any);
+        logEvent(email, 'race_completed', { km: +km.toFixed(2), kcal, raceId }); // Event Bus
       } catch (e) { console.warn('[race-live] save failed', e); }
     }
     try {
