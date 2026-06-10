@@ -332,41 +332,73 @@ export const getNutritionLogs = async (email: string, date: string): Promise<Nut
  * Adds a new nutrition log. `log.userId` must be the user's email.
  */
 export const addNutritionLog = async (log: Omit<NutritionLog, 'id' | 'timestamp'>) => {
+  const docId = emailToDocId(log.userId);
+  if (!docId) throw new Error('addNutritionLog requires an email as userId');
+
+  // 1) OFFLINE-FIRST : on met TOUJOURS le repas dans le cache local d'abord, pour
+  //    qu'il s'affiche immédiatement (dashboards) même sans réseau.
   try {
-    const docId = emailToDocId(log.userId);
-    if (!docId) throw new Error('addNutritionLog requires an email as userId');
+    const key = `logs_${docId}`;
+    const raw = await AsyncStorage.getItem(key);
+    const arr = raw ? JSON.parse(raw) : [];
+    arr.push({ ...log, userId: docId });
+    await AsyncStorage.setItem(key, JSON.stringify(arr));
+  } catch {}
+
+  // 2) Écriture distante. Si elle échoue (hors-ligne), on met en FILE D'ATTENTE
+  //    (pending_logs_{docId}) pour synchroniser au retour réseau — au lieu de perdre le repas.
+  try {
     const logsRef = collection(db, 'users', docId, 'logs');
-    console.log('\x1b[32m[API→Firestore] logs/add REQUEST\x1b[0m', {
-      docId, type: (log as any).type, name: (log as any).name,
-      calories: (log as any).calories, date: (log as any).date,
-    });
     const t0 = Date.now();
-    await addDoc(logsRef, {
-      ...log,
-      userId: docId,
-      timestamp: serverTimestamp(),
-    });
+    await addDoc(logsRef, { ...log, userId: docId, timestamp: serverTimestamp() });
     console.log('\x1b[34m[API←Firestore] logs/add OK\x1b[0m', { docId, ms: Date.now() - t0 });
-    // Keep the LOCAL cache in sync so dashboards that read logs_{docId}
-    // (nutrients, analytics, Coach streak) see the new entry IMMEDIATELY,
-    // before the next full Firestore sync.
+  } catch (error: any) {
+    console.warn('[offline] addNutritionLog → mis en file de sync:', error?.message || error);
     try {
-      const key = `logs_${docId}`;
-      const raw = await AsyncStorage.getItem(key);
-      const arr = raw ? JSON.parse(raw) : [];
-      arr.push({ ...log, userId: docId });
-      await AsyncStorage.setItem(key, JSON.stringify(arr));
+      const qkey = `pending_logs_${docId}`;
+      const raw = await AsyncStorage.getItem(qkey);
+      const q = raw ? JSON.parse(raw) : [];
+      q.push({ ...log, userId: docId, queuedAt: Date.now() });
+      await AsyncStorage.setItem(qkey, JSON.stringify(q));
     } catch {}
-    // Fire-and-forget: flip stale=true on week/month/all insight docs so the
-    // next analytics open regenerates. Lazy import to avoid a cycle.
-    try {
-      const { markInsightsStale } = await import('./InsightsService');
-      markInsightsStale(log.userId).catch(() => {});
-    } catch {}
-  } catch (error) {
-    console.error('Error adding nutrition log:', error);
-    throw error;
+    // offline-first : on NE rethrow PAS — le repas est en cache + en file de sync.
   }
+
+  // 3) Best-effort : marquer les insights périmés (lazy import pour éviter un cycle).
+  try {
+    const { markInsightsStale } = await import('./InsightsService');
+    markInsightsStale(log.userId).catch(() => {});
+  } catch {}
+};
+
+/** Nombre de logs en attente de synchronisation (hors-ligne). */
+export const pendingLogsCount = async (email: string): Promise<number> => {
+  const docId = emailToDocId(email);
+  if (!docId) return 0;
+  try {
+    const raw = await AsyncStorage.getItem(`pending_logs_${docId}`);
+    return raw ? (JSON.parse(raw) as any[]).length : 0;
+  } catch { return 0; }
+};
+
+/** Rejoue les logs en file d'attente (appelé au retour réseau). Renvoie le nb synchronisé. */
+export const flushPendingLogs = async (email: string): Promise<number> => {
+  const docId = emailToDocId(email);
+  if (!docId) return 0;
+  const qkey = `pending_logs_${docId}`;
+  let q: any[] = [];
+  try { const raw = await AsyncStorage.getItem(qkey); q = raw ? JSON.parse(raw) : []; } catch { return 0; }
+  if (!q.length) return 0;
+  const remaining: any[] = [];
+  for (const log of q) {
+    try {
+      await addDoc(collection(db, 'users', docId, 'logs'), {
+        ...log, userId: docId, timestamp: serverTimestamp(),
+      });
+    } catch { remaining.push(log); }
+  }
+  try { await AsyncStorage.setItem(qkey, JSON.stringify(remaining)); } catch {}
+  return q.length - remaining.length;
 };
 
 /**
