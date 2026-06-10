@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Re
 import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer, Wallet, Refrigerator, Replace, Ruler, Moon, Smile, Droplets, BookmarkPlus } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer, Wallet, Refrigerator, Replace, Ruler, Moon, Smile, Droplets, BookmarkPlus, Award, ShoppingCart, Link2 } from 'lucide-react-native';
 import { useFeatureFlags, isEnabled } from '../../lib/featureFlags';
 
 const PLANS_CTA: Record<string, { t: string; s: string }> = {
@@ -173,6 +173,12 @@ export default function CoachScreen() {
             { Icon: Droplets, label: 'Hydratation intelligente', route: '/smart-hydration' },
             { Icon: BookmarkPlus, label: 'Repas types', route: '/meal-templates' },
             { Icon: TrendingUp, label: 'Photos de progression', route: '/progress-photos' },
+          ]},
+          { sec: 'Nutrition+', items: [
+            { Icon: Award, label: 'Nutri-Score', route: '/nutri-score' },
+            { Icon: Link2, label: 'Importer recette', route: '/import-recipe' },
+            { Icon: ShoppingCart, label: 'Liste de courses', route: '/shopping-list' },
+            { Icon: ScanText, label: 'Scan code-barres', route: '/scan-barcode' },
           ]},
         ].map((group) => (
           <View key={group.sec}>
