@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Re
 import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer, Wallet, Refrigerator, Replace } from 'lucide-react-native';
 import { useFeatureFlags, isEnabled } from '../../lib/featureFlags';
 
 const PLANS_CTA: Record<string, { t: string; s: string }> = {
@@ -158,6 +158,13 @@ export default function CoachScreen() {
             { Icon: Trophy, label: t('coach.social_title'), route: '/social' },
             { Icon: Trophy, label: (RACES_CTA[language] || RACES_CTA.en).t, route: '/races' },
             { Icon: HeartPulse, label: t('coach.health_title'), route: '/health' },
+          ]},
+          { sec: 'IA & projections', items: [
+            { Icon: TrendingDown, label: 'Jumeau métabolique', route: '/metabolic-twin' },
+            { Icon: Wallet, label: 'Budget calories', route: '/calorie-budget' },
+            { Icon: Flame, label: 'Mes séries', route: '/streaks' },
+            { Icon: Refrigerator, label: 'Frigo → recettes', route: '/fridge-recipes' },
+            { Icon: Replace, label: 'Substitutions', route: '/substitutions' },
           ]},
         ].map((group) => (
           <View key={group.sec}>
