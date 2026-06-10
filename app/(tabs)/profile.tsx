@@ -173,6 +173,16 @@ export default function ProfileScreen() {
     </TouchableOpacity>
   );
 
+  // Tuile compacte (allègement : grille 2 colonnes au lieu de lignes empilées).
+  const GridTile = ({ icon: Icon, label, color, onPress }: any) => (
+    <TouchableOpacity style={styles.gridTile} activeOpacity={0.85} onPress={onPress}>
+      <View style={[styles.gridIcon, { backgroundColor: color + '15' }]}>
+        <Icon size={22} color={color} />
+      </View>
+      <Text style={styles.gridLabel} numberOfLines={2}>{label}</Text>
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]}>
       <ScrollView 
@@ -227,70 +237,22 @@ export default function ProfileScreen() {
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: resolved === 'dark' ? '#fff' : undefined }]}>{t('profile.account')}</Text>
         </View>
-        <Animated.View entering={FadeInDown.delay(200).duration(600)} style={styles.optionsCard}>
-          <SettingItem 
-            icon={User} 
-            label={t('profile.personal_details')}
-            color={Colors.light.primary} 
-            onPress={() => router.push('/personal-details' as any)}
-          />
-          <View style={styles.separator} />
-          <SettingItem 
-            icon={Bell} 
-            label={t('prefs.notifications')}
-            subtext={t('profile.notif_history')}
-            color={Colors.light.primary} 
-            onPress={() => router.push('/notifications' as any)}
-          />
-          <View style={styles.separator} />
-          <SettingItem 
-            icon={Settings} 
-            label={t('profile.preferences')}
-            color="#6366F1" 
-            onPress={() => router.push('/preferences' as any)}
-          />
-          <View style={styles.separator} />
-          <SettingItem 
-            icon={CreditCard} 
-            label={t('profile.upgrade')}
-            subtext={t('profile.unlock_ai')}
-            color="#EC4899" 
-            onPress={handleUpgrade}
-          />
+        <Animated.View entering={FadeInDown.delay(200).duration(600)} style={styles.grid}>
+          <GridTile icon={User} label={t('profile.personal_details')} color={Colors.light.primary} onPress={() => router.push('/personal-details' as any)} />
+          <GridTile icon={Bell} label={t('prefs.notifications')} color={Colors.light.primary} onPress={() => router.push('/notifications' as any)} />
+          <GridTile icon={Settings} label={t('profile.preferences')} color="#6366F1" onPress={() => router.push('/preferences' as any)} />
+          <GridTile icon={CreditCard} label={t('profile.upgrade')} color="#EC4899" onPress={handleUpgrade} />
         </Animated.View>
 
         {/* Support Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{t('profile.support')}</Text>
         </View>
-        <Animated.View entering={FadeInDown.delay(300).duration(600)} style={styles.optionsCard}>
-          <SettingItem 
-            icon={Lightbulb} 
-            label={t('profile.feature_requests')}
-            color="#10B981" 
-            onPress={() => router.push('/feature-requests' as any)}
-          />
-          <View style={styles.separator} />
-          <SettingItem 
-            icon={MessagesSquare} 
-            label={t('profile.contact_us')}
-            color="#3B82F6" 
-            onPress={() => Linking.openURL('mailto:admin@salistar.com?subject=Support Request&body=Hi support team,')}
-          />
-          <View style={styles.separator} />
-          <SettingItem 
-            icon={FileText} 
-            label={t('profile.terms')}
-            color={Colors.light.gray[500]} 
-            onPress={() => router.push('/terms' as any)}
-          />
-          <View style={styles.separator} />
-          <SettingItem 
-            icon={Shield} 
-            label={t('profile.privacy')}
-            color={Colors.light.gray[500]} 
-            onPress={() => router.push('/privacy' as any)}
-          />
+        <Animated.View entering={FadeInDown.delay(300).duration(600)} style={styles.grid}>
+          <GridTile icon={Lightbulb} label={t('profile.feature_requests')} color="#10B981" onPress={() => router.push('/feature-requests' as any)} />
+          <GridTile icon={MessagesSquare} label={t('profile.contact_us')} color="#3B82F6" onPress={() => Linking.openURL('mailto:admin@salistar.com?subject=Support Request&body=Hi support team,')} />
+          <GridTile icon={FileText} label={t('profile.terms')} color={Colors.light.gray[500]} onPress={() => router.push('/terms' as any)} />
+          <GridTile icon={Shield} label={t('profile.privacy')} color={Colors.light.gray[500]} onPress={() => router.push('/privacy' as any)} />
         </Animated.View>
 
         {/* Developer-only tools — hidden in production builds */}
@@ -467,6 +429,16 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 3,
   },
+  // Grille compacte (allègement Profile) — 2 colonnes
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 16 },
+  gridTile: {
+    width: '48%', alignItems: 'center', backgroundColor: Colors.light.white,
+    borderRadius: 20, paddingVertical: 18, paddingHorizontal: 8, marginBottom: 12,
+    borderWidth: 1.5, borderColor: Colors.light.gray[50],
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
+  },
+  gridIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  gridLabel: { fontSize: 13, fontWeight: '700', color: Colors.light.gray[900], marginTop: 10, textAlign: 'center' },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
