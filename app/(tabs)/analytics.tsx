@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import BrandBanner from '../../components/BrandBanner';
 import MlInsightsCard from '../../components/MlInsightsCard';
+import MacroTargets from '../../components/MacroTargets';
 import { useTheme } from '../../lib/ThemeContext';
 import { useUser } from '@clerk/clerk-expo';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
@@ -255,6 +256,9 @@ export default function AnalyticsScreen() {
 
         {/* Insights IA — modèles ML backend (prévision poids + reco repas) */}
         <MlInsightsCard />
+
+        {/* Macros par objectif — répartition P/G/L vs cible */}
+        <MacroTargets />
 
         {/* Bento Grid Insights */}
         <View style={styles.bentoContainer}>
