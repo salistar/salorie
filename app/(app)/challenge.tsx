@@ -479,7 +479,7 @@ export default function ChallengeScreen() {
     const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     addNutritionLog({
       userId: email, type: 'activity',
-      name: `${challenge.emoji} ${challenge.name} · ${covered.toFixed(1)} km`,
+      name: `${challenge.name} · ${covered.toFixed(1)} km`,
       calories: kcal, protein: 0, carbs: 0, fat: 0, date,
       duration: Math.round(covered * 6), intensity: 'medium',
     } as any).catch((e) => console.warn('[challenge] log segment failed', e));
@@ -685,7 +685,8 @@ export default function ChallengeScreen() {
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
         {/* Progress header */}
         <View style={[styles.header, { backgroundColor: card }, rtlRow]}>
-          <Text style={styles.emoji}>{challenge.emoji}</Text>
+          {/* Badge = la médaille du défi (plus d'émoji) */}
+          <Medal width={44} frame={isMongo ? undefined : CHALLENGE_FRAME[challengeId]} {...(isMongo && mongoSpec ? mongoSpec : {})} title={challenge.name} km={totalKm} mode="template" />
           <View style={{ flex: 1 }}>
             <Text style={[styles.chName, { color: text }, align]} numberOfLines={1}>{challenge.name}</Text>
             <Text style={[styles.bigKm, { color: PRIMARY }, align]}>
@@ -846,7 +847,7 @@ export default function ChallengeScreen() {
               <PoiPhoto challengeId={challengeId} index={viewerPoi} style={styles.viewerImg} photoUrl={isMongo ? streetViewUrl(pois[viewerPoi].lat, pois[viewerPoi].lng) : undefined} />
               <View style={styles.viewerInfo}>
                 <Text style={styles.viewerName}>{pois[viewerPoi].name}</Text>
-                <Text style={styles.viewerKm}>{challenge.emoji} {challenge.name} · {pois[viewerPoi].atKm} {t.km}</Text>
+                <Text style={styles.viewerKm}>{challenge.name} · {pois[viewerPoi].atKm} {t.km}</Text>
               </View>
               <TouchableOpacity style={styles.viewerClose} onPress={() => setViewerPoi(null)}>
                 <X size={26} color="#fff" />

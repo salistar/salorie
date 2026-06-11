@@ -47,6 +47,24 @@ export default function ProfileScreen() {
     PurchasesService.showPaywall();
   };
 
+  // Envoie les diagnostics (device + 50 derniers logs d'erreur) au support —
+  // visibles dans le back-office web (page Feedback, via contact_messages).
+  const sendLogs = async () => {
+    const email = user?.primaryEmailAddress?.emailAddress || '';
+    if (!email) return;
+    try {
+      const { buildDiagnostics } = require('../../lib/logBuffer');
+      const { db, emailToDocId } = require('../../lib/firebase');
+      const { collection, addDoc, serverTimestamp } = require('firebase/firestore');
+      await addDoc(collection(db, 'users', emailToDocId(email), 'contact_messages'), {
+        email, subject: '[LOGS] Diagnostic app', message: buildDiagnostics(), createdAt: serverTimestamp(),
+      });
+      Alert.alert('✅', t('profile.logs_sent') || 'Logs envoyés au support. Merci !');
+    } catch {
+      Alert.alert('⚠️', 'Envoi impossible — réessaie plus tard.');
+    }
+  };
+
   const handleLogout = async () => {
     console.log('[ProfileScreen] handleLogout pressed');
     Alert.alert(
@@ -250,7 +268,9 @@ export default function ProfileScreen() {
         </View>
         <Animated.View entering={FadeInDown.delay(250).duration(600)} style={styles.grid}>
           <GridTile icon={Award} label="Mes médailles" color="#F59E0B" onPress={() => router.push('/medals' as any)} />
+          <GridTile icon={Trophy} label="Achievements" color="#8B5CF6" onPress={() => router.push('/social' as any)} />
           <GridTile icon={Trophy} label="Courses virtuelles" color={Colors.light.primary} onPress={() => router.push('/races' as any)} />
+          <GridTile icon={FileText} label="Agenda sport" color="#0EA5E9" onPress={() => router.push('/sport-agenda' as any)} />
         </Animated.View>
 
         {/* Support Section */}
@@ -260,6 +280,7 @@ export default function ProfileScreen() {
         <Animated.View entering={FadeInDown.delay(300).duration(600)} style={styles.grid}>
           <GridTile icon={Lightbulb} label={t('profile.feature_requests')} color="#10B981" onPress={() => router.push('/feature-requests' as any)} />
           <GridTile icon={MessagesSquare} label={t('profile.contact_us')} color="#3B82F6" onPress={() => router.push('/contact' as any)} />
+          <GridTile icon={FileText} label="Envoyer les logs" color="#64748B" onPress={sendLogs} />
           <GridTile icon={FileText} label={t('profile.terms')} color={Colors.light.gray[500]} onPress={() => router.push('/terms' as any)} />
           <GridTile icon={Shield} label={t('profile.privacy')} color={Colors.light.gray[500]} onPress={() => router.push('/privacy' as any)} />
         </Animated.View>

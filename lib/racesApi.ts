@@ -24,6 +24,8 @@ export const raceProgress = (id: string, km: number) => authFetch(`/races/${id}/
 export const finishRace = (id: string) => authFetch(`/races/${id}/finish`, { method: 'POST' });
 // Médailles
 export const getMyMedals = () => authFetch('/races/medals/me');
+// Journal (actus publiées depuis le back-office web)
+export const getNews = () => authFetch('/news');
 // Orgs B2B
 export const getMyOrgs = () => authFetch('/orgs/mine');
 export const joinOrg = (code: string, userName?: string) => authFetch('/orgs/join', { method: 'POST', body: JSON.stringify({ code, userName }) });

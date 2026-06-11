@@ -16,6 +16,10 @@ import {
 } from '../lib/firebase';
 import { syncAllUserData, printLogLegend } from '../lib/LocalDataStore';
 import { signInToFirebase } from '../lib/firebaseAuth';
+import { initLogCapture } from '../lib/logBuffer';
+
+// Capture les 50 dernières erreurs/warnings → "Envoyer les logs" (Profil → support web).
+initLogCapture();
 
 // Imprime la legende des couleurs UNE FOIS au demarrage du module (avant
 // meme que React ne monte) — comme ca tout developpeur qui ouvre Metro voit

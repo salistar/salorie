@@ -28,6 +28,9 @@ import { VirtualRace, VirtualRaceSchema, RaceParticipant, RaceParticipantSchema,
 import { OrgsController } from './orgs/orgs.controller';
 import { OrgsService } from './orgs/orgs.service';
 import { Organization, OrganizationSchema, Membership, MembershipSchema, Invite, InviteSchema } from './orgs/orgs.schemas';
+import { NewsController } from './news/news.controller';
+import { NewsService } from './news/news.service';
+import { NewsItem, NewsItemSchema } from './news/news.schemas';
 
 // Pipeline analytics (CDC Firestore→Mongo + feature store + outbox + multi-tenant)
 // — activé uniquement si Mongo est configuré (sinon DI échoue au boot standalone).
@@ -45,6 +48,7 @@ const PIPELINE_FEATURES = HAS_MONGO
         { name: Organization.name, schema: OrganizationSchema },
         { name: Membership.name, schema: MembershipSchema },
         { name: Invite.name, schema: InviteSchema },
+        { name: NewsItem.name, schema: NewsItemSchema },
       ]),
       // Gateway GraphQL (code-first, /graphql) sur le pipeline.
       GraphQLModule.forRoot<ApolloDriverConfig>({
@@ -64,7 +68,7 @@ const PIPELINE_FEATURES = HAS_MONGO
     ...(HAS_MONGO ? [MongooseModule.forRoot(process.env.MONGO_URI!)] : []),
     ...PIPELINE_FEATURES,
   ],
-  controllers: [HealthController, UsersController, FilesController, NutritionController, InsightsController, AiController, MlController, ...(HAS_MONGO ? [PipelineController, RacesController, OrgsController] : [])],
-  providers: [FirebaseService, RedisService, UsersService, NutritionService, InsightsService, AiService, MlService, ...(HAS_MONGO ? [PipelineService, PipelineResolver, RacesService, OrgsService] : [])],
+  controllers: [HealthController, UsersController, FilesController, NutritionController, InsightsController, AiController, MlController, ...(HAS_MONGO ? [PipelineController, RacesController, OrgsController, NewsController] : [])],
+  providers: [FirebaseService, RedisService, UsersService, NutritionService, InsightsService, AiService, MlService, ...(HAS_MONGO ? [PipelineService, PipelineResolver, RacesService, OrgsService, NewsService] : [])],
 })
 export class AppModule {}
