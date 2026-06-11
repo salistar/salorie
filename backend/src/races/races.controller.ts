@@ -25,6 +25,8 @@ export class RacesController {
   remove(@Param('id') id: string, @Headers('x-admin-key') k?: string) { this.admin(k); return this.svc.deleteRace(id); }
   @Post('admin/:id/generate-medals')
   genMedals(@Param('id') id: string, @Headers('x-admin-key') k?: string) { this.admin(k); return this.svc.generateMedals(id); }
+  @Get('admin/medals')
+  allMedals(@Headers('x-admin-key') k?: string) { this.admin(k); return this.svc.listAllMedals(); }
 
   // ── App (token Firebase) ──
   @Get('active')
