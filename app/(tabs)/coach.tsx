@@ -158,6 +158,7 @@ export default function CoachScreen() {
             { Icon: Sparkles, label: 'Coach IA', route: '/ai-coach' },
             { Icon: Trophy, label: t('coach.social_title'), route: '/social' },
             { Icon: Trophy, label: (RACES_CTA[language] || RACES_CTA.en).t, route: '/races' },
+            { Icon: Award, label: 'Mes médailles', route: '/medals' },
             { Icon: HeartPulse, label: t('coach.health_title'), route: '/health' },
           ]},
           { sec: 'IA & projections', items: [
