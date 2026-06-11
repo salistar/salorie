@@ -87,7 +87,7 @@ export class RacesService {
       const timeLabel = this.fmtDuration((p.finishedAt || 0) - (p.startedAt || p.finishedAt || 0));
       await this.medals.findOneAndUpdate(
         { raceId, userId },
-        { $set: { tenantId: TENANT, raceName: race.name, userName: p.userName, rank: p.rank, frame: race.medalFrame, distanceKm: race.totalKm, timeLabel, startDate: race.startDate, endDate: race.endDate } },
+        { $set: { tenantId: TENANT, raceName: race.name, userName: p.userName, rank: p.rank, frame: race.medalFrame, spec: race.medalSpec, distanceKm: race.totalKm, timeLabel, startDate: race.startDate, endDate: race.endDate } },
         { upsert: true },
       );
     }
@@ -114,7 +114,7 @@ export class RacesService {
         {
           $set: {
             tenantId: TENANT, raceName: race.name, userName: f.userName, rank,
-            frame: race.medalFrame, distanceKm: race.totalKm, timeLabel,
+            frame: race.medalFrame, spec: race.medalSpec, distanceKm: race.totalKm, timeLabel,
             startDate: race.startDate, endDate: race.endDate,
           },
         },
