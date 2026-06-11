@@ -75,6 +75,7 @@ export const FLAG_KEYS: { key: string; label: string }[] = [
   { key: 'nutrients', label: 'Nutriments du jour' },
   { key: 'meal-builder', label: 'Composer un repas' },
   { key: 'food-recognition', label: 'Reconnaissance d\'aliment (IA)' },
+  { key: 'voice-log', label: 'Logging vocal' },
   { key: 'label-scan', label: 'Scanner étiquette (OCR)' },
   { key: 'rep-counter', label: 'Compteur de reps' },
   { key: 'run', label: 'Course solo (GPS)' },

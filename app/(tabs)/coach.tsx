@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Re
 import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer, Wallet, Refrigerator, Replace, Ruler, Moon, Smile, Droplets, BookmarkPlus, Award, ShoppingCart, Link2, UtensilsCrossed, Receipt, FileText, Swords, Droplet, Activity, PersonStanding } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer, Wallet, Refrigerator, Replace, Ruler, Moon, Smile, Droplets, BookmarkPlus, Award, ShoppingCart, Link2, UtensilsCrossed, Receipt, FileText, Swords, Droplet, Activity, PersonStanding, Mic } from 'lucide-react-native';
 import { useFeatureFlags, isEnabled } from '../../lib/featureFlags';
 
 const PLANS_CTA: Record<string, { t: string; s: string }> = {
@@ -145,6 +145,7 @@ export default function CoachScreen() {
             { Icon: Apple, label: t('coach.nutrients_title'), route: '/nutrients' },
             { Icon: ChefHat, label: 'Composer un repas', route: '/meal-builder' },
             { Icon: Apple, label: 'Reconnaître un aliment', route: '/food-recognition' },
+            { Icon: Mic, label: 'Logging vocal', route: '/voice-log' },
             { Icon: ScanText, label: 'Scanner étiquette', route: '/label-scan' },
           ]},
           { sec: 'Activité', items: [
