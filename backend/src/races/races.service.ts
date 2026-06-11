@@ -129,6 +129,10 @@ export class RacesService {
   getUserMedals(userId: string) {
     return this.medals.find({ userId }).sort({ createdAt: -1 }).lean();
   }
+  // Admin : historique de TOUTES les médailles générées (par email/user).
+  listAllMedals(max = 400) {
+    return this.medals.find().sort({ createdAt: -1 }).limit(max).lean();
+  }
   setMedalPhoto(medalId: string, photoUrl: string) {
     return this.medals.findByIdAndUpdate(medalId, { $set: { photoUrl } }, { new: true });
   }
