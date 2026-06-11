@@ -411,7 +411,7 @@ export default function ChallengeScreen() {
 
   const html = useMemo(
     () => (challenge ? buildHtml(challenge.route as LatLng[], mePoint, PRIMARY) : ''),
-    [challengeId] // eslint-disable-line react-hooks/exhaustive-deps
+    [challengeId, challenge?.id] // inclut challenge?.id : recalcule quand la course Mongo (async) se charge
   );
 
   // Draw the real road-following route once it's loaded + the map is ready.
