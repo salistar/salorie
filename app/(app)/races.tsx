@@ -294,7 +294,7 @@ export default function RacesScreen() {
                     {/* Visuel = la MÉDAILLE du défi (couleur/forme variées), pas une photo */}
                     <View style={styles.heroMedalWrap}>
                       <View style={styles.heroEmoji}><Text style={{ fontSize: 20 }}>{c.emoji}</Text></View>
-                      <Medal width={132} frame={CH_FRAME[c.id] || c.id} title={c.name} km={c.totalKm} rank={done ? 1 : undefined} />
+                      <Medal width={132} frame={CH_FRAME[c.id] || c.id} title={c.name} km={c.totalKm} rank={done ? 1 : undefined} photoSource={hero} />
                     </View>
                     <View style={styles.infoRow}>
                       <View style={{ flex: 1 }}>
