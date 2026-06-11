@@ -259,7 +259,7 @@ export default function ProfileScreen() {
         </View>
         <Animated.View entering={FadeInDown.delay(300).duration(600)} style={styles.grid}>
           <GridTile icon={Lightbulb} label={t('profile.feature_requests')} color="#10B981" onPress={() => router.push('/feature-requests' as any)} />
-          <GridTile icon={MessagesSquare} label={t('profile.contact_us')} color="#3B82F6" onPress={() => Linking.openURL('mailto:admin@salistar.com?subject=Support Request&body=Hi support team,')} />
+          <GridTile icon={MessagesSquare} label={t('profile.contact_us')} color="#3B82F6" onPress={() => router.push('/contact' as any)} />
           <GridTile icon={FileText} label={t('profile.terms')} color={Colors.light.gray[500]} onPress={() => router.push('/terms' as any)} />
           <GridTile icon={Shield} label={t('profile.privacy')} color={Colors.light.gray[500]} onPress={() => router.push('/privacy' as any)} />
         </Animated.View>
