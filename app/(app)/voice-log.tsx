@@ -101,8 +101,8 @@ export default function VoiceLog() {
               <View style={s.macro}><Text style={s.mVal}>{meal.fat}g</Text><Text style={s.mLbl}>Lipides</Text></View>
             </View>
             <View style={s.actions}>
-              <TouchableOpacity style={s.retry} onPress={reset}><RotateCcw size={16} color={GREEN} /><Text style={s.retryTxt}>Recommencer</Text></TouchableOpacity>
-              <TouchableOpacity style={s.add} onPress={save}><Check size={18} color="#fff" /><Text style={s.addTxt}>Ajouter au journal</Text></TouchableOpacity>
+              <TouchableOpacity style={s.retry} onPress={reset}><RotateCcw size={15} color={GREEN} /><Text style={s.retryTxt} numberOfLines={1}>Refaire</Text></TouchableOpacity>
+              <TouchableOpacity style={s.add} onPress={save}><Check size={17} color="#fff" /><Text style={s.addTxt} numberOfLines={1}>Ajouter</Text></TouchableOpacity>
             </View>
           </View>
         )}
@@ -138,9 +138,9 @@ const s = StyleSheet.create({
   mVal: { fontSize: 18, fontWeight: '800', color: '#1B2A33' },
   mLbl: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
   actions: { flexDirection: 'row', gap: 10, marginTop: 22 },
-  retry: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, paddingVertical: 14, borderRadius: 14, borderWidth: 1.5, borderColor: GREEN },
-  retryTxt: { color: GREEN, fontWeight: '700' },
-  add: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, flex: 1.6, paddingVertical: 14, borderRadius: 14, backgroundColor: GREEN },
-  addTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  retry: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 14, borderWidth: 1.5, borderColor: GREEN },
+  retryTxt: { color: GREEN, fontWeight: '700', fontSize: 14.5, flexShrink: 1 },
+  add: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, flex: 1, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 14, backgroundColor: GREEN },
+  addTxt: { color: '#fff', fontWeight: '800', fontSize: 14.5, flexShrink: 1 },
   savedTxt: { fontSize: 16, fontWeight: '700', color: '#1B2A33', textAlign: 'center', marginVertical: 16 },
 });

@@ -5,6 +5,9 @@ import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, Trophy, Users, Plus, ChevronRight, MapPin, CheckCircle2 } from 'lucide-react-native';
 import { poiPhoto } from '../../assets/challenges/registry';
 import Medal from '../../components/Medal';
+
+// Thème de cadre médaille par défi (couleurs variées ; sinon l'id → palette défaut).
+const CH_FRAME: Record<string, string> = { 'casa-loop': 'casablanca', 'paris-marathon': 'rabat', 'great-wall': 'meknes', 'route66': 'merzouga' };
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -288,29 +291,22 @@ export default function RacesScreen() {
                 const stops = (c.pois as any[])?.length || 0;
                 return (
                   <TouchableOpacity key={c.id} activeOpacity={0.9} style={[styles.challengeCard, { backgroundColor: card }]} onPress={() => router.push('/challenge?id=' + c.id)}>
-                    {/* Hero photo */}
-                    <View style={styles.heroWrap}>
-                      {hero ? <Image source={hero} style={styles.hero} resizeMode="cover" /> : <View style={[styles.hero, { backgroundColor: '#cbd5e1' }]} />}
-                      <View style={styles.heroShade} />
-                      <View style={styles.heroEmoji}><Text style={{ fontSize: 22 }}>{c.emoji}</Text></View>
-                      {/* Vignette médaille (forme variée selon la course) */}
-                      <View style={{ position: 'absolute', top: 4, right: 6 }}>
-                        <Medal width={58} frame={c.id} title={c.name} km={c.totalKm} rank={done ? 1 : undefined} />
-                      </View>
-                      <View style={styles.heroBottom}>
-                        <Text style={styles.heroName} numberOfLines={1}>{c.name}</Text>
+                    {/* Visuel = la MÉDAILLE du défi (couleur/forme variées), pas une photo */}
+                    <View style={styles.heroMedalWrap}>
+                      <View style={styles.heroEmoji}><Text style={{ fontSize: 20 }}>{c.emoji}</Text></View>
+                      <Medal width={132} frame={CH_FRAME[c.id] || c.id} title={c.name} km={c.totalKm} rank={done ? 1 : undefined} />
+                    </View>
+                    <View style={styles.infoRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.infoName, { color: text }]} numberOfLines={1}>{c.name}</Text>
                         <View style={styles.heroChips}>
-                          <View style={styles.heroChip}><Text style={styles.heroChipTxt}>{c.totalKm} {t.km}</Text></View>
-                          {stops > 0 && (
-                            <View style={styles.heroChip}><MapPin size={11} color="#fff" /><Text style={styles.heroChipTxt}> {stops}</Text></View>
-                          )}
-                          {done && (
-                            <View style={[styles.heroChip, { backgroundColor: 'rgba(34,197,94,0.9)' }]}><CheckCircle2 size={11} color="#fff" /><Text style={styles.heroChipTxt}> 100%</Text></View>
-                          )}
+                          <View style={styles.chipLite}><Text style={styles.chipLiteTxt}>{c.totalKm} {t.km}</Text></View>
+                          {stops > 0 && (<View style={styles.chipLite}><MapPin size={11} color={PRIMARY} /><Text style={styles.chipLiteTxt}> {stops}</Text></View>)}
+                          {done && (<View style={[styles.chipLite, { backgroundColor: '#dcfce7' }]}><CheckCircle2 size={11} color="#16a34a" /><Text style={[styles.chipLiteTxt, { color: '#16a34a' }]}> 100%</Text></View>)}
                         </View>
                       </View>
                       {!joined && (
-                        <TouchableOpacity style={styles.heroJoin} onPress={(e) => { e.stopPropagation?.(); onJoinChallenge(c.id); }} disabled={!!busy[c.id]}>
+                        <TouchableOpacity style={styles.joinSmall} onPress={(e) => { e.stopPropagation?.(); onJoinChallenge(c.id); }} disabled={!!busy[c.id]}>
                           {busy[c.id] ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.joinBtnTxt}>{t.join}</Text>}
                         </TouchableOpacity>
                       )}
@@ -371,6 +367,12 @@ const styles = StyleSheet.create({
   heroShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.28)' },
   heroEmoji: { position: 'absolute', top: 12, left: 12, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.92)', alignItems: 'center', justifyContent: 'center' },
   heroBottom: { padding: 14 },
+  heroMedalWrap: { alignItems: 'center', paddingVertical: 14, backgroundColor: '#EAF4EE' },
+  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
+  infoName: { fontSize: 16, fontWeight: '800' },
+  chipLite: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eef2f7', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  chipLiteTxt: { fontSize: 12, fontWeight: '700', color: '#475569' },
+  joinSmall: { backgroundColor: '#2E8B57', borderRadius: 12, paddingHorizontal: 18, paddingVertical: 10 },
   heroName: { color: '#fff', fontSize: 19, fontWeight: '900', letterSpacing: -0.3, textShadowColor: 'rgba(0,0,0,0.4)', textShadowRadius: 6 },
   heroChips: { flexDirection: 'row', gap: 8, marginTop: 8 },
   heroChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.45)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
