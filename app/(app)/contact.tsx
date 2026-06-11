@@ -4,7 +4,7 @@ import { useUser } from '@clerk/clerk-expo';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { MessagesSquare, Send, Check, Mail } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
-import { db, logEvent } from '../../lib/firebase';
+import { db, logEvent, emailToDocId } from '../../lib/firebase';
 
 const GREEN = '#2E8B57';
 
@@ -20,7 +20,9 @@ export default function Contact() {
     if (!message.trim() || busy) return;
     setBusy(true);
     try {
-      await addDoc(collection(db, 'contact_messages'), {
+      // Sous-collection owner (autorisée par les règles) ; le web lit via collectionGroup.
+      const docId = emailToDocId(email);
+      await addDoc(collection(db, 'users', docId, 'contact_messages'), {
         email, subject: subject.trim() || '(sans sujet)', message: message.trim(),
         userName: user?.fullName || '', createdAt: serverTimestamp(),
       });

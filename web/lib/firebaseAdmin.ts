@@ -160,9 +160,10 @@ export async function getFeatureRequests(max = 150): Promise<any[]> {
   catch { try { return map(await db().collection('feature_requests').limit(max).get()); } catch { return []; } }
 }
 export async function getContactMessages(max = 150): Promise<any[]> {
+  // Messages écrits en sous-collection owner users/{id}/contact_messages → collectionGroup.
   const map = (s: any) => s.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
-  try { return map(await db().collection('contact_messages').orderBy('createdAt', 'desc').limit(max).get()); }
-  catch { try { return map(await db().collection('contact_messages').limit(max).get()); } catch { return []; } }
+  try { return map(await db().collectionGroup('contact_messages').orderBy('createdAt', 'desc').limit(max).get()); }
+  catch { try { return map(await db().collectionGroup('contact_messages').limit(max).get()); } catch { return []; } }
 }
 
 export async function getAchievements(): Promise<AchievementDef[]> {
