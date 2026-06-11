@@ -26,8 +26,13 @@ import {
   Challenge,
   ChallengeProgress,
   ChallengePOI,
+  streetViewUrl,
 } from '../../lib/races';
 import { poiPhoto } from '../../assets/challenges/registry';
+import Medal from '../../components/Medal';
+
+// Mappe un défi (id) vers un thème de cadre médaille (sinon défaut vert).
+const CHALLENGE_FRAME: Record<string, string> = { 'casa-loop': 'casablanca' };
 
 // Google Maps JS in a WebView — same approach as run.tsx (the JS API key works in a
 // WebView with a baseUrl; react-native-maps would need a Maps SDK for Android key).
@@ -651,6 +656,27 @@ export default function ChallengeScreen() {
             <Text style={[styles.pctTxt, { color: sub }, align]}>{pct}% · {t.progress}</Text>
           </View>
         </View>
+
+        {/* Médaille de la course — centre = image (Street View) du lieu d'arrivée (connectée) */}
+        {totalKm > 0 && (() => {
+          const ps = challenge?.pois || [];
+          const last = ps.length ? ps[ps.length - 1] : null;
+          const photo = last ? streetViewUrl(last.lat, last.lng, 300, 300) : undefined;
+          const completed = myCumulativeKm >= totalKm;
+          const myRank = completed ? ((board.findIndex((b) => b.email === email) + 1) || 1) : 0;
+          return (
+            <View style={{ alignItems: 'center', marginTop: 14 }}>
+              <Text style={{ fontSize: 14, fontWeight: '800', marginBottom: 6, color: completed ? PRIMARY : sub }}>
+                {completed ? '🎉 Médaille gagnée !' : 'Ta médaille à débloquer'}
+              </Text>
+              <View style={completed ? undefined : { opacity: 0.5 }}>
+                <Medal width={190} frame={CHALLENGE_FRAME[challengeId]} title={challenge.name}
+                  km={totalKm} rank={myRank || undefined} name={user?.fullName || t.you} photoUrl={photo} />
+              </View>
+              {completed && <Text style={{ fontSize: 14, fontWeight: '700', marginTop: 6, color: text }}>{t.leaderboard} : {myRank}{language === 'fr' ? 'ᵉ' : ''}</Text>}
+            </View>
+          );
+        })()}
 
         {/* Join button (only when not joined) */}
         {!joined && (
