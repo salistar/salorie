@@ -159,6 +159,7 @@ export default function CoachScreen() {
             { Icon: Trophy, label: t('coach.social_title'), route: '/social' },
             { Icon: Trophy, label: (RACES_CTA[language] || RACES_CTA.en).t, route: '/races' },
             { Icon: Award, label: 'Mes médailles', route: '/medals' },
+            { Icon: Trophy, label: 'Courses virtuelles', route: '/virtual-races' },
             { Icon: HeartPulse, label: t('coach.health_title'), route: '/health' },
           ]},
           { sec: 'IA & projections', items: [
