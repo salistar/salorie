@@ -7,6 +7,7 @@ const NAV = [
   { href: '/races', label: 'Courses virtuelles', icon: '🏁' },
   { href: '/orgs', label: 'Organisations B2B', icon: '🏢' },
   { href: '/achievements', label: 'Achievements', icon: '🏅' },
+  { href: '/medal-builder', label: 'Builder médailles', icon: '🥇' },
   { href: '/flags', label: 'Feature Flags', icon: '🎛️' },
 ];
 
