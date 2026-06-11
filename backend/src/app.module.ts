@@ -22,6 +22,9 @@ import { PipelineController } from './pipeline/pipeline.controller';
 import { PipelineService } from './pipeline/pipeline.service';
 import { PipelineResolver } from './pipeline/pipeline.resolver';
 import { MirrorEvent, MirrorEventSchema, MirrorUser, MirrorUserSchema, FeatureStore, FeatureStoreSchema, OutboxItem, OutboxItemSchema } from './pipeline/pipeline.schemas';
+import { RacesController } from './races/races.controller';
+import { RacesService } from './races/races.service';
+import { VirtualRace, VirtualRaceSchema, RaceParticipant, RaceParticipantSchema, Medal, MedalSchema } from './races/races.schemas';
 
 // Pipeline analytics (CDC Firestore→Mongo + feature store + outbox + multi-tenant)
 // — activé uniquement si Mongo est configuré (sinon DI échoue au boot standalone).
@@ -33,6 +36,9 @@ const PIPELINE_FEATURES = HAS_MONGO
         { name: MirrorUser.name, schema: MirrorUserSchema },
         { name: FeatureStore.name, schema: FeatureStoreSchema },
         { name: OutboxItem.name, schema: OutboxItemSchema },
+        { name: VirtualRace.name, schema: VirtualRaceSchema },
+        { name: RaceParticipant.name, schema: RaceParticipantSchema },
+        { name: Medal.name, schema: MedalSchema },
       ]),
       // Gateway GraphQL (code-first, /graphql) sur le pipeline.
       GraphQLModule.forRoot<ApolloDriverConfig>({
@@ -52,7 +58,7 @@ const PIPELINE_FEATURES = HAS_MONGO
     ...(HAS_MONGO ? [MongooseModule.forRoot(process.env.MONGO_URI!)] : []),
     ...PIPELINE_FEATURES,
   ],
-  controllers: [HealthController, UsersController, FilesController, NutritionController, InsightsController, AiController, MlController, ...(HAS_MONGO ? [PipelineController] : [])],
-  providers: [FirebaseService, RedisService, UsersService, NutritionService, InsightsService, AiService, MlService, ...(HAS_MONGO ? [PipelineService, PipelineResolver] : [])],
+  controllers: [HealthController, UsersController, FilesController, NutritionController, InsightsController, AiController, MlController, ...(HAS_MONGO ? [PipelineController, RacesController] : [])],
+  providers: [FirebaseService, RedisService, UsersService, NutritionService, InsightsService, AiService, MlService, ...(HAS_MONGO ? [PipelineService, PipelineResolver, RacesService] : [])],
 })
 export class AppModule {}
