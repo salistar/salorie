@@ -31,6 +31,15 @@ class MainActivity : ReactActivity() {
     // even after the app is closed, with a persistent notification.
     // N'on demarre le service "health" QUE si ACTIVITY_RECOGNITION est accordee
     // (Android 10+/14+ : sinon le foreground service health est refuse et crashe).
+    maybeStartStepService()
+  }
+
+  /**
+   * Démarre le StepCounterService SI ACTIVITY_RECOGNITION est accordée. Appelé en
+   * onCreate ET onResume : ainsi, dès que l'utilisateur accorde la permission via
+   * le prompt JS (la dialog ferme → onResume), le service démarre sans relancer l'app.
+   */
+  private fun maybeStartStepService() {
     try {
       val needsPerm = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
       val granted = !needsPerm || checkSelfPermission(android.Manifest.permission.ACTIVITY_RECOGNITION) ==
@@ -40,6 +49,11 @@ class MainActivity : ReactActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(svc) else startService(svc)
       }
     } catch (_: Exception) {}
+  }
+
+  override fun onResume() {
+    super.onResume()
+    maybeStartStepService()
   }
 
   /**
