@@ -85,6 +85,7 @@ export const FLAG_KEYS: { key: string; label: string }[] = [
   { key: 'social', label: 'Classement / social' },
   { key: 'races', label: 'Courses & défis' },
   { key: 'medals', label: 'Médailles' },
+  { key: 'virtual-races', label: 'Courses virtuelles (Mongo)' },
   { key: 'health', label: 'Health Connect / wearables' },
   // — Vague 1 (IA & projections) —
   { key: 'metabolic-twin', label: 'Jumeau métabolique' },

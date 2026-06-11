@@ -82,6 +82,14 @@ export class RacesService {
       const before = await this.parts.countDocuments({ raceId, finishedAt: { $ne: null, $lt: p.finishedAt } });
       p.rank = before + 1;
       await p.save();
+      // Médaille immédiate (finir une course → médaille visible direct dans l'app).
+      const race = await this.getRace(raceId);
+      const timeLabel = this.fmtDuration((p.finishedAt || 0) - (p.startedAt || p.finishedAt || 0));
+      await this.medals.findOneAndUpdate(
+        { raceId, userId },
+        { $set: { tenantId: TENANT, raceName: race.name, userName: p.userName, rank: p.rank, frame: race.medalFrame, distanceKm: race.totalKm, timeLabel, startDate: race.startDate, endDate: race.endDate } },
+        { upsert: true },
+      );
     }
     return p;
   }
