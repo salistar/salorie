@@ -59,6 +59,8 @@ export const SHAPES = [
   'circle', 'hexagon', 'octagon', 'pentagon', 'heptagon', 'triangle', 'square', 'diamond',
   'star5', 'star6', 'star7', 'star8', 'star12', 'gear', 'gearFine', 'bobbles', 'bobbles12',
   'clover', 'quatrefoil', 'scallop', 'scallop24', 'sunburst', 'flower8', 'shield', 'tag', 'rounded',
+  // +10 formes "perso" prêtes
+  'star9', 'star10', 'star16', 'nonagon', 'decagon', 'gear12', 'gear36', 'flower12', 'cross', 'burst32',
 ] as const;
 export type MedalShape = typeof SHAPES[number];
 
@@ -98,6 +100,16 @@ function shapeLayer(shape: MedalShape, c: Palette, id: string): string {
     case 'shield': return `<path d="M ${cx - 92} ${cy - 96} H ${cx + 92} V ${cy + 30} Q ${cx + 92} ${cy + 110} ${cx} ${cy + 130} Q ${cx - 92} ${cy + 110} ${cx - 92} ${cy + 30} Z" ${gold}/>`;
     case 'tag': return `<rect x="${cx - 92}" y="${cy - 100}" width="184" height="200" rx="40" ${gold}/>`;
     case 'rounded': return `<rect x="${cx - 96}" y="${cy - 96}" width="192" height="192" rx="26" ${gold}/>`;
+    case 'star9': return star(9, 104, 64);
+    case 'star10': return star(10, 102, 66);
+    case 'star16': return star(16, 100, 84);
+    case 'nonagon': return poly(9, 100);
+    case 'decagon': return poly(10, 100);
+    case 'gear12': { const n = 12; const pts: string[] = []; for (let i = 0; i < n * 2; i++) { const a = (i / (n * 2)) * 2 * Math.PI, r = i % 2 === 0 ? 104 : 84; pts.push(`${R1(cx + r * Math.cos(a))},${R1(cy + r * Math.sin(a))}`); } return `<polygon points="${pts.join(' ')}" ${gold}/>`; }
+    case 'gear36': { const n = 36; const pts: string[] = []; for (let i = 0; i < n * 2; i++) { const a = (i / (n * 2)) * 2 * Math.PI, r = i % 2 === 0 ? 99 : 92; pts.push(`${R1(cx + r * Math.cos(a))},${R1(cy + r * Math.sin(a))}`); } return `<polygon points="${pts.join(' ')}" ${gold}/>`; }
+    case 'flower12': { let s = ''; const n = 12, R = 80; for (let i = 0; i < n; i++) { const a = (i / n) * 2 * Math.PI; s += `<circle cx="${R1(cx + R * Math.cos(a))}" cy="${R1(cy + R * Math.sin(a))}" r="22" ${gold}/>`; } return s + `<circle cx="${cx}" cy="${cy}" r="86" ${gold}/>`; }
+    case 'cross': { const a = 36, b = 96; return `<path d="M ${cx - a} ${cy - b} H ${cx + a} V ${cy - a} H ${cx + b} V ${cy + a} H ${cx + a} V ${cy + b} H ${cx - a} V ${cy + a} H ${cx - b} V ${cy - a} H ${cx - a} Z" ${gold}/>`; }
+    case 'burst32': { const n = 32; const pts: string[] = []; for (let i = 0; i < n * 2; i++) { const a = (i / (n * 2)) * 2 * Math.PI, r = i % 2 === 0 ? 104 : 88; pts.push(`${R1(cx + r * Math.cos(a))},${R1(cy + r * Math.sin(a))}`); } return `<polygon points="${pts.join(' ')}" ${gold}/>`; }
     default: return `<circle cx="${cx}" cy="${cy}" r="92" ${gold}/>`;
   }
 }
@@ -115,6 +127,8 @@ export interface MedalParams {
   frame?: string; color?: string; metal?: string; shape?: string; centerType?: 'photo' | 'geo';
   customPath?: string; title: string; km: number | string; time?: string;
   name?: string; dates?: string; rank?: number; photoUrl?: string;
+  // 'template' = médaille MODÈLE vierge (cache rang/temps/nom) ; 'full' (défaut) = avec données user.
+  mode?: 'template' | 'full';
 }
 
 export function buildMedalSvg(p: MedalParams): string {
@@ -136,10 +150,10 @@ export function buildMedalSvg(p: MedalParams): string {
   <path id="bot_${id}" fill="none" d="M 63 224 A 76 76 0 0 0 201 224"/>
 </defs>
   <circle cx="132" cy="28" r="8" fill="none" stroke="url(#gb_${id})" stroke-width="5"/>
-  <circle cx="132" cy="60" r="17" fill="url(#en_${id})" stroke="${c.stroke}" stroke-width="1.2"/>
+  ${p.mode === 'template' ? '' : `<circle cx="132" cy="60" r="17" fill="url(#en_${id})" stroke="${c.stroke}" stroke-width="1.2"/>
   <text x="132" y="61" text-anchor="middle" font-family="Georgia,serif" font-weight="800" font-size="16" fill="#fff">${rank}</text>
   <text x="132" y="72" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="5.7" letter-spacing="2" fill="${c.e0}">RANG</text>
-  <path d="M118 78 L122 108 H142 L146 78 Z" fill="url(#en_${id})" stroke="${c.stroke}" stroke-width="1"/>
+  <path d="M118 78 L122 108 H142 L146 78 Z" fill="url(#en_${id})" stroke="${c.stroke}" stroke-width="1"/>`}
   ${outline}
   <circle cx="132" cy="192" r="84" fill="url(#en_${id})" stroke="${c.stroke}" stroke-width="0.8"/>
   <circle cx="132" cy="192" r="60" fill="url(#g_${id})"/>
@@ -150,11 +164,11 @@ export function buildMedalSvg(p: MedalParams): string {
   <path d="M 63 224 A 76 76 0 0 0 201 224" fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="20" stroke-linecap="round"/>
   <text font-family="Georgia,serif" font-weight="700" font-size="15" letter-spacing="1.5" fill="#fff"><textPath href="#top_${id}" startOffset="50%" text-anchor="middle">${esc((p.title || '').toUpperCase()).slice(0, 16)}</textPath></text>
   <text font-family="sans-serif" font-weight="800" font-size="13" letter-spacing="1.5" fill="#fff"><textPath href="#bot_${id}" startOffset="50%" text-anchor="middle">${esc(String(p.km))} KM</textPath></text>
-  <rect x="60" y="277" width="144" height="30" rx="15" fill="#241805" stroke="url(#gb_${id})" stroke-width="1.4"/>
+  ${p.mode === 'template' ? '' : `<rect x="60" y="277" width="144" height="30" rx="15" fill="#241805" stroke="url(#gb_${id})" stroke-width="1.4"/>
   <text x="132" y="291" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="13" fill="${c.g0}">${esc(p.time || '—')}</text>
   <text x="132" y="301" text-anchor="middle" font-family="sans-serif" font-weight="600" font-size="6" letter-spacing="2.5" fill="${c.g1}">TEMPS DE COURSE</text>
   <path d="M40 336 H224 L224 378 L132 368 L40 378 Z" fill="url(#en_${id})" stroke="${c.stroke}" stroke-width="1.2"/>
   <text x="132" y="354" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="14.5" fill="#fff">${esc(p.name || '')}</text>
-  <text x="132" y="368" text-anchor="middle" font-family="sans-serif" font-weight="600" font-size="9" fill="${c.e0}">${esc(p.dates || '')}</text>
+  <text x="132" y="368" text-anchor="middle" font-family="sans-serif" font-weight="600" font-size="9" fill="${c.e0}">${esc(p.dates || '')}</text>`}
 </svg>`;
 }
