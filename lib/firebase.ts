@@ -505,6 +505,22 @@ export const updateUserLanguage = async (email: string, language: string) => {
 };
 
 /**
+ * Met à jour la cible calorique quotidienne (TDEE adaptatif → "Appliquer").
+ * merge:true → ne touche QUE dailyCalories dans nutritionalPlan (deep merge),
+ * les autres champs du plan sont préservés.
+ */
+export const updateDailyCalories = async (email: string, dailyCalories: number) => {
+  try {
+    const docId = emailToDocId(email);
+    if (!docId || !(dailyCalories > 0)) return;
+    const userRef = doc(db, 'users', docId);
+    await setDoc(userRef, { nutritionalPlan: { dailyCalories }, updatedAt: serverTimestamp() }, { merge: true });
+  } catch (error) {
+    console.error('Error updating dailyCalories:', error);
+  }
+};
+
+/**
  * Fetches all notification history entries for a user (keyed by email)
  */
 export const getNotificationsHistory = async (email: string) => {

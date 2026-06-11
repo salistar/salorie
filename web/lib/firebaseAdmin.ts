@@ -86,6 +86,7 @@ export const FLAG_KEYS: { key: string; label: string }[] = [
   { key: 'health', label: 'Health Connect / wearables' },
   // — Vague 1 (IA & projections) —
   { key: 'metabolic-twin', label: 'Jumeau métabolique' },
+  { key: 'adaptive-tdee', label: 'TDEE adaptatif' },
   { key: 'calorie-budget', label: 'Budget calories' },
   { key: 'streaks', label: 'Séries multi-dim' },
   { key: 'fridge-recipes', label: 'Frigo → recettes' },

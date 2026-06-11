@@ -161,6 +161,7 @@ export default function CoachScreen() {
           ]},
           { sec: 'IA & projections', items: [
             { Icon: TrendingDown, label: 'Jumeau métabolique', route: '/metabolic-twin' },
+            { Icon: Activity, label: 'TDEE adaptatif', route: '/adaptive-tdee' },
             { Icon: Wallet, label: 'Budget calories', route: '/calorie-budget' },
             { Icon: Flame, label: 'Mes séries', route: '/streaks' },
             { Icon: Refrigerator, label: 'Frigo → recettes', route: '/fridge-recipes' },
