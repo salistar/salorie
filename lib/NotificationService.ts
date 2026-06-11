@@ -64,9 +64,10 @@ export class NotificationService {
 
     const config = await getAdminNotificationConfig();
 
+    // SDK 52 : 'daily' = rappel quotidien à heure:minute (repeats implicite).
+    // L'ancien 'calendar' ne planifiait AUCUNE alarme sur Android 14 (0 rappel).
     const triggerOptions = {
-        type: 'calendar' as any,
-        repeats: true,
+        type: 'daily' as any,
     };
 
     // Breakfast (8:00 AM) — message FR "intelligent" en fallback si config vide
