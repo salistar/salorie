@@ -141,6 +141,14 @@ function pointAtFraction(route: LatLng[], fraction: number): LatLng {
   return route[route.length - 1];
 }
 
+// Point du tracé le plus proche d'un POI → place TOUS les arrêts SUR le trajet.
+function nearestOnRoute(route: LatLng[], p: LatLng): LatLng {
+  if (!route.length) return p;
+  let best = route[0], bd = Infinity;
+  for (const r of route) { const d = haversine(r, p); if (d < bd) { bd = d; best = r; } }
+  return best;
+}
+
 function buildHtml(route: LatLng[], me: LatLng, color: string): string {
   const start = route[0];
   const end = route[route.length - 1];
@@ -395,13 +403,14 @@ export default function ChallengeScreen() {
   // Push POIs (with their fraction along the route) to the map.
   useEffect(() => {
     if (mapReady && pois.length) {
-      const payload = pois.map((p) => ({
-        name: p.name, lat: p.lat, lng: p.lng,
-        frac: totalKm > 0 ? Math.min(1, p.atKm / totalKm) : 0,
-      }));
+      const payload = pois.map((p) => {
+        // Snap chaque arrêt sur le tracé routier (sinon certains POIs tombent à côté).
+        const sn = nearestOnRoute(effectiveRoute, { lat: p.lat, lng: p.lng });
+        return { name: p.name, lat: sn.lat, lng: sn.lng, frac: totalKm > 0 ? Math.min(1, p.atKm / totalKm) : 0 };
+      });
       webRef.current?.injectJavaScript(`window.setPois && window.setPois(${JSON.stringify(payload)}); true;`);
     }
-  }, [mapReady, challengeId, totalKm]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mapReady, challengeId, totalKm, roadPath]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Move the "you" marker when my progress changes (when not navigating).
   useEffect(() => {
