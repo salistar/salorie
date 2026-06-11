@@ -62,7 +62,7 @@ export default function Medals() {
             <View style={s.grid}>
               {medals.map((m, i) => (
                 <View key={m._id || i} style={s.cell}>
-                  <Medal width={150} frame={m.frame} title={m.raceName} km={m.distanceKm}
+                  <Medal width={150} frame={m.frame} {...(m.spec || {})} title={m.raceName} km={m.distanceKm}
                     time={m.timeLabel} name={m.userName} rank={m.rank} photoUrl={m.photoUrl}
                     dates={m.startDate ? `${fmt(m.startDate)} — ${fmt(m.endDate)}` : ''} />
                 </View>
