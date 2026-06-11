@@ -84,6 +84,33 @@ export const FLAG_KEYS: { key: string; label: string }[] = [
   { key: 'social', label: 'Classement / social' },
   { key: 'races', label: 'Courses & défis' },
   { key: 'health', label: 'Health Connect / wearables' },
+  // — Vague 1 (IA & projections) —
+  { key: 'metabolic-twin', label: 'Jumeau métabolique' },
+  { key: 'calorie-budget', label: 'Budget calories' },
+  { key: 'streaks', label: 'Séries multi-dim' },
+  { key: 'fridge-recipes', label: 'Frigo → recettes' },
+  { key: 'substitutions', label: 'Substitutions IA' },
+  // — Vague 2 (Suivi) —
+  { key: 'body-measurements', label: 'Mesures corporelles' },
+  { key: 'sleep-tracker', label: 'Sommeil' },
+  { key: 'mood-tracker', label: 'Humeur & énergie' },
+  { key: 'smart-hydration', label: 'Hydratation intelligente' },
+  { key: 'meal-templates', label: 'Repas types' },
+  { key: 'progress-photos', label: 'Photos de progression' },
+  // — Vague 3 (Nutrition+) —
+  { key: 'nutri-score', label: 'Nutri-Score' },
+  { key: 'import-recipe', label: 'Import recette URL' },
+  { key: 'shopping-list', label: 'Liste de courses' },
+  // — Outils avancés —
+  { key: 'restaurant-mode', label: 'Mode resto' },
+  { key: 'receipt-ocr', label: 'OCR ticket de caisse' },
+  { key: 'ai-meal-plan', label: 'Plan repas IA' },
+  { key: 'battle', label: 'Battle 1v1' },
+  { key: 'doctor-export', label: 'Export médecin' },
+  // — Santé + —
+  { key: 'glucose-tracker', label: 'Glycémie' },
+  { key: 'microbiome', label: 'Microbiote' },
+  { key: 'body-composition', label: 'Composition corporelle' },
 ];
 
 export async function getFlags(): Promise<Record<string, boolean>> {
