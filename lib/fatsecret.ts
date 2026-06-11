@@ -1,3 +1,20 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// ── Cache on-device des appels OpenFoodFacts (réduit les appels provider) ──
+// Produit (barcode) = immuable → cache long ; recherche = TTL plus court.
+async function cacheGet<T>(key: string): Promise<T | undefined> {
+  try {
+    const raw = await AsyncStorage.getItem(key);
+    if (!raw) return undefined;
+    const { v, exp } = JSON.parse(raw);
+    if (exp && Date.now() > exp) { AsyncStorage.removeItem(key).catch(() => {}); return undefined; }
+    return v as T;
+  } catch { return undefined; }
+}
+async function cacheSet(key: string, v: unknown, ttlMs: number): Promise<void> {
+  try { await AsyncStorage.setItem(key, JSON.stringify({ v, exp: ttlMs ? Date.now() + ttlMs : 0 })); } catch {}
+}
+
 // S4: Food search uses OpenFoodFacts ONLY (free, no API key, no client secret).
 // The former FatSecret OAuth helpers were removed — a client secret must never
 // ship in the app bundle, and FatSecret rejects mobile IPs anyway. A server-side
@@ -95,6 +112,9 @@ async function salSearch(query: string): Promise<{ code: string; name: string }[
 // Fetches one product's nutriments from the reliable v2 product API and maps it
 // to the UI shape. Returns null if the product has no usable energy value.
 async function fetchProductItem(code: string, fallbackName: string): Promise<any | null> {
+  const ck = `off_prod_${code}`;
+  const cached = await cacheGet<any>(ck);
+  if (cached !== undefined) return cached; // cache on-device → 0 appel provider
   const url = `https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=code,product_name,brands,nutriments`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
@@ -110,11 +130,13 @@ async function fetchProductItem(code: string, fallbackName: string): Promise<any
     // sometimes stores per-serving values mislabeled as per-100g (e.g. 1900).
     if (!(kcal > 0) || kcal > 900) return null;
     const name = [p.product_name || fallbackName, (p.brands || '').split(',')[0]].filter(Boolean).join(' ').trim();
-    return {
+    const item = {
       food_id: code,
       food_name: name || fallbackName,
       food_description: `Per 100g - Calories: ${Math.round(kcal)}kcal | Fat: ${round100(n.fat_100g)}g | Carbs: ${round100(n.carbohydrates_100g)}g | Protein: ${round100(n.proteins_100g)}g`,
     };
+    cacheSet(ck, item, 30 * 24 * 3600 * 1000); // produit ~immuable → cache 30 j
+    return item;
   } catch {
     return null;
   } finally {
@@ -132,6 +154,18 @@ async function fetchProductItem(code: string, fallbackName: string): Promise<any
  *   "Per 100g - Calories: Xkcal | Fat: Yg | Carbs: Zg | Protein: Wg" }.
  */
 export async function searchFood(query: string): Promise<any[]> {
+  const q = query.trim().toLowerCase();
+  if (q.length < 3) return [];
+  // Cache on-device de la recherche (mêmes termes → 0 appel provider, TTL 7 j).
+  const ck = `off_search_${q}`;
+  const cached = await cacheGet<any[]>(ck);
+  if (cached !== undefined) return cached;
+  const items = await searchFoodRaw(query);
+  if (items && items.length) cacheSet(ck, items, 7 * 24 * 3600 * 1000);
+  return items;
+}
+
+async function searchFoodRaw(query: string): Promise<any[]> {
   if (query.trim().length < 3) return [];
 
   // 1) Reliable full-text discovery.
