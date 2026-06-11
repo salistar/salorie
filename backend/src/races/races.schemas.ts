@@ -27,7 +27,8 @@ export class VirtualRace {
   @Prop({ default: 30 }) timeLimitDays: number;       // temps imparti pour finir
   @Prop() startDate: Date;                            // plage A
   @Prop() endDate: Date;                              // plage B
-  @Prop({ default: 'rabat' }) medalFrame: string;     // thème du cadre médaille
+  @Prop({ default: 'rabat' }) medalFrame: string;     // (rétro-compat) thème simple
+  @Prop({ type: Object }) medalSpec: any;             // modèle conçu au builder : { shape, color, metal, centerType, customPath }
   @Prop({ type: [WaypointSchema], default: [] }) waypoints: Waypoint[];
   @Prop({ default: true, index: true }) active: boolean;
 }
@@ -55,7 +56,8 @@ export class Medal {
   @Prop({ index: true, required: true }) userId: string;
   @Prop() userName: string;
   @Prop({ default: 0 }) rank: number;                      // classement final
-  @Prop({ default: 'rabat' }) frame: string;               // thème du cadre (SVG)
+  @Prop({ default: 'rabat' }) frame: string;               // (rétro-compat) thème
+  @Prop({ type: Object }) spec: any;                       // modèle médaille { shape, color, metal, centerType, customPath }
   @Prop({ default: 0 }) distanceKm: number;
   @Prop({ default: '' }) timeLabel: string;                // ex "4h 28min"
   @Prop() startDate: Date;
