@@ -291,25 +291,29 @@ export default function RacesScreen() {
                 const stops = (c.pois as any[])?.length || 0;
                 return (
                   <TouchableOpacity key={c.id} activeOpacity={0.9} style={[styles.challengeCard, { backgroundColor: card }]} onPress={() => router.push('/challenge?id=' + c.id)}>
-                    {/* Visuel = la MÉDAILLE du défi (couleur/forme variées), pas une photo */}
-                    <View style={styles.heroMedalWrap}>
+                    {/* GRANDE photo du lieu + médaille en BADGE (coin) */}
+                    <View style={styles.heroWrap}>
+                      {hero ? <Image source={hero} style={styles.hero} resizeMode="cover" /> : <View style={[styles.hero, { backgroundColor: '#cbd5e1' }]} />}
+                      <View style={styles.heroShade} />
                       <View style={styles.heroEmoji}><Text style={{ fontSize: 20 }}>{c.emoji}</Text></View>
-                      <Medal width={132} frame={CH_FRAME[c.id] || c.id} title={c.name} km={c.totalKm} rank={done ? 1 : undefined} photoSource={hero} />
-                    </View>
-                    <View style={styles.infoRow}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.infoName, { color: text }]} numberOfLines={1}>{c.name}</Text>
-                        <View style={styles.heroChips}>
-                          <View style={styles.chipLite}><Text style={styles.chipLiteTxt}>{c.totalKm} {t.km}</Text></View>
-                          {stops > 0 && (<View style={styles.chipLite}><MapPin size={11} color={PRIMARY} /><Text style={styles.chipLiteTxt}> {stops}</Text></View>)}
-                          {done && (<View style={[styles.chipLite, { backgroundColor: '#dcfce7' }]}><CheckCircle2 size={11} color="#16a34a" /><Text style={[styles.chipLiteTxt, { color: '#16a34a' }]}> 100%</Text></View>)}
-                        </View>
+                      <View style={{ position: 'absolute', top: 6, right: 8 }}>
+                        <Medal width={60} frame={CH_FRAME[c.id] || c.id} title={c.name} km={c.totalKm} rank={done ? 1 : undefined} />
                       </View>
+                      <View style={[styles.heroBottom, { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }]}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.heroName} numberOfLines={1}>{c.name}</Text>
+                          <View style={styles.heroChips}>
+                            <View style={styles.heroChip}><Text style={styles.heroChipTxt}>{c.totalKm} {t.km}</Text></View>
+                            {stops > 0 && (<View style={styles.heroChip}><MapPin size={11} color="#fff" /><Text style={styles.heroChipTxt}> {stops}</Text></View>)}
+                            {done && (<View style={[styles.heroChip, { backgroundColor: 'rgba(34,197,94,0.9)' }]}><CheckCircle2 size={11} color="#fff" /><Text style={styles.heroChipTxt}> 100%</Text></View>)}
+                          </View>
+                        </View>
                       {!joined && (
                         <TouchableOpacity style={styles.joinSmall} onPress={(e) => { e.stopPropagation?.(); onJoinChallenge(c.id); }} disabled={!!busy[c.id]}>
                           {busy[c.id] ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.joinBtnTxt}>{t.join}</Text>}
                         </TouchableOpacity>
                       )}
+                      </View>
                     </View>
                     {joined && (
                       <View style={styles.progressWrap}>
