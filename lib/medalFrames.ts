@@ -44,19 +44,66 @@ function dots(cx: number, cy: number, r: number, n: number, color: string): stri
 }
 const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+// ── Formes du médaillon (pour ne PAS avoir que des cercles) ──
+export const SHAPES = ['circle', 'bobbles', 'cog', 'clover', 'octagon', 'scallop'] as const;
+export type MedalShape = typeof SHAPES[number];
+
+// Forme déterministe par thème (réparties) si non précisée → liste variée.
+export function shapeFor(frame: string, explicit?: string): MedalShape {
+  if (explicit && (SHAPES as readonly string[]).includes(explicit)) return explicit as MedalShape;
+  const keys = Object.keys(PALETTES);
+  const i = keys.indexOf(frame);
+  return SHAPES[(i >= 0 ? i : Math.abs(hash(frame))) % SHAPES.length];
+}
+function hash(s: string): number { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; }
+
+// Décor extérieur (derrière l'anneau émaillé r=84), centré sur (132,192).
+function shapeLayer(shape: MedalShape, c: Palette, id: string): string {
+  const cx = 132, cy = 192, gold = `fill="url(#g_${id})" stroke="${c.stroke}"`;
+  const round = (v: number) => v.toFixed(1);
+  if (shape === 'bobbles') {
+    let s = ''; const n = 8, R = 88;
+    for (let i = 0; i < n; i++) { const a = (i / n) * 2 * Math.PI, x = cx + R * Math.cos(a), y = cy + R * Math.sin(a);
+      s += `<circle cx="${round(x)}" cy="${round(y)}" r="20" ${gold} stroke-width="1.2"/><circle cx="${round(x)}" cy="${round(y)}" r="15" fill="url(#en_${id})"/>`; }
+    return s + `<circle cx="${cx}" cy="${cy}" r="90" ${gold} stroke-width="1.2"/>`;
+  }
+  if (shape === 'cog') {
+    const n = 16; const pts: string[] = [];
+    for (let i = 0; i < n * 2; i++) { const a = (i / (n * 2)) * 2 * Math.PI, r = i % 2 === 0 ? 100 : 86;
+      pts.push(`${round(cx + r * Math.cos(a))},${round(cy + r * Math.sin(a))}`); }
+    return `<polygon points="${pts.join(' ')}" ${gold} stroke-width="1.2"/><circle cx="${cx}" cy="${cy}" r="88" fill="url(#en_${id})" opacity="0.0"/>`;
+  }
+  if (shape === 'clover') {
+    let s = ''; const R = 56;
+    for (const a of [-Math.PI / 2, Math.PI / 6, (Math.PI * 5) / 6]) {
+      s += `<circle cx="${round(cx + R * Math.cos(a))}" cy="${round(cy + R * Math.sin(a))}" r="62" ${gold} stroke-width="1.2"/>`; }
+    return s;
+  }
+  if (shape === 'octagon') {
+    const pts: string[] = []; const R = 99;
+    for (let i = 0; i < 8; i++) { const a = (i / 8) * 2 * Math.PI + Math.PI / 8; pts.push(`${round(cx + R * Math.cos(a))},${round(cy + R * Math.sin(a))}`); }
+    return `<polygon points="${pts.join(' ')}" ${gold} stroke-width="1.4"/>`;
+  }
+  if (shape === 'scallop') {
+    let s = ''; const n = 18, R = 90;
+    for (let i = 0; i < n; i++) { const a = (i / n) * 2 * Math.PI; s += `<circle cx="${round(cx + R * Math.cos(a))}" cy="${round(cy + R * Math.sin(a))}" r="12" ${gold} stroke-width="0.8"/>`; }
+    return s + `<circle cx="${cx}" cy="${cy}" r="88" ${gold} stroke-width="1"/>`;
+  }
+  return `<circle cx="${cx}" cy="${cy}" r="92" ${gold} stroke-width="1.4"/>`; // circle
+}
+
 export interface MedalParams {
   frame: string; title: string; km: number | string; time?: string;
-  name?: string; dates?: string; rank?: number; photoUrl?: string;
+  name?: string; dates?: string; rank?: number; photoUrl?: string; shape?: string;
 }
 
 export function buildMedalSvg(p: MedalParams): string {
   const c = pal(p.frame);
   const id = (p.frame || 'm').replace(/[^a-z0-9]/gi, '');
   const rank = p.rank && p.rank > 0 ? `${p.rank}ᵉ` : '—';
-  const photo = p.photoUrl
-    ? `<image href="${esc(p.photoUrl)}" x="78" y="138" width="108" height="108" preserveAspectRatio="xMidYMid slice"/>`
-    : `<rect x="78" y="138" width="108" height="108" fill="url(#ph_${id})"/>
-       <text x="132" y="195" text-anchor="middle" font-family="monospace" font-size="9.5" fill="#9a917f">GLISSEZ UNE PHOTO</text>`;
+  const shape = shapeFor(p.frame, p.shape);
+  // NB : pas d'<image> distante dans le SVG (crashait SvgXml). Le centre est un
+  // disque émaillé TOUJOURS rempli ; la photo du lieu est overlay côté RN (Medal.tsx).
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 264 384" width="264" height="384">
 <defs>
   <linearGradient id="g_${id}" x1="0" y1="0" x2="0.25" y2="1"><stop offset="0" stop-color="${c.g0}"/><stop offset="0.3" stop-color="${c.g1}"/><stop offset="0.62" stop-color="${c.g2}"/><stop offset="1" stop-color="${c.g3}"/></linearGradient>
@@ -72,11 +119,13 @@ export function buildMedalSvg(p: MedalParams): string {
   <text x="132" y="61" text-anchor="middle" font-family="Georgia,serif" font-weight="800" font-size="16" fill="#fff">${rank}</text>
   <text x="132" y="72" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="5.7" letter-spacing="2" fill="${c.e0}">RANG</text>
   <path d="M118 78 L122 108 H142 L146 78 Z" fill="url(#en_${id})" stroke="${c.stroke}" stroke-width="1"/>
+  ${shapeLayer(shape, c, id)}
   <circle cx="132" cy="192" r="84" fill="url(#en_${id})" stroke="${c.stroke}" stroke-width="0.8"/>
   <circle cx="132" cy="192" r="60" fill="url(#g_${id})"/>
   ${dots(132, 192, 58, 56, c.g0)}
-  <circle cx="132" cy="192" r="54" fill="#0e0c08"/>
-  <g clip-path="url(#sc_${id})">${photo}</g>
+  <circle cx="132" cy="192" r="54" fill="${c.e2}"/>
+  <circle cx="132" cy="192" r="50" fill="url(#g_${id})"/>
+  <circle cx="132" cy="192" r="50" fill="${c.e1}" opacity="0.16"/>
   <circle cx="132" cy="192" r="54" fill="none" stroke="${c.stroke}" stroke-width="2"/>
   <path d="M 73 164.5 A 65 65 0 0 1 191 164.5" fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="23" stroke-linecap="round"/>
   <path d="M 63 224 A 76 76 0 0 0 201 224" fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="20" stroke-linecap="round"/>
