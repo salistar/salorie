@@ -6,6 +6,7 @@ const NAV = [
   { href: '/notify', label: 'Notifications', icon: '📣' },
   { href: '/races', label: 'Courses virtuelles', icon: '🏁' },
   { href: '/orgs', label: 'Organisations B2B', icon: '🏢' },
+  { href: '/achievements', label: 'Achievements', icon: '🏅' },
   { href: '/flags', label: 'Feature Flags', icon: '🎛️' },
 ];
 

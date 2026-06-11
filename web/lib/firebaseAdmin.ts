@@ -146,6 +146,24 @@ export async function setFlag(key: string, value: boolean): Promise<void> {
   await db().collection('config').doc('features').set({ [key]: value }, { merge: true });
 }
 
+// ── Achievements (gérés depuis le web → Firestore config/achievements) ──
+// Métriques dispo (calculées côté app) : streak · daysTracked · weighIns · totalLogs.
+export interface AchievementDef {
+  key: string; icon: string; metric: string; threshold: number;
+  titleFr?: string; descFr?: string; titleEn?: string; descEn?: string; titleAr?: string; descAr?: string;
+  enabled?: boolean;
+}
+export async function getAchievements(): Promise<AchievementDef[]> {
+  try {
+    const d = await db().collection('config').doc('achievements').get();
+    const data: any = d.exists ? d.data() : null;
+    return (data?.list as AchievementDef[]) || [];
+  } catch { return []; }
+}
+export async function setAchievements(list: AchievementDef[]): Promise<void> {
+  await db().collection('config').doc('achievements').set({ list }, { merge: true });
+}
+
 // ── Étape 2 : Event Bus — flux d'événements (collection `events`) ──
 
 export async function getRecentEvents(max = 60): Promise<any[]> {
