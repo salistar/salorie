@@ -295,9 +295,9 @@ export default function RacesScreen() {
                     <View style={styles.heroWrap}>
                       {hero ? <Image source={hero} style={styles.hero} resizeMode="cover" /> : <View style={[styles.hero, { backgroundColor: '#cbd5e1' }]} />}
                       <View style={styles.heroShade} />
-                      <View style={styles.heroEmoji}><Text style={{ fontSize: 20 }}>{c.emoji}</Text></View>
-                      <View style={{ position: 'absolute', top: 6, right: 8 }}>
-                        <Medal width={60} frame={CH_FRAME[c.id] || c.id} title={c.name} km={c.totalKm} rank={done ? 1 : undefined} />
+                      {/* Logo (emoji) REMPLACÉ par la médaille — photo du lieu conservée */}
+                      <View style={{ position: 'absolute', top: 6, left: 8 }}>
+                        <Medal width={62} frame={CH_FRAME[c.id] || c.id} title={c.name} km={c.totalKm} rank={done ? 1 : undefined} />
                       </View>
                       <View style={[styles.heroBottom, { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }]}>
                         <View style={{ flex: 1 }}>
