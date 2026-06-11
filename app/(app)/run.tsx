@@ -65,6 +65,52 @@ function buildHtml(center: LatLng, color: string): string {
 </body></html>`;
 }
 
+// ── Simulation qui SUIT LES ROUTES (ne traverse plus bâtiments/mer) ──
+function decodePolyline(enc: string): LatLng[] {
+  let i = 0, lat = 0, lng = 0; const out: LatLng[] = [];
+  while (i < enc.length) {
+    let b, shift = 0, result = 0;
+    do { b = enc.charCodeAt(i++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+    shift = 0; result = 0;
+    do { b = enc.charCodeAt(i++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+    out.push({ lat: lat / 1e5, lng: lng / 1e5 });
+  }
+  return out;
+}
+// Cherche un itinéraire piéton réel depuis l'origine (~3 km, plusieurs directions
+// pour éviter la mer). Renvoie la polyline des routes, ou null.
+async function fetchRoadLoop(origin: LatLng): Promise<LatLng[] | null> {
+  for (const brg of [45, 135, 225, 315, 0, 90, 180, 270]) {
+    const b = (brg * Math.PI) / 180;
+    const dest = {
+      lat: origin.lat + (3000 / 111111) * Math.cos(b),
+      lng: origin.lng + (3000 / (111111 * Math.cos((origin.lat * Math.PI) / 180))) * Math.sin(b),
+    };
+    try {
+      const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.lat},${origin.lng}&destination=${dest.lat},${dest.lng}&mode=walking&key=${GOOGLE_MAPS_KEY}`;
+      const j = await (await fetch(url)).json();
+      if (j.status === 'OK' && j.routes?.[0]?.overview_polyline?.points) {
+        const p = decodePolyline(j.routes[0].overview_polyline.points);
+        if (p.length > 1) return p;
+      }
+    } catch { /* try next bearing */ }
+  }
+  return null;
+}
+function pathLen(p: LatLng[]): number { let t = 0; for (let i = 1; i < p.length; i++) t += haversine(p[i - 1], p[i]); return t; }
+function pointAtDist(p: LatLng[], d: number): LatLng {
+  if (p.length < 2) return p[0];
+  let acc = 0;
+  for (let i = 1; i < p.length; i++) {
+    const seg = haversine(p[i - 1], p[i]);
+    if (acc + seg >= d) { const f = seg ? (d - acc) / seg : 0; return { lat: p[i - 1].lat + (p[i].lat - p[i - 1].lat) * f, lng: p[i - 1].lng + (p[i].lng - p[i - 1].lng) * f }; }
+    acc += seg;
+  }
+  return p[p.length - 1];
+}
+
 export default function RunScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
@@ -89,6 +135,9 @@ export default function RunScreen() {
   const simTimer = useRef<any>(null);
   const simHeading = useRef(45);
   const simStep = useRef(0);
+  const simPathRef = useRef<LatLng[] | null>(null);
+  const simAlong = useRef(0);
+  const simDir = useRef(1);
 
   useEffect(() => {
     (async () => {
@@ -131,17 +180,19 @@ export default function RunScreen() {
     setStatus('running');
     timerRef.current = setInterval(() => setSecs((s) => s + 1), 1000);
     if (mode === 'sim') {
-      // Simulation: advance 10 m every second (10 m/s) along a gently curving path.
-      if (!lastPt.current) lastPt.current = center;
+      // Simulation : on avance 10 m/s LE LONG D'UNE VRAIE ROUTE (Directions walking)
+      // → ne traverse plus les bâtiments ni la mer. Demi-tour en bout pour boucler.
+      const origin = lastPt.current || center;
+      simAlong.current = 0; simDir.current = 1; simPathRef.current = null;
+      if (origin) fetchRoadLoop(origin).then((p) => { simPathRef.current = p; }).catch(() => {});
       simTimer.current = setInterval(() => {
-        const from = lastPt.current || center;
-        if (!from) return;
-        simStep.current += 1;
-        simHeading.current += Math.sin(simStep.current / 5) * 12; // gentle wander
-        const brg = (simHeading.current * Math.PI) / 180;
-        const dLat = (10 / 111111) * Math.cos(brg);
-        const dLng = (10 / (111111 * Math.cos((from.lat * Math.PI) / 180))) * Math.sin(brg);
-        const pt = { lat: from.lat + dLat, lng: from.lng + dLng };
+        const path = simPathRef.current;
+        if (!path || path.length < 2) return; // attend l'itinéraire (1-2 s)
+        const total = pathLen(path);
+        simAlong.current += 10 * simDir.current;
+        if (simAlong.current >= total) { simAlong.current = total; simDir.current = -1; }
+        else if (simAlong.current <= 0) { simAlong.current = 0; simDir.current = 1; }
+        const pt = pointAtDist(path, simAlong.current);
         lastPt.current = pt;
         setMeters((m) => m + 10);
         if (mapReady.current) webRef.current?.injectJavaScript(`window.addPoint && window.addPoint(${pt.lat},${pt.lng}); true;`);
