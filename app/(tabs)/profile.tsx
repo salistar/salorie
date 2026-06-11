@@ -26,7 +26,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useTheme } from '../../lib/ThemeContext';
 import { triggerSeededNotifications, syncAllUserData, clearAllLocalData } from '../../lib/LocalDataStore';
-import { BellRing, Trash2 } from 'lucide-react-native';
+import { BellRing, Trash2, Award, Trophy } from 'lucide-react-native';
 import { useEffect } from 'react';
 
 const { width } = Dimensions.get('window');
@@ -242,6 +242,15 @@ export default function ProfileScreen() {
           <GridTile icon={Bell} label={t('prefs.notifications')} color={Colors.light.primary} onPress={() => router.push('/notifications' as any)} />
           <GridTile icon={Settings} label={t('profile.preferences')} color="#6366F1" onPress={() => router.push('/preferences' as any)} />
           <GridTile icon={CreditCard} label={t('profile.upgrade')} color="#EC4899" onPress={handleUpgrade} />
+        </Animated.View>
+
+        {/* Sport & médailles */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: resolved === 'dark' ? '#fff' : undefined }]}>Sport & médailles</Text>
+        </View>
+        <Animated.View entering={FadeInDown.delay(250).duration(600)} style={styles.grid}>
+          <GridTile icon={Award} label="Mes médailles" color="#F59E0B" onPress={() => router.push('/medals' as any)} />
+          <GridTile icon={Trophy} label="Courses virtuelles" color={Colors.light.primary} onPress={() => router.push('/races' as any)} />
         </Animated.View>
 
         {/* Support Section */}
