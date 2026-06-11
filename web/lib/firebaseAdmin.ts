@@ -153,6 +153,18 @@ export interface AchievementDef {
   titleFr?: string; descFr?: string; titleEn?: string; descEn?: string; titleAr?: string; descAr?: string;
   enabled?: boolean;
 }
+// ── Feedback : demandes de features (app /feature-requests) + messages contact ──
+export async function getFeatureRequests(max = 150): Promise<any[]> {
+  const map = (s: any) => s.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
+  try { return map(await db().collection('feature_requests').orderBy('createdAt', 'desc').limit(max).get()); }
+  catch { try { return map(await db().collection('feature_requests').limit(max).get()); } catch { return []; } }
+}
+export async function getContactMessages(max = 150): Promise<any[]> {
+  const map = (s: any) => s.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
+  try { return map(await db().collection('contact_messages').orderBy('createdAt', 'desc').limit(max).get()); }
+  catch { try { return map(await db().collection('contact_messages').limit(max).get()); } catch { return []; } }
+}
+
 export async function getAchievements(): Promise<AchievementDef[]> {
   try {
     const d = await db().collection('config').doc('achievements').get();
