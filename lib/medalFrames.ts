@@ -49,13 +49,14 @@ export const SHAPES = ['circle', 'bobbles', 'cog', 'clover', 'octagon', 'scallop
 export type MedalShape = typeof SHAPES[number];
 
 // Forme déterministe par thème (réparties) si non précisée → liste variée.
-export function shapeFor(frame: string, explicit?: string): MedalShape {
+export function shapeFor(frame?: string, explicit?: string): MedalShape {
   if (explicit && (SHAPES as readonly string[]).includes(explicit)) return explicit as MedalShape;
+  const f = frame || 'default';
   const keys = Object.keys(PALETTES);
-  const i = keys.indexOf(frame);
-  return SHAPES[(i >= 0 ? i : Math.abs(hash(frame))) % SHAPES.length];
+  const i = keys.indexOf(f);
+  return SHAPES[(i >= 0 ? i : Math.abs(hash(f))) % SHAPES.length];
 }
-function hash(s: string): number { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; }
+function hash(s?: string): number { const str = s || ''; let h = 0; for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return h; }
 
 // Décor extérieur (derrière l'anneau émaillé r=84), centré sur (132,192).
 function shapeLayer(shape: MedalShape, c: Palette, id: string): string {
