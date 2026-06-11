@@ -1,6 +1,10 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import RaceForm from './RaceForm';
+import { buildMedalSvg } from '../../lib/medalFrames';
+
+// Badge médaille (remplace l'émoji) — rend le modèle de la course en petit.
+const medalBadge = (r: any) => buildMedalSvg({ ...(r.medalSpec || {}), frame: r.medalSpec ? undefined : r.medalFrame, mode: 'template', title: r.name || '', km: r.totalKm || 0 }).replace('width="264" height="384"', 'width="40" height="58"');
 
 export default function RacesPage() {
   const [races, setRaces] = useState<any[]>([]);
@@ -46,7 +50,7 @@ export default function RacesPage() {
         <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
           {races.map((r) => (
             <div key={r._id} className="card" style={{ padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 22 }}>{r.emoji || '🏃'}</span>
+              <span dangerouslySetInnerHTML={{ __html: medalBadge(r) }} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700 }}>{r.name}</div>
                 <div className="foot">{r.totalKm} km · {r.waypoints?.length || 0} points · cadre « {r.medalFrame} » · {r.active ? 'active' : 'inactive'}</div>

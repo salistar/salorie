@@ -1,7 +1,16 @@
 // Helpers de tracking (mesures, sommeil, humeur, templates) → sous-collections
 // users/{docId}/<sub> (autorisées par les règles Firestore). Best-effort.
-import { collection, addDoc, getDocs, query, orderBy, limit as qlimit, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy, limit as qlimit, serverTimestamp, doc, deleteDoc } from 'firebase/firestore';
 import { db, emailToDocId } from './firebase';
+
+export async function deleteEntry(email: string, sub: string, entryId: string): Promise<boolean> {
+  try {
+    const id = emailToDocId(email);
+    if (!id) return false;
+    await deleteDoc(doc(db, 'users', id, sub, entryId));
+    return true;
+  } catch { return false; }
+}
 
 export function todayStr(): string {
   const d = new Date();

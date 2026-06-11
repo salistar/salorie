@@ -149,12 +149,16 @@ export default function CoachScreen() {
             { Icon: ScanText, label: 'Scanner étiquette', route: '/label-scan' },
           ]},
           { sec: 'Activité', items: [
+            { Icon: Dumbbell, label: 'Enregistrer une séance', route: '/log-exercise' },
+            { Icon: FileText, label: 'Agenda sport', route: '/sport-agenda' },
+            { Icon: ScanText, label: "Scanner d'équipement", route: '/equipment-scan' },
             { Icon: Dumbbell, label: 'Compteur de reps', route: '/rep-counter' },
             { Icon: MapPin, label: (RUN_CTA[language] || RUN_CTA.en).t, route: '/run' },
             { Icon: Dumbbell, label: (PLANS_CTA[language] || PLANS_CTA.en).t, route: '/workout-plans' },
             { Icon: Timer, label: 'Jeûne intermittent', route: '/fasting' },
           ]},
           { sec: 'Communauté & santé', items: [
+            { Icon: FileText, label: 'Journal & actus', route: '/journal' },
             { Icon: Sparkles, label: 'Coach IA', route: '/ai-coach' },
             { Icon: Trophy, label: t('coach.social_title'), route: '/social' },
             { Icon: Trophy, label: (RACES_CTA[language] || RACES_CTA.en).t, route: '/races' },

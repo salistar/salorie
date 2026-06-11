@@ -11,7 +11,6 @@ type WP = { name: string; lat: number; lng: number; atKm: string; mediaType: str
 
 export default function RaceForm({ onCreated }: { onCreated?: () => void }) {
   const [name, setName] = useState('');
-  const [emoji, setEmoji] = useState('🏃');
   const [totalKm, setTotalKm] = useState('120');
   const [timeLimitDays, setTimeLimitDays] = useState('30');
   const [startDate, setStartDate] = useState('');
@@ -75,7 +74,7 @@ export default function RaceForm({ onCreated }: { onCreated?: () => void }) {
     if (!name.trim()) { setMsg('⚠️ Nom requis.'); return; }
     if (wps.length < 2) { setMsg('⚠️ Clique au moins un départ et une arrivée sur la carte.'); return; }
     const payload = {
-      name, emoji, totalKm: Number(totalKm), timeLimitDays: Number(timeLimitDays),
+      name, totalKm: Number(totalKm), timeLimitDays: Number(timeLimitDays),
       startDate: startDate || undefined, endDate: endDate || undefined, medalFrame: 'custom',
       medalSpec: { shape: mShape, color: mColor, metal: mMetal, centerType: mCenter },
       waypoints: wps.map((w, i) => ({ kind: i === 0 ? 'start' : i === wps.length - 1 ? 'end' : 'stop', name: w.name, lat: w.lat, lng: w.lng, atKm: Number(w.atKm), mediaType: w.mediaType })),
@@ -94,7 +93,6 @@ export default function RaceForm({ onCreated }: { onCreated?: () => void }) {
     <div className="card" style={{ padding: 20 }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <Field label="Nom de la course"><input style={inp} value={name} onChange={(e) => setName(e.target.value)} placeholder="Tour du Maroc" /></Field>
-        <Field label="Emoji"><input style={inp} value={emoji} onChange={(e) => setEmoji(e.target.value)} /></Field>
         <Field label="Distance totale (km) — 80 à 2000"><input style={inp} type="number" value={totalKm} onChange={(e) => setTotalKm(e.target.value)} /></Field>
         <Field label="Temps imparti (jours)"><input style={inp} type="number" value={timeLimitDays} onChange={(e) => setTimeLimitDays(e.target.value)} /></Field>
         <Field label="Date début"><input style={inp} type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></Field>

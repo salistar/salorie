@@ -14,7 +14,7 @@ import { useTranslation } from '../../lib/i18n';
 import {
   listenOpenRaces, createRace, joinRace,
   CHALLENGES, getMyChallengeProgress, joinChallenge,
-  Race,
+  Race, streetViewUrl,
 } from '../../lib/races';
 import { getActiveRaces } from '../../lib/racesApi';
 
@@ -214,41 +214,7 @@ export default function RacesScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {tab === 'group' ? (
           <>
-            {/* Create race control */}
-            {showForm ? (
-              <View style={[styles.formCard, { backgroundColor: card }]}>
-                <Text style={[styles.formLabel, { color: sub, textAlign: align }]}>{t.raceName}</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: bg, color: text, borderColor: track, textAlign: align }]}
-                  placeholder={t.raceNamePh}
-                  placeholderTextColor={sub}
-                  value={raceName}
-                  onChangeText={setRaceName}
-                />
-                <Text style={[styles.formLabel, { color: sub, textAlign: align, marginTop: 12 }]}>{t.goal} ({t.km})</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: bg, color: text, borderColor: track, textAlign: align }]}
-                  placeholder="5"
-                  placeholderTextColor={sub}
-                  value={goalKm}
-                  onChangeText={setGoalKm}
-                  keyboardType="numeric"
-                />
-                <View style={[styles.formBtns, { flexDirection: rowDir }]}>
-                  <TouchableOpacity style={[styles.ghostBtn, { borderColor: track }]} onPress={() => setShowForm(false)} disabled={creating}>
-                    <Text style={[styles.ghostBtnTxt, { color: sub }]}>{t.cancel}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.primaryBtn} onPress={onCreate} disabled={creating || !raceName.trim()}>
-                    {creating ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.primaryBtnTxt}>{t.create}</Text>}
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : (
-              <TouchableOpacity style={[styles.createBtn, { flexDirection: rowDir }]} onPress={() => setShowForm(true)}>
-                <Plus size={20} color="#fff" />
-                <Text style={styles.createBtnTxt}>{t.createRace}</Text>
-              </TouchableOpacity>
-            )}
+            {/* Création de courses désormais UNIQUEMENT depuis le back-office web. */}
 
             {/* Race list */}
             {loadingRaces ? (
@@ -281,17 +247,19 @@ export default function RacesScreen() {
             {/* Courses créées depuis l'admin (Mongo) — médaille = le modèle conçu */}
             {activeRaces.map((r) => {
               const stops = (r.waypoints || []).length;
+              const w0 = (r.waypoints || [])[0];
               return (
                 <TouchableOpacity key={r._id} activeOpacity={0.9} style={[styles.challengeCard, { backgroundColor: card }]} onPress={() => router.push('/challenge?id=' + r._id + '&src=mongo')}>
                   <View style={styles.heroWrap}>
-                    <View style={[styles.hero, { backgroundColor: '#dbe4ee' }]} />
+                    {/* Photo héro = Street View du départ ; badge = la MÉDAILLE (pas d'émoji). */}
+                    {w0 ? <Image source={{ uri: streetViewUrl(w0.lat, w0.lng, 640, 400) }} style={styles.hero} resizeMode="cover" /> : <View style={[styles.hero, { backgroundColor: '#dbe4ee' }]} />}
                     <View style={styles.heroShade} />
                     <View style={{ position: 'absolute', top: 6, left: 8 }}>
                       <Medal width={62} {...(r.medalSpec || {})} title={r.name} km={r.totalKm} />
                     </View>
                     <View style={[styles.heroBottom, { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }]}>
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.heroName} numberOfLines={1}>{r.emoji ? r.emoji + ' ' : ''}{r.name}</Text>
+                        <Text style={styles.heroName} numberOfLines={1}>{r.name}</Text>
                         <View style={styles.heroChips}>
                           <View style={styles.heroChip}><Text style={styles.heroChipTxt}>{r.totalKm} {t.km}</Text></View>
                           {stops > 0 && (<View style={styles.heroChip}><MapPin size={11} color="#fff" /><Text style={styles.heroChipTxt}> {stops}</Text></View>)}
