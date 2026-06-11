@@ -26,7 +26,6 @@ import {
   Challenge,
   ChallengeProgress,
   ChallengePOI,
-  streetViewUrl,
 } from '../../lib/races';
 import { poiPhoto } from '../../assets/challenges/registry';
 import Medal from '../../components/Medal';
@@ -504,7 +503,10 @@ export default function ChallengeScreen() {
         const cur = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
         lastReal.current = { lat: cur.coords.latitude, lng: cur.coords.longitude };
         const h = cur.coords.heading != null && cur.coords.heading >= 0 ? cur.coords.heading : 0;
-        webRef.current?.injectJavaScript(`window.navReal && window.navReal(${cur.coords.latitude}, ${cur.coords.longitude}, ${h}); true;`);
+        // Le marqueur démarre SUR le trajet (à la progression actuelle), pas à ta position brute.
+        const fr0 = totalKm > 0 ? Math.min(1, sessionBaseKm.current / totalKm) : 0;
+        const rp0 = pointAtFraction(effectiveRoute, fr0);
+        webRef.current?.injectJavaScript(`window.navReal && window.navReal(${rp0.lat}, ${rp0.lng}, ${h}); true;`);
       } catch {}
       locWatch.current = await Location.watchPositionAsync(
         // Énergie : on espace les relevés (2s/4m au lieu de 1s/2m) hors sprint.
@@ -520,7 +522,11 @@ export default function ChallengeScreen() {
           const total = sessionBaseKm.current + sessionKm.current;
           setLiveKm(total);
           const h = heading != null && heading >= 0 ? heading : 0;
-          webRef.current?.injectJavaScript(`window.navReal && window.navReal(${latitude}, ${longitude}, ${h}); true;`);
+          // Défi VIRTUEL : ta distance réelle (parcourue n'importe où) fait avancer
+          // le marqueur LE LONG DU TRAJET — pas besoin d'être à l'emplacement exact.
+          const frac = totalKm > 0 ? Math.min(1, total / totalKm) : 0;
+          const rp = pointAtFraction(effectiveRoute, frac);
+          webRef.current?.injectJavaScript(`window.navReal && window.navReal(${rp.lat}, ${rp.lng}, ${h}); true;`);
           maybeWrite(total);
         }
       );
@@ -668,9 +674,6 @@ export default function ChallengeScreen() {
 
         {/* Médaille de la course — centre = image (Street View) du lieu d'arrivée (connectée) */}
         {totalKm > 0 && (() => {
-          const ps = challenge?.pois || [];
-          const last = ps.length ? ps[ps.length - 1] : null;
-          const photo = last ? streetViewUrl(last.lat, last.lng, 300, 300) : undefined;
           const completed = myCumulativeKm >= totalKm;
           const myRank = completed ? ((board.findIndex((b) => b.email === email) + 1) || 1) : 0;
           return (
@@ -680,7 +683,7 @@ export default function ChallengeScreen() {
               </Text>
               <View style={completed ? undefined : { opacity: 0.5 }}>
                 <Medal width={190} frame={CHALLENGE_FRAME[challengeId]} title={challenge.name}
-                  km={totalKm} rank={myRank || undefined} name={user?.fullName || t.you} photoUrl={photo} />
+                  km={totalKm} rank={myRank || undefined} name={user?.fullName || t.you} photoSource={poiPhoto(challengeId, 0)} />
               </View>
               {completed && <Text style={{ fontSize: 14, fontWeight: '700', marginTop: 6, color: text }}>{t.leaderboard} : {myRank}{language === 'fr' ? 'ᵉ' : ''}</Text>}
             </View>
