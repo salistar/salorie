@@ -29,6 +29,7 @@ import {
 } from '../../lib/races';
 import { poiPhoto } from '../../assets/challenges/registry';
 import Medal from '../../components/Medal';
+import { getRace as apiGetRace, joinRace as apiJoinRace, raceProgress as apiProgress } from '../../lib/racesApi';
 
 // Mappe un défi (id) vers un thème de cadre médaille (sinon défaut vert).
 const CHALLENGE_FRAME: Record<string, string> = { 'casa-loop': 'casablanca' };
@@ -273,8 +274,12 @@ function PoiPhoto({ challengeId, index, style }: { challengeId: string; index: n
 }
 
 export default function ChallengeScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, src } = useLocalSearchParams<{ id: string; src?: string }>();
   const challengeId = String(id || '');
+  // Course admin (Mongo) vs défi hardcodé (Firestore). Mongo = id ObjectId 24 hex OU src=mongo.
+  const isMongo = String(src) === 'mongo' || /^[a-f0-9]{24}$/i.test(challengeId);
+  const [mongoChallenge, setMongoChallenge] = useState<Challenge | undefined>(undefined);
+  const [mongoSpec, setMongoSpec] = useState<any>(null);
   const { user } = useUser();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
@@ -287,7 +292,24 @@ export default function ChallengeScreen() {
     user?.fullName ||
     (email ? email.split('@')[0] : 'Runner');
 
-  const challenge: Challenge | undefined = getChallenge(challengeId);
+  const challenge: Challenge | undefined = isMongo ? mongoChallenge : getChallenge(challengeId);
+
+  // Charge la course Mongo (admin) et la convertit au format Challenge (route + POIs).
+  useEffect(() => {
+    if (!isMongo || !challengeId) return;
+    let alive = true;
+    apiGetRace(challengeId).then((r: any) => {
+      if (!alive || !r) return;
+      const wps = (r.waypoints || []) as any[];
+      setMongoChallenge({
+        id: String(r._id || challengeId), name: r.name, totalKm: r.totalKm, emoji: r.emoji || '🏃',
+        route: wps.map((w) => ({ lat: w.lat, lng: w.lng })),
+        pois: wps.map((w) => ({ name: w.name, lat: w.lat, lng: w.lng, atKm: w.atKm || 0 })),
+      } as Challenge);
+      setMongoSpec(r.medalSpec || null);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [isMongo, challengeId]);
 
   const [board, setBoard] = useState<ChallengeProgress[]>([]);
   const [myKm, setMyKm] = useState<number | null>(null);
@@ -422,8 +444,8 @@ export default function ChallengeScreen() {
     if (!challengeId || !email || joining) return;
     setJoining(true);
     try {
-      await joinChallenge(challengeId, email, displayName);
-      setMyKm(0);
+      if (isMongo) { const p: any = await apiJoinRace(challengeId, displayName); setMyKm(p?.cumulativeKm || 0); }
+      else { await joinChallenge(challengeId, email, displayName); setMyKm(0); }
     } catch (e) {
       console.warn('[challenge] join failed', e);
     } finally {
@@ -437,7 +459,8 @@ export default function ChallengeScreen() {
     if (!force && now - lastWrite.current < 1500) return;
     lastWrite.current = now;
     const clamped = Math.min(totalKm || km, Math.max(baseKm, km));
-    setChallengeProgress(challengeId, email, clamped);
+    if (isMongo) apiProgress(challengeId, clamped).catch(() => {}); // backend auto-finit + génère la médaille au total
+    else setChallengeProgress(challengeId, email, clamped);
   };
 
   // Finishing a navigation segment → log the distance covered to recent activity
@@ -682,8 +705,8 @@ export default function ChallengeScreen() {
                 {completed ? '🎉 Médaille gagnée !' : 'Ta médaille à débloquer'}
               </Text>
               <View style={completed ? undefined : { opacity: 0.5 }}>
-                <Medal width={190} frame={CHALLENGE_FRAME[challengeId]} title={challenge.name}
-                  km={totalKm} rank={myRank || undefined} name={user?.fullName || t.you} photoSource={poiPhoto(challengeId, 0)} />
+                <Medal width={190} frame={isMongo ? undefined : CHALLENGE_FRAME[challengeId]} {...(isMongo && mongoSpec ? mongoSpec : {})} title={challenge.name}
+                  km={totalKm} rank={myRank || undefined} name={user?.fullName || t.you} photoSource={isMongo ? undefined : poiPhoto(challengeId, 0)} />
               </View>
               {completed && <Text style={{ fontSize: 14, fontWeight: '700', marginTop: 6, color: text }}>{t.leaderboard} : {myRank}{language === 'fr' ? 'ᵉ' : ''}</Text>}
             </View>

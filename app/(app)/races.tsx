@@ -16,6 +16,7 @@ import {
   CHALLENGES, getMyChallengeProgress, joinChallenge,
   Race,
 } from '../../lib/races';
+import { getActiveRaces } from '../../lib/racesApi';
 
 const PRIMARY = Colors.light.primary;
 
@@ -108,6 +109,7 @@ export default function RacesScreen() {
   // Challenges
   const [progress, setProgress] = useState<Record<string, number | null>>({});
   const [loadingChallenges, setLoadingChallenges] = useState(true);
+  const [activeRaces, setActiveRaces] = useState<any[]>([]); // courses admin (Mongo)
   const [busy, setBusy] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -136,6 +138,8 @@ export default function RacesScreen() {
   }, [email]);
 
   useEffect(() => { loadProgress(); }, [loadProgress]);
+  // Courses créées depuis l'admin (Mongo) — jouables via le MÊME écran défi.
+  useEffect(() => { getActiveRaces().then((r: any) => { if (Array.isArray(r)) setActiveRaces(r); }).catch(() => {}); }, []);
 
   const onCreate = async () => {
     if (!raceName.trim() || creating) return;
@@ -274,6 +278,30 @@ export default function RacesScreen() {
         ) : (
           <>
             {/* Challenges */}
+            {/* Courses créées depuis l'admin (Mongo) — médaille = le modèle conçu */}
+            {activeRaces.map((r) => {
+              const stops = (r.waypoints || []).length;
+              return (
+                <TouchableOpacity key={r._id} activeOpacity={0.9} style={[styles.challengeCard, { backgroundColor: card }]} onPress={() => router.push('/challenge?id=' + r._id + '&src=mongo')}>
+                  <View style={styles.heroWrap}>
+                    <View style={[styles.hero, { backgroundColor: '#dbe4ee' }]} />
+                    <View style={styles.heroShade} />
+                    <View style={{ position: 'absolute', top: 6, left: 8 }}>
+                      <Medal width={62} {...(r.medalSpec || {})} title={r.name} km={r.totalKm} />
+                    </View>
+                    <View style={[styles.heroBottom, { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }]}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.heroName} numberOfLines={1}>{r.emoji ? r.emoji + ' ' : ''}{r.name}</Text>
+                        <View style={styles.heroChips}>
+                          <View style={styles.heroChip}><Text style={styles.heroChipTxt}>{r.totalKm} {t.km}</Text></View>
+                          {stops > 0 && (<View style={styles.heroChip}><MapPin size={11} color="#fff" /><Text style={styles.heroChipTxt}> {stops}</Text></View>)}
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
             {loadingChallenges ? (
               <View style={styles.loadingBox}><ActivityIndicator size="large" color={PRIMARY} /></View>
             ) : CHALLENGES.length === 0 ? (
