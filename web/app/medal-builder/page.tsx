@@ -15,8 +15,9 @@ export default function MedalBuilder() {
   const [customPath, setCustomPath] = useState('');
   const [title, setTitle] = useState('SALORIE');
   const [km, setKm] = useState('120');
+  const [mode, setMode] = useState<'template' | 'full'>('template');
 
-  const base: any = { color, metal, centerType, title, km: Number(km) || 0, time: '4h 28min', name: 'Participant', rank: 1, customPath: customPath.trim() || undefined };
+  const base: any = { color, metal, centerType, mode, title, km: Number(km) || 0, time: '4h 28min', name: 'Participant', rank: 1, customPath: customPath.trim() || undefined };
   const spec = JSON.stringify({ shape: customPath.trim() ? 'custom' : shape, color, metal, centerType, ...(customPath.trim() ? { customPath: customPath.trim() } : {}) });
 
   return (
@@ -47,6 +48,12 @@ export default function MedalBuilder() {
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => setCenterType('geo')} style={chip(centerType === 'geo')}>Motif géométrique</button>
             <button onClick={() => setCenterType('photo')} style={chip(centerType === 'photo')}>Photo (dans l'app)</button>
+          </div>
+
+          <label style={lbl}>Aperçu</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => setMode('template')} style={chip(mode === 'template')}>Modèle vierge</button>
+            <button onClick={() => setMode('full')} style={chip(mode === 'full')}>Avec données (rang/temps/nom)</button>
           </div>
 
           <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
