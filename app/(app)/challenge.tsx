@@ -26,6 +26,7 @@ import {
   Challenge,
   ChallengeProgress,
   ChallengePOI,
+  streetViewUrl,
 } from '../../lib/races';
 import { poiPhoto } from '../../assets/challenges/registry';
 import Medal from '../../components/Medal';
@@ -266,8 +267,10 @@ function buildHtml(route: LatLng[], me: LatLng, color: string): string {
 </body></html>`;
 }
 
-// A bundled landmark photo (always available offline).
-function PoiPhoto({ challengeId, index, style }: { challengeId: string; index: number; style?: any }) {
+// Photo d'un arrêt : bundlée (défis hardcodés, offline) OU URL distante (Street View
+// auto pour les courses Mongo, calculée depuis les coords).
+function PoiPhoto({ challengeId, index, style, photoUrl }: { challengeId: string; index: number; style?: any; photoUrl?: string }) {
+  if (photoUrl) return <Image source={{ uri: photoUrl }} style={style} resizeMode="cover" />;
   const src = poiPhoto(challengeId, index);
   if (!src) return <View style={[style, { backgroundColor: '#cbd5e1' }]} />;
   return <Image source={src} style={style} resizeMode="cover" />;
@@ -345,7 +348,8 @@ export default function ChallengeScreen() {
         const origin = `${r[0].lat},${r[0].lng}`;
         const dest = `${r[r.length - 1].lat},${r[r.length - 1].lng}`;
         const wp = r.slice(1, -1).map((p) => `${p.lat},${p.lng}`).join('|');
-        const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${dest}${wp ? `&waypoints=${wp}` : ''}&mode=walking&key=${GOOGLE_MAPS_KEY}`;
+        // driving = suit les routes même sur longue distance (walking échoue > ~100 km).
+        const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${dest}${wp ? `&waypoints=${wp}` : ''}&mode=driving&key=${GOOGLE_MAPS_KEY}`;
         const res = await fetch(url);
         const j = await res.json();
         if (alive && j.status === 'OK' && j.routes?.[0]?.overview_polyline?.points) {
@@ -354,7 +358,7 @@ export default function ChallengeScreen() {
       } catch (e) { console.warn('[challenge] directions failed', e); }
     })();
     return () => { alive = false; };
-  }, [challengeId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [challengeId, challenge?.id]); // challenge?.id : relance quand la course Mongo (async) se charge
 
   // Load body weight (for the calorie estimate when a segment is logged).
   useEffect(() => {
@@ -666,7 +670,7 @@ export default function ChallengeScreen() {
                 style={styles.navCard}
                 onPress={() => setViewerPoi(activePoi)}
               >
-                <PoiPhoto challengeId={challengeId} index={activePoi} style={styles.navCardImg} />
+                <PoiPhoto challengeId={challengeId} index={activePoi} style={styles.navCardImg} photoUrl={isMongo ? streetViewUrl(pois[activePoi].lat, pois[activePoi].lng) : undefined} />
                 <View style={styles.navCardBody}>
                   <Text style={styles.navCardKicker}>📍 {t.youAreHere}</Text>
                   <Text style={styles.navCardName} numberOfLines={1}>{pois[activePoi].name}</Text>
@@ -778,7 +782,7 @@ export default function ChallengeScreen() {
                     onPress={() => setViewerPoi(i)}
                   >
                     <View style={styles.poiImgWrap}>
-                      <PoiPhoto challengeId={challengeId} index={i} style={styles.poiImg} />
+                      <PoiPhoto challengeId={challengeId} index={i} style={styles.poiImg} photoUrl={isMongo && pois[i] ? streetViewUrl(pois[i].lat, pois[i].lng) : undefined} />
                       {!isReached && (
                         <View style={styles.poiLock}>
                           <Text style={styles.poiLockTxt}>{t.locked}</Text>
@@ -839,7 +843,7 @@ export default function ChallengeScreen() {
         <View style={styles.viewerWrap}>
           {viewerPoi !== null && pois[viewerPoi] && (
             <>
-              <PoiPhoto challengeId={challengeId} index={viewerPoi} style={styles.viewerImg} />
+              <PoiPhoto challengeId={challengeId} index={viewerPoi} style={styles.viewerImg} photoUrl={isMongo ? streetViewUrl(pois[viewerPoi].lat, pois[viewerPoi].lng) : undefined} />
               <View style={styles.viewerInfo}>
                 <Text style={styles.viewerName}>{pois[viewerPoi].name}</Text>
                 <Text style={styles.viewerKm}>{challenge.emoji} {challenge.name} · {pois[viewerPoi].atKm} {t.km}</Text>
