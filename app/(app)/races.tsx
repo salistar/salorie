@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, Trophy, Users, Plus, ChevronRight, MapPin, CheckCircle2 } from 'lucide-react-native';
 import { poiPhoto } from '../../assets/challenges/registry';
+import Medal from '../../components/Medal';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -292,6 +293,10 @@ export default function RacesScreen() {
                       {hero ? <Image source={hero} style={styles.hero} resizeMode="cover" /> : <View style={[styles.hero, { backgroundColor: '#cbd5e1' }]} />}
                       <View style={styles.heroShade} />
                       <View style={styles.heroEmoji}><Text style={{ fontSize: 22 }}>{c.emoji}</Text></View>
+                      {/* Vignette médaille (forme variée selon la course) */}
+                      <View style={{ position: 'absolute', top: 4, right: 6 }}>
+                        <Medal width={58} frame={c.id} title={c.name} km={c.totalKm} rank={done ? 1 : undefined} />
+                      </View>
                       <View style={styles.heroBottom}>
                         <Text style={styles.heroName} numberOfLines={1}>{c.name}</Text>
                         <View style={styles.heroChips}>
