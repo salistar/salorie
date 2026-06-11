@@ -1,8 +1,8 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { buildMedalSvg } from '../../lib/medalFrames';
+import { buildMedalSvg, SHAPES } from '../../lib/medalFrames';
 
-const FRAMES = ['rabat','casablanca','marrakech','fes','meknes','tanger','chefchaouen','essaouira','ouarzazate','tetouan','agadir','oujda','safi','volubilis','dakhla','merzouga','ifrane','el-jadida','asilah','beni-mellal','couscous','tajine','caftan','zellige','gnaoua','the','henne','tapis','babouche','argan'];
+const mchip = (a: boolean): any => ({ padding: '5px 11px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 12, color: a ? '#fff' : '#64748b', background: a ? '#2E8B57' : '#eef2f7' });
 // Clé via variable d'env (jamais en dur dans le code). Définir NEXT_PUBLIC_GMAP_KEY
 // côté déploiement web pour activer la carte.
 const GMAP_KEY = process.env.NEXT_PUBLIC_GMAP_KEY || '';
@@ -16,7 +16,10 @@ export default function RaceForm({ onCreated }: { onCreated?: () => void }) {
   const [timeLimitDays, setTimeLimitDays] = useState('30');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [medalFrame, setMedalFrame] = useState('rabat');
+  const [mShape, setMShape] = useState('circle');
+  const [mColor, setMColor] = useState('#2e74b0');
+  const [mMetal, setMMetal] = useState('or');
+  const [mCenter, setMCenter] = useState<'photo' | 'geo'>('geo');
   const [wps, setWps] = useState<WP[]>([]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -73,7 +76,8 @@ export default function RaceForm({ onCreated }: { onCreated?: () => void }) {
     if (wps.length < 2) { setMsg('⚠️ Clique au moins un départ et une arrivée sur la carte.'); return; }
     const payload = {
       name, emoji, totalKm: Number(totalKm), timeLimitDays: Number(timeLimitDays),
-      startDate: startDate || undefined, endDate: endDate || undefined, medalFrame,
+      startDate: startDate || undefined, endDate: endDate || undefined, medalFrame: 'custom',
+      medalSpec: { shape: mShape, color: mColor, metal: mMetal, centerType: mCenter },
       waypoints: wps.map((w, i) => ({ kind: i === 0 ? 'start' : i === wps.length - 1 ? 'end' : 'stop', name: w.name, lat: w.lat, lng: w.lng, atKm: Number(w.atKm), mediaType: w.mediaType })),
     };
     setBusy(true);
@@ -95,14 +99,22 @@ export default function RaceForm({ onCreated }: { onCreated?: () => void }) {
         <Field label="Temps imparti (jours)"><input style={inp} type="number" value={timeLimitDays} onChange={(e) => setTimeLimitDays(e.target.value)} /></Field>
         <Field label="Date début"><input style={inp} type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></Field>
         <Field label="Date fin"><input style={inp} type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></Field>
-        <Field label="Cadre médaille">
-          <select style={inp} value={medalFrame} onChange={(e) => setMedalFrame(e.target.value)}>{FRAMES.map((f) => <option key={f} value={f}>{f}</option>)}</select>
+        <Field label="Forme de la médaille">
+          <select style={inp} value={mShape} onChange={(e) => setMShape(e.target.value)}>{SHAPES.map((s) => <option key={s} value={s}>{s}</option>)}</select>
+        </Field>
+        <Field label="Couleur de la médaille">
+          <input type="color" value={mColor} onChange={(e) => setMColor(e.target.value)} style={{ ...inp, padding: 4, height: 42 }} />
         </Field>
       </div>
 
       <div style={{ textAlign: 'center', margin: '14px 0', padding: 12, background: '#f8fafc', borderRadius: 12 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginBottom: 6 }}>Aperçu médaille (cadre « {medalFrame} »)</div>
-        <div style={{ display: 'inline-block' }} dangerouslySetInnerHTML={{ __html: buildMedalSvg({ frame: medalFrame, title: name || 'Course', km: Number(totalKm) || 0, time: '4h 28min', name: 'Participant', dates: '', rank: 1 }).replace('width="264" height="384"', 'width="140" height="204"') }} />
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginBottom: 6 }}>Aperçu médaille (modèle) — <a href="/medal-builder" style={{ color: '#2E8B57' }}>builder complet</a></div>
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
+          {['or', 'argent', 'bronze'].map((m) => <button key={m} type="button" onClick={() => setMMetal(m)} style={mchip(mMetal === m)}>{m}</button>)}
+          <button type="button" onClick={() => setMCenter('geo')} style={mchip(mCenter === 'geo')}>motif</button>
+          <button type="button" onClick={() => setMCenter('photo')} style={mchip(mCenter === 'photo')}>photo</button>
+        </div>
+        <div style={{ display: 'inline-block' }} dangerouslySetInnerHTML={{ __html: buildMedalSvg({ shape: mShape, color: mColor, metal: mMetal, centerType: mCenter, mode: 'template', title: name || 'Course', km: Number(totalKm) || 0 }).replace('width="264" height="384"', 'width="150" height="218"') }} />
       </div>
 
       <label style={lbl}>🗺️ Clique sur la carte pour poser tes points (1er = départ, dernier = arrivée, milieu = arrêts)</label>
