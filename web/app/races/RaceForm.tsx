@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { buildMedalSvg } from '../../lib/medalFrames';
 
 const FRAMES = ['rabat','casablanca','marrakech','fes','meknes','tanger','chefchaouen','essaouira','ouarzazate','tetouan','agadir','oujda','safi','volubilis','dakhla','merzouga','ifrane','el-jadida','asilah','beni-mellal','couscous','tajine','caftan','zellige','gnaoua','the','henne','tapis','babouche','argan'];
 
@@ -89,6 +90,11 @@ export default function RaceForm({ onCreated }: { onCreated?: () => void }) {
             {FRAMES.map((f) => <option key={f} value={f}>{f}</option>)}
           </select>
         </Field>
+      </div>
+
+      <div style={{ textAlign: 'center', margin: '14px 0', padding: 12, background: '#f8fafc', borderRadius: 12 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginBottom: 6 }}>Aperçu de la médaille (cadre « {medalFrame} »)</div>
+        <div style={{ display: 'inline-block' }} dangerouslySetInnerHTML={{ __html: buildMedalSvg({ frame: medalFrame, title: name || 'Course', km: Number(totalKm) || 0, time: '4h 28min', name: 'Participant', dates: '', rank: 1 }).replace('width="264" height="384"', 'width="150" height="218"') }} />
       </div>
 
       <label style={lbl}>Points du parcours (départ → arrêts 20-100 km → arrivée)</label>
