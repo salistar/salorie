@@ -113,6 +113,24 @@ export const FLAG_KEYS: { key: string; label: string }[] = [
   { key: 'body-composition', label: 'Composition corporelle' },
 ];
 
+// ── Notifications push (admin → users) : récupère les tokens Expo ──
+export async function getPushTargets(userIds?: string[]): Promise<{ id: string; token: string }[]> {
+  const out: { id: string; token: string }[] = [];
+  if (userIds && userIds.length) {
+    for (const id of userIds) {
+      try {
+        const d = await db().collection('users').doc(id).get();
+        const tok = (d.data() as any)?.pushToken;
+        if (d.exists && tok) out.push({ id, token: tok });
+      } catch { /* skip */ }
+    }
+  } else {
+    const snap = await db().collection('users').limit(2000).get();
+    snap.docs.forEach((d) => { const tok = (d.data() as any)?.pushToken; if (tok) out.push({ id: d.id, token: tok }); });
+  }
+  return out;
+}
+
 export async function getFlags(): Promise<Record<string, boolean>> {
   try {
     const d = await db().collection('config').doc('features').get();
