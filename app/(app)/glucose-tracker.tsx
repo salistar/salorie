@@ -1,6 +1,6 @@
 // Glycémie — suivi manuel (mesures + contexte + tendance). Sync CGM = à venir.
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { Droplet, Check } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -51,6 +51,7 @@ export default function GlucoseTrackerScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        <Image source={require('../../assets/images/illustrations/profile_cover.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <View style={styles.head}><Droplet size={24} color="#E11D48" /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 

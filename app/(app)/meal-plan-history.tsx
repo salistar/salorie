@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Image, View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, History, ChevronDown } from 'lucide-react-native';
@@ -45,6 +45,7 @@ export default function MealPlanHistoryScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <ScreenTopBar showBack title={savedTitle} showBrand={false} showNotif={false} />
+        <Image source={require('../../assets/images/illustrations/splash_bg.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
 
         {loading ? (
           <View style={{ paddingVertical: 60, alignItems: 'center' }}><ActivityIndicator size="large" color={Colors.light.primary} /></View>

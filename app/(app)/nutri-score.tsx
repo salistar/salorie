@@ -1,6 +1,6 @@
 // Nutri-Score — note nutritionnelle A→E d'un aliment (pour 100 g).
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { Award } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { FormCard, Stepper } from '../../components/FormKit';
@@ -62,6 +62,7 @@ export default function NutriScoreScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        <Image source={require('../../assets/images/illustrations/healthy_food.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <View style={styles.head}><Award size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 

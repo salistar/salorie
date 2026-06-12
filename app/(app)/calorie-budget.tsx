@@ -1,6 +1,6 @@
 // Budget calories — tes calories comme un compte en banque.
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { Wallet, ArrowDownCircle, ArrowUpCircle, PiggyBank } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useNutritionData } from '../../hooks/useNutritionData';
@@ -78,6 +78,7 @@ export default function CalorieBudgetScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
+        <Image source={require('../../assets/images/illustrations/dashboard_bg.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <View style={styles.head}><Wallet size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 

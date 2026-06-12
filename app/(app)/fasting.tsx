@@ -1,7 +1,7 @@
 // Jeûne intermittent — minuteur on-device. Protocoles 16:8 / 18:6 / 20:4 / OMAD.
 // Persiste l'heure de début (AsyncStorage) → survit au redémarrage de l'app.
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import { Image, View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Play, Square, Timer, Utensils } from 'lucide-react-native';
 import { useUser } from '@clerk/clerk-expo';
@@ -135,6 +135,7 @@ export default function FastingScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
+        <Image source={require('../../assets/images/illustrations/plan.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <View style={styles.head}><Timer size={26} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
 
         <View style={styles.protoRow}>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { Activity, TrendingDown, TrendingUp, Check } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -125,6 +125,7 @@ export default function AdaptiveTDEE() {
     <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar />
       <ScrollView contentContainerStyle={s.body}>
+        <Image source={require('../../assets/images/illustrations/lose_weight.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <View style={s.head}>
           <Activity size={26} color={GREEN} />
           <Text style={[s.title, { color: text }]}>{t.title}</Text>
