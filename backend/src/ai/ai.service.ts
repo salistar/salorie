@@ -35,6 +35,28 @@ export class AiService {
   // Vision : modèle LITE par défaut (latence 2-3× plus faible que flash, suffisant
   // pour reconnaître un plat / une machine). Overridable par GEMINI_VISION_MODEL.
   private visionModel = process.env.GEMINI_VISION_MODEL || 'gemini-2.5-flash-lite';
+
+  // Transcription : faster-whisper local (rapide, gratuit) → fallback Gemini audio.
+  async transcribe(audioBase64: string, mimeType = 'audio/mp4', language?: string): Promise<{ text: string; engine: string }> {
+    const whisperUrl = process.env.WHISPER_URL || 'http://whisper:9000';
+    try {
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 30000);
+      const r = await fetch(`${whisperUrl}/transcribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audioBase64, language: language || null }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(to);
+      if (r.ok) {
+        const j: any = await r.json();
+        if (typeof j?.text === 'string') return { text: j.text, engine: 'whisper' };
+      }
+    } catch { /* whisper indisponible → fallback Gemini */ }
+    const text = await this.vision('Transcribe this audio exactly as spoken. Reply with ONLY the raw transcription text, nothing else.', audioBase64, mimeType);
+    return { text, engine: 'gemini' };
+  }
   async vision(prompt: string, imageBase64: string, mimeType = 'image/jpeg', model?: string): Promise<string> {
     if (!this.genAI) throw new Error('GEMINI_API_KEY not configured');
     const m = this.genAI.getGenerativeModel({ model: model || this.visionModel });

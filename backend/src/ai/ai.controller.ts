@@ -19,4 +19,12 @@ export class AiController {
     if (!body?.prompt || !body?.imageBase64) throw new BadRequestException('prompt and imageBase64 required');
     return { text: await this.ai.vision(body.prompt, body.imageBase64, body.mimeType || 'image/jpeg', body.model) };
   }
+
+  // Vocal → texte : faster-whisper local (fallback Gemini). Limite 10 Mo base64.
+  @Post('transcribe')
+  async transcribe(@Body() body: { audioBase64?: string; mimeType?: string; language?: string }) {
+    if (!body?.audioBase64) throw new BadRequestException('audioBase64 required');
+    if (body.audioBase64.length > 10_000_000) throw new BadRequestException('audio too large');
+    return this.ai.transcribe(body.audioBase64, body.mimeType || 'audio/mp4', body.language);
+  }
 }

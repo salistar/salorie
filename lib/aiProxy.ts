@@ -23,6 +23,19 @@ export async function aiGenerate(prompt: string, model?: string): Promise<string
   return String(j?.text ?? '');
 }
 
+/** Vocal → texte via faster-whisper backend (fallback Gemini côté serveur). */
+export async function aiTranscribe(audioBase64: string, mimeType = 'audio/mp4', language?: string): Promise<string> {
+  if (!API_URL) throw new Error('EXPO_PUBLIC_API_URL not configured');
+  const res = await fetch(`${API_URL}/ai/transcribe`, {
+    method: 'POST',
+    headers: await headers(),
+    body: JSON.stringify({ audioBase64, mimeType, language }),
+  });
+  if (!res.ok) throw new Error(`/ai/transcribe ${res.status}`);
+  const j = await res.json();
+  return String(j?.text ?? '');
+}
+
 /** Multimodal (image) generation via backend Gemini. */
 export async function aiVision(prompt: string, imageBase64: string, mimeType = 'image/jpeg', model?: string): Promise<string> {
   if (!API_URL) throw new Error('EXPO_PUBLIC_API_URL not configured');
