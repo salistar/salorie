@@ -7,12 +7,14 @@ import { WifiOff, RefreshCw } from 'lucide-react-native';
 import * as Network from 'expo-network';
 import { auth } from '../lib/firebaseAuth';
 import { flushPendingLogs, pendingLogsCount } from '../lib/firebase';
+import { flushPendingRaceProgress } from '../lib/racesApi';
 
 export default function OfflineBanner() {
   const [offline, setOffline] = useState(false);
   const [pending, setPending] = useState(0);
   const [syncing, setSyncing] = useState(false);
   const wasOffline = useRef(false);
+  const didStartupFlush = useRef(false);
 
   useEffect(() => {
     let alive = true;
@@ -24,12 +26,16 @@ export default function OfflineBanner() {
         setOffline(off);
         const email = auth.currentUser?.email || (auth.currentUser as any)?.uid || '';
         if (email) {
-          // Retour en ligne après une coupure → on synchronise la file.
-          if (wasOffline.current && !off) {
+          // Retour en ligne après une coupure OU démarrage avec file non vide
+          // (app tuée hors-ligne puis relancée en ligne) → on synchronise.
+          const startupFlush = !didStartupFlush.current && !off && (await pendingLogsCount(email)) > 0;
+          if ((wasOffline.current && !off) || startupFlush) {
             setSyncing(true);
             try { await flushPendingLogs(email); } catch {}
+            try { await flushPendingRaceProgress(); } catch {}
             setSyncing(false);
           }
+          didStartupFlush.current = true;
           if (alive) setPending(await pendingLogsCount(email));
         }
         wasOffline.current = off;

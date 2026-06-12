@@ -86,6 +86,8 @@ export default function HomeScreen() {
     const email = user?.primaryEmailAddress?.emailAddress || '';
     const uid = user?.id;
     if (!email || !uid) return;
+    // Crash de la session précédente ? → envoi automatique au support (best-effort).
+    try { require('../../lib/logBuffer').maybeReportCrash(email); } catch {}
     if (_homeSyncedUserIds.has(uid)) {
       console.log('\x1b[33m[HomeScreen] sync deja effectue dans cette session pour\x1b[0m', email, '\x1b[33m— on skip pour eviter le reload quand on revient du scan\x1b[0m');
       return;
