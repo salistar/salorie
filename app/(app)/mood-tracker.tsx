@@ -5,12 +5,30 @@ import { useUser } from '@clerk/clerk-expo';
 import { Smile, Check, Zap } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { logEntry, getEntries } from '../../lib/tracking';
+import { useTranslation } from '../../lib/i18n';
+import { useTheme } from '../../lib/ThemeContext';
 
 const GREEN = '#2E8B57';
 const MOODS = ['😞', '😕', '😐', '🙂', '😄'];
 
+const TXT: any = {
+  en: { title: 'Mood & energy', sub: 'How are you feeling today?', mood: 'Mood', energy: 'Energy', save: 'Save', last7: 'Last 7 days', empty: 'Nothing yet.' },
+  fr: { title: 'Humeur & énergie', sub: "Comment te sens-tu aujourd'hui ?", mood: 'Humeur', energy: 'Énergie', save: 'Enregistrer', last7: '7 derniers jours', empty: 'Rien encore.' },
+  ar: { title: 'المزاج والطاقة', sub: 'كيف تشعر اليوم؟', mood: 'المزاج', energy: 'الطاقة', save: 'حفظ', last7: 'آخر 7 أيام', empty: 'لا شيء بعد.' },
+};
+
 export default function MoodTrackerScreen() {
   const { user } = useUser();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const text = isDark ? '#f1f5f9' : '#0F172A';
+  const sub = isDark ? '#94a3b8' : '#64748B';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const [mood, setMood] = useState(4);
   const [energy, setEnergy] = useState(3);
@@ -23,35 +41,35 @@ export default function MoodTrackerScreen() {
   const save = async () => { setSaving(true); await logEntry(email, 'mood', { mood, energy }); await load(); setSaving(false); };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
-        <View style={styles.head}><Smile size={24} color={GREEN} /><Text style={styles.title}>Humeur & énergie</Text></View>
-        <Text style={styles.sub}>Comment te sens-tu aujourd'hui ?</Text>
+        <View style={styles.head}><Smile size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
-        <Text style={styles.label}>Humeur</Text>
+        <Text style={[styles.label, { color: sub }, align]}>{t.mood}</Text>
         <View style={styles.row}>
           {MOODS.map((e, i) => (
-            <TouchableOpacity key={i} style={[styles.btn, mood === i + 1 && styles.btnActive]} onPress={() => setMood(i + 1)}><Text style={styles.emoji}>{e}</Text></TouchableOpacity>
+            <TouchableOpacity key={i} style={[styles.btn, { backgroundColor: card }, mood === i + 1 && styles.btnActive]} onPress={() => setMood(i + 1)}><Text style={styles.emoji}>{e}</Text></TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.label}><Zap size={13} color="#64748B" /> Énergie</Text>
+        <Text style={[styles.label, { color: sub }, align]}><Zap size={13} color={sub} /> {t.energy}</Text>
         <View style={styles.row}>
           {[1, 2, 3, 4, 5].map((n) => (
-            <TouchableOpacity key={n} style={[styles.lvl, energy >= n && styles.lvlActive]} onPress={() => setEnergy(n)}><Text style={[styles.lvlTxt, energy >= n && { color: '#fff' }]}>{n}</Text></TouchableOpacity>
+            <TouchableOpacity key={n} style={[styles.lvl, { backgroundColor: card }, energy >= n && styles.lvlActive]} onPress={() => setEnergy(n)}><Text style={[styles.lvlTxt, energy >= n && { color: '#fff' }]}>{n}</Text></TouchableOpacity>
           ))}
         </View>
 
         <TouchableOpacity style={styles.saveBtn} onPress={save} disabled={saving}>
-          {saving ? <ActivityIndicator color="#fff" /> : <><Check size={20} color="#fff" /><Text style={styles.saveTxt}>Enregistrer</Text></>}
+          {saving ? <ActivityIndicator color="#fff" /> : <><Check size={20} color="#fff" /><Text style={styles.saveTxt}>{t.save}</Text></>}
         </TouchableOpacity>
 
-        <Text style={styles.label}>7 derniers jours</Text>
-        {loading ? <ActivityIndicator color={GREEN} /> : hist.length === 0 ? <Text style={styles.empty}>Rien encore.</Text> : hist.map((h) => (
-          <View key={h.id} style={styles.histRow}>
-            <Text style={styles.histDate}>{h.date}</Text>
-            <Text style={styles.histVal}>{MOODS[(h.mood || 3) - 1]}  ⚡{h.energy || '—'}/5</Text>
+        <Text style={[styles.label, { color: sub }, align]}>{t.last7}</Text>
+        {loading ? <ActivityIndicator color={GREEN} /> : hist.length === 0 ? <Text style={[styles.empty, align]}>{t.empty}</Text> : hist.map((h) => (
+          <View key={h.id} style={[styles.histRow, { backgroundColor: card }]}>
+            <Text style={[styles.histDate, { color: sub }]}>{h.date}</Text>
+            <Text style={[styles.histVal, { color: text }]}>{MOODS[(h.mood || 3) - 1]}  ⚡{h.energy || '—'}/5</Text>
           </View>
         ))}
       </ScrollView>

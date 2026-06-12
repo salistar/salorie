@@ -4,10 +4,28 @@ import { View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableO
 import { Link2, Download } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { aiGenerate } from '../../lib/aiProxy';
+import { useTheme } from '../../lib/ThemeContext';
+import { useTranslation } from '../../lib/i18n';
 
 const GREEN = '#2E8B57';
 
+const TXT: any = {
+  en: { title: 'Import a recipe', sub: 'Paste a recipe URL (blog, cooking site) → ingredients + nutrition.', importBtn: 'Import', loading: 'Fetching + analyzing the page…', failPrefix: 'Import failed', failSuffix: 'Check the URL or try again.', timeout: 'timed out', error: 'error' },
+  fr: { title: 'Importer une recette', sub: "Colle l'URL d'une recette (blog, site cuisine) → ingrédients + nutrition.", importBtn: 'Importer', loading: 'Récupération + analyse de la page…', failPrefix: 'Import impossible', failSuffix: "Vérifie l'URL ou réessaie.", timeout: 'délai dépassé', error: 'erreur' },
+  ar: { title: 'استيراد وصفة', sub: 'الصق رابط وصفة (مدونة، موقع طبخ) ← مكونات + قيم غذائية.', importBtn: 'استيراد', loading: 'جارٍ جلب الصفحة وتحليلها…', failPrefix: 'تعذر الاستيراد', failSuffix: 'تحقق من الرابط أو حاول مجدداً.', timeout: 'انتهت المهلة', error: 'خطأ' },
+};
+
 export default function ImportRecipeScreen() {
+  const { resolved } = useTheme();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const text = isDark ? '#f1f5f9' : '#0F172A';
+  const sub = isDark ? '#94a3b8' : '#64748B';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');
@@ -28,26 +46,26 @@ export default function ImportRecipeScreen() {
       const text = await aiGenerate(`Voici le HTML d'une page de recette. Extrais et renvoie en français, concis : 1) le NOM de la recette, 2) les INGRÉDIENTS (liste à puces), 3) les ÉTAPES (résumé court), 4) une ESTIMATION NUTRITIONNELLE par portion (calories, protéines, glucides, lipides). HTML:\n${html}`);
       setResult(text.trim());
     } catch (e: any) {
-      setResult(`Import impossible (${e?.name === 'AbortError' ? 'délai dépassé' : e?.message || 'erreur'}). Vérifie l'URL ou réessaie.`);
+      setResult(`${t.failPrefix} (${e?.name === 'AbortError' ? t.timeout : e?.message || t.error}). ${t.failSuffix}`);
     } finally { setLoading(false); }
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <View style={styles.head}><Link2 size={24} color={GREEN} /><Text style={styles.title}>Importer une recette</Text></View>
-        <Text style={styles.sub}>Colle l'URL d'une recette (blog, site cuisine) → ingrédients + nutrition.</Text>
+        <View style={styles.head}><Link2 size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
         <View style={styles.row}>
-          <TextInput style={styles.input} placeholder="https://…" autoCapitalize="none" keyboardType="url" value={url} onChangeText={setUrl} onSubmitEditing={run} returnKeyType="go" />
+          <TextInput style={[styles.input, { backgroundColor: card, color: text }]} placeholder="https://…" placeholderTextColor={sub} autoCapitalize="none" keyboardType="url" value={url} onChangeText={setUrl} onSubmitEditing={run} returnKeyType="go" />
         </View>
         <TouchableOpacity style={styles.btn} onPress={run} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <><Download size={20} color="#fff" /><Text style={styles.btnTxt}>Importer</Text></>}
+          {loading ? <ActivityIndicator color="#fff" /> : <><Download size={20} color="#fff" /><Text style={styles.btnTxt}>{t.importBtn}</Text></>}
         </TouchableOpacity>
 
-        {loading && <Text style={styles.loadingTxt}>Récupération + analyse de la page…</Text>}
-        {!!result && <View style={styles.card}><Text style={styles.cardTxt}>{result}</Text></View>}
+        {loading && <Text style={[styles.loadingTxt, { color: sub }]}>{t.loading}</Text>}
+        {!!result && <View style={[styles.card, { backgroundColor: card }]}><Text style={[styles.cardTxt, { color: isDark ? '#e2e8f0' : '#1F2937' }, align]}>{result}</Text></View>}
       </ScrollView>
     </SafeAreaView>
   );

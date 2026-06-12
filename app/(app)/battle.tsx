@@ -7,12 +7,72 @@ import { Swords, Search } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { db, emailToDocId, getUserFromFirestore } from '../../lib/firebase';
 import { getEntries } from '../../lib/tracking';
+import { useTheme } from '../../lib/ThemeContext';
+import { useTranslation } from '../../lib/i18n';
 
 const GREEN = '#2E8B57';
 const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
+const TXT: any = {
+  en: {
+    title: 'Battle 1v1',
+    sub: 'Consistency score = active days over 7 days. Challenge a friend!',
+    myLabel: 'Your score this week',
+    placeholder: "Your friend's email",
+    challenge: 'Challenge',
+    errEmail: "Enter your friend's email.",
+    errNotFound: 'Friend not found (they need a Salorie account).',
+    errProfile: 'Could not fetch this profile.',
+    you: 'You',
+    leading: "You're leading! 🏆",
+    behind: "You're behind, hang in there! 💪",
+    tie: 'Perfect tie ⚖️',
+    noScore: "hasn't published a score yet — invite them to open Battle.",
+  },
+  fr: {
+    title: 'Battle 1v1',
+    sub: "Score d'assiduité = jours actifs sur 7 jours. Défie un ami !",
+    myLabel: 'Ton score cette semaine',
+    placeholder: 'Email de ton ami',
+    challenge: 'Défier',
+    errEmail: "Entre l'email de ton ami.",
+    errNotFound: 'Ami introuvable (il doit avoir un compte Salorie).',
+    errProfile: 'Impossible de récupérer ce profil.',
+    you: 'Toi',
+    leading: 'Tu mènes ! 🏆',
+    behind: 'Tu es mené, accroche-toi ! 💪',
+    tie: 'Égalité parfaite ⚖️',
+    noScore: "n'a pas encore de score publié — invite-le à ouvrir Battle.",
+  },
+  ar: {
+    title: 'تحدي 1 ضد 1',
+    sub: 'نقاط المواظبة = أيام النشاط خلال 7 أيام. تحدَّ صديقاً!',
+    myLabel: 'نقاطك هذا الأسبوع',
+    placeholder: 'البريد الإلكتروني لصديقك',
+    challenge: 'تحدَّ',
+    errEmail: 'أدخل البريد الإلكتروني لصديقك.',
+    errNotFound: 'الصديق غير موجود (يجب أن يملك حساب Salorie).',
+    errProfile: 'تعذّر جلب هذا الملف الشخصي.',
+    you: 'أنت',
+    leading: 'أنت في المقدمة! 🏆',
+    behind: 'أنت متأخر، تماسك! 💪',
+    tie: 'تعادل تام ⚖️',
+    noScore: 'لم ينشر نقاطاً بعد — ادعُه لفتح التحدي.',
+  },
+};
+
 export default function BattleScreen() {
   const { user } = useUser();
+  const { resolved } = useTheme();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const text = isDark ? '#f1f5f9' : '#0F172A';
+  const sub = isDark ? '#94a3b8' : '#64748B';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const [myScore, setMyScore] = useState(0);
   const [friend, setFriend] = useState('');
@@ -43,47 +103,56 @@ export default function BattleScreen() {
 
   const challenge = async () => {
     const e = friend.trim().toLowerCase();
-    if (!e || !e.includes('@')) { setErr('Entre l\'email de ton ami.'); return; }
+    if (!e || !e.includes('@')) { setErr(t.errEmail); return; }
     setErr(''); setBusy(true); setResult(null);
     try {
       const p: any = await getUserFromFirestore(e, undefined);
-      if (!p) { setErr('Ami introuvable (il doit avoir un compte Salorie).'); }
+      if (!p) { setErr(t.errNotFound); }
       else { setResult({ name: p.firstName || e.split('@')[0], score: Number(p?.publicStats?.weeklyScore ?? -1) }); }
-    } catch { setErr('Impossible de récupérer ce profil.'); } finally { setBusy(false); }
+    } catch { setErr(t.errProfile); } finally { setBusy(false); }
   };
 
-  const verdict = result && result.score >= 0 ? (myScore > result.score ? 'Tu mènes ! 🏆' : myScore < result.score ? 'Tu es mené, accroche-toi ! 💪' : 'Égalité parfaite ⚖️') : null;
+  const verdict = result && result.score >= 0 ? (myScore > result.score ? t.leading : myScore < result.score ? t.behind : t.tie) : null;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <View style={styles.head}><Swords size={24} color={GREEN} /><Text style={styles.title}>Battle 1v1</Text></View>
-        <Text style={styles.sub}>Score d'assiduité = jours actifs sur 7 jours. Défie un ami !</Text>
+        <View style={styles.head}><Swords size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
         {loading ? <ActivityIndicator color={GREEN} style={{ marginTop: 20 }} /> : (
           <>
             <View style={styles.myCard}>
-              <Text style={styles.myLabel}>Ton score cette semaine</Text>
+              <Text style={styles.myLabel}>{t.myLabel}</Text>
               <Text style={styles.myScore}>{myScore}<Text style={styles.myMax}>/7</Text></Text>
             </View>
 
-            <View style={styles.searchRow}>
-              <Search size={20} color="#94A3B8" />
-              <TextInput style={styles.input} placeholder="Email de ton ami" autoCapitalize="none" keyboardType="email-address" value={friend} onChangeText={setFriend} onSubmitEditing={challenge} />
-              <TouchableOpacity style={styles.go} onPress={challenge}><Text style={styles.goTxt}>Défier</Text></TouchableOpacity>
+            <View style={[styles.searchRow, { backgroundColor: card }]}>
+              <Search size={20} color={sub} />
+              <TextInput
+                style={[styles.input, { color: text }]}
+                placeholder={t.placeholder}
+                placeholderTextColor={sub}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                value={friend}
+                onChangeText={setFriend}
+                onSubmitEditing={challenge}
+              />
+              <TouchableOpacity style={styles.go} onPress={challenge}><Text style={styles.goTxt}>{t.challenge}</Text></TouchableOpacity>
             </View>
-            {!!err && <Text style={styles.err}>{err}</Text>}
+            {!!err && <Text style={[styles.err, align]}>{err}</Text>}
             {busy && <ActivityIndicator color={GREEN} style={{ marginTop: 16 }} />}
 
             {result && (
-              <View style={styles.vsCard}>
+              <View style={[styles.vsCard, { backgroundColor: card }]}>
                 <View style={styles.vsRow}>
-                  <View style={styles.vsP}><Text style={styles.vsName}>Toi</Text><Text style={[styles.vsScore, { color: GREEN }]}>{myScore}</Text></View>
+                  <View style={styles.vsP}><Text style={[styles.vsName, { color: text }]}>{t.you}</Text><Text style={[styles.vsScore, { color: GREEN }]}>{myScore}</Text></View>
                   <Text style={styles.vsX}>VS</Text>
-                  <View style={styles.vsP}><Text style={styles.vsName}>{result.name}</Text><Text style={styles.vsScore}>{result.score >= 0 ? result.score : '—'}</Text></View>
+                  <View style={styles.vsP}><Text style={[styles.vsName, { color: text }]}>{result.name}</Text><Text style={styles.vsScore}>{result.score >= 0 ? result.score : '—'}</Text></View>
                 </View>
-                <Text style={styles.verdict}>{result.score >= 0 ? verdict : `${result.name} n'a pas encore de score publié — invite-le à ouvrir Battle.`}</Text>
+                <Text style={[styles.verdict, { color: text }]}>{result.score >= 0 ? verdict : `${result.name} ${t.noScore}`}</Text>
               </View>
             )}
           </>

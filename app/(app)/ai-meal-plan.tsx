@@ -6,11 +6,65 @@ import { Sparkles, ChefHat } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { aiGenerate } from '../../lib/aiProxy';
 import { getUserFromFirestore } from '../../lib/firebase';
+import { useTheme } from '../../lib/ThemeContext';
+import { useTranslation } from '../../lib/i18n';
 
 const GREEN = '#2E8B57';
 
+const TXT: any = {
+  en: {
+    title: 'AI meal plan',
+    sub1: 'Goal', sub2: 'kcal. Add a budget and ingredients (optional).',
+    budgetLabel: 'Budget (€, optional)',
+    budgetPh: 'e.g. 8',
+    fridgeLabel: 'Available ingredients (optional)',
+    fridgePh: 'e.g. chicken, rice, broccoli, eggs…',
+    generate: 'Generate my plan',
+    generating: 'Generating the plan…',
+    fail: 'Generation failed',
+    error: 'error',
+    replyLang: 'Réponds en anglais',
+  },
+  fr: {
+    title: 'Plan repas IA',
+    sub1: 'Objectif', sub2: 'kcal. Ajoute budget et ingrédients (optionnel).',
+    budgetLabel: 'Budget (€, optionnel)',
+    budgetPh: 'ex. 8',
+    fridgeLabel: 'Ingrédients dispo (optionnel)',
+    fridgePh: 'ex. poulet, riz, brocoli, œufs…',
+    generate: 'Générer mon plan',
+    generating: 'Génération du plan…',
+    fail: 'Génération impossible',
+    error: 'erreur',
+    replyLang: 'Réponds en français',
+  },
+  ar: {
+    title: 'خطة وجبات ذكية',
+    sub1: 'الهدف', sub2: 'سعرة. أضف ميزانية ومكونات (اختياري).',
+    budgetLabel: 'الميزانية (€، اختياري)',
+    budgetPh: 'مثال: 8',
+    fridgeLabel: 'المكونات المتوفرة (اختياري)',
+    fridgePh: 'مثال: دجاج، أرز، بروكلي، بيض…',
+    generate: 'أنشئ خطتي',
+    generating: 'جارٍ إنشاء الخطة…',
+    fail: 'تعذّر الإنشاء',
+    error: 'خطأ',
+    replyLang: 'Réponds en arabe',
+  },
+};
+
 export default function AiMealPlanScreen() {
   const { user } = useUser();
+  const { resolved } = useTheme();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const text = isDark ? '#f1f5f9' : '#0F172A';
+  const sub = isDark ? '#94a3b8' : '#64748B';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const [goal, setGoal] = useState('maintain');
   const [cals, setCals] = useState(2000);
   const [budget, setBudget] = useState('');
@@ -24,29 +78,43 @@ export default function AiMealPlanScreen() {
     setPlan(''); setLoading(true);
     try {
       const g = goal === 'lose' ? 'perte de poids' : goal === 'gain' ? 'prise de muscle' : 'maintien';
-      const text = await aiGenerate(`Génère un plan de repas pour UNE journée. Objectif : ${g}, ~${cals} kcal/jour.${budget.trim() ? ` Budget max : ${budget}€.` : ''}${fridge.trim() ? ` Privilégie ces ingrédients dispo : ${fridge}.` : ''} Donne : petit-déjeuner, déjeuner, collation, dîner — chacun avec les aliments et une estimation calories. Total à la fin. Réponds en français, concis.`);
+      const text = await aiGenerate(`Génère un plan de repas pour UNE journée. Objectif : ${g}, ~${cals} kcal/jour.${budget.trim() ? ` Budget max : ${budget}€.` : ''}${fridge.trim() ? ` Privilégie ces ingrédients dispo : ${fridge}.` : ''} Donne : petit-déjeuner, déjeuner, collation, dîner — chacun avec les aliments et une estimation calories. Total à la fin. ${t.replyLang}, concis.`);
       setPlan(text.trim());
-    } catch (e: any) { setPlan(`Génération impossible (${e?.message || 'erreur'}).`); } finally { setLoading(false); }
+    } catch (e: any) { setPlan(`${t.fail} (${e?.message || t.error}).`); } finally { setLoading(false); }
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <View style={styles.head}><Sparkles size={24} color={GREEN} /><Text style={styles.title}>Plan repas IA</Text></View>
-        <Text style={styles.sub}>Objectif {goal} · ~{cals} kcal. Ajoute budget et ingrédients (optionnel).</Text>
+        <View style={styles.head}><Sparkles size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <Text style={[styles.sub, { color: sub }, align]}>{t.sub1} {goal} · ~{cals} {t.sub2}</Text>
 
-        <Text style={styles.label}>Budget (€, optionnel)</Text>
-        <TextInput style={styles.input} keyboardType="numeric" placeholder="ex. 8" value={budget} onChangeText={setBudget} />
-        <Text style={styles.label}>Ingrédients dispo (optionnel)</Text>
-        <TextInput style={[styles.input, { height: 70 }]} multiline placeholder="ex. poulet, riz, brocoli, œufs…" value={fridge} onChangeText={setFridge} />
+        <Text style={[styles.label, { color: sub }, align]}>{t.budgetLabel}</Text>
+        <TextInput
+          style={[styles.input, { backgroundColor: card, color: text }]}
+          keyboardType="numeric"
+          placeholder={t.budgetPh}
+          placeholderTextColor={sub}
+          value={budget}
+          onChangeText={setBudget}
+        />
+        <Text style={[styles.label, { color: sub }, align]}>{t.fridgeLabel}</Text>
+        <TextInput
+          style={[styles.input, { height: 70, backgroundColor: card, color: text }]}
+          multiline
+          placeholder={t.fridgePh}
+          placeholderTextColor={sub}
+          value={fridge}
+          onChangeText={setFridge}
+        />
 
         <TouchableOpacity style={styles.btn} onPress={run} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <><ChefHat size={20} color="#fff" /><Text style={styles.btnTxt}>Générer mon plan</Text></>}
+          {loading ? <ActivityIndicator color="#fff" /> : <><ChefHat size={20} color="#fff" /><Text style={styles.btnTxt}>{t.generate}</Text></>}
         </TouchableOpacity>
 
-        {loading && <Text style={styles.loadingTxt}>Génération du plan…</Text>}
-        {!!plan && <View style={styles.card}><Text style={styles.cardTxt}>{plan}</Text></View>}
+        {loading && <Text style={[styles.loadingTxt, { color: sub }]}>{t.generating}</Text>}
+        {!!plan && <View style={[styles.card, { backgroundColor: card }]}><Text style={[styles.cardTxt, { color: text }, align]}>{plan}</Text></View>}
       </ScrollView>
     </SafeAreaView>
   );

@@ -11,8 +11,37 @@ import { useNutritionData } from '../../hooks/useNutritionData';
 import { auth } from '../../lib/firebaseAuth';
 import { getUserFromFirestore } from '../../lib/firebase';
 import { mlWeightForecast } from '../../lib/mlApi';
+import { useTheme } from '../../lib/ThemeContext';
+import { useTranslation } from '../../lib/i18n';
 
 const GREEN = '#2E8B57';
+
+const TXT: any = {
+  en: {
+    greeting: "Hi 👋 I'm your AI coach. Ask me a question, or check your personalized tips for today right below.",
+    title: 'AI Coach',
+    placeholder: 'Ask your coach a question…',
+    unavailable: 'Coach unavailable',
+    error: 'error',
+    replyLang: 'Réponds en anglais',
+  },
+  fr: {
+    greeting: 'Salut 👋 Je suis ton coach IA. Pose-moi une question, ou regarde tes conseils personnalisés du jour juste en dessous.',
+    title: 'Coach IA',
+    placeholder: 'Pose une question à ton coach…',
+    unavailable: 'Coach indisponible',
+    error: 'erreur',
+    replyLang: 'Réponds en français',
+  },
+  ar: {
+    greeting: 'مرحباً 👋 أنا مدربك الذكي. اطرح عليّ سؤالاً، أو اطّلع على نصائحك المخصصة لليوم في الأسفل.',
+    title: 'المدرب الذكي',
+    placeholder: 'اطرح سؤالاً على مدربك…',
+    unavailable: 'المدرب غير متاح',
+    error: 'خطأ',
+    replyLang: 'Réponds en arabe',
+  },
+};
 
 type Msg = { role: 'coach' | 'user'; text: string };
 
@@ -34,8 +63,18 @@ async function buildContext(goals: any, consumed: any): Promise<string> {
 
 export default function AiCoachScreen() {
   const data: any = useNutritionData();
+  const { resolved } = useTheme();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#F8FAFC';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const text = isDark ? '#f1f5f9' : '#0F172A';
+  const sub = isDark ? '#94a3b8' : '#94A3B8';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const [msgs, setMsgs] = useState<Msg[]>([
-    { role: 'coach', text: 'Salut 👋 Je suis ton coach IA. Pose-moi une question, ou regarde tes conseils personnalisés du jour juste en dessous.' },
+    { role: 'coach', text: t.greeting },
   ]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState('');
@@ -51,13 +90,13 @@ export default function AiCoachScreen() {
     try {
       const ctx = await buildContext(data?.goals || {}, data?.consumed || {});
       const prompt = isAuto
-        ? `Tu es un coach nutrition & sport bienveillant. Contexte de l'utilisateur: ${ctx} Donne 3 conseils personnalisés, courts et actionnables pour aujourd'hui. Réponds en français, format liste à puces.`
-        : `Tu es un coach nutrition & sport. Contexte: ${ctx} Question de l'utilisateur: "${question}". Réponds en français, court et actionnable.`;
+        ? `Tu es un coach nutrition & sport bienveillant. Contexte de l'utilisateur: ${ctx} Donne 3 conseils personnalisés, courts et actionnables pour aujourd'hui. ${t.replyLang}, format liste à puces.`
+        : `Tu es un coach nutrition & sport. Contexte: ${ctx} Question de l'utilisateur: "${question}". ${t.replyLang}, court et actionnable.`;
       const text = await aiGenerate(prompt);
       setMsgs((m) => [...m, { role: 'coach', text: text.trim() }]);
-      if (voiceRef.current) Speech.speak(text.trim(), { language: 'fr-FR' }); // coach vocal
+      if (voiceRef.current) Speech.speak(text.trim(), { language: language === 'ar' ? 'ar-SA' : language === 'en' ? 'en-US' : 'fr-FR' }); // coach vocal
     } catch (e: any) {
-      setMsgs((m) => [...m, { role: 'coach', text: `Coach indisponible (${e?.message || 'erreur'}).` }]);
+      setMsgs((m) => [...m, { role: 'coach', text: `${t.unavailable} (${e?.message || t.error}).` }]);
     } finally {
       setLoading(false);
       setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 100);
@@ -66,29 +105,37 @@ export default function AiCoachScreen() {
 
   useEffect(() => { ask('', true); }, []); // conseils contextuels auto
 
-  const send = () => { const t = q.trim(); if (!t) return; setQ(''); ask(t); };
+  const send = () => { const t2 = q.trim(); if (!t2) return; setQ(''); ask(t2); };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
       <View style={styles.head}>
         <Sparkles size={22} color={GREEN} />
-        <Text style={styles.title}>Coach IA</Text>
+        <Text style={[styles.title, { color: text }]}>{t.title}</Text>
         <TouchableOpacity onPress={toggleVoice} style={{ marginLeft: 'auto' }} hitSlop={10}>
-          {voice ? <Volume2 size={20} color={GREEN} /> : <VolumeX size={20} color="#94A3B8" />}
+          {voice ? <Volume2 size={20} color={GREEN} /> : <VolumeX size={20} color={sub} />}
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => ask('', true)} style={{ marginLeft: 14 }} hitSlop={10}><RefreshCw size={18} color="#94A3B8" /></TouchableOpacity>
+        <TouchableOpacity onPress={() => ask('', true)} style={{ marginLeft: 14 }} hitSlop={10}><RefreshCw size={18} color={sub} /></TouchableOpacity>
       </View>
       <ScrollView ref={scroll} contentContainerStyle={styles.body}>
         {msgs.map((m, i) => (
-          <View key={i} style={[styles.bubble, m.role === 'user' ? styles.user : styles.coach]}>
-            <Text style={[styles.bubbleTxt, m.role === 'user' && { color: '#fff' }]}>{m.text}</Text>
+          <View key={i} style={[styles.bubble, m.role === 'user' ? styles.user : [styles.coach, { backgroundColor: card, borderColor: isDark ? '#334155' : '#EEF2F6' }]]}>
+            <Text style={[styles.bubbleTxt, { color: text }, align, m.role === 'user' && { color: '#fff' }]}>{m.text}</Text>
           </View>
         ))}
-        {loading && <View style={[styles.bubble, styles.coach]}><ActivityIndicator color={GREEN} /></View>}
+        {loading && <View style={[styles.bubble, styles.coach, { backgroundColor: card, borderColor: isDark ? '#334155' : '#EEF2F6' }]}><ActivityIndicator color={GREEN} /></View>}
       </ScrollView>
-      <View style={styles.inputRow}>
-        <TextInput style={styles.input} placeholder="Pose une question à ton coach…" value={q} onChangeText={setQ} onSubmitEditing={send} returnKeyType="send" />
+      <View style={[styles.inputRow, { backgroundColor: card, borderTopColor: isDark ? '#334155' : '#EEF2F6' }]}>
+        <TextInput
+          style={[styles.input, { backgroundColor: isDark ? '#0f172a' : '#F1F5F9', color: text }]}
+          placeholder={t.placeholder}
+          placeholderTextColor={sub}
+          value={q}
+          onChangeText={setQ}
+          onSubmitEditing={send}
+          returnKeyType="send"
+        />
         <TouchableOpacity style={styles.sendBtn} onPress={send} disabled={loading}><Send size={20} color="#fff" /></TouchableOpacity>
       </View>
     </SafeAreaView>

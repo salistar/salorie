@@ -6,10 +6,28 @@ import { Minus, Plus, TrendingDown, Flag } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { getUserFromFirestore } from '../../lib/firebase';
 import { ProfileLite, estimateTDEE, projectWeight, weeklyRate, weeksToGoal } from '../../lib/projections';
+import { useTheme } from '../../lib/ThemeContext';
+import { useTranslation } from '../../lib/i18n';
 
 const GREEN = '#2E8B57';
 
+const TXT: any = {
+  en: { title: 'Metabolic twin', sub1: 'Simulate the effect of your diet on your weight (estimate, TDEE ≈ ', sub2: ' kcal).', ifIEat: 'If I eat every day…', heroLabel: 'Estimated weight in 30 days', perWeek: 'kg/wk', d7: '7 days', d30: '30 days', d90: '90 days', goal: 'Goal', notSet: '(not set)', etaA: '≈ ', etaB: ' weeks at this pace (~', etaC: ' months)', etaEmpty: 'Set a weight goal and a deficit/surplus to estimate the date.' },
+  fr: { title: 'Jumeau métabolique', sub1: "Simule l'effet de ton alimentation sur ton poids (estimation, TDEE ≈ ", sub2: ' kcal).', ifIEat: 'Si je mange chaque jour…', heroLabel: 'Poids estimé dans 30 jours', perWeek: 'kg/sem', d7: '7 jours', d30: '30 jours', d90: '90 jours', goal: 'Objectif', notSet: '(non défini)', etaA: '≈ ', etaB: ' semaines à ce rythme (~', etaC: ' mois)', etaEmpty: 'Définis un objectif de poids et un déficit/surplus pour estimer la date.' },
+  ar: { title: 'التوأم الأيضي', sub1: 'حاكِ تأثير غذائك على وزنك (تقدير، TDEE ≈ ', sub2: ' سعرة).', ifIEat: 'إذا أكلت كل يوم…', heroLabel: 'الوزن المقدَّر بعد 30 يوماً', perWeek: 'كغ/أسبوع', d7: '7 أيام', d30: '30 يوماً', d90: '90 يوماً', goal: 'الهدف', notSet: '(غير محدد)', etaA: '≈ ', etaB: ' أسبوعاً بهذا الإيقاع (~', etaC: ' أشهر)', etaEmpty: 'حدد هدف وزن وعجزاً/فائضاً لتقدير الموعد.' },
+};
+
 export default function MetabolicTwinScreen() {
+  const { resolved } = useTheme();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const text = isDark ? '#f1f5f9' : '#0F172A';
+  const sub = isDark ? '#94a3b8' : '#64748B';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const { user } = useUser();
   const [p, setP] = useState<ProfileLite | null>(null);
   const [intake, setIntake] = useState(2000);
@@ -34,7 +52,7 @@ export default function MetabolicTwinScreen() {
   }, []);
 
   if (loading || !p) {
-    return <SafeAreaView style={styles.safe}><ScreenTopBar showBack showNotif={false} /><View style={styles.center}><ActivityIndicator color={GREEN} /></View></SafeAreaView>;
+    return <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}><ScreenTopBar showBack showNotif={false} /><View style={styles.center}><ActivityIndicator color={GREEN} /></View></SafeAreaView>;
   }
 
   const tdee = estimateTDEE(p);
@@ -46,36 +64,36 @@ export default function MetabolicTwinScreen() {
   const rate = weeklyRate({ ...p, dailyCalories: intake });
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
-        <View style={styles.head}><TrendingDown size={24} color={GREEN} /><Text style={styles.title}>Jumeau métabolique</Text></View>
-        <Text style={styles.sub}>Simule l'effet de ton alimentation sur ton poids (estimation, TDEE ≈ {tdee} kcal).</Text>
+        <View style={styles.head}><TrendingDown size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <Text style={[styles.sub, { color: sub }, align]}>{t.sub1}{tdee}{t.sub2}</Text>
 
-        <Text style={styles.label}>Si je mange chaque jour…</Text>
+        <Text style={[styles.label, { color: sub }, align]}>{t.ifIEat}</Text>
         <View style={styles.stepper}>
-          <TouchableOpacity style={styles.stepBtn} onPress={() => setIntake((v) => Math.max(800, v - 100))}><Minus size={22} color={GREEN} /></TouchableOpacity>
-          <View style={styles.intakeWrap}><Text style={styles.intake}>{intake}</Text><Text style={styles.unit}>kcal</Text></View>
-          <TouchableOpacity style={styles.stepBtn} onPress={() => setIntake((v) => Math.min(5000, v + 100))}><Plus size={22} color={GREEN} /></TouchableOpacity>
+          <TouchableOpacity style={[styles.stepBtn, isDark && { backgroundColor: '#1e3a2f' }]} onPress={() => setIntake((v) => Math.max(800, v - 100))}><Minus size={22} color={GREEN} /></TouchableOpacity>
+          <View style={styles.intakeWrap}><Text style={[styles.intake, { color: text }]}>{intake}</Text><Text style={[styles.unit, { color: sub }]}>kcal</Text></View>
+          <TouchableOpacity style={[styles.stepBtn, isDark && { backgroundColor: '#1e3a2f' }]} onPress={() => setIntake((v) => Math.min(5000, v + 100))}><Plus size={22} color={GREEN} /></TouchableOpacity>
         </View>
 
         <View style={styles.hero}>
-          <Text style={styles.heroLabel}>Poids estimé dans 30 jours</Text>
+          <Text style={styles.heroLabel}>{t.heroLabel}</Text>
           <Text style={styles.heroValue}>{w30}<Text style={styles.heroUnit}> kg</Text></Text>
-          <Text style={[styles.heroDelta, { color: delta30 <= 0 ? GREEN : '#E11D48' }]}>{delta30 > 0 ? '+' : ''}{delta30} kg · {rate > 0 ? '+' : ''}{rate} kg/sem</Text>
+          <Text style={[styles.heroDelta, { color: delta30 <= 0 ? GREEN : '#E11D48' }]}>{delta30 > 0 ? '+' : ''}{delta30} kg · {rate > 0 ? '+' : ''}{rate} {t.perWeek}</Text>
         </View>
 
         <View style={styles.row}>
-          <View style={styles.cell}><Text style={styles.cellV}>{w7} kg</Text><Text style={styles.cellL}>7 jours</Text></View>
-          <View style={styles.cell}><Text style={styles.cellV}>{w30} kg</Text><Text style={styles.cellL}>30 jours</Text></View>
-          <View style={styles.cell}><Text style={styles.cellV}>{w90} kg</Text><Text style={styles.cellL}>90 jours</Text></View>
+          <View style={[styles.cell, { backgroundColor: card }]}><Text style={[styles.cellV, { color: text }]}>{w7} kg</Text><Text style={[styles.cellL, { color: sub }]}>{t.d7}</Text></View>
+          <View style={[styles.cell, { backgroundColor: card }]}><Text style={[styles.cellV, { color: text }]}>{w30} kg</Text><Text style={[styles.cellL, { color: sub }]}>{t.d30}</Text></View>
+          <View style={[styles.cell, { backgroundColor: card }]}><Text style={[styles.cellV, { color: text }]}>{w90} kg</Text><Text style={[styles.cellL, { color: sub }]}>{t.d90}</Text></View>
         </View>
 
-        <View style={styles.etaCard}>
+        <View style={[styles.etaCard, { backgroundColor: card }]}>
           <Flag size={20} color={GREEN} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.etaTitle}>Objectif {p.targetWeight ? `${p.targetWeight} kg` : '(non défini)'}</Text>
-            <Text style={styles.etaSub}>{eta ? `≈ ${eta} semaines à ce rythme (~${Math.ceil(eta / 4)} mois)` : 'Définis un objectif de poids et un déficit/surplus pour estimer la date.'}</Text>
+            <Text style={[styles.etaTitle, { color: text }, align]}>{t.goal} {p.targetWeight ? `${p.targetWeight} kg` : t.notSet}</Text>
+            <Text style={[styles.etaSub, { color: sub }, align]}>{eta ? `${t.etaA}${eta}${t.etaB}${Math.ceil(eta / 4)}${t.etaC}` : t.etaEmpty}</Text>
           </View>
         </View>
       </ScrollView>

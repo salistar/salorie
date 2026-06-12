@@ -5,8 +5,16 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, SafeAr
 import { Search, Plus, Minus, Trash2, ChefHat } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { searchFood } from '../../lib/fatsecret';
+import { useTheme } from '../../lib/ThemeContext';
+import { useTranslation } from '../../lib/i18n';
 
 const GREEN = '#2E8B57';
+
+const TXT: any = {
+  en: { title: 'Build a meal', searchPh: 'Search for an ingredient…', empty: 'Search for ingredients to build your recipe. Macro totals update live.', p: 'P', c: 'C', f: 'F' },
+  fr: { title: 'Composer un repas', searchPh: 'Rechercher un ingrédient…', empty: 'Cherche des ingrédients pour composer ta recette. Le total des macros se calcule en direct.', p: 'P', c: 'G', f: 'L' },
+  ar: { title: 'تكوين وجبة', searchPh: 'ابحث عن مكوّن…', empty: 'ابحث عن مكونات لتكوين وصفتك. يُحسب مجموع العناصر الكبرى مباشرة.', p: 'ب', c: 'ك', f: 'د' },
+};
 
 function parseDescription(desc: string) {
   const parts = (desc || '').split(' - ');
@@ -20,6 +28,15 @@ function parseDescription(desc: string) {
 type Item = { id: string; name: string; qty: number; calories: number; protein: number; carbs: number; fat: number };
 
 export default function MealBuilderScreen() {
+  const { resolved } = useTheme();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#F8FAFC';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const text = isDark ? '#f1f5f9' : '#0F172A';
+  const sub = isDark ? '#94a3b8' : '#64748B';
+
   const [q, setQ] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,25 +64,25 @@ export default function MealBuilderScreen() {
   }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
-      <View style={styles.head}><ChefHat size={22} color={GREEN} /><Text style={styles.title}>Composer un repas</Text></View>
+      <View style={styles.head}><ChefHat size={22} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
 
-      <View style={styles.searchRow}>
-        <Search size={18} color="#94A3B8" />
-        <TextInput style={styles.search} placeholder="Rechercher un ingrédient…" value={q} onChangeText={doSearch} />
+      <View style={[styles.searchRow, { backgroundColor: card }, isDark && { borderColor: '#334155' }]}>
+        <Search size={18} color={sub} />
+        <TextInput style={[styles.search, { color: text }]} placeholder={t.searchPh} placeholderTextColor={sub} value={q} onChangeText={doSearch} />
         {loading && <ActivityIndicator color={GREEN} />}
       </View>
 
       {results.length > 0 && (
-        <View style={styles.resultsBox}>
+        <View style={[styles.resultsBox, { backgroundColor: card }, isDark && { borderColor: '#334155' }]}>
           <FlatList data={results.slice(0, 8)} keyExtractor={(r) => String(r.food_id)} keyboardShouldPersistTaps="handled"
             renderItem={({ item: r }) => {
               const m = parseDescription(r.food_description);
               return (
-                <TouchableOpacity style={styles.resRow} onPress={() => add(r)}>
-                  <Text style={styles.resName} numberOfLines={1}>{r.food_name}</Text>
-                  <Text style={styles.resMacro}>{m.calories} kcal</Text>
+                <TouchableOpacity style={[styles.resRow, isDark && { borderBottomColor: '#334155' }]} onPress={() => add(r)}>
+                  <Text style={[styles.resName, { color: isDark ? '#e2e8f0' : '#1F2937' }]} numberOfLines={1}>{r.food_name}</Text>
+                  <Text style={[styles.resMacro, { color: sub }]}>{m.calories} kcal</Text>
                   <Plus size={18} color={GREEN} />
                 </TouchableOpacity>
               );
@@ -75,17 +92,17 @@ export default function MealBuilderScreen() {
 
       <ScrollView contentContainerStyle={styles.body}>
         {items.length === 0 && results.length === 0 && (
-          <Text style={styles.empty}>Cherche des ingrédients pour composer ta recette. Le total des macros se calcule en direct.</Text>
+          <Text style={[styles.empty, { color: sub }]}>{t.empty}</Text>
         )}
         {items.map((x) => (
-          <View key={x.id} style={styles.item}>
+          <View key={x.id} style={[styles.item, { backgroundColor: card }]}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.itemName} numberOfLines={1}>{x.name}</Text>
-              <Text style={styles.itemMacro}>{Math.round(x.calories * x.qty)} kcal · {Math.round(x.protein * x.qty)}g P · {Math.round(x.carbs * x.qty)}g G · {Math.round(x.fat * x.qty)}g L</Text>
+              <Text style={[styles.itemName, { color: text }]} numberOfLines={1}>{x.name}</Text>
+              <Text style={[styles.itemMacro, { color: sub }]}>{Math.round(x.calories * x.qty)} kcal · {Math.round(x.protein * x.qty)}g {t.p} · {Math.round(x.carbs * x.qty)}g {t.c} · {Math.round(x.fat * x.qty)}g {t.f}</Text>
             </View>
-            <TouchableOpacity onPress={() => setQty(x.id, -1)} style={styles.qtyBtn}><Minus size={16} color="#475569" /></TouchableOpacity>
-            <Text style={styles.qty}>{x.qty}</Text>
-            <TouchableOpacity onPress={() => setQty(x.id, 1)} style={styles.qtyBtn}><Plus size={16} color="#475569" /></TouchableOpacity>
+            <TouchableOpacity onPress={() => setQty(x.id, -1)} style={[styles.qtyBtn, isDark && { backgroundColor: '#334155' }]}><Minus size={16} color={isDark ? '#cbd5e1' : '#475569'} /></TouchableOpacity>
+            <Text style={[styles.qty, { color: text }]}>{x.qty}</Text>
+            <TouchableOpacity onPress={() => setQty(x.id, 1)} style={[styles.qtyBtn, isDark && { backgroundColor: '#334155' }]}><Plus size={16} color={isDark ? '#cbd5e1' : '#475569'} /></TouchableOpacity>
             <TouchableOpacity onPress={() => remove(x.id)} style={{ marginLeft: 8 }}><Trash2 size={18} color="#E11D48" /></TouchableOpacity>
           </View>
         ))}
@@ -94,7 +111,7 @@ export default function MealBuilderScreen() {
       {items.length > 0 && (
         <View style={styles.totalBar}>
           <Text style={styles.totalKcal}>{Math.round(total.calories)} kcal</Text>
-          <Text style={styles.totalMacro}>{Math.round(total.protein)}g P · {Math.round(total.carbs)}g G · {Math.round(total.fat)}g L</Text>
+          <Text style={styles.totalMacro}>{Math.round(total.protein)}g {t.p} · {Math.round(total.carbs)}g {t.c} · {Math.round(total.fat)}g {t.f}</Text>
         </View>
       )}
     </SafeAreaView>

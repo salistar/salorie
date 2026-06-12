@@ -7,6 +7,8 @@ import { Accelerometer } from 'expo-sensors';
 import { Play, Pause, RotateCcw, Activity } from 'lucide-react-native';
 import { router } from 'expo-router';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { useTranslation } from '../../lib/i18n';
+import { useTheme } from '../../lib/ThemeContext';
 
 const GREEN = '#2E8B57';
 // Seuils (en g). Un rep = la magnitude passe au-dessus de HIGH puis revient sous LOW.
@@ -14,7 +16,21 @@ const HIGH = 1.28;
 const LOW = 0.82;
 const MIN_REP_MS = 350; // anti-rebond
 
+const TXT: any = {
+  en: { title: 'Rep counter', sub: 'Hold your phone (armband / pocket) during the exercise. On-device detection.', reps: 'reps', running: '· running', stopped: '· stopped', reset: 'Reset', pause: 'Pause', start: 'Start', note: 'Model: acceleration peaks (state machine + debounce). Great for squats, curls, push-ups.' },
+  fr: { title: 'Compteur de répétitions', sub: "Tiens ton téléphone (brassard / poche) pendant l'exercice. Détection on-device.", reps: 'reps', running: '· en cours', stopped: '· arrêté', reset: 'Reset', pause: 'Pause', start: 'Démarrer', note: "Modèle : pics d'accélération (machine à états + anti-rebond). Idéal pour squats, curls, pompes." },
+  ar: { title: 'عدّاد التكرارات', sub: 'أمسك هاتفك (حزام الذراع / الجيب) أثناء التمرين. كشف على الجهاز.', reps: 'تكرار', running: '· جارٍ', stopped: '· متوقف', reset: 'تصفير', pause: 'إيقاف', start: 'ابدأ', note: 'النموذج: قمم التسارع (آلة حالات + مانع ارتداد). مثالي للسكوات والضغط.' },
+};
+
 export default function RepCounterScreen() {
+  const { language } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#F8FAFC';
+  const text = isDark ? '#f1f5f9' : '#0F172A';
+  const sub = isDark ? '#94a3b8' : '#64748B';
+
   const [running, setRunning] = useState(false);
   const [reps, setReps] = useState(0);
   const [mag, setMag] = useState(1);
@@ -55,41 +71,41 @@ export default function RepCounterScreen() {
   const reset = () => { stop(); setReps(0); phase.current = 'idle'; };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar />
       <View style={styles.body}>
-        <Text style={styles.title}>Compteur de répétitions</Text>
-        <Text style={styles.sub}>Tiens ton téléphone (brassard / poche) pendant l'exercice. Détection on-device.</Text>
+        <Text style={[styles.title, { color: text }]}>{t.title}</Text>
+        <Text style={[styles.sub, { color: sub }]}>{t.sub}</Text>
 
         <View style={styles.counterWrap}>
           <Text style={styles.count}>{reps}</Text>
-          <Text style={styles.countLabel}>reps</Text>
+          <Text style={[styles.countLabel, { color: sub }]}>{t.reps}</Text>
         </View>
 
         <View style={styles.magRow}>
           <Activity size={16} color={running ? GREEN : '#CBD5E1'} />
-          <Text style={styles.magTxt}>{mag.toFixed(2)} g {running ? '· en cours' : '· arrêté'}</Text>
+          <Text style={[styles.magTxt, { color: sub }]}>{mag.toFixed(2)} g {running ? t.running : t.stopped}</Text>
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={[styles.btn, styles.secondary]} onPress={reset}>
-            <RotateCcw size={20} color="#475569" />
-            <Text style={styles.btnTxtDark}>Reset</Text>
+          <TouchableOpacity style={[styles.btn, styles.secondary, isDark && { backgroundColor: '#334155' }]} onPress={reset}>
+            <RotateCcw size={20} color={isDark ? '#cbd5e1' : '#475569'} />
+            <Text style={[styles.btnTxtDark, isDark && { color: '#cbd5e1' }]}>{t.reset}</Text>
           </TouchableOpacity>
           {running ? (
             <TouchableOpacity style={[styles.btn, styles.primary]} onPress={stop}>
               <Pause size={20} color="#fff" />
-              <Text style={styles.btnTxt}>Pause</Text>
+              <Text style={styles.btnTxt}>{t.pause}</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={[styles.btn, styles.primary]} onPress={start}>
               <Play size={20} color="#fff" />
-              <Text style={styles.btnTxt}>Démarrer</Text>
+              <Text style={styles.btnTxt}>{t.start}</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        <Text style={styles.note}>Modèle : pics d'accélération (machine à états + anti-rebond). Idéal pour squats, curls, pompes.</Text>
+        <Text style={[styles.note, { color: sub }]}>{t.note}</Text>
       </View>
     </SafeAreaView>
   );

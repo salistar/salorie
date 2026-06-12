@@ -11,8 +11,16 @@ import { Buffer } from 'buffer';
 import { Camera, Images, Utensils, AlertTriangle } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { FOOD_LABELS } from '../../lib/foodLabels';
+import { useTheme } from '../../lib/ThemeContext';
+import { useTranslation } from '../../lib/i18n';
 
 const GREEN = '#2E8B57';
+
+const TXT: any = {
+  en: { title: 'Recognize a food', sub: 'Snap your dish — 100% on-device classification (TFLite / MobileNet, 2024 foods).', camera: 'Camera', gallery: 'Gallery', analyzing: '  On-device analysis…', results: 'Results', note: 'Model: TFLite MobileNet (AIY food_V1, on-device, offline).', permDenied: 'Permission denied', modelUnavailable: 'Model unavailable' },
+  fr: { title: 'Reconnaître un aliment', sub: 'Photographie ton plat — classification 100% on-device (TFLite / MobileNet, 2024 aliments).', camera: 'Caméra', gallery: 'Galerie', analyzing: '  Analyse on-device…', results: 'Résultats', note: 'Modèle : TFLite MobileNet (AIY food_V1, on-device, hors-ligne).', permDenied: 'Permission refusée', modelUnavailable: 'Modèle indisponible' },
+  ar: { title: 'التعرف على طعام', sub: 'صوّر طبقك — تصنيف 100% على الجهاز (TFLite / MobileNet، 2024 صنفاً).', camera: 'الكاميرا', gallery: 'المعرض', analyzing: '  تحليل على الجهاز…', results: 'النتائج', note: 'النموذج: TFLite MobileNet (AIY food_V1، على الجهاز، دون اتصال).', permDenied: 'تم رفض الإذن', modelUnavailable: 'النموذج غير متوفر' },
+};
 
 let modelPromise: Promise<any> | null = null;
 async function getModel() {
@@ -63,6 +71,16 @@ async function classify(uri: string): Promise<Pred[]> {
 }
 
 export default function FoodRecognitionScreen() {
+  const { resolved } = useTheme();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#F8FAFC';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const text = isDark ? '#f1f5f9' : '#0F172A';
+  const sub = isDark ? '#94a3b8' : '#64748B';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [uri, setUri] = useState<string | null>(null);
@@ -74,7 +92,7 @@ export default function FoodRecognitionScreen() {
       const perm = fromCamera
         ? await ImagePicker.requestCameraPermissionsAsync()
         : await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!perm.granted) { setErr('Permission refusée'); return; }
+      if (!perm.granted) { setErr(t.permDenied); return; }
       const res = fromCamera
         ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
         : await ImagePicker.launchImageLibraryAsync({ quality: 0.7 });
@@ -84,51 +102,51 @@ export default function FoodRecognitionScreen() {
       const p = await classify(res.assets[0].uri);
       setPreds(p);
     } catch (e: any) {
-      setErr(e?.message || 'Modèle indisponible');
+      setErr(e?.message || t.modelUnavailable);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.head}>
           <Utensils size={26} color={GREEN} />
-          <Text style={styles.title}>Reconnaître un aliment</Text>
+          <Text style={[styles.title, { color: text }]}>{t.title}</Text>
         </View>
-        <Text style={styles.sub}>Photographie ton plat — classification 100% on-device (TFLite / MobileNet, 2024 aliments).</Text>
+        <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
         <View style={styles.actions}>
           <TouchableOpacity style={[styles.btn, styles.primary]} onPress={() => run(true)}>
-            <Camera size={20} color="#fff" /><Text style={styles.btnTxt}>Caméra</Text>
+            <Camera size={20} color="#fff" /><Text style={styles.btnTxt}>{t.camera}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.btn, styles.secondary]} onPress={() => run(false)}>
-            <Images size={20} color="#475569" /><Text style={styles.btnTxtDark}>Galerie</Text>
+          <TouchableOpacity style={[styles.btn, styles.secondary, isDark && { backgroundColor: '#334155' }]} onPress={() => run(false)}>
+            <Images size={20} color={isDark ? '#cbd5e1' : '#475569'} /><Text style={[styles.btnTxtDark, isDark && { color: '#cbd5e1' }]}>{t.gallery}</Text>
           </TouchableOpacity>
         </View>
 
         {uri && <Image source={{ uri }} style={styles.preview} resizeMode="cover" />}
-        {loading && <View style={styles.loadingRow}><ActivityIndicator color={GREEN} /><Text style={styles.muted}>  Analyse on-device…</Text></View>}
+        {loading && <View style={styles.loadingRow}><ActivityIndicator color={GREEN} /><Text style={[styles.muted, { color: sub }]}>{t.analyzing}</Text></View>}
 
         {err && (
           <View style={styles.warn}><AlertTriangle size={16} color="#B45309" /><Text style={styles.warnTxt}>{err}</Text></View>
         )}
 
         {preds.length > 0 && (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Résultats</Text>
+          <View style={[styles.card, { backgroundColor: card }, isDark && { borderColor: '#334155' }]}>
+            <Text style={styles.cardTitle}>{t.results}</Text>
             {preds.map((p, i) => (
               <View key={i} style={styles.predRow}>
-                <Text style={[styles.predName, i === 0 && styles.bold]} numberOfLines={1}>{p.label}</Text>
+                <Text style={[styles.predName, { color: isDark ? '#cbd5e1' : '#334155' }, i === 0 && [styles.bold, { color: text }]]} numberOfLines={1}>{p.label}</Text>
                 <Text style={styles.predScore}>{Math.round(p.score * 100)}%</Text>
               </View>
             ))}
           </View>
         )}
 
-        <Text style={styles.note}>Modèle : TFLite MobileNet (AIY food_V1, on-device, hors-ligne).</Text>
+        <Text style={[styles.note, { color: sub }]}>{t.note}</Text>
       </ScrollView>
     </SafeAreaView>
   );

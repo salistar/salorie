@@ -5,17 +5,53 @@ import { useUser } from '@clerk/clerk-expo';
 import { Ruler, Check } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { logEntry, getEntries } from '../../lib/tracking';
+import { useTheme } from '../../lib/ThemeContext';
+import { useTranslation } from '../../lib/i18n';
 
 const GREEN = '#2E8B57';
 const FIELDS = [
-  { key: 'waist', label: 'Tour de taille' },
-  { key: 'hips', label: 'Hanches' },
-  { key: 'chest', label: 'Poitrine' },
-  { key: 'arms', label: 'Bras' },
+  { key: 'waist' },
+  { key: 'hips' },
+  { key: 'chest' },
+  { key: 'arms' },
 ];
+
+const TXT: any = {
+  en: {
+    title: 'Body measurements',
+    sub: "Track your body's progress (cm).",
+    waist: 'Waist', hips: 'Hips', chest: 'Chest', arms: 'Arms',
+    save: 'Save',
+    lastEntry: 'Last entry',
+  },
+  fr: {
+    title: 'Mesures corporelles',
+    sub: "Suis l'évolution de ton corps (cm).",
+    waist: 'Tour de taille', hips: 'Hanches', chest: 'Poitrine', arms: 'Bras',
+    save: 'Enregistrer',
+    lastEntry: 'Dernière saisie',
+  },
+  ar: {
+    title: 'قياسات الجسم',
+    sub: 'تابع تطور جسمك (سم).',
+    waist: 'محيط الخصر', hips: 'الوركان', chest: 'الصدر', arms: 'الذراعان',
+    save: 'حفظ',
+    lastEntry: 'آخر إدخال',
+  },
+};
 
 export default function BodyMeasurementsScreen() {
   const { user } = useUser();
+  const { resolved } = useTheme();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const text = isDark ? '#f1f5f9' : '#0F172A';
+  const sub = isDark ? '#94a3b8' : '#64748B';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const [vals, setVals] = useState<Record<string, string>>({});
   const [last, setLast] = useState<any>(null);
@@ -38,26 +74,32 @@ export default function BodyMeasurementsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <View style={styles.head}><Ruler size={24} color={GREEN} /><Text style={styles.title}>Mesures corporelles</Text></View>
-        <Text style={styles.sub}>Suis l'évolution de ton corps (cm).</Text>
+        <View style={styles.head}><Ruler size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
         {FIELDS.map((f) => (
-          <View key={f.key} style={styles.row}>
-            <Text style={styles.label}>{f.label}</Text>
+          <View key={f.key} style={[styles.row, { backgroundColor: card }]}>
+            <Text style={[styles.label, { color: text }]}>{t[f.key]}</Text>
             <View style={styles.inputWrap}>
-              <TextInput style={styles.input} keyboardType="numeric" placeholder={last?.[f.key] ? String(last[f.key]) : '—'}
-                value={vals[f.key] || ''} onChangeText={(t) => setVals((v) => ({ ...v, [f.key]: t }))} />
+              <TextInput
+                style={[styles.input, { color: text }]}
+                keyboardType="numeric"
+                placeholder={last?.[f.key] ? String(last[f.key]) : '—'}
+                placeholderTextColor={sub}
+                value={vals[f.key] || ''}
+                onChangeText={(t2) => setVals((v) => ({ ...v, [f.key]: t2 }))}
+              />
               <Text style={styles.unit}>cm</Text>
             </View>
           </View>
         ))}
         <TouchableOpacity style={styles.saveBtn} onPress={save} disabled={saving}>
-          {saving ? <ActivityIndicator color="#fff" /> : <><Check size={20} color="#fff" /><Text style={styles.saveTxt}>Enregistrer</Text></>}
+          {saving ? <ActivityIndicator color="#fff" /> : <><Check size={20} color="#fff" /><Text style={styles.saveTxt}>{t.save}</Text></>}
         </TouchableOpacity>
         {loading ? <ActivityIndicator color={GREEN} style={{ marginTop: 20 }} /> : last && (
-          <Text style={styles.lastNote}>Dernière saisie ({last.date}) : {FIELDS.filter((f) => last[f.key] != null).map((f) => `${f.label} ${last[f.key]}cm`).join(' · ') || '—'}</Text>
+          <Text style={[styles.lastNote, { color: sub }, align]}>{t.lastEntry} ({last.date}) : {FIELDS.filter((f) => last[f.key] != null).map((f) => `${t[f.key]} ${last[f.key]}cm`).join(' · ') || '—'}</Text>
         )}
       </ScrollView>
     </SafeAreaView>
