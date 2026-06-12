@@ -227,6 +227,10 @@ export default function RacesScreen() {
             ) : (
               races.map((r) => (
                 <TouchableOpacity key={r.id} style={[styles.raceRow, { backgroundColor: card, flexDirection: rowDir }]} onPress={() => onJoinRace(r)}>
+                  {/* Visuel : pastille dégradée avec icône (cartes plus vivantes) */}
+                  <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: r.status === 'live' ? '#dcfce7' : '#EAF4EE', alignItems: 'center', justifyContent: 'center' }}>
+                    <Users size={20} color={PRIMARY} />
+                  </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.raceName, { color: text, textAlign: align }]} numberOfLines={1}>{r.name}</Text>
                     <Text style={[styles.raceMeta, { color: sub, textAlign: align }]} numberOfLines={1}>

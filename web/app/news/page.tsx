@@ -15,6 +15,7 @@ export default function NewsAdmin() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [kind, setKind] = useState('news');
+  const [imageUrl, setImageUrl] = useState('');
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -29,8 +30,8 @@ export default function NewsAdmin() {
   const publish = async () => {
     if (!title.trim()) return;
     setBusy(true);
-    await fetch('/api/news', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, body, kind }) });
-    setTitle(''); setBody(''); setBusy(false); load();
+    await fetch('/api/news', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, body, kind, imageUrl: imageUrl.trim() }) });
+    setTitle(''); setBody(''); setImageUrl(''); setBusy(false); load();
   };
   const toggle = async (n: any) => { await fetch('/api/news', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: n._id, active: !n.active }) }); load(); };
   const del = async (id: string) => { if (!confirm('Supprimer cette actu ?')) return; await fetch('/api/news', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }); load(); };
@@ -50,6 +51,9 @@ export default function NewsAdmin() {
         </div>
         <label style={lbl}>Texte</label>
         <textarea style={{ ...inp, height: 70 }} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Détails de l'annonce…" />
+        <label style={lbl}>Image (URL — affichée en grand dans l'app)</label>
+        <input style={inp} value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…/photo.jpg" />
+        {imageUrl.trim() ? <img src={imageUrl.trim()} alt="" style={{ maxHeight: 120, borderRadius: 10, marginTop: 8 }} /> : null}
         <button onClick={publish} disabled={busy || !title.trim()} style={{ marginTop: 10, padding: '10px 18px', borderRadius: 10, border: 'none', background: '#2E8B57', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
           {busy ? '…' : '📣 Publier dans l\'app'}
         </button>

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Tex
 import { useUser } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
 import { CalendarDays, Plus, Trash2, Flag, Dumbbell } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { logEntry, getEntries, deleteEntry } from '../../lib/tracking';
 import { getActiveRaces } from '../../lib/racesApi';
@@ -64,11 +65,14 @@ export default function SportAgenda() {
     <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <View style={[s.head, rowDir]}>
-          <CalendarDays size={26} color={GREEN} />
-          <Text style={[s.title, { color: text }]}>{t.title}</Text>
-        </View>
-        <Text style={[s.sub, { color: sub }, align]}>{t.sub}</Text>
+        {/* Bandeau héro visuel */}
+        <LinearGradient colors={[GREEN, '#1d6440']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.heroBanner}>
+          <CalendarDays size={30} color="#fff" />
+          <View style={{ flex: 1 }}>
+            <Text style={[s.heroTitle, align]}>{t.title}</Text>
+            <Text style={[s.heroSub, align]}>{t.sub}</Text>
+          </View>
+        </LinearGradient>
 
         {/* Planifier */}
         <View style={[s.card, { backgroundColor: card }]}>
@@ -121,6 +125,9 @@ const s = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   title: { fontSize: 24, fontWeight: '900', letterSpacing: -0.4 },
   sub: { fontSize: 13.5, marginTop: 6, lineHeight: 19 },
+  heroBanner: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, padding: 18 },
+  heroTitle: { color: '#fff', fontSize: 21, fontWeight: '900', letterSpacing: -0.3 },
+  heroSub: { color: 'rgba(255,255,255,0.85)', fontSize: 12.5, marginTop: 4, lineHeight: 17 },
   card: { borderRadius: 18, padding: 16, marginTop: 18 },
   secHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 22, marginBottom: 10 },
   secTitle: { fontSize: 15.5, fontWeight: '800' },
