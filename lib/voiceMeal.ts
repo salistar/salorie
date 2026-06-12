@@ -1,8 +1,8 @@
-import { aiVision } from './aiProxy';
+import { aiVision, aiTranscribe, aiGenerate } from './aiProxy';
 
-// Logging vocal : on envoie l'audio enregistré à Gemini (via /ai/vision, qui
-// accepte l'audio en inlineData) pour le TRANSCRIRE + estimer les nutriments,
-// le tout en un appel. 100% logiciel, aucun module natif (réutilise l'AI proxy).
+// Logging vocal — chemin RAPIDE : audio → faster-whisper (backend, quasi gratuit)
+// → texte → Gemini TEXTE (léger) pour les nutriments. Fallback : ancien chemin
+// Gemini audio en un appel (si whisper/transcribe indisponible).
 
 export interface ParsedMeal {
   name: string;
@@ -12,14 +12,19 @@ export interface ParsedMeal {
   fat: number;
 }
 
-const PROMPT = `Cet audio est une personne qui décrit, en français, un repas ou un aliment qu'elle vient de manger.
+const AUDIO_PROMPT = `Cet audio est une personne qui décrit, en français, un repas ou un aliment qu'elle vient de manger.
 1) Transcris ce qui est dit. 2) Identifie l'aliment/repas et estime ses nutriments pour la portion décrite.
 Réponds STRICTEMENT en JSON pur (aucun texte autour, pas de balises), format exact :
 {"name":"<repas en français, court>","calories":<number kcal>,"protein":<number g>,"carbs":<number g>,"fat":<number g>}
 Si l'audio ne décrit aucune nourriture, renvoie {"name":"","calories":0,"protein":0,"carbs":0,"fat":0}.`;
 
-export async function parseMealFromAudio(base64: string, mimeType = 'audio/mp4'): Promise<ParsedMeal | null> {
-  const raw = await aiVision(PROMPT, base64, mimeType);
+const textPrompt = (transcript: string) => `Une personne décrit un repas qu'elle vient de manger : « ${transcript} »
+Identifie l'aliment/repas et estime ses nutriments pour la portion décrite.
+Réponds STRICTEMENT en JSON pur (aucun texte autour, pas de balises), format exact :
+{"name":"<repas en français, court>","calories":<number kcal>,"protein":<number g>,"carbs":<number g>,"fat":<number g>}
+Si le texte ne décrit aucune nourriture, renvoie {"name":"","calories":0,"protein":0,"carbs":0,"fat":0}.`;
+
+function parseJson(raw: string): ParsedMeal | null {
   if (!raw) return null;
   const m = raw.match(/\{[\s\S]*\}/); // extrait le 1er bloc JSON même si entouré
   if (!m) return null;
@@ -35,4 +40,17 @@ export async function parseMealFromAudio(base64: string, mimeType = 'audio/mp4')
   } catch {
     return null;
   }
+}
+
+export async function parseMealFromAudio(base64: string, mimeType = 'audio/mp4'): Promise<ParsedMeal | null> {
+  // 1) Chemin rapide : whisper → texte → Gemini texte.
+  try {
+    const transcript = (await aiTranscribe(base64, mimeType, 'fr')).trim();
+    if (transcript) {
+      const parsed = parseJson(await aiGenerate(textPrompt(transcript)));
+      if (parsed) return parsed;
+    }
+  } catch { /* transcribe indisponible → fallback audio direct */ }
+  // 2) Fallback : Gemini audio en un appel (ancien chemin, toujours fiable).
+  return parseJson(await aiVision(AUDIO_PROMPT, base64, mimeType));
 }
