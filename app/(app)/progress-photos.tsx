@@ -6,12 +6,29 @@ import * as FileSystem from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Camera, Image as ImageIcon, TrendingUp } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { useTranslation } from '../../lib/i18n';
+import { useTheme } from '../../lib/ThemeContext';
 
 const GREEN = '#2E8B57';
 const KEY = 'progress_photos_v1';
 const COL = (Dimensions.get('window').width - 52) / 2;
 
+const TXT: any = {
+  en: { title: 'Progress photos', sub: 'Keep a visual record (stored on your device, private).', photo: 'Photo', gallery: 'Gallery', empty: 'No photos yet. Add your first one to track your progress.' },
+  fr: { title: 'Photos de progression', sub: 'Garde une trace visuelle (stockée sur ton appareil, privée).', photo: 'Photo', gallery: 'Galerie', empty: 'Aucune photo. Ajoute ta première pour suivre ton évolution.' },
+  ar: { title: 'صور التقدم', sub: 'احتفظ بسجل مرئي (مخزّن على جهازك، خاص).', photo: 'صورة', gallery: 'المعرض', empty: 'لا توجد صور. أضف أول صورة لتتابع تطورك.' },
+};
+
 export default function ProgressPhotosScreen() {
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  const text = isDark ? '#f1f5f9' : '#0F172A';
+  const sub = isDark ? '#94a3b8' : '#64748B';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const [photos, setPhotos] = useState<{ uri: string; date: string }[]>([]);
 
   const load = async () => { try { const r = await AsyncStorage.getItem(KEY); if (r) setPhotos(JSON.parse(r)); } catch {} };
@@ -35,23 +52,23 @@ export default function ProgressPhotosScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
-        <View style={styles.head}><TrendingUp size={24} color={GREEN} /><Text style={styles.title}>Photos de progression</Text></View>
-        <Text style={styles.sub}>Garde une trace visuelle (stockée sur ton appareil, privée).</Text>
+        <View style={styles.head}><TrendingUp size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
         <View style={styles.btnRow}>
-          <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={() => add(true)}><Camera size={20} color="#fff" /><Text style={styles.btnPrimaryTxt}>Photo</Text></TouchableOpacity>
-          <TouchableOpacity style={[styles.btn, styles.btnGhost]} onPress={() => add(false)}><ImageIcon size={20} color={GREEN} /><Text style={styles.btnGhostTxt}>Galerie</Text></TouchableOpacity>
+          <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={() => add(true)}><Camera size={20} color="#fff" /><Text style={styles.btnPrimaryTxt}>{t.photo}</Text></TouchableOpacity>
+          <TouchableOpacity style={[styles.btn, styles.btnGhost]} onPress={() => add(false)}><ImageIcon size={20} color={GREEN} /><Text style={styles.btnGhostTxt}>{t.gallery}</Text></TouchableOpacity>
         </View>
 
-        {photos.length === 0 ? <Text style={styles.empty}>Aucune photo. Ajoute ta première pour suivre ton évolution.</Text> : (
+        {photos.length === 0 ? <Text style={styles.empty}>{t.empty}</Text> : (
           <View style={styles.grid}>
             {photos.map((p, i) => (
               <View key={i} style={styles.cell}>
-                <Image source={{ uri: p.uri }} style={styles.photo} resizeMode="cover" />
-                <Text style={styles.date}>{p.date}</Text>
+                <Image source={{ uri: p.uri }} style={[styles.photo, isDark && { backgroundColor: '#334155' }]} resizeMode="cover" />
+                <Text style={[styles.date, { color: sub }]}>{p.date}</Text>
               </View>
             ))}
           </View>

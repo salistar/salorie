@@ -5,11 +5,29 @@ import { useUser } from '@clerk/clerk-expo';
 import { Droplets, Activity, Sun } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { getUserFromFirestore } from '../../lib/firebase';
+import { useTranslation } from '../../lib/i18n';
+import { useTheme } from '../../lib/ThemeContext';
 
 const GREEN = '#2E8B57';
 
+const TXT: any = {
+  en: { title: 'Smart hydration', sub: 'Water goal tailored to your weight and activity.', hero: 'Recommended goal', glasses: 'glasses', act_label: 'Activity level', sedentary: 'Sedentary', moderate: 'Moderate', intense: 'Intense', hot: 'Hot weather / heavy sweating', calc: 'Calculation', act: 'activity', heat: 'heat' },
+  fr: { title: 'Hydratation intelligente', sub: "Objectif d'eau adapté à ton poids et ton activité.", hero: 'Objectif recommandé', glasses: 'verres', act_label: "Niveau d'activité", sedentary: 'Sédentaire', moderate: 'Modéré', intense: 'Intense', hot: 'Temps chaud / forte transpiration', calc: 'Calcul', act: 'activité', heat: 'chaleur' },
+  ar: { title: 'ترطيب ذكي', sub: 'هدف ماء مناسب لوزنك ونشاطك.', hero: 'الهدف الموصى به', glasses: 'أكواب', act_label: 'مستوى النشاط', sedentary: 'خامل', moderate: 'معتدل', intense: 'مكثّف', hot: 'طقس حار / تعرّق شديد', calc: 'الحساب', act: 'نشاط', heat: 'حرارة' },
+};
+
 export default function SmartHydrationScreen() {
   const { user } = useUser();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const text = isDark ? '#f1f5f9' : '#0F172A';
+  const sub = isDark ? '#94a3b8' : '#64748B';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const [weight, setWeight] = useState(70);
   const [activity, setActivity] = useState(1); // 0=sédentaire,1=modéré,2=intense
   const [hot, setHot] = useState(false);
@@ -31,36 +49,36 @@ export default function SmartHydrationScreen() {
   const glasses = Math.round(goal / 250);
 
   const ActLvl = ({ i, label }: any) => (
-    <TouchableOpacity style={[styles.opt, activity === i && styles.optActive]} onPress={() => setActivity(i)}>
-      <Text style={[styles.optTxt, activity === i && { color: '#fff' }]}>{label}</Text>
+    <TouchableOpacity style={[styles.opt, { backgroundColor: card }, activity === i && styles.optActive]} onPress={() => setActivity(i)}>
+      <Text style={[styles.optTxt, { color: sub }, activity === i && { color: '#fff' }]}>{label}</Text>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
-        <View style={styles.head}><Droplets size={24} color="#0EA5E9" /><Text style={styles.title}>Hydratation intelligente</Text></View>
-        <Text style={styles.sub}>Objectif d'eau adapté à ton poids et ton activité.</Text>
+        <View style={styles.head}><Droplets size={24} color="#0EA5E9" /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
         {loading ? <ActivityIndicator color={GREEN} style={{ marginTop: 40 }} /> : (
           <>
             <View style={styles.hero}>
-              <Text style={styles.heroLabel}>Objectif recommandé</Text>
+              <Text style={styles.heroLabel}>{t.hero}</Text>
               <Text style={styles.heroValue}>{(goal / 1000).toFixed(1)}<Text style={styles.heroUnit}> L</Text></Text>
-              <Text style={styles.heroNote}>≈ {glasses} verres · {goal} ml</Text>
+              <Text style={styles.heroNote}>≈ {glasses} {t.glasses} · {goal} ml</Text>
             </View>
 
-            <Text style={styles.label}><Activity size={13} color="#64748B" /> Niveau d'activité</Text>
-            <View style={styles.optRow}><ActLvl i={0} label="Sédentaire" /><ActLvl i={1} label="Modéré" /><ActLvl i={2} label="Intense" /></View>
+            <Text style={[styles.label, { color: sub }, align]}><Activity size={13} color={sub} /> {t.act_label}</Text>
+            <View style={styles.optRow}><ActLvl i={0} label={t.sedentary} /><ActLvl i={1} label={t.moderate} /><ActLvl i={2} label={t.intense} /></View>
 
-            <TouchableOpacity style={[styles.hotRow, hot && styles.hotActive]} onPress={() => setHot((h) => !h)}>
+            <TouchableOpacity style={[styles.hotRow, { backgroundColor: card }, hot && styles.hotActive]} onPress={() => setHot((h) => !h)}>
               <Sun size={20} color={hot ? '#fff' : '#F59E0B'} />
-              <Text style={[styles.hotTxt, hot && { color: '#fff' }]}>Temps chaud / forte transpiration</Text>
-              <Text style={[styles.hotTxt, hot && { color: '#fff' }]}>{hot ? '✓' : ''}</Text>
+              <Text style={[styles.hotTxt, { color: text }, hot && { color: '#fff' }]}>{t.hot}</Text>
+              <Text style={[styles.hotTxt, { color: text }, hot && { color: '#fff' }]}>{hot ? '✓' : ''}</Text>
             </TouchableOpacity>
 
-            <Text style={styles.calc}>Calcul : {weight} kg × 35 ml = {base} ml{actBonus ? ` + ${actBonus} (activité)` : ''}{hotBonus ? ` + ${hotBonus} (chaleur)` : ''}.</Text>
+            <Text style={[styles.calc, { color: sub }, align]}>{t.calc} : {weight} kg × 35 ml = {base} ml{actBonus ? ` + ${actBonus} (${t.act})` : ''}{hotBonus ? ` + ${hotBonus} (${t.heat})` : ''}.</Text>
           </>
         )}
       </ScrollView>

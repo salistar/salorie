@@ -6,8 +6,16 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Act
 import * as ImagePicker from 'expo-image-picker';
 import { Camera, Images, ScanText, AlertTriangle } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { useTheme } from '../../lib/ThemeContext';
+import { useTranslation } from '../../lib/i18n';
 
 const GREEN = '#2E8B57';
+
+const TXT: any = {
+  en: { title: 'Scan a label', sub: 'Snap the nutrition facts table — 100% on-device text recognition (MLKit).', camera: 'Camera', gallery: 'Gallery', detected: 'Detected values', calories: 'Calories', protein: 'Protein', carbs: 'Carbs', fat: 'Fat', recognized: 'Recognized text', note: 'Model: MLKit Text Recognition (on-device, offline).', permDenied: 'Permission denied', ocrUnavailable: 'OCR unavailable' },
+  fr: { title: 'Scanner une étiquette', sub: 'Photographie le tableau nutritionnel — lecture de texte 100% on-device (MLKit).', camera: 'Caméra', gallery: 'Galerie', detected: 'Valeurs détectées', calories: 'Calories', protein: 'Protéines', carbs: 'Glucides', fat: 'Lipides', recognized: 'Texte reconnu', note: 'Modèle : MLKit Text Recognition (on-device, hors-ligne).', permDenied: 'Permission refusée', ocrUnavailable: 'OCR indisponible' },
+  ar: { title: 'مسح ملصق غذائي', sub: 'صوّر جدول القيم الغذائية — قراءة نص 100% على الجهاز (MLKit).', camera: 'الكاميرا', gallery: 'المعرض', detected: 'القيم المكتشفة', calories: 'السعرات', protein: 'البروتين', carbs: 'الكربوهيدرات', fat: 'الدهون', recognized: 'النص المتعرف عليه', note: 'النموذج: MLKit Text Recognition (على الجهاز، دون اتصال).', permDenied: 'تم رفض الإذن', ocrUnavailable: 'OCR غير متوفر' },
+};
 
 type Parsed = { calories?: number; protein?: number; carbs?: number; fat?: number };
 
@@ -52,6 +60,16 @@ function parseNutrition(text: string): Parsed {
 }
 
 export default function LabelScanScreen() {
+  const { resolved } = useTheme();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#F8FAFC';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const fg = isDark ? '#f1f5f9' : '#0F172A';
+  const sub = isDark ? '#94a3b8' : '#64748B';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [uri, setUri] = useState<string | null>(null);
@@ -64,7 +82,7 @@ export default function LabelScanScreen() {
       const perm = fromCamera
         ? await ImagePicker.requestCameraPermissionsAsync()
         : await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!perm.granted) { setErr('Permission refusée'); return; }
+      if (!perm.granted) { setErr(t.permDenied); return; }
       const res = fromCamera
         ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
         : await ImagePicker.launchImageLibraryAsync({ quality: 0.7 });
@@ -79,7 +97,7 @@ export default function LabelScanScreen() {
       setText(full);
       setParsed(parseNutrition(full));
     } catch (e: any) {
-      setErr(e?.message || 'OCR indisponible');
+      setErr(e?.message || t.ocrUnavailable);
     } finally {
       setLoading(false);
     }
@@ -88,21 +106,21 @@ export default function LabelScanScreen() {
   const hasParsed = parsed.calories || parsed.protein || parsed.carbs || parsed.fat;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.head}>
           <ScanText size={26} color={GREEN} />
-          <Text style={styles.title}>Scanner une étiquette</Text>
+          <Text style={[styles.title, { color: fg }]}>{t.title}</Text>
         </View>
-        <Text style={styles.sub}>Photographie le tableau nutritionnel — lecture de texte 100% on-device (MLKit).</Text>
+        <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
         <View style={styles.actions}>
           <TouchableOpacity style={[styles.btn, styles.primary]} onPress={() => run(true)}>
-            <Camera size={20} color="#fff" /><Text style={styles.btnTxt}>Caméra</Text>
+            <Camera size={20} color="#fff" /><Text style={styles.btnTxt}>{t.camera}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.btn, styles.secondary]} onPress={() => run(false)}>
-            <Images size={20} color="#475569" /><Text style={styles.btnTxtDark}>Galerie</Text>
+          <TouchableOpacity style={[styles.btn, styles.secondary, isDark && { backgroundColor: '#334155' }]} onPress={() => run(false)}>
+            <Images size={20} color={isDark ? '#cbd5e1' : '#475569'} /><Text style={[styles.btnTxtDark, isDark && { color: '#cbd5e1' }]}>{t.gallery}</Text>
           </TouchableOpacity>
         </View>
 
@@ -117,23 +135,23 @@ export default function LabelScanScreen() {
         )}
 
         {hasParsed ? (
-          <View style={styles.parsedCard}>
-            <Text style={styles.parsedTitle}>Valeurs détectées</Text>
-            {parsed.calories != null && <Text style={styles.parsedRow}>Calories : <Text style={styles.bold}>{parsed.calories} kcal</Text></Text>}
-            {parsed.protein != null && <Text style={styles.parsedRow}>Protéines : <Text style={styles.bold}>{parsed.protein} g</Text></Text>}
-            {parsed.carbs != null && <Text style={styles.parsedRow}>Glucides : <Text style={styles.bold}>{parsed.carbs} g</Text></Text>}
-            {parsed.fat != null && <Text style={styles.parsedRow}>Lipides : <Text style={styles.bold}>{parsed.fat} g</Text></Text>}
+          <View style={[styles.parsedCard, { backgroundColor: card }, isDark && { borderColor: '#334155' }]}>
+            <Text style={[styles.parsedTitle, align]}>{t.detected}</Text>
+            {parsed.calories != null && <Text style={[styles.parsedRow, { color: isDark ? '#cbd5e1' : '#334155' }, align]}>{t.calories} : <Text style={[styles.bold, { color: fg }]}>{parsed.calories} kcal</Text></Text>}
+            {parsed.protein != null && <Text style={[styles.parsedRow, { color: isDark ? '#cbd5e1' : '#334155' }, align]}>{t.protein} : <Text style={[styles.bold, { color: fg }]}>{parsed.protein} g</Text></Text>}
+            {parsed.carbs != null && <Text style={[styles.parsedRow, { color: isDark ? '#cbd5e1' : '#334155' }, align]}>{t.carbs} : <Text style={[styles.bold, { color: fg }]}>{parsed.carbs} g</Text></Text>}
+            {parsed.fat != null && <Text style={[styles.parsedRow, { color: isDark ? '#cbd5e1' : '#334155' }, align]}>{t.fat} : <Text style={[styles.bold, { color: fg }]}>{parsed.fat} g</Text></Text>}
           </View>
         ) : null}
 
         {text ? (
-          <View style={styles.textCard}>
-            <Text style={styles.textTitle}>Texte reconnu</Text>
-            <Text style={styles.rawText}>{text}</Text>
+          <View style={[styles.textCard, { backgroundColor: card }]}>
+            <Text style={[styles.textTitle, { color: isDark ? '#cbd5e1' : '#334155' }, align]}>{t.recognized}</Text>
+            <Text style={[styles.rawText, { color: sub }]}>{text}</Text>
           </View>
         ) : null}
 
-        <Text style={styles.note}>Modèle : MLKit Text Recognition (on-device, hors-ligne).</Text>
+        <Text style={[styles.note, { color: sub }]}>{t.note}</Text>
       </ScrollView>
     </SafeAreaView>
   );

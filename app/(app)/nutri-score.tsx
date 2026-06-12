@@ -4,18 +4,51 @@ import { View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput } from 'rea
 import { Award } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { nutriScore, GRADE_COLOR, NutriGrade } from '../../lib/nutriScore';
+import { useTranslation } from '../../lib/i18n';
+import { useTheme } from '../../lib/ThemeContext';
 
 const GREEN = '#2E8B57';
 const FIELDS = [
-  { k: 'energyKcal', l: 'Énergie', u: 'kcal' },
-  { k: 'sugars', l: 'Sucres', u: 'g' },
-  { k: 'satFat', l: 'Graisses sat.', u: 'g' },
-  { k: 'sodiumMg', l: 'Sodium', u: 'mg' },
-  { k: 'fiber', l: 'Fibres', u: 'g' },
-  { k: 'protein', l: 'Protéines', u: 'g' },
+  { k: 'energyKcal', tk: 'f_energy', u: 'kcal' },
+  { k: 'sugars', tk: 'f_sugars', u: 'g' },
+  { k: 'satFat', tk: 'f_satfat', u: 'g' },
+  { k: 'sodiumMg', tk: 'f_sodium', u: 'mg' },
+  { k: 'fiber', tk: 'f_fiber', u: 'g' },
+  { k: 'protein', tk: 'f_protein', u: 'g' },
 ];
 
+const TXT: any = {
+  en: {
+    title: 'Nutri-Score', sub: 'Enter the values per 100 g → live A→E grade.',
+    grade: 'Grade', score: 'score',
+    f_energy: 'Energy', f_sugars: 'Sugars', f_satfat: 'Sat. fat', f_sodium: 'Sodium', f_fiber: 'Fiber', f_protein: 'Protein',
+    tip: '💡 Find these values on the nutrition label ("per 100 g" table).',
+  },
+  fr: {
+    title: 'Nutri-Score', sub: 'Saisis les valeurs pour 100 g → note A→E en direct.',
+    grade: 'Note', score: 'score',
+    f_energy: 'Énergie', f_sugars: 'Sucres', f_satfat: 'Graisses sat.', f_sodium: 'Sodium', f_fiber: 'Fibres', f_protein: 'Protéines',
+    tip: '💡 Trouve ces valeurs sur l\'étiquette nutritionnelle (tableau « pour 100 g »).',
+  },
+  ar: {
+    title: 'نوتري-سكور', sub: 'أدخل القيم لكل 100 غ ← تقييم A→E مباشر.',
+    grade: 'التقييم', score: 'النقاط',
+    f_energy: 'الطاقة', f_sugars: 'السكريات', f_satfat: 'دهون مشبعة', f_sodium: 'الصوديوم', f_fiber: 'الألياف', f_protein: 'البروتين',
+    tip: '💡 ستجد هذه القيم على الملصق الغذائي (جدول «لكل 100 غ»).',
+  },
+};
+
 export default function NutriScoreScreen() {
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const text = isDark ? '#f1f5f9' : '#0F172A';
+  const sub = isDark ? '#94a3b8' : '#64748B';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const [v, setV] = useState<Record<string, string>>({});
   const num = (k: string) => parseFloat(v[k]) || 0;
   const { grade, score } = useMemo(() => nutriScore({
@@ -25,11 +58,11 @@ export default function NutriScoreScreen() {
   const hasInput = Object.values(v).some((x) => x);
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <View style={styles.head}><Award size={24} color={GREEN} /><Text style={styles.title}>Nutri-Score</Text></View>
-        <Text style={styles.sub}>Saisis les valeurs pour 100 g → note A→E en direct.</Text>
+        <View style={styles.head}><Award size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
         <View style={styles.scaleRow}>
           {(['A', 'B', 'C', 'D', 'E'] as NutriGrade[]).map((g) => (
@@ -38,18 +71,18 @@ export default function NutriScoreScreen() {
             </View>
           ))}
         </View>
-        {hasInput && <Text style={styles.scoreNote}>Note <Text style={{ color: GRADE_COLOR[grade], fontWeight: '900' }}>{grade}</Text> · score {score}</Text>}
+        {hasInput && <Text style={[styles.scoreNote, { color: sub }]}>{t.grade} <Text style={{ color: GRADE_COLOR[grade], fontWeight: '900' }}>{grade}</Text> · {t.score} {score}</Text>}
 
         {FIELDS.map((f) => (
-          <View key={f.k} style={styles.row}>
-            <Text style={styles.label}>{f.l}</Text>
+          <View key={f.k} style={[styles.row, { backgroundColor: card }]}>
+            <Text style={[styles.label, { color: text }]}>{t[f.tk]}</Text>
             <View style={styles.inputWrap}>
-              <TextInput style={styles.input} keyboardType="numeric" placeholder="0" value={v[f.k] || ''} onChangeText={(t) => setV((s) => ({ ...s, [f.k]: t }))} />
-              <Text style={styles.unit}>{f.u}</Text>
+              <TextInput style={[styles.input, { color: text }]} keyboardType="numeric" placeholder="0" placeholderTextColor={isDark ? '#64748b' : '#94A3B8'} value={v[f.k] || ''} onChangeText={(t2) => setV((s) => ({ ...s, [f.k]: t2 }))} />
+              <Text style={[styles.unit, { color: sub }]}>{f.u}</Text>
             </View>
           </View>
         ))}
-        <Text style={styles.tip}>💡 Trouve ces valeurs sur l'étiquette nutritionnelle (tableau « pour 100 g »).</Text>
+        <Text style={[styles.tip, { color: sub }, align]}>{t.tip}</Text>
       </ScrollView>
     </SafeAreaView>
   );

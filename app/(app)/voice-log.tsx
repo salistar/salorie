@@ -8,12 +8,54 @@ import ScreenTopBar from '../../components/ScreenTopBar';
 import { addNutritionLog } from '../../lib/firebase';
 import { todayStr } from '../../lib/tracking';
 import { parseMealFromAudio, ParsedMeal } from '../../lib/voiceMeal';
+import { useTranslation } from '../../lib/i18n';
+import { useTheme } from '../../lib/ThemeContext';
 
 const GREEN = '#2E8B57';
 type Phase = 'idle' | 'recording' | 'analyzing' | 'preview' | 'saved';
 
+const TXT: any = {
+  en: {
+    title: 'Voice logging', sub: 'Say what you ate (e.g. "a bowl of chicken couscous and an orange") — AI transcribes and estimates calories.',
+    mic_perm: 'Microphone permission denied.', mic_err: 'Microphone error', no_audio: 'No audio', not_understood: "I didn't catch any food. Try again speaking clearly.", analysis_err: 'Analysis error',
+    alert_err: 'Error', save_fail: 'Saving failed',
+    recording: 'Recording… tap to stop', analyzing: 'Analyzing…', tap_to_talk: 'Tap to talk',
+    protein: 'Protein', carbs: 'Carbs', fat: 'Fat',
+    retry: 'Retry', add: 'Add',
+    added_b: 'added', kcal: 'kcal', log_another: 'Log another meal',
+  },
+  fr: {
+    title: 'Logging vocal', sub: "Dis ce que tu as mangé (ex: « un bol de couscous au poulet et une orange ») — l'IA transcrit et estime les calories.",
+    mic_perm: 'Permission micro refusée.', mic_err: 'Erreur micro', no_audio: "Pas d'audio", not_understood: "Je n'ai pas compris d'aliment. Réessaie en parlant clairement.", analysis_err: "Erreur d'analyse",
+    alert_err: 'Erreur', save_fail: "Échec de l'enregistrement",
+    recording: 'Enregistrement… appuie pour arrêter', analyzing: 'Analyse en cours…', tap_to_talk: 'Appuie pour parler',
+    protein: 'Protéines', carbs: 'Glucides', fat: 'Lipides',
+    retry: 'Refaire', add: 'Ajouter',
+    added_b: 'ajouté', kcal: 'kcal', log_another: 'Logger un autre repas',
+  },
+  ar: {
+    title: 'تسجيل صوتي', sub: 'قل ما أكلته (مثلاً: «طبق كسكس بالدجاج وبرتقالة») — الذكاء الاصطناعي ينسخ ويقدّر السعرات.',
+    mic_perm: 'تم رفض إذن الميكروفون.', mic_err: 'خطأ في الميكروفون', no_audio: 'لا يوجد صوت', not_understood: 'لم أفهم أي طعام. أعد المحاولة بصوت واضح.', analysis_err: 'خطأ في التحليل',
+    alert_err: 'خطأ', save_fail: 'فشل الحفظ',
+    recording: 'جارٍ التسجيل… اضغط للإيقاف', analyzing: 'جارٍ التحليل…', tap_to_talk: 'اضغط للتحدث',
+    protein: 'بروتين', carbs: 'كربوهيدرات', fat: 'دهون',
+    retry: 'إعادة', add: 'أضف',
+    added_b: 'أُضيف', kcal: 'سعرة', log_another: 'سجّل وجبة أخرى',
+  },
+};
+
 export default function VoiceLog() {
   const { user } = useUser();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#f3f6f4';
+  const cardBg = isDark ? '#1e293b' : '#ffffff';
+  const text = isDark ? '#f1f5f9' : '#1B2A33';
+  const sub = isDark ? '#94a3b8' : '#667085';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const [phase, setPhase] = useState<Phase>('idle');
   const [meal, setMeal] = useState<ParsedMeal | null>(null);
@@ -24,12 +66,12 @@ export default function VoiceLog() {
     setErr('');
     try {
       const perm = await Audio.requestPermissionsAsync();
-      if (!perm.granted) { setErr('Permission micro refusée.'); return; }
+      if (!perm.granted) { setErr(t.mic_perm); return; }
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
       const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
       recRef.current = recording;
       setPhase('recording');
-    } catch (e: any) { setErr(e?.message || 'Erreur micro'); }
+    } catch (e: any) { setErr(e?.message || t.mic_err); }
   };
 
   const stop = async () => {
@@ -40,13 +82,13 @@ export default function VoiceLog() {
       await rec.stopAndUnloadAsync();
       const uri = rec.getURI();
       recRef.current = null;
-      if (!uri) throw new Error('Pas d\'audio');
+      if (!uri) throw new Error(t.no_audio);
       const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
       const parsed = await parseMealFromAudio(base64, 'audio/mp4');
-      if (!parsed || !parsed.name) { setErr('Je n\'ai pas compris d\'aliment. Réessaie en parlant clairement.'); setPhase('idle'); return; }
+      if (!parsed || !parsed.name) { setErr(t.not_understood); setPhase('idle'); return; }
       setMeal(parsed);
       setPhase('preview');
-    } catch (e: any) { setErr(e?.message || 'Erreur d\'analyse'); setPhase('idle'); }
+    } catch (e: any) { setErr(e?.message || t.analysis_err); setPhase('idle'); }
   };
 
   const save = async () => {
@@ -58,17 +100,17 @@ export default function VoiceLog() {
         date: todayStr(),
       } as any);
       setPhase('saved');
-    } catch (e: any) { Alert.alert('Erreur', e?.message || 'Échec de l\'enregistrement'); }
+    } catch (e: any) { Alert.alert(t.alert_err, e?.message || t.save_fail); }
   };
 
   const reset = () => { setMeal(null); setErr(''); setPhase('idle'); };
 
   return (
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar />
       <ScrollView contentContainerStyle={s.body}>
-        <View style={s.head}><Mic size={26} color={GREEN} /><Text style={s.title}>Logging vocal</Text></View>
-        <Text style={s.sub}>Dis ce que tu as mangé (ex: « un bol de couscous au poulet et une orange ») — l'IA transcrit et estime les calories.</Text>
+        <View style={s.head}><Mic size={26} color={GREEN} /><Text style={[s.title, { color: text }]}>{t.title}</Text></View>
+        <Text style={[s.sub, { color: sub }, align]}>{t.sub}</Text>
 
         {(phase === 'idle' || phase === 'recording' || phase === 'analyzing') && (
           <View style={s.micWrap}>
@@ -81,10 +123,10 @@ export default function VoiceLog() {
                 : phase === 'recording' ? <Square size={42} color="#fff" fill="#fff" />
                 : <Mic size={48} color="#fff" />}
             </TouchableOpacity>
-            <Text style={s.micLabel}>
-              {phase === 'recording' ? 'Enregistrement… appuie pour arrêter'
-                : phase === 'analyzing' ? 'Analyse en cours…'
-                : 'Appuie pour parler'}
+            <Text style={[s.micLabel, { color: sub }]}>
+              {phase === 'recording' ? t.recording
+                : phase === 'analyzing' ? t.analyzing
+                : t.tap_to_talk}
             </Text>
           </View>
         )}
@@ -92,26 +134,26 @@ export default function VoiceLog() {
         {!!err && <Text style={s.err}>{err}</Text>}
 
         {phase === 'preview' && meal && (
-          <View style={s.card}>
-            <Text style={s.mealName}>{meal.name}</Text>
+          <View style={[s.card, { backgroundColor: cardBg }, isDark && { borderColor: '#334155' }]}>
+            <Text style={[s.mealName, { color: text }]}>{meal.name}</Text>
             <Text style={s.kcal}>{meal.calories} kcal</Text>
             <View style={s.macros}>
-              <View style={s.macro}><Text style={s.mVal}>{meal.protein}g</Text><Text style={s.mLbl}>Protéines</Text></View>
-              <View style={s.macro}><Text style={s.mVal}>{meal.carbs}g</Text><Text style={s.mLbl}>Glucides</Text></View>
-              <View style={s.macro}><Text style={s.mVal}>{meal.fat}g</Text><Text style={s.mLbl}>Lipides</Text></View>
+              <View style={s.macro}><Text style={[s.mVal, { color: text }]}>{meal.protein}g</Text><Text style={s.mLbl}>{t.protein}</Text></View>
+              <View style={s.macro}><Text style={[s.mVal, { color: text }]}>{meal.carbs}g</Text><Text style={s.mLbl}>{t.carbs}</Text></View>
+              <View style={s.macro}><Text style={[s.mVal, { color: text }]}>{meal.fat}g</Text><Text style={s.mLbl}>{t.fat}</Text></View>
             </View>
             <View style={s.actions}>
-              <TouchableOpacity style={s.retry} onPress={reset}><RotateCcw size={15} color={GREEN} /><Text style={s.retryTxt} numberOfLines={1}>Refaire</Text></TouchableOpacity>
-              <TouchableOpacity style={s.add} onPress={save}><Check size={17} color="#fff" /><Text style={s.addTxt} numberOfLines={1}>Ajouter</Text></TouchableOpacity>
+              <TouchableOpacity style={s.retry} onPress={reset}><RotateCcw size={15} color={GREEN} /><Text style={s.retryTxt} numberOfLines={1}>{t.retry}</Text></TouchableOpacity>
+              <TouchableOpacity style={s.add} onPress={save}><Check size={17} color="#fff" /><Text style={s.addTxt} numberOfLines={1}>{t.add}</Text></TouchableOpacity>
             </View>
           </View>
         )}
 
         {phase === 'saved' && meal && (
-          <View style={s.card}>
+          <View style={[s.card, { backgroundColor: cardBg }, isDark && { borderColor: '#334155' }]}>
             <Check size={40} color={GREEN} style={{ alignSelf: 'center' }} />
-            <Text style={s.savedTxt}>« {meal.name} » ajouté ({meal.calories} kcal) ✅</Text>
-            <TouchableOpacity style={s.add} onPress={reset}><Mic size={18} color="#fff" /><Text style={s.addTxt}>Logger un autre repas</Text></TouchableOpacity>
+            <Text style={[s.savedTxt, { color: text }]}>« {meal.name} » {t.added_b} ({meal.calories} {t.kcal}) ✅</Text>
+            <TouchableOpacity style={s.add} onPress={reset}><Mic size={18} color="#fff" /><Text style={s.addTxt}>{t.log_another}</Text></TouchableOpacity>
           </View>
         )}
       </ScrollView>

@@ -6,11 +6,84 @@ import ScreenTopBar from '../../components/ScreenTopBar';
 import { getUserFromFirestore, updateDailyCalories } from '../../lib/firebase';
 import { getEntries } from '../../lib/tracking';
 import { computeAdaptiveTDEE, AdaptiveResult } from '../../lib/adaptiveTDEE';
+import { useTheme } from '../../lib/ThemeContext';
+import { useTranslation } from '../../lib/i18n';
 
 const GREEN = '#2E8B57';
 
+const TXT: any = {
+  en: {
+    title: 'Adaptive TDEE',
+    sub: 'Your real maintenance, learned from your logged meals + your weight trend — automatically recalibrated every week.',
+    notEnough: 'Not enough data yet',
+    hint: 'Log your meals every day + weigh yourself 2-3×/week. The calculation unlocks around 7 days.',
+    heroLabel: 'LEARNED MAINTENANCE (TDEE)',
+    perDay: 'kcal / day',
+    confidence: 'Confidence:',
+    confHigh: 'High', confMed: 'Medium', confLow: 'Low',
+    avgIntake: 'Real average intake',
+    days: 'd', kcalDay: 'kcal/day',
+    weightTrend: 'Weight trend',
+    kgWeek: 'kg/wk', weighIns: 'weigh-ins',
+    recommended: 'Recommended target for your goal',
+    currentTarget: 'Current target:',
+    applied: 'Target applied',
+    apply: 'Apply this target',
+    foot: "The estimate gets sharper with every logged meal and every weigh-in.",
+  },
+  fr: {
+    title: 'TDEE adaptatif',
+    sub: 'Ta maintenance réelle, apprise de tes repas loggés + ta tendance de poids — recalibrée automatiquement chaque semaine.',
+    notEnough: 'Pas encore assez de données',
+    hint: 'Logge tes repas chaque jour + pèse-toi 2-3×/semaine. Le calcul se débloque vers 7 jours.',
+    heroLabel: 'MAINTENANCE APPRISE (TDEE)',
+    perDay: 'kcal / jour',
+    confidence: 'Confiance :',
+    confHigh: 'Élevée', confMed: 'Moyenne', confLow: 'Faible',
+    avgIntake: 'Apport moyen réel',
+    days: 'j', kcalDay: 'kcal/j',
+    weightTrend: 'Tendance poids',
+    kgWeek: 'kg/sem', weighIns: 'pesées',
+    recommended: 'Cible conseillée pour ton objectif',
+    currentTarget: 'Cible actuelle :',
+    applied: 'Cible appliquée',
+    apply: 'Appliquer cette cible',
+    foot: "L'estimation s'affine à chaque repas loggé et chaque pesée.",
+  },
+  ar: {
+    title: 'TDEE التكيفي',
+    sub: 'صيانتك الحقيقية، مستخلصة من وجباتك المسجلة + اتجاه وزنك — تُعاد معايرتها تلقائياً كل أسبوع.',
+    notEnough: 'لا توجد بيانات كافية بعد',
+    hint: 'سجّل وجباتك يومياً + زِن نفسك 2-3 مرات في الأسبوع. يبدأ الحساب بعد حوالي 7 أيام.',
+    heroLabel: 'الصيانة المُتعلَّمة (TDEE)',
+    perDay: 'سعرة / يوم',
+    confidence: 'الثقة:',
+    confHigh: 'عالية', confMed: 'متوسطة', confLow: 'منخفضة',
+    avgIntake: 'متوسط الاستهلاك الفعلي',
+    days: 'ي', kcalDay: 'سعرة/يوم',
+    weightTrend: 'اتجاه الوزن',
+    kgWeek: 'كغ/أسبوع', weighIns: 'وزنات',
+    recommended: 'الهدف الموصى به لهدفك',
+    currentTarget: 'الهدف الحالي:',
+    applied: 'تم تطبيق الهدف',
+    apply: 'طبّق هذا الهدف',
+    foot: 'يزداد التقدير دقة مع كل وجبة مسجلة وكل وزنة.',
+  },
+};
+
 export default function AdaptiveTDEE() {
   const { user } = useUser();
+  const { resolved } = useTheme();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#f3f6f4';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const text = isDark ? '#f1f5f9' : '#1B2A33';
+  const sub = isDark ? '#94a3b8' : '#667085';
+  const border = isDark ? '#334155' : '#e6ece8';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const [loading, setLoading] = useState(true);
   const [res, setRes] = useState<AdaptiveResult | null>(null);
@@ -44,62 +117,62 @@ export default function AdaptiveTDEE() {
   };
 
   const conf = res?.confidence;
-  const confLabel = conf === 'high' ? 'Élevée' : conf === 'medium' ? 'Moyenne' : 'Faible';
+  const confLabel = conf === 'high' ? t.confHigh : conf === 'medium' ? t.confMed : t.confLow;
   const confColor = conf === 'high' ? GREEN : conf === 'medium' ? '#B45309' : '#94a3b8';
   const losing = (res?.trendKgPerWeek || 0) < 0;
 
   return (
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar />
       <ScrollView contentContainerStyle={s.body}>
         <View style={s.head}>
           <Activity size={26} color={GREEN} />
-          <Text style={s.title}>TDEE adaptatif</Text>
+          <Text style={[s.title, { color: text }]}>{t.title}</Text>
         </View>
-        <Text style={s.sub}>Ta maintenance réelle, apprise de tes repas loggés + ta tendance de poids — recalibrée automatiquement chaque semaine.</Text>
+        <Text style={[s.sub, { color: sub }, align]}>{t.sub}</Text>
 
         {loading ? (
           <ActivityIndicator color={GREEN} style={{ marginTop: 40 }} />
         ) : !res?.tdee ? (
-          <View style={s.card}>
-            <Text style={s.cardLabel}>Pas encore assez de données</Text>
-            <Text style={s.note}>{res?.note}</Text>
-            <Text style={s.hint}>Logge tes repas chaque jour + pèse-toi 2-3×/semaine. Le calcul se débloque vers 7 jours.</Text>
+          <View style={[s.card, { backgroundColor: card, borderColor: border }]}>
+            <Text style={[s.cardLabel, { color: text }, align]}>{t.notEnough}</Text>
+            <Text style={[s.note, { color: sub }, align]}>{res?.note}</Text>
+            <Text style={[s.hint, align]}>{t.hint}</Text>
           </View>
         ) : (
           <>
-            <View style={s.heroCard}>
-              <Text style={s.heroLabel}>MAINTENANCE APPRISE (TDEE)</Text>
+            <View style={[s.heroCard, { backgroundColor: card, borderColor: border }]}>
+              <Text style={s.heroLabel}>{t.heroLabel}</Text>
               <Text style={s.heroValue}>{res.tdee}</Text>
-              <Text style={s.heroUnit}>kcal / jour</Text>
+              <Text style={[s.heroUnit, { color: sub }]}>{t.perDay}</Text>
               <View style={[s.confPill, { backgroundColor: confColor + '22' }]}>
-                <Text style={[s.confTxt, { color: confColor }]}>Confiance : {confLabel}</Text>
+                <Text style={[s.confTxt, { color: confColor }]}>{t.confidence} {confLabel}</Text>
               </View>
             </View>
 
             <View style={s.row}>
-              <View style={s.statCard}>
-                <Text style={s.statLabel}>Apport moyen réel</Text>
-                <Text style={s.statValue}>{res.avgIntake}</Text>
-                <Text style={s.statUnit}>kcal/j · {res.intakeDays} j</Text>
+              <View style={[s.statCard, { backgroundColor: card, borderColor: border }]}>
+                <Text style={s.statLabel}>{t.avgIntake}</Text>
+                <Text style={[s.statValue, { color: text }]}>{res.avgIntake}</Text>
+                <Text style={s.statUnit}>{t.kcalDay} · {res.intakeDays} {t.days}</Text>
               </View>
-              <View style={s.statCard}>
+              <View style={[s.statCard, { backgroundColor: card, borderColor: border }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   {losing ? <TrendingDown size={14} color={GREEN} /> : <TrendingUp size={14} color="#B45309" />}
-                  <Text style={s.statLabel}>Tendance poids</Text>
+                  <Text style={s.statLabel}>{t.weightTrend}</Text>
                 </View>
                 <Text style={[s.statValue, { color: losing ? GREEN : '#B45309' }]}>
                   {res.trendKgPerWeek > 0 ? '+' : ''}{res.trendKgPerWeek}
                 </Text>
-                <Text style={s.statUnit}>kg/sem · {res.weighIns} pesées</Text>
+                <Text style={s.statUnit}>{t.kgWeek} · {res.weighIns} {t.weighIns}</Text>
               </View>
             </View>
 
-            <View style={s.card}>
-              <Text style={s.cardLabel}>Cible conseillée pour ton objectif{goal ? ` (${goal})` : ''}</Text>
-              <Text style={s.recValue}>{res.recommendedTarget} <Text style={s.recUnit}>kcal/j</Text></Text>
+            <View style={[s.card, { backgroundColor: card, borderColor: border }]}>
+              <Text style={[s.cardLabel, { color: text }, align]}>{t.recommended}{goal ? ` (${goal})` : ''}</Text>
+              <Text style={s.recValue}>{res.recommendedTarget} <Text style={[s.recUnit, { color: sub }]}>{t.kcalDay}</Text></Text>
               {currentTarget ? (
-                <Text style={s.note}>Cible actuelle : {currentTarget} kcal/j</Text>
+                <Text style={[s.note, { color: sub }, align]}>{t.currentTarget} {currentTarget} {t.kcalDay}</Text>
               ) : null}
               <TouchableOpacity
                 style={[s.applyBtn, (applied || currentTarget === res.recommendedTarget) && s.applyBtnDone]}
@@ -108,12 +181,12 @@ export default function AdaptiveTDEE() {
               >
                 <Check size={18} color="#fff" />
                 <Text style={s.applyTxt}>
-                  {applied || currentTarget === res.recommendedTarget ? 'Cible appliquée' : 'Appliquer cette cible'}
+                  {applied || currentTarget === res.recommendedTarget ? t.applied : t.apply}
                 </Text>
               </TouchableOpacity>
             </View>
 
-            <Text style={s.foot}>{res.note} L'estimation s'affine à chaque repas loggé et chaque pesée.</Text>
+            <Text style={s.foot}>{res.note} {t.foot}</Text>
           </>
         )}
       </ScrollView>

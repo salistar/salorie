@@ -6,11 +6,68 @@ import { FileText, Share2 } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { getUserFromFirestore } from '../../lib/firebase';
 import { getEntries } from '../../lib/tracking';
+import { useTheme } from '../../lib/ThemeContext';
+import { useTranslation } from '../../lib/i18n';
 
 const GREEN = '#2E8B57';
 
+const TXT: any = {
+  en: {
+    title: 'Export for your doctor',
+    sub: 'A summary of your data (meals, activity, weight) to share with a health professional.',
+    statLogs: 'meals/activities',
+    statWeights: 'weigh-ins',
+    btn: 'Share the summary (CSV)',
+    note: 'CSV format — opens in Excel/Sheets, or send it by email. No data is sent to any third party: sharing goes through your phone.',
+    csvHeader: 'SALORIE — Health summary',
+    csvName: 'Name', csvGoal: 'Goal', csvWeight: 'Weight', csvTarget: 'Target kcal/day', csvGenerated: 'Generated on',
+    csvMeals: 'MEALS & ACTIVITY (date,type,name,kcal)',
+    csvWeights: 'WEIGHT (date,kg)',
+    defaultUser: 'User',
+    shareTitle: 'Salorie summary',
+  },
+  fr: {
+    title: 'Export pour ton médecin',
+    sub: 'Un résumé de tes données (repas, activité, poids) à partager avec un professionnel de santé.',
+    statLogs: 'repas/activités',
+    statWeights: 'pesées',
+    btn: 'Partager le résumé (CSV)',
+    note: "Format CSV — ouvrable dans Excel/Sheets, ou à envoyer par mail. Aucune donnée n'est transmise à un tiers : le partage passe par ton téléphone.",
+    csvHeader: 'SALORIE — Résumé santé',
+    csvName: 'Nom', csvGoal: 'Objectif', csvWeight: 'Poids', csvTarget: 'Cible kcal/j', csvGenerated: 'Généré le',
+    csvMeals: 'REPAS & ACTIVITÉ (date,type,nom,kcal)',
+    csvWeights: 'POIDS (date,kg)',
+    defaultUser: 'Utilisateur',
+    shareTitle: 'Résumé Salorie',
+  },
+  ar: {
+    title: 'تصدير لطبيبك',
+    sub: 'ملخص لبياناتك (الوجبات، النشاط، الوزن) لمشاركته مع أخصائي صحي.',
+    statLogs: 'وجبات/أنشطة',
+    statWeights: 'وزنات',
+    btn: 'شارك الملخص (CSV)',
+    note: 'صيغة CSV — يمكن فتحها في Excel/Sheets أو إرسالها بالبريد. لا تُرسَل أي بيانات لطرف ثالث: المشاركة تتم عبر هاتفك.',
+    csvHeader: 'SALORIE — ملخص صحي',
+    csvName: 'الاسم', csvGoal: 'الهدف', csvWeight: 'الوزن', csvTarget: 'الهدف سعرة/يوم', csvGenerated: 'أُنشئ في',
+    csvMeals: 'الوجبات والنشاط (التاريخ,النوع,الاسم,سعرة)',
+    csvWeights: 'الوزن (التاريخ,كغ)',
+    defaultUser: 'مستخدم',
+    shareTitle: 'ملخص Salorie',
+  },
+};
+
 export default function DoctorExportScreen() {
   const { user } = useUser();
+  const { resolved } = useTheme();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const text = isDark ? '#f1f5f9' : '#0F172A';
+  const sub = isDark ? '#94a3b8' : '#64748B';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState({ logs: 0, weights: 0, name: '' });
@@ -22,11 +79,11 @@ export default function DoctorExportScreen() {
         const p: any = await getUserFromFirestore(email, user?.id);
         const logs = await getEntries(email, 'logs', 90);
         const weights = await getEntries(email, 'weight_history', 60);
-        const name = p?.firstName || (email ? email.split('@')[0] : 'Utilisateur');
-        let out = `SALORIE — Résumé santé\nNom: ${name}\nObjectif: ${p?.goal || '—'} · Poids: ${p?.weight || '—'} kg\nCible kcal/j: ${p?.nutritionalPlan?.dailyCalories || '—'}\nGénéré le: ${new Date().toLocaleDateString('fr-FR')}\n\n`;
-        out += `=== REPAS & ACTIVITÉ (date,type,nom,kcal) ===\n`;
+        const name = p?.firstName || (email ? email.split('@')[0] : t.defaultUser);
+        let out = `${t.csvHeader}\n${t.csvName}: ${name}\n${t.csvGoal}: ${p?.goal || '—'} · ${t.csvWeight}: ${p?.weight || '—'} kg\n${t.csvTarget}: ${p?.nutritionalPlan?.dailyCalories || '—'}\n${t.csvGenerated}: ${new Date().toLocaleDateString('fr-FR')}\n\n`;
+        out += `=== ${t.csvMeals} ===\n`;
         for (const l of logs) out += `${l.date || ''},${l.type || ''},${(l.name || '').replace(/,/g, ' ')},${Math.round(l.calories || 0)}\n`;
-        out += `\n=== POIDS (date,kg) ===\n`;
+        out += `\n=== ${t.csvWeights} ===\n`;
         for (const w of weights) out += `${w.date || ''},${w.weight ?? ''}\n`;
         setCsv(out);
         setSummary({ logs: logs.length, weights: weights.length, name });
@@ -34,23 +91,23 @@ export default function DoctorExportScreen() {
     })();
   }, []);
 
-  const share = async () => { try { await Share.share({ title: 'Résumé Salorie', message: csv }); } catch {} };
+  const share = async () => { try { await Share.share({ title: t.shareTitle, message: csv }); } catch {} };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
-        <View style={styles.head}><FileText size={24} color={GREEN} /><Text style={styles.title}>Export pour ton médecin</Text></View>
-        <Text style={styles.sub}>Un résumé de tes données (repas, activité, poids) à partager avec un professionnel de santé.</Text>
+        <View style={styles.head}><FileText size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
         {loading ? <ActivityIndicator color={GREEN} style={{ marginTop: 30 }} /> : (
           <>
             <View style={styles.statsRow}>
-              <View style={styles.stat}><Text style={styles.statV}>{summary.logs}</Text><Text style={styles.statL}>repas/activités</Text></View>
-              <View style={styles.stat}><Text style={styles.statV}>{summary.weights}</Text><Text style={styles.statL}>pesées</Text></View>
+              <View style={[styles.stat, { backgroundColor: card }]}><Text style={styles.statV}>{summary.logs}</Text><Text style={styles.statL}>{t.statLogs}</Text></View>
+              <View style={[styles.stat, { backgroundColor: card }]}><Text style={styles.statV}>{summary.weights}</Text><Text style={styles.statL}>{t.statWeights}</Text></View>
             </View>
-            <TouchableOpacity style={styles.btn} onPress={share}><Share2 size={20} color="#fff" /><Text style={styles.btnTxt}>Partager le résumé (CSV)</Text></TouchableOpacity>
-            <Text style={styles.note}>Format CSV — ouvrable dans Excel/Sheets, ou à envoyer par mail. Aucune donnée n'est transmise à un tiers : le partage passe par ton téléphone.</Text>
+            <TouchableOpacity style={styles.btn} onPress={share}><Share2 size={20} color="#fff" /><Text style={styles.btnTxt}>{t.btn}</Text></TouchableOpacity>
+            <Text style={[styles.note, align]}>{t.note}</Text>
             <View style={styles.preview}><Text style={styles.previewTxt} numberOfLines={12}>{csv}</Text></View>
           </>
         )}

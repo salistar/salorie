@@ -5,9 +5,17 @@ import { useUser } from '@clerk/clerk-expo';
 import { Droplet, Check } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { logEntry, getEntries } from '../../lib/tracking';
+import { useTheme } from '../../lib/ThemeContext';
+import { useTranslation } from '../../lib/i18n';
 
 const GREEN = '#2E8B57';
 const CONTEXTS = ['À jeun', 'Avant repas', 'Après repas', 'Coucher'];
+
+const TXT: any = {
+  en: { title: 'Blood glucose', sub: 'Log your readings (mg/dL). CGM sensor sync (Dexcom/Libre) coming soon.', placeholder: 'e.g. 95', save: 'Save', history: 'History', empty: 'No readings yet.', status: { 'Basse': 'Low', 'Normale': 'Normal', 'Élevée': 'High', 'Très élevée': 'Very high' }, ctx: { 'À jeun': 'Fasting', 'Avant repas': 'Before meal', 'Après repas': 'After meal', 'Coucher': 'Bedtime' } },
+  fr: { title: 'Glycémie', sub: 'Note tes mesures (mg/dL). Sync capteur CGM (Dexcom/Libre) à venir.', placeholder: 'ex. 95', save: 'Enregistrer', history: 'Historique', empty: 'Aucune mesure.', status: { 'Basse': 'Basse', 'Normale': 'Normale', 'Élevée': 'Élevée', 'Très élevée': 'Très élevée' }, ctx: { 'À jeun': 'À jeun', 'Avant repas': 'Avant repas', 'Après repas': 'Après repas', 'Coucher': 'Coucher' } },
+  ar: { title: 'سكر الدم', sub: 'سجّل قياساتك (ملغ/دل). مزامنة مستشعر CGM (Dexcom/Libre) قريباً.', placeholder: 'مثال 95', save: 'حفظ', history: 'السجل', empty: 'لا قياسات بعد.', status: { 'Basse': 'منخفض', 'Normale': 'طبيعي', 'Élevée': 'مرتفع', 'Très élevée': 'مرتفع جداً' }, ctx: { 'À jeun': 'صائم', 'Avant repas': 'قبل الوجبة', 'Après repas': 'بعد الوجبة', 'Coucher': 'قبل النوم' } },
+};
 
 function status(v: number, ctx: string) {
   const fasting = ctx === 'À jeun' || ctx === 'Avant repas';
@@ -16,6 +24,16 @@ function status(v: number, ctx: string) {
 }
 
 export default function GlucoseTrackerScreen() {
+  const { resolved } = useTheme();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const text = isDark ? '#f1f5f9' : '#0F172A';
+  const sub = isDark ? '#94a3b8' : '#64748B';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const [val, setVal] = useState('');
@@ -29,32 +47,32 @@ export default function GlucoseTrackerScreen() {
   const save = async () => { const v = parseFloat(val); if (isNaN(v)) return; setSaving(true); await logEntry(email, 'glucose', { value: v, context: ctx }); setVal(''); await load(); setSaving(false); };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <View style={styles.head}><Droplet size={24} color="#E11D48" /><Text style={styles.title}>Glycémie</Text></View>
-        <Text style={styles.sub}>Note tes mesures (mg/dL). Sync capteur CGM (Dexcom/Libre) à venir.</Text>
+        <View style={styles.head}><Droplet size={24} color="#E11D48" /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
-        <View style={styles.inputRow}>
-          <TextInput style={styles.input} keyboardType="numeric" placeholder="ex. 95" value={val} onChangeText={setVal} />
-          <Text style={styles.unit}>mg/dL</Text>
+        <View style={[styles.inputRow, { backgroundColor: card }]}>
+          <TextInput style={[styles.input, { color: text }]} keyboardType="numeric" placeholder={t.placeholder} placeholderTextColor={sub} value={val} onChangeText={setVal} />
+          <Text style={[styles.unit, { color: sub }]}>mg/dL</Text>
         </View>
         <View style={styles.ctxRow}>
           {CONTEXTS.map((c) => (
-            <TouchableOpacity key={c} style={[styles.ctx, ctx === c && styles.ctxActive]} onPress={() => setCtx(c)}><Text style={[styles.ctxTxt, ctx === c && { color: '#fff' }]}>{c}</Text></TouchableOpacity>
+            <TouchableOpacity key={c} style={[styles.ctx, { backgroundColor: card }, ctx === c && styles.ctxActive]} onPress={() => setCtx(c)}><Text style={[styles.ctxTxt, { color: sub }, ctx === c && { color: '#fff' }]}>{t.ctx[c] || c}</Text></TouchableOpacity>
           ))}
         </View>
         <TouchableOpacity style={styles.saveBtn} onPress={save} disabled={saving}>
-          {saving ? <ActivityIndicator color="#fff" /> : <><Check size={20} color="#fff" /><Text style={styles.saveTxt}>Enregistrer</Text></>}
+          {saving ? <ActivityIndicator color="#fff" /> : <><Check size={20} color="#fff" /><Text style={styles.saveTxt}>{t.save}</Text></>}
         </TouchableOpacity>
 
-        <Text style={styles.label}>Historique</Text>
-        {loading ? <ActivityIndicator color={GREEN} /> : hist.length === 0 ? <Text style={styles.empty}>Aucune mesure.</Text> : hist.map((h) => {
+        <Text style={[styles.label, { color: sub }]}>{t.history}</Text>
+        {loading ? <ActivityIndicator color={GREEN} /> : hist.length === 0 ? <Text style={[styles.empty, { color: sub }]}>{t.empty}</Text> : hist.map((h) => {
           const s = status(h.value, h.context);
           return (
-            <View key={h.id} style={styles.row}>
-              <View style={{ flex: 1 }}><Text style={styles.rowV}>{h.value} mg/dL</Text><Text style={styles.rowSub}>{h.context} · {h.date}</Text></View>
-              <View style={[styles.badge, { backgroundColor: s.c + '18' }]}><Text style={[styles.badgeTxt, { color: s.c }]}>{s.t}</Text></View>
+            <View key={h.id} style={[styles.row, { backgroundColor: card }]}>
+              <View style={{ flex: 1 }}><Text style={[styles.rowV, { color: text }]}>{h.value} mg/dL</Text><Text style={[styles.rowSub, { color: sub }]}>{t.ctx[h.context] || h.context} · {h.date}</Text></View>
+              <View style={[styles.badge, { backgroundColor: s.c + '18' }]}><Text style={[styles.badgeTxt, { color: s.c }]}>{t.status[s.t] || s.t}</Text></View>
             </View>
           );
         })}

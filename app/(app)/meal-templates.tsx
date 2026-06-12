@@ -6,11 +6,29 @@ import { BookmarkPlus, Plus, Check } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { logEntry, getEntries, todayStr } from '../../lib/tracking';
 import { addNutritionLog } from '../../lib/firebase';
+import { useTheme } from '../../lib/ThemeContext';
+import { useTranslation } from '../../lib/i18n';
 
 const GREEN = '#2E8B57';
 const F = [{ k: 'calories', l: 'Calories', u: 'kcal' }, { k: 'protein', l: 'Prot.', u: 'g' }, { k: 'carbs', l: 'Gluc.', u: 'g' }, { k: 'fat', l: 'Lip.', u: 'g' }];
 
+const TXT: any = {
+  en: { title: 'My meal templates', sub: 'Save a usual meal, re-log it in 1 tap.', namePh: 'Name (e.g. Usual breakfast)', createBtn: 'Create template', myTemplates: 'My templates', empty: 'No templates yet. Create one above.', logBtn: 'Log', loggedTitle: 'Logged ✅', loggedMsg: 'added to today.', errTitle: 'Error', errMsg: 'Could not log.', p: 'P', c: 'C', f: 'F', fields: { calories: 'Calories', protein: 'Prot.', carbs: 'Carbs', fat: 'Fat' } },
+  fr: { title: 'Mes repas types', sub: 'Enregistre un repas habituel, re-logge-le en 1 tap.', namePh: 'Nom (ex. Petit-déj habituel)', createBtn: 'Créer le template', myTemplates: 'Mes templates', empty: 'Aucun template. Crées-en un ci-dessus.', logBtn: 'Logger', loggedTitle: 'Loggé ✅', loggedMsg: "ajouté à aujourd'hui.", errTitle: 'Erreur', errMsg: 'Log impossible.', p: 'P', c: 'G', f: 'L', fields: { calories: 'Calories', protein: 'Prot.', carbs: 'Gluc.', fat: 'Lip.' } },
+  ar: { title: 'وجباتي المعتادة', sub: 'احفظ وجبة معتادة وسجّلها مجدداً بلمسة واحدة.', namePh: 'الاسم (مثل فطور معتاد)', createBtn: 'إنشاء قالب', myTemplates: 'قوالبي', empty: 'لا قوالب بعد. أنشئ واحداً أعلاه.', logBtn: 'تسجيل', loggedTitle: 'تم التسجيل ✅', loggedMsg: 'أُضيف إلى اليوم.', errTitle: 'خطأ', errMsg: 'تعذر التسجيل.', p: 'ب', c: 'ك', f: 'د', fields: { calories: 'سعرات', protein: 'بروتين', carbs: 'كربوهيدرات', fat: 'دهون' } },
+};
+
 export default function MealTemplatesScreen() {
+  const { resolved } = useTheme();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const text = isDark ? '#f1f5f9' : '#0F172A';
+  const sub = isDark ? '#94a3b8' : '#64748B';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const [name, setName] = useState('');
@@ -31,43 +49,43 @@ export default function MealTemplatesScreen() {
     setName(''); setVals({}); await load(); setBusy(false);
   };
 
-  const quickLog = async (t: any) => {
+  const quickLog = async (tpl: any) => {
     try {
-      await addNutritionLog({ userId: email, type: 'meal', name: t.name, calories: t.calories || 0, protein: t.protein || 0, carbs: t.carbs || 0, fat: t.fat || 0, date: todayStr() } as any);
-      Alert.alert('Loggé ✅', `${t.name} ajouté à aujourd'hui.`);
-    } catch { Alert.alert('Erreur', 'Log impossible.'); }
+      await addNutritionLog({ userId: email, type: 'meal', name: tpl.name, calories: tpl.calories || 0, protein: tpl.protein || 0, carbs: tpl.carbs || 0, fat: tpl.fat || 0, date: todayStr() } as any);
+      Alert.alert(t.loggedTitle, `${tpl.name} ${t.loggedMsg}`);
+    } catch { Alert.alert(t.errTitle, t.errMsg); }
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <View style={styles.head}><BookmarkPlus size={24} color={GREEN} /><Text style={styles.title}>Mes repas types</Text></View>
-        <Text style={styles.sub}>Enregistre un repas habituel, re-logge-le en 1 tap.</Text>
+        <View style={styles.head}><BookmarkPlus size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
-        <View style={styles.form}>
-          <TextInput style={styles.nameInput} placeholder="Nom (ex. Petit-déj habituel)" value={name} onChangeText={setName} />
+        <View style={[styles.form, { backgroundColor: card }]}>
+          <TextInput style={[styles.nameInput, { color: text }, isDark && { borderBottomColor: '#334155' }]} placeholder={t.namePh} placeholderTextColor={sub} value={name} onChangeText={setName} />
           <View style={styles.macroRow}>
             {F.map((f) => (
               <View key={f.k} style={styles.macroCell}>
-                <TextInput style={styles.macroInput} keyboardType="numeric" placeholder="0" value={vals[f.k] || ''} onChangeText={(t) => setVals((v) => ({ ...v, [f.k]: t }))} />
-                <Text style={styles.macroLbl}>{f.l}</Text>
+                <TextInput style={[styles.macroInput, { color: text }]} keyboardType="numeric" placeholder="0" placeholderTextColor={sub} value={vals[f.k] || ''} onChangeText={(v2) => setVals((v) => ({ ...v, [f.k]: v2 }))} />
+                <Text style={[styles.macroLbl, { color: sub }]}>{t.fields[f.k] || f.l}</Text>
               </View>
             ))}
           </View>
           <TouchableOpacity style={styles.addBtn} onPress={create} disabled={busy}>
-            {busy ? <ActivityIndicator color="#fff" /> : <><Plus size={18} color="#fff" /><Text style={styles.addTxt}>Créer le template</Text></>}
+            {busy ? <ActivityIndicator color="#fff" /> : <><Plus size={18} color="#fff" /><Text style={styles.addTxt}>{t.createBtn}</Text></>}
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.label}>Mes templates</Text>
-        {loading ? <ActivityIndicator color={GREEN} /> : tpls.length === 0 ? <Text style={styles.empty}>Aucun template. Crées-en un ci-dessus.</Text> : tpls.map((t) => (
-          <TouchableOpacity key={t.id} style={styles.tpl} onPress={() => quickLog(t)} activeOpacity={0.85}>
+        <Text style={[styles.label, { color: sub }]}>{t.myTemplates}</Text>
+        {loading ? <ActivityIndicator color={GREEN} /> : tpls.length === 0 ? <Text style={[styles.empty, { color: sub }]}>{t.empty}</Text> : tpls.map((tp) => (
+          <TouchableOpacity key={tp.id} style={[styles.tpl, { backgroundColor: card }]} onPress={() => quickLog(tp)} activeOpacity={0.85}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.tplName}>{t.name}</Text>
-              <Text style={styles.tplMacro}>{Math.round(t.calories || 0)} kcal · {Math.round(t.protein || 0)}P/{Math.round(t.carbs || 0)}G/{Math.round(t.fat || 0)}L</Text>
+              <Text style={[styles.tplName, { color: text }]}>{tp.name}</Text>
+              <Text style={[styles.tplMacro, { color: sub }]}>{Math.round(tp.calories || 0)} kcal · {Math.round(tp.protein || 0)}{t.p}/{Math.round(tp.carbs || 0)}{t.c}/{Math.round(tp.fat || 0)}{t.f}</Text>
             </View>
-            <View style={styles.logChip}><Check size={16} color="#fff" /><Text style={styles.logChipTxt}>Logger</Text></View>
+            <View style={styles.logChip}><Check size={16} color="#fff" /><Text style={styles.logChipTxt}>{t.logBtn}</Text></View>
           </TouchableOpacity>
         ))}
       </ScrollView>

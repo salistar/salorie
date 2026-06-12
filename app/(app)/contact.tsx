@@ -5,11 +5,69 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { MessagesSquare, Send, Check, Mail } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { db, logEvent, emailToDocId } from '../../lib/firebase';
+import { useTheme } from '../../lib/ThemeContext';
+import { useTranslation } from '../../lib/i18n';
 
 const GREEN = '#2E8B57';
 
+const TXT: any = {
+  en: {
+    title: 'Contact us',
+    sub: 'A question, an issue, a suggestion? Write to us — we reply by email.',
+    subjectLabel: 'Subject',
+    subjectPh: 'E.g. Sync issue',
+    messageLabel: 'Message',
+    messagePh: 'Describe your request…',
+    send: 'Send',
+    noSubject: '(no subject)',
+    doneTxt: 'Message sent ✅',
+    doneSub: 'Our team has received it (visible in the back office). Thank you!',
+    newMessage: 'New message',
+    orMail: 'Or write to admin@salistar.com',
+  },
+  fr: {
+    title: 'Nous contacter',
+    sub: 'Une question, un souci, une suggestion ? Écris-nous — on te répond par e-mail.',
+    subjectLabel: 'Sujet',
+    subjectPh: 'Ex: Problème de synchro',
+    messageLabel: 'Message',
+    messagePh: 'Décris ta demande…',
+    send: 'Envoyer',
+    noSubject: '(sans sujet)',
+    doneTxt: 'Message envoyé ✅',
+    doneSub: "Notre équipe l'a reçu (visible dans le back-office). Merci !",
+    newMessage: 'Nouveau message',
+    orMail: 'Ou écris à admin@salistar.com',
+  },
+  ar: {
+    title: 'اتصل بنا',
+    sub: 'سؤال، مشكلة، اقتراح؟ راسلنا — سنرد عليك عبر البريد الإلكتروني.',
+    subjectLabel: 'الموضوع',
+    subjectPh: 'مثال: مشكلة في المزامنة',
+    messageLabel: 'الرسالة',
+    messagePh: 'صف طلبك…',
+    send: 'إرسال',
+    noSubject: '(بدون موضوع)',
+    doneTxt: 'تم إرسال الرسالة ✅',
+    doneSub: 'استلمها فريقنا (مرئية في لوحة الإدارة). شكراً!',
+    newMessage: 'رسالة جديدة',
+    orMail: 'أو راسل admin@salistar.com',
+  },
+};
+
 export default function Contact() {
   const { user } = useUser();
+  const { resolved } = useTheme();
+  const { language, isRTL } = useTranslation() as any;
+  const t = TXT[language] || TXT.en;
+  const isDark = resolved === 'dark';
+  const bg = isDark ? '#0f172a' : '#f3f6f4';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const text = isDark ? '#f1f5f9' : '#1B2A33';
+  const sub = isDark ? '#94a3b8' : '#667085';
+  const border = isDark ? '#334155' : '#e6ece8';
+  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
@@ -23,7 +81,7 @@ export default function Contact() {
       // Sous-collection owner (autorisée par les règles) ; le web lit via collectionGroup.
       const docId = emailToDocId(email);
       await addDoc(collection(db, 'users', docId, 'contact_messages'), {
-        email, subject: subject.trim() || '(sans sujet)', message: message.trim(),
+        email, subject: subject.trim() || t.noSubject, message: message.trim(),
         userName: user?.fullName || '', createdAt: serverTimestamp(),
       });
       logEvent(email, 'contact_message', { subject: subject.trim() });
@@ -36,29 +94,29 @@ export default function Contact() {
 
   if (sent) {
     return (
-      <SafeAreaView style={s.safe}><ScreenTopBar />
-        <View style={s.done}><Check size={48} color={GREEN} /><Text style={s.doneTxt}>Message envoyé ✅</Text>
-          <Text style={s.doneSub}>Notre équipe l'a reçu (visible dans le back-office). Merci !</Text>
-          <TouchableOpacity style={s.btn} onPress={() => { setSent(false); setSubject(''); setMessage(''); }}><Text style={s.btnTxt}>Nouveau message</Text></TouchableOpacity>
+      <SafeAreaView style={[s.safe, { backgroundColor: bg }]}><ScreenTopBar />
+        <View style={s.done}><Check size={48} color={GREEN} /><Text style={[s.doneTxt, { color: text }]}>{t.doneTxt}</Text>
+          <Text style={[s.doneSub, { color: sub }]}>{t.doneSub}</Text>
+          <TouchableOpacity style={s.btn} onPress={() => { setSent(false); setSubject(''); setMessage(''); }}><Text style={s.btnTxt}>{t.newMessage}</Text></TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={s.safe}><ScreenTopBar />
+    <SafeAreaView style={[s.safe, { backgroundColor: bg }]}><ScreenTopBar />
       <ScrollView contentContainerStyle={s.body}>
-        <View style={s.head}><MessagesSquare size={26} color={GREEN} /><Text style={s.title}>Nous contacter</Text></View>
-        <Text style={s.sub}>Une question, un souci, une suggestion ? Écris-nous — on te répond par e-mail.</Text>
-        <Text style={s.label}>Sujet</Text>
-        <TextInput style={s.input} value={subject} onChangeText={setSubject} placeholder="Ex: Problème de synchro" placeholderTextColor="#94a3b8" />
-        <Text style={s.label}>Message</Text>
-        <TextInput style={[s.input, { height: 140, textAlignVertical: 'top' }]} value={message} onChangeText={setMessage} placeholder="Décris ta demande…" placeholderTextColor="#94a3b8" multiline />
+        <View style={s.head}><MessagesSquare size={26} color={GREEN} /><Text style={[s.title, { color: text }]}>{t.title}</Text></View>
+        <Text style={[s.sub, { color: sub }, align]}>{t.sub}</Text>
+        <Text style={[s.label, { color: sub }, align]}>{t.subjectLabel}</Text>
+        <TextInput style={[s.input, { backgroundColor: card, borderColor: border, color: text }]} value={subject} onChangeText={setSubject} placeholder={t.subjectPh} placeholderTextColor="#94a3b8" />
+        <Text style={[s.label, { color: sub }, align]}>{t.messageLabel}</Text>
+        <TextInput style={[s.input, { height: 140, textAlignVertical: 'top', backgroundColor: card, borderColor: border, color: text }]} value={message} onChangeText={setMessage} placeholder={t.messagePh} placeholderTextColor="#94a3b8" multiline />
         <TouchableOpacity style={[s.btn, (!message.trim() || busy) && { opacity: 0.5 }]} onPress={send} disabled={!message.trim() || busy}>
-          {busy ? <ActivityIndicator color="#fff" /> : <><Send size={18} color="#fff" /><Text style={s.btnTxt}>Envoyer</Text></>}
+          {busy ? <ActivityIndicator color="#fff" /> : <><Send size={18} color="#fff" /><Text style={s.btnTxt}>{t.send}</Text></>}
         </TouchableOpacity>
         <TouchableOpacity style={s.mail} onPress={() => Linking.openURL('mailto:admin@salistar.com')}>
-          <Mail size={15} color={GREEN} /><Text style={s.mailTxt}>Ou écris à admin@salistar.com</Text>
+          <Mail size={15} color={GREEN} /><Text style={s.mailTxt}>{t.orMail}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

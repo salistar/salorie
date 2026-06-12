@@ -10,6 +10,7 @@ import { ArrowLeft, ScanBarcode, RefreshCw, PlusCircle } from 'lucide-react-nati
 import * as Haptics from 'expo-haptics';
 import { Colors } from '../../constants/Colors';
 import { useTranslation } from '../../lib/i18n';
+import { useTheme } from '../../lib/ThemeContext';
 import { getCustomProduct } from '../../lib/aiStore';
 
 type Found = {
@@ -23,6 +24,11 @@ type Found = {
 
 export default function ScanBarcodeScreen() {
   const { t } = useTranslation();
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const card = isDark ? '#1e293b' : '#ffffff';
+  const textCol = isDark ? '#f1f5f9' : Colors.light.gray[900];
+  const subCol = isDark ? '#94a3b8' : Colors.light.gray[500];
   const [permission, requestPermission] = useCameraPermissions();
   const [status, setStatus] = useState<'scanning' | 'loading' | 'found' | 'notfound'>('scanning');
   const [found, setFound] = useState<Found | null>(null);
@@ -99,14 +105,14 @@ export default function ScanBarcodeScreen() {
   if (!permission) return <View style={styles.black} />;
   if (!permission.granted) {
     return (
-      <View style={styles.permWrap}>
+      <View style={[styles.permWrap, isDark && { backgroundColor: '#0f172a' }]}>
         <ScanBarcode size={56} color={Colors.light.primary} />
-        <Text style={styles.permTitle}>{t('barcode.perm_title')}</Text>
-        <Text style={styles.permText}>{t('barcode.perm_text')}</Text>
+        <Text style={[styles.permTitle, { color: textCol }]}>{t('barcode.perm_title')}</Text>
+        <Text style={[styles.permText, { color: subCol }]}>{t('barcode.perm_text')}</Text>
         <TouchableOpacity style={styles.primaryBtn} onPress={requestPermission}>
           <Text style={styles.primaryBtnText}>{t('barcode.allow')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.back()}><Text style={styles.cancelText}>{t('barcode.cancel')}</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()}><Text style={[styles.cancelText, { color: subCol }]}>{t('barcode.cancel')}</Text></TouchableOpacity>
       </View>
     );
   }
@@ -148,9 +154,9 @@ export default function ScanBarcodeScreen() {
 
       {/* Not found */}
       {status === 'notfound' && (
-        <View style={styles.sheet}>
-          <Text style={styles.sheetTitle}>{t('barcode.not_found_title')}</Text>
-          <Text style={styles.sheetSub}>{t('barcode.not_found_sub')}</Text>
+        <View style={[styles.sheet, { backgroundColor: card }]}>
+          <Text style={[styles.sheetTitle, { color: textCol }]}>{t('barcode.not_found_title')}</Text>
+          <Text style={[styles.sheetSub, { color: subCol }]}>{t('barcode.not_found_sub')}</Text>
           <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push(('/register-product?code=' + code) as any)}>
             <PlusCircle size={18} color="#fff" />
             <Text style={styles.primaryBtnText}>Enregistrer ce produit</Text>
@@ -164,12 +170,12 @@ export default function ScanBarcodeScreen() {
 
       {/* Found product card */}
       {status === 'found' && found && (
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { backgroundColor: card }]}>
           <View style={styles.foundRow}>
-            {found.image ? <Image source={{ uri: found.image }} style={styles.thumb} /> : <View style={[styles.thumb, styles.thumbPh]}><ScanBarcode size={26} color={Colors.light.primary} /></View>}
+            {found.image ? <Image source={{ uri: found.image }} style={[styles.thumb, isDark && { backgroundColor: '#334155' }]} /> : <View style={[styles.thumb, styles.thumbPh, isDark && { backgroundColor: '#334155' }]}><ScanBarcode size={26} color={Colors.light.primary} /></View>}
             <View style={{ flex: 1 }}>
-              <Text style={styles.foundName} numberOfLines={2}>{found.name}</Text>
-              <Text style={styles.foundMacros}>{found.calories} kcal · P {found.protein}g · C {found.carbs}g · F {found.fat}g <Text style={styles.per100}>/ 100 g</Text></Text>
+              <Text style={[styles.foundName, { color: textCol }]} numberOfLines={2}>{found.name}</Text>
+              <Text style={[styles.foundMacros, { color: subCol }]}>{found.calories} kcal · P {found.protein}g · C {found.carbs}g · F {found.fat}g <Text style={[styles.per100, isDark && { color: '#64748b' }]}>/ 100 g</Text></Text>
             </View>
           </View>
           <TouchableOpacity style={styles.primaryBtn} onPress={logIt}>
