@@ -3,15 +3,16 @@
 // custom_products collection, so the next scan of this barcode resolves instantly.
 import React, { useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, TextInput,
-  ActivityIndicator, Image, Alert, KeyboardAvoidingView, Platform,
+  View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity,
+  Image, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import { ArrowLeft, Camera, Check, ScanBarcode } from 'lucide-react-native';
+import { Camera, ScanBarcode } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { FormCard, FormInput, Stepper, SubmitBar } from '../../components/FormKit';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -131,35 +132,21 @@ export default function RegisterProductScreen() {
           </View>
 
           {/* Fields */}
-          <Field label="Nom du produit *" value={name} onChange={setName} placeholder="ex. Jus d'orange Marrakech" {...{ text, sub, inputBg }} />
-          <Field label="Marque" value={brand} onChange={setBrand} placeholder="ex. Marrakech" {...{ text, sub, inputBg }} />
+          <FormCard>
+            <FormInput label="Nom du produit *" value={name} onChangeText={setName} placeholder="ex. Jus d'orange Marrakech" />
+            <FormInput label="Marque" value={brand} onChangeText={setBrand} placeholder="ex. Marrakech" />
+          </FormCard>
           <Text style={[styles.per100, { color: sub }]}>Valeurs pour 100 g / 100 ml</Text>
-          <View style={styles.macroGrid}>
-            <Field half label="Calories" value={calories} onChange={setCalories} keyboard placeholder="kcal" {...{ text, sub, inputBg }} />
-            <Field half label="Protéines" value={protein} onChange={setProtein} keyboard placeholder="g" {...{ text, sub, inputBg }} />
-            <Field half label="Glucides" value={carbs} onChange={setCarbs} keyboard placeholder="g" {...{ text, sub, inputBg }} />
-            <Field half label="Lipides" value={fat} onChange={setFat} keyboard placeholder="g" {...{ text, sub, inputBg }} />
-          </View>
-
-          <TouchableOpacity style={styles.saveBtn} onPress={save} disabled={saving}>
-            {saving ? <ActivityIndicator color="#fff" /> : <><Check size={18} color="#fff" /><Text style={styles.saveTxt}>Enregistrer dans la base</Text></>}
-          </TouchableOpacity>
+          <FormCard>
+            <Stepper label="Calories" value={calories} onChange={setCalories} step={10} unit="kcal" />
+            <Stepper label="Protéines" value={protein} onChange={setProtein} step={1} unit="g" />
+            <Stepper label="Glucides" value={carbs} onChange={setCarbs} step={1} unit="g" />
+            <Stepper label="Lipides" value={fat} onChange={setFat} step={1} unit="g" />
+          </FormCard>
         </ScrollView>
+        <SubmitBar label="Enregistrer dans la base" onPress={save} loading={saving} />
       </KeyboardAvoidingView>
     </SafeAreaView>
-  );
-}
-
-function Field({ label, value, onChange, placeholder, keyboard, half, text, sub, inputBg }: any) {
-  return (
-    <View style={[{ marginBottom: 14 }, half && { width: '48%' }]}>
-      <Text style={[styles.label, { color: sub }]}>{label}</Text>
-      <TextInput
-        value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={sub}
-        keyboardType={keyboard ? 'numeric' : 'default'}
-        style={[styles.input, { backgroundColor: inputBg, color: text }]}
-      />
-    </View>
   );
 }
 
@@ -174,12 +161,7 @@ const styles = StyleSheet.create({
   photoBox: { flex: 1, height: 120, borderRadius: 16, alignItems: 'center', justifyContent: 'center', gap: 6, overflow: 'hidden' },
   photo: { width: '100%', height: '100%' },
   photoTxt: { fontSize: 13, fontWeight: '700' },
-  label: { fontSize: 13, fontWeight: '700', marginBottom: 6 },
-  input: { height: 48, borderRadius: 12, paddingHorizontal: 14, fontSize: 15, fontWeight: '600' },
   per100: { fontSize: 12, fontWeight: '700', marginBottom: 10 },
-  macroGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  saveBtn: { flexDirection: 'row', gap: 8, backgroundColor: Colors.light.primary, paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
-  saveTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
   black: { flex: 1, backgroundColor: '#000' },
   camTop: { position: 'absolute', top: 60, left: 0, right: 0, alignItems: 'center' },
   camTitle: { color: '#fff', fontSize: 16, fontWeight: '800', backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 },

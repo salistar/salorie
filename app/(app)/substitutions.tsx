@@ -1,8 +1,9 @@
 // Substitutions instantanées — remplace un aliment par une alternative plus saine (IA).
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Replace, Search } from 'lucide-react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Replace } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { FormCard, FormInput, SubmitBar } from '../../components/FormKit';
 import { aiGenerate } from '../../lib/aiProxy';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
@@ -50,10 +51,17 @@ export default function SubstitutionsScreen() {
         <View style={styles.head}><Replace size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
-        <View style={[styles.searchRow, { backgroundColor: card }]}>
-          <Search size={20} color="#94A3B8" />
-          <TextInput style={[styles.input, { color: text }]} placeholder={t.placeholder} placeholderTextColor={isDark ? '#64748b' : '#94A3B8'} value={food} onChangeText={setFood} onSubmitEditing={() => ask(food)} returnKeyType="search" />
-          <TouchableOpacity style={styles.go} onPress={() => ask(food)}><Text style={styles.goTxt}>{t.ok}</Text></TouchableOpacity>
+        <FormCard>
+          <FormInput
+            placeholder={t.placeholder}
+            value={food}
+            onChangeText={setFood}
+            onSubmitEditing={() => ask(food)}
+            returnKeyType="search"
+          />
+        </FormCard>
+        <View style={{ marginHorizontal: -20, marginTop: -8, marginBottom: -6 }}>
+          <SubmitBar label={t.ok} onPress={() => ask(food)} disabled={loading} />
         </View>
 
         <View style={styles.chips}>

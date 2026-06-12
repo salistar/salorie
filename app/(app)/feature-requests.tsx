@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  SafeAreaView, 
-  ScrollView, 
-  TouchableOpacity, 
-  TextInput,
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  TouchableOpacity,
   ActivityIndicator,
   Modal,
   Dimensions,
@@ -14,17 +13,17 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
-import { 
-  ChevronLeft, 
-  Plus, 
-  ArrowBigUp, 
+import {
+  ChevronLeft,
+  Plus,
+  ArrowBigUp,
   ArrowBigUpDash,
   Lightbulb,
-  X,
-  CheckCircle2
+  X
 } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { FormInput, SubmitBar } from '../../components/FormKit';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { 
@@ -220,36 +219,26 @@ export default function FeatureRequestsScreen() {
             </View>
 
             <View style={styles.modalBody}>
-              <Text style={styles.inputLabel}>Title</Text>
-              <TextInput 
-                style={styles.input}
+              <FormInput
+                label="Title"
                 placeholder="What's your idea?"
                 value={newFeature.title}
-                onChangeText={t => setNewFeature({ ...newFeature, title: t })}
+                onChangeText={(t: string) => setNewFeature({ ...newFeature, title: t })}
               />
 
-              <Text style={styles.inputLabel}>Description</Text>
-              <TextInput 
-                style={[styles.input, styles.textArea]}
+              <FormInput
+                label="Description"
                 placeholder="How would it work?"
                 multiline
                 numberOfLines={4}
+                style={{ height: 120, textAlignVertical: 'top' }}
                 value={newFeature.description}
-                onChangeText={t => setNewFeature({ ...newFeature, description: t })}
+                onChangeText={(t: string) => setNewFeature({ ...newFeature, description: t })}
               />
 
-              <TouchableOpacity 
-                style={[styles.submitBtn, isSubmitting && { opacity: 0.7 }]}
-                disabled={isSubmitting}
-                onPress={handleAddFeature}
-              >
-                {isSubmitting ? <ActivityIndicator color={Colors.light.white} /> : (
-                  <>
-                    <CheckCircle2 color={Colors.light.white} size={20} />
-                    <Text style={styles.submitBtnText}>Submit Request</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+              <View style={{ marginHorizontal: -24, marginTop: -8 }}>
+                <SubmitBar label="Submit Request" onPress={handleAddFeature} loading={isSubmitting} />
+              </View>
             </View>
           </Animated.View>
         </View>
@@ -415,7 +404,7 @@ const styles = StyleSheet.create({
     color: Colors.light.gray[900],
   },
   modalBody: {
-    gap: 16,
+    gap: 2,
   },
   inputLabel: {
     fontSize: 14,

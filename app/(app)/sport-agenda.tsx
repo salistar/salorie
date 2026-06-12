@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
 import { CalendarDays, Plus, Trash2, Flag, Dumbbell } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { FormCard, FormInput } from '../../components/FormKit';
 import { logEntry, getEntries, deleteEntry } from '../../lib/tracking';
 import { getActiveRaces } from '../../lib/racesApi';
 import { useTheme } from '../../lib/ThemeContext';
@@ -74,18 +75,18 @@ export default function SportAgenda() {
           </View>
         </LinearGradient>
 
-        {/* Planifier */}
-        <View style={[s.card, { backgroundColor: card }]}>
-          <Text style={[s.secTitle, { color: text }, align]}>{t.plan}</Text>
-          <TextInput style={[s.input, { color: text, borderColor: isDark ? '#334155' : '#e2e8f0' }, align]} placeholder={t.what} placeholderTextColor={sub} value={what} onChangeText={setWhat} />
-          <TextInput style={[s.input, { color: text, borderColor: isDark ? '#334155' : '#e2e8f0' }, align]} placeholder={t.when} placeholderTextColor={sub} value={when} onChangeText={setWhen} />
+        {/* Planifier — champs FormKit (label au-dessus, carte) */}
+        <FormCard style={{ marginTop: 18, marginBottom: 0 }}>
+          <Text style={[s.secTitle, { color: text, marginBottom: 12 }, align]}>{t.plan}</Text>
+          <FormInput label={t.what} value={what} onChangeText={setWhat} />
+          <FormInput label={t.when} value={when} onChangeText={setWhen} />
           <TouchableOpacity style={s.addBtn} onPress={add} disabled={busy || !what.trim()}>
             {busy ? <ActivityIndicator size="small" color="#fff" /> : (<><Plus size={17} color="#fff" /><Text style={s.addTxt}>{t.add}</Text></>)}
           </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/log-exercise' as any)}>
             <Text style={{ color: GREEN, fontWeight: '700', fontSize: 13, marginTop: 10, textAlign: 'center' }}>{t.logIt} →</Text>
           </TouchableOpacity>
-        </View>
+        </FormCard>
 
         {/* Séances planifiées */}
         <View style={[s.secHead, rowDir]}><Dumbbell size={17} color={GREEN} /><Text style={[s.secTitle, { color: text }]}>{t.planned}</Text></View>
@@ -128,11 +129,9 @@ const s = StyleSheet.create({
   heroBanner: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, padding: 18 },
   heroTitle: { color: '#fff', fontSize: 21, fontWeight: '900', letterSpacing: -0.3 },
   heroSub: { color: 'rgba(255,255,255,0.85)', fontSize: 12.5, marginTop: 4, lineHeight: 17 },
-  card: { borderRadius: 18, padding: 16, marginTop: 18 },
   secHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 22, marginBottom: 10 },
   secTitle: { fontSize: 15.5, fontWeight: '800' },
-  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, marginTop: 10 },
-  addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: GREEN, borderRadius: 12, paddingVertical: 12, marginTop: 12 },
+  addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: GREEN, borderRadius: 12, paddingVertical: 12, marginTop: 4 },
   addTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 14, padding: 13, marginBottom: 8 },
 });

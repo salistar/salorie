@@ -1,8 +1,9 @@
 // Nutri-Score — note nutritionnelle A→E d'un aliment (pour 100 g).
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { Award } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { FormCard, Stepper } from '../../components/FormKit';
 import { nutriScore, GRADE_COLOR, NutriGrade } from '../../lib/nutriScore';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
@@ -73,15 +74,18 @@ export default function NutriScoreScreen() {
         </View>
         {hasInput && <Text style={[styles.scoreNote, { color: sub }]}>{t.grade} <Text style={{ color: GRADE_COLOR[grade], fontWeight: '900' }}>{grade}</Text> · {t.score} {score}</Text>}
 
-        {FIELDS.map((f) => (
-          <View key={f.k} style={[styles.row, { backgroundColor: card }]}>
-            <Text style={[styles.label, { color: text }]}>{t[f.tk]}</Text>
-            <View style={styles.inputWrap}>
-              <TextInput style={[styles.input, { color: text }]} keyboardType="numeric" placeholder="0" placeholderTextColor={isDark ? '#64748b' : '#94A3B8'} value={v[f.k] || ''} onChangeText={(t2) => setV((s) => ({ ...s, [f.k]: t2 }))} />
-              <Text style={[styles.unit, { color: sub }]}>{f.u}</Text>
-            </View>
-          </View>
-        ))}
+        <FormCard>
+          {FIELDS.map((f) => (
+            <Stepper
+              key={f.k}
+              label={t[f.tk]}
+              unit={f.u}
+              step={1}
+              value={v[f.k] || ''}
+              onChange={(t2: string) => setV((s) => ({ ...s, [f.k]: t2 }))}
+            />
+          ))}
+        </FormCard>
         <Text style={[styles.tip, { color: sub }, align]}>{t.tip}</Text>
       </ScrollView>
     </SafeAreaView>

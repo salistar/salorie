@@ -68,7 +68,7 @@ export default function MealBuilderScreen() {
       <ScreenTopBar showBack showBrand showNotif={false} />
       <View style={styles.head}><ChefHat size={22} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
 
-      <View style={[styles.searchRow, { backgroundColor: card }, isDark && { borderColor: '#334155' }]}>
+      <View style={[styles.searchRow, { backgroundColor: card, borderColor: isDark ? '#283241' : '#E2E8F0' }]}>
         <Search size={18} color={sub} />
         <TextInput style={[styles.search, { color: text }]} placeholder={t.searchPh} placeholderTextColor={sub} value={q} onChangeText={doSearch} />
         {loading && <ActivityIndicator color={GREEN} />}
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F8FAFC' },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 8 },
   title: { fontSize: 22, fontWeight: '800', color: '#0F172A' },
-  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 4, borderWidth: 1, borderColor: '#EEF2F6' },
+  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 4, borderWidth: 1.5, borderColor: '#E2E8F0' },
   search: { flex: 1, paddingVertical: 11, fontSize: 14 },
   resultsBox: { maxHeight: 260, backgroundColor: '#fff', marginHorizontal: 16, marginTop: 6, borderRadius: 14, borderWidth: 1, borderColor: '#EEF2F6' },
   resRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderBottomWidth: 1, borderBottomColor: '#F5F7FA' },

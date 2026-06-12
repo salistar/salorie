@@ -1,30 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  SafeAreaView, 
-  ScrollView, 
-  TextInput, 
-  TouchableOpacity, 
-  KeyboardAvoidingView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
   Alert
 } from 'react-native';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
-import { 
-  ChevronLeft, 
-  Flame, 
-  Beef, 
-  Cherry, 
-  Droplet, 
-  Zap,
-  CheckCircle2
+import {
+  Flame,
+  Beef,
+  Cherry,
+  Droplet,
+  Zap
 } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { FormCard, Stepper, SubmitBar } from '../../components/FormKit';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db, emailToDocId } from '../../lib/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -206,7 +203,9 @@ export default function PersonalDetailsScreen() {
     }
   };
 
-  const InputField = ({ label, value, onChangeText, placeholder, icon: Icon, unit, delay = 0 }: any) => (
+  // FormKit Stepper pour les valeurs numériques (pattern standard) ; on garde
+  // l'icône + l'animation d'entrée existantes.
+  const InputField = ({ label, value, onChangeText, icon: Icon, unit, step = 1, delay = 0 }: any) => (
     <Animated.View entering={FadeInRight.delay(delay).duration(600)} style={styles.inputContainer}>
       <View style={[styles.labelRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <View style={[styles.iconBackground, isRTL ? { marginRight: 0, marginLeft: 10 } : null]}>
@@ -214,17 +213,7 @@ export default function PersonalDetailsScreen() {
         </View>
         <Text style={[styles.inputLabel, { color: secondaryText, textAlign: isRTL ? 'right' : 'left' }]}>{label}</Text>
       </View>
-      <View style={[styles.textInputWrapper, { backgroundColor: cardBg, borderColor, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-        <TextInput
-          style={[styles.textInput, { color: primaryText, textAlign: isRTL ? 'right' : 'left' }]}
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={placeholder}
-          placeholderTextColor={isDark ? Colors.dark.gray[400] : Colors.light.gray[300]}
-          keyboardType="numeric"
-        />
-        <Text style={styles.unitText}>{unit}</Text>
-      </View>
+      <Stepper value={value} onChange={onChangeText} step={step} unit={unit} />
     </Animated.View>
   );
 
@@ -250,71 +239,60 @@ export default function PersonalDetailsScreen() {
               <Text style={[styles.introDesc, { color: secondaryText, textAlign: isRTL ? 'right' : 'left' }]}>{t.introDesc}</Text>
             </View>
 
-            <InputField
-              label={t.calories}
-              value={goals.calories}
-              onChangeText={(text: string) => setGoals({ ...goals, calories: text })}
-              placeholder={t.caloriesPh}
-              icon={Flame}
-              unit="kcal"
-              delay={100}
-            />
+            <FormCard>
+              <InputField
+                label={t.calories}
+                value={goals.calories}
+                onChangeText={(text: string) => setGoals({ ...goals, calories: text })}
+                icon={Flame}
+                unit="kcal"
+                step={50}
+                delay={100}
+              />
 
-            <InputField
-              label={t.proteins}
-              value={goals.protein}
-              onChangeText={(text: string) => setGoals({ ...goals, protein: text })}
-              placeholder={t.proteinsPh}
-              icon={Beef}
-              unit="g"
-              delay={200}
-            />
+              <InputField
+                label={t.proteins}
+                value={goals.protein}
+                onChangeText={(text: string) => setGoals({ ...goals, protein: text })}
+                icon={Beef}
+                unit="g"
+                step={5}
+                delay={200}
+              />
 
-            <InputField
-              label={t.carbs}
-              value={goals.carbs}
-              onChangeText={(text: string) => setGoals({ ...goals, carbs: text })}
-              placeholder={t.carbsPh}
-              icon={Cherry}
-              unit="g"
-              delay={300}
-            />
+              <InputField
+                label={t.carbs}
+                value={goals.carbs}
+                onChangeText={(text: string) => setGoals({ ...goals, carbs: text })}
+                icon={Cherry}
+                unit="g"
+                step={5}
+                delay={300}
+              />
 
-            <InputField
-              label={t.fats}
-              value={goals.fat}
-              onChangeText={(text: string) => setGoals({ ...goals, fat: text })}
-              placeholder={t.fatsPh}
-              icon={Zap}
-              unit="g"
-              delay={400}
-            />
+              <InputField
+                label={t.fats}
+                value={goals.fat}
+                onChangeText={(text: string) => setGoals({ ...goals, fat: text })}
+                icon={Zap}
+                unit="g"
+                step={5}
+                delay={400}
+              />
 
-            <InputField
-              label={t.water}
-              value={goals.water}
-              onChangeText={(text: string) => setGoals({ ...goals, water: text })}
-              placeholder={t.waterPh}
-              icon={Droplet}
-              unit="ml"
-              delay={500}
-            />
+              <InputField
+                label={t.water}
+                value={goals.water}
+                onChangeText={(text: string) => setGoals({ ...goals, water: text })}
+                icon={Droplet}
+                unit="ml"
+                step={100}
+                delay={500}
+              />
+            </FormCard>
 
-            <Animated.View entering={FadeInDown.delay(600).duration(600)}>
-              <TouchableOpacity 
-                style={[styles.saveButton, saving && styles.saveButtonDisabled]}
-                onPress={handleSave}
-                disabled={saving}
-              >
-                {saving ? (
-                  <ActivityIndicator color={Colors.light.white} />
-                ) : (
-                  <>
-                    <CheckCircle2 color={Colors.light.white} size={20} />
-                    <Text style={styles.saveButtonText}>{t.saveChanges}</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+            <Animated.View entering={FadeInDown.delay(600).duration(600)} style={{ marginHorizontal: -20 }}>
+              <SubmitBar label={t.saveChanges} onPress={handleSave} loading={saving} />
             </Animated.View>
           </ScrollView>
         )}
@@ -373,7 +351,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   inputContainer: {
-    marginBottom: 24,
+    marginBottom: 10,
   },
   labelRow: {
     flexDirection: 'row',
