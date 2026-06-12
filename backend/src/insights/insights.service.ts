@@ -51,10 +51,14 @@ export class InsightsService {
 
   async generate(profile: any, logs: any[], periodLabel: string) {
     if (!this.genAI || logs.length === 0) return this.offline(logs, periodLabel);
+    // RGPD/anonymisation : on n'envoie à Gemini AUCUN identifiant (ni nom, ni email,
+    // ni uid) — uniquement l'objectif et un poids ARRONDI, plus les aliments loggés.
+    const goal = String(profile?.goal || 'general health').slice(0, 40);
+    const weightRounded = Math.round(Number(profile?.weight) || 0) || 'unknown';
     const logsSummary = logs.slice(-200).map((l) => `${l.date}: ${l.name} (${l.calories} ${l.type === 'water' ? 'ml' : 'kcal'}, ${l.type}${l.intensity ? ', ' + l.intensity : ''})`).join('\n');
     const prompt = `You are a nutrition & fitness analyst. Analyse the user's ${periodLabel} logs.
-User goal: ${profile?.goal}
-Current weight: ${profile?.weight}kg
+User goal: ${goal}
+Current weight: ${weightRounded}kg
 Logs (${logs.length}):
 ${logsSummary || 'No logs yet.'}
 Return ONLY strict JSON, no backticks, with this exact shape:

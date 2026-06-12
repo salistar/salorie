@@ -168,6 +168,11 @@ export const saveUserToFirestore = async (user: Partial<UserProfile> & { id?: st
  * @param legacyClerkId  Le Clerk user.id pour lookup legacy
  * @param extraEmails  Emails secondaires (Clerk emailAddresses, externalAccounts) a essayer
  */
+// Cache de résolution (durée de vie = session app) : une fois le docId du user
+// trouvé, les appels suivants font UNE lecture (le doc, données fraîches) au lieu
+// de re-dérouler les ~6-9 lookups de compatibilité legacy à chaque écran.
+const resolvedUserDocId = new Map<string, string>();
+
 export const getUserFromFirestore = async (
   email: string,
   legacyClerkId?: string,
@@ -175,6 +180,17 @@ export const getUserFromFirestore = async (
 ): Promise<UserProfile | null> => {
   try {
     if (!email && !legacyClerkId && (!extraEmails || extraEmails.length === 0)) return null;
+
+    const cacheKey = emailToDocId(email) || legacyClerkId || '';
+    const cachedId = cacheKey ? resolvedUserDocId.get(cacheKey) : undefined;
+    if (cachedId) {
+      const snap = await getDoc(doc(db, 'users', cachedId));
+      if (snap.exists()) {
+        const data = snap.data() as UserProfile;
+        return { ...data, id: (data as any).id || cachedId };
+      }
+      resolvedUserDocId.delete(cacheKey); // doc disparu → re-résolution complète
+    }
 
     // Liste d'emails a essayer, dedupliquee, sanitizee
     const emailsToTry: string[] = [];
@@ -204,7 +220,9 @@ export const getUserFromFirestore = async (
       });
       if (!firstFound) firstFound = { data, id: docId };
       if (data.onboarded) {
-        // Priorise un user deja onboarde (vrai compte)
+        // Priorise un user deja onboarde (vrai compte) + memorise le docId
+        // pour que les prochains appels fassent 1 seule lecture.
+        if (cacheKey) resolvedUserDocId.set(cacheKey, docId);
         return { ...data, id: data.id || docId };
       }
       return null;
