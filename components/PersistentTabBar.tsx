@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Keyboard } from 'react-native';
 import { router } from 'expo-router';
+import { useAuth } from '@clerk/clerk-expo';
 import { Home, Sparkles, BarChart3, User } from 'lucide-react-native';
 
 const GREY = '#94A3B8';
@@ -18,12 +19,15 @@ const TABS = [
 export default function PersistentTabBar() {
   // Masque la barre quand le clavier est ouvert (sinon elle flotte au-dessus).
   const [kbOpen, setKbOpen] = useState(false);
+  const { isSignedIn } = useAuth();
   useEffect(() => {
     const s = Keyboard.addListener('keyboardDidShow', () => setKbOpen(true));
     const h = Keyboard.addListener('keyboardDidHide', () => setKbOpen(false));
     return () => { s.remove(); h.remove(); };
   }, []);
   if (kbOpen) return null;
+  // Pas connecté (welcome…) → pas de barre d'onglets (elle mènerait à des écrans qui exigent une session).
+  if (!isSignedIn) return null;
 
   return (
     <View style={styles.bar} pointerEvents="box-none">
