@@ -104,23 +104,7 @@ export default function Journal() {
               </>
             )}
 
-            {/* Défis intégrés */}
-            <Section icon={Trophy} label={t.challenges} />
-            {CHALLENGES.map((c) => {
-              const photo = poiPhoto(c.id, 0);
-              return (
-                <TouchableOpacity key={c.id} style={[s.card, { backgroundColor: card }, rowDir]} activeOpacity={0.85}
-                  onPress={() => router.push(('/challenge?id=' + c.id) as any)}>
-                  {photo ? <Image source={photo} style={s.thumb} /> : null}
-                  <View style={{ flex: 1 }}>
-                    <Text style={[s.cardTitle, { color: text }, align]}>{c.name}</Text>
-                    <Text style={[s.cardBody, { color: sub }, align]}>{c.totalKm} {t.km}</Text>
-                  </View>
-                  <ChevronRight size={18} color={sub} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
-                </TouchableOpacity>
-              );
-            })}
-
+            {/* (Anciens défis intégrés migrés en base → inclus dans la section courses) */}
             {!news.length && !races.length && <Text style={[s.cardBody, { color: sub, marginTop: 18, textAlign: 'center' }]}>{t.empty}</Text>}
           </>
         )}

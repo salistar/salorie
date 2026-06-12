@@ -100,21 +100,7 @@ export default function DefisTab() {
                   </TouchableOpacity>
                 );
               })}
-              {CHALLENGES.map((c) => {
-                const p = progress[c.id];
-                return (
-                  <TouchableOpacity key={c.id} activeOpacity={0.9} onPress={() => router.push(('/challenge?id=' + c.id) as any)}>
-                    <View style={s.raceCard}>
-                      <Image source={poiPhoto(c.id, 0)} style={s.raceImg} />
-                      <View style={s.raceShade} />
-                      <View style={s.raceTxtWrap}>
-                        <Text style={s.raceName} numberOfLines={1}>{c.name}</Text>
-                        <Text style={s.raceMeta}>{p != null ? `${(p as number).toFixed(0)} / ` : ''}{c.totalKm} {t.km}</Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
+              {/* (Anciens défis intégrés migrés en base → déjà dans `races` ci-dessus) */}
             </ScrollView>
 
             {/* Mes médailles — bande horizontale */}

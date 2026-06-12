@@ -410,6 +410,40 @@ export default function ChallengeScreen() {
   const pct = Math.round(fraction * 100);
   const joined = myKm !== null;
 
+  // ── Style Conqueror : prochain arrêt + position réelle + jalons ──
+  const nextPoi = pois.find((p) => (p.atKm || 0) > myCumulativeKm) || null;
+  const [realPos, setRealPos] = useState<LatLng | null>(null);
+  const [showMyView, setShowMyView] = useState(false);
+  useEffect(() => {
+    if (!joined) return;
+    let alive = true;
+    (async () => {
+      try {
+        const perm = await Location.getForegroundPermissionsAsync();
+        if (!perm.granted) return; // pas de demande intrusive ici — affichage best-effort
+        const cur = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        if (alive) setRealPos({ lat: cur.coords.latitude, lng: cur.coords.longitude });
+      } catch {}
+    })();
+    return () => { alive = false; };
+  }, [joined]);
+
+  // Célébration aux jalons 25/50/75/100 % (cartes postales débloquées en route).
+  const prevPctRef = useRef(-1);
+  useEffect(() => {
+    const prev = prevPctRef.current;
+    prevPctRef.current = pct;
+    if (prev < 0 || pct <= prev) return;
+    const crossed = [25, 50, 75, 100].find((m) => prev < m && pct >= m);
+    if (crossed) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      const msg = language === 'fr' ? `🎉 ${crossed}% du défi ! Continue, ta médaille approche.`
+        : language === 'ar' ? `🎉 ${crossed}% من التحدي! واصل، ميداليتك تقترب.`
+        : `🎉 ${crossed}% of the challenge! Keep going — your medal is getting closer.`;
+      Alert.alert(challenge?.name || '', msg);
+    }
+  }, [pct]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const effectiveRoute = roadPath.length > 1 ? roadPath : ((challenge?.route as LatLng[]) || []);
   const mePoint = useMemo<LatLng>(() => {
     if (!challenge || !effectiveRoute.length) return { lat: 0, lng: 0 };
@@ -660,6 +694,14 @@ export default function ChallengeScreen() {
           <ArrowLeft size={22} color={text} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
         </TouchableOpacity>
 
+        {/* Street View de MA position sur le parcours (style Conqueror) */}
+        {joined && (
+          <TouchableOpacity style={styles.myViewBtn} onPress={() => setShowMyView(true)}>
+            <MapPin size={13} color="#fff" />
+            <Text style={styles.myViewTxt}>Street View</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Navigation banner + active landmark photo card */}
         {navMode && (
           <>
@@ -702,6 +744,18 @@ export default function ChallengeScreen() {
             <Text style={[styles.pctTxt, { color: sub }, align]}>{pct}% · {t.progress}</Text>
           </View>
         </View>
+
+        {/* 📍 Prochain arrêt (style Conqueror) : km de parcours restants + distance réelle */}
+        {joined && nextPoi && (
+          <View style={[styles.nextStopCard, { backgroundColor: card }]}>
+            <Text style={[styles.nextStopKicker, { color: PRIMARY }, align]}>📍 {language === 'fr' ? 'Prochain arrêt' : language === 'ar' ? 'المحطة التالية' : 'Next stop'}</Text>
+            <Text style={[styles.nextStopName, { color: text }, align]} numberOfLines={1}>{nextPoi.name}</Text>
+            <Text style={[styles.nextStopMeta, { color: sub }, align]}>
+              {(nextPoi.atKm - myCumulativeKm).toFixed(1)} {t.km} {language === 'fr' ? 'de parcours restants' : language === 'ar' ? 'متبقية في المسار' : 'left on the route'}
+              {realPos ? ` · ${(haversine(realPos, { lat: nextPoi.lat, lng: nextPoi.lng }) / 1000).toFixed(1)} ${t.km} ${language === 'fr' ? 'de ta position réelle' : language === 'ar' ? 'من موقعك الحقيقي' : 'from your real position'}` : ''}
+            </Text>
+          </View>
+        )}
 
         {/* Médaille de la course — centre = image (Street View) du lieu d'arrivée (connectée) */}
         {totalKm > 0 && (() => {
@@ -859,6 +913,20 @@ export default function ChallengeScreen() {
           )}
         </View>
       </Modal>
+
+      {/* Street View de MA position virtuelle sur le parcours */}
+      <Modal visible={showMyView} animationType="slide" transparent onRequestClose={() => setShowMyView(false)}>
+        <View style={styles.viewerWrap}>
+          <Image source={{ uri: streetViewUrl(mePoint.lat, mePoint.lng, 640, 640) }} style={styles.viewerImg} resizeMode="cover" />
+          <View style={styles.viewerInfo}>
+            <Text style={styles.viewerName}>📍 {t.youAreHere}</Text>
+            <Text style={styles.viewerKm}>{challenge?.name} · {myCumulativeKm.toFixed(1)} {t.km}</Text>
+          </View>
+          <TouchableOpacity style={styles.viewerClose} onPress={() => setShowMyView(false)}>
+            <X size={26} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -888,6 +956,12 @@ const styles = StyleSheet.create({
   track: { height: 10, borderRadius: 5, overflow: 'hidden', marginTop: 10 },
   fill: { height: 10, borderRadius: 5, backgroundColor: PRIMARY },
   pctTxt: { fontSize: 12, fontWeight: '600', marginTop: 6 },
+  nextStopCard: { marginHorizontal: 16, marginTop: 10, borderRadius: 16, padding: 14 },
+  nextStopKicker: { fontSize: 11.5, fontWeight: '900', letterSpacing: 0.4, textTransform: 'uppercase' },
+  nextStopName: { fontSize: 16, fontWeight: '800', marginTop: 3 },
+  nextStopMeta: { fontSize: 12.5, marginTop: 4, lineHeight: 18 },
+  myViewBtn: { position: 'absolute', right: 12, bottom: 14, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  myViewTxt: { color: '#fff', fontSize: 11.5, fontWeight: '800' },
 
   joinBtn: { backgroundColor: PRIMARY, marginHorizontal: 16, marginTop: 16, paddingVertical: 16, borderRadius: 16, alignItems: 'center' },
   joinBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
