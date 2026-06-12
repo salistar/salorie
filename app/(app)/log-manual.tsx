@@ -22,11 +22,12 @@ import ScreenTopBar from '../../components/ScreenTopBar';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { colorLog, explain } from '../../lib/LocalDataStore';
+import { Stepper, InlineError } from '../../components/FormKit';
 
 console.log('\x1b[35m[log-manual.tsx] MODULE LOADED\x1b[0m');
 
-// Photo representative: personne en mouvement libre, utilisee en hero card
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=800&q=70';
+// Photo bundlée (offline-safe) au lieu d'une image distante Unsplash.
+const HERO_IMAGE = require('../../assets/images/illustrations/gain_weight.jpg');
 
 export default function LogManualExerciseScreen() {
   const { user } = useUser();
@@ -93,7 +94,7 @@ export default function LogManualExerciseScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.content}>
-          <Image source={{ uri: HERO_IMAGE }} style={styles.hero} resizeMode="cover" />
+          <Image source={HERO_IMAGE} style={styles.hero} resizeMode="cover" />
 
           <Text style={[styles.title, { color: textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
             {t('manual.title')}
@@ -125,25 +126,9 @@ export default function LogManualExerciseScreen() {
                 {t('manual.calories_burned')}
               </Text>
             </View>
-            <View
-              style={[
-                styles.inputWrapper,
-                styles.caloriesWrapper,
-                { backgroundColor: inputBg, borderColor: '#FFEEED' },
-                isRTL && { flexDirection: 'row-reverse' },
-              ]}
-            >
-              <TextInput
-                style={[styles.input, styles.caloriesInput, { textAlign: isRTL ? 'right' : 'left' }]}
-                placeholder="0"
-                placeholderTextColor={textMuted}
-                keyboardType="numeric"
-                value={calories}
-                onChangeText={setCalories}
-              />
-              <Text style={[styles.unit, { color: textMuted }]}>kcal</Text>
-              <Flame size={24} color="#FF5C5C" opacity={0.3} strokeWidth={2.5} />
-            </View>
+            {/* Stepper +/- (pattern FormKit) au lieu d'un simple champ texte */}
+            <Stepper value={calories} onChange={setCalories} step={25} min={0} max={5000} unit="kcal"
+              error={calories !== '' && (!Number(calories) || Number(calories) <= 0) ? '⚠️ Entre un nombre de kcal valide' : undefined} />
           </View>
         </ScrollView>
 
