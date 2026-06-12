@@ -1,9 +1,10 @@
 // Plan repas IA — génère un plan du jour selon objectif + budget + ingrédients dispo.
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
-import { Sparkles, ChefHat } from 'lucide-react-native';
+import { Sparkles } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { FormCard, FormInput, Stepper, SubmitBar } from '../../components/FormKit';
 import { aiGenerate } from '../../lib/aiProxy';
 import { getUserFromFirestore } from '../../lib/firebase';
 import { useTheme } from '../../lib/ThemeContext';
@@ -15,6 +16,7 @@ const TXT: any = {
   en: {
     title: 'AI meal plan',
     sub1: 'Goal', sub2: 'kcal. Add a budget and ingredients (optional).',
+    calsLabel: 'Target calories',
     budgetLabel: 'Budget (€, optional)',
     budgetPh: 'e.g. 8',
     fridgeLabel: 'Available ingredients (optional)',
@@ -28,6 +30,7 @@ const TXT: any = {
   fr: {
     title: 'Plan repas IA',
     sub1: 'Objectif', sub2: 'kcal. Ajoute budget et ingrédients (optionnel).',
+    calsLabel: 'Calories cibles',
     budgetLabel: 'Budget (€, optionnel)',
     budgetPh: 'ex. 8',
     fridgeLabel: 'Ingrédients dispo (optionnel)',
@@ -41,6 +44,7 @@ const TXT: any = {
   ar: {
     title: 'خطة وجبات ذكية',
     sub1: 'الهدف', sub2: 'سعرة. أضف ميزانية ومكونات (اختياري).',
+    calsLabel: 'السعرات المستهدفة',
     budgetLabel: 'الميزانية (€، اختياري)',
     budgetPh: 'مثال: 8',
     fridgeLabel: 'المكونات المتوفرة (اختياري)',
@@ -90,32 +94,41 @@ export default function AiMealPlanScreen() {
         <View style={styles.head}><Sparkles size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub1} {goal} · ~{cals} {t.sub2}</Text>
 
-        <Text style={[styles.label, { color: sub }, align]}>{t.budgetLabel}</Text>
-        <TextInput
-          style={[styles.input, { backgroundColor: card, color: text }]}
-          keyboardType="numeric"
-          placeholder={t.budgetPh}
-          placeholderTextColor={sub}
-          value={budget}
-          onChangeText={setBudget}
-        />
-        <Text style={[styles.label, { color: sub }, align]}>{t.fridgeLabel}</Text>
-        <TextInput
-          style={[styles.input, { height: 70, backgroundColor: card, color: text }]}
-          multiline
-          placeholder={t.fridgePh}
-          placeholderTextColor={sub}
-          value={fridge}
-          onChangeText={setFridge}
-        />
-
-        <TouchableOpacity style={styles.btn} onPress={run} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <><ChefHat size={20} color="#fff" /><Text style={styles.btnTxt}>{t.generate}</Text></>}
-        </TouchableOpacity>
+        {/* Champs groupés en carte — pattern FormKit (Stepper pour les nombres). */}
+        <FormCard>
+          <Stepper
+            label={t.calsLabel}
+            value={cals}
+            onChange={(v: string) => setCals(Math.max(0, parseInt(v, 10) || 0))}
+            step={50}
+            min={800}
+            max={6000}
+            unit="kcal"
+          />
+          <Stepper
+            label={t.budgetLabel}
+            value={budget}
+            onChange={setBudget}
+            step={1}
+            min={0}
+            max={500}
+            unit="€"
+          />
+          <FormInput
+            label={t.fridgeLabel}
+            placeholder={t.fridgePh}
+            multiline
+            value={fridge}
+            onChangeText={setFridge}
+            style={{ height: 70, textAlignVertical: 'top' }}
+          />
+        </FormCard>
 
         {loading && <Text style={[styles.loadingTxt, { color: sub }]}>{t.generating}</Text>}
         {!!plan && <View style={[styles.card, { backgroundColor: card }]}><Text style={[styles.cardTxt, { color: text }, align]}>{plan}</Text></View>}
       </ScrollView>
+      {/* CTA unique vert plein en bas (SubmitBar FormKit). */}
+      <SubmitBar label={t.generate} onPress={run} loading={loading} />
     </SafeAreaView>
   );
 }
@@ -126,10 +139,6 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
   title: { fontSize: 26, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
   sub: { fontSize: 14, color: '#64748B', marginBottom: 18, lineHeight: 20 },
-  label: { fontSize: 13, fontWeight: '700', color: '#64748B', marginBottom: 8, marginTop: 6 },
-  input: { backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: '#0F172A', marginBottom: 12, textAlignVertical: 'top' },
-  btn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GREEN, borderRadius: 14, paddingVertical: 15, marginTop: 4 },
-  btnTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
   loadingTxt: { color: '#64748B', textAlign: 'center', marginTop: 16, fontWeight: '600' },
   card: { backgroundColor: '#fff', borderRadius: 18, padding: 18, marginTop: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   cardTxt: { fontSize: 14.5, color: '#1F2937', lineHeight: 22 },

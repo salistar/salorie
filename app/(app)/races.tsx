@@ -1,9 +1,9 @@
 import ScreenTopBar from '../../components/ScreenTopBar';
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, TextInput, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
-import { ArrowLeft, Trophy, Users, Plus, ChevronRight, MapPin, CheckCircle2 } from 'lucide-react-native';
+import { ArrowLeft, Trophy, Users, ChevronRight, MapPin, CheckCircle2 } from 'lucide-react-native';
 import { poiPhoto } from '../../assets/challenges/registry';
 import Medal from '../../components/Medal';
 
@@ -13,7 +13,7 @@ import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import {
-  listenOpenRaces, createRace, joinRace,
+  listenOpenRaces, joinRace,
   CHALLENGES, getMyChallengeProgress, joinChallenge,
   Race, streetViewUrl,
 } from '../../lib/races';
@@ -26,13 +26,8 @@ const TXT: Record<string, any> = {
     title: 'Races',
     tabGroup: 'Group races',
     tabChallenges: 'Virtual challenges',
-    createRace: '+ Create race',
-    raceName: 'Race name',
-    raceNamePh: 'e.g. Morning sprint',
     goal: 'Goal',
     km: 'km',
-    create: 'Create',
-    cancel: 'Cancel',
     join: 'Join',
     open: 'Open',
     live: 'Live',
@@ -47,13 +42,8 @@ const TXT: Record<string, any> = {
     title: 'Courses',
     tabGroup: 'Courses de groupe',
     tabChallenges: 'Défis virtuels',
-    createRace: '+ Créer une course',
-    raceName: 'Nom de la course',
-    raceNamePh: 'ex. Sprint du matin',
     goal: 'Objectif',
     km: 'km',
-    create: 'Créer',
-    cancel: 'Annuler',
     join: 'Rejoindre',
     open: 'Ouverte',
     live: 'En direct',
@@ -68,13 +58,8 @@ const TXT: Record<string, any> = {
     title: 'السباقات',
     tabGroup: 'سباقات جماعية',
     tabChallenges: 'تحديات افتراضية',
-    createRace: '+ إنشاء سباق',
-    raceName: 'اسم السباق',
-    raceNamePh: 'مثال: سباق الصباح',
     goal: 'الهدف',
     km: 'كم',
-    create: 'إنشاء',
-    cancel: 'إلغاء',
     join: 'انضمام',
     open: 'مفتوح',
     live: 'مباشر',
@@ -102,10 +87,6 @@ export default function RacesScreen() {
   // Group races
   const [races, setRaces] = useState<Race[]>([]);
   const [loadingRaces, setLoadingRaces] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [raceName, setRaceName] = useState('');
-  const [goalKm, setGoalKm] = useState('5');
-  const [creating, setCreating] = useState(false);
 
   // Challenges
   const [progress, setProgress] = useState<Record<string, number | null>>({});
@@ -141,21 +122,6 @@ export default function RacesScreen() {
   useEffect(() => { loadProgress(); }, [loadProgress]);
   // Courses créées depuis l'admin (Mongo) — jouables via le MÊME écran défi.
   useEffect(() => { getActiveRaces().then((r: any) => { if (Array.isArray(r)) setActiveRaces(r); }).catch(() => {}); }, []);
-
-  const onCreate = async () => {
-    if (!raceName.trim() || creating) return;
-    setCreating(true);
-    try {
-      const goal = Math.max(1, Number(goalKm) || 5);
-      const id = await createRace(email, displayName, raceName.trim(), goal);
-      setShowForm(false); setRaceName(''); setGoalKm('5');
-      router.push('/race-live?id=' + id);
-    } catch (e) {
-      console.warn('[races] create failed', e);
-    } finally {
-      setCreating(false);
-    }
-  };
 
   const onJoinRace = async (race: Race) => {
     try {
@@ -348,16 +314,6 @@ const styles = StyleSheet.create({
   tabActive: { borderColor: PRIMARY, backgroundColor: Colors.light.primaryLight },
   tabTxt: { fontSize: 13, fontWeight: '800' },
   content: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 60 },
-  createBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: PRIMARY, paddingVertical: 15, borderRadius: 16, marginBottom: 14 },
-  createBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
-  formCard: { borderRadius: 18, padding: 16, marginBottom: 14 },
-  formLabel: { fontSize: 13, fontWeight: '700', marginBottom: 6 },
-  input: { height: 48, borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, fontSize: 15, fontWeight: '600' },
-  formBtns: { gap: 10, marginTop: 16 },
-  ghostBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 12, borderWidth: 1.5 },
-  ghostBtnTxt: { fontSize: 15, fontWeight: '800' },
-  primaryBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 12, backgroundColor: PRIMARY },
-  primaryBtnTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
   loadingBox: { paddingVertical: 50, alignItems: 'center' },
   emptyBox: { borderRadius: 18, padding: 28, alignItems: 'center', gap: 14, marginTop: 8 },
   emptySub: { fontSize: 14, textAlign: 'center', lineHeight: 20 },

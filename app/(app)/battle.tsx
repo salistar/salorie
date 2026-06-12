@@ -1,10 +1,11 @@
 // Battle nutrition 1v1 — compare ton score d'assiduité hebdo avec un ami.
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { Swords, Search } from 'lucide-react-native';
+import { Swords } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { FormCard, FormInput, SubmitBar } from '../../components/FormKit';
 import { db, emailToDocId, getUserFromFirestore } from '../../lib/firebase';
 import { getEntries } from '../../lib/tracking';
 import { useTheme } from '../../lib/ThemeContext';
@@ -128,22 +129,21 @@ export default function BattleScreen() {
               <Text style={styles.myScore}>{myScore}<Text style={styles.myMax}>/7</Text></Text>
             </View>
 
-            <View style={[styles.searchRow, { backgroundColor: card }]}>
-              <Search size={20} color={sub} />
-              <TextInput
-                style={[styles.input, { color: text }]}
+            <FormCard>
+              <FormInput
+                label={t.placeholder}
                 placeholder={t.placeholder}
-                placeholderTextColor={sub}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 value={friend}
                 onChangeText={setFriend}
                 onSubmitEditing={challenge}
+                error={err || undefined}
               />
-              <TouchableOpacity style={styles.go} onPress={challenge}><Text style={styles.goTxt}>{t.challenge}</Text></TouchableOpacity>
+            </FormCard>
+            <View style={{ marginHorizontal: -20, marginTop: -8 }}>
+              <SubmitBar label={t.challenge} onPress={challenge} loading={busy} />
             </View>
-            {!!err && <Text style={[styles.err, align]}>{err}</Text>}
-            {busy && <ActivityIndicator color={GREEN} style={{ marginTop: 16 }} />}
 
             {result && (
               <View style={[styles.vsCard, { backgroundColor: card }]}>

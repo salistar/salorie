@@ -49,7 +49,7 @@ export default function ShoppingListScreen() {
         <Text style={[styles.sub, { color: sub }, align]}>{items.length ? `${left} ${t.to_buy}` : t.add_what}</Text>
 
         <View style={styles.addRow}>
-          <TextInput style={[styles.input, { backgroundColor: card, color: textCol }]} placeholder={t.placeholder} placeholderTextColor={isDark ? '#64748b' : '#94A3B8'} value={text} onChangeText={setText} onSubmitEditing={add} returnKeyType="done" />
+          <TextInput style={[styles.input, { backgroundColor: card, color: textCol, borderColor: isDark ? '#283241' : '#E2E8F0' }, align]} placeholder={t.placeholder} placeholderTextColor={isDark ? '#64748b' : '#94A3B8'} value={text} onChangeText={setText} onSubmitEditing={add} returnKeyType="done" />
           <TouchableOpacity style={styles.addBtn} onPress={add}><Plus size={22} color="#fff" /></TouchableOpacity>
         </View>
 
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
   sub: { fontSize: 14, color: '#64748B', marginBottom: 18 },
   addRow: { flexDirection: 'row', gap: 10, marginBottom: 18 },
-  input: { flex: 1, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: '#0F172A' },
+  input: { flex: 1, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: '#0F172A', borderWidth: 1.5, borderColor: '#E2E8F0' },
   addBtn: { width: 52, height: 52, borderRadius: 14, backgroundColor: GREEN, alignItems: 'center', justifyContent: 'center' },
   empty: { color: '#94A3B8', fontSize: 14, textAlign: 'center', marginTop: 20 },
   item: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 10 },

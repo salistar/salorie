@@ -1,8 +1,9 @@
 // Import recette depuis une URL — récupère la page + extrait recette & nutrition (IA).
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Link2, Download } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { FormInput } from '../../components/FormKit';
 import { aiGenerate } from '../../lib/aiProxy';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -57,9 +58,7 @@ export default function ImportRecipeScreen() {
         <View style={styles.head}><Link2 size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
-        <View style={styles.row}>
-          <TextInput style={[styles.input, { backgroundColor: card, color: text }]} placeholder="https://…" placeholderTextColor={sub} autoCapitalize="none" keyboardType="url" value={url} onChangeText={setUrl} onSubmitEditing={run} returnKeyType="go" />
-        </View>
+        <FormInput label="https://…" placeholder="https://…" autoCapitalize="none" keyboardType="url" value={url} onChangeText={setUrl} onSubmitEditing={run} returnKeyType="go" />
         <TouchableOpacity style={styles.btn} onPress={run} disabled={loading}>
           {loading ? <ActivityIndicator color="#fff" /> : <><Download size={20} color="#fff" /><Text style={styles.btnTxt}>{t.importBtn}</Text></>}
         </TouchableOpacity>
@@ -77,8 +76,6 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
   title: { fontSize: 24, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
   sub: { fontSize: 14, color: '#64748B', marginBottom: 18, lineHeight: 20 },
-  row: { marginBottom: 12 },
-  input: { backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 15, fontSize: 15, color: '#0F172A' },
   btn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GREEN, borderRadius: 14, paddingVertical: 15 },
   btnTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
   loadingTxt: { color: '#64748B', textAlign: 'center', marginTop: 16, fontWeight: '600' },

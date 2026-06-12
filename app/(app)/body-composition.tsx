@@ -1,19 +1,20 @@
 // Composition corporelle — poids, masse grasse %, muscle (manuel). Balance connectée = à venir.
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
-import { PersonStanding, Check } from 'lucide-react-native';
+import { PersonStanding } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { FormCard, Stepper, SubmitBar } from '../../components/FormKit';
 import { logEntry, getEntries } from '../../lib/tracking';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 
 const GREEN = '#2E8B57';
 const F = [
-  { k: 'weight', u: 'kg' },
-  { k: 'fat', u: '%' },
-  { k: 'muscle', u: 'kg' },
-  { k: 'water', u: '%' },
+  { k: 'weight', u: 'kg', step: 0.5 },
+  { k: 'fat', u: '%', step: 0.5 },
+  { k: 'muscle', u: 'kg', step: 0.5 },
+  { k: 'water', u: '%', step: 0.5 },
 ];
 
 const TXT: any = {
@@ -79,25 +80,21 @@ export default function BodyCompositionScreen() {
         <View style={styles.head}><PersonStanding size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
-        {F.map((f) => (
-          <View key={f.k} style={[styles.row, { backgroundColor: card }]}>
-            <Text style={[styles.label, { color: text }]}>{t[f.k]}</Text>
-            <View style={styles.inputWrap}>
-              <TextInput
-                style={[styles.input, { color: text }]}
-                keyboardType="numeric"
-                placeholder={last?.[f.k] != null ? String(last[f.k]) : '—'}
-                placeholderTextColor={sub}
-                value={v[f.k] || ''}
-                onChangeText={(t2) => setV((s) => ({ ...s, [f.k]: t2 }))}
-              />
-              <Text style={styles.unit}>{f.u}</Text>
-            </View>
-          </View>
-        ))}
-        <TouchableOpacity style={styles.saveBtn} onPress={save} disabled={saving}>
-          {saving ? <ActivityIndicator color="#fff" /> : <><Check size={20} color="#fff" /><Text style={styles.saveTxt}>{t.save}</Text></>}
-        </TouchableOpacity>
+        <FormCard>
+          {F.map((f) => (
+            <Stepper
+              key={f.k}
+              label={last?.[f.k] != null ? `${t[f.k]} · ${last[f.k]}${f.u}` : t[f.k]}
+              unit={f.u}
+              step={f.step}
+              value={v[f.k] || ''}
+              onChange={(t2: string) => setV((s) => ({ ...s, [f.k]: t2 }))}
+            />
+          ))}
+        </FormCard>
+        <View style={{ marginHorizontal: -20, marginTop: -8 }}>
+          <SubmitBar label={t.save} onPress={save} loading={saving} />
+        </View>
 
         <Text style={[styles.histLabel, { color: sub }, align]}>{t.history}</Text>
         {loading ? <ActivityIndicator color={GREEN} /> : hist.length === 0 ? <Text style={[styles.empty, align]}>{t.empty}</Text> : hist.map((h) => (

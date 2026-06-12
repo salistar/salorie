@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ScrollView,
-  TextInput,
   Dimensions,
   KeyboardAvoidingView,
   Platform,
@@ -22,6 +21,7 @@ import { getUserFromFirestore } from '../../lib/firebase';
 import { useUser } from '@clerk/clerk-expo';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { FormCard, Stepper, ChipGroup } from '../../components/FormKit';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { colorLog, explain } from '../../lib/LocalDataStore';
@@ -521,39 +521,16 @@ Output a single integer (e.g. 247). No explanation.`;
             </View>
           )}
 
-          {/* Intensity */}
+          {/* Intensity — chips FormKit (mêmes valeurs stockées : 0/1/2) */}
           <View style={styles.section}>
-            <Text style={[styles.sectionLabel, { color: textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
-              {t('workout.intensity')}
-            </Text>
-            <View style={[styles.sliderCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-              <View style={styles.sliderTrack}>
-                <View style={[styles.sliderFill, { width: `${(intensity / 2) * 100}%`, left: isRTL ? undefined : 0, right: isRTL ? 0 : undefined }]} />
-                <View style={styles.sliderPoints}>
-                  {[0, 1, 2].map((point) => (
-                    <TouchableOpacity
-                      key={point}
-                      onPress={() => setIntensity(point)}
-                      style={[styles.sliderNode, intensity === point && styles.activeNode]}
-                    />
-                  ))}
-                </View>
-              </View>
-              <View style={styles.sliderLabels}>
-                {intensityLabels.map((label, idx) => (
-                  <Text
-                    key={label}
-                    style={[
-                      styles.label,
-                      { color: textMuted },
-                      intensity === idx && { color: Colors.light.primary, fontWeight: '800' },
-                    ]}
-                  >
-                    {label}
-                  </Text>
-                ))}
-              </View>
-            </View>
+            <FormCard style={{ marginBottom: 0 }}>
+              <ChipGroup
+                label={t('workout.intensity')}
+                options={[0, 1, 2].map((v) => ({ value: v, label: intensityLabels[v] }))}
+                value={intensity}
+                onChange={(v: number) => setIntensity(v)}
+              />
+            </FormCard>
           </View>
 
           {/* Sets x reps — rep-based exercises */}
@@ -563,25 +540,25 @@ Output a single integer (e.g. 247). No explanation.`;
                 <Dumbbell size={18} color={textPrimary} />
                 <Text style={[styles.sectionLabel, { color: textPrimary, marginBottom: 0 }]}>{rt.title}</Text>
               </View>
-              <View style={[styles.repsRow, isRTL && { flexDirection: 'row-reverse' }]}>
-                <View style={[styles.stepCard, { backgroundColor: cardBg }]}>
-                  <Text style={[styles.stepLabel, { color: textMuted }]}>{rt.sets}</Text>
-                  <View style={[styles.stepRow, isRTL && { flexDirection: 'row-reverse' }]}>
-                    <TouchableOpacity style={styles.stepBtn} onPress={() => setSets(Math.max(1, sets - 1))}><Text style={styles.stepBtnTxt}>−</Text></TouchableOpacity>
-                    <Text style={[styles.stepVal, { color: textPrimary }]}>{sets}</Text>
-                    <TouchableOpacity style={styles.stepBtn} onPress={() => setSets(Math.min(12, sets + 1))}><Text style={styles.stepBtnTxt}>+</Text></TouchableOpacity>
-                  </View>
-                </View>
-                <View style={[styles.stepCard, { backgroundColor: cardBg }]}>
-                  <Text style={[styles.stepLabel, { color: textMuted }]}>{rt.reps}</Text>
-                  <View style={[styles.stepRow, isRTL && { flexDirection: 'row-reverse' }]}>
-                    <TouchableOpacity style={styles.stepBtn} onPress={() => setReps(Math.max(1, reps - 1))}><Text style={styles.stepBtnTxt}>−</Text></TouchableOpacity>
-                    <Text style={[styles.stepVal, { color: textPrimary }]}>{reps}</Text>
-                    <TouchableOpacity style={styles.stepBtn} onPress={() => setReps(Math.min(30, reps + 1))}><Text style={styles.stepBtnTxt}>+</Text></TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-              <Text style={[styles.repsHint, { color: textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{sets} × {reps} · {rt.approx} {derivedMinutes} min</Text>
+              <FormCard style={{ marginBottom: 0, marginTop: 6 }}>
+                <Stepper
+                  label={rt.sets}
+                  value={sets}
+                  onChange={(v: string) => setSets(Math.max(1, Math.min(12, parseInt(v, 10) || 1)))}
+                  step={1}
+                  min={1}
+                  max={12}
+                />
+                <Stepper
+                  label={rt.reps}
+                  value={reps}
+                  onChange={(v: string) => setReps(Math.max(1, Math.min(30, parseInt(v, 10) || 1)))}
+                  step={1}
+                  min={1}
+                  max={30}
+                />
+                <Text style={[styles.repsHint, { color: textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{sets} × {reps} · {rt.approx} {derivedMinutes} min</Text>
+              </FormCard>
             </View>
           )}
 
@@ -595,50 +572,28 @@ Output a single integer (e.g. 247). No explanation.`;
               </Text>
             </View>
 
-            <View style={styles.chipGrid}>
-              {durationOptions.map((opt) => (
-                <TouchableOpacity
-                  key={opt}
-                  style={[
-                    styles.chip,
-                    { backgroundColor: cardBg, borderColor: 'transparent' },
-                    duration === opt && !customDuration && {
-                      backgroundColor: '#FFEEED',
-                      borderColor: Colors.light.primary,
-                    },
-                  ]}
-                  onPress={() => {
-                    setDuration(opt);
-                    setCustomDuration('');
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      { color: textMuted },
-                      duration === opt && !customDuration && { color: Colors.light.primary },
-                    ]}
-                  >
-                    {opt} min
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <View style={[styles.inputWrapper, { backgroundColor: cardBg }]}>
-              <TextInput
-                style={[styles.input, { color: textPrimary, textAlign: isRTL ? 'right' : 'left' }]}
-                placeholder={t('workout.manual_duration')}
-                placeholderTextColor={textMuted}
-                keyboardType="numeric"
+            <FormCard style={{ marginBottom: 0, marginTop: 6 }}>
+              <ChipGroup
+                options={durationOptions.map((opt) => ({ value: opt, label: `${opt} min` }))}
+                value={customDuration ? '' : duration}
+                onChange={(opt: string) => {
+                  setDuration(opt);
+                  setCustomDuration('');
+                }}
+              />
+              <Stepper
+                label={t('workout.manual_duration')}
                 value={customDuration}
-                onChangeText={(val) => {
+                onChange={(val: string) => {
                   setCustomDuration(val);
                   setDuration('');
                 }}
+                step={5}
+                min={0}
+                max={600}
+                unit="min"
               />
-              <Text style={[styles.inputUnit, { color: textMuted }]}>min</Text>
-            </View>
+            </FormCard>
           </View>
           )}
         </ScrollView>
@@ -690,14 +645,7 @@ const styles = StyleSheet.create({
   heroImg: { width: '100%', height: '100%' },
   heroFallback: { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 20 },
   heroFallbackTxt: { fontSize: 18, fontWeight: '800', textAlign: 'center' },
-  repsRow: { flexDirection: 'row', gap: 12, marginTop: 6 },
-  stepCard: { flex: 1, borderRadius: 16, padding: 14, alignItems: 'center' },
-  stepLabel: { fontSize: 12, fontWeight: '700', marginBottom: 8 },
-  stepRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  stepBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(41,143,80,0.12)', alignItems: 'center', justifyContent: 'center' },
-  stepBtnTxt: { fontSize: 20, fontWeight: '900', color: Colors.light.primary, lineHeight: 22 },
-  stepVal: { fontSize: 22, fontWeight: '900', minWidth: 32, textAlign: 'center' },
-  repsHint: { fontSize: 13, fontWeight: '600', marginTop: 10 },
+  repsHint: { fontSize: 13, fontWeight: '600', marginTop: 4 },
   videoBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -763,61 +711,6 @@ const styles = StyleSheet.create({
   },
   activityImg: { width: '100%', height: 80, borderRadius: 12 },
   activityLabel: { fontSize: 13, fontWeight: '700' },
-  sliderCard: { borderRadius: 24, padding: 20, paddingTop: 24, borderWidth: 1 },
-  sliderTrack: {
-    height: 6,
-    backgroundColor: Colors.light.gray[200],
-    borderRadius: 3,
-    position: 'relative',
-    justifyContent: 'center',
-  },
-  sliderFill: {
-    height: 6,
-    backgroundColor: Colors.light.primary,
-    borderRadius: 3,
-    position: 'absolute',
-    // left/right set inline based on isRTL so the fill grows from the correct side
-  },
-  sliderPoints: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    position: 'absolute',
-    left: -10,
-    right: -10,
-  },
-  sliderNode: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: Colors.light.white,
-    borderWidth: 3,
-    borderColor: Colors.light.gray[200],
-  },
-  activeNode: {
-    borderColor: Colors.light.primary,
-    backgroundColor: Colors.light.white,
-    transform: [{ scale: 1.2 }],
-  },
-  sliderLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 14 },
-  label: { fontSize: 13, fontWeight: '600' },
-  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 },
-  chip: {
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 14,
-    borderWidth: 1.5,
-  },
-  chipText: { fontSize: 14, fontWeight: '700' },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    height: 52,
-  },
-  input: { flex: 1, fontSize: 15, fontWeight: '600' },
-  inputUnit: { fontSize: 14, fontWeight: '700' },
   footer: {
     position: 'absolute',
     bottom: 0,

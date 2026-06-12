@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { MessagesSquare, Send, Check, Mail } from 'lucide-react-native';
+import { MessagesSquare, Check, Mail } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { FormCard, FormInput, SubmitBar } from '../../components/FormKit';
 import { db, logEvent, emailToDocId } from '../../lib/firebase';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -108,13 +109,13 @@ export default function Contact() {
       <ScrollView contentContainerStyle={s.body}>
         <View style={s.head}><MessagesSquare size={26} color={GREEN} /><Text style={[s.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[s.sub, { color: sub }, align]}>{t.sub}</Text>
-        <Text style={[s.label, { color: sub }, align]}>{t.subjectLabel}</Text>
-        <TextInput style={[s.input, { backgroundColor: card, borderColor: border, color: text }]} value={subject} onChangeText={setSubject} placeholder={t.subjectPh} placeholderTextColor="#94a3b8" />
-        <Text style={[s.label, { color: sub }, align]}>{t.messageLabel}</Text>
-        <TextInput style={[s.input, { height: 140, textAlignVertical: 'top', backgroundColor: card, borderColor: border, color: text }]} value={message} onChangeText={setMessage} placeholder={t.messagePh} placeholderTextColor="#94a3b8" multiline />
-        <TouchableOpacity style={[s.btn, (!message.trim() || busy) && { opacity: 0.5 }]} onPress={send} disabled={!message.trim() || busy}>
-          {busy ? <ActivityIndicator color="#fff" /> : <><Send size={18} color="#fff" /><Text style={s.btnTxt}>{t.send}</Text></>}
-        </TouchableOpacity>
+        <FormCard style={{ marginTop: 18 }}>
+          <FormInput label={t.subjectLabel} value={subject} onChangeText={setSubject} placeholder={t.subjectPh} />
+          <FormInput label={t.messageLabel} value={message} onChangeText={setMessage} placeholder={t.messagePh} multiline style={{ height: 140, textAlignVertical: 'top' }} />
+        </FormCard>
+        <View style={{ marginHorizontal: -18, marginTop: -8 }}>
+          <SubmitBar label={t.send} onPress={send} disabled={!message.trim()} loading={busy} />
+        </View>
         <TouchableOpacity style={s.mail} onPress={() => Linking.openURL('mailto:admin@salistar.com')}>
           <Mail size={15} color={GREEN} /><Text style={s.mailTxt}>{t.orMail}</Text>
         </TouchableOpacity>

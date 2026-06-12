@@ -128,7 +128,7 @@ export default function AiCoachScreen() {
       </ScrollView>
       <View style={[styles.inputRow, { backgroundColor: card, borderTopColor: isDark ? '#334155' : '#EEF2F6' }]}>
         <TextInput
-          style={[styles.input, { backgroundColor: isDark ? '#0f172a' : '#F1F5F9', color: text }]}
+          style={[styles.input, { backgroundColor: isDark ? '#0f172a' : '#F1F5F9', color: text, borderWidth: 1.5, borderColor: isDark ? '#334155' : '#E2E8F0' }]}
           placeholder={t.placeholder}
           placeholderTextColor={sub}
           value={q}

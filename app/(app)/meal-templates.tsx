@@ -1,9 +1,10 @@
 // Templates de repas — enregistre tes repas habituels, re-logge en 1 tap.
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { BookmarkPlus, Plus, Check } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { FormCard, FormInput, Stepper } from '../../components/FormKit';
 import { logEntry, getEntries, todayStr } from '../../lib/tracking';
 import { addNutritionLog } from '../../lib/firebase';
 import { useTheme } from '../../lib/ThemeContext';
@@ -63,20 +64,22 @@ export default function MealTemplatesScreen() {
         <View style={styles.head}><BookmarkPlus size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
-        <View style={[styles.form, { backgroundColor: card }]}>
-          <TextInput style={[styles.nameInput, { color: text }, isDark && { borderBottomColor: '#334155' }]} placeholder={t.namePh} placeholderTextColor={sub} value={name} onChangeText={setName} />
-          <View style={styles.macroRow}>
-            {F.map((f) => (
-              <View key={f.k} style={styles.macroCell}>
-                <TextInput style={[styles.macroInput, { color: text }]} keyboardType="numeric" placeholder="0" placeholderTextColor={sub} value={vals[f.k] || ''} onChangeText={(v2) => setVals((v) => ({ ...v, [f.k]: v2 }))} />
-                <Text style={[styles.macroLbl, { color: sub }]}>{t.fields[f.k] || f.l}</Text>
-              </View>
-            ))}
-          </View>
+        <FormCard>
+          <FormInput label={t.namePh} placeholder={t.namePh} value={name} onChangeText={setName} />
+          {F.map((f) => (
+            <Stepper
+              key={f.k}
+              label={t.fields[f.k] || f.l}
+              unit={f.u}
+              step={f.k === 'calories' ? 50 : 5}
+              value={vals[f.k] || ''}
+              onChange={(v2: string) => setVals((v) => ({ ...v, [f.k]: v2 }))}
+            />
+          ))}
           <TouchableOpacity style={styles.addBtn} onPress={create} disabled={busy}>
             {busy ? <ActivityIndicator color="#fff" /> : <><Plus size={18} color="#fff" /><Text style={styles.addTxt}>{t.createBtn}</Text></>}
           </TouchableOpacity>
-        </View>
+        </FormCard>
 
         <Text style={[styles.label, { color: sub }]}>{t.myTemplates}</Text>
         {loading ? <ActivityIndicator color={GREEN} /> : tpls.length === 0 ? <Text style={[styles.empty, { color: sub }]}>{t.empty}</Text> : tpls.map((tp) => (
@@ -99,13 +102,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
   title: { fontSize: 24, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
   sub: { fontSize: 14, color: '#64748B', marginBottom: 18 },
-  form: { backgroundColor: '#fff', borderRadius: 18, padding: 16, marginBottom: 22 },
-  nameInput: { fontSize: 16, fontWeight: '700', color: '#0F172A', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#EEF2F7', marginBottom: 12 },
-  macroRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
-  macroCell: { flex: 1, alignItems: 'center' },
-  macroInput: { fontSize: 18, fontWeight: '800', color: '#0F172A', textAlign: 'center', width: '100%' },
-  macroLbl: { fontSize: 11, color: '#94A3B8', fontWeight: '700', marginTop: 2 },
-  addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GREEN, borderRadius: 14, paddingVertical: 13 },
+  addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GREEN, borderRadius: 14, paddingVertical: 13, marginTop: 4 },
   addTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
   label: { fontSize: 13, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
   empty: { color: '#94A3B8', fontSize: 14 },

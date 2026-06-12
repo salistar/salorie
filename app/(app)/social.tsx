@@ -4,6 +4,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, Trophy, UserPlus, Flame } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { useFormTheme } from '../../components/FormKit';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -17,6 +18,7 @@ export default function SocialScreen() {
   const { resolved } = useTheme();
   const { t, language } = useTranslation() as any;
   const isDark = resolved === 'dark';
+  const th = useFormTheme(); // couleurs FormKit (bordure input harmonisée)
 
   const [rows, setRows] = useState<LeaderRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,7 +83,7 @@ export default function SocialScreen() {
         <Text style={[styles.section, { color: text }]}>{t('social.add_friend')}</Text>
         <View style={styles.addRow}>
           <TextInput
-            style={[styles.input, { backgroundColor: card, color: text }]}
+            style={[styles.input, { backgroundColor: card, color: text, borderWidth: 1.5, borderColor: th.border }]}
             placeholder={t('social.email_ph')}
             placeholderTextColor={sub}
             value={input}

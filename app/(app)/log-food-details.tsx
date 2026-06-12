@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   SafeAreaView,
   ScrollView,
   KeyboardAvoidingView,
@@ -12,13 +11,14 @@ import {
   Image,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ArrowLeft, Flame, Beef, Wheat, Droplets, Check, Edit3, FileText } from 'lucide-react-native';
+import { Flame, Beef, Wheat, Droplets, FileText } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { useLogging } from '../../lib/LoggingContext';
 import { addNutritionLog } from '../../lib/firebase';
 import { useUser } from '@clerk/clerk-expo';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { FormInput, Stepper, SubmitBar } from '../../components/FormKit';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { colorLog, explain } from '../../lib/LocalDataStore';
@@ -175,48 +175,27 @@ export default function LogFoodDetailsScreen() {
           ) : null}
 
           <Animated.View entering={FadeInDown.duration(600)}>
-            <Text style={[styles.inputLabel, { color: textMuted, textAlign: isRTL ? 'right' : 'left' }]}>
-              {t('logfood.food_name')}
-            </Text>
-            <View style={[styles.nameContainer, { backgroundColor: cardBg, borderColor: inputBorder }]}>
-              <TextInput
-                style={[styles.foodName, { color: textPrimary, textAlign: isRTL ? 'right' : 'left' }]}
-                value={name}
-                onChangeText={setName}
-                multiline
-                placeholder={t('logfood.food_name_ph')}
-                placeholderTextColor={textMuted}
-              />
-            </View>
+            <FormInput
+              label={t('logfood.food_name')}
+              value={name}
+              onChangeText={setName}
+              multiline
+              placeholder={t('logfood.food_name_ph')}
+            />
 
-            <View style={[styles.servingContainer, isRTL && { flexDirection: 'row-reverse' }]}>
-              <View
-                style={[
-                  styles.servingInputGroup,
-                  { backgroundColor: cardBg, borderColor: inputBorder },
-                ]}
-              >
-                <Edit3 size={16} color={textMuted} />
-                <TextInput
-                  style={[styles.quantityInput, { color: textPrimary }]}
-                  value={quantity}
-                  onChangeText={updateQuantity}
-                  keyboardType="numeric"
-                  placeholder="0"
-                  placeholderTextColor={textMuted}
-                />
-              </View>
-              <TextInput
-                style={[
-                  styles.unitInput,
-                  { color: textMuted, textAlign: isRTL ? 'right' : 'left' },
-                ]}
-                value={unit}
-                onChangeText={setUnit}
-                placeholder={t('logfood.unit_ph')}
-                placeholderTextColor={textMuted}
-              />
-            </View>
+            <Stepper
+              value={quantity}
+              onChange={updateQuantity}
+              step={/^(g|ml)/i.test(unit.trim()) ? 10 : 1}
+              unit={unit}
+            />
+
+            <FormInput
+              label={t('logfood.unit_ph')}
+              value={unit}
+              onChangeText={setUnit}
+              placeholder={t('logfood.unit_ph')}
+            />
           </Animated.View>
 
           {/* Description card (from AI) */}
@@ -327,16 +306,7 @@ export default function LogFoodDetailsScreen() {
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={[styles.logBtn, loading && styles.disabledBtn]}
-            onPress={handleLog}
-            disabled={loading}
-          >
-            <Check size={22} color={Colors.light.white} strokeWidth={3} />
-            <Text style={styles.logText}>{loading ? t('logfood.logging') : t('logfood.log_btn')}</Text>
-          </TouchableOpacity>
-        </View>
+        <SubmitBar label={t('logfood.log_btn')} onPress={handleLog} loading={loading} />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -375,52 +345,6 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   image: { width: '100%', height: '100%' },
-  inputLabel: {
-    fontSize: 12,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  nameContainer: {
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1.5,
-  },
-  foodName: {
-    fontSize: 26,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-    padding: 0,
-  },
-  servingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 20,
-  },
-  servingInputGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 44,
-    gap: 8,
-    borderWidth: 1,
-  },
-  quantityInput: {
-    fontSize: 16,
-    fontWeight: '800',
-    minWidth: 50,
-    padding: 0,
-  },
-  unitInput: {
-    fontSize: 16,
-    fontWeight: '600',
-    flex: 1,
-    padding: 0,
-  },
   descCard: {
     borderRadius: 22,
     padding: 16,
@@ -496,25 +420,4 @@ const styles = StyleSheet.create({
   macroInputRow: { flexDirection: 'row', alignItems: 'baseline', gap: 2 },
   macroInput: { fontSize: 18, fontWeight: '800', padding: 0, textAlign: 'center' },
   macroUnit: { fontSize: 13, fontWeight: '700' },
-  footer: { padding: 24, paddingBottom: Platform.OS === 'ios' ? 30 : 20 },
-  logBtn: {
-    backgroundColor: Colors.light.primary,
-    height: 60,
-    borderRadius: 22,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    shadowColor: Colors.light.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  disabledBtn: {
-    backgroundColor: Colors.light.gray[200],
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  logText: { fontSize: 18, fontWeight: '800', color: Colors.light.white },
 });
