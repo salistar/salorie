@@ -1,9 +1,10 @@
 // Glycémie — suivi manuel (mesures + contexte + tendance). Sync CGM = à venir.
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { Droplet, Check } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { FormCard, Stepper, ChipGroup } from '../../components/FormKit';
 import { logEntry, getEntries } from '../../lib/tracking';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -53,15 +54,21 @@ export default function GlucoseTrackerScreen() {
         <View style={styles.head}><Droplet size={24} color="#E11D48" /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
-        <View style={[styles.inputRow, { backgroundColor: card }]}>
-          <TextInput style={[styles.input, { color: text }]} keyboardType="numeric" placeholder={t.placeholder} placeholderTextColor={sub} value={val} onChangeText={setVal} />
-          <Text style={[styles.unit, { color: sub }]}>mg/dL</Text>
-        </View>
-        <View style={styles.ctxRow}>
-          {CONTEXTS.map((c) => (
-            <TouchableOpacity key={c} style={[styles.ctx, { backgroundColor: card }, ctx === c && styles.ctxActive]} onPress={() => setCtx(c)}><Text style={[styles.ctxTxt, { color: sub }, ctx === c && { color: '#fff' }]}>{t.ctx[c] || c}</Text></TouchableOpacity>
-          ))}
-        </View>
+        <FormCard>
+          <Stepper
+            value={val}
+            onChange={setVal}
+            step={1}
+            min={0}
+            max={600}
+            unit="mg/dL"
+          />
+          <ChipGroup
+            value={ctx}
+            onChange={setCtx}
+            options={CONTEXTS.map((c) => ({ value: c, label: t.ctx[c] || c }))}
+          />
+        </FormCard>
         <TouchableOpacity style={styles.saveBtn} onPress={save} disabled={saving}>
           {saving ? <ActivityIndicator color="#fff" /> : <><Check size={20} color="#fff" /><Text style={styles.saveTxt}>{t.save}</Text></>}
         </TouchableOpacity>
@@ -87,13 +94,6 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
   title: { fontSize: 26, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
   sub: { fontSize: 14, color: '#64748B', marginBottom: 20, lineHeight: 20 },
-  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, marginBottom: 14 },
-  input: { flex: 1, fontSize: 22, fontWeight: '800', color: '#0F172A', paddingVertical: 14 },
-  unit: { fontSize: 14, color: '#94A3B8', fontWeight: '700' },
-  ctxRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  ctx: { backgroundColor: '#fff', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14 },
-  ctxActive: { backgroundColor: GREEN },
-  ctxTxt: { fontSize: 13, fontWeight: '700', color: '#64748B' },
   saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GREEN, borderRadius: 14, paddingVertical: 15, marginBottom: 8 },
   saveTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
   label: { fontSize: 13, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 8, marginBottom: 10 },

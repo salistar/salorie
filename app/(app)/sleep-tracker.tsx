@@ -2,8 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
-import { Moon, Minus, Plus, Check } from 'lucide-react-native';
+import { Moon, Check } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { FormCard, Stepper, ChipGroup } from '../../components/FormKit';
 import { logEntry, getEntries } from '../../lib/tracking';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
@@ -48,20 +49,23 @@ export default function SleepTrackerScreen() {
         <View style={styles.head}><Moon size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
-        <View style={styles.stepper}>
-          <TouchableOpacity style={styles.stepBtn} onPress={() => setHours((h) => Math.max(0, h - 0.5))}><Minus size={22} color={GREEN} /></TouchableOpacity>
-          <View style={styles.hWrap}><Text style={[styles.hVal, { color: text }]}>{hours}</Text><Text style={styles.hUnit}>{t.hours}</Text></View>
-          <TouchableOpacity style={styles.stepBtn} onPress={() => setHours((h) => Math.min(14, h + 0.5))}><Plus size={22} color={GREEN} /></TouchableOpacity>
-        </View>
-
-        <Text style={[styles.label, { color: sub }, align]}>{t.quality}</Text>
-        <View style={styles.qRow}>
-          {QUALITY.map((e, i) => (
-            <TouchableOpacity key={i} style={[styles.qBtn, { backgroundColor: card }, quality === i + 1 && styles.qBtnActive]} onPress={() => setQuality(i + 1)}>
-              <Text style={styles.qEmoji}>{e}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <FormCard>
+          <Stepper
+            label={t.hours}
+            value={String(hours)}
+            onChange={(v: string) => setHours(Math.max(0, Math.min(14, Number(v) || 0)))}
+            step={0.5}
+            min={0}
+            max={14}
+            unit="h"
+          />
+          <ChipGroup
+            label={t.quality}
+            value={quality}
+            onChange={setQuality}
+            options={QUALITY.map((e, i) => ({ value: i + 1, label: e }))}
+          />
+        </FormCard>
 
         <TouchableOpacity style={styles.saveBtn} onPress={save} disabled={saving}>
           {saving ? <ActivityIndicator color="#fff" /> : <><Check size={20} color="#fff" /><Text style={styles.saveTxt}>{t.save}</Text></>}
@@ -85,16 +89,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
   title: { fontSize: 24, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
   sub: { fontSize: 14, color: '#64748B', marginBottom: 20 },
-  stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 },
-  stepBtn: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#EAF4EE', alignItems: 'center', justifyContent: 'center' },
-  hWrap: { alignItems: 'center' },
-  hVal: { fontSize: 44, fontWeight: '900', color: '#0F172A', letterSpacing: -1 },
-  hUnit: { fontSize: 13, color: '#94A3B8', fontWeight: '700' },
   label: { fontSize: 13, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10, marginTop: 8 },
-  qRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
-  qBtn: { width: 56, height: 56, borderRadius: 16, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent' },
-  qBtnActive: { borderColor: GREEN, backgroundColor: '#EAF4EE' },
-  qEmoji: { fontSize: 26 },
   saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GREEN, borderRadius: 16, paddingVertical: 15, marginBottom: 8 },
   saveTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
   empty: { color: '#94A3B8', fontSize: 14 },
