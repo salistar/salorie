@@ -12,6 +12,7 @@ import {
   getDocs,
   orderBy,
   updateDoc,
+  deleteDoc,
   limit as firestoreLimit
 } from 'firebase/firestore';
 import { CONFIG } from '../constants/config';
@@ -311,7 +312,27 @@ export interface NutritionLog {
   intensity?: string;
   duration?: number;
   serving?: string;
+  // Slot du Diary (breakfast|lunch|snack|dinner) — optionnel ; sinon déduit de l'heure.
+  slot?: string;
 }
+
+/** Supprime un log (Firestore + cache local) — utilisé par le Diary. */
+export const deleteNutritionLog = async (email: string, logId: string): Promise<boolean> => {
+  try {
+    const docId = emailToDocId(email);
+    if (!docId || !logId) return false;
+    await deleteDoc(doc(db, 'users', docId, 'logs', logId));
+    try {
+      const key = `logs_${docId}`;
+      const raw = await AsyncStorage.getItem(key);
+      if (raw) {
+        const arr = JSON.parse(raw).filter((l: any) => l.id !== logId);
+        await AsyncStorage.setItem(key, JSON.stringify(arr));
+      }
+    } catch {}
+    return true;
+  } catch { return false; }
+};
 
 /**
  * Fetches nutrition logs for a specific user (by email) and date

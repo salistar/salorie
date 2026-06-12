@@ -167,6 +167,7 @@ export default function CoachScreen() {
         {(() => {
           const sections = [
             { key: 'eat', Icon: UtensilsCrossed, items: [
+              { Icon: BookmarkPlus, label: 'Journal alimentaire', route: '/diary' },
               { Icon: Apple, label: 'Reconnaître un aliment', route: '/food-recognition' },
               { Icon: Mic, label: 'Logging vocal', route: '/voice-log' },
               { Icon: ScanText, label: 'Scan code-barres', route: '/scan-barcode' },
