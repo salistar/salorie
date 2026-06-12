@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Dimensions, Alert } from 'react-native';
-import { Zap, Droplets, Database, Scan, Crown } from 'lucide-react-native';
+import { Zap, Droplets, Database, Scan, Crown, Mic, ScanBarcode, Scale } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { useLogging } from '../lib/LoggingContext';
 import { useTranslation } from '../lib/i18n';
@@ -19,7 +19,14 @@ const PENDING_SCAN_KEY = 'pending_scan_v1';
 
 export default function ActionMenu() {
   const { isActionMenuVisible, hideActionMenu, showLogModal, setScanImageBase64 } = useLogging();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation() as any;
+  // Libellés des 3 nouvelles actions (pas de clés centrales) — trilingue local.
+  const L: any = {
+    en: { voice: 'Voice log', barcode: 'Barcode', weight: 'Weight' },
+    fr: { voice: 'Vocal', barcode: 'Code-barres', weight: 'Poids' },
+    ar: { voice: 'صوتي', barcode: 'باركود', weight: 'الوزن' },
+  };
+  const lx = L[language] || L.en;
 
   const handleScanFood = () => {
     Alert.alert(
@@ -192,6 +199,27 @@ export default function ActionMenu() {
       bg: '#FFEEED',
       premium: true,
       onPress: handleScanFood,
+    },
+    {
+      id: 'voice',
+      title: lx.voice,
+      icon: <Mic size={24} color="#8B5CF6" />,
+      bg: '#F3EEFF',
+      onPress: () => { hideActionMenu(); router.push('/voice-log' as any); },
+    },
+    {
+      id: 'barcode',
+      title: lx.barcode,
+      icon: <ScanBarcode size={24} color="#0E7490" />,
+      bg: '#E0F7FA',
+      onPress: () => { hideActionMenu(); router.push('/scan-barcode' as any); },
+    },
+    {
+      id: 'weight',
+      title: lx.weight,
+      icon: <Scale size={24} color="#B45309" />,
+      bg: '#FEF3E2',
+      onPress: () => { hideActionMenu(); router.push('/update-weight' as any); },
     },
   ];
 
