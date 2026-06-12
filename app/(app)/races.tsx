@@ -242,15 +242,15 @@ export default function RacesScreen() {
                 </TouchableOpacity>
               );
             })}
-            {loadingChallenges ? (
-              <View style={styles.loadingBox}><ActivityIndicator size="large" color={PRIMARY} /></View>
-            ) : CHALLENGES.length === 0 ? (
+            {/* UNIFIÉ : une seule liste = les courses admin (Mongo). Les 4 anciens
+                défis intégrés ont été MIGRÉS en base avec leurs médailles. */}
+            {activeRaces.length === 0 && (
               <View style={[styles.emptyBox, { backgroundColor: card }]}>
                 <Trophy size={36} color={Colors.light.gray[300]} />
                 <Text style={[styles.emptySub, { color: sub }]}>{t.emptyChallenges}</Text>
               </View>
-            ) : (
-              CHALLENGES.map((c) => {
+            )}
+            {false && CHALLENGES.map((c) => {
                 const p = progress[c.id];
                 const joined = p != null;
                 const pct = joined ? Math.min(1, (p as number) / c.totalKm) : 0;
@@ -295,8 +295,7 @@ export default function RacesScreen() {
                     )}
                   </TouchableOpacity>
                 );
-              })
-            )}
+              })}
           </>
         )}
       </ScrollView>

@@ -17,18 +17,20 @@ export class RacesService {
 
   // Valide les contraintes métier : total 80–2000 km, arrêts espacés de 20–100 km,
   // 1 départ + 1 arrivée. Lève BadRequest si invalide (l'admin voit l'erreur).
+  // Validation assouplie : les défis courts (corniche 10 km, marathon 42 km…)
+  // sont désormais gérés ici aussi (unification défis = courses virtuelles).
   private validate(dto: any) {
     const total = Number(dto.totalKm);
-    if (!(total >= 80 && total <= 2000)) {
-      throw new BadRequestException('La distance totale doit être entre 80 et 2000 km.');
+    if (!(total >= 1 && total <= 5000)) {
+      throw new BadRequestException('La distance totale doit être entre 1 et 5000 km.');
     }
     const wps = Array.isArray(dto.waypoints) ? dto.waypoints : [];
     if (wps.length < 2) throw new BadRequestException('Il faut au moins un départ et une arrivée.');
     const sorted = [...wps].sort((a, b) => (a.atKm || 0) - (b.atKm || 0));
     for (let i = 1; i < sorted.length; i++) {
       const gap = (sorted[i].atKm || 0) - (sorted[i - 1].atKm || 0);
-      if (gap < 20 || gap > 100) {
-        throw new BadRequestException(`Chaque point doit être espacé de 20 à 100 km (écart trouvé: ${gap.toFixed(0)} km).`);
+      if (gap < 0.5 || gap > 200) {
+        throw new BadRequestException(`Chaque point doit être espacé de 0.5 à 200 km (écart trouvé: ${gap.toFixed(1)} km).`);
       }
     }
   }
