@@ -179,11 +179,28 @@ function InitialLayout() {
     if (!isLoaded) return;
 
     if (!isSignedIn) {
-      setStatus('signed-out');
-      // Garde le flag optimiste — on laisse la cache email-keyed
-      // `onboarded_{email}` intacte pour qu'une reconnexion du MEME user soit
-      // instantanee (pas de splash).
-      AsyncStorage.removeItem('last_session_onboarded').catch(() => {});
+      // GRÂCE HORS-LIGNE : à froid sans réseau, Clerk ne peut PAS valider le token
+      // → isSignedIn=false même pour un user valide. Si on est hors-ligne et que la
+      // session précédente était onboardée, on laisse entrer en mode hors-ligne
+      // (cache local) au lieu d'éjecter vers Welcome. Au retour réseau, Clerk
+      // revalide normalement (et déconnecte vraiment si le token est invalide).
+      (async () => {
+        try {
+          const Network = require('expo-network');
+          const s = await Network.getNetworkStateAsync();
+          const flag = await AsyncStorage.getItem('last_session_onboarded');
+          if (s?.isConnected === false && flag === 'true') {
+            console.log('[Auth] hors-ligne + session précédente onboardée → grâce offline (entrée Home)');
+            setStatus('onboarded');
+            return; // on NE retire PAS le flag : il sert de laissez-passer offline
+          }
+        } catch {}
+        setStatus('signed-out');
+        // Garde le flag optimiste — on laisse la cache email-keyed
+        // `onboarded_{email}` intacte pour qu'une reconnexion du MEME user soit
+        // instantanee (pas de splash).
+        AsyncStorage.removeItem('last_session_onboarded').catch(() => {});
+      })();
     } else {
       // Signed in. Resolution immediate via cache email-keyed avant tout
       // passage par 'pending' — evite totalement le splash a la reconnexion.
