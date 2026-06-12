@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, User, BarChart3, Plus, Sparkles } from 'lucide-react-native';
+import { Home, User, BarChart3, Plus, Sparkles, Trophy } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { LoggingProvider, useLogging } from '../../lib/LoggingContext';
@@ -9,7 +9,8 @@ import { useTranslation } from '../../lib/i18n';
 function TabsContent() {
   const { showActionMenu } = useLogging();
   const { colors, resolved } = useTheme();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation() as any;
+  const defisLabel = language === 'fr' ? 'Défis' : language === 'ar' ? 'تحديات' : 'Challenges';
 
   return (
     <>
@@ -43,6 +44,13 @@ function TabsContent() {
           options={{
             tabBarLabel: t('tabs.coach'),
             tabBarIcon: ({ color }) => <Sparkles size={22} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="defis"
+          options={{
+            tabBarLabel: defisLabel,
+            tabBarIcon: ({ color }) => <Trophy size={22} color={color} />,
           }}
         />
         <Tabs.Screen
