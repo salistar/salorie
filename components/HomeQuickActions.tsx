@@ -10,9 +10,9 @@ import { useTranslation } from '../lib/i18n';
 const GREEN = '#2E8B57';
 
 const TXT: any = {
-  en: { title: 'Quick start', notif: 'Notifications', log: 'Log a meal', workout: 'Workout', races: 'Virtual races', journal: 'Journal', coach: 'AI Coach' },
-  fr: { title: 'Lance-toi', notif: 'Notifications', log: 'Logger un repas', workout: 'Séance', races: 'Courses virtuelles', journal: 'Journal', coach: 'Coach IA' },
-  ar: { title: 'انطلق', notif: 'الإشعارات', log: 'سجّل وجبة', workout: 'تمرين', races: 'سباقات افتراضية', journal: 'اليوميات', coach: 'مدرب AI' },
+  en: { title: 'Quick start', notif: 'Notifications', log: 'Log a meal', diary: 'Diary', workout: 'Workout', races: 'Virtual races', journal: 'Journal', coach: 'AI Coach' },
+  fr: { title: 'Lance-toi', notif: 'Notifications', log: 'Logger un repas', diary: 'Journal repas', workout: 'Séance', races: 'Courses virtuelles', journal: 'Journal', coach: 'Coach IA' },
+  ar: { title: 'انطلق', notif: 'الإشعارات', log: 'سجّل وجبة', diary: 'يوميات الطعام', workout: 'تمرين', races: 'سباقات افتراضية', journal: 'اليوميات', coach: 'مدرب AI' },
 };
 
 export default function HomeQuickActions({ onLog }: { onLog?: () => void }) {
@@ -26,6 +26,7 @@ export default function HomeQuickActions({ onLog }: { onLog?: () => void }) {
 
   const ACTIONS = [
     { icon: UtensilsCrossed, label: t.log, onPress: () => (onLog ? onLog() : router.push('/food-recognition' as any)) },
+    { icon: Newspaper, label: t.diary, onPress: () => router.push('/diary' as any) },
     { icon: Dumbbell, label: t.workout, onPress: () => router.push('/log-exercise' as any) },
     { icon: Trophy, label: t.races, onPress: () => router.push('/races' as any) },
     { icon: Newspaper, label: t.journal, onPress: () => router.push('/journal' as any) },
