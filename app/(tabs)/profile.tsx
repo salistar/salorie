@@ -59,7 +59,7 @@ export default function ProfileScreen() {
       await addDoc(collection(db, 'users', emailToDocId(email), 'contact_messages'), {
         email, subject: '[LOGS] Diagnostic app', message: buildDiagnostics(), createdAt: serverTimestamp(),
       });
-      Alert.alert('✅', t('profile.logs_sent') || 'Logs envoyés au support. Merci !');
+      Alert.alert('✅', 'Logs envoyés au support / Logs sent. Merci !');
     } catch {
       Alert.alert('⚠️', 'Envoi impossible — réessaie plus tard.');
     }
