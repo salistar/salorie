@@ -8,6 +8,9 @@ export default function MedalsHistory() {
   const [medals, setMedals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  // Pagination côté client : on rend 60 cartes à la fois (le SVG par carte rend
+  // le DOM lourd au-delà).
+  const [visible, setVisible] = useState(60);
 
   const load = useCallback(async () => {
     setLoading(true); setErr(null);
@@ -27,8 +30,9 @@ export default function MedalsHistory() {
         : err ? <div className="card empty">⚠️ {err}</div>
         : !medals.length ? <div className="card empty">Aucune médaille gagnée pour l'instant.</div>
         : (
+          <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 14, marginTop: 12 }}>
-            {medals.map((m) => (
+            {medals.slice(0, visible).map((m) => (
               <div key={m._id} className="card" style={{ padding: 10, textAlign: 'center' }}>
                 <div dangerouslySetInnerHTML={{ __html: svg(m, 120) }} />
                 <div style={{ fontWeight: 700, fontSize: 13, marginTop: 4 }}>{m.raceName}</div>
@@ -37,6 +41,14 @@ export default function MedalsHistory() {
               </div>
             ))}
           </div>
+          {medals.length > visible && (
+            <p style={{ textAlign: 'center', marginTop: 14 }}>
+              <button onClick={() => setVisible((v) => v + 60)} style={{ padding: '9px 18px', borderRadius: 10, border: '1px solid #e5e7eb', background: '#fff', fontWeight: 700, cursor: 'pointer', color: '#2E8B57' }}>
+                Voir {Math.min(60, medals.length - visible)} de plus ({medals.length - visible} restantes)
+              </button>
+            </p>
+          )}
+          </>
         )}
     </main>
   );

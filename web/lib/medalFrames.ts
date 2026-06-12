@@ -1,3 +1,4 @@
+// ⚠️ FICHIER GÉNÉRÉ — ne pas éditer ici. Source : lib/medalFrames.ts (npm run sync:medals)
 // Générateur de médailles paramétrable (builder). On génère le SVG en code :
 //  - COULEUR libre (n'importe quel hex → palette émail dérivée) — plus de noms de thème.
 //  - des dizaines de FORMES (paramétriques : étoiles, polygones, engrenages, écusson…).

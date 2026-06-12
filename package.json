@@ -18,7 +18,8 @@
     "install:from-github:fast": "powershell -ExecutionPolicy Bypass -File ./install-from-github.ps1 -NoLogcat",
     "deploy:phone": "powershell -ExecutionPolicy Bypass -File ./deploy-to-phone.ps1",
     "deploy:phone:fast": "powershell -ExecutionPolicy Bypass -File ./deploy-to-phone.ps1 -SkipBundle",
-    "deploy:phone:clean": "powershell -ExecutionPolicy Bypass -File ./deploy-to-phone.ps1 -Clean"
+    "deploy:phone:clean": "powershell -ExecutionPolicy Bypass -File ./deploy-to-phone.ps1 -Clean",
+    "sync:medals": "node scripts/sync-medal-frames.js"
   },
   "dependencies": {
     "@clerk/clerk-expo": "^2.19.31",
