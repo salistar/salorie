@@ -9,7 +9,8 @@ export class PipelineController {
 
   private auth(key?: string) {
     const expected = process.env.ADMIN_API_KEY;
-    if (expected && key !== expected) throw new ForbiddenException('admin key invalide');
+    // Clé OBLIGATOIRE : sans ADMIN_API_KEY défini, les routes admin sont fermées.
+    if (!expected || key !== expected) throw new ForbiddenException('admin key invalide');
   }
 
   @Get('status')

@@ -96,7 +96,9 @@ const GOOGLE_MAPS_KEY = 'AIzaSyAa1lBSroSXA-Om4mio84-SWAcmzQgYv8w';
 export function streetViewUrl(lat: number, lng: number, w = 600, h = 360): string {
   // radius=50000 : prend la vue Street View la PLUS PROCHE (couverture Maroc = surtout
   // axes/villes) — sans ça, les arrêts ruraux renvoient une image « no imagery ».
-  return `https://maps.googleapis.com/maps/api/streetview?size=${w}x${h}&location=${lat},${lng}&fov=85&pitch=5&radius=50000&key=${GOOGLE_MAPS_KEY}`;
+  // Coercition numérique : lat/lng peuvent venir d'une saisie admin (jamais de texte en URL).
+  const la = Number(lat) || 0, ln = Number(lng) || 0, ww = Number(w) || 600, hh = Number(h) || 360;
+  return `https://maps.googleapis.com/maps/api/streetview?size=${ww}x${hh}&location=${la},${ln}&fov=85&pitch=5&radius=50000&key=${GOOGLE_MAPS_KEY}`;
 }
 // A satellite/hybrid thumbnail centered on a place — always renders (good fallback).
 export function staticMapUrl(lat: number, lng: number, w = 600, h = 360, zoom = 16): string {

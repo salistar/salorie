@@ -304,10 +304,13 @@ export default function ChallengeScreen() {
     apiGetRace(challengeId).then((r: any) => {
       if (!alive || !r) return;
       const wps = (r.waypoints || []) as any[];
+      // Coercition numérique : ces valeurs (saisies admin) partent dans des
+      // template strings injectJavaScript/URL — on n'injecte QUE des nombres.
+      const num = (v: any) => Number(v) || 0;
       setMongoChallenge({
-        id: String(r._id || challengeId), name: r.name, totalKm: r.totalKm, emoji: r.emoji || '🏃',
-        route: wps.map((w) => ({ lat: w.lat, lng: w.lng })),
-        pois: wps.map((w) => ({ name: w.name, lat: w.lat, lng: w.lng, atKm: w.atKm || 0 })),
+        id: String(r._id || challengeId), name: String(r.name || ''), totalKm: num(r.totalKm), emoji: r.emoji || '🏃',
+        route: wps.map((w) => ({ lat: num(w.lat), lng: num(w.lng) })),
+        pois: wps.map((w) => ({ name: String(w.name || ''), lat: num(w.lat), lng: num(w.lng), atKm: num(w.atKm) })),
       } as Challenge);
       setMongoSpec(r.medalSpec || null);
     }).catch(() => {});
