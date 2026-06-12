@@ -12,6 +12,7 @@ import StepsCard from '../../components/StepsCard';
 import DailyHealthScore from '../../components/DailyHealthScore';
 import OfflineBanner from '../../components/OfflineBanner';
 import HomeQuickActions from '../../components/HomeQuickActions';
+import HomeDiscover from '../../components/HomeDiscover';
 import CollapsibleSection from '../../components/CollapsibleSection';
 import { useLogging } from '../../lib/LoggingContext';
 import { useNutritionData } from '../../hooks/useNutritionData';
@@ -179,6 +180,7 @@ export default function HomeScreen() {
 
         {/* Lance-toi : courses virtuelles / groupe / défis + notifs */}
         <HomeQuickActions onLog={() => showLogModal()} />
+        <HomeDiscover />
 
         {/* Score santé quotidien — hook de rétention */}
         <DailyHealthScore />
