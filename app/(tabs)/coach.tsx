@@ -95,7 +95,9 @@ export default function CoachScreen() {
   const card = isDark ? Colors.dark.card : '#fff';
   const bg = isDark ? '#000' : 'transparent';
 
-  if (loading) {
+  // !data couvre aussi le cas DÉCONNECTÉ (pas d'email → data jamais chargée) :
+  // sans ce garde, `data!` crashait l'onglet Coach pour un user signé out.
+  if (loading || !data) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
         <ScreenTopBar />
@@ -104,7 +106,7 @@ export default function CoachScreen() {
     );
   }
 
-  const d = data!;
+  const d = data;
   const hasPlan = d.recommendedTarget != null;
   const trend = d.weightTrendKgPerWeek;
   const TrendIcon = trend == null || Math.abs(trend) < 0.05 ? Minus : trend < 0 ? TrendingDown : TrendingUp;
