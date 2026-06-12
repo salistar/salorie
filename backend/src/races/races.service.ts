@@ -55,7 +55,10 @@ export class RacesService {
 
   // ── App : participation ──
   async join(raceId: string, userId: string, email: string, userName: string) {
-    await this.getRace(raceId); // 404 si inexistante
+    const race = await this.getRace(raceId); // 404 si inexistante
+    // On ne rejoint pas une course désactivée ou expirée.
+    if (!race.active) throw new BadRequestException('Course inactive.');
+    if (race.endDate && new Date(race.endDate as any).getTime() < Date.now()) throw new BadRequestException('Course terminée.');
     const existing = await this.parts.findOne({ raceId, userId });
     if (existing) return existing;
     return this.parts.create({ tenantId: TENANT, raceId, userId, email, userName, cumulativeKm: 0, startedAt: Date.now() });
@@ -103,35 +106,31 @@ export class RacesService {
   async generateMedals(raceId: string) {
     const race = await this.getRace(raceId);
     const finishers = await this.parts.find({ raceId, finishedAt: { $ne: null } }).sort({ finishedAt: 1 }).lean();
-    const out = [];
-    for (let i = 0; i < finishers.length; i++) {
-      const f = finishers[i];
+    // bulkWrite : 2 requêtes au total quel que soit le nombre de finishers (vs N+1).
+    const medalOps: any[] = [];
+    const partOps: any[] = [];
+    finishers.forEach((f: any, i: number) => {
       const rank = i + 1;
-      const durMs = (f.finishedAt || 0) - (f.startedAt || f.finishedAt || 0);
-      const timeLabel = this.fmtDuration(durMs);
-      const medal = await this.medals.findOneAndUpdate(
-        { raceId, userId: f.userId },
-        {
-          $set: {
-            tenantId: TENANT, raceName: race.name, userName: f.userName, rank,
-            frame: race.medalFrame, spec: race.medalSpec, distanceKm: race.totalKm, timeLabel,
-            startDate: race.startDate, endDate: race.endDate,
-          },
+      const timeLabel = this.fmtDuration((f.finishedAt || 0) - (f.startedAt || f.finishedAt || 0));
+      medalOps.push({
+        updateOne: {
+          filter: { raceId, userId: f.userId },
+          update: { $set: { tenantId: TENANT, raceName: race.name, userName: f.userName, rank, frame: race.medalFrame, spec: race.medalSpec, distanceKm: race.totalKm, timeLabel, startDate: race.startDate, endDate: race.endDate } },
+          upsert: true,
         },
-        { new: true, upsert: true },
-      );
-      // synchronise le rang sur le participant
-      await this.parts.updateOne({ _id: f._id }, { $set: { rank } });
-      out.push(medal);
-    }
-    return { count: out.length, medals: out };
+      });
+      partOps.push({ updateOne: { filter: { _id: f._id }, update: { $set: { rank } } } });
+    });
+    if (medalOps.length) await this.medals.bulkWrite(medalOps);
+    if (partOps.length) await this.parts.bulkWrite(partOps);
+    return { count: medalOps.length };
   }
   getUserMedals(userId: string) {
     return this.medals.find({ userId }).sort({ createdAt: -1 }).lean();
   }
   // Admin : historique de TOUTES les médailles générées (par email/user).
   listAllMedals(max = 400) {
-    return this.medals.find().sort({ createdAt: -1 }).limit(max).lean();
+    return this.medals.find({ tenantId: TENANT }).sort({ createdAt: -1 }).limit(max).lean();
   }
   setMedalPhoto(medalId: string, photoUrl: string) {
     return this.medals.findByIdAndUpdate(medalId, { $set: { photoUrl } }, { new: true });
