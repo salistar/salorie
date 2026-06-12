@@ -23,6 +23,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as FileSystem from 'expo-file-system';
+import * as ImageManipulator from 'expo-image-manipulator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useTheme } from '../../lib/ThemeContext';
@@ -136,6 +137,22 @@ export default function ScanAnalysisScreen() {
         explain('base64 deja en memoire (LoggingContext) — pas de relecture disque');
         colorLog('CYAN', '[ScanAnalysis] image base64 (cache)', { chars: base64.length });
       } else {
+        // VITESSE : on REDIMENSIONNE la photo (1024px, q0.6) AVANT l'upload — une
+        // photo 12MP fait 5-15 Mo en base64 (lenteur 4G + 413) vs ~200 Ko ici.
+        try {
+          const manip = await ImageManipulator.manipulateAsync(
+            imageUri, [{ resize: { width: 1024 } }],
+            { base64: true, compress: 0.6, format: ImageManipulator.SaveFormat.JPEG },
+          );
+          if (manip.base64) {
+            base64 = manip.base64;
+            colorLog('CYAN', '[ScanAnalysis] image redimensionnée 1024px', { chars: base64.length });
+          }
+        } catch (e) {
+          colorLog('YELLOW', '[ScanAnalysis] resize échoué — lecture brute en fallback', { e: String(e) });
+        }
+      }
+      if (!base64) {
         explain('on lit l image depuis le filesystem (pas de base64 en memoire)');
         const t0Read = Date.now();
         const tryRead = async (uri: string) => {
@@ -184,7 +201,7 @@ export default function ScanAnalysisScreen() {
       const approxKB = Math.round((base64.length * 0.75) / 1024);
       colorLog('CYAN', '[ScanAnalysis] image prete', { base64Chars: base64.length, approxSizeKB: approxKB });
 
-      const modelName = process.env.EXPO_PUBLIC_GEMINI_VISION_MODEL || 'gemini-2.5-flash';
+      const modelName = process.env.EXPO_PUBLIC_GEMINI_VISION_MODEL || 'gemini-2.5-flash-lite';
       explain(`modele vision: ${modelName} | langue de sortie: ${language}`);
       const model = genAI.getGenerativeModel({ model: modelName });
 

@@ -59,6 +59,9 @@ export default function ProfileScreen() {
       if (r.canceled || !r.assets?.[0]?.uri) return;
       const manip = await ImageManipulator.manipulateAsync(r.assets[0].uri, [{ resize: { width: 400 } }], { base64: true, format: ImageManipulator.SaveFormat.JPEG });
       await user?.setProfileImage({ file: `data:image/jpeg;base64,${manip.base64}` } as any);
+      // Sans reload, user.imageUrl local reste l'ancienne URL → la nouvelle photo
+      // ne s'affichait pas avant un redémarrage de l'app.
+      await user?.reload();
       Alert.alert('✅', 'Photo de profil mise à jour / Profile photo updated');
     } catch {
       Alert.alert('⚠️', 'Échec de la mise à jour — réessaie.');

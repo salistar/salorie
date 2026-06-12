@@ -120,27 +120,33 @@ export default function ScanBarcodeScreen() {
 
   return (
     <View style={styles.black}>
-      <BrandOverlay />
       <CameraView
         style={StyleSheet.absoluteFillObject}
         facing="back"
         barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39'] }}
         onBarcodeScanned={status === 'scanning' ? onScanned : undefined}
       />
+      {/* La pastille marque EST le titre (plus de chevauchement logo/texte). */}
+      <BrandOverlay top={46} />
 
-      {/* Top bar */}
+      {/* Top bar : retour à gauche, marque au centre */}
       <View style={styles.topBar}>
         <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
           <ArrowLeft size={22} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.topTitle}>{t('barcode.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
-      {/* Scan window */}
+      {/* Scan window — coins verts + chip formats */}
       {status === 'scanning' && (
         <View style={styles.overlay} pointerEvents="none">
-          <View style={styles.scanWindow} />
+          <View style={styles.scanWindow}>
+            <View style={[styles.corner, styles.cTL]} />
+            <View style={[styles.corner, styles.cTR]} />
+            <View style={[styles.corner, styles.cBL]} />
+            <View style={[styles.corner, styles.cBR]} />
+          </View>
+          <View style={styles.formatChip}><Text style={styles.formatTxt}>EAN-13 · EAN-8 · UPC</Text></View>
           <Text style={styles.hint}>{t('barcode.hint')}</Text>
         </View>
       )}
@@ -203,14 +209,25 @@ const styles = StyleSheet.create({
   overlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   scanWindow: {
     width: 280, height: 180, borderRadius: 20,
-    borderWidth: 3, borderColor: '#4ade80', backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
-  hint: { color: '#fff', fontSize: 15, fontWeight: '600', marginTop: 18, textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 4 },
+  // Coins type "viseur" (plus pro qu'un cadre plein)
+  corner: { position: 'absolute', width: 34, height: 34, borderColor: '#4ade80' },
+  cTL: { top: 0, left: 0, borderTopWidth: 4, borderLeftWidth: 4, borderTopLeftRadius: 18 },
+  cTR: { top: 0, right: 0, borderTopWidth: 4, borderRightWidth: 4, borderTopRightRadius: 18 },
+  cBL: { bottom: 0, left: 0, borderBottomWidth: 4, borderLeftWidth: 4, borderBottomLeftRadius: 18 },
+  cBR: { bottom: 0, right: 0, borderBottomWidth: 4, borderRightWidth: 4, borderBottomRightRadius: 18 },
+  formatChip: { backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5, marginTop: 14 },
+  formatTxt: { color: '#a7f3d0', fontSize: 11.5, fontWeight: '800', letterSpacing: 0.6 },
+  hint: { color: '#fff', fontSize: 15, fontWeight: '600', marginTop: 12, textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 4 },
   center: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', gap: 8 },
+  // Carte flottante AU-DESSUS de la barre de navigation persistante (~90px) —
+  // avant : bottom 0 → la barre recouvrait le bouton « Log » (taps impossibles).
   sheet: {
-    position: 'absolute', left: 0, right: 0, bottom: 0,
-    backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    padding: 24, paddingBottom: 40, gap: 14,
+    position: 'absolute', left: 12, right: 12, bottom: 96,
+    backgroundColor: '#fff', borderRadius: 24,
+    padding: 22, gap: 14,
+    shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 10,
   },
   sheetTitle: { fontSize: 20, fontWeight: '900', color: Colors.light.gray[900] },
   sheetSub: { fontSize: 14, color: Colors.light.gray[500] },
