@@ -14,9 +14,9 @@ import { useTranslation } from '../lib/i18n';
 const GREEN = '#2E8B57';
 
 const TXT: any = {
-  en: { title: 'Discover', races: 'Virtual races', challenge: 'Casablanca challenge', eat: 'Eat healthy' },
-  fr: { title: 'Découvrir', races: 'Courses virtuelles', challenge: 'Défi Casablanca', eat: 'Manger sain' },
-  ar: { title: 'اكتشف', races: 'سباقات افتراضية', challenge: 'تحدي الدار البيضاء', eat: 'كُل صحياً' },
+  en: { title: 'Discover', races: 'Virtual races', challenge: 'Casablanca challenge', eat: 'Eat healthy', paris: 'Paris Marathon', progress: 'My progress', workout: 'Train now' },
+  fr: { title: 'Découvrir', races: 'Courses virtuelles', challenge: 'Défi Casablanca', eat: 'Manger sain', paris: 'Marathon de Paris', progress: 'Ma progression', workout: 'M\'entraîner' },
+  ar: { title: 'اكتشف', races: 'سباقات افتراضية', challenge: 'تحدي الدار البيضاء', eat: 'كُل صحياً', paris: 'ماراثون باريس', progress: 'تقدمي', workout: 'تمرّن الآن' },
 };
 
 export default function HomeDiscover() {
@@ -38,6 +38,9 @@ export default function HomeDiscover() {
     { label: t.races, img: raceImg ? { uri: raceImg } : poiPhoto('casa-loop', 1), onPress: () => router.push('/races' as any) },
     { label: t.challenge, img: poiPhoto('casa-loop', 0), onPress: () => router.push('/challenge?id=casa-loop' as any) },
     { label: t.eat, img: require('../assets/images/illustrations/healthy_food.jpg'), onPress: () => router.push('/meal-plan' as any) },
+    { label: t.paris, img: poiPhoto('paris-marathon', 0), onPress: () => router.push('/challenge?id=paris-marathon' as any) },
+    { label: t.workout, img: require('../assets/images/illustrations/gain_weight.jpg'), onPress: () => router.push('/log-exercise' as any) },
+    { label: t.progress, img: require('../assets/images/illustrations/analytics_cover.jpg'), onPress: () => router.push('/progress-photos' as any) },
   ];
 
   return (

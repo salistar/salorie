@@ -1,3 +1,4 @@
+import ScreenTopBar from '../../components/ScreenTopBar';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -141,6 +142,7 @@ export default function FoodDatabaseScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#000' : Colors.light.white }]}>
+      <ScreenTopBar />
       <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <TouchableOpacity style={[styles.backBtn, { backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] }]} onPress={() => router.back()}>
           <ArrowLeft size={28} color={isDark ? '#fff' : Colors.light.gray[900]} strokeWidth={2.5} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />

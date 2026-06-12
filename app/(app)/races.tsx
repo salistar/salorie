@@ -1,3 +1,4 @@
+import ScreenTopBar from '../../components/ScreenTopBar';
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, TextInput, ActivityIndicator, Image } from 'react-native';
 import { router } from 'expo-router';
@@ -190,6 +191,7 @@ export default function RacesScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
+      <ScreenTopBar />
       {/* Header */}
       <View style={[styles.header, { flexDirection: rowDir }]}>
         <TouchableOpacity style={[styles.backBtn, { backgroundColor: card }]} onPress={() => router.back()}>
