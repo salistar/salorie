@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { Camera, Image as ImageIcon, Refrigerator } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { aiVision } from '../../lib/aiProxy';
@@ -37,11 +38,13 @@ export default function FridgeRecipesScreen() {
       const res = fromCamera
         ? await ImagePicker.launchCameraAsync({ quality: 0.4, base64: true })
         : await ImagePicker.launchImageLibraryAsync({ quality: 0.4, base64: true });
-      if (res.canceled || !res.assets?.[0]?.base64) return;
+      if (res.canceled || !res.assets?.[0]?.uri) return;
       setUri(res.assets[0].uri);
+      // VITESSE : resize 1000px q0.6 avant upload (photo brute = 5-15 Mo -> ~200 Ko).
+      const manip = await ImageManipulator.manipulateAsync(res.assets[0].uri, [{ resize: { width: 1000 } }], { base64: true, compress: 0.6, format: ImageManipulator.SaveFormat.JPEG });
       setResult('');
       setLoading(true);
-      const text = await aiVision(PROMPT, res.assets[0].base64, 'image/jpeg');
+      const text = await aiVision(PROMPT, manip.base64 as string, 'image/jpeg');
       setResult(text.trim());
     } catch (e: any) {
       setResult(`${t.failPrefix} (${e?.message || t.error}). ${t.failSuffix}`);

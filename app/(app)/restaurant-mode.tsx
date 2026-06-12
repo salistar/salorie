@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { Camera, Image as ImageIcon, UtensilsCrossed } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { aiVision } from '../../lib/aiProxy';
@@ -41,10 +42,12 @@ export default function RestaurantModeScreen() {
   const run = async (cam: boolean) => {
     try {
       const res = cam ? await ImagePicker.launchCameraAsync({ quality: 0.4, base64: true }) : await ImagePicker.launchImageLibraryAsync({ quality: 0.4, base64: true });
-      if (res.canceled || !res.assets?.[0]?.base64) return;
-      setUri(res.assets[0].uri); setResult(''); setLoading(true);
+      if (res.canceled || !res.assets?.[0]?.uri) return;
+      setUri(res.assets[0].uri);
+      // VITESSE : resize 1000px q0.6 avant upload (photo brute = 5-15 Mo -> ~200 Ko).
+      const manip = await ImageManipulator.manipulateAsync(res.assets[0].uri, [{ resize: { width: 1000 } }], { base64: true, compress: 0.6, format: ImageManipulator.SaveFormat.JPEG }); setResult(''); setLoading(true);
       const goalTxt = goal === 'lose' ? 'perdre du poids' : goal === 'gain' ? 'prendre du muscle' : 'maintenir mon poids';
-      const aiTxt = await aiVision(`Voici la photo d'un menu de restaurant. Mon objectif : ${goalTxt}. Recommande les 2-3 MEILLEURS plats du menu pour cet objectif (nom exact du menu + pourquoi, + estimation calories). Puis cite 1 plat à éviter. Réponds en français, concis.`, res.assets[0].base64, 'image/jpeg');
+      const aiTxt = await aiVision(`Voici la photo d'un menu de restaurant. Mon objectif : ${goalTxt}. Recommande les 2-3 MEILLEURS plats du menu pour cet objectif (nom exact du menu + pourquoi, + estimation calories). Puis cite 1 plat à éviter. Réponds en français, concis.`, manip.base64 as string, 'image/jpeg');
       setResult(aiTxt.trim());
     } catch (e: any) { setResult(`${t.fail} (${e?.message || t.error}).`); } finally { setLoading(false); }
   };

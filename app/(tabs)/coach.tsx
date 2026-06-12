@@ -75,7 +75,19 @@ export default function CoachScreen() {
     const email = user?.primaryEmailAddress?.emailAddress || '';
     if (!email) { setLoading(false); return; }
     try {
-      const d = await loadEngagement(email, language);
+      // TIMEOUT 8s : sur réseau faible, les lectures Firestore peuvent pendre
+      // indéfiniment → le Coach restait bloqué sur le spinner ("n'ouvre pas").
+      // Au timeout, on rend l'écran avec des valeurs neutres (les OUTILS — la
+      // partie utile — ne doivent jamais être otages des stats).
+      const FALLBACK: EngagementData = {
+        adaptiveTDEE: null, recommendedTarget: null, staticTarget: null, avgIntake: null,
+        weightTrendKgPerWeek: null, confidence: 'low' as any, streak: 0, daysTracked: 0,
+        weighIns: 0, totalLogs: 0, achievements: [], lesson: { title: '', body: '' }, goal: '',
+      };
+      const d = await Promise.race([
+        loadEngagement(email, language),
+        new Promise<EngagementData>((resolve) => setTimeout(() => resolve(FALLBACK), 8000)),
+      ]);
       setData(d);
       // Publish public stats so friends' leaderboards stay fresh.
       const name = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.fullName || email.split('@')[0];
