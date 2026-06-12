@@ -9,7 +9,8 @@ export class NewsController {
 
   private admin(k?: string) {
     const key = process.env.ADMIN_API_KEY;
-    if (key && k !== key) throw new ForbiddenException('admin key invalide');
+    // Clé OBLIGATOIRE : sans ADMIN_API_KEY défini, les routes admin sont fermées.
+    if (!key || k !== key) throw new ForbiddenException('admin key invalide');
   }
 
   @Get('admin')

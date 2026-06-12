@@ -8,7 +8,8 @@ import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 @Controller('orgs')
 export class OrgsController {
   constructor(private svc: OrgsService) {}
-  private admin(k?: string) { const key = process.env.ADMIN_API_KEY; if (key && k !== key) throw new ForbiddenException('admin key invalide'); }
+  // Clé OBLIGATOIRE : sans ADMIN_API_KEY défini, les routes admin sont fermées.
+  private admin(k?: string) { const key = process.env.ADMIN_API_KEY; if (!key || k !== key) throw new ForbiddenException('admin key invalide'); }
 
   // ── Super-admin ──
   @Post('admin')
