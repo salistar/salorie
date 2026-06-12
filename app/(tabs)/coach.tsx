@@ -1,9 +1,18 @@
-import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl, TouchableOpacity, Modal, Pressable } from 'react-native';
+import React, { useCallback, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl, TouchableOpacity, Modal, Pressable, TextInput } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer, Wallet, Refrigerator, Replace, Ruler, Moon, Smile, Droplets, BookmarkPlus, Award, ShoppingCart, Link2, UtensilsCrossed, Receipt, FileText, Swords, Droplet, Activity, PersonStanding, Mic } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer, Wallet, Refrigerator, Replace, Ruler, Moon, Smile, Droplets, BookmarkPlus, Award, ShoppingCart, Link2, UtensilsCrossed, Receipt, FileText, Swords, Droplet, Activity, PersonStanding, Mic, Search, UtensilsCrossed as EatIcon, BarChart3, History } from 'lucide-react-native';
+
+// Sections par INTENTION utilisateur (4 au lieu de 8) + recherche + récents :
+// l'utilisateur ne voit que 6 tuiles par section (divulgation progressive).
+const SEC_TXT: any = {
+  en: { eat: 'Eat', move: 'Move', track: 'Track me', ai: 'AI Coach & more', search: 'Search a tool…', recents: 'Recents', seeAll: 'See all', less: 'Show less' },
+  fr: { eat: 'Manger', move: 'Bouger', track: 'Me suivre', ai: 'Coach IA & plus', search: 'Chercher un outil…', recents: 'Récents', seeAll: 'Voir tout', less: 'Réduire' },
+  ar: { eat: 'الأكل', move: 'الحركة', track: 'متابعتي', ai: 'مدرب AI والمزيد', search: 'ابحث عن أداة…', recents: 'الأخيرة', seeAll: 'عرض الكل', less: 'تقليص' },
+};
 import { useFeatureFlags, isEnabled } from '../../lib/featureFlags';
 
 const PLANS_CTA: Record<string, { t: string; s: string }> = {
@@ -46,6 +55,20 @@ export default function CoachScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [selAch, setSelAch] = useState<any>(null);
   const flags = useFeatureFlags(); // Feature Flags (Étape 3) — masque les features désactivées par l'admin
+  // UX anti-perte : recherche d'outils + 4 derniers outils utilisés + sections repliées.
+  const st = SEC_TXT[language] || SEC_TXT.en;
+  const [toolSearch, setToolSearch] = useState('');
+  const [expandedSecs, setExpandedSecs] = useState<Record<string, boolean>>({});
+  const [recents, setRecents] = useState<string[]>([]);
+  useEffect(() => { AsyncStorage.getItem('coach_recents').then((v) => { try { if (v) setRecents(JSON.parse(v)); } catch {} }).catch(() => {}); }, []);
+  const openTool = (route: string) => {
+    router.push(route as any);
+    setRecents((prev) => {
+      const next = [route, ...prev.filter((r) => r !== route)].slice(0, 4);
+      AsyncStorage.setItem('coach_recents', JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  };
   const astr = ACH_STR[language] || ACH_STR.en;
 
   const load = useCallback(async () => {
@@ -138,82 +161,115 @@ export default function CoachScreen() {
           )}
         </LinearGradient>
 
-        {/* ── Outils & features — grille compacte organisée (toutes les features conservées) ── */}
-        {[
-          { sec: 'Nutrition', items: [
-            { Icon: ChefHat, label: t('coach.meal_title'), route: '/meal-plan' },
-            { Icon: Apple, label: t('coach.nutrients_title'), route: '/nutrients' },
-            { Icon: ChefHat, label: 'Composer un repas', route: '/meal-builder' },
-            { Icon: Apple, label: 'Reconnaître un aliment', route: '/food-recognition' },
-            { Icon: Mic, label: 'Logging vocal', route: '/voice-log' },
-            { Icon: ScanText, label: 'Scanner étiquette', route: '/label-scan' },
-          ]},
-          { sec: 'Activité', items: [
-            { Icon: Dumbbell, label: 'Enregistrer une séance', route: '/log-exercise' },
-            { Icon: FileText, label: 'Agenda sport', route: '/sport-agenda' },
-            { Icon: ScanText, label: "Scanner d'équipement", route: '/equipment-scan' },
-            { Icon: Dumbbell, label: 'Compteur de reps', route: '/rep-counter' },
-            { Icon: MapPin, label: (RUN_CTA[language] || RUN_CTA.en).t, route: '/run' },
-            { Icon: Dumbbell, label: (PLANS_CTA[language] || PLANS_CTA.en).t, route: '/workout-plans' },
-            { Icon: Timer, label: 'Jeûne intermittent', route: '/fasting' },
-          ]},
-          { sec: 'Communauté & santé', items: [
-            { Icon: FileText, label: 'Journal & actus', route: '/journal' },
-            { Icon: Sparkles, label: 'Coach IA', route: '/ai-coach' },
-            { Icon: Trophy, label: t('coach.social_title'), route: '/social' },
-            { Icon: Trophy, label: (RACES_CTA[language] || RACES_CTA.en).t, route: '/races' },
-            { Icon: HeartPulse, label: t('coach.health_title'), route: '/health' },
-          ]},
-          { sec: 'IA & projections', items: [
-            { Icon: TrendingDown, label: 'Jumeau métabolique', route: '/metabolic-twin' },
-            { Icon: Activity, label: 'TDEE adaptatif', route: '/adaptive-tdee' },
-            { Icon: Wallet, label: 'Budget calories', route: '/calorie-budget' },
-            { Icon: Flame, label: 'Mes séries', route: '/streaks' },
-            { Icon: Refrigerator, label: 'Frigo → recettes', route: '/fridge-recipes' },
-            { Icon: Replace, label: 'Substitutions', route: '/substitutions' },
-          ]},
-          { sec: 'Suivi', items: [
-            { Icon: Ruler, label: 'Mesures corporelles', route: '/body-measurements' },
-            { Icon: Moon, label: 'Sommeil', route: '/sleep-tracker' },
-            { Icon: Smile, label: 'Humeur & énergie', route: '/mood-tracker' },
-            { Icon: Droplets, label: 'Hydratation intelligente', route: '/smart-hydration' },
-            { Icon: BookmarkPlus, label: 'Repas types', route: '/meal-templates' },
-            { Icon: TrendingUp, label: 'Photos de progression', route: '/progress-photos' },
-          ]},
-          { sec: 'Nutrition+', items: [
-            { Icon: Award, label: 'Nutri-Score', route: '/nutri-score' },
-            { Icon: Link2, label: 'Importer recette', route: '/import-recipe' },
-            { Icon: ShoppingCart, label: 'Liste de courses', route: '/shopping-list' },
-            { Icon: ScanText, label: 'Scan code-barres', route: '/scan-barcode' },
-          ]},
-          { sec: 'Outils avancés', items: [
-            { Icon: UtensilsCrossed, label: 'Mode resto', route: '/restaurant-mode' },
-            { Icon: Receipt, label: 'Ticket de caisse', route: '/receipt-ocr' },
-            { Icon: Sparkles, label: 'Plan repas IA', route: '/ai-meal-plan' },
-            { Icon: Swords, label: 'Battle 1v1', route: '/battle' },
-            { Icon: FileText, label: 'Export médecin', route: '/doctor-export' },
-          ]},
-          { sec: 'Santé +', items: [
-            { Icon: Droplet, label: 'Glycémie', route: '/glucose-tracker' },
-            { Icon: Activity, label: 'Microbiote', route: '/microbiome' },
-            { Icon: PersonStanding, label: 'Composition corporelle', route: '/body-composition' },
-          ]},
-        ].map((group) => (
-          <View key={group.sec}>
-            <Text style={[styles.gridSection, { color: sub }]}>{group.sec}</Text>
-            <View style={styles.featGrid}>
-              {group.items.filter((it) => isEnabled(flags, it.route.replace(/^\//, ''))).map((it) => {
-                const Icon = it.Icon;
+        {/* ── Outils — 4 sections par INTENTION + recherche + récents + repli (anti-perte) ── */}
+        {(() => {
+          const sections = [
+            { key: 'eat', Icon: UtensilsCrossed, items: [
+              { Icon: Apple, label: 'Reconnaître un aliment', route: '/food-recognition' },
+              { Icon: Mic, label: 'Logging vocal', route: '/voice-log' },
+              { Icon: ScanText, label: 'Scan code-barres', route: '/scan-barcode' },
+              { Icon: ScanText, label: 'Scanner étiquette', route: '/label-scan' },
+              { Icon: ChefHat, label: 'Composer un repas', route: '/meal-builder' },
+              { Icon: ChefHat, label: t('coach.meal_title'), route: '/meal-plan' },
+              { Icon: Sparkles, label: 'Plan repas IA', route: '/ai-meal-plan' },
+              { Icon: BookmarkPlus, label: 'Repas types', route: '/meal-templates' },
+              { Icon: Apple, label: t('coach.nutrients_title'), route: '/nutrients' },
+              { Icon: Refrigerator, label: 'Frigo → recettes', route: '/fridge-recipes' },
+              { Icon: Replace, label: 'Substitutions', route: '/substitutions' },
+              { Icon: Link2, label: 'Importer recette', route: '/import-recipe' },
+              { Icon: ShoppingCart, label: 'Liste de courses', route: '/shopping-list' },
+              { Icon: Award, label: 'Nutri-Score', route: '/nutri-score' },
+              { Icon: UtensilsCrossed, label: 'Mode resto', route: '/restaurant-mode' },
+              { Icon: Receipt, label: 'Ticket de caisse', route: '/receipt-ocr' },
+              { Icon: Timer, label: 'Jeûne intermittent', route: '/fasting' },
+            ]},
+            { key: 'move', Icon: Dumbbell, items: [
+              { Icon: Dumbbell, label: 'Enregistrer une séance', route: '/log-exercise' },
+              { Icon: MapPin, label: (RUN_CTA[language] || RUN_CTA.en).t, route: '/run' },
+              { Icon: Trophy, label: (RACES_CTA[language] || RACES_CTA.en).t, route: '/races' },
+              { Icon: FileText, label: 'Agenda sport', route: '/sport-agenda' },
+              { Icon: Dumbbell, label: (PLANS_CTA[language] || PLANS_CTA.en).t, route: '/workout-plans' },
+              { Icon: Dumbbell, label: 'Compteur de reps', route: '/rep-counter' },
+              { Icon: ScanText, label: "Scanner d'équipement", route: '/equipment-scan' },
+              { Icon: Swords, label: 'Battle 1v1', route: '/battle' },
+            ]},
+            { key: 'track', Icon: BarChart3, items: [
+              { Icon: Ruler, label: 'Mesures corporelles', route: '/body-measurements' },
+              { Icon: Moon, label: 'Sommeil', route: '/sleep-tracker' },
+              { Icon: Smile, label: 'Humeur & énergie', route: '/mood-tracker' },
+              { Icon: Droplets, label: 'Hydratation intelligente', route: '/smart-hydration' },
+              { Icon: TrendingUp, label: 'Photos de progression', route: '/progress-photos' },
+              { Icon: Flame, label: 'Mes séries', route: '/streaks' },
+              { Icon: PersonStanding, label: 'Composition corporelle', route: '/body-composition' },
+              { Icon: Droplet, label: 'Glycémie', route: '/glucose-tracker' },
+              { Icon: Activity, label: 'Microbiote', route: '/microbiome' },
+              { Icon: HeartPulse, label: t('coach.health_title'), route: '/health' },
+              { Icon: FileText, label: 'Export médecin', route: '/doctor-export' },
+            ]},
+            { key: 'ai', Icon: Sparkles, items: [
+              { Icon: Sparkles, label: 'Coach IA', route: '/ai-coach' },
+              { Icon: Activity, label: 'TDEE adaptatif', route: '/adaptive-tdee' },
+              { Icon: TrendingDown, label: 'Jumeau métabolique', route: '/metabolic-twin' },
+              { Icon: Wallet, label: 'Budget calories', route: '/calorie-budget' },
+              { Icon: FileText, label: 'Journal & actus', route: '/journal' },
+              { Icon: Trophy, label: t('coach.social_title'), route: '/social' },
+            ]},
+          ];
+          const allItems = sections.flatMap((g) => g.items);
+          const q = toolSearch.trim().toLowerCase();
+          return (
+            <>
+              {/* Recherche d'outil */}
+              <View style={[styles.searchBox, { backgroundColor: card }]}>
+                <Search size={17} color={sub} />
+                <TextInput style={[styles.searchInput, { color: text }]} placeholder={st.search} placeholderTextColor={sub} value={toolSearch} onChangeText={setToolSearch} />
+                {!!toolSearch && <TouchableOpacity onPress={() => setToolSearch('')}><X size={16} color={sub} /></TouchableOpacity>}
+              </View>
+
+              {/* Récents — l'app s'adapte à l'usage */}
+              {!q && recents.length > 0 && (
+                <>
+                  <View style={styles.secHeadRow}><History size={15} color={Colors.light.primary} /><Text style={[styles.gridSection, { color: sub, marginTop: 0, marginBottom: 0 }]}>{st.recents}</Text></View>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 6 }}>
+                    {recents.map((r) => { const it = allItems.find((i) => i.route === r); if (!it) return null; const I = it.Icon; return (
+                      <TouchableOpacity key={r} style={[styles.recentChip, { backgroundColor: card }]} onPress={() => openTool(r)}>
+                        <I size={15} color={Colors.light.primary} /><Text style={[styles.recentTxt, { color: text }]} numberOfLines={1}>{it.label}</Text>
+                      </TouchableOpacity>
+                    ); })}
+                  </ScrollView>
+                </>
+              )}
+
+              {sections.map((group) => {
+                const items = group.items
+                  .filter((it) => isEnabled(flags, it.route.replace(/^\//, '')))
+                  .filter((it) => !q || it.label.toLowerCase().includes(q));
+                if (!items.length) return null;
+                const isOpen = !!expandedSecs[group.key] || !!q;
+                const visible = isOpen ? items : items.slice(0, 6);
+                const GIcon = group.Icon;
                 return (
-                  <TouchableOpacity key={it.route} activeOpacity={0.85} onPress={() => router.push(it.route as any)} style={[styles.featCard, { backgroundColor: card }]}>
-                    <View style={styles.mealCtaIcon}><Icon size={22} color={Colors.light.primary} /></View>
-                    <Text style={[styles.featLabel, { color: text }]} numberOfLines={2}>{it.label}</Text>
-                  </TouchableOpacity>
+                  <View key={group.key}>
+                    <View style={styles.secHeadRow}><GIcon size={15} color={Colors.light.primary} /><Text style={[styles.gridSection, { color: sub, marginTop: 0, marginBottom: 0 }]}>{st[group.key]}</Text></View>
+                    <View style={styles.featGrid}>
+                      {visible.map((it) => { const Icon = it.Icon; return (
+                        <TouchableOpacity key={it.route} activeOpacity={0.85} onPress={() => openTool(it.route)} style={[styles.featCard, { backgroundColor: card }]}>
+                          <View style={styles.mealCtaIcon}><Icon size={22} color={Colors.light.primary} /></View>
+                          <Text style={[styles.featLabel, { color: text }]} numberOfLines={2}>{it.label}</Text>
+                        </TouchableOpacity>
+                      ); })}
+                    </View>
+                    {items.length > 6 && !q && (
+                      <TouchableOpacity style={styles.seeAllBtn} onPress={() => setExpandedSecs((p) => ({ ...p, [group.key]: !p[group.key] }))}>
+                        <Text style={styles.seeAllTxt}>{isOpen ? st.less : `${st.seeAll} (${items.length})`}</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 );
               })}
-            </View>
-          </View>
-        ))}
+            </>
+          );
+        })()}
 
         {/* ── Streak ── */}
         <View style={[styles.streakCard, { backgroundColor: card }]}>
@@ -314,6 +370,13 @@ const styles = StyleSheet.create({
   mealCtaSub: { fontSize: 13, marginTop: 3, lineHeight: 18 },
   // Grille compacte (Coach allégé) — 2 colonnes, sections
   gridSection: { fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 14, marginBottom: 8, opacity: 0.7 },
+  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 4, marginTop: 16, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
+  searchInput: { flex: 1, fontSize: 14, paddingVertical: 10 },
+  secHeadRow: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 18, marginBottom: 10 },
+  recentChip: { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 999, paddingHorizontal: 13, paddingVertical: 9, maxWidth: 190 },
+  recentTxt: { fontSize: 12.5, fontWeight: '700', flexShrink: 1 },
+  seeAllBtn: { alignItems: 'center', paddingVertical: 4, marginBottom: 6 },
+  seeAllTxt: { color: Colors.light.primary, fontWeight: '800', fontSize: 13 },
   featGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   featCard: { width: '48%', alignItems: 'center', borderRadius: 16, paddingVertical: 16, paddingHorizontal: 8, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   featLabel: { fontSize: 13, fontWeight: '700', marginTop: 8, textAlign: 'center' },

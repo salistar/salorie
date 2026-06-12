@@ -178,7 +178,7 @@ export default function HomeScreen() {
         </View>
 
         {/* Lance-toi : courses virtuelles / groupe / défis + notifs */}
-        <HomeQuickActions />
+        <HomeQuickActions onLog={() => showLogModal()} />
 
         {/* Score santé quotidien — hook de rétention */}
         <DailyHealthScore />
