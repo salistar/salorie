@@ -23,7 +23,8 @@ type Found = {
 };
 
 export default function ScanBarcodeScreen() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation() as any;
+  const registerLabel = language === 'fr' ? 'Enregistrer ce produit' : language === 'ar' ? 'سجّل هذا المنتج' : 'Register this product';
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
   const card = isDark ? '#1e293b' : '#ffffff';
@@ -159,7 +160,7 @@ export default function ScanBarcodeScreen() {
           <Text style={[styles.sheetSub, { color: subCol }]}>{t('barcode.not_found_sub')}</Text>
           <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push(('/register-product?code=' + code) as any)}>
             <PlusCircle size={18} color="#fff" />
-            <Text style={styles.primaryBtnText}>Enregistrer ce produit</Text>
+            <Text style={styles.primaryBtnText}>{registerLabel}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.ghostBtn} onPress={rescan}>
             <RefreshCw size={16} color={Colors.light.primary} />

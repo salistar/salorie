@@ -13,6 +13,9 @@ interface ActivityListProps {
 
 export default function ActivityList({ logs, onAddPress }: ActivityListProps) {
   const { t, language } = useTranslation();
+  // Perf : on est DANS le ScrollView du Home (FlatList imbriquée interdite) →
+  // rendu plafonné + « voir plus » incrémental pour éviter 100+ items montés.
+  const [visibleCount, setVisibleCount] = useState(30);
 
   // Cache of log.id → localized name. Names are first looked up in the i18n
   // dictionary (activities.<Name>); missing entries fall back to a Gemini
@@ -112,7 +115,7 @@ export default function ActivityList({ logs, onAddPress }: ActivityListProps) {
         renderEmptyState()
       ) : (
         <View style={styles.list}>
-          {logs.map((log, index) => (
+          {logs.slice(0, visibleCount).map((log, index) => (
             <View key={log.id || index} style={styles.item}>
               <Text style={styles.itemTimestamp}>{formatTime(log.timestamp)}</Text>
               
@@ -149,6 +152,13 @@ export default function ActivityList({ logs, onAddPress }: ActivityListProps) {
               </View>
             </View>
           ))}
+          {logs.length > visibleCount && (
+            <TouchableOpacity onPress={() => setVisibleCount((c) => c + 30)} style={{ paddingVertical: 12, alignItems: 'center' }}>
+              <Text style={{ color: Colors.light.primary, fontWeight: '700', fontSize: 13 }}>
+                + {Math.min(30, logs.length - visibleCount)} {language === 'fr' ? 'de plus' : language === 'ar' ? 'المزيد' : 'more'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </View>
