@@ -190,6 +190,32 @@ async function searchFoodRaw(query: string): Promise<any[]> {
     if (items && items.length === 0) break;
     if (attempt === 0) await new Promise((r) => setTimeout(r, 700));
   }
+  // 4) Dernier filet : base LOCALE embarquée (~500 aliments dont marocains) —
+  //    fonctionne HORS-LIGNE et quand OpenFoodFacts est indisponible.
+  const local = searchLocalFoods(query);
+  if (local.length) {
+    console.log('[search] base locale embarquée', { query, count: local.length });
+    return local;
+  }
   console.warn('[search] no results (OFF unavailable)', { query });
   return [];
+}
+
+// ── Base d'aliments locale (assets/data/local-foods.json) ──
+let LOCAL_FOODS: any[] | null = null;
+function searchLocalFoods(query: string): any[] {
+  try {
+    if (!LOCAL_FOODS) LOCAL_FOODS = require('../assets/data/local-foods.json');
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return [];
+    return (LOCAL_FOODS || [])
+      .filter((x: any) => String(x.n).toLowerCase().includes(q) || (x.ar && String(x.ar).includes(query.trim())))
+      .slice(0, 15)
+      .map((x: any, i: number) => ({
+        food_id: `local_${x.n}_${i}`,
+        food_name: x.n,
+        food_description: `Per 100g - Calories: ${Math.round(x.k)}kcal | Fat: ${x.f}g | Carbs: ${x.c}g | Protein: ${x.p}g`,
+        _kcal: Number(x.k) || 0,
+      }));
+  } catch { return []; }
 }

@@ -21,5 +21,16 @@ export class RedisService implements OnModuleDestroy {
   async setJSON(key: string, value: unknown, ttlSec = 3600): Promise<void> {
     try { await this.get().set(key, JSON.stringify(value), 'EX', ttlSec); } catch { /* no cache */ }
   }
+
+  /** Rate limiting fenêtre fixe : true = autorisé. Dégrade OUVERT si Redis indisponible. */
+  async rateLimit(key: string, limit: number, windowSec: number): Promise<boolean> {
+    try {
+      const k = `rl:${key}`;
+      const n = await this.get().incr(k);
+      if (n === 1) await this.get().expire(k, windowSec);
+      return n <= limit;
+    } catch { return true; }
+  }
+
   onModuleDestroy() { this.client?.disconnect(); }
 }
