@@ -1,6 +1,6 @@
 // Streaks multi-dimensions — séries de jours consécutifs par catégorie.
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Flame, Utensils, Droplets, Activity } from 'lucide-react-native';
@@ -69,6 +69,7 @@ export default function StreaksScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
+        <Image source={require('../../assets/images/illustrations/measure.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <View style={styles.head}><Flame size={24} color="#F59E0B" /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
         {loading ? <ActivityIndicator color={GREEN} style={{ marginTop: 40 }} /> : (
