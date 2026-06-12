@@ -5,13 +5,14 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Keyboard } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
-import { Home, Sparkles, BarChart3, User } from 'lucide-react-native';
+import { Home, Sparkles, BarChart3, User, Trophy } from 'lucide-react-native';
 
 const GREY = '#94A3B8';
 
 const TABS = [
   { key: 'home', label: 'Home', icon: Home, route: '/(tabs)' },
   { key: 'coach', label: 'Coach', icon: Sparkles, route: '/(tabs)/coach' },
+  { key: 'defis', label: 'Défis', icon: Trophy, route: '/(tabs)/defis' },
   { key: 'analytics', label: 'Analytics', icon: BarChart3, route: '/(tabs)/analytics' },
   { key: 'profile', label: 'Profile', icon: User, route: '/(tabs)/profile' },
 ];

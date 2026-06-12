@@ -279,10 +279,9 @@ export default function ProfileScreen() {
           <Text style={[styles.sectionTitle, { color: resolved === 'dark' ? '#fff' : undefined }]}>Sport & médailles</Text>
         </View>
         <Animated.View entering={FadeInDown.delay(200).duration(600)} style={styles.grid}>
+          {/* Courses + agenda vivent dans l'onglet Défis (pas de doublon ici) */}
           <GridTile icon={Award} label="Mes médailles" color="#F59E0B" onPress={() => router.push('/medals' as any)} />
           <GridTile icon={Trophy} label="Achievements" color="#8B5CF6" onPress={() => router.push('/social' as any)} />
-          <GridTile icon={Trophy} label="Courses virtuelles" color={Colors.light.primary} onPress={() => router.push('/races' as any)} />
-          <GridTile icon={FileText} label="Agenda sport" color="#0EA5E9" onPress={() => router.push('/sport-agenda' as any)} />
         </Animated.View>
 
         {/* Account Section */}
