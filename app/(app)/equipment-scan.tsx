@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Act
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Camera, ImageIcon, Dumbbell, Flame, BookOpen } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { aiVision } from '../../lib/aiProxy';
 import { useTheme } from '../../lib/ThemeContext';
@@ -54,11 +55,13 @@ export default function EquipmentScan() {
     <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
-        <View style={[s.head, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-          <Dumbbell size={26} color={GREEN} />
-          <Text style={[s.title, { color: text }]}>{t.title}</Text>
-        </View>
-        <Text style={[s.sub, { color: sub }, align]}>{t.sub}</Text>
+        <LinearGradient colors={[GREEN, '#1d6440']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.heroBanner}>
+          <Dumbbell size={30} color="#fff" />
+          <View style={{ flex: 1 }}>
+            <Text style={[s.heroTitle, align]}>{t.title}</Text>
+            <Text style={[s.heroSub, align]}>{t.sub}</Text>
+          </View>
+        </LinearGradient>
 
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 18 }}>
           <TouchableOpacity style={[s.btn, { backgroundColor: GREEN }]} onPress={() => pick(true)} disabled={busy}>
@@ -105,6 +108,9 @@ const s = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   title: { fontSize: 24, fontWeight: '900', letterSpacing: -0.4 },
   sub: { fontSize: 13.5, marginTop: 6, lineHeight: 19 },
+  heroBanner: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, padding: 18 },
+  heroTitle: { color: '#fff', fontSize: 21, fontWeight: '900', letterSpacing: -0.3 },
+  heroSub: { color: 'rgba(255,255,255,0.85)', fontSize: 12.5, marginTop: 4, lineHeight: 17 },
   btn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 13, borderRadius: 14 },
   btnTxt: { color: '#fff', fontWeight: '800', fontSize: 14, flexShrink: 1 },
   photo: { width: '100%', height: 220, borderRadius: 18, marginTop: 16 },

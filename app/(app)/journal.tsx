@@ -5,6 +5,7 @@ import { Newspaper, Flag, Trophy, Sparkles, ChevronRight } from 'lucide-react-na
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { getNews, getActiveRaces } from '../../lib/racesApi';
 import { CHALLENGES, streetViewUrl } from '../../lib/races';
+import { poiPhoto } from '../../assets/challenges/registry';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 
@@ -66,11 +67,15 @@ export default function Journal() {
                 {news.map((n) => {
                   const Icon = KIND_ICON[n.kind] || Newspaper;
                   return (
-                    <View key={n._id} style={[s.card, { backgroundColor: card }, rowDir]}>
-                      <View style={s.iconWrap}><Icon size={18} color={GREEN} /></View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[s.cardTitle, { color: text }, align]}>{n.title}</Text>
-                        {n.body ? <Text style={[s.cardBody, { color: sub }, align]}>{n.body}</Text> : null}
+                    <View key={n._id} style={[s.card, { backgroundColor: card, flexDirection: 'column', alignItems: 'stretch' }]}>
+                      {/* Image de l'actu si fournie depuis le back-office */}
+                      {n.imageUrl ? <Image source={{ uri: n.imageUrl }} style={s.newsImg} resizeMode="cover" /> : null}
+                      <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 12 }, isRTL && { flexDirection: 'row-reverse' }]}>
+                        <View style={s.iconWrap}><Icon size={18} color={GREEN} /></View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={[s.cardTitle, { color: text }, align]}>{n.title}</Text>
+                          {n.body ? <Text style={[s.cardBody, { color: sub }, align]}>{n.body}</Text> : null}
+                        </View>
                       </View>
                     </View>
                   );
@@ -101,16 +106,20 @@ export default function Journal() {
 
             {/* Défis intégrés */}
             <Section icon={Trophy} label={t.challenges} />
-            {CHALLENGES.map((c) => (
-              <TouchableOpacity key={c.id} style={[s.card, { backgroundColor: card }, rowDir]} activeOpacity={0.85}
-                onPress={() => router.push(('/challenge?id=' + c.id) as any)}>
-                <View style={{ flex: 1 }}>
-                  <Text style={[s.cardTitle, { color: text }, align]}>{c.name}</Text>
-                  <Text style={[s.cardBody, { color: sub }, align]}>{c.totalKm} {t.km}</Text>
-                </View>
-                <ChevronRight size={18} color={sub} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
-              </TouchableOpacity>
-            ))}
+            {CHALLENGES.map((c) => {
+              const photo = poiPhoto(c.id, 0);
+              return (
+                <TouchableOpacity key={c.id} style={[s.card, { backgroundColor: card }, rowDir]} activeOpacity={0.85}
+                  onPress={() => router.push(('/challenge?id=' + c.id) as any)}>
+                  {photo ? <Image source={photo} style={s.thumb} /> : null}
+                  <View style={{ flex: 1 }}>
+                    <Text style={[s.cardTitle, { color: text }, align]}>{c.name}</Text>
+                    <Text style={[s.cardBody, { color: sub }, align]}>{c.totalKm} {t.km}</Text>
+                  </View>
+                  <ChevronRight size={18} color={sub} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+                </TouchableOpacity>
+              );
+            })}
 
             {!news.length && !races.length && <Text style={[s.cardBody, { color: sub, marginTop: 18, textAlign: 'center' }]}>{t.empty}</Text>}
           </>
@@ -131,6 +140,7 @@ const s = StyleSheet.create({
   card: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, padding: 13, marginBottom: 9 },
   iconWrap: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(46,139,87,0.12)', alignItems: 'center', justifyContent: 'center' },
   thumb: { width: 52, height: 52, borderRadius: 12 },
+  newsImg: { width: '100%', height: 130, borderRadius: 12, marginBottom: 10 },
   cardTitle: { fontSize: 14.5, fontWeight: '800' },
   cardBody: { fontSize: 12.5, marginTop: 3, lineHeight: 17 },
 });
