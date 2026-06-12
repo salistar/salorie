@@ -1,3 +1,4 @@
+import BrandOverlay from '../../components/BrandOverlay';
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -167,6 +168,7 @@ export default function ChallengeARScreen() {
 
       {/* dim overlay for legibility */}
       <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.08)' }]} pointerEvents="none" />
+      <BrandOverlay />
 
       {/* center reticle */}
       <View style={styles.reticle} pointerEvents="none">

@@ -26,7 +26,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useTheme } from '../../lib/ThemeContext';
 import { triggerSeededNotifications, syncAllUserData, clearAllLocalData } from '../../lib/LocalDataStore';
-import { BellRing, Trash2, Award, Trophy } from 'lucide-react-native';
+import { BellRing, Trash2, Award, Trophy, Camera } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useEffect } from 'react';
 
 const { width } = Dimensions.get('window');
@@ -45,6 +47,22 @@ export default function ProfileScreen() {
   const handleUpgrade = () => {
     console.log('[ProfileScreen] handleUpgrade pressed');
     PurchasesService.showPaywall();
+  };
+
+  // Photo de profil : galerie → recadrage carré → upload Clerk (backend d'auth),
+  // user.imageUrl se met à jour partout automatiquement.
+  const changeAvatar = async () => {
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) return;
+      const r = await ImagePicker.launchImageLibraryAsync({ quality: 0.85, allowsEditing: true, aspect: [1, 1] });
+      if (r.canceled || !r.assets?.[0]?.uri) return;
+      const manip = await ImageManipulator.manipulateAsync(r.assets[0].uri, [{ resize: { width: 400 } }], { base64: true, format: ImageManipulator.SaveFormat.JPEG });
+      await user?.setProfileImage({ file: `data:image/jpeg;base64,${manip.base64}` } as any);
+      Alert.alert('✅', 'Photo de profil mise à jour / Profile photo updated');
+    } catch {
+      Alert.alert('⚠️', 'Échec de la mise à jour — réessaie.');
+    }
   };
 
   // Envoie les diagnostics (device + 50 derniers logs d'erreur) au support —
@@ -221,10 +239,15 @@ export default function ProfileScreen() {
 
         {/* User Identity Card */}
         <Animated.View entering={FadeInDown.duration(600)} style={styles.userCard}>
-          <Image 
-            source={{ uri: user?.imageUrl }} 
-            style={styles.avatar} 
-          />
+          <TouchableOpacity onPress={changeAvatar} activeOpacity={0.8}>
+            <Image
+              source={{ uri: user?.imageUrl }}
+              style={styles.avatar}
+            />
+            <View style={{ position: 'absolute', bottom: -2, right: -2, backgroundColor: Colors.light.primary, borderRadius: 12, padding: 5, borderWidth: 2, borderColor: '#fff' }}>
+              <Camera size={12} color="#fff" />
+            </View>
+          </TouchableOpacity>
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{user?.fullName || t('profile.health_explorer')}</Text>
             <Text style={styles.userEmail}>{user?.primaryEmailAddress?.emailAddress}</Text>

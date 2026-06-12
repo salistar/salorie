@@ -1,3 +1,4 @@
+import ScreenTopBar from '../../components/ScreenTopBar';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -373,6 +374,7 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, isDark && { backgroundColor: '#000' }]}>
+      <ScreenTopBar />
       <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <TouchableOpacity style={[styles.backButton, isDark && { backgroundColor: Colors.dark.gray[50] }]} onPress={() => router.back()}>
           <ChevronLeft size={24} color={isDark ? '#fff' : Colors.light.gray[900]} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />

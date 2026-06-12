@@ -32,9 +32,12 @@ export class AiService {
     return text;
   }
 
+  // Vision : modèle LITE par défaut (latence 2-3× plus faible que flash, suffisant
+  // pour reconnaître un plat / une machine). Overridable par GEMINI_VISION_MODEL.
+  private visionModel = process.env.GEMINI_VISION_MODEL || 'gemini-2.5-flash-lite';
   async vision(prompt: string, imageBase64: string, mimeType = 'image/jpeg', model?: string): Promise<string> {
     if (!this.genAI) throw new Error('GEMINI_API_KEY not configured');
-    const m = this.genAI.getGenerativeModel({ model: model || this.defaultModel });
+    const m = this.genAI.getGenerativeModel({ model: model || this.visionModel });
     const r = await m.generateContent([
       { text: prompt },
       { inlineData: { data: imageBase64, mimeType } },
