@@ -251,26 +251,26 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </Animated.View>
 
-        {/* Account Section */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: resolved === 'dark' ? '#fff' : undefined }]}>{t('profile.account')}</Text>
-        </View>
-        <Animated.View entering={FadeInDown.delay(200).duration(600)} style={styles.grid}>
-          <GridTile icon={User} label={t('profile.personal_details')} color={Colors.light.primary} onPress={() => router.push('/personal-details' as any)} />
-          <GridTile icon={Bell} label={t('prefs.notifications')} color={Colors.light.primary} onPress={() => router.push('/notifications' as any)} />
-          <GridTile icon={Settings} label={t('profile.preferences')} color="#6366F1" onPress={() => router.push('/preferences' as any)} />
-          <GridTile icon={CreditCard} label={t('profile.upgrade')} color="#EC4899" onPress={handleUpgrade} />
-        </Animated.View>
-
-        {/* Sport & médailles */}
+        {/* Sport & médailles — d'abord (pattern « You » des leaders : trophées avant réglages) */}
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: resolved === 'dark' ? '#fff' : undefined }]}>Sport & médailles</Text>
         </View>
-        <Animated.View entering={FadeInDown.delay(250).duration(600)} style={styles.grid}>
+        <Animated.View entering={FadeInDown.delay(200).duration(600)} style={styles.grid}>
           <GridTile icon={Award} label="Mes médailles" color="#F59E0B" onPress={() => router.push('/medals' as any)} />
           <GridTile icon={Trophy} label="Achievements" color="#8B5CF6" onPress={() => router.push('/social' as any)} />
           <GridTile icon={Trophy} label="Courses virtuelles" color={Colors.light.primary} onPress={() => router.push('/races' as any)} />
           <GridTile icon={FileText} label="Agenda sport" color="#0EA5E9" onPress={() => router.push('/sport-agenda' as any)} />
+        </Animated.View>
+
+        {/* Account Section */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: resolved === 'dark' ? '#fff' : undefined }]}>{t('profile.account')}</Text>
+        </View>
+        <Animated.View entering={FadeInDown.delay(250).duration(600)} style={styles.grid}>
+          <GridTile icon={User} label={t('profile.personal_details')} color={Colors.light.primary} onPress={() => router.push('/personal-details' as any)} />
+          <GridTile icon={Bell} label={t('prefs.notifications')} color={Colors.light.primary} onPress={() => router.push('/notifications' as any)} />
+          <GridTile icon={Settings} label={t('profile.preferences')} color="#6366F1" onPress={() => router.push('/preferences' as any)} />
+          <GridTile icon={CreditCard} label={t('profile.upgrade')} color="#EC4899" onPress={handleUpgrade} />
         </Animated.View>
 
         {/* Support Section */}
