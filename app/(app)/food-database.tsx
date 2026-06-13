@@ -11,12 +11,13 @@ import {
   ActivityIndicator,
   Keyboard,
 } from 'react-native';
-import { router } from 'expo-router';
-import { ArrowLeft, Search, Plus, Utensils, ScanBarcode } from 'lucide-react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { ArrowLeft, Search, Plus, Utensils, ScanBarcode, Star, History, RotateCcw } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { searchFood } from '../../lib/fatsecret';
 import { useLogging } from '../../lib/LoggingContext';
 import { addNutritionLog } from '../../lib/firebase';
+import { getRecentFoods, getFavoriteFoods, addRecentFood, toggleFavoriteFood, QuickFood } from '../../lib/recentFoods';
 import { useUser } from '@clerk/clerk-expo';
 import { debounce } from 'lodash';
 import { useTranslation } from '../../lib/i18n';
@@ -27,24 +28,30 @@ const TXT: Record<string, {
   searchPlaceholder: string;
   noResults: string;
   keepTyping: string;
+  recents: string;
+  favorites: string;
+  km: string;
 }> = {
   en: {
     title: 'Food Database',
     searchPlaceholder: 'Search food (e.g. Apple, Chicken...)',
     noResults: 'No results found for',
     keepTyping: 'Keep typing to search...',
+    recents: 'Recent', favorites: 'Favorites', km: 'km',
   },
   fr: {
     title: 'Base d\'aliments',
     searchPlaceholder: 'Rechercher un aliment (ex. Pomme, Poulet...)',
     noResults: 'Aucun résultat pour',
     keepTyping: 'Continuez à taper pour rechercher...',
+    recents: 'Récents', favorites: 'Favoris', km: 'km',
   },
   ar: {
     title: 'قاعدة بيانات الأطعمة',
     searchPlaceholder: 'ابحث عن طعام (مثال: تفاح، دجاج...)',
     noResults: 'لا توجد نتائج لـ',
     keepTyping: 'استمر في الكتابة للبحث...',
+    recents: 'الأخيرة', favorites: 'المفضلة', km: 'كلم',
   },
 };
 
@@ -58,6 +65,30 @@ export default function FoodDatabaseScreen() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const email = user?.primaryEmailAddress?.emailAddress || '';
+  const [recents, setRecents] = useState<QuickFood[]>([]);
+  const [favorites, setFavorites] = useState<QuickFood[]>([]);
+
+  const loadQuick = useCallback(async () => {
+    if (!email) return;
+    setRecents(await getRecentFoods(email));
+    setFavorites(await getFavoriteFoods(email));
+  }, [email]);
+  useFocusEffect(useCallback(() => { loadQuick(); }, [loadQuick]));
+
+  const slotByHour = () => { const h = new Date().getHours(); return h < 11 ? 'breakfast' : h < 16 ? 'lunch' : h < 18 ? 'snack' : 'dinner'; };
+
+  // Re-log en 1 tap depuis Récents/Favoris.
+  const quickLog = async (f: QuickFood) => {
+    if (!email) return;
+    try {
+      await addNutritionLog({ userId: email, type: 'meal', name: f.name, calories: f.calories, protein: f.protein || 0, carbs: f.carbs || 0, fat: f.fat || 0, serving: f.serving, slot: slotByHour(), date: selectedDate } as any);
+      await addRecentFood(email, f);
+      triggerRefresh();
+      router.replace('/(tabs)' as any);
+    } catch {}
+  };
+  const onToggleFav = async (f: QuickFood) => { await toggleFavoriteFood(email, f); loadQuick(); };
 
   const performSearch = async (text: string) => {
     if (text.length < 3) {
@@ -172,6 +203,32 @@ export default function FoodDatabaseScreen() {
         renderItem={renderItem}
         keyExtractor={(item) => item.food_id.toString()}
         contentContainerStyle={styles.listContent}
+        ListHeaderComponent={() => (
+          query.length >= 1 ? null : (
+            <View>
+              {favorites.length > 0 && (
+                <>
+                  <View style={[styles.quickHead, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                    <Star size={16} color="#f59e0b" fill="#f59e0b" /><Text style={[styles.quickTitle, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{t.favorites}</Text>
+                  </View>
+                  {favorites.map((f, i) => (
+                    <QuickRow key={`fav${i}`} f={f} fav onLog={quickLog} onFav={onToggleFav} isDark={isDark} isRTL={isRTL} km={t.km} />
+                  ))}
+                </>
+              )}
+              {recents.length > 0 && (
+                <>
+                  <View style={[styles.quickHead, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                    <History size={16} color={Colors.light.primary} /><Text style={[styles.quickTitle, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{t.recents}</Text>
+                  </View>
+                  {recents.map((f, i) => (
+                    <QuickRow key={`rec${i}`} f={f} fav={favorites.some((x) => x.name === f.name)} onLog={quickLog} onFav={onToggleFav} isDark={isDark} isRTL={isRTL} km={t.km} />
+                  ))}
+                </>
+              )}
+            </View>
+          )
+        )}
         ListEmptyComponent={() => (
           !loading && query.length >= 3 ? (
             <View style={styles.emptyState}>
@@ -189,11 +246,34 @@ export default function FoodDatabaseScreen() {
   );
 }
 
+// Ligne Récent/Favori : tap = re-log 1 tap ; étoile = (dé)favoriser.
+function QuickRow({ f, fav, onLog, onFav, isDark, isRTL, km }: any) {
+  return (
+    <TouchableOpacity activeOpacity={0.7} onPress={() => onLog(f)}
+      style={[qrStyles.row, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: isDark ? Colors.dark.card : Colors.light.white, borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[100] }]}>
+      <TouchableOpacity onPress={() => onFav(f)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <Star size={20} color="#f59e0b" fill={fav ? '#f59e0b' : 'transparent'} />
+      </TouchableOpacity>
+      <View style={{ flex: 1 }}>
+        <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '700', color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }}>{f.name}</Text>
+        <Text style={{ fontSize: 12.5, color: isDark ? '#9BA1A6' : Colors.light.gray[400], textAlign: isRTL ? 'right' : 'left' }}>{f.serving ? `${f.serving} • ` : ''}{Math.round(f.calories)} {km === 'كلم' ? 'سعرة' : 'kcal'}</Text>
+      </View>
+      <View style={qrStyles.relog}><RotateCcw size={18} color="#fff" strokeWidth={2.5} /></View>
+    </TouchableOpacity>
+  );
+}
+const qrStyles = StyleSheet.create({
+  row: { alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, borderWidth: 1, marginHorizontal: 20, marginBottom: 10 },
+  relog: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.light.primary, alignItems: 'center', justifyContent: 'center' },
+});
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.light.white,
   },
+  quickHead: { alignItems: 'center', gap: 8, paddingHorizontal: 20, marginTop: 4, marginBottom: 10 },
+  quickTitle: { fontSize: 16, fontWeight: '800' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -129,6 +129,11 @@ export default function LogFoodDetailsScreen() {
         date: selectedDate,
       } as any);
       colorLog('BLUE', '[API←Firestore] addNutritionLog OK', { ms: Date.now() - t0 });
+      // Mémorise l'aliment pour le re-logger en 1 tap (Récents).
+      try {
+        const { addRecentFood } = require('../../lib/recentFoods');
+        await addRecentFood(email, { name, calories: parseFloat(calories) || 0, protein: parseFloat(protein) || 0, carbs: parseFloat(carbs) || 0, fat: parseFloat(fat) || 0, serving: `${quantity} ${unit}` });
+      } catch {}
       triggerRefresh();
       router.replace('/(tabs)' as any);
     } catch (error) {
