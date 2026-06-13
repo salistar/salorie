@@ -1,19 +1,75 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { Cron } from '@nestjs/schedule';
 import { Model } from 'mongoose';
 import { VirtualRace } from './races.schemas';
 import { RaceParticipant } from './races.schemas';
 import { Medal } from './races.schemas';
+import { FirebaseService } from '../firebase.service';
 
 const TENANT = 'default';
 
 @Injectable()
 export class RacesService {
+  private readonly logger = new Logger('RacesMilestones');
   constructor(
     @InjectModel(VirtualRace.name) private races: Model<VirtualRace>,
     @InjectModel(RaceParticipant.name) private parts: Model<RaceParticipant>,
     @InjectModel(Medal.name) private medals: Model<Medal>,
+    private fb: FirebaseService,
   ) {}
+
+  // ── Notifications de jalons (style The Conqueror) ────────────────────────────
+  // Toutes les 15 min : pour chaque coureur en cours, si un palier 25/50/75/100%
+  // vient d'être franchi (et pas déjà notifié), on envoie un push d'encouragement.
+  @Cron(process.env.MILESTONE_CRON || '*/15 * * * *')
+  async milestoneNotifications() {
+    try {
+      const races = await this.races.find({ tenantId: TENANT }).select('name totalKm').lean();
+      const byId = new Map(races.map((r: any) => [String(r._id), r]));
+      const parts = await this.parts.find({ finishedAt: null, cumulativeKm: { $gt: 0 } }).limit(500).lean();
+      const STEPS = [25, 50, 75, 100];
+      const ops: any[] = [];
+      let sent = 0;
+      for (const p of parts as any[]) {
+        const race = byId.get(String(p.raceId));
+        if (!race || !race.totalKm) continue;
+        const pct = Math.min(100, (p.cumulativeKm / race.totalKm) * 100);
+        const reached = STEPS.filter((s) => pct >= s && s > (p.notifiedMilestone || 0)).pop();
+        if (!reached) continue;
+        const token = await this.pushToken(p.userId);
+        if (token) {
+          const body = reached >= 100
+            ? `🏅 Bravo ! Tu as terminé « ${race.name} ». Ta médaille t'attend.`
+            : `🎉 ${reached}% de « ${race.name} » ! Continue, ta médaille approche.`;
+          await this.sendPush(token, 'Salorie', body);
+          sent++;
+        }
+        ops.push({ updateOne: { filter: { _id: p._id }, update: { $set: { notifiedMilestone: reached } } } });
+      }
+      if (ops.length) await this.parts.bulkWrite(ops);
+      if (sent) this.logger.log(`jalons: ${sent} push envoyés (${ops.length} maj)`);
+    } catch (e: any) {
+      this.logger.warn(`milestone cron: ${e?.message}`);
+    }
+  }
+
+  private async pushToken(userId: string): Promise<string | null> {
+    try {
+      const snap = await this.fb.db().collection('users').doc(userId).get();
+      const tok = (snap.data() as any)?.pushToken;
+      return typeof tok === 'string' && tok.startsWith('ExponentPushToken') ? tok : null;
+    } catch { return null; }
+  }
+  private async sendPush(to: string, title: string, body: string) {
+    try {
+      await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to, title, body, sound: 'default', priority: 'high' }),
+      });
+    } catch { /* push best-effort */ }
+  }
 
   // Valide les contraintes métier : total 80–2000 km, arrêts espacés de 20–100 km,
   // 1 départ + 1 arrivée. Lève BadRequest si invalide (l'admin voit l'erreur).

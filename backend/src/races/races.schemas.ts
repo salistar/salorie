@@ -45,6 +45,7 @@ export class RaceParticipant {
   @Prop() startedAt: number;
   @Prop({ index: true }) finishedAt: number;               // null = non terminé
   @Prop({ default: 0 }) rank: number;                      // classement (0 = pas encore)
+  @Prop({ default: 0 }) notifiedMilestone: number;         // dernier jalon % notifié (anti-spam push)
 }
 export const RaceParticipantSchema = SchemaFactory.createForClass(RaceParticipant);
 
