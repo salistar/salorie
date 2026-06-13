@@ -170,8 +170,8 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   backBtn: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -221,8 +221,8 @@ const styles = StyleSheet.create({
     color: Colors.light.gray[700],
   },
   iconBtnSquare: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
