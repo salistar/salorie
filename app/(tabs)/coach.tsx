@@ -13,6 +13,47 @@ const SEC_TXT: any = {
   fr: { eat: 'Manger', move: 'Bouger', track: 'Me suivre', ai: 'Coach IA & plus', search: 'Chercher un outil…', recents: 'Récents', seeAll: 'Voir tout', less: 'Réduire' },
   ar: { eat: 'الأكل', move: 'الحركة', track: 'متابعتي', ai: 'مدرب AI والمزيد', search: 'ابحث عن أداة…', recents: 'الأخيرة', seeAll: 'عرض الكل', less: 'تقليص' },
 };
+
+// i18n des libellés de tuiles par route (corrige le reste FR en mode EN/AR).
+const TILE_I18N: Record<string, { en: string; ar: string }> = {
+  '/diary': { en: 'Food diary', ar: 'يوميات الطعام' },
+  '/food-recognition': { en: 'Recognize a food', ar: 'تعرّف على طعام' },
+  '/voice-log': { en: 'Voice log', ar: 'تسجيل صوتي' },
+  '/scan-barcode': { en: 'Barcode scan', ar: 'مسح الباركود' },
+  '/label-scan': { en: 'Scan label', ar: 'مسح الملصق' },
+  '/meal-builder': { en: 'Build a meal', ar: 'كوّن وجبة' },
+  '/ai-meal-plan': { en: 'AI meal plan', ar: 'خطة وجبات AI' },
+  '/meal-templates': { en: 'Meal templates', ar: 'قوالب الوجبات' },
+  '/fridge-recipes': { en: 'Fridge → recipes', ar: 'الثلاجة ← وصفات' },
+  '/substitutions': { en: 'Substitutions', ar: 'بدائل' },
+  '/import-recipe': { en: 'Import recipe', ar: 'استيراد وصفة' },
+  '/shopping-list': { en: 'Shopping list', ar: 'قائمة التسوق' },
+  '/nutri-score': { en: 'Nutri-Score', ar: 'نوتري-سكور' },
+  '/restaurant-mode': { en: 'Restaurant mode', ar: 'وضع المطعم' },
+  '/receipt-ocr': { en: 'Receipt scan', ar: 'مسح الإيصال' },
+  '/fasting': { en: 'Intermittent fasting', ar: 'الصيام المتقطع' },
+  '/log-exercise': { en: 'Log a workout', ar: 'سجّل تمريناً' },
+  '/move-goals': { en: 'Daily moves', ar: 'حركات اليوم' },
+  '/sport-agenda': { en: 'Sport agenda', ar: 'أجندة الرياضة' },
+  '/equipment-scan': { en: 'Equipment scanner', ar: 'ماسح الأجهزة' },
+  '/rep-counter': { en: 'Rep counter', ar: 'عدّاد التكرارات' },
+  '/battle': { en: '1v1 Battle', ar: 'تحدٍ 1ضد1' },
+  '/body-measurements': { en: 'Body measurements', ar: 'قياسات الجسم' },
+  '/sleep-tracker': { en: 'Sleep', ar: 'النوم' },
+  '/mood-tracker': { en: 'Mood & energy', ar: 'المزاج والطاقة' },
+  '/smart-hydration': { en: 'Smart hydration', ar: 'ترطيب ذكي' },
+  '/progress-photos': { en: 'Progress photos', ar: 'صور التقدم' },
+  '/streaks': { en: 'My streaks', ar: 'سلاسلي' },
+  '/body-composition': { en: 'Body composition', ar: 'تكوين الجسم' },
+  '/glucose-tracker': { en: 'Glucose', ar: 'السكر' },
+  '/microbiome': { en: 'Microbiome', ar: 'الميكروبيوم' },
+  '/doctor-export': { en: 'Doctor export', ar: 'تصدير للطبيب' },
+  '/adaptive-tdee': { en: 'Adaptive TDEE', ar: 'TDEE تكيّفي' },
+  '/metabolic-twin': { en: 'Metabolic twin', ar: 'التوأم الأيضي' },
+  '/calorie-budget': { en: 'Calorie budget', ar: 'ميزانية السعرات' },
+  '/journal': { en: 'Journal & news', ar: 'اليوميات والأخبار' },
+};
+const tileLabel = (route: string, fr: string, lang: string) => (lang === 'fr' ? fr : (TILE_I18N[route]?.[lang as 'en' | 'ar'] || fr));
 import { useFeatureFlags, isEnabled } from '../../lib/featureFlags';
 
 const PLANS_CTA: Record<string, { t: string; s: string }> = {
@@ -200,6 +241,7 @@ export default function CoachScreen() {
             ]},
             { key: 'move', Icon: Dumbbell, items: [
               { Icon: Dumbbell, label: 'Enregistrer une séance', route: '/log-exercise' },
+              { Icon: Dumbbell, label: 'Mouvements du jour', route: '/move-goals' },
               { Icon: MapPin, label: (RUN_CTA[language] || RUN_CTA.en).t, route: '/run' },
               { Icon: Trophy, label: (RACES_CTA[language] || RACES_CTA.en).t, route: '/races' },
               { Icon: FileText, label: 'Agenda sport', route: '/sport-agenda' },
@@ -248,7 +290,7 @@ export default function CoachScreen() {
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 6 }}>
                     {recents.map((r) => { const it = allItems.find((i) => i.route === r); if (!it) return null; const I = it.Icon; return (
                       <TouchableOpacity key={r} style={[styles.recentChip, { backgroundColor: card }]} onPress={() => openTool(r)}>
-                        <I size={15} color={Colors.light.primary} /><Text style={[styles.recentTxt, { color: text }]} numberOfLines={1}>{it.label}</Text>
+                        <I size={15} color={Colors.light.primary} /><Text style={[styles.recentTxt, { color: text }]} numberOfLines={1}>{tileLabel(it.route, it.label, language)}</Text>
                       </TouchableOpacity>
                     ); })}
                   </ScrollView>
@@ -258,7 +300,7 @@ export default function CoachScreen() {
               {sections.map((group) => {
                 const items = group.items
                   .filter((it) => isEnabled(flags, it.route.replace(/^\//, '')))
-                  .filter((it) => !q || it.label.toLowerCase().includes(q));
+                  .filter((it) => !q || it.label.toLowerCase().includes(q) || tileLabel(it.route, it.label, language).toLowerCase().includes(q));
                 if (!items.length) return null;
                 const isOpen = !!expandedSecs[group.key] || !!q;
                 const visible = isOpen ? items : items.slice(0, 6);
@@ -270,7 +312,7 @@ export default function CoachScreen() {
                       {visible.map((it) => { const Icon = it.Icon; return (
                         <TouchableOpacity key={it.route} activeOpacity={0.85} onPress={() => openTool(it.route)} style={[styles.featCard, { backgroundColor: card }]}>
                           <View style={styles.mealCtaIcon}><Icon size={22} color={Colors.light.primary} /></View>
-                          <Text style={[styles.featLabel, { color: text }]} numberOfLines={2}>{it.label}</Text>
+                          <Text style={[styles.featLabel, { color: text }]} numberOfLines={2}>{tileLabel(it.route, it.label, language)}</Text>
                         </TouchableOpacity>
                       ); })}
                     </View>
