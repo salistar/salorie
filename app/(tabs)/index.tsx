@@ -225,7 +225,7 @@ export default function HomeScreen() {
               }}
             />
 
-            <CollapsibleSection title="Activité récente">
+            <CollapsibleSection title={language === 'fr' ? 'Activité récente' : language === 'ar' ? 'النشاط الأخير' : 'Recent activity'}>
               <ActivityList
                 logs={logs}
                 onAddPress={() => showLogModal()}
