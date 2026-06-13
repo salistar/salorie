@@ -19,7 +19,7 @@ function todayStr() {
 export default function HealthScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation() as any;
   const isDark = resolved === 'dark';
 
   const [available, setAvailable] = useState<boolean | null>(null);
@@ -116,6 +116,34 @@ export default function HealthScreen() {
       await addNutritionLog({ userId: email, type: 'activity', name: 'Health Connect', calories: data.activeKcal, date: todayStr() } as any);
       setMsg(t('health.logged'));
     } catch {}
+  };
+
+  // Import des séances de la montre (anti-doublon via clé locale par jour) + poids.
+  const syncLabel = language === 'fr' ? 'Synchroniser séances + poids' : language === 'ar' ? 'مزامنة التمارين + الوزن' : 'Sync workouts + weight';
+  const syncSessions = async () => {
+    const email = user?.primaryEmailAddress?.emailAddress || '';
+    if (!email) return;
+    setBusy(true);
+    try {
+      const { readTodaySessions } = require('../../lib/health');
+      const { addWeightLog } = require('../../lib/firebase');
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const sessions = await readTodaySessions();
+      const dedupKey = `hc_sessions_${todayStr()}`;
+      let done: string[] = [];
+      try { done = JSON.parse((await AsyncStorage.getItem(dedupKey)) || '[]'); } catch {}
+      let added = 0;
+      for (const s of sessions) {
+        if (done.includes(s.startISO)) continue;
+        await addNutritionLog({ userId: email, type: 'activity', name: s.name, calories: s.calories, duration: s.durationMin, date: todayStr() } as any);
+        done.push(s.startISO); added++;
+      }
+      await AsyncStorage.setItem(dedupKey, JSON.stringify(done));
+      // Poids du jour (si dispo) → historique.
+      let w = 0;
+      if (data?.weightKg) { try { await addWeightLog(email, data.weightKg); w = 1; } catch {} }
+      setMsg(language === 'fr' ? `✅ ${added} séance(s) importée(s)${w ? ' + poids' : ''}` : language === 'ar' ? `✅ تم استيراد ${added} تمرين${w ? ' + الوزن' : ''}` : `✅ ${added} workout(s) imported${w ? ' + weight' : ''}`);
+    } catch { setMsg('Sync échouée'); } finally { setBusy(false); }
   };
 
   const Stat = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
@@ -223,6 +251,11 @@ export default function HealthScreen() {
                 <Plus size={18} color="#fff" /><Text style={styles.primaryBtnText}>{t('health.log_activity')}</Text>
               </TouchableOpacity>
             )}
+
+            {/* Import séances (montre) + poids depuis Health Connect */}
+            <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: '#0EA5E9' }]} onPress={syncSessions} disabled={busy}>
+              <RefreshCw size={18} color="#fff" /><Text style={styles.primaryBtnText}>{syncLabel}</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity style={styles.ghostBtn} onPress={refresh} disabled={busy}>
               <RefreshCw size={18} color={Colors.light.primary} /><Text style={styles.ghostText}>{t('health.refresh')}</Text>

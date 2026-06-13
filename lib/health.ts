@@ -46,6 +46,7 @@ export async function connectHealthStatus(): Promise<ConnectResult> {
       { accessType: 'read' as const, recordType: 'Steps' as const },
       { accessType: 'read' as const, recordType: 'ActiveCaloriesBurned' as const },
       { accessType: 'read' as const, recordType: 'Weight' as const },
+      { accessType: 'read' as const, recordType: 'ExerciseSession' as const },
     ];
     let granted: any[] = [];
     try { granted = (await requestPermission(perms)) || []; } catch { granted = []; }
@@ -123,4 +124,40 @@ export async function readToday(): Promise<HealthToday> {
   } catch (e) { console.warn('[health] weight read failed', e); }
 
   return { steps, activeKcal, weightKg };
+}
+
+// Type d'exercice Health Connect (int) → libellé lisible (principaux).
+const EXERCISE_LABELS: Record<number, string> = {
+  56: 'Course à pied', 79: 'Marche', 8: 'Vélo', 82: 'Natation', 0: 'Séance',
+  13: 'Boot camp', 16: 'Musculation', 70: 'Yoga', 71: 'HIIT', 48: 'Randonnée',
+  37: 'Football', 64: 'Tennis', 2: 'Badminton', 9: 'Vélo (salle)', 57: 'Course (tapis)',
+};
+
+export interface ImportedSession { name: string; calories: number; durationMin: number; startISO: string; }
+
+// Lit les SÉANCES (ExerciseSession) d'aujourd'hui + leurs calories (best-effort),
+// pour les importer comme activités. Dédoublonnage géré par l'appelant (clé = startISO).
+export async function readTodaySessions(): Promise<ImportedSession[]> {
+  const now = new Date();
+  const start = new Date(now); start.setHours(0, 0, 0, 0);
+  const filter = { timeRangeFilter: { operator: 'between' as const, startTime: start.toISOString(), endTime: now.toISOString() } };
+  let sessions: any[] = [];
+  try { sessions = ((await readRecords('ExerciseSession', filter as any)) as any).records || []; }
+  catch (e) { console.warn('[health] sessions read failed', e); return []; }
+
+  // Calories totales sur la fenêtre (réparties au prorata de la durée si plusieurs séances).
+  let totalKcal = 0;
+  try {
+    const c: any = await readRecords('ActiveCaloriesBurned', filter as any);
+    totalKcal = (c.records || []).reduce((a: number, r: any) => a + (r.energy?.inKilocalories || 0), 0);
+  } catch {}
+  const durations = sessions.map((s) => Math.max(1, (new Date(s.endTime).getTime() - new Date(s.startTime).getTime()) / 60000));
+  const totalDur = durations.reduce((a, b) => a + b, 0) || 1;
+
+  return sessions.map((s, i) => ({
+    name: EXERCISE_LABELS[s.exerciseType] || 'Séance',
+    durationMin: Math.round(durations[i]),
+    calories: Math.round((durations[i] / totalDur) * totalKcal),
+    startISO: String(s.startTime),
+  }));
 }
