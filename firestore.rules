@@ -38,6 +38,28 @@ service cloud.firestore {
       }
     }
 
+    // Courses de GROUPE : lisibles par tout utilisateur connecté ; le doc course
+    // est créé/géré côté serveur (admin SDK, bypass) ; chaque participant
+    // n'écrit que SA propre ligne.
+    match /races/{raceId} {
+      allow read: if signedIn();
+      allow write: if false;
+      match /participants/{uid} {
+        allow read: if signedIn();
+        allow write: if isOwner(uid);
+      }
+    }
+
+    // Défis virtuels legacy (progression Firestore des anciens défis intégrés).
+    match /challenges/{challengeId} {
+      allow read: if signedIn();
+      allow write: if false;
+      match /participants/{uid} {
+        allow read: if signedIn();
+        allow write: if isOwner(uid);
+      }
+    }
+
     // Admin config is read-only to clients; writes happen server-side only.
     match /admin/{doc} {
       allow read: if signedIn();
