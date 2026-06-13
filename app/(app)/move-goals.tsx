@@ -95,7 +95,7 @@ export default function MoveGoals() {
               <View style={[{ alignItems: 'center', gap: 10 }, rowDir]}>
                 <Text style={{ fontSize: 26 }}>{m.emoji}</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={[s.moveName, { color: text }, align]}>{m[language] || m.en}</Text>
+                  <Text style={[s.moveName, { color: text }, align]}>{(m as any)[language] || m.en}</Text>
                   <Text style={[s.moveMeta, { color: done ? GREEN : sub }, align]}>{c} / {m.goal}{done ? ` · ${t.done}` : ''}</Text>
                 </View>
                 <TouchableOpacity style={[s.addBtn, { backgroundColor: done ? GREEN : '#eef2f7' }]} onPress={() => addSet(m)}>
