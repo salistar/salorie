@@ -18,7 +18,21 @@ import { addNutritionLog } from '../../lib/firebase';
 import { useUser } from '@clerk/clerk-expo';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import ScreenTopBar from '../../components/ScreenTopBar';
-import { FormInput, Stepper, SubmitBar } from '../../components/FormKit';
+import { FormInput, Stepper, SubmitBar, ChipGroup } from '../../components/FormKit';
+
+// Repas (slot) du Diary — libellés trilingues + défaut selon l'heure.
+const SLOT_LABELS: any = {
+  en: { breakfast: 'Breakfast', lunch: 'Lunch', snack: 'Snack', dinner: 'Dinner', label: 'Meal' },
+  fr: { breakfast: 'Petit-déj', lunch: 'Déjeuner', snack: 'Snack', dinner: 'Dîner', label: 'Repas' },
+  ar: { breakfast: 'فطور', lunch: 'غداء', snack: 'خفيفة', dinner: 'عشاء', label: 'الوجبة' },
+};
+function defaultSlot(): string {
+  const h = new Date().getHours();
+  if (h < 11) return 'breakfast';
+  if (h < 16) return 'lunch';
+  if (h < 18) return 'snack';
+  return 'dinner';
+}
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { colorLog, explain } from '../../lib/LocalDataStore';
@@ -30,7 +44,8 @@ export default function LogFoodDetailsScreen() {
   const { selectedDate, triggerRefresh } = useLogging();
   const params = useLocalSearchParams();
   const { colors, resolved } = useTheme();
-  const { t, isRTL } = useTranslation();
+  const { t, isRTL, language } = useTranslation() as any;
+  const sl = SLOT_LABELS[language] || SLOT_LABELS.en;
 
   const isDark = resolved === 'dark';
 
@@ -77,6 +92,7 @@ export default function LogFoodDetailsScreen() {
   const [carbs, setCarbs] = useState(params.carbs as string);
   const [fat, setFat] = useState(params.fat as string);
   const [description, setDescription] = useState((params.description as string) || '');
+  const [slot, setSlot] = useState<string>(defaultSlot());
   const [loading, setLoading] = useState(false);
 
   const [baseData] = useState({
@@ -109,6 +125,7 @@ export default function LogFoodDetailsScreen() {
         carbs: parseFloat(carbs) || 0,
         fat: parseFloat(fat) || 0,
         serving: `${quantity} ${unit}`,
+        slot,
         date: selectedDate,
       } as any);
       colorLog('BLUE', '[API←Firestore] addNutritionLog OK', { ms: Date.now() - t0 });
@@ -195,6 +212,19 @@ export default function LogFoodDetailsScreen() {
               value={unit}
               onChangeText={setUnit}
               placeholder={t('logfood.unit_ph')}
+            />
+
+            {/* Repas (slot) du Diary — pré-rempli selon l'heure, modifiable */}
+            <ChipGroup
+              label={sl.label}
+              value={slot}
+              onChange={setSlot}
+              options={[
+                { value: 'breakfast', label: sl.breakfast },
+                { value: 'lunch', label: sl.lunch },
+                { value: 'snack', label: sl.snack },
+                { value: 'dinner', label: sl.dinner },
+              ]}
             />
           </Animated.View>
 
