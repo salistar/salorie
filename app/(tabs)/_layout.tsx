@@ -11,6 +11,8 @@ function TabsContent() {
   const { colors, resolved } = useTheme();
   const { t, language } = useTranslation() as any;
   const defisLabel = language === 'fr' ? 'Défis' : language === 'ar' ? 'تحديات' : 'Challenges';
+  const isDark = resolved === 'dark';
+  const tabBg = isDark ? '#161C23' : Colors.light.white; // theme-aware (plus de barre blanche en dark)
 
   return (
     <>
@@ -20,7 +22,7 @@ function TabsContent() {
           headerShown: false,
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.gray[400],
-          tabBarStyle: [styles.tabBar, { backgroundColor: Colors.light.white }],
+          tabBarStyle: [styles.tabBar, { backgroundColor: tabBg }],
           tabBarShowLabel: true,
           tabBarLabelPosition: 'below-icon',
           tabBarLabelStyle: {
