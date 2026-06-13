@@ -5,12 +5,28 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Heart } from 'lucide-react-native';
 import { useNutritionData } from '../hooks/useNutritionData';
+import { useTranslation } from '../lib/i18n';
+import { useTheme } from '../lib/ThemeContext';
 
 const GREEN = '#2E8B57';
+
+const TXT: any = {
+  en: { caption: 'Daily health score', calories: 'Calories', protein: 'Protein', hydration: 'Hydration', excellent: 'Excellent', good: 'Good', ongoing: 'Ongoing', start: 'Get started' },
+  fr: { caption: 'Score santé du jour', calories: 'Calories', protein: 'Protéines', hydration: 'Hydratation', excellent: 'Excellent', good: 'Bien', ongoing: 'En cours', start: 'À démarrer' },
+  ar: { caption: 'نقاط صحة اليوم', calories: 'سعرات', protein: 'بروتين', hydration: 'ترطيب', excellent: 'ممتاز', good: 'جيد', ongoing: 'جارٍ', start: 'ابدأ' },
+};
 
 function clamp01(x: number) { return Math.max(0, Math.min(1, x)); }
 
 export default function DailyHealthScore() {
+  const { language, isRTL } = useTranslation() as any;
+  const { resolved } = useTheme();
+  const tx = TXT[language] || TXT.en;
+  const isDark = resolved === 'dark';
+  const cardBg = isDark ? '#161C23' : '#fff';
+  const txtColor = isDark ? '#f1f5f9' : '#0f172a';
+  const subColor = isDark ? '#94a3b8' : '#64748b';
+  const trackBg = isDark ? '#334155' : '#e2e8f0';
   const data: any = useNutritionData();
   const goals = data?.goals || { calories: 2000, protein: 150, water: 2000 };
   const consumed = data?.consumed || { calories: 0, protein: 0, water: 0 };
@@ -24,28 +40,28 @@ export default function DailyHealthScore() {
   const waterScore = clamp01(consumed.water / Math.max(goals.water, 1));
   const score = Math.round((calScore * 0.4 + protScore * 0.3 + waterScore * 0.3) * 100);
 
-  const label = score >= 80 ? 'Excellent' : score >= 55 ? 'Bien' : score >= 30 ? 'En cours' : 'À démarrer';
+  const label = score >= 80 ? tx.excellent : score >= 55 ? tx.good : score >= 30 ? tx.ongoing : tx.start;
   const color = score >= 80 ? GREEN : score >= 55 ? '#16A34A' : score >= 30 ? '#D97706' : '#94A3B8';
 
   const Bar = ({ label, v }: { label: string; v: number }) => (
-    <View style={styles.barRow}>
-      <Text style={styles.barLabel}>{label}</Text>
-      <View style={styles.barTrack}><View style={[styles.barFill, { width: `${Math.round(v * 100)}%`, backgroundColor: color }]} /></View>
+    <View style={[styles.barRow, isRTL && { flexDirection: 'row-reverse' }]}>
+      <Text style={[styles.barLabel, { color: subColor }]}>{label}</Text>
+      <View style={[styles.barTrack, { backgroundColor: trackBg }]}><View style={[styles.barFill, { width: `${Math.round(v * 100)}%`, backgroundColor: color }]} /></View>
     </View>
   );
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: cardBg }, isRTL && { flexDirection: 'row-reverse' }]}>
       <View style={styles.left}>
         <Heart size={16} color={color} />
-        <Text style={styles.scoreNum}>{score}</Text>
+        <Text style={[styles.scoreNum, { color: txtColor }]}>{score}</Text>
         <Text style={[styles.label, { color }]}>{label}</Text>
-        <Text style={styles.caption}>Score santé du jour</Text>
+        <Text style={[styles.caption, { color: subColor }]}>{tx.caption}</Text>
       </View>
       <View style={styles.right}>
-        <Bar label="Calories" v={calScore} />
-        <Bar label="Protéines" v={protScore} />
-        <Bar label="Hydratation" v={waterScore} />
+        <Bar label={tx.calories} v={calScore} />
+        <Bar label={tx.protein} v={protScore} />
+        <Bar label={tx.hydration} v={waterScore} />
       </View>
     </View>
   );
