@@ -212,6 +212,19 @@ export default function LogFoodDetailsScreen() {
               unit={unit}
             />
 
+            {/* Portions rapides — multiplie la portion de base (pas de calcul de grammes) */}
+            <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', flexWrap: 'wrap', gap: 8, marginTop: -4, marginBottom: 14 }}>
+              {[{ k: '½', m: 0.5 }, { k: '×1', m: 1 }, { k: '×2', m: 2 }, { k: '×3', m: 3 }].map((q) => {
+                const active = Math.abs((parseFloat(quantity) || 0) - baseData.quantity * q.m) < 0.01;
+                return (
+                  <TouchableOpacity key={q.k} onPress={() => updateQuantity(String(+(baseData.quantity * q.m).toFixed(2)))}
+                    style={{ paddingHorizontal: 18, paddingVertical: 9, borderRadius: 999, borderWidth: 1.5, backgroundColor: active ? Colors.light.primary : 'transparent', borderColor: active ? Colors.light.primary : inputBorder }}>
+                    <Text style={{ fontWeight: '800', fontSize: 14, color: active ? '#fff' : textSecondary }}>{q.k}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
             <FormInput
               label={t('logfood.unit_ph')}
               value={unit}
