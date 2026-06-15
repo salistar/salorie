@@ -26,7 +26,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useTheme } from '../../lib/ThemeContext';
 import { triggerSeededNotifications, syncAllUserData, clearAllLocalData } from '../../lib/LocalDataStore';
-import { BellRing, Trash2, Award, Trophy, Camera } from 'lucide-react-native';
+import { BellRing, Trash2, Award, Trophy, Camera, Flame } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useEffect } from 'react';
@@ -36,9 +36,17 @@ const { width } = Dimensions.get('window');
 export default function ProfileScreen() {
   const { user } = useUser();
   const { signOut } = useAuth();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation() as any;
   const { resolved } = useTheme();
-  const bgColor = resolved === 'dark' ? '#000000' : 'transparent';
+  const isDark = resolved === 'dark';
+  const bgColor = isDark ? '#0B0E12' : 'transparent';
+  // Inline trilingual labels for items not yet in the shared i18n file.
+  const PSTR: any = {
+    en: { sport_medals: 'Sport & medals', my_medals: 'My medals', achievements: 'Achievements', send_logs: 'Send logs', nutrients: 'Daily nutrients', streaks: 'My streaks' },
+    fr: { sport_medals: 'Sport & médailles', my_medals: 'Mes médailles', achievements: 'Succès', send_logs: 'Envoyer les logs', nutrients: 'Nutriments du jour', streaks: 'Mes séries' },
+    ar: { sport_medals: 'الرياضة والأوسمة', my_medals: 'أوسمتي', achievements: 'الإنجازات', send_logs: 'إرسال السجلات', nutrients: 'عناصر اليوم الغذائية', streaks: 'سلاسلي' },
+  };
+  const P_ = (k: string) => (PSTR[String(language)] || PSTR.en)[k] || PSTR.en[k] || k;
 
   useEffect(() => {
     console.log('[ProfileScreen] mounted — user:', user?.primaryEmailAddress?.emailAddress);
@@ -214,11 +222,15 @@ export default function ProfileScreen() {
 
   // Tuile compacte (allègement : grille 2 colonnes au lieu de lignes empilées).
   const GridTile = ({ icon: Icon, label, color, onPress }: any) => (
-    <TouchableOpacity style={styles.gridTile} activeOpacity={0.85} onPress={onPress}>
-      <View style={[styles.gridIcon, { backgroundColor: color + '15' }]}>
+    <TouchableOpacity
+      style={[styles.gridTile, isDark && { backgroundColor: '#161C23', borderColor: 'rgba(255,255,255,0.08)' }]}
+      activeOpacity={0.85}
+      onPress={onPress}
+    >
+      <View style={[styles.gridIcon, { backgroundColor: color + (isDark ? '26' : '15') }]}>
         <Icon size={22} color={color} />
       </View>
-      <Text style={styles.gridLabel} numberOfLines={2}>{label}</Text>
+      <Text style={[styles.gridLabel, isDark && { color: '#f1f5f9' }]} numberOfLines={2}>{label}</Text>
     </TouchableOpacity>
   );
 
@@ -252,8 +264,8 @@ export default function ProfileScreen() {
             </View>
           </TouchableOpacity>
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user?.fullName || t('profile.health_explorer')}</Text>
-            <Text style={styles.userEmail}>{user?.primaryEmailAddress?.emailAddress}</Text>
+            <Text style={styles.userName} numberOfLines={1}>{user?.fullName || t('profile.health_explorer')}</Text>
+            <Text style={styles.userEmail} numberOfLines={1}>{user?.primaryEmailAddress?.emailAddress}</Text>
           </View>
         </Animated.View>
 
@@ -279,12 +291,13 @@ export default function ProfileScreen() {
 
         {/* Sport & médailles — d'abord (pattern « You » des leaders : trophées avant réglages) */}
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: resolved === 'dark' ? '#fff' : undefined }]}>Sport & médailles</Text>
+          <Text style={[styles.sectionTitle, { color: resolved === 'dark' ? '#fff' : undefined }]}>{P_('sport_medals')}</Text>
         </View>
         <Animated.View entering={FadeInDown.delay(200).duration(600)} style={styles.grid}>
           {/* Courses + agenda vivent dans l'onglet Défis (pas de doublon ici) */}
-          <GridTile icon={Award} label="Mes médailles" color="#F59E0B" onPress={() => router.push('/medals' as any)} />
-          <GridTile icon={Trophy} label="Achievements" color="#8B5CF6" onPress={() => router.push('/social' as any)} />
+          <GridTile icon={Award} label={P_('my_medals')} color="#F59E0B" onPress={() => router.push('/medals' as any)} />
+          <GridTile icon={Trophy} label={P_('achievements')} color="#8B5CF6" onPress={() => router.push('/social' as any)} />
+          <GridTile icon={Flame} label={P_('streaks')} color="#EF4444" onPress={() => router.push('/streaks' as any)} />
         </Animated.View>
 
         {/* Account Section */}
@@ -293,6 +306,7 @@ export default function ProfileScreen() {
         </View>
         <Animated.View entering={FadeInDown.delay(250).duration(600)} style={styles.grid}>
           <GridTile icon={User} label={t('profile.personal_details')} color={Colors.light.primary} onPress={() => router.push('/personal-details' as any)} />
+          <GridTile icon={Heart} label={P_('nutrients')} color="#10B981" onPress={() => router.push('/nutrients' as any)} />
           <GridTile icon={Bell} label={t('prefs.notifications')} color={Colors.light.primary} onPress={() => router.push('/notifications' as any)} />
           <GridTile icon={Settings} label={t('profile.preferences')} color="#6366F1" onPress={() => router.push('/preferences' as any)} />
           <GridTile icon={CreditCard} label={t('profile.upgrade')} color="#EC4899" onPress={handleUpgrade} />
@@ -300,12 +314,12 @@ export default function ProfileScreen() {
 
         {/* Support Section */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('profile.support')}</Text>
+          <Text style={[styles.sectionTitle, { color: resolved === 'dark' ? '#fff' : undefined }]}>{t('profile.support')}</Text>
         </View>
         <Animated.View entering={FadeInDown.delay(300).duration(600)} style={styles.grid}>
           <GridTile icon={Lightbulb} label={t('profile.feature_requests')} color="#10B981" onPress={() => router.push('/feature-requests' as any)} />
           <GridTile icon={MessagesSquare} label={t('profile.contact_us')} color="#3B82F6" onPress={() => router.push('/contact' as any)} />
-          <GridTile icon={FileText} label="Envoyer les logs" color="#64748B" onPress={sendLogs} />
+          <GridTile icon={FileText} label={P_('send_logs')} color="#64748B" onPress={sendLogs} />
           <GridTile icon={FileText} label={t('profile.terms')} color={Colors.light.gray[500]} onPress={() => router.push('/terms' as any)} />
           <GridTile icon={Shield} label={t('profile.privacy')} color={Colors.light.gray[500]} onPress={() => router.push('/privacy' as any)} />
         </Animated.View>

@@ -1,6 +1,7 @@
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import { UtensilsCrossed, Activity as ActivityIcon, ChevronRight } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../../constants/Colors';
 import HomeHeader from '../../components/HomeHeader';
@@ -41,7 +42,7 @@ export default function HomeScreen() {
     ar: { sub: 'تتبّع. كل بذكاء. حقّق هدفك.' },
   };
   const bannerSub = (HSTR[String(language)] || HSTR.en).sub;
-  const bgColor = resolved === 'dark' ? '#000000' : 'transparent';
+  const bgColor = resolved === 'dark' ? '#0B0E12' : 'transparent';
   const { selectedDate, refreshCount, showLogModal } = useLogging();
   const { loading, goals, consumed, logs, refresh } = useNutritionData(selectedDate);
 
@@ -182,6 +183,32 @@ export default function HomeScreen() {
 
         {/* Lance-toi : courses virtuelles / groupe / défis + notifs */}
         <HomeQuickActions onLog={() => showLogModal()} />
+
+        {/* Accès rapides : Journal alimentaire + Activité (déplacés ici) */}
+        {(() => {
+          const dark = resolved === 'dark';
+          const cardBg = dark ? '#161C23' : '#fff';
+          const txt = dark ? '#f1f5f9' : Colors.light.gray[900];
+          const SHORT: Record<string, { diary: string; activity: string }> = {
+            en: { diary: 'Food diary', activity: 'Activity' },
+            fr: { diary: 'Journal alimentaire', activity: 'Activité' },
+            ar: { diary: 'يوميات الطعام', activity: 'النشاط' },
+          };
+          const sx = SHORT[String(language)] || SHORT.en;
+          return (
+            <View style={styles.shortcutRow}>
+              <TouchableOpacity style={[styles.shortcut, { backgroundColor: cardBg }]} activeOpacity={0.85} onPress={() => router.push('/diary' as any)}>
+                <View style={[styles.shortcutIcon, { backgroundColor: '#EAF4EE' }]}><UtensilsCrossed size={20} color={Colors.light.primary} /></View>
+                <Text style={[styles.shortcutTxt, { color: txt }]} numberOfLines={2}>{sx.diary}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.shortcut, { backgroundColor: cardBg }]} activeOpacity={0.85} onPress={() => router.push('/activity' as any)}>
+                <View style={[styles.shortcutIcon, { backgroundColor: '#EEF2FF' }]}><ActivityIcon size={20} color="#6366F1" /></View>
+                <Text style={[styles.shortcutTxt, { color: txt }]} numberOfLines={2}>{sx.activity}</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })()}
+
         <HomeDiscover />
 
         {/* Score santé quotidien — hook de rétention */}
@@ -254,6 +281,10 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 4,
   },
+  shortcutRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 24, marginTop: 4, marginBottom: 8 },
+  shortcut: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 18, paddingVertical: 14, paddingHorizontal: 14, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  shortcutIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  shortcutTxt: { flex: 1, fontSize: 13, fontWeight: '800' },
   contentHeader: {
     paddingHorizontal: 24,
     flexDirection: 'row',

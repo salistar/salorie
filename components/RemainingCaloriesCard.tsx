@@ -85,6 +85,16 @@ export default function RemainingCaloriesCard({
   const tx = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
+  // Theme-aware surface so the card doesn't stay bright white on the dark home.
+  const cardBg = isDark ? '#161C23' : Colors.light.white;
+  const titleColor = isDark ? '#f1f5f9' : Colors.light.gray[900];
+  const subColor = isDark ? '#94a3b8' : Colors.light.gray[400];
+  const valueColor = isDark ? '#f1f5f9' : Colors.light.gray[900];
+  const statValueColor = isDark ? '#e2e8f0' : Colors.light.gray[800];
+  const macroBg = isDark ? 'rgba(46,139,87,0.15)' : Colors.light.primaryLight;
+  const macroIconBg = isDark ? '#0f1419' : '#fff';
+  const trackColor = isDark ? '#334155' : Colors.light.gray[200];
+  const borderColor = isDark ? 'rgba(255,255,255,0.08)' : Colors.light.gray[50];
   const [modalVisible, setModalVisible] = useState(false);
   const [inputs, setInputs] = useState({
     calories: String(goal),
@@ -114,10 +124,10 @@ export default function RemainingCaloriesCard({
 
   return (
     <>
-      <View style={[styles.card, resolved === 'dark' && { borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }]}>
+      <View style={[styles.card, { backgroundColor: cardBg }, isDark && { borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }]}>
         {/* Header: Title + Edit Icon */}
         <View style={styles.header}>
-          <Text style={styles.title}>{t('home.calories')}</Text>
+          <Text style={[styles.title, { color: titleColor }]}>{t('home.calories')}</Text>
           <TouchableOpacity
             style={styles.editIconBtn}
             activeOpacity={0.6}
@@ -142,16 +152,18 @@ export default function RemainingCaloriesCard({
             size={240}
             strokeWidth={24}
             color={getProgressColor()}
-            trackColor={Colors.light.gray[200]}
+            trackColor={trackColor}
           >
             <View style={styles.innerContent}>
-              <Text style={[
-                styles.remainingValue,
-                { color: getProgressColor() }
-              ]}>
+              <Text
+                style={[styles.remainingValue, { color: getProgressColor() }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.5}
+              >
                 {Math.abs(remaining).toLocaleString()}
               </Text>
-              <Text style={styles.remainingLabel}>
+              <Text style={[styles.remainingLabel, { color: subColor }]}>
                 {consumed > goal ? t('home.kcal_over') : t('home.kcal_remaining')}
               </Text>
             </View>
@@ -160,41 +172,41 @@ export default function RemainingCaloriesCard({
 
         {/* Macros Row */}
         <View style={styles.macrosGrid}>
-          <View style={styles.macroBox}>
-            <View style={[styles.macroIconCircle, { backgroundColor: '#fff' }]}>
+          <View style={[styles.macroBox, { backgroundColor: macroBg }]}>
+            <View style={[styles.macroIconCircle, { backgroundColor: macroIconBg }]}>
               <Beef size={22} color="#FF5C5C" />
             </View>
-            <Text style={styles.macroValue}>{Math.max(0, proteinGoal - protein)}g</Text>
-            <Text style={styles.macroName}>{t('home.protein_left')}</Text>
+            <Text style={[styles.macroValue, { color: valueColor }]}>{Math.max(0, proteinGoal - protein)}g</Text>
+            <Text style={[styles.macroName, { color: subColor }]}>{t('home.protein_left')}</Text>
           </View>
 
-          <View style={styles.macroBox}>
-            <View style={[styles.macroIconCircle, { backgroundColor: '#fff' }]}>
+          <View style={[styles.macroBox, { backgroundColor: macroBg }]}>
+            <View style={[styles.macroIconCircle, { backgroundColor: macroIconBg }]}>
               <Wheat size={22} color="#F59E0B" />
             </View>
-            <Text style={styles.macroValue}>{Math.max(0, carbsGoal - carbs)}g</Text>
-            <Text style={styles.macroName}>{t('home.carbs_left')}</Text>
+            <Text style={[styles.macroValue, { color: valueColor }]}>{Math.max(0, carbsGoal - carbs)}g</Text>
+            <Text style={[styles.macroName, { color: subColor }]}>{t('home.carbs_left')}</Text>
           </View>
 
-          <View style={styles.macroBox}>
-            <View style={[styles.macroIconCircle, { backgroundColor: '#fff' }]}>
+          <View style={[styles.macroBox, { backgroundColor: macroBg }]}>
+            <View style={[styles.macroIconCircle, { backgroundColor: macroIconBg }]}>
               <Droplets size={22} color="#0EA5E9" />
             </View>
-            <Text style={styles.macroValue}>{Math.max(0, fatGoal - fat)}g</Text>
-            <Text style={styles.macroName}>{t('home.fat_left')}</Text>
+            <Text style={[styles.macroValue, { color: valueColor }]}>{Math.max(0, fatGoal - fat)}g</Text>
+            <Text style={[styles.macroName, { color: subColor }]}>{t('home.fat_left')}</Text>
           </View>
         </View>
 
         {/* Stats Row */}
-        <View style={styles.statsRow}>
+        <View style={[styles.statsRow, { borderTopColor: borderColor }]}>
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>{t('home.goal')}</Text>
-            <Text style={styles.statValue}>{goal.toLocaleString()} kcal</Text>
+            <Text style={[styles.statLabel, { color: subColor }]}>{t('home.goal')}</Text>
+            <Text style={[styles.statValue, { color: statValueColor }]}>{goal.toLocaleString()} kcal</Text>
           </View>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: borderColor }]} />
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>{t('home.consumed')}</Text>
-            <Text style={styles.statValue}>{consumed.toLocaleString()} kcal</Text>
+            <Text style={[styles.statLabel, { color: subColor }]}>{t('home.consumed')}</Text>
+            <Text style={[styles.statValue, { color: statValueColor }]}>{consumed.toLocaleString()} kcal</Text>
           </View>
         </View>
       </View>

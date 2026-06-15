@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ArrowLeft, ChevronDown, Dumbbell, Clock, BarChart3, Flame, CheckCircle2 } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import PhotoStrip from '../../components/PhotoStrip';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { addNutritionLog, emailToDocId } from '../../lib/firebase';
@@ -66,6 +67,82 @@ const PLANS: Record<string, Plan[]> = {
   ],
 };
 
+// Explication courte de CHAQUE mouvement (clé = nom localisé de l'exercice).
+const EX_HOW: Record<string, Record<string, string>> = {
+  fr: {
+    'Squat': 'Pieds largeur d’épaules, descends les hanches dos droit (genoux dans l’axe des pieds), puis remonte.',
+    'Développé couché': 'Allongé sur le banc, descends la barre vers la poitrine puis pousse jusqu’à extension des bras.',
+    'Rowing haltère': 'Buste penché dos plat, tire l’haltère vers la hanche en serrant l’omoplate.',
+    'Développé épaules': 'Pousse les haltères au-dessus de la tête sans cambrer le bas du dos.',
+    'Gainage': 'Avant-bras au sol, corps droit et gainé — ne creuse pas le dos, tiens la position.',
+    'Tirage vertical': 'Tire la barre vers le haut de la poitrine en abaissant les omoplates.',
+    'Soulevé de terre': 'Dos plat, pousse dans les jambes pour soulever la barre le long des tibias.',
+    'Fentes': 'Grand pas en avant, plie les deux genoux à 90°, reviens et alterne les jambes.',
+    'Élévations latérales': 'Lève les haltères sur les côtés jusqu’à l’horizontale, coudes légèrement fléchis.',
+    'Course': 'Allure régulière, respiration contrôlée, foulée souple.',
+    'Vélo': 'Pédale à intensité modérée à soutenue, dos droit.',
+    'Intervalles HIIT': 'Alterne effort intense (~40 s) et récupération (~20 s).',
+    'Marche (retour au calme)': 'Marche lente pour faire redescendre le rythme cardiaque.',
+    'Tractions': 'Suspendu, tire-toi jusqu’au menton au-dessus de la barre, descends en contrôlant.',
+    'Rowing barre': 'Buste penché, tire la barre vers le nombril en serrant le dos.',
+    'Crunchs': 'Décolle les épaules en contractant les abdos, sans tirer sur la nuque.',
+    'Russian Twist': 'Assis buste incliné, fais pivoter le tronc de gauche à droite (ballotté contrôlé).',
+    'Relevé de genoux suspendu': 'Suspendu à la barre, remonte les genoux vers la poitrine en contrôlant.',
+    'Échauffement dynamique': 'Mouvements amples (cercles de bras, montées de genoux) pour préparer le corps.',
+    'Ouverture des hanches': 'Étirements actifs des hanches (fente, papillon), en douceur.',
+    'Étirement ischios': 'Jambe tendue, penche-toi vers l’avant sans arrondir le dos.',
+    'Mobilité épaules': 'Rotations et passages de bras pour mobiliser les épaules.',
+  },
+  en: {
+    'Squat': 'Feet shoulder-width, lower hips with a straight back (knees over toes), then stand up.',
+    'Bench Press': 'Lying on the bench, lower the bar to your chest, then push until arms extend.',
+    'Dumbbell Row': 'Hinge forward with a flat back, pull the dumbbell to your hip, squeezing the shoulder blade.',
+    'Shoulder Press': 'Press the dumbbells overhead without arching your lower back.',
+    'Plank': 'Forearms on the floor, body straight and braced — don’t sag, hold the position.',
+    'Lat Pulldown': 'Pull the bar to your upper chest while drawing your shoulder blades down.',
+    'Deadlift': 'Flat back, drive through your legs to lift the bar along your shins.',
+    'Lunges': 'Big step forward, bend both knees to 90°, return and alternate legs.',
+    'Lateral Raise': 'Raise the dumbbells to the sides up to shoulder height, elbows slightly bent.',
+    'Running': 'Steady pace, controlled breathing, relaxed stride.',
+    'Cycling': 'Pedal at moderate-to-hard intensity, back straight.',
+    'HIIT intervals': 'Alternate hard effort (~40 s) and recovery (~20 s).',
+    'Walking (cooldown)': 'Slow walk to bring your heart rate back down.',
+    'Pull-up': 'Hang, pull yourself until your chin is over the bar, lower under control.',
+    'Barbell Row': 'Hinge forward, pull the bar to your navel, squeezing your back.',
+    'Crunches': 'Lift your shoulders by contracting your abs, without pulling your neck.',
+    'Russian Twist': 'Seated, lean back, rotate your torso side to side under control.',
+    'Hanging Knee Raise': 'Hanging from the bar, raise your knees toward your chest, controlled.',
+    'Dynamic warm-up': 'Large movements (arm circles, knee lifts) to prep the body.',
+    'Hip openers': 'Active hip stretches (lunge, butterfly), gently.',
+    'Hamstring stretch': 'Leg straight, hinge forward without rounding your back.',
+    'Shoulder mobility': 'Rotations and arm pass-throughs to mobilize the shoulders.',
+  },
+  ar: {
+    'سكوات': 'القدمان بعرض الكتفين، انزل بالوركين والظهر مستقيم ثم انهض.',
+    'بنش برس': 'مستلقٍ على المقعد، انزل البار نحو الصدر ثم ادفع حتى تمدّ الذراعين.',
+    'تجديف دمبل': 'انحنِ للأمام بظهر مستقيم واسحب الدمبل نحو الورك مع ضغط لوح الكتف.',
+    'ضغط الأكتاف': 'ادفع الدمبل فوق الرأس دون تقويس أسفل الظهر.',
+    'بلانك': 'الساعدان على الأرض والجسم مستقيم ومشدود — لا تُرخِ الظهر، اثبت.',
+    'سحب علوي': 'اسحب البار نحو أعلى الصدر مع خفض لوحي الكتف.',
+    'رفعة ميتة': 'ظهر مستقيم، ادفع بالساقين لرفع البار بمحاذاة الساقين.',
+    'لانجز': 'خطوة كبيرة للأمام، اثنِ الركبتين 90°، عُد وبدّل.',
+    'رفرفة جانبية': 'ارفع الدمبل للجانبين حتى مستوى الكتف، الكوعان مثنيان قليلاً.',
+    'جري': 'إيقاع ثابت وتنفّس منتظم وخطوة مرنة.',
+    'دراجة': 'دوّس بشدة متوسطة إلى عالية والظهر مستقيم.',
+    'فترات HIIT': 'تبديل بين مجهود قوي (~40ث) واستراحة (~20ث).',
+    'مشي (تهدئة)': 'مشي بطيء لخفض نبض القلب تدريجياً.',
+    'عقلة': 'تعلّق واسحب نفسك حتى يتجاوز ذقنك البار، وانزل بتحكم.',
+    'تجديف بار': 'انحنِ للأمام واسحب البار نحو السرّة مع ضغط الظهر.',
+    'كرنش': 'ارفع كتفيك بشدّ البطن دون شدّ الرقبة.',
+    'التواء روسي': 'اجلس ومِل للخلف ودوّر الجذع يميناً ويساراً بتحكم.',
+    'رفع الركبتين معلقًا': 'تعلّق بالبار وارفع ركبتيك نحو الصدر بتحكم.',
+    'إحماء ديناميكي': 'حركات واسعة (دوائر ذراع، رفع ركب) لتجهيز الجسم.',
+    'فتح الورك': 'إطالات نشطة للورك (لانج، فراشة) بلطف.',
+    'إطالة أوتار الركبة': 'الساق ممدودة، مِل للأمام دون تقويس الظهر.',
+    'مرونة الكتف': 'تدوير وتمرير الذراعين لتحريك مفاصل الكتف.',
+  },
+};
+
 export default function WorkoutPlansScreen() {
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
@@ -120,6 +197,7 @@ export default function WorkoutPlansScreen() {
           <Text style={[styles.title, { color: text }, ta]}>{t.title}</Text>
         </View>
         <Text style={[styles.subtitle, { color: sub }, ta]}>{t.sub}</Text>
+        <PhotoStrip category="sport" />
 
         {plans.map((p, i) => {
           const isOpen = open === i;
@@ -141,13 +219,19 @@ export default function WorkoutPlansScreen() {
               {isOpen && (
                 <View style={styles.exList}>
                   <Text style={[styles.exHeader, { color: sub }, ta]}>{t.exercises}</Text>
-                  {p.exercises.map((ex, j) => (
-                    <View key={j} style={[styles.exRow, row(), { borderTopColor: isDark ? '#1e293b' : '#f1f5f9' }]}>
-                      <View style={[styles.exDot, { backgroundColor: p.color }]} />
-                      <Text style={[styles.exName, { color: text }, ta]}>{ex.name}</Text>
-                      <Text style={[styles.exDetail, { color: p.color }]}>{ex.detail}</Text>
-                    </View>
-                  ))}
+                  {p.exercises.map((ex, j) => {
+                    const how = (EX_HOW[language] || EX_HOW.en)[ex.name];
+                    return (
+                      <View key={j} style={[styles.exItem, { borderTopColor: isDark ? '#1e293b' : '#f1f5f9' }]}>
+                        <View style={[styles.exRow, row()]}>
+                          <View style={[styles.exDot, { backgroundColor: p.color }]} />
+                          <Text style={[styles.exName, { color: text }, ta]}>{ex.name}</Text>
+                          <Text style={[styles.exDetail, { color: p.color }]}>{ex.detail}</Text>
+                        </View>
+                        {!!how && <Text style={[styles.exHow, { color: sub }, ta]}>{how}</Text>}
+                      </View>
+                    );
+                  })}
                   <TouchableOpacity style={[styles.doneBtn, { backgroundColor: p.color }]} onPress={() => doPlan(p, i)} disabled={busy === i} activeOpacity={0.85}>
                     {busy === i ? <ActivityIndicator color="#fff" /> : (<><CheckCircle2 size={18} color="#fff" /><Text style={styles.doneBtnTxt}>{t.done}</Text></>)}
                   </TouchableOpacity>
@@ -187,7 +271,9 @@ const styles = StyleSheet.create({
   metaTxt: { fontSize: 12, fontWeight: '600' },
   exList: { paddingHorizontal: 16, paddingBottom: 14 },
   exHeader: { fontSize: 11, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 },
-  exRow: { alignItems: 'center', gap: 10, paddingVertical: 11, borderTopWidth: 1 },
+  exItem: { borderTopWidth: 1, paddingVertical: 11 },
+  exRow: { alignItems: 'center', gap: 10 },
+  exHow: { fontSize: 12, lineHeight: 17, marginTop: 5, marginLeft: 17 },
   exDot: { width: 7, height: 7, borderRadius: 4 },
   exName: { flex: 1, fontSize: 15, fontWeight: '600' },
   exDetail: { fontSize: 14, fontWeight: '800' },

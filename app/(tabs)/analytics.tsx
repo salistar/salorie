@@ -31,9 +31,9 @@ export default function AnalyticsScreen() {
   // Local FR/EN/AR strings for the score explanation (D3) + empty-state CTA (D4).
   // Inline to avoid touching the shared i18n file.
   const ASTR: Record<string, Record<string, string>> = {
-    en: { banner_title: 'Your Progress', banner_sub: 'Trends, streaks and AI insights from your week.', score_hint: 'What is this?', score_info_title: 'Your Health Score', score_info_body: 'A 0–100 score based on your consistency, nutrition balance, hydration and activity this week. Log meals, water and workouts to raise it.', log_workout: 'Log a workout', close: 'Got it' },
-    fr: { banner_title: 'Ta progression', banner_sub: 'Tendances, séries et insights IA de ta semaine.', score_hint: "C'est quoi ?", score_info_title: 'Ton Score Santé', score_info_body: "Un score de 0 à 100 basé sur ta régularité, l'équilibre nutritionnel, l'hydratation et l'activité cette semaine. Logge tes repas, ton eau et tes séances pour le faire monter.", log_workout: 'Logger une séance', close: 'Compris' },
-    ar: { banner_title: 'تقدّمك', banner_sub: 'الاتجاهات والسلاسل ورؤى الذكاء لأسبوعك.', score_hint: 'ما هذا؟', score_info_title: 'نقاط صحتك', score_info_body: 'نتيجة من 0 إلى 100 تعتمد على انتظامك وتوازن تغذيتك وترطيبك ونشاطك هذا الأسبوع. سجّل وجباتك ومياهك وتمارينك لرفعها.', log_workout: 'سجّل تمرينًا', close: 'حسنًا' },
+    en: { banner_title: 'Your Progress', banner_sub: 'Trends, streaks and AI insights from your week.', score_hint: 'What is this?', score_info_title: 'Your Health Score', score_info_body: 'A 0–100 score based on your consistency, nutrition balance, hydration and activity this week. Log meals, water and workouts to raise it.', log_workout: 'Log a workout', close: 'Got it', detailed_charts: 'Detailed charts' },
+    fr: { banner_title: 'Ta progression', banner_sub: 'Tendances, séries et insights IA de ta semaine.', score_hint: "C'est quoi ?", score_info_title: 'Ton Score Santé', score_info_body: "Un score de 0 à 100 basé sur ta régularité, l'équilibre nutritionnel, l'hydratation et l'activité cette semaine. Logge tes repas, ton eau et tes séances pour le faire monter.", log_workout: 'Logger une séance', close: 'Compris', detailed_charts: 'Graphes détaillés' },
+    ar: { banner_title: 'تقدّمك', banner_sub: 'الاتجاهات والسلاسل ورؤى الذكاء لأسبوعك.', score_hint: 'ما هذا؟', score_info_title: 'نقاط صحتك', score_info_body: 'نتيجة من 0 إلى 100 تعتمد على انتظامك وتوازن تغذيتك وترطيبك ونشاطك هذا الأسبوع. سجّل وجباتك ومياهك وتمارينك لرفعها.', log_workout: 'سجّل تمرينًا', close: 'حسنًا', detailed_charts: 'الرسوم البيانية المفصلة' },
   };
   const A_ = (k: string) => (ASTR[String(language)] || ASTR.en)[k] || ASTR.en[k] || k;
 
@@ -46,7 +46,7 @@ export default function AnalyticsScreen() {
   };
   const { resolved, colors } = useTheme();
   const isDark = resolved === 'dark';
-  const bgColor = isDark ? '#000000' : 'transparent';
+  const bgColor = isDark ? '#0B0E12' : 'transparent';
   // Premium + dark-aware palette (P2/P4): one accent (green) + neutral surfaces,
   // instead of the loud pink/blue/amber cards. All surfaces/text adapt to theme.
   const surface = isDark ? colors.card : '#fff';
@@ -255,8 +255,10 @@ export default function AnalyticsScreen() {
         </View>
         <BrandBanner title={A_('banner_title')} subtitle={A_('banner_sub')} height={120} style={{ marginBottom: 16 }} />
 
-        {/* Insights IA — modèles ML backend (prévision poids + reco repas) */}
-        <MlInsightsCard />
+        {/* Insights IA — cascade LOCAL (on-device) → BACKEND (/ml) → GEMINI.
+            On passe l'historique de poids + l'objectif déjà chargés pour que le
+            tier local (régression JS, hors-ligne, gratuit) serve en priorité. */}
+        <MlInsightsCard weightHistory={weightHistory} goal={goal} />
 
         {/* Macros par objectif — répartition P/G/L vs cible */}
         <MacroTargets />
@@ -332,7 +334,7 @@ export default function AnalyticsScreen() {
           </View>
         ) : (
           <>
-            <CollapsibleSection title="Graphes détaillés">
+            <CollapsibleSection title={A_('detailed_charts')}>
             {/* Calories Chart Card */}
             <Animated.View entering={FadeInDown.duration(600)} style={[styles.chartCard, { backgroundColor: surface, borderColor: isDark ? colors.gray[200] : Colors.light.gray[50] }]}>
               <View style={styles.chartHeader}>
@@ -379,7 +381,7 @@ export default function AnalyticsScreen() {
                 <View style={styles.energyStatDivider} />
                 <View style={styles.energyStat}>
                   <Text style={styles.energyStatLabel}>{t('analytics.net')}</Text>
-                  <Text style={[styles.energyStatValue, { color: Colors.light.gray[900] }]}>{netEnergy.toLocaleString()}</Text>
+                  <Text style={[styles.energyStatValue, { color: tPrimary }]}>{netEnergy.toLocaleString()}</Text>
                 </View>
               </View>
               
@@ -431,7 +433,7 @@ export default function AnalyticsScreen() {
                 </View>
                 <View style={[styles.waterStat, { alignItems: 'flex-end' }]}>
                   <Text style={styles.waterStatLabel}>{t('analytics.daily_avg')}</Text>
-                  <Text style={[styles.waterStatValue, { color: Colors.light.gray[500] }]}>
+                  <Text style={[styles.waterStatValue, { color: tMuted }]}>
                     {Math.round(streakData.reduce((acc, d) => acc + d.waterConsumed, 0) / 7).toLocaleString()} ml
                   </Text>
                 </View>
@@ -474,14 +476,14 @@ export default function AnalyticsScreen() {
                 activeOpacity={0.8}
                 onPress={() => setIsStreakModalVisible(true)}
               >
-                <Animated.View entering={FadeInDown.duration(600)} style={styles.statCard}>
-                  <View style={styles.streakIconContainer}>
-                    <Image 
-                      source={require('../../assets/images/fire.png')} 
-                      style={styles.fireIcon} 
+                <Animated.View entering={FadeInDown.duration(600)} style={[styles.statCard, { backgroundColor: surfaceSoft, borderColor: isDark ? colors.gray[200] : Colors.light.gray[100] }]}>
+                  <View style={[styles.streakIconContainer, isDark && { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
+                    <Image
+                      source={require('../../assets/images/fire.png')}
+                      style={styles.fireIcon}
                     />
                   </View>
-                  <Text style={styles.streakValue}>{currentStreak}</Text>
+                  <Text style={[styles.streakValue, { color: tPrimary }]}>{currentStreak}</Text>
                   <Text style={styles.streakLabel}>{t('analytics.day_streak')}</Text>
                   
                   {/* 7-Day Grid */}
@@ -490,6 +492,7 @@ export default function AnalyticsScreen() {
                       <View key={index} style={styles.dayCol}>
                         <View style={[
                           styles.dayIndicator,
+                          isDark && !day.hasActivity && { backgroundColor: 'rgba(255,255,255,0.06)', borderColor: colors.gray[200] },
                           day.hasActivity && styles.activeIndicator
                         ]}>
                           {day.hasActivity ? (
@@ -514,12 +517,12 @@ export default function AnalyticsScreen() {
                   params: { currentWeight: weight }
                 })}
               >
-                <Animated.View entering={FadeInDown.delay(200).duration(600)} style={[styles.statCard, styles.weightCard]}>
-                <View style={styles.weightIconContainer}>
+                <Animated.View entering={FadeInDown.delay(200).duration(600)} style={[styles.statCard, styles.weightCard, { backgroundColor: surface, borderColor: isDark ? colors.gray[200] : Colors.light.gray[50] }]}>
+                <View style={[styles.weightIconContainer, isDark && { backgroundColor: 'rgba(74,222,128,0.12)' }]}>
                   <Scale size={24} color={Colors.light.primary} />
                 </View>
                 <View style={styles.weightValueRow}>
-                  <Text style={styles.weightValue}>{weight || '--'}</Text>
+                  <Text style={[styles.weightValue, { color: tPrimary }]}>{weight || '--'}</Text>
                   <Text style={styles.weightUnit}>kg</Text>
                 </View>
                 <Text style={styles.weightLabel}>{t('analytics.my_weight')}</Text>
@@ -565,19 +568,19 @@ export default function AnalyticsScreen() {
             entering={FadeIn.duration(200)}
             style={styles.modalBg} 
           />
-          <Animated.View 
+          <Animated.View
             entering={FadeIn.duration(400)}
-            style={styles.modalContent}
+            style={[styles.modalContent, isDark && { backgroundColor: surface }]}
           >
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('analytics.daily_streak')}</Text>
+              <Text style={[styles.modalTitle, { color: tPrimary }]}>{t('analytics.daily_streak')}</Text>
               <TouchableOpacity onPress={() => setIsStreakModalVisible(false)}>
                 <X size={24} color={Colors.light.gray[400]} />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.largeStreakCard}>
-              <View style={styles.largeIconBox}>
+            <View style={[styles.largeStreakCard, isDark && { backgroundColor: surfaceSoft, borderColor: colors.gray[200] }]}>
+              <View style={[styles.largeIconBox, isDark && { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
                 <Image 
                   source={require('../../assets/images/fire.png')} 
                   style={styles.largeFireIcon} 
@@ -585,9 +588,9 @@ export default function AnalyticsScreen() {
               </View>
 
               <View style={styles.streakInfoRow}>
-                <Text style={styles.largeStreakValue}>{currentStreak}</Text>
-                <View style={styles.streakChip}>
-                   <Text style={styles.chipText}>{t('analytics.keep_going_emoji')}</Text>
+                <Text style={[styles.largeStreakValue, { color: tPrimary }]}>{currentStreak}</Text>
+                <View style={[styles.streakChip, isDark && { backgroundColor: 'rgba(255,255,255,0.06)', borderColor: colors.gray[200] }]}>
+                   <Text style={[styles.chipText, { color: tPrimary }]}>{t('analytics.keep_going_emoji')}</Text>
                 </View>
               </View>
               <Text style={styles.largeStreakLabel}>{t('analytics.day_streak')}</Text>
@@ -597,6 +600,7 @@ export default function AnalyticsScreen() {
                   <View key={index} style={styles.largeDayCol}>
                     <View style={[
                       styles.largeDayIndicator,
+                      isDark && !day.hasActivity && { backgroundColor: 'rgba(255,255,255,0.06)', borderColor: colors.gray[200] },
                       day.hasActivity && styles.largeActiveIndicator
                     ]}>
                       {day.hasActivity ? (
@@ -623,9 +627,9 @@ export default function AnalyticsScreen() {
       >
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setScoreInfoVisible(false)}>
           <Animated.View entering={FadeIn.duration(200)} style={styles.modalBg} />
-          <Animated.View entering={FadeIn.duration(400)} style={styles.modalContent}>
+          <Animated.View entering={FadeIn.duration(400)} style={[styles.modalContent, isDark && { backgroundColor: surface }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{A_('score_info_title')}</Text>
+              <Text style={[styles.modalTitle, { color: tPrimary }]}>{A_('score_info_title')}</Text>
               <TouchableOpacity onPress={() => setScoreInfoVisible(false)}>
                 <X size={24} color={Colors.light.gray[400]} />
               </TouchableOpacity>
@@ -634,7 +638,7 @@ export default function AnalyticsScreen() {
               <Text style={styles.scoreInfoBigValue}>{healthScore || '--'}</Text>
               <Text style={styles.scoreInfoBigMax}>/ 100</Text>
             </View>
-            <Text style={styles.scoreInfoBody}>{A_('score_info_body')}</Text>
+            <Text style={[styles.scoreInfoBody, isDark && { color: tMuted }]}>{A_('score_info_body')}</Text>
             <TouchableOpacity style={styles.scoreInfoBtn} onPress={() => setScoreInfoVisible(false)}>
               <Text style={styles.scoreInfoBtnTxt}>{A_('close')}</Text>
             </TouchableOpacity>

@@ -39,3 +39,33 @@ async generate(prompt, model?) {
 }
 ```
 Comment obtenir les clés : créer un compte sur la console du provider (platform.openai.com, console.anthropic.com, console.groq.com, openrouter.ai/keys, console.mistral.ai) → générer une API key → la coller dans le `.env` serveur (jamais commitée). Redéployer le backend (`docker compose up -d --build backend`).
+
+---
+
+## 🆓 Providers GRATUITS (free tier — recommandés)
+Ceux à privilégier pour ne rien payer. Le plus gratuit = **local/on-device** (aucun appel réseau), puis **self-host sur le serveur** (Ollama), puis **free tiers cloud**.
+
+| Provider | Clé/env | Gratuit ? | Vision ? | Notes |
+|---|---|---|---|---|
+| **On-device TFLite / MLKit** | aucune | ✅ 100% gratuit, hors-ligne | ✅ (food_v1.tflite) | déjà en place — tier 1 du scan |
+| **Ollama (self-host serveur 3)** | aucune (port local) | ✅ gratuit (ton CPU/GPU) | ✅ `llava`, `moondream`, `llama3.2-vision` | aligne avec « modèle local de l'ordinateur » ; tourne en conteneur Docker à côté de whisper |
+| **Google Gemini (AI Studio)** | `GEMINI_API_KEY` | ✅ free tier généreux | ✅ flash / flash-lite | déjà utilisé ; quota gratuit RPM/RPD via aistudio.google.com |
+| **Groq** | `GROQ_API_KEY` | ✅ free tier large | ✅ Llama-4 / Llama-3.2 vision | ultra rapide ; idéal texte + vision légère |
+| **OpenRouter (modèles `:free`)** | `OPENROUTER_API_KEY` | ✅ modèles suffixés `:free` | ✅ certains (Llama vision free) | 1 clé → dizaines de modèles gratuits |
+| **Cloudflare Workers AI** | `CF_API_TOKEN` + account id | ✅ ~10k neurones/jour gratuits | ✅ `llava` | pas de carte requise |
+| **Mistral (La Plateforme)** | `MISTRAL_API_KEY` | ✅ tier expérimental gratuit | ✅ Pixtral | UE/RGPD, FR natif |
+| **HuggingFace Inference** | `HF_TOKEN` | ✅ free (rate-limité) | ✅ beaucoup de modèles | bon pour tester |
+| **GitHub Models** | token GitHub | ✅ gratuit (dev/test) | ✅ GPT-4o, Llama | quotas dev, pratique pour prototyper |
+| **Cohere / Together** | `COHERE_API_KEY` / `TOGETHER_API_KEY` | ✅ trial/crédits offerts | ➖/✅ | texte/embeddings surtout |
+
+**Conseil coût-zéro pour Salorie** : garde la cascade **local → Ollama (serveur) → Gemini free tier**. Tu ne paies que si tu dépasses le free tier Gemini, et seulement pour les cas que ni l'on-device ni Ollama ne couvrent.
+
+---
+
+## Cascade d'insights ANALYTICS (implémentée juin 2026)
+L'écran Analytics suit désormais la cascade demandée **LOCAL → BACKEND → GEMINI** :
+1. **LOCAL (on-device, gratuit, hors-ligne)** — `lib/localInsights.ts` : `localWeightForecast()` (régression linéaire JS sur l'historique de poids + détection de plateau) et `localMealReco()` (scoring macro d'une base d'aliments embarquée). Sert en PREMIER.
+2. **BACKEND (`/ml`)** — `lib/mlApi.ts` (`mlWeightForecast`, `mlMealReco`) : utilisé seulement si le local manque de données (< 3 pesées).
+3. **GEMINI** — narration IA (résumé/reco hebdo) des cartes Bento via `InsightsService` → `/ai`. Tier de secours payant.
+
+`components/MlInsightsCard.tsx` orchestre la cascade et affiche un **badge de source** (Sur l'appareil / Serveur / IA) pour la transparence. Le tier local évite la plupart des appels payants.

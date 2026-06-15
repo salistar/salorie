@@ -5,6 +5,7 @@ import { Colors } from '../constants/Colors';
 import { NutritionLog } from '../lib/firebase';
 import { useTranslation } from '../lib/i18n';
 import { translate } from '../lib/translator';
+import { useTheme } from '../lib/ThemeContext';
 
 interface ActivityListProps {
   logs: NutritionLog[];
@@ -13,6 +14,16 @@ interface ActivityListProps {
 
 export default function ActivityList({ logs, onAddPress }: ActivityListProps) {
   const { t, language } = useTranslation();
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const titleColor = isDark ? '#f1f5f9' : Colors.light.gray[900];
+  const itemBg = isDark ? '#161C23' : Colors.light.white;
+  const itemBorder = isDark ? 'rgba(255,255,255,0.08)' : Colors.light.gray[50];
+  const nameColor = isDark ? '#f1f5f9' : Colors.light.gray[900];
+  const valueColor = isDark ? '#f1f5f9' : Colors.light.gray[900];
+  const emptyBg = isDark ? 'rgba(255,255,255,0.04)' : Colors.light.gray[50];
+  const subColor = isDark ? '#94a3b8' : Colors.light.gray[400];
+  const tsColor = isDark ? '#64748b' : Colors.light.gray[300];
   // Perf : on est DANS le ScrollView du Home (FlatList imbriquée interdite) →
   // rendu plafonné + « voir plus » incrémental pour éviter 100+ items montés.
   const [visibleCount, setVisibleCount] = useState(30);
@@ -93,11 +104,11 @@ export default function ActivityList({ logs, onAddPress }: ActivityListProps) {
   };
 
   const renderEmptyState = () => (
-    <View style={styles.emptyState}>
+    <View style={[styles.emptyState, { backgroundColor: emptyBg }]}>
       <View style={styles.emptyIconWrapper}>
         <ClipboardList size={40} color={Colors.light.primary} strokeWidth={2} />
       </View>
-      <Text style={styles.emptyTitle}>{t('home.no_activity')}</Text>
+      <Text style={[styles.emptyTitle, { color: isDark ? '#f1f5f9' : Colors.light.gray[800] }]}>{t('home.no_activity')}</Text>
       <Text style={styles.emptySub}>{t('home.add_first')}</Text>
 
       <TouchableOpacity style={styles.addCta} onPress={onAddPress} activeOpacity={0.8}>
@@ -109,41 +120,52 @@ export default function ActivityList({ logs, onAddPress }: ActivityListProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>{t('home.recent_activity')}</Text>
-      
+      <Text style={[styles.sectionTitle, { color: titleColor }]}>{t('home.recent_activity')}</Text>
+
       {logs.length === 0 ? (
         renderEmptyState()
       ) : (
         <View style={styles.list}>
           {logs.slice(0, visibleCount).map((log, index) => (
-            <View key={log.id || index} style={styles.item}>
-              <Text style={styles.itemTimestamp}>{formatTime(log.timestamp)}</Text>
-              
+            <View key={log.id || index} style={[styles.item, { backgroundColor: itemBg, borderColor: itemBorder }]}>
+              <Text style={[styles.itemTimestamp, { color: tsColor }]}>{formatTime(log.timestamp)}</Text>
+
               <View style={styles.left}>
                 {renderIcon(log)}
                 <View style={styles.details}>
-                  <Text style={styles.name} numberOfLines={1}>{localizedName(log)}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+                    {(log as any).note?.grade ? (
+                      <View style={[styles.gradeBadge, { backgroundColor: (log as any).note.color || '#2E8B57' }]}>
+                        <Text style={styles.gradeTxt}>{(log as any).note.grade}</Text>
+                      </View>
+                    ) : null}
+                    <Text style={[styles.name, { color: nameColor, flexShrink: 1 }]} numberOfLines={1}>{localizedName(log)}</Text>
+                  </View>
                   {log.type === 'activity' && (log.intensity || log.duration) ? (
-                    <Text style={styles.subtext}>
+                    <Text style={[styles.subtext, { color: subColor }]}>
                       {localizedIntensity(log.intensity)} • {log.duration} min
                     </Text>
                   ) : log.type === 'meal' ? (
-                    <Text style={styles.subtext}>
+                    <Text style={[styles.subtext, { color: subColor }]}>
                       {Math.round(log.calories)} kcal {log.serving ? `• ${log.serving}` : ''}
                     </Text>
                   ) : log.type === 'water' ? (
-                    <Text style={styles.subtext}>
+                    <Text style={[styles.subtext, { color: subColor }]}>
                       {t('home.hydration_log')}
                     </Text>
                   ) : (
-                    <Text style={styles.subtext}>{log.type.charAt(0).toUpperCase() + log.type.slice(1)}</Text>
+                    <Text style={[styles.subtext, { color: subColor }]}>{log.type.charAt(0).toUpperCase() + log.type.slice(1)}</Text>
                   )}
+                  {(log as any).description ? (
+                    <Text style={[styles.descLine, { color: subColor }]} numberOfLines={2}>{(log as any).description}</Text>
+                  ) : null}
                 </View>
               </View>
               
               <View style={styles.right}>
                 <Text style={[
                   styles.value,
+                  { color: valueColor },
                   log.type === 'activity' && styles.activityValue
                 ]}>
                   {log.type === 'activity' ? '-' : ''}
@@ -234,6 +256,9 @@ const styles = StyleSheet.create({
     color: Colors.light.gray[400],
     fontWeight: '600',
   },
+  gradeBadge: { width: 24, height: 24, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  gradeTxt: { color: '#fff', fontSize: 12.5, fontWeight: '900' },
+  descLine: { fontSize: 11.5, fontWeight: '500', marginTop: 4, lineHeight: 15.5, opacity: 0.9 },
   right: {
     alignItems: 'flex-end',
     justifyContent: 'center',

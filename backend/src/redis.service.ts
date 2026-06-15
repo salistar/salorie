@@ -22,6 +22,11 @@ export class RedisService implements OnModuleDestroy {
     try { await this.get().set(key, JSON.stringify(value), 'EX', ttlSec); } catch { /* no cache */ }
   }
 
+  /** Ping Redis pour le readiness probe (/health). true = répond PONG. */
+  async ping(): Promise<boolean> {
+    try { return (await this.get().ping()) === 'PONG'; } catch { return false; }
+  }
+
   /** Rate limiting fenêtre fixe : true = autorisé. Dégrade OUVERT si Redis indisponible. */
   async rateLimit(key: string, limit: number, windowSec: number): Promise<boolean> {
     try {

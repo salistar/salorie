@@ -117,7 +117,9 @@ export default function LogFoodDetailsScreen() {
     });
     const t0 = Date.now();
     try {
-      await addNutritionLog({
+      // Persiste AUSSI la description (ingrédients + qualités/risques) et la note
+      // santé (grade) venues du scan → visibles ensuite dans diary/activité.
+      const payload: any = {
         userId: email,
         type: 'meal',
         name: name,
@@ -128,7 +130,18 @@ export default function LogFoodDetailsScreen() {
         serving: `${quantity} ${unit}`,
         slot,
         date: selectedDate,
-      } as any);
+      };
+      if (description && description.trim()) payload.description = description.trim();
+      const g = params.healthGrade as string | undefined;
+      if (g) {
+        payload.note = {
+          grade: g,
+          score: Number(params.healthScore) || 0,
+          verdict: (params.healthVerdict as string) || '',
+          ...(params.healthColor ? { color: params.healthColor as string } : {}),
+        };
+      }
+      await addNutritionLog(payload);
       colorLog('BLUE', '[API←Firestore] addNutritionLog OK', { ms: Date.now() - t0 });
       // Mémorise l'aliment pour le re-logger en 1 tap (Récents).
       try {

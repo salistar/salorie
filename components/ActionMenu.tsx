@@ -23,15 +23,16 @@ export default function ActionMenu() {
   const { t, language } = useTranslation() as any;
   // Libellés des 3 nouvelles actions (pas de clés centrales) — trilingue local.
   const L: any = {
-    en: { voice: 'Voice log', barcode: 'Barcode', weight: 'Weight' },
-    fr: { voice: 'Vocal', barcode: 'Code-barres', weight: 'Poids' },
-    ar: { voice: 'صوتي', barcode: 'باركود', weight: 'الوزن' },
+    en: { voice: 'Voice log', barcode: 'Barcode', weight: 'Weight', scan: 'Scan (food / barcode)', camHint: 'Dish or barcode' },
+    fr: { voice: 'Vocal', barcode: 'Code-barres', weight: 'Poids', scan: 'Scanner (plat / code-barres)', camHint: 'Plat ou code-barres' },
+    ar: { voice: 'صوتي', barcode: 'باركود', weight: 'الوزن', scan: 'مسح (طعام / باركود)', camHint: 'طبق أو باركود' },
   };
   const lx = L[language] || L.en;
 
-  // Choix Caméra/Galerie DANS le menu (cartes stylées) — plus d'Alert système basique.
+  // Le scanner unifié (scan-camera) gère désormais TOUT : toggle Plat/Code-barres
+  // en haut, galerie intégrée, et choix du modèle (appareil/backend/Gemini).
   const [scanChoice, setScanChoice] = useState(false);
-  const handleScanFood = () => setScanChoice(true);
+  const handleScanFood = () => { hideActionMenu(); router.push('/scan-camera' as any); };
   const closeMenu = () => { setScanChoice(false); hideActionMenu(); };
   const goCamera = () => {
     // FIX Expo Go reload : on navigue vers /scan-camera (CameraView inline,
@@ -177,8 +178,10 @@ export default function ActionMenu() {
       },
     },
     {
+      // Card fusionnée : Scan plat + Code-barres. À l'ouverture → 2 choix
+      // (Caméra / Galerie). La caméra détecte le code-barres OU photographie un plat.
       id: 'scan',
-      title: t('menu.scan_food'),
+      title: lx.scan,
       icon: <Scan size={24} color="#FF5C5C" />,
       bg: '#FFEEED',
       premium: true,
@@ -190,13 +193,6 @@ export default function ActionMenu() {
       icon: <Mic size={24} color="#8B5CF6" />,
       bg: '#F3EEFF',
       onPress: () => { hideActionMenu(); router.push('/voice-log' as any); },
-    },
-    {
-      id: 'barcode',
-      title: lx.barcode,
-      icon: <ScanBarcode size={24} color="#0E7490" />,
-      bg: '#E0F7FA',
-      onPress: () => { hideActionMenu(); router.push('/scan-barcode' as any); },
     },
     {
       id: 'weight',
@@ -230,6 +226,7 @@ export default function ActionMenu() {
                   <Camera size={24} color="#FF5C5C" />
                 </View>
                 <Text style={styles.actionTitle}>{t('menu.take_photo')}</Text>
+                <Text style={styles.cardHint}>{lx.camHint}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => { setScanChoice(false); handleGalleryAction(); }}>
                 <View style={[styles.iconBox, { backgroundColor: '#E0F2FE' }]}>
@@ -329,5 +326,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: Colors.light.gray[900],
     textAlign: 'center',
+  },
+  cardHint: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.light.gray[500],
+    textAlign: 'center',
+    marginTop: 2,
   },
 });

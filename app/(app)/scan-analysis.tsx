@@ -10,7 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ArrowLeft, Check, Circle, Flame, Beef, Wheat, Droplets, Scale, FileText } from 'lucide-react-native';
+import { Check, Circle, Flame, Beef, Wheat, Droplets, Scale, FileText } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import Animated, {
   FadeInDown,
@@ -30,9 +30,60 @@ import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { useLogging } from '../../lib/LoggingContext';
 import { colorLog, explain } from '../../lib/LocalDataStore';
-import { geminiShim } from '../../lib/aiProxy';
+import { geminiShim, aiVisionLocal } from '../../lib/aiProxy';
+import { classifyOnDevice, localMacroForLabel } from '../../lib/onDeviceVision';
+import { computeHealthScore, VERDICT_TXT, HealthScore } from '../../lib/healthScore';
+import { CheckCircle2, AlertTriangle } from 'lucide-react-native';
 
 const PENDING_SCAN_KEY = 'pending_scan_v1';
+
+// Libellés Qualités / Risques (note santé) — trilingue local.
+const QR_LABELS: any = {
+  en: { qualities: 'Strengths', risks: 'Watch out', note: 'Health note' },
+  fr: { qualities: 'Qualités', risks: 'Risques', note: 'Note santé' },
+  ar: { qualities: 'الإيجابيات', risks: 'تنبيهات', note: 'تقييم صحي' },
+};
+
+// Ramène les macros à 100 g pour calculer une note santé comparable.
+function per100(data: any) {
+  const q = data?.unit === 'g' && data?.quantity > 0 ? data.quantity : 100;
+  const f = 100 / q;
+  return {
+    kcal: (Number(data?.calories) || 0) * f,
+    protein: (Number(data?.protein) || 0) * f,
+    carbs: (Number(data?.carbs) || 0) * f,
+    fat: (Number(data?.fat) || 0) * f,
+  };
+}
+
+// Heuristique on-device (pas d'IA) : qualités + risques à partir des macros/100g.
+function heuristicQualRisk(p: { kcal: number; protein: number; carbs: number; fat: number }, lang: string) {
+  const T: any = {
+    fr: { prot: 'Bonne source de protéines', lowfat: 'Pauvre en matières grasses', moderate: 'Apport énergétique modéré',
+          hifat: 'Riche en matières grasses', hicarb: 'Riche en glucides', hical: 'Densité calorique élevée', watch: 'À consommer avec modération' },
+    en: { prot: 'Good source of protein', lowfat: 'Low in fat', moderate: 'Moderate energy',
+          hifat: 'High in fat', hicarb: 'High in carbs', hical: 'High calorie density', watch: 'Best in moderation' },
+    ar: { prot: 'مصدر جيد للبروتين', lowfat: 'قليل الدهون', moderate: 'طاقة معتدلة',
+          hifat: 'غني بالدهون', hicarb: 'غني بالكربوهيدرات', hical: 'كثافة سعرات عالية', watch: 'يُفضّل باعتدال' },
+  };
+  const x = T[lang] || T.en;
+  const Q: string[] = [], R: string[] = [];
+  if (p.protein >= 10) Q.push(x.prot);
+  if (p.fat <= 3) Q.push(x.lowfat);
+  if (p.fat >= 17) R.push(x.hifat);
+  if (p.carbs >= 40) R.push(x.hicarb);
+  if (p.kcal >= 300) R.push(x.hical);
+  if (!Q.length) Q.push(x.moderate);
+  if (!R.length) R.push(x.watch);
+  return { qualities: Q, risks: R };
+}
+
+// Normalise une valeur IA (string "a; b" ou array) en tableau de strings courts.
+function toList(v: any): string[] {
+  if (Array.isArray(v)) return v.map((s) => String(s).trim()).filter(Boolean).slice(0, 4);
+  if (typeof v === 'string') return v.split(/[;\n•]+/).map((s) => s.trim()).filter(Boolean).slice(0, 4);
+  return [];
+}
 
 // LOG AU CHARGEMENT DU MODULE (hors composant) — prouve que le fichier a
 // bien ete evalue par le bundler.
@@ -71,6 +122,9 @@ export default function ScanAnalysisScreen() {
   const params = useLocalSearchParams();
   const imageUri = params.imageUri as string;
   const displayUri = toDisplayUri(imageUri);
+  // Modèle choisi par l'utilisateur (item « 3 modèles ») : 'device' | 'backend' | 'gemini'.
+  // Absent → cascade automatique (on-device → Gemini).
+  const forceModel = (params.forceModel as string) || '';
 
   const { scanImageBase64, setScanImageBase64 } = useLogging();
   const { colors, resolved } = useTheme();
@@ -81,6 +135,8 @@ export default function ScanAnalysisScreen() {
   const [isFinished, setIsFinished] = useState(false);
   const [aiResult, setAiResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  // Tier de la cascade vision qui a fourni le résultat : on-device / IA (Gemini).
+  const [source, setSource] = useState<'device' | 'backend' | 'ai' | null>(null);
 
   const isDark = resolved === 'dark';
 
@@ -131,6 +187,57 @@ export default function ScanAnalysisScreen() {
 
       setCurrentStep(0);
       setCompletedSteps([]);
+
+      // ───── CASCADE VISION — TIER 1 : ON-DEVICE (TFLite, hors-ligne, gratuit) ─────
+      // On classe la photo sur le téléphone. Si confiance OK ET macros trouvées dans
+      // la base locale (502 aliments) → résultat instantané SANS appel cloud. Sinon
+      // on garde le label comme INDICE pour Gemini (tier 3) → meilleure précision.
+      // Finalise un résultat (note santé + qualités/risques on-device) et termine.
+      const finishWith = (data: any, src: 'device' | 'backend' | 'ai') => {
+        const p100 = per100(data);
+        data.health = computeHealthScore(p100);
+        const heur = heuristicQualRisk(p100, language);
+        data.qualities = toList(data.qualities); if (!data.qualities.length) data.qualities = heur.qualities;
+        data.risks = toList(data.risks); if (!data.risks.length) data.risks = heur.risks;
+        if (!data.description) data.description = '';
+        setSource(src);
+        setAiResult(data);
+        setCompletedSteps([1, 2, 3]);
+        setCurrentStep(2);
+        setTimeout(() => setIsFinished(true), 400);
+      };
+
+      // ───── TIER 1 ON-DEVICE (TFLite) — court-circuit UNIQUEMENT si TRÈS confiant ─────
+      // Le classifieur embarqué se trompe souvent (boissons, plats marocains/MENA) :
+      // on ne garde son résultat que s'il est très sûr ET que les macros locales
+      // existent. Sinon (et pour Backend/Gemini forcés) on passe à la VISION CLOUD,
+      // bien plus précise. On NE transmet PAS le label on-device au cloud (peu fiable
+      // → risque d'induire l'IA en erreur).
+      if (forceModel !== 'gemini' && forceModel !== 'backend') {
+        try {
+          const preds = await Promise.race([
+            classifyOnDevice(imageUri),
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
+          ]);
+          const top = (preds as any)?.[0];
+          if (top) {
+            const macro = localMacroForLabel(top.label);
+            // Appareil forcé : seuil élevé (0.85) ; cascade auto : 0.6. En-dessous → cloud.
+            const need = forceModel === 'device' ? 0.85 : 0.6;
+            colorLog('CYAN', '[ScanAnalysis] TIER1 on-device', { label: top.label, score: Math.round(top.score * 100) + '%', need, forceModel });
+            if (top.score >= need && macro && macro.kcal > 0) {
+              explain('Modèle ON-DEVICE (TFLite) — confiant, aucun appel cloud');
+              finishWith({ name: macro.name, description: '', calories: Math.round(macro.kcal), protein: macro.protein, carbs: macro.carbs, fat: macro.fat, quantity: 100, unit: 'g', serving: '100 g' }, 'device');
+              return;
+            }
+          }
+        } catch (e) {
+          colorLog('YELLOW', '[ScanAnalysis] on-device indisponible', { e: String(e) });
+        }
+      }
+      // → VISION CLOUD (précise) : 'backend' via /ai/vision, sinon Gemini direct.
+      const cloudSource: 'backend' | 'ai' = forceModel === 'backend' ? 'backend' : 'ai';
+      setSource(cloudSource);
 
       let base64 = scanImageBase64;
       if (base64) {
@@ -202,8 +309,7 @@ export default function ScanAnalysisScreen() {
       colorLog('CYAN', '[ScanAnalysis] image prete', { base64Chars: base64.length, approxSizeKB: approxKB });
 
       const modelName = process.env.EXPO_PUBLIC_GEMINI_VISION_MODEL || 'gemini-2.5-flash-lite';
-      explain(`modele vision: ${modelName} | langue de sortie: ${language}`);
-      const model = genAI.getGenerativeModel({ model: modelName });
+      explain(`vision: ${modelName} | source: ${cloudSource} | langue: ${language}`);
 
       setCompletedSteps([1]);
       setCurrentStep(1);
@@ -211,14 +317,22 @@ export default function ScanAnalysisScreen() {
       // Prompt enrichi : on demande aussi une description detaillee + quantite
       // precise en g ou ml (pour liquides). Sortie localisee dans la langue de l app.
       const langInstr = languageInstruction(language);
-      const prompt = `Analyze the food in this image in detail.
+      const prompt = `You are a precise food & drink recognition expert. Analyze the food OR DRINK in this image.
 
 ${langInstr}
+
+Be especially accurate for INTERNATIONAL, MOROCCAN and MENA-region dishes and drinks. Examples you must recognize correctly:
+- Moroccan/MENA dishes: tajine, couscous, harira, rfissa, pastilla/bastilla, tangia, msemen, baghrir, harcha, zaalouk, bissara, chebakia, briouates, kebab, shawarma, falafel, hummus, mloukhia, koshari, mansaf, maqluba.
+- Drinks: black coffee (café noir / espresso), Moroccan mint tea (atay / thé à la menthe), café au lait, fresh orange juice, avocado smoothie, leben/raïb.
+- If it is clearly a simple BEVERAGE (e.g. a cup of dark liquid = coffee/tea), classify it as the DRINK, never as a meat/dessert dish.
+Look carefully at color, container (cup/glass/plate/bowl) and texture before deciding.
 
 Return STRICT JSON with these keys:
 {
   "name": "short dish name (2-5 words)",
-  "description": "detailed description of the food (2-4 sentences): visible ingredients, cooking style, texture, notable health properties",
+  "description": "detailed description of the food (2-4 sentences): visible ingredients, cooking style, texture",
+  "qualities": ["2-3 short health BENEFITS of this food (e.g. 'High in protein', 'Rich in fiber')"],
+  "risks": ["2-3 short health RISKS / cautions (e.g. 'High in saturated fat', 'High in added sugar', 'Salty')"],
   "calories": 123,
   "protein": 12.3,
   "carbs": 45,
@@ -231,35 +345,32 @@ Return STRICT JSON with these keys:
 Rules:
 - "unit" MUST be exactly "g" for solids or "ml" for liquids. No other unit.
 - "quantity" is a NUMBER (no unit), matching "unit" — realistic portion as visible.
-- All text ("name", "description", "serving") must be in the requested language.
+- "qualities" and "risks" are ARRAYS of 2-3 SHORT strings each (max ~5 words). Always give at least one of each.
+- All text ("name", "description", "serving", "qualities", "risks") must be in the requested language.
 - Output ONLY the JSON. No markdown, no code fences, no commentary.`;
 
-      colorLog('GREEN', '[API→Gemini] scan-analysis (vision) REQUEST', {
-        model: modelName,
-        lang: language,
-        imageBase64Chars: base64.length,
-        approxKB,
-        promptChars: prompt.length,
-      });
       const t0 = Date.now();
-      let result;
+      let text: string;
       try {
-        result = await model.generateContent([
-          prompt,
-          { inlineData: { data: base64, mimeType: 'image/jpeg' } },
-        ]);
-      } catch (geminiErr) {
-        const fullMsg = (geminiErr as Error).message || '';
-        colorLog('RED', '[API←Gemini] generateContent FAILED', { ms: Date.now() - t0, error: fullMsg });
-        console.log('\x1b[31m━━━━━━━━ GEMINI FULL ERROR START ━━━━━━━━\x1b[0m');
-        console.log(fullMsg);
-        console.log('\x1b[31m━━━━━━━━ GEMINI FULL ERROR END ━━━━━━━━\x1b[0m');
-        throw geminiErr;
+        if (cloudSource === 'backend') {
+          // BACKEND : modèle LOCAL auto-hébergé sur le serveur (Ollama + repli API food),
+          // route /ml/vision — DISTINCT du provider Gemini.
+          colorLog('GREEN', '[API→Backend] /ml/vision REQUEST (modèle local serveur)', { lang: language, approxKB, promptChars: prompt.length });
+          text = await aiVisionLocal(prompt, base64, 'image/jpeg');
+        } else {
+          // GEMINI direct (proxy /ai/vision via le shim).
+          colorLog('GREEN', '[API→Gemini] vision REQUEST', { model: modelName, lang: language, approxKB, promptChars: prompt.length });
+          const model = genAI.getGenerativeModel({ model: modelName });
+          const result = await model.generateContent([prompt, { inlineData: { data: base64, mimeType: 'image/jpeg' } }]);
+          const response = await result.response;
+          text = response.text();
+        }
+      } catch (visErr) {
+        const fullMsg = (visErr as Error).message || '';
+        colorLog('RED', '[API←Vision] FAILED', { ms: Date.now() - t0, source: cloudSource, error: fullMsg });
+        throw visErr;
       }
-      colorLog('BLUE', '[API←Gemini] generateContent returned', { ms: Date.now() - t0 });
-
-      const response = await result.response;
-      let text = response.text();
+      colorLog('BLUE', '[API←Vision] returned', { ms: Date.now() - t0, source: cloudSource });
       explain('reponse brute Gemini recue — preview 300 chars');
       colorLog('BLUE', '[API←Gemini] scan-analysis RESPONSE', {
         ms: Date.now() - t0,
@@ -285,8 +396,15 @@ Rules:
       if (!data.description) {
         data.description = '';
       }
+      // Note santé ON-DEVICE à partir des macros/100g (déterministe, hors-ligne).
+      const p100ai = per100(data);
+      data.health = computeHealthScore(p100ai);
+      // Qualités / risques : ceux de Gemini si présents, sinon repli heuristique on-device.
+      const heur = heuristicQualRisk(p100ai, language);
+      data.qualities = toList(data.qualities); if (!data.qualities.length) data.qualities = heur.qualities;
+      data.risks = toList(data.risks); if (!data.risks.length) data.risks = heur.risks;
 
-      explain('JSON parse + normalisation OK — macros + description + quantite pretes');
+      explain('JSON parse + normalisation OK — macros + description + note santé + qualités/risques');
       colorLog('CYAN', '[ScanAnalysis] macros detectees', {
         name: data.name,
         qty: `${data.quantity} ${data.unit}`,
@@ -316,7 +434,15 @@ Rules:
 
   const handleContinue = () => {
     if (!aiResult) return;
-    explain('user clique Continue — navigation vers log-food-details avec macros + description + quantite');
+    // On replie qualités + risques DANS la description (visible à l'étape de log).
+    const ql = QR_LABELS[language] || QR_LABELS.en;
+    const parts: string[] = [];
+    if (aiResult.description) parts.push(aiResult.description);
+    if (aiResult.qualities?.length) parts.push(`✅ ${ql.qualities}: ${aiResult.qualities.join(' · ')}`);
+    if (aiResult.risks?.length) parts.push(`⚠️ ${ql.risks}: ${aiResult.risks.join(' · ')}`);
+    const fullDesc = parts.join('\n\n');
+
+    explain('user clique Continue — navigation vers log-food-details avec macros + description (qualités/risques) + quantite');
     colorLog('YELLOW', '[ScanAnalysis] → log-food-details', {
       name: aiResult.name,
       qty: `${aiResult.quantity} ${aiResult.unit}`,
@@ -334,8 +460,15 @@ Rules:
         serving: aiResult.serving || `${aiResult.quantity} ${aiResult.unit}`,
         quantity: String(aiResult.quantity),
         unit: aiResult.unit,
-        description: aiResult.description || '',
+        description: fullDesc,
         imageUri: displayUri,
+        // Note santé → persistée sur le repas loggé.
+        ...(aiResult.health ? {
+          healthGrade: aiResult.health.grade,
+          healthScore: String(aiResult.health.score),
+          healthVerdict: (VERDICT_TXT[language] || VERDICT_TXT.en)[aiResult.health.verdict],
+          healthColor: aiResult.health.color,
+        } : {}),
       },
     });
   };
@@ -351,21 +484,7 @@ Rules:
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: bg }]}>
-      <ScreenTopBar showBrand showNotif={false} />
-
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.backBtn, { backgroundColor: cardBg }]}
-          onPress={() => router.back()}
-        >
-          <ArrowLeft
-            size={24}
-            color={textPrimary}
-            strokeWidth={2.5}
-            style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}
-          />
-        </TouchableOpacity>
-      </View>
+      <ScreenTopBar showBack showBrand showNotif={false} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={[styles.titleSection, isRTL && { alignItems: 'flex-end' }]}>
@@ -444,9 +563,23 @@ Rules:
               entering={FadeIn.duration(500)}
               style={[styles.resultCard, { backgroundColor: cardBg, borderColor: cardBorder }]}
             >
-              <Text style={[styles.resultLabel, { color: textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
-                {t('scan.detected_name')}
-              </Text>
+              <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 8 }, isRTL && { flexDirection: 'row-reverse' }]}>
+                <Text style={[styles.resultLabel, { color: textSecondary }]}>
+                  {t('scan.detected_name')}
+                </Text>
+                {source && (() => {
+                  const cfg = source === 'device'
+                    ? { bg: '#EAF4EE', fg: '#2E8B57', label: language === 'fr' ? "Sur l'appareil" : language === 'ar' ? 'على الجهاز' : 'On-device' }
+                    : source === 'backend'
+                    ? { bg: 'rgba(99,102,241,0.12)', fg: '#6366F1', label: language === 'fr' ? 'Backend' : language === 'ar' ? 'الخادم' : 'Backend' }
+                    : { bg: 'rgba(14,165,233,0.12)', fg: '#0EA5E9', label: language === 'fr' ? 'IA · Gemini' : language === 'ar' ? 'ذكاء · Gemini' : 'AI · Gemini' };
+                  return (
+                    <View style={{ backgroundColor: cfg.bg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
+                      <Text style={{ fontSize: 9, fontWeight: '800', color: cfg.fg, textTransform: 'uppercase', letterSpacing: 0.3 }}>{cfg.label}</Text>
+                    </View>
+                  );
+                })()}
+              </View>
               <Text style={[styles.resultName, { color: textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
                 {aiResult.name}
               </Text>
@@ -476,6 +609,51 @@ Rules:
                   >
                     {aiResult.description}
                   </Text>
+                </View>
+              ) : null}
+
+              {/* Note santé (calculée on-device) — grade A→E + verdict */}
+              {aiResult.health && (
+                <View style={[styles.healthBadge, { backgroundColor: aiResult.health.color + '1A', borderColor: aiResult.health.color }, isRTL && { flexDirection: 'row-reverse' }]}>
+                  <View style={[styles.healthGrade, { backgroundColor: aiResult.health.color }]}>
+                    <Text style={styles.healthGradeTxt}>{aiResult.health.grade}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.healthVerdict, { color: aiResult.health.color, textAlign: isRTL ? 'right' : 'left' }]}>
+                      {(VERDICT_TXT[language] || VERDICT_TXT.en)[aiResult.health.verdict]}
+                    </Text>
+                    <Text style={[styles.healthSub, { color: textMuted, textAlign: isRTL ? 'right' : 'left' }]}>
+                      {(QR_LABELS[language] || QR_LABELS.en).note} · {aiResult.health.score}/100{aiResult.health.approx ? ' ~' : ''} · {language === 'fr' ? "sur l'appareil" : language === 'ar' ? 'على الجهاز' : 'on-device'}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Qualités (vert) & Risques (ambre) */}
+              {(aiResult.qualities?.length || aiResult.risks?.length) ? (
+                <View style={styles.qrWrap}>
+                  {aiResult.qualities?.length ? (
+                    <View style={styles.qrBlock}>
+                      <View style={[styles.qrHead, isRTL && { flexDirection: 'row-reverse' }]}>
+                        <CheckCircle2 size={14} color="#2E8B57" strokeWidth={2.5} />
+                        <Text style={[styles.qrTitle, { color: '#2E8B57' }]}>{(QR_LABELS[language] || QR_LABELS.en).qualities}</Text>
+                      </View>
+                      {aiResult.qualities.map((q: string, i: number) => (
+                        <Text key={'q' + i} style={[styles.qrItem, { color: textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>• {q}</Text>
+                      ))}
+                    </View>
+                  ) : null}
+                  {aiResult.risks?.length ? (
+                    <View style={styles.qrBlock}>
+                      <View style={[styles.qrHead, isRTL && { flexDirection: 'row-reverse' }]}>
+                        <AlertTriangle size={14} color="#D97706" strokeWidth={2.5} />
+                        <Text style={[styles.qrTitle, { color: '#D97706' }]}>{(QR_LABELS[language] || QR_LABELS.en).risks}</Text>
+                      </View>
+                      {aiResult.risks.map((r: string, i: number) => (
+                        <Text key={'r' + i} style={[styles.qrItem, { color: textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>• {r}</Text>
+                      ))}
+                    </View>
+                  ) : null}
                 </View>
               ) : null}
 
@@ -710,6 +888,16 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   descText: { fontSize: 14, lineHeight: 20, fontWeight: '500' },
+  healthBadge: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, borderWidth: 1.5, padding: 12, marginTop: 4 },
+  healthGrade: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  healthGradeTxt: { color: '#fff', fontSize: 22, fontWeight: '900' },
+  healthVerdict: { fontSize: 16, fontWeight: '800' },
+  healthSub: { fontSize: 11, fontWeight: '600', marginTop: 1 },
+  qrWrap: { flexDirection: 'row', gap: 12, marginTop: 4 },
+  qrBlock: { flex: 1, gap: 3 },
+  qrHead: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 },
+  qrTitle: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  qrItem: { fontSize: 12.5, lineHeight: 17, fontWeight: '500' },
   macrosGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

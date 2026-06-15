@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
-import { Activity, TrendingDown, TrendingUp, Check } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { Activity, TrendingDown, TrendingUp, Check, Scale, Utensils } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { getUserFromFirestore, updateDailyCalories } from '../../lib/firebase';
 import { getEntries } from '../../lib/tracking';
@@ -30,6 +31,17 @@ const TXT: any = {
     applied: 'Target applied',
     apply: 'Apply this target',
     foot: "The estimate gets sharper with every logged meal and every weigh-in.",
+    howTitle: 'How it is computed',
+    howBody1: 'Adaptive TDEE learns your real maintenance calories from what actually happens to your body, not from a generic formula. It compares how much you ate with how your weight moved over the last weeks.',
+    howBody2: 'Over a rolling window (~21 days) it measures two things: your real average daily intake from logged meals, and your weight trend using a linear regression over your weigh-ins (regression is robust to daily scale noise).',
+    howMethodLabel: 'The method',
+    howMethod: 'Real TDEE = average intake − (weight change per day × 7700 kcal/kg)',
+    howBody3: 'Each kg of body mass is about 7700 kcal. If you are losing weight while eating a known amount, your body must be burning more than you eat — so your true maintenance is higher than your intake. It recalibrates automatically every time you open the screen.',
+    howNeed: 'What it needs: ~7+ days of logged meals and at least 2 weigh-ins spaced ~7 days apart.',
+    addData: 'Add my data',
+    addWeight: 'Log my weight',
+    logMeal: 'Log a meal',
+    signInPrompt: 'Sign in to add your data and unlock your TDEE.',
   },
   fr: {
     title: 'TDEE adaptatif',
@@ -49,6 +61,17 @@ const TXT: any = {
     applied: 'Cible appliquée',
     apply: 'Appliquer cette cible',
     foot: "L'estimation s'affine à chaque repas loggé et chaque pesée.",
+    howTitle: 'Comment c\'est calculé',
+    howBody1: "Le TDEE adaptatif apprend tes vraies calories de maintenance à partir de ce qui arrive réellement à ton corps, et non d'une formule générique. Il compare ce que tu as mangé à l'évolution de ton poids sur les dernières semaines.",
+    howBody2: "Sur une fenêtre glissante (~21 jours), il mesure deux choses : ton apport quotidien moyen réel à partir des repas loggés, et ta tendance de poids via une régression linéaire sur tes pesées (la régression résiste au bruit quotidien de la balance).",
+    howMethodLabel: 'La méthode',
+    howMethod: 'TDEE réel = apport moyen − (variation de poids par jour × 7700 kcal/kg)',
+    howBody3: "Chaque kg de masse corporelle vaut environ 7700 kcal. Si tu perds du poids tout en mangeant une quantité connue, ton corps brûle plus que tu ne manges — ta vraie maintenance est donc supérieure à ton apport. Il se recalibre automatiquement à chaque ouverture de l'écran.",
+    howNeed: "Ce qu'il faut : ~7 jours et plus de repas loggés et au moins 2 pesées espacées d'environ 7 jours.",
+    addData: 'Ajouter mes données',
+    addWeight: 'Logger mon poids',
+    logMeal: 'Logger un repas',
+    signInPrompt: 'Connecte-toi pour ajouter tes données et débloquer ton TDEE.',
   },
   ar: {
     title: 'TDEE التكيفي',
@@ -68,6 +91,17 @@ const TXT: any = {
     applied: 'تم تطبيق الهدف',
     apply: 'طبّق هذا الهدف',
     foot: 'يزداد التقدير دقة مع كل وجبة مسجلة وكل وزنة.',
+    howTitle: 'كيف يُحسب',
+    howBody1: 'يتعلّم TDEE التكيفي سعرات الصيانة الحقيقية من ما يحدث فعلاً لجسمك، وليس من معادلة عامة. يقارن كمية ما أكلته بكيفية تغيّر وزنك خلال الأسابيع الماضية.',
+    howBody2: 'على مدى نافذة متحركة (~21 يوماً) يقيس أمرين: متوسط استهلاكك اليومي الحقيقي من الوجبات المسجلة، واتجاه وزنك باستخدام انحدار خطي على وزناتك (الانحدار مقاوم لضوضاء الميزان اليومية).',
+    howMethodLabel: 'الطريقة',
+    howMethod: 'TDEE الحقيقي = متوسط الاستهلاك − (تغيّر الوزن في اليوم × 7700 سعرة/كغ)',
+    howBody3: 'كل كيلوغرام من كتلة الجسم يساوي حوالي 7700 سعرة. إذا كنت تفقد الوزن أثناء أكل كمية معروفة، فإن جسمك يحرق أكثر مما تأكل — لذا فإن صيانتك الحقيقية أعلى من استهلاكك. تُعاد المعايرة تلقائياً في كل مرة تفتح فيها الشاشة.',
+    howNeed: 'ما يحتاجه: 7 أيام فأكثر من الوجبات المسجلة ووزنتان على الأقل بفارق ~7 أيام.',
+    addData: 'أضف بياناتي',
+    addWeight: 'سجّل وزني',
+    logMeal: 'سجّل وجبة',
+    signInPrompt: 'سجّل الدخول لإضافة بياناتك وفتح TDEE الخاص بك.',
   },
 };
 
@@ -123,7 +157,7 @@ export default function AdaptiveTDEE() {
 
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
-      <ScreenTopBar />
+      <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body}>
         <Image source={require('../../assets/images/illustrations/lose_weight.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <View style={s.head}>
@@ -190,6 +224,36 @@ export default function AdaptiveTDEE() {
             <Text style={s.foot}>{res.note} {t.foot}</Text>
           </>
         )}
+
+        <View style={[s.howCard, { backgroundColor: card, borderColor: border }]}>
+          <Text style={[s.howTitle, { color: GREEN }, align]}>{t.howTitle}</Text>
+          <Text style={[s.howBody, { color: sub }, align]}>{t.howBody1}</Text>
+          <Text style={[s.howBody, { color: sub }, align]}>{t.howBody2}</Text>
+          <View style={[s.methodBox, { backgroundColor: GREEN + '14' }]}>
+            <Text style={[s.methodLabel, { color: GREEN }, align]}>{t.howMethodLabel}</Text>
+            <Text style={[s.method, { color: text }, align]}>{t.howMethod}</Text>
+          </View>
+          <Text style={[s.howBody, { color: sub }, align]}>{t.howBody3}</Text>
+          <Text style={[s.howNeed, { color: sub }, align]}>{t.howNeed}</Text>
+        </View>
+
+        {user ? (
+          <View style={s.dataCard}>
+            <Text style={[s.dataTitle, { color: text }, align]}>{t.addData}</Text>
+            <View style={s.dataRow}>
+              <TouchableOpacity style={[s.dataBtn, { backgroundColor: GREEN }]} onPress={() => router.push('/update-weight' as any)}>
+                <Scale size={18} color="#fff" />
+                <Text style={s.dataBtnTxt}>{t.addWeight}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.dataBtn, s.dataBtnAlt, { borderColor: GREEN }]} onPress={() => router.push('/log-manual' as any)}>
+                <Utensils size={18} color={GREEN} />
+                <Text style={[s.dataBtnTxt, { color: GREEN }]}>{t.logMeal}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <Text style={[s.signIn, align]}>{t.signInPrompt}</Text>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -222,4 +286,18 @@ const s = StyleSheet.create({
   applyBtnDone: { backgroundColor: '#94a3b8' },
   applyTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
   foot: { fontSize: 11, color: '#94a3b8', marginTop: 16, lineHeight: 17, textAlign: 'center' },
+  howCard: { backgroundColor: '#fff', borderRadius: 18, padding: 18, marginTop: 18, borderWidth: 1, borderColor: '#e6ece8' },
+  howTitle: { fontSize: 17, fontWeight: '900', marginBottom: 10 },
+  howBody: { fontSize: 13, lineHeight: 20, marginBottom: 10 },
+  methodBox: { borderRadius: 14, padding: 14, marginVertical: 2, marginBottom: 12 },
+  methodLabel: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
+  method: { fontSize: 14, fontWeight: '800', lineHeight: 20 },
+  howNeed: { fontSize: 12, lineHeight: 18, fontStyle: 'italic' },
+  dataCard: { marginTop: 16 },
+  dataTitle: { fontSize: 14, fontWeight: '800', marginBottom: 10 },
+  dataRow: { flexDirection: 'row', gap: 12 },
+  dataBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 14 },
+  dataBtnAlt: { backgroundColor: 'transparent', borderWidth: 1.5 },
+  dataBtnTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  signIn: { fontSize: 13, color: '#667085', marginTop: 18, lineHeight: 19, fontWeight: '600' },
 });

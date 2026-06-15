@@ -12,9 +12,51 @@ import { useTranslation } from '../../lib/i18n';
 const GREEN = '#2E8B57';
 
 const TXT: any = {
-  en: { title: 'Metabolic twin', sub1: 'Simulate the effect of your diet on your weight (estimate, TDEE ≈ ', sub2: ' kcal).', ifIEat: 'If I eat every day…', heroLabel: 'Estimated weight in 30 days', perWeek: 'kg/wk', d7: '7 days', d30: '30 days', d90: '90 days', goal: 'Goal', notSet: '(not set)', etaA: '≈ ', etaB: ' weeks at this pace (~', etaC: ' months)', etaEmpty: 'Set a weight goal and a deficit/surplus to estimate the date.' },
-  fr: { title: 'Jumeau métabolique', sub1: "Simule l'effet de ton alimentation sur ton poids (estimation, TDEE ≈ ", sub2: ' kcal).', ifIEat: 'Si je mange chaque jour…', heroLabel: 'Poids estimé dans 30 jours', perWeek: 'kg/sem', d7: '7 jours', d30: '30 jours', d90: '90 jours', goal: 'Objectif', notSet: '(non défini)', etaA: '≈ ', etaB: ' semaines à ce rythme (~', etaC: ' mois)', etaEmpty: 'Définis un objectif de poids et un déficit/surplus pour estimer la date.' },
-  ar: { title: 'التوأم الأيضي', sub1: 'حاكِ تأثير غذائك على وزنك (تقدير، TDEE ≈ ', sub2: ' سعرة).', ifIEat: 'إذا أكلت كل يوم…', heroLabel: 'الوزن المقدَّر بعد 30 يوماً', perWeek: 'كغ/أسبوع', d7: '7 أيام', d30: '30 يوماً', d90: '90 يوماً', goal: 'الهدف', notSet: '(غير محدد)', etaA: '≈ ', etaB: ' أسبوعاً بهذا الإيقاع (~', etaC: ' أشهر)', etaEmpty: 'حدد هدف وزن وعجزاً/فائضاً لتقدير الموعد.' },
+  en: {
+    title: 'Metabolic twin', sub1: 'Simulate the effect of your diet on your weight (estimate, TDEE ≈ ', sub2: ' kcal).', ifIEat: 'If I eat every day…', heroLabel: 'Estimated weight in 30 days', perWeek: 'kg/wk', d7: '7 days', d30: '30 days', d90: '90 days', goal: 'Goal', notSet: '(not set)', etaA: '≈ ', etaB: ' weeks at this pace (~', etaC: ' months)', etaEmpty: 'Set a weight goal and a deficit/surplus to estimate the date.',
+    howTitle: 'What this is',
+    howBody1: 'Your metabolic twin is a simple energy-balance model of your body. It projects how your weight would change if you kept eating a chosen number of calories every day. Move the stepper to test different intakes.',
+    howMathTitle: 'How the math works',
+    howBody2: 'It compares your daily intake to your maintenance calories (TDEE — the energy you burn per day). Eating below maintenance creates a deficit (you lose weight); above it creates a surplus (you gain).',
+    fTdee: 'Maintenance (TDEE)',
+    fTdeeBody: 'Estimated from your weight using a standard activity-adjusted rate. The classic basis is the Mifflin-St Jeor BMR (10·kg + 6.25·cm − 5·age + s) multiplied by an activity factor; here a simplified ~31 kcal/kg of body weight is used:',
+    fEnergy: 'Energy per kg',
+    fEnergyBody: '1 kg of body mass ≈ 7700 kcal.',
+    fProjection: 'Weight projection',
+    fProjBody: 'Future weight = current weight + ((intake − TDEE) × days) ÷ 7700',
+    fPlug: 'With your numbers',
+    fRate: 'Weekly rate = (intake − TDEE) × 7 ÷ 7700',
+  },
+  fr: {
+    title: 'Jumeau métabolique', sub1: "Simule l'effet de ton alimentation sur ton poids (estimation, TDEE ≈ ", sub2: ' kcal).', ifIEat: 'Si je mange chaque jour…', heroLabel: 'Poids estimé dans 30 jours', perWeek: 'kg/sem', d7: '7 jours', d30: '30 jours', d90: '90 jours', goal: 'Objectif', notSet: '(non défini)', etaA: '≈ ', etaB: ' semaines à ce rythme (~', etaC: ' mois)', etaEmpty: 'Définis un objectif de poids et un déficit/surplus pour estimer la date.',
+    howTitle: "Ce que c'est",
+    howBody1: "Ton jumeau métabolique est un modèle simple de bilan énergétique de ton corps. Il projette l'évolution de ton poids si tu continuais à manger un certain nombre de calories chaque jour. Utilise le sélecteur pour tester différents apports.",
+    howMathTitle: 'Comment le calcul fonctionne',
+    howBody2: "Il compare ton apport quotidien à tes calories de maintenance (TDEE — l'énergie que tu brûles par jour). Manger sous la maintenance crée un déficit (tu perds du poids) ; au-dessus, un surplus (tu en prends).",
+    fTdee: 'Maintenance (TDEE)',
+    fTdeeBody: "Estimée à partir de ton poids avec un taux ajusté à l'activité. La base classique est le métabolisme de base Mifflin-St Jeor (10·kg + 6,25·cm − 5·âge + s) multiplié par un facteur d'activité ; ici un ~31 kcal/kg de poids corporel simplifié est utilisé :",
+    fEnergy: 'Énergie par kg',
+    fEnergyBody: '1 kg de masse corporelle ≈ 7700 kcal.',
+    fProjection: 'Projection du poids',
+    fProjBody: 'Poids futur = poids actuel + ((apport − TDEE) × jours) ÷ 7700',
+    fPlug: 'Avec tes chiffres',
+    fRate: 'Rythme hebdo = (apport − TDEE) × 7 ÷ 7700',
+  },
+  ar: {
+    title: 'التوأم الأيضي', sub1: 'حاكِ تأثير غذائك على وزنك (تقدير، TDEE ≈ ', sub2: ' سعرة).', ifIEat: 'إذا أكلت كل يوم…', heroLabel: 'الوزن المقدَّر بعد 30 يوماً', perWeek: 'كغ/أسبوع', d7: '7 أيام', d30: '30 يوماً', d90: '90 يوماً', goal: 'الهدف', notSet: '(غير محدد)', etaA: '≈ ', etaB: ' أسبوعاً بهذا الإيقاع (~', etaC: ' أشهر)', etaEmpty: 'حدد هدف وزن وعجزاً/فائضاً لتقدير الموعد.',
+    howTitle: 'ما هذا',
+    howBody1: 'توأمك الأيضي هو نموذج بسيط لتوازن الطاقة في جسمك. يتوقع كيف سيتغيّر وزنك إذا واصلت أكل عدد معيّن من السعرات كل يوم. حرّك المُحدِّد لتجربة كميات مختلفة.',
+    howMathTitle: 'كيف يعمل الحساب',
+    howBody2: 'يقارن استهلاكك اليومي بسعرات الصيانة (TDEE — الطاقة التي تحرقها يومياً). الأكل تحت الصيانة يخلق عجزاً (تفقد الوزن) ؛ وفوقها يخلق فائضاً (تكتسب الوزن).',
+    fTdee: 'الصيانة (TDEE)',
+    fTdeeBody: 'تُقدَّر من وزنك بمعدل معدّل حسب النشاط. الأساس الكلاسيكي هو معدل الأيض الأساسي Mifflin-St Jeor (10·كغ + 6.25·سم − 5·العمر + s) مضروباً في عامل النشاط ؛ هنا يُستخدم ~31 سعرة/كغ من وزن الجسم بشكل مبسّط:',
+    fEnergy: 'الطاقة لكل كغ',
+    fEnergyBody: '1 كغ من كتلة الجسم ≈ 7700 سعرة.',
+    fProjection: 'توقّع الوزن',
+    fProjBody: 'الوزن المستقبلي = الوزن الحالي + ((الاستهلاك − TDEE) × الأيام) ÷ 7700',
+    fPlug: 'بأرقامك',
+    fRate: 'المعدل الأسبوعي = (الاستهلاك − TDEE) × 7 ÷ 7700',
+  },
 };
 
 export default function MetabolicTwinScreen() {
@@ -97,6 +139,33 @@ export default function MetabolicTwinScreen() {
             <Text style={[styles.etaSub, { color: sub }, align]}>{eta ? `${t.etaA}${eta}${t.etaB}${Math.ceil(eta / 4)}${t.etaC}` : t.etaEmpty}</Text>
           </View>
         </View>
+
+        <View style={[styles.howCard, { backgroundColor: card }]}>
+          <Text style={[styles.howTitle, { color: GREEN }, align]}>{t.howTitle}</Text>
+          <Text style={[styles.howBody, { color: sub }, align]}>{t.howBody1}</Text>
+
+          <Text style={[styles.howSubTitle, { color: text }, align]}>{t.howMathTitle}</Text>
+          <Text style={[styles.howBody, { color: sub }, align]}>{t.howBody2}</Text>
+
+          <View style={[styles.mathBox, { backgroundColor: GREEN + '14' }]}>
+            <Text style={[styles.mathLabel, { color: GREEN }, align]}>{t.fTdee}</Text>
+            <Text style={[styles.mathBody, { color: text }, align]}>{t.fTdeeBody}</Text>
+            <Text style={[styles.mathFormula, { color: text }, align]}>TDEE ≈ {p.weight} kg × 31 = {tdee} kcal/day</Text>
+
+            <View style={[styles.mathSep, { backgroundColor: isDark ? '#334155' : '#D7E8DD' }]} />
+            <Text style={[styles.mathLabel, { color: GREEN }, align]}>{t.fEnergy}</Text>
+            <Text style={[styles.mathBody, { color: text }, align]}>{t.fEnergyBody}</Text>
+
+            <View style={[styles.mathSep, { backgroundColor: isDark ? '#334155' : '#D7E8DD' }]} />
+            <Text style={[styles.mathLabel, { color: GREEN }, align]}>{t.fProjection}</Text>
+            <Text style={[styles.mathFormula, { color: text }, align]}>{t.fProjBody}</Text>
+            <Text style={[styles.mathBody, { color: sub }, align]}>{t.fPlug}: {p.weight} + (({intake} − {tdee}) × 30) ÷ 7700 = {w30} kg</Text>
+
+            <View style={[styles.mathSep, { backgroundColor: isDark ? '#334155' : '#D7E8DD' }]} />
+            <Text style={[styles.mathLabel, { color: GREEN }, align]}>{t.fRate}</Text>
+            <Text style={[styles.mathFormula, { color: text }, align]}>({intake} − {tdee}) × 7 ÷ 7700 = {rate} {t.perWeek}</Text>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -127,4 +196,13 @@ const styles = StyleSheet.create({
   etaCard: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#fff', borderRadius: 18, padding: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   etaTitle: { fontSize: 15, fontWeight: '800', color: '#0F172A' },
   etaSub: { fontSize: 13, color: '#64748B', marginTop: 3, lineHeight: 18 },
+  howCard: { backgroundColor: '#fff', borderRadius: 20, padding: 18, marginTop: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  howTitle: { fontSize: 18, fontWeight: '900', marginBottom: 10 },
+  howSubTitle: { fontSize: 15, fontWeight: '800', marginTop: 6, marginBottom: 8 },
+  howBody: { fontSize: 14, lineHeight: 21, marginBottom: 10 },
+  mathBox: { borderRadius: 14, padding: 14, marginTop: 4 },
+  mathLabel: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
+  mathBody: { fontSize: 13, lineHeight: 19, marginBottom: 4 },
+  mathFormula: { fontSize: 13, fontWeight: '800', lineHeight: 19, marginBottom: 2 },
+  mathSep: { height: 1, marginVertical: 12 },
 });

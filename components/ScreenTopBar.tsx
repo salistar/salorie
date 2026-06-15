@@ -7,6 +7,13 @@ import { useTheme, ThemeMode } from '../lib/ThemeContext';
 import { useTranslation, Language } from '../lib/i18n';
 import AppBrand from './AppBrand';
 
+// Libellés du menu de thème, traduits (sinon "Light/Dark/System" en anglais partout).
+const THEME_LABELS: Record<string, Record<string, string>> = {
+  en: { light: 'Light', dark: 'Dark', system: 'System' },
+  fr: { light: 'Clair', dark: 'Sombre', system: 'Système' },
+  ar: { light: 'فاتح', dark: 'داكن', system: 'النظام' },
+};
+
 interface ScreenTopBarProps {
   showBrand?: boolean;
   showNotif?: boolean;
@@ -28,6 +35,11 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
   const iconColor = resolved === 'dark' ? colors.gray[600] : Colors.light.gray[700];
   const btnBg = resolved === 'dark' ? 'rgba(40,50,60,0.6)' : 'rgba(255,255,255,0.8)';
   const btnBorder = resolved === 'dark' ? colors.gray[200] : Colors.light.gray[200];
+  // Dark-aware dropdown menus (theme / language).
+  const isDark = resolved === 'dark';
+  const menuBg = isDark ? '#161C23' : Colors.light.white;
+  const menuItemText = isDark ? '#f1f5f9' : Colors.light.gray[800];
+  const menuActiveBg = isDark ? 'rgba(46,139,87,0.18)' : Colors.light.primaryLight;
 
   const themeIcons: Record<ThemeMode, any> = {
     light: Sun,
@@ -65,7 +77,7 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
             {title}
           </Text>
         ) : (
-          showBrand && <Text style={[styles.brandWord, { color: colors.primary }]}>Salorie</Text>
+          showBrand && <Text numberOfLines={1} style={[styles.brandWord, { color: colors.primary }]}>Salorie</Text>
         )}
       </View>
       <View style={styles.actions}>
@@ -102,11 +114,11 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
       {/* Language menu */}
       <Modal visible={langMenuOpen} transparent animationType="fade" onRequestClose={() => setLangMenuOpen(false)}>
         <Pressable style={styles.modalBackdrop} onPress={() => setLangMenuOpen(false)}>
-          <View style={styles.menu}>
+          <View style={[styles.menu, { backgroundColor: menuBg }]}>
             {(['en', 'fr', 'ar'] as Language[]).map((lang) => (
               <TouchableOpacity
                 key={lang}
-                style={[styles.menuItem, language === lang && styles.menuItemActive]}
+                style={[styles.menuItem, language === lang && { backgroundColor: menuActiveBg }]}
                 onPress={() => {
                   setLanguage(lang);
                   setLangMenuOpen(false);
@@ -115,7 +127,7 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
                 <Text style={styles.menuItemFlag}>
                   {lang === 'en' ? '🇬🇧' : lang === 'fr' ? '🇫🇷' : '🇸🇦'}
                 </Text>
-                <Text style={[styles.menuItemText, language === lang && styles.menuItemTextActive]}>
+                <Text style={[styles.menuItemText, { color: menuItemText }, language === lang && styles.menuItemTextActive]}>
                   {lang === 'en' ? 'English' : lang === 'fr' ? 'Français' : 'العربية'}
                 </Text>
               </TouchableOpacity>
@@ -127,21 +139,21 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
       {/* Theme menu */}
       <Modal visible={themeMenuOpen} transparent animationType="fade" onRequestClose={() => setThemeMenuOpen(false)}>
         <Pressable style={styles.modalBackdrop} onPress={() => setThemeMenuOpen(false)}>
-          <View style={styles.menu}>
+          <View style={[styles.menu, { backgroundColor: menuBg }]}>
             {(['light', 'dark', 'system'] as ThemeMode[]).map((m) => {
               const Icon = themeIcons[m];
               return (
                 <TouchableOpacity
                   key={m}
-                  style={[styles.menuItem, mode === m && styles.menuItemActive]}
+                  style={[styles.menuItem, mode === m && { backgroundColor: menuActiveBg }]}
                   onPress={() => {
                     setMode(m);
                     setThemeMenuOpen(false);
                   }}
                 >
-                  <Icon size={18} color={mode === m ? Colors.light.primary : Colors.light.gray[700]} />
-                  <Text style={[styles.menuItemText, mode === m && styles.menuItemTextActive]}>
-                    {m.charAt(0).toUpperCase() + m.slice(1)}
+                  <Icon size={18} color={mode === m ? Colors.light.primary : (isDark ? colors.gray[600] : Colors.light.gray[700])} />
+                  <Text style={[styles.menuItemText, { color: menuItemText }, mode === m && styles.menuItemTextActive]}>
+                    {(THEME_LABELS[language] || THEME_LABELS.en)[m]}
                   </Text>
                 </TouchableOpacity>
               );
@@ -158,16 +170,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    // Sans largeur explicite, à l'intérieur d'un ScrollView le row se réduit à la
+    // largeur de son contenu → space-between n'écarte plus les boutons et ils
+    // recouvrent le mot « Salorie ». width:100% + alignSelf:stretch garantit la
+    // pleine largeur dans TOUS les conteneurs (SafeAreaView direct OU ScrollView).
+    width: '100%',
+    alignSelf: 'stretch',
+    paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 8,
   },
   leading: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     flex: 1,
     minWidth: 0,
+    marginRight: 6,
   },
   backBtn: {
     width: 44,
@@ -190,9 +209,10 @@ const styles = StyleSheet.create({
     height: 26,
   },
   brandWord: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: '900',
     letterSpacing: -0.5,
+    flexShrink: 1,
   },
   screenTitle: {
     flex: 1,
@@ -202,28 +222,29 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 5,
+    flexShrink: 0,
   },
   iconBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 14,
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 7,
+    borderRadius: 11,
     backgroundColor: 'rgba(255,255,255,0.8)',
     borderWidth: 1,
     borderColor: Colors.light.gray[200],
   },
   iconBtnText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
     color: Colors.light.gray[700],
   },
   iconBtnSquare: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 38,
+    height: 38,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.8)',

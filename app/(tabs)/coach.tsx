@@ -17,7 +17,8 @@ const SEC_TXT: any = {
 // i18n des libellés de tuiles par route (corrige le reste FR en mode EN/AR).
 const TILE_I18N: Record<string, { en: string; ar: string }> = {
   '/diary': { en: 'Food diary', ar: 'يوميات الطعام' },
-  '/food-recognition': { en: 'Recognize a food', ar: 'تعرّف على طعام' },
+  '/kitchen': { en: 'Kitchen & meals', ar: 'المطبخ والوجبات' },
+  '/scan-camera': { en: 'Recognize a food', ar: 'تعرّف على طعام' },
   '/voice-log': { en: 'Voice log', ar: 'تسجيل صوتي' },
   '/scan-barcode': { en: 'Barcode scan', ar: 'مسح الباركود' },
   '/label-scan': { en: 'Scan label', ar: 'مسح الملصق' },
@@ -34,6 +35,7 @@ const TILE_I18N: Record<string, { en: string; ar: string }> = {
   '/fasting': { en: 'Intermittent fasting', ar: 'الصيام المتقطع' },
   '/log-exercise': { en: 'Log a workout', ar: 'سجّل تمريناً' },
   '/move-goals': { en: 'Daily moves', ar: 'حركات اليوم' },
+  '/activity': { en: 'Activity', ar: 'النشاط' },
   '/sport-agenda': { en: 'Sport agenda', ar: 'أجندة الرياضة' },
   '/equipment-scan': { en: 'Equipment scanner', ar: 'ماسح الأجهزة' },
   '/rep-counter': { en: 'Rep counter', ar: 'عدّاد التكرارات' },
@@ -52,6 +54,11 @@ const TILE_I18N: Record<string, { en: string; ar: string }> = {
   '/metabolic-twin': { en: 'Metabolic twin', ar: 'التوأم الأيضي' },
   '/calorie-budget': { en: 'Calorie budget', ar: 'ميزانية السعرات' },
   '/journal': { en: 'Journal & news', ar: 'اليوميات والأخبار' },
+  '/ai-coach': { en: 'AI Coach', ar: 'مدرب الذكاء' },
+  '/meal-plan': { en: 'Meal plan', ar: 'خطة الوجبات' },
+  '/nutrients': { en: 'Nutrients', ar: 'العناصر الغذائية' },
+  '/health': { en: 'Health Connect', ar: 'ربط الصحة' },
+  '/social': { en: 'Social & friends', ar: 'المجتمع والأصدقاء' },
 };
 const tileLabel = (route: string, fr: string, lang: string) => (lang === 'fr' ? fr : (TILE_I18N[route]?.[lang as 'en' | 'ar'] || fr));
 import { useFeatureFlags, isEnabled } from '../../lib/featureFlags';
@@ -114,19 +121,21 @@ export default function CoachScreen() {
 
   const load = useCallback(async () => {
     const email = user?.primaryEmailAddress?.emailAddress || '';
-    if (!email) { setLoading(false); return; }
+    // Stats calculées 100% ON-DEVICE (AsyncStorage + JS, aucun modèle/réseau).
+    // Les OUTILS du Coach ne dépendent PAS de ces stats : on rend TOUJOURS
+    // l'écran, même déconnecté ou si le chargement échoue. Sans ça, `data`
+    // restait null → spinner infini → "le Coach ne s'ouvre pas".
+    const FALLBACK: EngagementData = {
+      adaptiveTDEE: null, recommendedTarget: null, staticTarget: null, avgIntake: null,
+      weightTrendKgPerWeek: null, confidence: 'low' as any, streak: 0, daysTracked: 0,
+      weighIns: 0, totalLogs: 0, achievements: [], lesson: { title: '', body: '' }, goal: '',
+    };
+    if (!email) { setData(FALLBACK); setLoading(false); return; }
     try {
-      // TIMEOUT 8s : sur réseau faible, les lectures Firestore peuvent pendre
-      // indéfiniment → le Coach restait bloqué sur le spinner ("n'ouvre pas").
-      // Au timeout, on rend l'écran avec des valeurs neutres (les OUTILS — la
-      // partie utile — ne doivent jamais être otages des stats).
-      const FALLBACK: EngagementData = {
-        adaptiveTDEE: null, recommendedTarget: null, staticTarget: null, avgIntake: null,
-        weightTrendKgPerWeek: null, confidence: 'low' as any, streak: 0, daysTracked: 0,
-        weighIns: 0, totalLogs: 0, achievements: [], lesson: { title: '', body: '' }, goal: '',
-      };
+      // TIMEOUT 8s : sur réseau faible, les lectures peuvent pendre. .catch sur
+      // loadEngagement → la course ne REJETTE jamais (sinon data restait null).
       const d = await Promise.race([
-        loadEngagement(email, language),
+        loadEngagement(email, language).catch((e) => { console.warn('[Coach] loadEngagement', e); return FALLBACK; }),
         new Promise<EngagementData>((resolve) => setTimeout(() => resolve(FALLBACK), 8000)),
       ]);
       setData(d);
@@ -135,6 +144,7 @@ export default function CoachScreen() {
       publishStats(email, { name, imageUrl: user?.imageUrl || undefined, streak: d.streak, daysTracked: d.daysTracked }).catch(() => {});
     } catch (e) {
       console.warn('[Coach] load failed', e);
+      setData(FALLBACK); // garantit le rendu de l'écran quoi qu'il arrive
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -146,7 +156,7 @@ export default function CoachScreen() {
   const text = isDark ? '#fff' : Colors.light.gray[900];
   const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
   const card = isDark ? Colors.dark.card : '#fff';
-  const bg = isDark ? '#000' : 'transparent';
+  const bg = isDark ? '#0B0E12' : 'transparent';
 
   // !data couvre aussi le cas DÉCONNECTÉ (pas d'email → data jamais chargée) :
   // sans ce garde, `data!` crashait l'onglet Coach pour un user signé out.
@@ -185,7 +195,7 @@ export default function CoachScreen() {
           <Text style={styles.heroLabel}>{t('coach.adaptive_label')}</Text>
           {hasPlan ? (
             <>
-              <Text style={styles.heroValue}>{d.recommendedTarget}<Text style={styles.heroUnit}> kcal</Text></Text>
+              <Text style={styles.heroValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>{d.recommendedTarget}<Text style={styles.heroUnit}> kcal</Text></Text>
               <View style={styles.heroRow}>
                 <View style={styles.heroStat}>
                   <Text style={styles.heroStatLabel}>{t('coach.real_burn')}</Text>
@@ -220,43 +230,25 @@ export default function CoachScreen() {
         {(() => {
           const sections = [
             { key: 'eat', Icon: UtensilsCrossed, items: [
-              { Icon: BookmarkPlus, label: 'Journal alimentaire', route: '/diary' },
-              { Icon: Apple, label: 'Reconnaître un aliment', route: '/food-recognition' },
-              { Icon: Mic, label: 'Logging vocal', route: '/voice-log' },
-              { Icon: ScanText, label: 'Scan code-barres', route: '/scan-barcode' },
-              { Icon: ScanText, label: 'Scanner étiquette', route: '/label-scan' },
-              { Icon: ChefHat, label: 'Composer un repas', route: '/meal-builder' },
-              { Icon: ChefHat, label: t('coach.meal_title'), route: '/meal-plan' },
-              { Icon: Sparkles, label: 'Plan repas IA', route: '/ai-meal-plan' },
-              { Icon: BookmarkPlus, label: 'Repas types', route: '/meal-templates' },
-              { Icon: Apple, label: t('coach.nutrients_title'), route: '/nutrients' },
-              { Icon: Refrigerator, label: 'Frigo → recettes', route: '/fridge-recipes' },
-              { Icon: Replace, label: 'Substitutions', route: '/substitutions' },
-              { Icon: Link2, label: 'Importer recette', route: '/import-recipe' },
-              { Icon: ShoppingCart, label: 'Liste de courses', route: '/shopping-list' },
-              { Icon: Award, label: 'Nutri-Score', route: '/nutri-score' },
-              { Icon: UtensilsCrossed, label: 'Mode resto', route: '/restaurant-mode' },
-              { Icon: Receipt, label: 'Ticket de caisse', route: '/receipt-ocr' },
-              { Icon: Timer, label: 'Jeûne intermittent', route: '/fasting' },
+              // Journal alimentaire est désormais en accès rapide sur l'Accueil.
+              { Icon: ChefHat, label: 'Cuisine & repas', route: '/kitchen' },
             ]},
             { key: 'move', Icon: Dumbbell, items: [
-              { Icon: Dumbbell, label: 'Enregistrer une séance', route: '/log-exercise' },
+              // Course solo, Courses & défis et Agenda sport vivent dans l'onglet Défis
+              // (évite les doublons). On garde ici les outils d'entraînement.
               { Icon: Dumbbell, label: 'Mouvements du jour', route: '/move-goals' },
-              { Icon: MapPin, label: (RUN_CTA[language] || RUN_CTA.en).t, route: '/run' },
-              { Icon: Trophy, label: (RACES_CTA[language] || RACES_CTA.en).t, route: '/races' },
-              { Icon: FileText, label: 'Agenda sport', route: '/sport-agenda' },
               { Icon: Dumbbell, label: (PLANS_CTA[language] || PLANS_CTA.en).t, route: '/workout-plans' },
               { Icon: Dumbbell, label: 'Compteur de reps', route: '/rep-counter' },
               { Icon: ScanText, label: "Scanner d'équipement", route: '/equipment-scan' },
               { Icon: Swords, label: 'Battle 1v1', route: '/battle' },
             ]},
             { key: 'track', Icon: BarChart3, items: [
+              { Icon: Activity, label: 'Activité', route: '/activity' },
               { Icon: Ruler, label: 'Mesures corporelles', route: '/body-measurements' },
               { Icon: Moon, label: 'Sommeil', route: '/sleep-tracker' },
               { Icon: Smile, label: 'Humeur & énergie', route: '/mood-tracker' },
               { Icon: Droplets, label: 'Hydratation intelligente', route: '/smart-hydration' },
               { Icon: TrendingUp, label: 'Photos de progression', route: '/progress-photos' },
-              { Icon: Flame, label: 'Mes séries', route: '/streaks' },
               { Icon: PersonStanding, label: 'Composition corporelle', route: '/body-composition' },
               { Icon: Droplet, label: 'Glycémie', route: '/glucose-tracker' },
               { Icon: Activity, label: 'Microbiote', route: '/microbiome' },
@@ -264,12 +256,11 @@ export default function CoachScreen() {
               { Icon: FileText, label: 'Export médecin', route: '/doctor-export' },
             ]},
             { key: 'ai', Icon: Sparkles, items: [
+              // Journal & actus + Social & amis ont été déplacés dans l'onglet Défis.
               { Icon: Sparkles, label: 'Coach IA', route: '/ai-coach' },
               { Icon: Activity, label: 'TDEE adaptatif', route: '/adaptive-tdee' },
               { Icon: TrendingDown, label: 'Jumeau métabolique', route: '/metabolic-twin' },
               { Icon: Wallet, label: 'Budget calories', route: '/calorie-budget' },
-              { Icon: FileText, label: 'Journal & actus', route: '/journal' },
-              { Icon: Trophy, label: t('coach.social_title'), route: '/social' },
             ]},
           ];
           const allItems = sections.flatMap((g) => g.items);

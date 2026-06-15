@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Sparkles, RefreshCw, Plus, Lightbulb, Save, History, Check } from 'lucide-react-native';
 import { Alert } from 'react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import PhotoStrip from '../../components/PhotoStrip';
 import BrandBanner from '../../components/BrandBanner';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
@@ -114,6 +115,7 @@ export default function MealPlanScreen() {
           <Sparkles size={26} color={Colors.light.primary} />
           <Text style={[styles.title, { color: text }]}>{t('mealplan.title')}</Text>
         </View>
+        <PhotoStrip category="food" />
         <Text style={[styles.subtitle, { color: sub }]}>
           {t('mealplan.subtitle_prefix')} — {targets.calories} kcal · {targets.protein}P / {targets.carbs}C / {targets.fat}F
           {usingDefaults ? '  ' + t('mealplan.default_note') : ''}

@@ -28,6 +28,7 @@ import { VirtualRace, VirtualRaceSchema, RaceParticipant, RaceParticipantSchema,
 import { OrgsController } from './orgs/orgs.controller';
 import { OrgsService } from './orgs/orgs.service';
 import { Organization, OrganizationSchema, Membership, MembershipSchema, Invite, InviteSchema } from './orgs/orgs.schemas';
+import { FastingGateway } from './fasting/fasting.gateway';
 import { NewsController } from './news/news.controller';
 import { NewsService } from './news/news.service';
 import { NewsItem, NewsItemSchema } from './news/news.schemas';
@@ -69,6 +70,6 @@ const PIPELINE_FEATURES = HAS_MONGO
     ...PIPELINE_FEATURES,
   ],
   controllers: [HealthController, UsersController, FilesController, NutritionController, InsightsController, AiController, MlController, ...(HAS_MONGO ? [PipelineController, RacesController, OrgsController, NewsController] : [])],
-  providers: [FirebaseService, RedisService, UsersService, NutritionService, InsightsService, AiService, MlService, ...(HAS_MONGO ? [PipelineService, PipelineResolver, RacesService, OrgsService, NewsService] : [])],
+  providers: [FirebaseService, RedisService, UsersService, NutritionService, InsightsService, AiService, MlService, FastingGateway, ...(HAS_MONGO ? [PipelineService, PipelineResolver, RacesService, OrgsService, NewsService] : [])],
 })
 export class AppModule {}

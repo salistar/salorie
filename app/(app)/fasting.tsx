@@ -1,14 +1,15 @@
 // Jeûne intermittent — minuteur on-device. Protocoles 16:8 / 18:6 / 20:4 / OMAD.
 // Persiste l'heure de début (AsyncStorage) → survit au redémarrage de l'app.
 import React, { useEffect, useRef, useState } from 'react';
-import { Image, View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import { Image, View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Play, Square, Timer, Utensils } from 'lucide-react-native';
+import { Play, Square, Timer, Utensils, Users } from 'lucide-react-native';
 import { useUser } from '@clerk/clerk-expo';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { logEvent } from '../../lib/firebase';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
+import { connectFasting, joinFasting, updateFasting, leaveFasting, disconnectFasting, getFastingSocket, FastParticipant } from '../../lib/fastingSocket';
 
 const GREEN = '#2E8B57';
 const KEY = 'fasting_state_v1';
@@ -33,6 +34,7 @@ const TXT: any = {
     stop: 'Stop the fast',
     start: 'Start',
     note: 'The timer keeps running even with the app closed (start time saved locally).',
+    challengeTitle: 'Fasting challenge (live)', codePh: 'Challenge code (share it)', joinBtn: 'Join challenge', leaveBtn: 'Leave', live: 'Live participants', noOne: 'No one yet — share the code with friends.', you: 'You',
   },
   fr: {
     title: 'Jeûne intermittent',
@@ -47,6 +49,7 @@ const TXT: any = {
     stop: 'Arrêter le jeûne',
     start: 'Démarrer',
     note: 'Le minuteur continue même app fermée (heure de début sauvegardée localement).',
+    challengeTitle: 'Défi de jeûne (live)', codePh: 'Code du défi (partage-le)', joinBtn: 'Rejoindre le défi', leaveBtn: 'Quitter', live: 'Participants en direct', noOne: 'Personne encore — partage le code à tes amis.', you: 'Toi',
   },
   ar: {
     title: 'الصيام المتقطع',
@@ -61,6 +64,7 @@ const TXT: any = {
     stop: 'إيقاف الصيام',
     start: 'ابدأ',
     note: 'يستمر المؤقت حتى مع إغلاق التطبيق (وقت البدء محفوظ محلياً).',
+    challengeTitle: 'تحدي الصيام (مباشر)', codePh: 'رمز التحدي (شاركه)', joinBtn: 'انضم للتحدي', leaveBtn: 'مغادرة', live: 'المشاركون مباشرة', noOne: 'لا أحد بعد — شارك الرمز مع أصدقائك.', you: 'أنت',
   },
 };
 
@@ -87,6 +91,30 @@ export default function FastingScreen() {
   const [now, setNow] = useState(Date.now());
   const timer = useRef<any>(null);
 
+  // ── Défi temps-réel (socket.io) ──────────────────────────────
+  const [code, setCode] = useState('');
+  const [joined, setJoined] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  const [participants, setParticipants] = useState<FastParticipant[]>([]);
+  const myName = (user as any)?.firstName || user?.primaryEmailAddress?.emailAddress?.split('@')[0] || 'User';
+  const cidOf = () => code.trim().toLowerCase();
+
+  const joinChallenge = async () => {
+    const cid = cidOf();
+    if (!cid) return;
+    setConnecting(true);
+    const s = await connectFasting();
+    setConnecting(false);
+    if (!s) return;
+    s.off('fasting:participants');
+    s.on('fasting:participants', (p: any) => { if (p?.challengeId === cid) setParticipants(p.participants || []); });
+    joinFasting(cid, myName, proto.fast);
+    if (startTs) updateFasting(cid, startTs, 'fasting', proto.fast);
+    setJoined(true);
+  };
+  const leaveChallenge = () => { const cid = cidOf(); if (cid) leaveFasting(cid); setJoined(false); setParticipants([]); };
+  useEffect(() => () => { disconnectFasting(); }, []); // déconnexion à la sortie de l'écran
+
   useEffect(() => {
     (async () => {
       try {
@@ -102,14 +130,15 @@ export default function FastingScreen() {
   }, []);
 
   useEffect(() => {
-    if (startTs) { timer.current = setInterval(() => setNow(Date.now()), 1000); }
+    if (startTs || joined) { timer.current = setInterval(() => setNow(Date.now()), 1000); }
     return () => { if (timer.current) clearInterval(timer.current); };
-  }, [startTs]);
+  }, [startTs, joined]);
 
   const start = async () => {
     const ts = Date.now();
     setStartTs(ts); setNow(ts);
     try { await AsyncStorage.setItem(KEY, JSON.stringify({ startTs: ts, protoId: proto.id })); } catch {}
+    if (joined) updateFasting(cidOf(), ts, 'fasting', proto.fast); // diffuse aux autres participants
   };
   const stop = async () => {
     // Event Bus : émet fast_completed UNIQUEMENT si le jeûne a atteint son objectif.
@@ -121,6 +150,7 @@ export default function FastingScreen() {
     setStartTs(null);
     if (timer.current) clearInterval(timer.current);
     try { await AsyncStorage.removeItem(KEY); } catch {}
+    if (joined) updateFasting(cidOf(), null, 'idle', proto.fast); // diffuse l'arrêt
   };
 
   const targetMs = proto.fast * 3600 * 1000;
@@ -171,6 +201,45 @@ export default function FastingScreen() {
           </TouchableOpacity>
         )}
 
+        {/* ── Défi de jeûne TEMPS RÉEL (socket.io) ── */}
+        <View style={[styles.challengeCard, { backgroundColor: card }]}>
+          <View style={styles.cHead}><Users size={18} color={GREEN} /><Text style={[styles.cTitle, { color: text }]}>{t.challengeTitle}</Text></View>
+          {!joined ? (
+            <View style={styles.cJoinRow}>
+              <TextInput
+                style={[styles.codeInput, { color: text, backgroundColor: isDark ? '#0f172a' : '#F1F5F9', borderColor: isDark ? '#334155' : '#E2E8F0' }]}
+                placeholder={t.codePh} placeholderTextColor={sub} value={code} onChangeText={setCode} autoCapitalize="none"
+              />
+              <TouchableOpacity style={[styles.joinBtn, (!code.trim() || connecting) && { opacity: 0.6 }]} onPress={joinChallenge} disabled={connecting || !code.trim()}>
+                {connecting ? <ActivityIndicator color="#fff" /> : <Text style={styles.joinTxt}>{t.joinBtn}</Text>}
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <View style={styles.cJoinRow}>
+                <Text style={[styles.codeBadge, { color: GREEN }]}>#{cidOf()}</Text>
+                <TouchableOpacity style={styles.leaveBtn} onPress={leaveChallenge}><Text style={styles.leaveTxt}>{t.leaveBtn}</Text></TouchableOpacity>
+              </View>
+              <Text style={[styles.liveLabel, { color: sub }]}>{t.live} ({participants.length})</Text>
+              {participants.length === 0 ? (
+                <Text style={[styles.sub, { color: sub }]}>{t.noOne}</Text>
+              ) : participants.map((p, i) => {
+                const el = p.startTs ? (now - p.startTs) : 0;
+                const pc = p.startTs ? Math.min(100, Math.round((el / (p.targetHours * 3600000)) * 100)) : 0;
+                return (
+                  <View key={i} style={styles.pRow}>
+                    <Text style={[styles.pName, { color: text }]} numberOfLines={1}>{p.name}</Text>
+                    <View style={[styles.pTrack, { backgroundColor: isDark ? '#334155' : '#F1F5F9' }]}>
+                      <View style={[styles.pFill, { width: `${pc}%`, backgroundColor: p.status === 'fasting' ? GREEN : '#94A3B8' }]} />
+                    </View>
+                    <Text style={[styles.pPct, { color: sub }]}>{p.status === 'fasting' ? `${pc}%` : '—'}</Text>
+                  </View>
+                );
+              })}
+            </>
+          )}
+        </View>
+
         <Text style={styles.note}>{t.note}</Text>
       </ScrollView>
     </SafeAreaView>
@@ -201,4 +270,21 @@ const styles = StyleSheet.create({
   stop: { backgroundColor: '#E11D48' },
   btnTxt: { color: '#fff', fontWeight: '700', fontSize: 16 },
   note: { fontSize: 11, color: '#94A3B8', textAlign: 'center', marginTop: 20 },
+  challengeCard: { width: '100%', borderRadius: 20, padding: 18, marginTop: 24, gap: 12 },
+  cHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  cTitle: { fontSize: 16, fontWeight: '800' },
+  cJoinRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  codeInput: { flex: 1, borderRadius: 12, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14 },
+  joinBtn: { backgroundColor: GREEN, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
+  joinTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  codeBadge: { flex: 1, fontSize: 16, fontWeight: '900' },
+  leaveBtn: { backgroundColor: '#FEE2E2', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 9 },
+  leaveTxt: { color: '#E11D48', fontWeight: '800', fontSize: 13 },
+  liveLabel: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  pRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  pName: { width: 90, fontSize: 13, fontWeight: '700' },
+  pTrack: { flex: 1, height: 8, borderRadius: 5, overflow: 'hidden' },
+  pFill: { height: 8, borderRadius: 5 },
+  pPct: { width: 42, fontSize: 12, fontWeight: '700', textAlign: 'right' },
 });
+

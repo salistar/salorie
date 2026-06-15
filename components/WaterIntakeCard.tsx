@@ -25,8 +25,14 @@ export default function WaterIntakeCard({
 }: WaterIntakeCardProps) {
   const { t } = useTranslation();
   const { resolved } = useTheme();
-  // Logic: Scale goal to exactly 9 glasses if goal is defined
-  const glassCapacity = goalMl / MAX_GLASSES;
+  const isDark = resolved === 'dark';
+  const cardBg = isDark ? '#161C23' : Colors.light.white;
+  const titleColor = isDark ? '#f1f5f9' : Colors.light.gray[900];
+  const borderColor = isDark ? 'rgba(255,255,255,0.08)' : Colors.light.gray[50];
+  // Logic: Scale goal to exactly 9 glasses if goal is defined.
+  // Guard contre goalMl=0 (profil non configuré) → évite Infinity/NaN (verres tous pleins).
+  const safeGoal = goalMl > 0 ? goalMl : 2000;
+  const glassCapacity = safeGoal / MAX_GLASSES;
   const consumedGlasses = consumedMl / glassCapacity;
 
   // Render glasses logic
@@ -54,9 +60,9 @@ export default function WaterIntakeCard({
   const remainingMl = Math.max(0, goalMl - consumedMl);
 
   return (
-    <View style={[styles.card, resolved === 'dark' && { borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }]}>
+    <View style={[styles.card, { backgroundColor: cardBg }, isDark && { borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>{t('home.water')}</Text>
+        <Text style={[styles.title, { color: titleColor }]}>{t('home.water')}</Text>
         <TouchableOpacity style={styles.editBtn} activeOpacity={0.6} onPress={onEditPress}>
           <Pencil size={20} color={Colors.light.gray[400]} strokeWidth={2.5} />
         </TouchableOpacity>
@@ -66,7 +72,7 @@ export default function WaterIntakeCard({
         <View style={styles.glassesRow}>{renderGlasses()}</View>
       </View>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { borderTopColor: borderColor }]}>
         <Text style={styles.footerText}>
           {Math.round(remainingMl)}{t('home.ml_left')}
         </Text>

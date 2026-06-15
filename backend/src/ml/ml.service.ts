@@ -211,6 +211,62 @@ export class MlService {
   }
 
   // ---------------------------------------------------------------------------
+  // 2bis) VISION via MODÈLE LOCAL AUTO-HÉBERGÉ (Ollama llava/moondream)
+  //       + repli API food gratuite. DISTINCT du provider Gemini.
+  //       L'app envoie déjà le prompt structuré (JSON attendu) → on renvoie le
+  //       texte brut du modèle, l'app le parse.
+  // ---------------------------------------------------------------------------
+  async visionLocal(prompt: string, imageBase64: string, mimeType = 'image/jpeg'): Promise<{ text: string; engine: string }> {
+    // 1) Ollama auto-hébergé (même pattern que WHISPER_URL).
+    const ollamaUrl = process.env.OLLAMA_URL; // ex: http://ollama:11434
+    const model = process.env.OLLAMA_VISION_MODEL || 'llava';
+    if (ollamaUrl) {
+      try {
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 60000); // CPU inference = lent
+        const r = await fetch(`${ollamaUrl}/api/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model, prompt, images: [imageBase64], stream: false }),
+          signal: ctrl.signal,
+        });
+        clearTimeout(to);
+        if (r.ok) {
+          const j: any = await r.json();
+          if (typeof j?.response === 'string' && j.response.trim()) {
+            return { text: j.response, engine: `ollama:${model}` };
+          }
+        } else {
+          this.log(`ollama ${r.status}`);
+        }
+      } catch (e: any) { this.log(`ollama KO: ${e?.message}`); }
+    }
+
+    // 2) Repli : API de reconnaissance d'aliments gratuite (option 3) — configurable.
+    //    FOOD_VISION_API_URL doit renvoyer { text } ou { name }. Sinon on saute.
+    const foodApi = process.env.FOOD_VISION_API_URL;
+    if (foodApi) {
+      try {
+        const r = await fetch(foodApi, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(process.env.FOOD_VISION_API_KEY ? { Authorization: `Bearer ${process.env.FOOD_VISION_API_KEY}` } : {}) },
+          body: JSON.stringify({ imageBase64, mimeType }),
+        });
+        if (r.ok) {
+          const j: any = await r.json();
+          const text = j?.text || (j?.name ? JSON.stringify(j) : '');
+          if (text) return { text, engine: 'food-api' };
+        }
+      } catch (e: any) { this.log(`food-api KO: ${e?.message}`); }
+    }
+
+    // Aucun modèle backend dispo (Ollama non déployé + pas d'API food) → erreur claire.
+    throw new Error('backend_vision_unavailable');
+  }
+
+  private log(m: string) { try { (this as any).logger?.warn?.(m); } catch {} console.warn('[ml.visionLocal]', m); }
+
+  // ---------------------------------------------------------------------------
   // 3) ESTIMATION DE PORTION (Gemini Vision, serveur)
   // ---------------------------------------------------------------------------
   async portionEstimate(imageBase64: string, foodName?: string) {

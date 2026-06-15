@@ -52,11 +52,15 @@ export default function DailyHealthScore() {
 
   return (
     <View style={[styles.card, { backgroundColor: cardBg }, isRTL && { flexDirection: 'row-reverse' }]}>
-      <View style={styles.left}>
+      <View style={[
+        styles.left,
+        { borderRightColor: trackBg },
+        isRTL && { borderRightWidth: 0, borderLeftWidth: 1, borderLeftColor: trackBg },
+      ]}>
         <Heart size={16} color={color} />
-        <Text style={[styles.scoreNum, { color: txtColor }]}>{score}</Text>
-        <Text style={[styles.label, { color }]}>{label}</Text>
-        <Text style={[styles.caption, { color: subColor }]}>{tx.caption}</Text>
+        <Text style={[styles.scoreNum, { color: txtColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{score}</Text>
+        <Text style={[styles.label, { color }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{label}</Text>
+        <Text style={[styles.caption, { color: subColor }]} numberOfLines={2}>{tx.caption}</Text>
       </View>
       <View style={styles.right}>
         <Bar label={tx.calories} v={calScore} />

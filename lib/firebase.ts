@@ -314,6 +314,10 @@ export interface NutritionLog {
   serving?: string;
   // Slot du Diary (breakfast|lunch|snack|dinner) — optionnel ; sinon déduit de l'heure.
   slot?: string;
+  // Description du repas (ingrédients + qualités/risques) — persistée au scan/log.
+  description?: string;
+  // Note santé (calculée on-device au scan) — persistée pour l'afficher dans diary/activité.
+  note?: { grade: string; score: number; verdict: string; color?: string };
 }
 
 /** Supprime un log (Firestore + cache local) — utilisé par le Diary. */

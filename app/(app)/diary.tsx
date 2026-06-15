@@ -103,7 +103,7 @@ export default function Diary() {
 
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
-      <ScreenTopBar />
+      <ScreenTopBar showBack />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
         {/* Navigation par date */}
         <View style={[s.dateRow, rowDir]}>
@@ -151,11 +151,20 @@ export default function Diary() {
                     <Text style={[{ color: sub, fontSize: 12.5, paddingBottom: 4 }, align]}>{t.empty}</Text>
                   ) : items.map((l) => (
                     <View key={l.id} style={[s.itemRow, rowDir]}>
+                      {/* Badge note santé (grade) si présent */}
+                      {(l as any).note?.grade ? (
+                        <View style={[s.gradeBadge, { backgroundColor: (l as any).note.color || GREEN }]}>
+                          <Text style={s.gradeTxt}>{(l as any).note.grade}</Text>
+                        </View>
+                      ) : null}
                       <View style={{ flex: 1 }}>
                         <Text style={[{ color: text, fontWeight: '700', fontSize: 13.5 }, align]} numberOfLines={1}>{l.name}</Text>
                         <Text style={[{ color: sub, fontSize: 11.5, marginTop: 1 }, align]}>
                           {Math.round(l.calories)} {t.kcal}{l.protein ? ` · P${Math.round(l.protein)}` : ''}{l.carbs ? ` C${Math.round(l.carbs)}` : ''}{l.fat ? ` F${Math.round(l.fat)}` : ''}{l.serving ? ` · ${l.serving}` : ''}
                         </Text>
+                        {(l as any).description ? (
+                          <Text style={[{ color: sub, fontSize: 11, marginTop: 3, lineHeight: 15, opacity: 0.9 }, align]} numberOfLines={3}>{(l as any).description}</Text>
+                        ) : null}
                       </View>
                       <TouchableOpacity onPress={() => removeLog(l)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                         <Trash2 size={16} color="#e11d48" />
@@ -210,4 +219,6 @@ const s = StyleSheet.create({
   slotKcal: { fontSize: 12.5, fontWeight: '800', marginRight: 8 },
   addBtn: { backgroundColor: GREEN, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   itemRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(148,163,184,0.25)' },
+  gradeBadge: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  gradeTxt: { color: '#fff', fontSize: 14, fontWeight: '900' },
 });

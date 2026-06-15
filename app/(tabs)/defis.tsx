@@ -6,7 +6,7 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
-import { Trophy, Flag, Newspaper, CalendarDays, ChevronRight, Award } from 'lucide-react-native';
+import { Trophy, Flag, Newspaper, CalendarDays, ChevronRight, Award, MapPin, Users, Activity } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import Medal from '../../components/Medal';
 import { getActiveRaces, getMyMedals, getNews } from '../../lib/racesApi';
@@ -18,9 +18,9 @@ import { useTranslation } from '../../lib/i18n';
 const GREEN = '#2E8B57';
 
 const TXT: any = {
-  en: { title: 'Challenges', sub: 'Virtual races, medals and news.', races: 'Virtual races', medals: 'My medals', news: 'News', agenda: 'Sport agenda', seeAll: 'See all', km: 'km', noMedals: 'Finish a race to earn your first medal!', join: 'Open' },
-  fr: { title: 'Défis', sub: 'Courses virtuelles, médailles et actus.', races: 'Courses virtuelles', medals: 'Mes médailles', news: 'Actualités', agenda: 'Agenda sport', seeAll: 'Voir tout', km: 'km', noMedals: 'Termine une course pour gagner ta première médaille !', join: 'Ouvrir' },
-  ar: { title: 'التحديات', sub: 'سباقات افتراضية وميداليات وأخبار.', races: 'سباقات افتراضية', medals: 'ميدالياتي', news: 'الأخبار', agenda: 'أجندة الرياضة', seeAll: 'عرض الكل', km: 'كلم', noMedals: 'أكمل سباقاً لتفوز بأول ميدالية!', join: 'افتح' },
+  en: { title: 'Challenges', sub: 'Virtual races, medals and news.', races: 'Virtual races', medals: 'My medals', news: 'News', agenda: 'Sport agenda', solo: 'Solo run (GPS)', journal: 'Journal & news', social: 'Social & friends', activity: 'Activity', seeAll: 'See all', km: 'km', noMedals: 'Finish a race to earn your first medal!', join: 'Open' },
+  fr: { title: 'Défis', sub: 'Courses virtuelles, médailles et actus.', races: 'Courses virtuelles', medals: 'Mes médailles', news: 'Actualités', agenda: 'Agenda sport', solo: 'Course solo (GPS)', journal: 'Journal & actus', social: 'Social & amis', activity: 'Activité', seeAll: 'Voir tout', km: 'km', noMedals: 'Termine une course pour gagner ta première médaille !', join: 'Ouvrir' },
+  ar: { title: 'التحديات', sub: 'سباقات افتراضية وميداليات وأخبار.', races: 'سباقات افتراضية', medals: 'ميدالياتي', news: 'الأخبار', agenda: 'أجندة الرياضة', solo: 'جري فردي (GPS)', journal: 'اليوميات والأخبار', social: 'المجتمع والأصدقاء', activity: 'النشاط', seeAll: 'عرض الكل', km: 'كلم', noMedals: 'أكمل سباقاً لتفوز بأول ميدالية!', join: 'افتح' },
 };
 
 export default function DefisTab() {
@@ -30,7 +30,7 @@ export default function DefisTab() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#000' : '#f7faf8';
+  const bg = isDark ? '#0B0E12' : '#f7faf8';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0f172a';
   const sub = isDark ? '#94a3b8' : '#64748b';
@@ -134,12 +134,31 @@ export default function DefisTab() {
               </>
             )}
 
+            {/* Course solo (GPS) — déplacée depuis Coach pour regrouper le sport ici */}
+            <TouchableOpacity style={[s.soloCta, rowDir]} activeOpacity={0.85} onPress={() => router.push('/run' as any)}>
+              <MapPin size={20} color={GREEN} />
+              <Text style={[s.soloTxt, { color: text }]}>{t.solo}</Text>
+              <ChevronRight size={18} color={sub} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+            </TouchableOpacity>
+
             {/* Agenda */}
             <TouchableOpacity style={[s.agendaCta, rowDir]} activeOpacity={0.85} onPress={() => router.push('/sport-agenda' as any)}>
               <CalendarDays size={20} color="#fff" />
               <Text style={s.agendaTxt}>{t.agenda}</Text>
               <ChevronRight size={18} color="#fff" style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
             </TouchableOpacity>
+
+            {/* Journal & actus + Social & amis (Activité a été déplacée dans l'Accueil) */}
+            <View style={[s.dualRow, rowDir]}>
+              <TouchableOpacity style={[s.dualCard, { backgroundColor: card }]} activeOpacity={0.85} onPress={() => router.push('/journal' as any)}>
+                <Newspaper size={22} color={GREEN} />
+                <Text style={[s.dualTxt, { color: text }]} numberOfLines={2}>{t.journal}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.dualCard, { backgroundColor: card }]} activeOpacity={0.85} onPress={() => router.push('/social' as any)}>
+                <Users size={22} color={GREEN} />
+                <Text style={[s.dualTxt, { color: text }]} numberOfLines={2}>{t.social}</Text>
+              </TouchableOpacity>
+            </View>
           </>
         )}
       </ScrollView>
@@ -164,6 +183,11 @@ const s = StyleSheet.create({
   raceMeta: { color: 'rgba(255,255,255,0.9)', fontWeight: '700', fontSize: 11.5, marginTop: 1 },
   newsRow: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 14, padding: 10, marginBottom: 8 },
   newsThumb: { width: 44, height: 44, borderRadius: 10 },
-  agendaCta: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: GREEN, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 16, marginTop: 22 },
+  agendaCta: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: GREEN, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 16, marginTop: 12 },
   agendaTxt: { color: '#fff', fontWeight: '800', fontSize: 14.5, flex: 1 },
+  soloCta: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 16, marginTop: 22, borderWidth: 1.5, borderColor: GREEN },
+  soloTxt: { fontWeight: '800', fontSize: 14.5, flex: 1 },
+  dualRow: { flexDirection: 'row', gap: 12, marginTop: 12 },
+  dualCard: { flex: 1, borderRadius: 16, paddingVertical: 18, paddingHorizontal: 14, alignItems: 'center', gap: 8, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  dualTxt: { fontWeight: '800', fontSize: 13.5, textAlign: 'center' },
 });

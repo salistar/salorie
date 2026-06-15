@@ -20,10 +20,10 @@ import Animated, { FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
 
-const TXT: Record<string, { burned: string; logWorkout: string }> = {
-  en: { burned: 'Your workout burned', logWorkout: 'Log Workout' },
-  fr: { burned: 'Calories brûlées', logWorkout: 'Enregistrer' },
-  ar: { burned: 'تمرينك أحرق', logWorkout: 'تسجيل التمرين' },
+const TXT: Record<string, any> = {
+  en: { burned: 'Your workout burned', logWorkout: 'Log Workout', great: 'Great session!', kcal: 'kcal', min: 'min', dur: 'Duration', intensity: 'Intensity', saved: 'It will be added to your activity' },
+  fr: { burned: 'Calories brûlées', logWorkout: 'Enregistrer', great: 'Belle séance !', kcal: 'kcal', min: 'min', dur: 'Durée', intensity: 'Intensité', saved: 'Sera ajouté à ton activité' },
+  ar: { burned: 'تمرينك أحرق', logWorkout: 'تسجيل التمرين', great: 'حصة رائعة!', kcal: 'سعرة', min: 'د', dur: 'المدة', intensity: 'الشدة', saved: 'ستُضاف إلى نشاطك' },
 };
 
 const { width } = Dimensions.get('window');
@@ -81,10 +81,26 @@ export default function WorkoutResultScreen() {
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.delay(300).duration(600)}>
+        <Animated.View entering={FadeInUp.delay(300).duration(600)} style={{ alignItems: 'center', alignSelf: 'stretch' }}>
+          <Text style={[styles.great, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{t.great}</Text>
           <Text style={[styles.subtitle, { color: isDark ? '#9BA1A6' : Colors.light.gray[500] }]}>{t.burned}</Text>
-          <Text style={[styles.calories, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{calories} kcal</Text>
-          <Text style={[styles.info, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>{name} • {duration} min</Text>
+          <Text style={[styles.calories, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{calories}<Text style={styles.calUnit}> {t.kcal}</Text></Text>
+
+          {/* Rangée de stats designée */}
+          <View style={[styles.statsRow, { backgroundColor: isDark ? '#161C23' : Colors.light.gray[50] }]}>
+            <View style={styles.stat}>
+              <Text style={[styles.statVal, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{duration}</Text>
+              <Text style={[styles.statLbl, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>{t.dur} ({t.min})</Text>
+            </View>
+            <View style={[styles.statDivider, { backgroundColor: isDark ? '#283241' : Colors.light.gray[100] }]} />
+            <View style={styles.stat}>
+              <Text style={[styles.statVal, { color: isDark ? '#fff' : Colors.light.gray[900] }]} numberOfLines={1}>{String(name).match(/\((.*?)\)/)?.[1] || '—'}</Text>
+              <Text style={[styles.statLbl, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>{t.intensity}</Text>
+            </View>
+          </View>
+
+          <Text style={[styles.info, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]} numberOfLines={1}>{String(name).split(' (')[0]}</Text>
+          <Text style={[styles.savedHint, { color: Colors.light.primary }]}>{t.saved}</Text>
         </Animated.View>
       </View>
 
@@ -154,6 +170,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
   },
+  great: { fontSize: 26, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5, marginBottom: 6 },
   calories: {
     fontSize: 72,
     fontWeight: '900',
@@ -161,6 +178,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: -2,
   },
+  calUnit: { fontSize: 24, fontWeight: '800' },
+  statsRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', borderRadius: 22, paddingVertical: 18, paddingHorizontal: 12, marginTop: 24, marginBottom: 4 },
+  stat: { flex: 1, alignItems: 'center', gap: 4 },
+  statVal: { fontSize: 22, fontWeight: '900', letterSpacing: -0.5 },
+  statLbl: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
+  statDivider: { width: 1, height: 36 },
+  savedHint: { fontSize: 13, fontWeight: '700', textAlign: 'center', marginTop: 10 },
   info: {
     fontSize: 16,
     fontWeight: '600',
