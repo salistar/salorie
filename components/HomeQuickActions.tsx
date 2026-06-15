@@ -25,7 +25,7 @@ export default function HomeQuickActions({ onLog }: { onLog?: () => void }) {
   const chipBg = isDark ? '#243b2f' : '#EAF4EE';
 
   const ACTIONS = [
-    { icon: UtensilsCrossed, label: t.log, onPress: () => (onLog ? onLog() : router.push('/food-recognition' as any)) },
+    { icon: UtensilsCrossed, label: t.log, onPress: () => (onLog ? onLog() : router.push('/scan-camera' as any)) },
     { icon: Newspaper, label: t.diary, onPress: () => router.push('/diary' as any) },
     { icon: Dumbbell, label: t.workout, onPress: () => router.push('/log-exercise' as any) },
     { icon: Trophy, label: t.races, onPress: () => router.push('/races' as any) },

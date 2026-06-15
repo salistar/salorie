@@ -1,19 +1,23 @@
 // Meal-builder / recettes — compose un repas en cherchant des ingrédients
 // (searchFood / OpenFoodFacts) → total des macros en direct. Réutilise la recherche existante.
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, FlatList } from 'react-native';
-import { Search, Plus, Minus, Trash2, ChefHat } from 'lucide-react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, FlatList, Alert } from 'react-native';
+import { Search, Plus, Minus, Trash2, ChefHat, Check } from 'lucide-react-native';
+import { useUser } from '@clerk/clerk-expo';
+import { router } from 'expo-router';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { searchFood } from '../../lib/fatsecret';
+import { addNutritionLog } from '../../lib/firebase';
+import { todayStr } from '../../lib/tracking';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 
 const GREEN = '#2E8B57';
 
 const TXT: any = {
-  en: { title: 'Build a meal', searchPh: 'Search for an ingredient…', empty: 'Search for ingredients to build your recipe. Macro totals update live.', p: 'P', c: 'C', f: 'F' },
-  fr: { title: 'Composer un repas', searchPh: 'Rechercher un ingrédient…', empty: 'Cherche des ingrédients pour composer ta recette. Le total des macros se calcule en direct.', p: 'P', c: 'G', f: 'L' },
-  ar: { title: 'تكوين وجبة', searchPh: 'ابحث عن مكوّن…', empty: 'ابحث عن مكونات لتكوين وصفتك. يُحسب مجموع العناصر الكبرى مباشرة.', p: 'ب', c: 'ك', f: 'د' },
+  en: { title: 'Build a meal', searchPh: 'Search for an ingredient…', empty: 'Search for ingredients to build your recipe. Macro totals update live.', p: 'P', c: 'C', f: 'F', logMeal: 'Log this meal', composed: 'Composed meal', logged: 'Logged ✅', loggedMsg: 'Meal added to today.', errTitle: 'Error', errMsg: 'Could not log the meal.' },
+  fr: { title: 'Composer un repas', searchPh: 'Rechercher un ingrédient…', empty: 'Cherche des ingrédients pour composer ta recette. Le total des macros se calcule en direct.', p: 'P', c: 'G', f: 'L', logMeal: 'Logger ce repas', composed: 'Repas composé', logged: 'Loggé ✅', loggedMsg: "Repas ajouté à aujourd'hui.", errTitle: 'Erreur', errMsg: 'Impossible de logger le repas.' },
+  ar: { title: 'تكوين وجبة', searchPh: 'ابحث عن مكوّن…', empty: 'ابحث عن مكونات لتكوين وصفتك. يُحسب مجموع العناصر الكبرى مباشرة.', p: 'ب', c: 'ك', f: 'د', logMeal: 'سجّل هذه الوجبة', composed: 'وجبة مكوّنة', logged: 'تم التسجيل ✅', loggedMsg: 'أُضيفت الوجبة إلى اليوم.', errTitle: 'خطأ', errMsg: 'تعذّر تسجيل الوجبة.' },
 };
 
 function parseDescription(desc: string) {
@@ -37,10 +41,13 @@ export default function MealBuilderScreen() {
   const text = isDark ? '#f1f5f9' : '#0F172A';
   const sub = isDark ? '#94a3b8' : '#64748B';
 
+  const { user } = useUser();
+  const email = user?.primaryEmailAddress?.emailAddress || '';
   const [q, setQ] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
+  const [busy, setBusy] = useState(false);
 
   const doSearch = async (text: string) => {
     setQ(text);
@@ -62,6 +69,22 @@ export default function MealBuilderScreen() {
     calories: a.calories + x.calories * x.qty, protein: a.protein + x.protein * x.qty,
     carbs: a.carbs + x.carbs * x.qty, fat: a.fat + x.fat * x.qty,
   }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+
+  // Retravaillé : on peut LOGGER le repas composé dans le journal du jour.
+  const logMeal = async () => {
+    if (!items.length || !email) return;
+    setBusy(true);
+    try {
+      await addNutritionLog({
+        userId: email, type: 'meal', name: t.composed,
+        calories: Math.round(total.calories), protein: Math.round(total.protein),
+        carbs: Math.round(total.carbs), fat: Math.round(total.fat), date: todayStr(),
+      } as any);
+      Alert.alert(t.logged, t.loggedMsg);
+      setItems([]);
+    } catch { Alert.alert(t.errTitle, t.errMsg); }
+    finally { setBusy(false); }
+  };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
@@ -110,8 +133,13 @@ export default function MealBuilderScreen() {
 
       {items.length > 0 && (
         <View style={styles.totalBar}>
-          <Text style={styles.totalKcal}>{Math.round(total.calories)} kcal</Text>
-          <Text style={styles.totalMacro}>{Math.round(total.protein)}g {t.p} · {Math.round(total.carbs)}g {t.c} · {Math.round(total.fat)}g {t.f}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.totalKcal}>{Math.round(total.calories)} kcal</Text>
+            <Text style={styles.totalMacro}>{Math.round(total.protein)}g {t.p} · {Math.round(total.carbs)}g {t.c} · {Math.round(total.fat)}g {t.f}</Text>
+          </View>
+          <TouchableOpacity style={styles.logBtn} onPress={logMeal} disabled={busy} activeOpacity={0.85}>
+            {busy ? <ActivityIndicator color={GREEN} /> : (<><Check size={18} color={GREEN} /><Text style={styles.logBtnTxt}>{t.logMeal}</Text></>)}
+          </TouchableOpacity>
         </View>
       )}
     </SafeAreaView>
@@ -135,7 +163,9 @@ const styles = StyleSheet.create({
   itemMacro: { fontSize: 11, color: '#64748B', marginTop: 2 },
   qtyBtn: { width: 30, height: 30, borderRadius: 8, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' },
   qty: { fontSize: 14, fontWeight: '700', color: '#0F172A', minWidth: 18, textAlign: 'center' },
-  totalBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: GREEN, padding: 18, paddingBottom: 28 },
+  totalBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: GREEN, padding: 18, paddingBottom: 28, gap: 12 },
   totalKcal: { fontSize: 22, fontWeight: '900', color: '#fff' },
   totalMacro: { fontSize: 14, color: '#E7F5EC', fontWeight: '600' },
+  logBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fff', borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16 },
+  logBtnTxt: { color: GREEN, fontWeight: '800', fontSize: 14 },
 });

@@ -6,6 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Camera, Image as ImageIcon, UtensilsCrossed } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import PhotoStrip from '../../components/PhotoStrip';
 import { aiVision } from '../../lib/aiProxy';
 import { getUserFromFirestore } from '../../lib/firebase';
 import { useTranslation } from '../../lib/i18n';
@@ -57,6 +58,7 @@ export default function RestaurantModeScreen() {
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.head}><UtensilsCrossed size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <PhotoStrip category="food" />
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub} ({goal}).</Text>
         <View style={styles.btnRow}>
           <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={() => run(true)} disabled={loading}><Camera size={20} color="#fff" /><Text style={styles.btnPrimaryTxt}>{t.menu_photo}</Text></TouchableOpacity>
@@ -65,6 +67,15 @@ export default function RestaurantModeScreen() {
         {uri && <Image source={{ uri }} style={styles.preview} resizeMode="cover" />}
         {loading && <View style={styles.center}><ActivityIndicator color={GREEN} /><Text style={[styles.loadingTxt, { color: sub }]}>{t.loading}</Text></View>}
         {!!result && <View style={[styles.card, { backgroundColor: card }]}><Text style={[styles.cardTxt, { color: cardTxtColor }, align]}>{result}</Text></View>}
+        {!!result && (
+          <Text style={[styles.source, { color: sub }, align]}>
+            {language === 'fr'
+              ? '⛅ Source : IA · Gemini — l’analyse de menu n’a pas de modèle on-device ; les autres scans privilégient on-device puis backend.'
+              : language === 'ar'
+                ? '⛅ المصدر: ذكاء · Gemini — تحليل القائمة لا يملك نموذجًا على الجهاز.'
+                : '⛅ Source: AI · Gemini — menu analysis has no on-device model; other scans prefer on-device then backend.'}
+          </Text>
+        )}
         {!uri && !loading && <Text style={[styles.hint, { color: sub }]}>{t.hint}</Text>}
       </ScrollView>
     </SafeAreaView>
@@ -85,5 +96,6 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center', paddingVertical: 24 }, loadingTxt: { color: '#64748B', marginTop: 10, fontWeight: '600' },
   card: { backgroundColor: '#fff', borderRadius: 18, padding: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   cardTxt: { fontSize: 14.5, color: '#1F2937', lineHeight: 22 },
+  source: { fontSize: 11.5, fontWeight: '600', marginTop: 10, lineHeight: 17, fontStyle: 'italic' },
   hint: { fontSize: 13, color: '#94A3B8', textAlign: 'center', marginTop: 24 },
 });

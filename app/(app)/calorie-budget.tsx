@@ -21,6 +21,13 @@ const TXT: any = {
     earned: 'Earned (activity)',
     balance: 'Remaining balance',
     used: 'of budget used',
+    howTitle: 'How it works',
+    howBody1: 'A calorie budget treats your daily calories like money in a bank account. You get a daily allowance to "spend", and every meal withdraws from it.',
+    howBody2: 'Your allowance is your daily calorie goal. That goal is built from your maintenance calories (TDEE — what your body burns in a day) adjusted for your objective: a deficit if you want to lose weight, a surplus if you want to gain, or maintenance to stay the same.',
+    howFormulaLabel: 'The daily formula',
+    howFormula: 'Allowance − Meals eaten + Activity burned = Remaining balance',
+    howBody3: 'As you log meals, the "Spent" total grows and your remaining balance drops. When you log a workout, the calories you burned are added back, giving you a little more room.',
+    howBody4: 'A positive balance (green) means you still have calories to spend today. A negative balance (red) means you went over your budget. The progress bar shows the percentage of your budget already used.',
   },
   fr: {
     title: 'Budget calories',
@@ -33,6 +40,13 @@ const TXT: any = {
     earned: 'Gagné (activité)',
     balance: 'Solde restant',
     used: 'du budget utilisé',
+    howTitle: 'Comment ça marche',
+    howBody1: "Un budget calories traite tes calories quotidiennes comme de l'argent sur un compte en banque. Tu reçois une allocation journalière à « dépenser », et chaque repas en retire une partie.",
+    howBody2: "Ton allocation correspond à ton objectif calorique quotidien. Cet objectif part de tes calories de maintenance (TDEE — ce que ton corps brûle dans une journée) ajustées selon ton but : un déficit pour perdre du poids, un surplus pour en prendre, ou la maintenance pour rester stable.",
+    howFormulaLabel: 'La formule du jour',
+    howFormula: 'Allocation − Repas mangés + Activité brûlée = Solde restant',
+    howBody3: "À mesure que tu logges tes repas, le total « Dépensé » augmente et ton solde restant diminue. Quand tu logges une séance, les calories brûlées sont rajoutées, ce qui te redonne un peu de marge.",
+    howBody4: "Un solde positif (vert) signifie qu'il te reste des calories à dépenser aujourd'hui. Un solde négatif (rouge) signifie que tu as dépassé ton budget. La barre de progression montre le pourcentage de budget déjà utilisé.",
   },
   ar: {
     title: 'ميزانية السعرات',
@@ -45,6 +59,13 @@ const TXT: any = {
     earned: 'المكتسب (النشاط)',
     balance: 'الرصيد المتبقي',
     used: 'من الميزانية مستخدمة',
+    howTitle: 'كيف تعمل',
+    howBody1: 'تتعامل ميزانية السعرات مع سعراتك اليومية مثل المال في حساب بنكي. تحصل على مخصص يومي «لتنفقه»، وكل وجبة تسحب منه.',
+    howBody2: 'مخصصك هو هدفك اليومي من السعرات. يُبنى هذا الهدف من سعرات الصيانة (TDEE — ما يحرقه جسمك في اليوم) معدّلة حسب هدفك: عجز لإنقاص الوزن، فائض لزيادته، أو الصيانة للبقاء كما أنت.',
+    howFormulaLabel: 'المعادلة اليومية',
+    howFormula: 'المخصص − الوجبات المأكولة + النشاط المحروق = الرصيد المتبقي',
+    howBody3: 'كلما سجّلت وجباتك، يزداد إجمالي «المصروف» وينخفض رصيدك المتبقي. عند تسجيل تمرين، تُضاف السعرات المحروقة من جديد، مما يمنحك هامشاً أكبر.',
+    howBody4: 'الرصيد الموجب (أخضر) يعني أنه لا تزال لديك سعرات لإنفاقها اليوم. الرصيد السالب (أحمر) يعني أنك تجاوزت ميزانيتك. يوضح شريط التقدم النسبة المئوية من الميزانية المستخدمة بالفعل.',
   },
 };
 
@@ -98,6 +119,18 @@ export default function CalorieBudgetScreen() {
 
         <View style={[styles.barTrack, { backgroundColor: isDark ? '#334155' : '#E5E7EB' }]}><View style={[styles.barFill, { width: `${pct}%`, backgroundColor: pct > 100 ? '#E11D48' : GREEN }]} /></View>
         <Text style={styles.barLabel}>{pct}% {t.used}</Text>
+
+        <View style={[styles.howCard, { backgroundColor: card }]}>
+          <Text style={[styles.howTitle, { color: GREEN }, align]}>{t.howTitle}</Text>
+          <Text style={[styles.howBody, { color: sub }, align]}>{t.howBody1}</Text>
+          <Text style={[styles.howBody, { color: sub }, align]}>{t.howBody2}</Text>
+          <View style={[styles.formulaBox, { backgroundColor: GREEN + '14' }]}>
+            <Text style={[styles.formulaLabel, { color: GREEN }, align]}>{t.howFormulaLabel}</Text>
+            <Text style={[styles.formula, { color: text }, align]}>{t.howFormula}</Text>
+          </View>
+          <Text style={[styles.howBody, { color: sub }, align]}>{t.howBody3}</Text>
+          <Text style={[styles.howBody, { color: sub }, align]}>{t.howBody4}</Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -123,4 +156,10 @@ const styles = StyleSheet.create({
   barTrack: { height: 12, borderRadius: 6, backgroundColor: '#E5E7EB', overflow: 'hidden' },
   barFill: { height: '100%', borderRadius: 6 },
   barLabel: { fontSize: 12, color: '#94A3B8', marginTop: 6, textAlign: 'center' },
+  howCard: { backgroundColor: '#fff', borderRadius: 20, padding: 18, marginTop: 22, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  howTitle: { fontSize: 18, fontWeight: '900', marginBottom: 10 },
+  howBody: { fontSize: 14, lineHeight: 21, marginBottom: 10 },
+  formulaBox: { borderRadius: 14, padding: 14, marginVertical: 4, marginBottom: 12 },
+  formulaLabel: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
+  formula: { fontSize: 14, fontWeight: '800', lineHeight: 20 },
 });

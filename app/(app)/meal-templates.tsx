@@ -4,6 +4,7 @@ import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpaci
 import { useUser } from '@clerk/clerk-expo';
 import { BookmarkPlus, Plus, Check } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import PhotoStrip from '../../components/PhotoStrip';
 import { FormCard, FormInput, Stepper } from '../../components/FormKit';
 import { logEntry, getEntries, todayStr } from '../../lib/tracking';
 import { addNutritionLog } from '../../lib/firebase';
@@ -38,11 +39,13 @@ export default function MealTemplatesScreen() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
-  const load = async () => { setTpls(await getEntries(email, 'meal_templates', 30)); setLoading(false); };
-  useEffect(() => { load(); }, []);
+  const load = async () => { try { setTpls(await getEntries(email, 'meal_templates', 30)); } catch {} setLoading(false); };
+  // email (Clerk) n'est pas prêt au 1er render → on (re)charge dès qu'il arrive,
+  // sinon les templates ne se chargent jamais et le spinner reste bloqué.
+  useEffect(() => { if (email) load(); else setLoading(false); }, [email]);
 
   const create = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || !email) return;
     setBusy(true);
     const data: any = { name: name.trim() };
     for (const f of F) data[f.k] = parseFloat(vals[f.k]) || 0;
@@ -63,6 +66,7 @@ export default function MealTemplatesScreen() {
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <Image source={require('../../assets/images/illustrations/welcome.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <View style={styles.head}><BookmarkPlus size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <PhotoStrip category="food" />
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
         <FormCard>

@@ -1,11 +1,14 @@
 // Photos de progression — capture + galerie locale (persistée sur l'appareil).
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Image, Dimensions, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
+import * as ImageManipulator from 'expo-image-manipulator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Camera, Image as ImageIcon, TrendingUp } from 'lucide-react-native';
+import { Camera, Image as ImageIcon, TrendingUp, Sparkles } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import PhotoStrip from '../../components/PhotoStrip';
+import { aiVision, aiGenerate } from '../../lib/aiProxy';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
 
@@ -14,9 +17,9 @@ const KEY = 'progress_photos_v1';
 const COL = (Dimensions.get('window').width - 52) / 2;
 
 const TXT: any = {
-  en: { title: 'Progress photos', sub: 'Keep a visual record (stored on your device, private).', photo: 'Photo', gallery: 'Gallery', empty: 'No photos yet. Add your first one to track your progress.' },
-  fr: { title: 'Photos de progression', sub: 'Garde une trace visuelle (stockée sur ton appareil, privée).', photo: 'Photo', gallery: 'Galerie', empty: 'Aucune photo. Ajoute ta première pour suivre ton évolution.' },
-  ar: { title: 'صور التقدم', sub: 'احتفظ بسجل مرئي (مخزّن على جهازك، خاص).', photo: 'صورة', gallery: 'المعرض', empty: 'لا توجد صور. أضف أول صورة لتتابع تطورك.' },
+  en: { title: 'Progress photos', sub: 'Keep a visual record (stored on your device, private).', photo: 'Photo', gallery: 'Gallery', empty: 'No photos yet. Add your first one to track your progress.', analyze: 'Analyze my evolution', analyzing: 'Analyzing…', needTwo: 'Add at least 2 photos to analyze your evolution.', result: 'Evolution analysis', err: 'Analysis unavailable.' },
+  fr: { title: 'Photos de progression', sub: 'Garde une trace visuelle (stockée sur ton appareil, privée).', photo: 'Photo', gallery: 'Galerie', empty: 'Aucune photo. Ajoute ta première pour suivre ton évolution.', analyze: 'Analyser mon évolution', analyzing: 'Analyse…', needTwo: 'Ajoute au moins 2 photos pour analyser ton évolution.', result: 'Analyse de l’évolution', err: 'Analyse indisponible.' },
+  ar: { title: 'صور التقدم', sub: 'احتفظ بسجل مرئي (مخزّن على جهازك، خاص).', photo: 'صورة', gallery: 'المعرض', empty: 'لا توجد صور. أضف أول صورة لتتابع تطورك.', analyze: 'حلّل تطوري', analyzing: 'جارٍ التحليل…', needTwo: 'أضف صورتين على الأقل لتحليل تطورك.', result: 'تحليل التطور', err: 'التحليل غير متاح.' },
 };
 
 export default function ProgressPhotosScreen() {
@@ -30,9 +33,32 @@ export default function ProgressPhotosScreen() {
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 
   const [photos, setPhotos] = useState<{ uri: string; date: string }[]>([]);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState('');
 
   const load = async () => { try { const r = await AsyncStorage.getItem(KEY); if (r) setPhotos(JSON.parse(r)); } catch {} };
   useEffect(() => { load(); }, []);
+
+  // Analyse de l'évolution : compare la 1ère et la dernière photo. Aucun modèle
+  // on-device ne juge le physique → on passe par le backend/Gemini (cascade).
+  const analyzeEvolution = async () => {
+    if (photos.length < 2 || analyzing) return;
+    setAnalyzing(true); setAnalysis('');
+    try {
+      const latest = photos[0], first = photos[photos.length - 1];
+      const b64 = async (uri: string) => {
+        const m = await ImageManipulator.manipulateAsync(uri, [{ resize: { width: 512 } }], { base64: true, compress: 0.6, format: ImageManipulator.SaveFormat.JPEG });
+        return m.base64 as string;
+      };
+      const [b1, b2] = await Promise.all([b64(first.uri), b64(latest.uri)]);
+      const d1 = await aiVision('Décris en 1 phrase la silhouette/corpulence sur cette photo (objectif, neutre).', b1, 'image/jpeg');
+      const d2 = await aiVision('Décris en 1 phrase la silhouette/corpulence sur cette photo (objectif, neutre).', b2, 'image/jpeg');
+      const lang = language === 'fr' ? 'Réponds en français' : language === 'ar' ? 'Réponds en arabe' : 'Reply in English';
+      const res = await aiGenerate(`Photo de départ (${first.date}) : ${d1}. Photo récente (${latest.date}) : ${d2}. Compare l'évolution physique entre les deux photos, donne un verdict encourageant et 2 conseils concrets. ${lang}, court (4-5 lignes).`);
+      setAnalysis(res.trim());
+    } catch { setAnalysis(t.err); }
+    finally { setAnalyzing(false); }
+  };
 
   const add = async (fromCamera: boolean) => {
     try {
@@ -56,12 +82,27 @@ export default function ProgressPhotosScreen() {
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.head}><TrendingUp size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <PhotoStrip category="health" />
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
         <View style={styles.btnRow}>
           <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={() => add(true)}><Camera size={20} color="#fff" /><Text style={styles.btnPrimaryTxt}>{t.photo}</Text></TouchableOpacity>
           <TouchableOpacity style={[styles.btn, styles.btnGhost]} onPress={() => add(false)}><ImageIcon size={20} color={GREEN} /><Text style={styles.btnGhostTxt}>{t.gallery}</Text></TouchableOpacity>
         </View>
+
+        {photos.length >= 2 && (
+          <TouchableOpacity style={[styles.analyzeBtn, analyzing && { opacity: 0.7 }]} onPress={analyzeEvolution} disabled={analyzing} activeOpacity={0.85}>
+            {analyzing ? <ActivityIndicator color="#fff" /> : <Sparkles size={18} color="#fff" />}
+            <Text style={styles.analyzeTxt}>{analyzing ? t.analyzing : t.analyze}</Text>
+          </TouchableOpacity>
+        )}
+        {!!analysis && (
+          <View style={[styles.analysisCard, { backgroundColor: isDark ? '#161C23' : '#fff' }]}>
+            <Text style={[styles.analysisTitle, align]}>{t.result}</Text>
+            <Text style={[styles.analysisTxt, { color: text }, align]}>{analysis}</Text>
+            <Text style={[styles.analysisSrc, { color: sub }, align]}>⛅ {language === 'fr' ? 'Source : IA · Gemini (pas de modèle on-device pour juger le physique)' : language === 'ar' ? 'المصدر: ذكاء · Gemini' : 'Source: AI · Gemini'}</Text>
+          </View>
+        )}
 
         {photos.length === 0 ? <Text style={styles.empty}>{t.empty}</Text> : (
           <View style={styles.grid}>
@@ -91,6 +132,12 @@ const styles = StyleSheet.create({
   btnGhost: { backgroundColor: '#EAF4EE' },
   btnGhostTxt: { color: GREEN, fontWeight: '800', fontSize: 15 },
   empty: { color: '#94A3B8', fontSize: 14, textAlign: 'center', marginTop: 30, lineHeight: 20 },
+  analyzeBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GREEN, borderRadius: 16, paddingVertical: 14, marginBottom: 16 },
+  analyzeTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  analysisCard: { borderRadius: 18, borderWidth: 1.5, borderColor: GREEN, padding: 16, marginBottom: 18, gap: 6 },
+  analysisTitle: { color: GREEN, fontWeight: '800', fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.5 },
+  analysisTxt: { fontSize: 14, lineHeight: 21 },
+  analysisSrc: { fontSize: 11, fontStyle: 'italic', marginTop: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   cell: { width: COL, marginBottom: 12 },
   photo: { width: COL, height: COL * 1.3, borderRadius: 16, backgroundColor: '#E5E7EB' },

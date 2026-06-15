@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Camera, Image as ImageIcon, Refrigerator } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import PhotoStrip from '../../components/PhotoStrip';
 import { aiVision } from '../../lib/aiProxy';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -57,6 +58,7 @@ export default function FridgeRecipesScreen() {
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.head}><Refrigerator size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
+        <PhotoStrip category="food" />
 
         <View style={styles.btnRow}>
           <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={() => run(true)} disabled={loading}>

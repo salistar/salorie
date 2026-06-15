@@ -6,6 +6,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, Keyboard } from 're
 import { router } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { Home, Sparkles, BarChart3, User, Trophy } from 'lucide-react-native';
+import { useTheme } from '../lib/ThemeContext';
+import { useTranslation } from '../lib/i18n';
 
 const GREY = '#94A3B8';
 
@@ -21,6 +23,11 @@ export default function PersistentTabBar() {
   // Masque la barre quand le clavier est ouvert (sinon elle flotte au-dessus).
   const [kbOpen, setKbOpen] = useState(false);
   const { isSignedIn } = useAuth();
+  const { resolved } = useTheme();
+  const { language } = useTranslation() as any;
+  const isDark = resolved === 'dark';
+  const barBg = isDark ? '#161C23' : '#fff';
+  const defisLabel = language === 'fr' ? 'Défis' : language === 'ar' ? 'تحديات' : 'Challenges';
   useEffect(() => {
     const s = Keyboard.addListener('keyboardDidShow', () => setKbOpen(true));
     const h = Keyboard.addListener('keyboardDidHide', () => setKbOpen(false));
@@ -30,16 +37,23 @@ export default function PersistentTabBar() {
   // Pas connecté (welcome…) → pas de barre d'onglets (elle mènerait à des écrans qui exigent une session).
   if (!isSignedIn) return null;
 
+  const labelFor = (key: string, fallback: string) => {
+    if (key === 'defis') return defisLabel;
+    if (language === 'fr') return key === 'home' ? 'Accueil' : key === 'coach' ? 'Coach' : key === 'analytics' ? 'Analyses' : key === 'profile' ? 'Profil' : fallback;
+    if (language === 'ar') return key === 'home' ? 'الرئيسية' : key === 'coach' ? 'المدرب' : key === 'analytics' ? 'التحليلات' : key === 'profile' ? 'الملف' : fallback;
+    return fallback;
+  };
+
   return (
     <View style={styles.bar} pointerEvents="box-none">
-      <View style={styles.inner}>
+      <View style={[styles.inner, { backgroundColor: barBg }]}>
         {TABS.map((t) => {
           const Icon = t.icon;
           return (
             <TouchableOpacity key={t.key} style={styles.item} activeOpacity={0.7}
               onPress={() => { try { router.navigate(t.route as any); } catch { router.replace(t.route as any); } }}>
               <Icon size={22} color={GREY} />
-              <Text style={styles.label}>{t.label}</Text>
+              <Text style={styles.label} numberOfLines={1}>{labelFor(t.key, t.label)}</Text>
             </TouchableOpacity>
           );
         })}

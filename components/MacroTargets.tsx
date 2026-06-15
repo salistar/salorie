@@ -1,27 +1,47 @@
 // Macros par objectif — répartition Protéines / Glucides / Lipides : cible (selon
 // le plan/objectif) vs consommé du jour, avec progression. Réutilise useNutritionData.
+// Theme-aware (light/dark) + trilingue (en/fr/ar).
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Target } from 'lucide-react-native';
 import { useNutritionData } from '../hooks/useNutritionData';
+import { useTranslation } from '../lib/i18n';
+import { useTheme } from '../lib/ThemeContext';
 
 const MACROS = [
-  { key: 'protein', label: 'Protéines', color: '#2E8B57' },
-  { key: 'carbs', label: 'Glucides', color: '#2563EB' },
-  { key: 'fat', label: 'Lipides', color: '#D97706' },
+  { key: 'protein', color: '#2E8B57' },
+  { key: 'carbs', color: '#2563EB' },
+  { key: 'fat', color: '#D97706' },
 ] as const;
 
+const TXT: any = {
+  en: { title: 'Macros by goal', perDay: 'kcal/day', protein: 'Protein', carbs: 'Carbs', fat: 'Fats', footer: 'Targets derived from your goal & nutrition plan.' },
+  fr: { title: 'Macros par objectif', perDay: 'kcal/j', protein: 'Protéines', carbs: 'Glucides', fat: 'Lipides', footer: 'Cibles dérivées de ton objectif & plan nutritionnel.' },
+  ar: { title: 'الماكروز حسب الهدف', perDay: 'سعرة/يوم', protein: 'بروتين', carbs: 'كربوهيدرات', fat: 'دهون', footer: 'أهداف مشتقة من هدفك وخطتك الغذائية.' },
+};
+
 export default function MacroTargets() {
+  const { language, isRTL } = useTranslation() as any;
+  const tx = TXT[language] || TXT.en;
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const cardBg = isDark ? '#161C23' : '#fff';
+  const titleColor = isDark ? '#f1f5f9' : '#0F172A';
+  const labelColor = isDark ? '#cbd5e1' : '#334155';
+  const valColor = isDark ? '#94a3b8' : '#64748B';
+  const trackBg = isDark ? '#334155' : '#F1F5F9';
+  const footerColor = isDark ? '#475569' : '#CBD5E1';
+
   const data: any = useNutritionData();
   const goals = data?.goals || { protein: 0, carbs: 0, fat: 0, calories: 0 };
   const consumed = data?.consumed || { protein: 0, carbs: 0, fat: 0 };
 
   return (
-    <View style={styles.card}>
-      <View style={styles.header}>
+    <View style={[styles.card, { backgroundColor: cardBg }]}>
+      <View style={[styles.header, isRTL && { flexDirection: 'row-reverse' }]}>
         <Target size={18} color="#2E8B57" />
-        <Text style={styles.title}>Macros par objectif</Text>
-        {goals.calories ? <Text style={styles.kcal}>{Math.round(goals.calories)} kcal/j</Text> : null}
+        <Text style={[styles.title, { color: titleColor }, isRTL && { marginLeft: 0, marginRight: 8, textAlign: 'right' }]}>{tx.title}</Text>
+        {goals.calories ? <Text style={[styles.kcal, { color: valColor }]}>{Math.round(goals.calories)} {tx.perDay}</Text> : null}
       </View>
       {MACROS.map((m) => {
         const target = Math.round(Number(goals[m.key]) || 0);
@@ -29,15 +49,15 @@ export default function MacroTargets() {
         const pct = target > 0 ? Math.min(100, (cur / target) * 100) : 0;
         return (
           <View key={m.key} style={styles.row}>
-            <View style={styles.rowTop}>
-              <Text style={styles.label}>{m.label}</Text>
-              <Text style={styles.val}><Text style={{ color: m.color, fontWeight: '800' }}>{cur}</Text> / {target} g</Text>
+            <View style={[styles.rowTop, isRTL && { flexDirection: 'row-reverse' }]}>
+              <Text style={[styles.label, { color: labelColor }]}>{tx[m.key]}</Text>
+              <Text style={[styles.val, { color: valColor }]}><Text style={{ color: m.color, fontWeight: '800' }}>{cur}</Text> / {target} g</Text>
             </View>
-            <View style={styles.track}><View style={[styles.fill, { width: `${pct}%`, backgroundColor: m.color }]} /></View>
+            <View style={[styles.track, { backgroundColor: trackBg }]}><View style={[styles.fill, { width: `${pct}%`, backgroundColor: m.color }]} /></View>
           </View>
         );
       })}
-      <Text style={styles.footer}>Cibles dérivées de ton objectif &amp; plan nutritionnel.</Text>
+      <Text style={[styles.footer, { color: footerColor, textAlign: isRTL ? 'right' : 'left' }]}>{tx.footer}</Text>
     </View>
   );
 }

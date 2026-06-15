@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { CalendarDays, Plus, Trash2, Flag, Dumbbell } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import PhotoStrip from '../../components/PhotoStrip';
 import { FormCard, FormInput } from '../../components/FormKit';
 import { logEntry, getEntries, deleteEntry } from '../../lib/tracking';
 import { getActiveRaces } from '../../lib/racesApi';
@@ -64,7 +65,7 @@ export default function SportAgenda() {
 
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
-      <ScreenTopBar />
+      <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Bandeau héro visuel */}
         <LinearGradient colors={[GREEN, '#1d6440']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.heroBanner}>
@@ -74,6 +75,7 @@ export default function SportAgenda() {
             <Text style={[s.heroSub, align]}>{t.sub}</Text>
           </View>
         </LinearGradient>
+        <PhotoStrip category="sport" />
 
         {/* Planifier — champs FormKit (label au-dessus, carte) */}
         <FormCard style={{ marginTop: 18, marginBottom: 0 }}>

@@ -50,6 +50,23 @@ export async function aiVision(prompt: string, imageBase64: string, mimeType = '
 }
 
 /**
+ * Vision via MODÈLE LOCAL AUTO-HÉBERGÉ sur le backend (Ollama llava/moondream),
+ * avec repli API food gratuite côté serveur. DISTINCT du provider Gemini (/ai/vision).
+ * Route backend: POST /ml/vision (à implémenter côté serveur — Phase 2).
+ */
+export async function aiVisionLocal(prompt: string, imageBase64: string, mimeType = 'image/jpeg'): Promise<string> {
+  if (!API_URL) throw new Error('EXPO_PUBLIC_API_URL not configured');
+  const res = await fetch(`${API_URL}/ml/vision`, {
+    method: 'POST',
+    headers: await headers(),
+    body: JSON.stringify({ prompt, imageBase64, mimeType }),
+  });
+  if (!res.ok) throw new Error(`/ml/vision ${res.status}`);
+  const j = await res.json();
+  return String(j?.text ?? '');
+}
+
+/**
  * Drop-in replacement for `new GoogleGenerativeAI(key)` — same surface
  * (`getGenerativeModel({model}).generateContent(promptOrParts)` →
  * `{ response: { text() } }`) but routes to the backend /ai/* proxy, so no

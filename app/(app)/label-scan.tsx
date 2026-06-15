@@ -8,6 +8,7 @@ import { Camera, Images, ScanText, AlertTriangle } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
+import { computeHealthScore, VERDICT_TXT } from '../../lib/healthScore';
 
 const GREEN = '#2E8B57';
 
@@ -143,6 +144,23 @@ export default function LabelScanScreen() {
             {parsed.fat != null && <Text style={[styles.parsedRow, { color: isDark ? '#cbd5e1' : '#334155' }, align]}>{t.fat} : <Text style={[styles.bold, { color: fg }]}>{parsed.fat} g</Text></Text>}
           </View>
         ) : null}
+
+        {hasParsed ? (() => {
+          const h = computeHealthScore({ kcal: parsed.calories, protein: parsed.protein, carbs: parsed.carbs, fat: parsed.fat });
+          return (
+            <View style={[styles.healthBadge, { backgroundColor: h.color + '1A', borderColor: h.color }]}>
+              <View style={[styles.healthGrade, { backgroundColor: h.color }]}>
+                <Text style={styles.healthGradeTxt}>{h.grade}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.healthVerdict, { color: h.color }, align]}>{(VERDICT_TXT[language] || VERDICT_TXT.en)[h.verdict]}</Text>
+                <Text style={[styles.healthSub, { color: sub }, align]}>
+                  {h.score}/100{h.approx ? ' ~' : ''} · {language === 'fr' ? 'calcul sur l’appareil' : language === 'ar' ? 'حساب على الجهاز' : 'computed on-device'}
+                </Text>
+              </View>
+            </View>
+          );
+        })() : null}
 
         {text ? (
           <View style={[styles.textCard, { backgroundColor: card }]}>

@@ -6,7 +6,7 @@ import BrandOverlay from '../../components/BrandOverlay';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
-import { ArrowLeft, Play, Pause, Square, MapPin } from 'lucide-react-native';
+import { ArrowLeft, Play, Pause, Square, MapPin, Trophy } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -24,9 +24,12 @@ const ME_COLOR = '#22c55e';   // current user — green
 const OTHER_COLOR = '#3b82f6'; // others — blue
 
 const TXT: Record<string, any> = {
-  en: { title: 'Live Race', perm: 'Location permission is required to join the race.', grant: 'Grant access', dist: 'Distance', time: 'Time', pace: 'Pace', kcal: 'Calories', start: 'Start', pause: 'Pause', resume: 'Resume', finish: 'Finish', saved: 'Race finished', savedMsg: 'kcal added to your activity for today.', waiting: 'Getting your location…', leaderboard: 'Leaderboard', you: 'You', km: 'km', done: 'finished' },
-  fr: { title: 'Course en direct', perm: 'La permission de localisation est requise pour rejoindre la course.', grant: 'Autoriser', dist: 'Distance', time: 'Temps', pace: 'Allure', kcal: 'Calories', start: 'Démarrer', pause: 'Pause', resume: 'Reprendre', finish: 'Terminer', saved: 'Course terminée', savedMsg: 'kcal ajoutées à ton activité du jour.', waiting: 'Localisation en cours…', leaderboard: 'Classement', you: 'Toi', km: 'km', done: 'terminé' },
-  ar: { title: 'سباق مباشر', perm: 'إذن الموقع مطلوب للانضمام إلى السباق.', grant: 'السماح', dist: 'المسافة', time: 'الوقت', pace: 'الإيقاع', kcal: 'سعرات', start: 'ابدأ', pause: 'إيقاف', resume: 'استئناف', finish: 'إنهاء', saved: 'انتهى السباق', savedMsg: 'سعرة أُضيفت إلى نشاط اليوم.', waiting: 'جارٍ تحديد موقعك…', leaderboard: 'الترتيب', you: 'أنت', km: 'كم', done: 'منتهٍ' },
+  en: { title: 'Live Race', perm: 'Location permission is required to join the race.', grant: 'Grant access', dist: 'Distance', time: 'Time', pace: 'Pace', kcal: 'Calories', start: 'Start', pause: 'Pause', resume: 'Resume', finish: 'Finish', saved: 'Race finished', savedMsg: 'kcal added to your activity for today.', waiting: 'Getting your location…', leaderboard: 'Leaderboard', you: 'You', km: 'km', done: 'finished',
+    gps: 'Real (GPS)', sim: 'Simulation', mode: 'Choose your mode', gpsHint: 'Moves only when you move', simHint: 'Auto-advances for you', avgPace: 'Avg pace', rank: 'Rank', savedToActivity: 'Saved to your activity', great: 'Great job!', viewActivity: 'View activity', close: 'Close' },
+  fr: { title: 'Course en direct', perm: 'La permission de localisation est requise pour rejoindre la course.', grant: 'Autoriser', dist: 'Distance', time: 'Temps', pace: 'Allure', kcal: 'Calories', start: 'Démarrer', pause: 'Pause', resume: 'Reprendre', finish: 'Terminer', saved: 'Course terminée', savedMsg: 'kcal ajoutées à ton activité du jour.', waiting: 'Localisation en cours…', leaderboard: 'Classement', you: 'Toi', km: 'km', done: 'terminé',
+    gps: 'Réel (GPS)', sim: 'Simulation', mode: 'Choisis ton mode', gpsHint: "N'avance que si tu bouges", simHint: 'Avance toute seule', avgPace: 'Allure moy.', rank: 'Rang', savedToActivity: 'Enregistré dans ton activité', great: 'Bravo !', viewActivity: "Voir l'activité", close: 'Fermer' },
+  ar: { title: 'سباق مباشر', perm: 'إذن الموقع مطلوب للانضمام إلى السباق.', grant: 'السماح', dist: 'المسافة', time: 'الوقت', pace: 'الإيقاع', kcal: 'سعرات', start: 'ابدأ', pause: 'إيقاف', resume: 'استئناف', finish: 'إنهاء', saved: 'انتهى السباق', savedMsg: 'سعرة أُضيفت إلى نشاط اليوم.', waiting: 'جارٍ تحديد موقعك…', leaderboard: 'الترتيب', you: 'أنت', km: 'كم', done: 'منتهٍ',
+    gps: 'حقيقي (GPS)', sim: 'محاكاة', mode: 'اختر الوضع', gpsHint: 'يتقدّم فقط عند الحركة', simHint: 'يتقدّم تلقائياً', avgPace: 'متوسط الإيقاع', rank: 'الترتيب', savedToActivity: 'حُفظ في نشاطك', great: 'أحسنت!', viewActivity: 'عرض النشاط', close: 'إغلاق' },
 };
 
 type LatLng = { lat: number; lng: number };
@@ -115,6 +118,8 @@ export default function RaceLiveScreen() {
   const [status, setStatus] = useState<'idle' | 'running' | 'paused'>('idle');
   const [weight, setWeight] = useState(70);
   const [participants, setParticipants] = useState<RaceParticipant[]>([]);
+  const [mode, setMode] = useState<'gps' | 'sim'>('gps'); // réel (GPS, bouge si on bouge) ou simulation (avance auto)
+  const [summary, setSummary] = useState<{ km: string; kcal: number; mmss: string; pace: string; rank: number } | null>(null);
 
   const subRef = useRef<Location.LocationSubscription | null>(null);
   const lastPt = useRef<LatLng | null>(null);
@@ -165,8 +170,23 @@ export default function RaceLiveScreen() {
     webRef.current?.injectJavaScript(`window.setParticipants && window.setParticipants(${JSON.stringify(json)}); true;`);
   };
 
-  const startTracking = async () => {
+  const startTracking = async (selected?: 'gps' | 'sim') => {
+    const m = selected || mode;
+    setMode(m);
     setStatus('running');
+    if (m === 'sim') {
+      // SIMULATION : la course avance toute seule (~10,8 km/h) sans GPS. À l'arrêt,
+      // on enregistre quand même dans l'historique/activité (comme le mode réel).
+      const c = center || { lat: 33.5731, lng: -7.5898 };
+      timerRef.current = setInterval(() => {
+        setSecs((s) => s + 1);
+        metersRef.current += 3; // 3 m/s
+        setMeters(metersRef.current);
+        if (raceId && email) updateRaceProgress(raceId, email, metersRef.current, c.lat, c.lng);
+      }, 1000);
+      return;
+    }
+    // RÉEL (GPS) : n'avance QUE si la position bouge réellement.
     timerRef.current = setInterval(() => setSecs((s) => s + 1), 1000);
     subRef.current = await Location.watchPositionAsync(
       // Énergie : High suffit pour la course/race et consomme bien moins que BestForNavigation.
@@ -211,7 +231,16 @@ export default function RaceLiveScreen() {
       if (raceId && email) await finishMyRace(raceId, email);
       if (email && km > 0) await addDistanceToJoinedChallenges(email, km);
     } catch (e) { console.warn('[race-live] finish failed', e); }
-    Alert.alert(t.saved, `${kcal} ${t.savedMsg}`, [{ text: 'OK', onPress: () => router.back() }]);
+    // Résumé designé (remplace l'Alert basique)
+    const myRank = (sorted.findIndex((p) => p.email === email) + 1) || 1;
+    const paceMinF = km > 0 ? secs / 60 / km : 0;
+    setSummary({
+      km: km.toFixed(2),
+      kcal,
+      mmss,
+      pace: paceMinF > 0 ? `${Math.floor(paceMinF)}'${String(Math.round((paceMinF % 1) * 60)).padStart(2, '0')}"` : "--'--",
+      rank: myRank,
+    });
   };
 
   const km = meters / 1000;
@@ -294,21 +323,71 @@ export default function RaceLiveScreen() {
           <Stat label={t.pace} value={paceStr} unit="/km" text={text} sub={sub} />
           <Stat label={t.kcal} value={`${kcal}`} unit="kcal" text={text} sub={sub} />
         </View>
+        {/* Sélecteur de mode (avant départ) : Réel GPS vs Simulation */}
+        {status === 'idle' && (
+          <View style={styles.modeRow}>
+            {(['gps', 'sim'] as const).map((m) => {
+              const active = mode === m;
+              return (
+                <TouchableOpacity key={m} activeOpacity={0.85} onPress={() => setMode(m)}
+                  style={[styles.modeChip, { borderColor: active ? PRIMARY : (isDark ? '#334155' : '#e2e8f0'), backgroundColor: active ? (isDark ? '#14321f' : '#ecfdf3') : 'transparent' }]}>
+                  <Text style={[styles.modeChipTitle, { color: active ? PRIMARY : text }]}>{m === 'gps' ? t.gps : t.sim}</Text>
+                  <Text style={[styles.modeChipHint, { color: sub }]} numberOfLines={1}>{m === 'gps' ? t.gpsHint : t.simHint}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
         <View style={styles.controls}>
           {status === 'idle' && (
-            <TouchableOpacity style={styles.bigBtn} onPress={startTracking}><Play size={26} color="#fff" fill="#fff" /><Text style={styles.bigBtnTxt}>{t.start}</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.bigBtn} onPress={() => startTracking(mode)}><Play size={26} color="#fff" fill="#fff" /><Text style={styles.bigBtnTxt}>{t.start}</Text></TouchableOpacity>
           )}
           {status === 'running' && (
             <TouchableOpacity style={[styles.bigBtn, { backgroundColor: '#f59e0b' }]} onPress={pause}><Pause size={26} color="#fff" fill="#fff" /><Text style={styles.bigBtnTxt}>{t.pause}</Text></TouchableOpacity>
           )}
           {status === 'paused' && (
             <>
-              <TouchableOpacity style={[styles.bigBtn, { flex: 1 }]} onPress={startTracking}><Play size={24} color="#fff" fill="#fff" /><Text style={styles.bigBtnTxt}>{t.resume}</Text></TouchableOpacity>
+              <TouchableOpacity style={[styles.bigBtn, { flex: 1 }]} onPress={() => startTracking(mode)}><Play size={24} color="#fff" fill="#fff" /><Text style={styles.bigBtnTxt}>{t.resume}</Text></TouchableOpacity>
               <TouchableOpacity style={[styles.bigBtn, { flex: 1, backgroundColor: '#ef4444' }]} onPress={finish}><Square size={22} color="#fff" fill="#fff" /><Text style={styles.bigBtnTxt}>{t.finish}</Text></TouchableOpacity>
             </>
           )}
         </View>
       </View>
+
+      {/* Résumé de fin — designé (remplace l'Alert basique) */}
+      {summary && (
+        <View style={styles.sumOverlay}>
+          <View style={[styles.sumCard, { backgroundColor: card }]}>
+            <View style={styles.sumIcon}><Trophy size={38} color="#F59E0B" /></View>
+            <Text style={[styles.sumTitle, { color: text }]}>{t.great}</Text>
+            <Text style={[styles.sumSub, { color: sub }]}>{summary.kcal} kcal · {t.savedToActivity}</Text>
+            <View style={styles.sumStatsRow}>
+              <SumStat v={summary.km} u="km" l={t.dist} text={text} sub={sub} />
+              <SumStat v={summary.mmss} u="" l={t.time} text={text} sub={sub} />
+              <SumStat v={`${summary.kcal}`} u="kcal" l={t.kcal} text={text} sub={sub} />
+            </View>
+            <View style={styles.sumStatsRow}>
+              <SumStat v={summary.pace} u="/km" l={t.avgPace} text={text} sub={sub} />
+              <SumStat v={`#${summary.rank}`} u="" l={t.rank} text={text} sub={sub} />
+            </View>
+            <TouchableOpacity style={styles.sumBtn} onPress={() => { setSummary(null); router.replace('/activity' as any); }}>
+              <Text style={styles.sumBtnTxt}>{t.viewActivity}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { setSummary(null); router.back(); }} style={{ paddingVertical: 10 }}>
+              <Text style={{ color: sub, fontWeight: '700', fontSize: 14 }}>{t.close}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function SumStat({ v, u, l, text, sub }: any) {
+  return (
+    <View style={{ alignItems: 'center', flex: 1 }}>
+      <Text style={{ fontSize: 22, fontWeight: '900', color: text, letterSpacing: -0.5 }}>{v}</Text>
+      <Text style={{ fontSize: 11, fontWeight: '700', color: sub, marginTop: 2 }}>{l}{u ? ` (${u})` : ''}</Text>
     </View>
   );
 }
@@ -342,4 +421,16 @@ const styles = StyleSheet.create({
   controls: { flexDirection: 'row', gap: 12 },
   bigBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: PRIMARY, paddingVertical: 18, borderRadius: 18 },
   bigBtnTxt: { color: '#fff', fontSize: 17, fontWeight: '800' },
+  modeRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
+  modeChip: { flex: 1, borderRadius: 16, borderWidth: 2, paddingVertical: 12, paddingHorizontal: 12, alignItems: 'center', gap: 2 },
+  modeChipTitle: { fontSize: 15, fontWeight: '900' },
+  modeChipHint: { fontSize: 11, fontWeight: '600' },
+  sumOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center', padding: 28 },
+  sumCard: { width: '100%', maxWidth: 380, borderRadius: 28, padding: 26, alignItems: 'center', gap: 6 },
+  sumIcon: { width: 76, height: 76, borderRadius: 38, backgroundColor: '#FEF3E0', alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  sumTitle: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5 },
+  sumSub: { fontSize: 13.5, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
+  sumStatsRow: { flexDirection: 'row', width: '100%', marginBottom: 6 },
+  sumBtn: { backgroundColor: PRIMARY, alignSelf: 'stretch', height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 14 },
+  sumBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
 });

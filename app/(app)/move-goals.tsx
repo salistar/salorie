@@ -2,7 +2,7 @@
 // gainage, fentes — chaque exo a un objectif quotidien ; tu incrémentes par séries,
 // l'anneau se remplit. Stocké localement par jour. Trilingue + dark + RTL.
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUser } from '@clerk/clerk-expo';
 import { Dumbbell, Plus, Check, RotateCcw } from 'lucide-react-native';
@@ -20,13 +20,37 @@ const TXT: any = {
   ar: { title: 'حركات اليوم', sub: 'حقّق أهداف حركتك اليومية — اضغط لإضافة مجموعة.', done: 'الأهداف المنجزة', set: '+ مجموعة', logged: 'تم تسجيل اليوم ✓', reset: 'إعادة', kcalNote: 'تمارين وزن الجسم — مثالية بين الوجبات أو في المكتب.' },
 };
 
-// Exercices (objectif/jour, incrément par série, kcal approx par rep).
+// Image de démonstration par exercice (assets locaux).
+const MOVE_IMG: Record<string, any> = {
+  pushups: require('../../assets/images/exercises/pushups.jpg'),
+  squats: require('../../assets/images/exercises/squats.jpg'),
+  abs: require('../../assets/images/exercises/abs.jpg'),
+  lunges: require('../../assets/images/exercises/lunges.jpg'),
+  plankSec: require('../../assets/images/exercises/plankSec.jpg'),
+};
+
+// Exercices (objectif/jour, incrément par série, kcal approx par rep) + description du geste.
 const MOVES = [
-  { key: 'pushups', emoji: '💪', goal: 50, per: 10, kcal: 0.5, en: 'Push-ups', fr: 'Pompes', ar: 'ضغط' },
-  { key: 'squats', emoji: '🦵', goal: 60, per: 15, kcal: 0.4, en: 'Squats', fr: 'Squats', ar: 'قرفصاء' },
-  { key: 'abs', emoji: '🔥', goal: 80, per: 20, kcal: 0.3, en: 'Crunches', fr: 'Abdos', ar: 'بطن' },
-  { key: 'lunges', emoji: '🏃', goal: 40, per: 10, kcal: 0.45, en: 'Lunges', fr: 'Fentes', ar: 'اندفاع' },
-  { key: 'plankSec', emoji: '🧘', goal: 120, per: 30, kcal: 0.08, en: 'Plank (sec)', fr: 'Gainage (sec)', ar: 'بلانك (ث)' },
+  { key: 'pushups', emoji: '💪', goal: 50, per: 10, kcal: 0.5, en: 'Push-ups', fr: 'Pompes', ar: 'ضغط',
+    descFr: 'Mains au sol largeur d’épaules, corps gainé en ligne droite. Descends la poitrine près du sol, puis pousse pour remonter.',
+    descEn: 'Hands shoulder-width on the floor, body straight and tight. Lower your chest near the floor, then push back up.',
+    descAr: 'اليدان على الأرض بعرض الكتفين والجسم مشدود ومستقيم. انزل بصدرك قرب الأرض ثم ادفع للأعلى.' },
+  { key: 'squats', emoji: '🦵', goal: 60, per: 15, kcal: 0.4, en: 'Squats', fr: 'Squats', ar: 'قرفصاء',
+    descFr: 'Pieds largeur d’épaules. Descends les hanches comme pour t’asseoir (dos droit, genoux derrière les orteils), puis remonte.',
+    descEn: 'Feet shoulder-width. Lower your hips like sitting back (straight back, knees behind toes), then stand back up.',
+    descAr: 'القدمان بعرض الكتفين. انزل بالوركين كأنك تجلس (الظهر مستقيم، الركبتان خلف أصابع القدم) ثم انهض.' },
+  { key: 'abs', emoji: '🔥', goal: 80, per: 20, kcal: 0.3, en: 'Crunches', fr: 'Abdos', ar: 'بطن',
+    descFr: 'Allongé sur le dos, genoux pliés. Décolle les épaules en contractant les abdos, sans tirer sur la nuque, puis redescends.',
+    descEn: 'Lie on your back, knees bent. Lift your shoulders by contracting your abs (don’t pull your neck), then lower slowly.',
+    descAr: 'استلقِ على ظهرك والركبتان مثنيتان. ارفع كتفيك بشدّ عضلات البطن دون شدّ الرقبة ثم انزل ببطء.' },
+  { key: 'lunges', emoji: '🏃', goal: 40, per: 10, kcal: 0.45, en: 'Lunges', fr: 'Fentes', ar: 'اندفاع',
+    descFr: 'Un grand pas en avant, plie les deux genoux à 90° (le genou arrière frôle le sol), reviens et alterne les jambes.',
+    descEn: 'Take a big step forward, bend both knees to 90° (back knee near the floor), return and alternate legs.',
+    descAr: 'خطوة كبيرة للأمام، اثنِ الركبتين 90° (الركبة الخلفية قرب الأرض)، عُد وبدّل الساقين.' },
+  { key: 'plankSec', emoji: '🧘', goal: 120, per: 30, kcal: 0.08, en: 'Plank (sec)', fr: 'Gainage (sec)', ar: 'بلانك (ث)',
+    descFr: 'Sur les avant-bras et la pointe des pieds, corps droit et gainé (ni hanches hautes ni creusées). Tiens la position.',
+    descEn: 'On forearms and toes, body straight and braced (hips not too high or sagging). Hold the position.',
+    descAr: 'على الساعدين وأطراف القدمين، الجسم مستقيم ومشدود (الوركان غير مرتفعين ولا منخفضين). اثبت على الوضعية.' },
 ];
 
 export default function MoveGoals() {
@@ -69,7 +93,7 @@ export default function MoveGoals() {
 
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
-      <ScreenTopBar />
+      <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
         <View style={[s.head, rowDir]}>
           <Dumbbell size={26} color={GREEN} />
@@ -92,8 +116,8 @@ export default function MoveGoals() {
           const done = c >= m.goal;
           return (
             <View key={m.key} style={[s.moveCard, { backgroundColor: card }]}>
-              <View style={[{ alignItems: 'center', gap: 10 }, rowDir]}>
-                <Text style={{ fontSize: 26 }}>{m.emoji}</Text>
+              <View style={[{ alignItems: 'center', gap: 12 }, rowDir]}>
+                <Image source={MOVE_IMG[m.key]} style={[s.moveImg, isDark && { backgroundColor: '#334155' }]} resizeMode="cover" />
                 <View style={{ flex: 1 }}>
                   <Text style={[s.moveName, { color: text }, align]}>{(m as any)[language] || m.en}</Text>
                   <Text style={[s.moveMeta, { color: done ? GREEN : sub }, align]}>{c} / {m.goal}{done ? ` · ${t.done}` : ''}</Text>
@@ -103,6 +127,7 @@ export default function MoveGoals() {
                   <Text style={[s.addTxt, { color: done ? '#fff' : GREEN }]}>{m.per}</Text>
                 </TouchableOpacity>
               </View>
+              <Text style={[s.moveDesc, { color: sub }, align]}>{language === 'fr' ? m.descFr : language === 'ar' ? m.descAr : m.descEn}</Text>
               <View style={[s.track, { backgroundColor: isDark ? '#334155' : '#e2e8f0' }]}>
                 <View style={[s.fill, { width: `${pct}%`, backgroundColor: done ? GREEN : '#86b8a0' }]} />
               </View>
@@ -127,6 +152,8 @@ const s = StyleSheet.create({
   summaryLabel: { fontSize: 15, fontWeight: '800' },
   summaryKcal: { fontSize: 12.5, marginTop: 2 },
   moveCard: { borderRadius: 18, padding: 15, marginTop: 12 },
+  moveImg: { width: 58, height: 58, borderRadius: 14, backgroundColor: '#e2e8f0' },
+  moveDesc: { fontSize: 12.5, lineHeight: 18, marginTop: 11 },
   moveName: { fontSize: 15.5, fontWeight: '800' },
   moveMeta: { fontSize: 12.5, marginTop: 2, fontWeight: '600' },
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9 },

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { ChevronDown, ChevronRight } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
+import { useTheme } from '../lib/ThemeContext';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -18,6 +19,8 @@ interface Props {
 
 export default function CollapsibleSection({ title, defaultOpen = false, children, color }: Props) {
   const [open, setOpen] = useState(defaultOpen);
+  const { resolved } = useTheme();
+  const titleColor = resolved === 'dark' ? '#f1f5f9' : Colors.light.gray[900];
   const toggle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setOpen((o) => !o);
@@ -26,7 +29,7 @@ export default function CollapsibleSection({ title, defaultOpen = false, childre
   return (
     <View style={styles.wrap}>
       <TouchableOpacity style={styles.header} activeOpacity={0.7} onPress={toggle}>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={[styles.title, { color: titleColor }]}>{title}</Text>
         {open ? <ChevronDown size={20} color={tint} /> : <ChevronRight size={20} color={tint} />}
       </TouchableOpacity>
       {open && <View style={styles.body}>{children}</View>}

@@ -53,7 +53,7 @@ export default function EquipmentScan() {
 
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
-      <ScreenTopBar />
+      <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
         <LinearGradient colors={[GREEN, '#1d6440']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.heroBanner}>
           <Dumbbell size={30} color="#fff" />

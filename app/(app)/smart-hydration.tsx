@@ -4,6 +4,7 @@ import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpaci
 import { useUser } from '@clerk/clerk-expo';
 import { Droplets, Activity, Sun } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import PhotoStrip from '../../components/PhotoStrip';
 import { getUserFromFirestore } from '../../lib/firebase';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
@@ -60,6 +61,7 @@ export default function SmartHydrationScreen() {
       <ScrollView contentContainerStyle={styles.body}>
         <Image source={require('../../assets/images/illustrations/weightlifting.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <View style={styles.head}><Droplets size={24} color="#0EA5E9" /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <PhotoStrip category="health" />
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
         {loading ? <ActivityIndicator color={GREEN} style={{ marginTop: 40 }} /> : (

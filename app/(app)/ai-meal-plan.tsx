@@ -1,12 +1,15 @@
 // Plan repas IA — génère un plan du jour selon objectif + budget + ingrédients dispo.
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
-import { Sparkles } from 'lucide-react-native';
+import { Sparkles, Bookmark } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import PhotoStrip from '../../components/PhotoStrip';
 import { FormCard, FormInput, Stepper, SubmitBar } from '../../components/FormKit';
 import { aiGenerate } from '../../lib/aiProxy';
 import { getUserFromFirestore } from '../../lib/firebase';
+import { logEntry, getEntries } from '../../lib/tracking';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 
@@ -26,6 +29,8 @@ const TXT: any = {
     fail: 'Generation failed',
     error: 'error',
     replyLang: 'Réponds en anglais',
+    savedTitle: 'My saved plans',
+    savedHint: 'Saved on this phone + your account. Tap to reopen.',
   },
   fr: {
     title: 'Plan repas IA',
@@ -40,6 +45,8 @@ const TXT: any = {
     fail: 'Génération impossible',
     error: 'erreur',
     replyLang: 'Réponds en français',
+    savedTitle: 'Mes plans enregistrés',
+    savedHint: 'Enregistrés sur ce téléphone + ton compte. Touche pour rouvrir.',
   },
   ar: {
     title: 'خطة وجبات ذكية',
@@ -54,6 +61,8 @@ const TXT: any = {
     fail: 'تعذّر الإنشاء',
     error: 'خطأ',
     replyLang: 'Réponds en arabe',
+    savedTitle: 'خططي المحفوظة',
+    savedHint: 'محفوظة على الهاتف + حسابك. اضغط لإعادة الفتح.',
   },
 };
 
@@ -75,6 +84,21 @@ export default function AiMealPlanScreen() {
   const [fridge, setFridge] = useState('');
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState('');
+  const [saved, setSaved] = useState<any[]>([]);
+  const email = user?.primaryEmailAddress?.emailAddress || '';
+  const CACHE_KEY = 'ai_meal_plans_v1';
+
+  // Lecture des plans sauvegardés : CASCADE device (AsyncStorage) → backend (Firestore).
+  const loadSaved = async () => {
+    try { const c = await AsyncStorage.getItem(CACHE_KEY); if (c) setSaved(JSON.parse(c)); } catch {}
+    if (email) {
+      try {
+        const r = await getEntries(email, 'meal_plans', 10);
+        if (r?.length) { setSaved(r); AsyncStorage.setItem(CACHE_KEY, JSON.stringify(r)).catch(() => {}); }
+      } catch {}
+    }
+  };
+  useEffect(() => { loadSaved(); }, [email]);
 
   useEffect(() => { (async () => { try { const e = user?.primaryEmailAddress?.emailAddress; if (e) { const p: any = await getUserFromFirestore(e, user?.id); if (p?.goal) setGoal(p.goal); if (p?.nutritionalPlan?.dailyCalories) setCals(Number(p.nutritionalPlan.dailyCalories)); } } catch {} })(); }, []);
 
@@ -83,7 +107,19 @@ export default function AiMealPlanScreen() {
     try {
       const g = goal === 'lose' ? 'perte de poids' : goal === 'gain' ? 'prise de muscle' : 'maintien';
       const text = await aiGenerate(`Génère un plan de repas pour UNE journée. Objectif : ${g}, ~${cals} kcal/jour.${budget.trim() ? ` Budget max : ${budget}€.` : ''}${fridge.trim() ? ` Privilégie ces ingrédients dispo : ${fridge}.` : ''} Donne : petit-déjeuner, déjeuner, collation, dîner — chacun avec les aliments et une estimation calories. Total à la fin. ${t.replyLang}, concis.`);
-      setPlan(text.trim());
+      const clean = text.trim();
+      setPlan(clean);
+      // SAUVEGARDE : device (AsyncStorage) + backend (Firestore via logEntry).
+      const entry: any = { name: `${cals} kcal · ${goal}`, plan: clean, goal, cals, at: Date.now() };
+      try {
+        const c = await AsyncStorage.getItem(CACHE_KEY);
+        const arr = c ? JSON.parse(c) : [];
+        arr.unshift(entry);
+        const trimmed = arr.slice(0, 20);
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(trimmed));
+        setSaved(trimmed);
+      } catch {}
+      if (email) { logEntry(email, 'meal_plans', entry).catch(() => {}); }
     } catch (e: any) { setPlan(`${t.fail} (${e?.message || t.error}).`); } finally { setLoading(false); }
   };
 
@@ -92,6 +128,7 @@ export default function AiMealPlanScreen() {
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <View style={styles.head}><Sparkles size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <PhotoStrip category="food" />
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub1} {goal} · ~{cals} {t.sub2}</Text>
 
         {/* Champs groupés en carte — pattern FormKit (Stepper pour les nombres). */}
@@ -126,6 +163,22 @@ export default function AiMealPlanScreen() {
 
         {loading && <Text style={[styles.loadingTxt, { color: sub }]}>{t.generating}</Text>}
         {!!plan && <View style={[styles.card, { backgroundColor: card }]}><Text style={[styles.cardTxt, { color: text }, align]}>{plan}</Text></View>}
+
+        {saved.length > 0 && (
+          <>
+            <Text style={[styles.savedTitle, { color: text }, align]}>{t.savedTitle}</Text>
+            <Text style={[styles.savedHint, { color: sub }, align]}>{t.savedHint}</Text>
+            {saved.map((s, i) => (
+              <TouchableOpacity key={s.id || i} style={[styles.savedItem, { backgroundColor: card }, isRTL && { flexDirection: 'row-reverse' }]} onPress={() => setPlan(s.plan)} activeOpacity={0.85}>
+                <Bookmark size={18} color={GREEN} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.savedName, { color: text }, align]} numberOfLines={1}>{s.name || `${s.cals} kcal · ${s.goal}`}</Text>
+                  <Text style={[styles.savedDate, { color: sub }, align]}>{s.at ? new Date(s.at).toLocaleDateString() : ''}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
       </ScrollView>
       {/* CTA unique vert plein en bas (SubmitBar FormKit). */}
       <SubmitBar label={t.generate} onPress={run} loading={loading} />
@@ -142,4 +195,10 @@ const styles = StyleSheet.create({
   loadingTxt: { color: '#64748B', textAlign: 'center', marginTop: 16, fontWeight: '600' },
   card: { backgroundColor: '#fff', borderRadius: 18, padding: 18, marginTop: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   cardTxt: { fontSize: 14.5, color: '#1F2937', lineHeight: 22 },
+  savedTitle: { fontSize: 15, fontWeight: '800', marginTop: 24, marginBottom: 2 },
+  savedHint: { fontSize: 12, marginBottom: 10 },
+  savedItem: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 14, padding: 14, marginBottom: 8 },
+  savedName: { fontSize: 14, fontWeight: '700' },
+  savedDate: { fontSize: 12, marginTop: 1 },
 });
+

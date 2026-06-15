@@ -107,7 +107,7 @@ export default function VoiceLog() {
 
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
-      <ScreenTopBar />
+      <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body}>
         <View style={s.head}><Mic size={26} color={GREEN} /><Text style={[s.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[s.sub, { color: sub }, align]}>{t.sub}</Text>
