@@ -1,15 +1,23 @@
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import { UtensilsCrossed, Activity as ActivityIcon, ChevronRight } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../../constants/Colors';
 import HomeHeader from '../../components/HomeHeader';
+import BrandBanner from '../../components/BrandBanner';
 import WeekCalendar from '../../components/WeekCalendar';
 import RemainingCaloriesCard from '../../components/RemainingCaloriesCard';
 import WaterIntakeCard from '../../components/WaterIntakeCard';
 import StepsCard from '../../components/StepsCard';
+import DailyHealthScore from '../../components/DailyHealthScore';
+import OfflineBanner from '../../components/OfflineBanner';
+import HomeQuickActions from '../../components/HomeQuickActions';
+import HomeDiscover from '../../components/HomeDiscover';
+import CollapsibleSection from '../../components/CollapsibleSection';
 import { useLogging } from '../../lib/LoggingContext';
 import { useNutritionData } from '../../hooks/useNutritionData';
+import { updateWidgetData } from '../../lib/widgetData';
 import { saveUserToFirestore } from '../../lib/firebase';
 import { useUser } from '@clerk/clerk-expo';
 import { isCacheEmpty, syncAllUserData } from '../../lib/LocalDataStore';
@@ -25,11 +33,23 @@ import { useTheme } from '../../lib/ThemeContext';
 export default function HomeScreen() {
   const { user } = useUser();
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation() as any;
   const { resolved } = useTheme();
-  const bgColor = resolved === 'dark' ? '#000000' : 'transparent';
+  // Local FR/EN/AR tagline for the brand banner (D2 — replaces stock cover photo).
+  const HSTR: Record<string, { sub: string }> = {
+    en: { sub: 'Track. Eat smart. Reach your goal.' },
+    fr: { sub: 'Suis. Mange malin. Atteins ton objectif.' },
+    ar: { sub: 'تتبّع. كل بذكاء. حقّق هدفك.' },
+  };
+  const bannerSub = (HSTR[String(language)] || HSTR.en).sub;
+  const bgColor = resolved === 'dark' ? '#0B0E12' : 'transparent';
   const { selectedDate, refreshCount, showLogModal } = useLogging();
   const { loading, goals, consumed, logs, refresh } = useNutritionData(selectedDate);
+
+  // Synchronise le widget écran d'accueil (calories + eau du jour) à chaque màj.
+  useEffect(() => {
+    updateWidgetData({ calories: consumed.calories, water: consumed.water });
+  }, [consumed.calories, consumed.water]);
 
   // Si l app a ete tuee par Android pendant qu on prenait une photo,
   // ActionMenu a persiste l URI dans AsyncStorage (pending_scan_v1). On
@@ -67,6 +87,8 @@ export default function HomeScreen() {
     const email = user?.primaryEmailAddress?.emailAddress || '';
     const uid = user?.id;
     if (!email || !uid) return;
+    // Crash de la session précédente ? → envoi automatique au support (best-effort).
+    try { require('../../lib/logBuffer').maybeReportCrash(email); } catch {}
     if (_homeSyncedUserIds.has(uid)) {
       console.log('\x1b[33m[HomeScreen] sync deja effectue dans cette session pour\x1b[0m', email, '\x1b[33m— on skip pour eviter le reload quand on revient du scan\x1b[0m');
       return;
@@ -140,6 +162,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: bgColor }]}>
+      <OfflineBanner />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -148,16 +171,48 @@ export default function HomeScreen() {
         {/* ── Top Header (brand + language + theme + notif) ──── */}
         <HomeHeader />
 
-        {/* ── Dashboard Cover Image ──────────────── */}
-        <Image
-          source={require('../../assets/images/illustrations/dashboard_cover.jpg')}
-          style={{ width: '90%', height: 120, borderRadius: 20, alignSelf: 'center', marginBottom: 2 }}
-        />
+        {/* ── Brand Banner (replaces stock cover photo, D2) ──────────────── */}
+        <View style={{ paddingHorizontal: 24 }}>
+          <BrandBanner title="Salorie" subtitle={bannerSub} height={110} />
+        </View>
 
         {/* ── Week Calendar Strip ────────────────── */}
         <View style={styles.calendarWrapper}>
           <WeekCalendar />
         </View>
+
+        {/* Lance-toi : courses virtuelles / groupe / défis + notifs */}
+        <HomeQuickActions onLog={() => showLogModal()} />
+
+        {/* Accès rapides : Journal alimentaire + Activité (déplacés ici) */}
+        {(() => {
+          const dark = resolved === 'dark';
+          const cardBg = dark ? '#161C23' : '#fff';
+          const txt = dark ? '#f1f5f9' : Colors.light.gray[900];
+          const SHORT: Record<string, { diary: string; activity: string }> = {
+            en: { diary: 'Food diary', activity: 'Activity' },
+            fr: { diary: 'Journal alimentaire', activity: 'Activité' },
+            ar: { diary: 'يوميات الطعام', activity: 'النشاط' },
+          };
+          const sx = SHORT[String(language)] || SHORT.en;
+          return (
+            <View style={styles.shortcutRow}>
+              <TouchableOpacity style={[styles.shortcut, { backgroundColor: cardBg }]} activeOpacity={0.85} onPress={() => router.push('/diary' as any)}>
+                <View style={[styles.shortcutIcon, { backgroundColor: '#EAF4EE' }]}><UtensilsCrossed size={20} color={Colors.light.primary} /></View>
+                <Text style={[styles.shortcutTxt, { color: txt }]} numberOfLines={2}>{sx.diary}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.shortcut, { backgroundColor: cardBg }]} activeOpacity={0.85} onPress={() => router.push('/activity' as any)}>
+                <View style={[styles.shortcutIcon, { backgroundColor: '#EEF2FF' }]}><ActivityIcon size={20} color="#6366F1" /></View>
+                <Text style={[styles.shortcutTxt, { color: txt }]} numberOfLines={2}>{sx.activity}</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })()}
+
+        <HomeDiscover />
+
+        {/* Score santé quotidien — hook de rétention */}
+        <DailyHealthScore />
 
         {/* ── Scrollable Content ─────────────────── */}
         <View style={styles.contentHeader}>
@@ -197,10 +252,12 @@ export default function HomeScreen() {
               }}
             />
 
-            <ActivityList
-              logs={logs}
-              onAddPress={() => showLogModal()}
-            />
+            <CollapsibleSection title={language === 'fr' ? 'Activité récente' : language === 'ar' ? 'النشاط الأخير' : 'Recent activity'}>
+              <ActivityList
+                logs={logs}
+                onAddPress={() => showLogModal()}
+              />
+            </CollapsibleSection>
           </>
         )}
       </ScrollView>
@@ -224,6 +281,10 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 4,
   },
+  shortcutRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 24, marginTop: 4, marginBottom: 8 },
+  shortcut: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 18, paddingVertical: 14, paddingHorizontal: 14, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  shortcutIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  shortcutTxt: { flex: 1, fontSize: 13, fontWeight: '800' },
   contentHeader: {
     paddingHorizontal: 24,
     flexDirection: 'row',

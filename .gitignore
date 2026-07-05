@@ -50,7 +50,17 @@ app-example
 
 # generated native folders
 /ios
-/android
+# android/ EST versionné pour préserver les natifs custom (widget, StepCounterService,
+# network_security_config, MainApplication…) — un prebuild les écraserait sinon.
+# On ignore uniquement les artefacts de build :
+/android/build/
+/android/app/build/
+/android/.gradle/
+/android/.cxx/
+/android/app/.cxx/
+/android/local.properties
+/android/.kotlin/
+/android/app/release/
 
 # Firebase CLI debug log
 firebase-debug.log

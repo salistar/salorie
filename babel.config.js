@@ -8,6 +8,7 @@ module.exports = function (api) {
       // En build de production (release), on retire tous les console.* :
       // securite (plus d'emails/tokens en clair dans logcat) + performance.
       production: {
+        // En release : on retire tous les console.* (sécurité + perf).
         plugins: ['transform-remove-console'],
       },
     },

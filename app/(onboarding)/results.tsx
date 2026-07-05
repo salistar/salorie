@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -39,6 +39,8 @@ const TXT: Record<string, {
   liters: string;
   aiAdvice: string;
   goToDashboard: string;
+  logFirstMeal: string;
+  later: string;
   step1: string;
   step2: string;
   step3: string;
@@ -56,6 +58,8 @@ const TXT: Record<string, {
     liters: 'Liters',
     aiAdvice: 'AI Expert Advice',
     goToDashboard: 'Go to Dashboard',
+    logFirstMeal: 'Log my first meal',
+    later: 'Later',
     step1: 'Analyzing your profile',
     step2: 'Calculating nutritional needs',
     step3: 'Syncing with cloud',
@@ -73,6 +77,8 @@ const TXT: Record<string, {
     liters: 'Litres',
     aiAdvice: 'Conseils d\'expert IA',
     goToDashboard: 'Aller au tableau de bord',
+    logFirstMeal: 'Logger mon premier repas',
+    later: 'Plus tard',
     step1: 'Analyse de votre profil',
     step2: 'Calcul des besoins nutritionnels',
     step3: 'Synchronisation avec le cloud',
@@ -90,6 +96,8 @@ const TXT: Record<string, {
     liters: 'لتر',
     aiAdvice: 'نصائح خبير الذكاء الاصطناعي',
     goToDashboard: 'الذهاب إلى لوحة التحكم',
+    logFirstMeal: 'سجّل وجبتي الأولى',
+    later: 'لاحقًا',
     step1: 'تحليل ملفك الشخصي',
     step2: 'حساب احتياجاتك الغذائية',
     step3: 'المزامنة مع السحابة',
@@ -116,13 +124,36 @@ export default function ResultsScreen() {
     { label: t.step4, status: 'pending' },
   ]);
 
+  // Données prêtes à sauvegarder UNIQUEMENT quand l'utilisateur appuie sur "Finish".
+  const pendingSave = useRef<{ profile: any; plan: any } | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  // C'EST ICI qu'on valide réellement l'onboarding : sauvegarde Firestore +
+  // flag local, PUIS navigation. Tant que l'utilisateur n'a pas appuyé, RIEN
+  // n'est en base. Les deux CTA (logger un repas / plus tard) partagent ce flux
+  // pour préserver la migration/sauvegarde Firestore.
+  const finishOnboarding = async (destination: string) => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const ps = pendingSave.current;
+      const email = user?.primaryEmailAddress?.emailAddress || '';
+      if (user && email && ps) {
+        await saveUserToFirestore({ id: user.id, email, ...ps.profile, nutritionalPlan: ps.plan, onboarded: true });
+        await AsyncStorage.setItem(`onboarded_${email.toLowerCase()}`, 'true');
+        await AsyncStorage.setItem('last_session_onboarded', 'true');
+      }
+    } catch (e) { console.warn('[Onboarding] finish save failed', e); }
+    router.replace(destination as any);
+  };
+
   useEffect(() => {
     const processData = async () => {
       try {
         const userProfile = JSON.parse(params.data as string);
         
-        // 1. Start Analysis (dummy wait)
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // 1. Start Analysis (dummy wait) — chargement raccourci (~1,2s total).
+        await new Promise(resolve => setTimeout(resolve, 500));
         setSteps(prev => prev.map((s, i) => i === 0 ? { ...s, status: 'completed' } : i === 1 ? { ...s, status: 'loading' } : s));
 
         // 2. AI Generation (with fallback if quota exceeded)
@@ -151,26 +182,17 @@ export default function ResultsScreen() {
         setPlan(aiPlan);
         setSteps(prev => prev.map((s, i) => i === 1 ? { ...s, status: 'completed' } : i === 2 ? { ...s, status: 'loading' } : s));
 
-        // 3. Save ALL user data + plan to Firebase
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const email = user?.primaryEmailAddress?.emailAddress || '';
-        if (user && email) {
-          await saveUserToFirestore({
-            id: user.id,
-            email,
-            ...userProfile,
-            nutritionalPlan: aiPlan,
-            onboarded: true,
-          });
-        }
+        // 3. Plan calculé : on CACHE seulement en local (affichage). On NE
+        //    sauvegarde PAS onboarded:true ici — sinon un utilisateur qui atteint
+        //    cet écran mais n'appuie PAS sur "Finish" serait marqué onboardé et
+        //    enregistré en base. La sauvegarde Firestore se fait sur "Finish".
+        await new Promise(resolve => setTimeout(resolve, 350));
         await AsyncStorage.setItem('user_nutritional_plan', JSON.stringify(aiPlan));
-        if (email) {
-          await AsyncStorage.setItem(`onboarded_${email.toLowerCase()}`, 'true');
-        }
+        pendingSave.current = { profile: userProfile, plan: aiPlan };
         setSteps(prev => prev.map((s, i) => i === 2 ? { ...s, status: 'completed' } : i === 3 ? { ...s, status: 'loading' } : s));
 
         // 4. Finish
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 350));
         setSteps(prev => prev.map((s, i) => i === 3 ? { ...s, status: 'completed' } : s));
 
         setLoading(false);
@@ -279,9 +301,14 @@ export default function ResultsScreen() {
       </ScrollView>
 
       <View style={[styles.bottomBar, { backgroundColor: isDark ? Colors.dark.card : Colors.light.gray[50] }]}>
-        <TouchableOpacity style={[styles.finishButton, { flexDirection: isRTL ? 'row-reverse' : 'row' }]} onPress={() => router.replace('/(tabs)' as any)}>
-          <Text style={styles.finishButtonText}>{t.goToDashboard}</Text>
+        {/* AHA MOMENT : CTA principal vers le logging du premier repas. */}
+        <TouchableOpacity disabled={saving} style={[styles.finishButton, { flexDirection: isRTL ? 'row-reverse' : 'row', opacity: saving ? 0.7 : 1 }]} onPress={() => finishOnboarding('/food-database')}>
+          <Text style={styles.finishButtonText}>{t.logFirstMeal}</Text>
           <ArrowRight size={24} color={Colors.light.white} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+        </TouchableOpacity>
+        {/* Secondaire : continuer plus tard, direct au tableau de bord. */}
+        <TouchableOpacity disabled={saving} style={styles.laterButton} onPress={() => finishOnboarding('/(tabs)')}>
+          <Text style={[styles.laterButtonText, { color: isDark ? '#9BA1A6' : Colors.light.gray[500] }]}>{t.later}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -490,11 +517,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 5,
-    marginBottom: 40,
   },
   finishButtonText: {
     color: Colors.light.white,
     fontSize: 18,
+    fontWeight: '700',
+  },
+  laterButton: {
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  laterButtonText: {
+    fontSize: 15,
     fontWeight: '700',
   },
 });

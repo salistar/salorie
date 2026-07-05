@@ -1,6 +1,20 @@
-import { listUsers, AdminUser } from '../lib/firebaseAdmin';
+import { listUsers, getRecentEvents, AdminUser } from '../lib/firebaseAdmin';
+import AutoRefresh from './AutoRefresh';
 
 export const dynamic = 'force-dynamic'; // always read fresh from Firestore
+
+function evTime(ts: any): string {
+  const s = ts?._seconds ?? ts?.seconds;
+  return s ? new Date(s * 1000).toLocaleString('fr-FR') : '—';
+}
+function evLabel(t: string): string {
+  const m: Record<string, string> = {
+    meal_logged: '🍽️ Repas', activity_logged: '👟 Activité', weight_logged: '⚖️ Poids',
+    run_completed: '🏃 Course', race_completed: '🏁 Course live', fast_completed: '⏱️ Jeûne',
+    race_joined: '➕ Course rejointe', challenge_joined: '➕ Défi rejoint',
+  };
+  return m[t] || t;
+}
 
 function initials(u: AdminUser): string {
   const a = (u.firstName || u.email || u.id || '?').trim();
@@ -12,14 +26,17 @@ function displayName(u: AdminUser): string {
 
 export default async function Home() {
   let users: AdminUser[] = [];
+  let events: any[] = [];
   let error: string | null = null;
   try { users = await listUsers(); } catch (e: any) { error = e?.message || String(e); }
+  try { events = await getRecentEvents(40); } catch {}
 
   const withGoal = users.filter((u) => u.goal).length;
   const withWeight = users.filter((u) => u.weight).length;
 
   return (
     <main className="container">
+      <AutoRefresh seconds={15} />
       {error ? (
         <div className="card empty">
           ⚠️ Impossible de lire Firestore : {error}
@@ -27,6 +44,7 @@ export default async function Home() {
         </div>
       ) : (
         <>
+          <h1>Vue d'ensemble</h1>
           <div className="stats">
             <div className="stat"><div className="num">{users.length}</div><div className="lab">Utilisateurs</div></div>
             <div className="stat"><div className="num">{withGoal}</div><div className="lab">Avec objectif défini</div></div>
@@ -46,13 +64,13 @@ export default async function Home() {
                   {users.map((u) => (
                     <tr key={u.id}>
                       <td>
-                        <div className="userRow">
+                        <a href={`/users/${encodeURIComponent(u.id)}`} className="userRow" style={{ textDecoration: 'none', color: 'inherit' }}>
                           <div className="avatar">{initials(u)}</div>
                           <div>
-                            <div className="uname">{displayName(u)}</div>
+                            <div className="uname">{displayName(u)} ↗</div>
                             <div className="umail">{u.id}</div>
                           </div>
-                        </div>
+                        </a>
                       </td>
                       <td className="umail">{u.email || '—'}</td>
                       <td>{u.goal ? <span className="badge">{u.goal}</span> : '—'}</td>
@@ -63,6 +81,27 @@ export default async function Home() {
               </table>
             )}
           </div>
+          <h2>Flux d'événements (Event Bus)</h2>
+          <div className="card">
+            {events.length === 0 ? (
+              <div className="empty">Aucun événement encore (l'app en émet à chaque repas / activité / poids).</div>
+            ) : (
+              <table>
+                <thead><tr><th>Événement</th><th>Détail</th><th>Utilisateur</th><th>Quand</th></tr></thead>
+                <tbody>
+                  {events.map((e) => (
+                    <tr key={e.id}>
+                      <td><span className="badge">{evLabel(e.type)}</span></td>
+                      <td className="umail">{e.data?.name || (e.data?.weight != null ? `${e.data.weight} kg` : '—')}{e.data?.calories != null ? ` · ${Math.round(e.data.calories)} kcal` : ''}</td>
+                      <td><a href={`/users/${encodeURIComponent(e.userId)}`} className="umail" style={{ color: '#2E8B57' }}>{e.userId}</a></td>
+                      <td className="umail">{evTime(e.timestamp)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
           <p className="foot">Salorie Admin · données Firebase Firestore en direct · {new Date().getFullYear()}</p>
         </>
       )}

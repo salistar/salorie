@@ -26,7 +26,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useTheme } from '../../lib/ThemeContext';
 import { triggerSeededNotifications, syncAllUserData, clearAllLocalData } from '../../lib/LocalDataStore';
-import { BellRing, Trash2 } from 'lucide-react-native';
+import { BellRing, Trash2, Award, Trophy, Camera, Flame } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useEffect } from 'react';
 
 const { width } = Dimensions.get('window');
@@ -34,9 +36,17 @@ const { width } = Dimensions.get('window');
 export default function ProfileScreen() {
   const { user } = useUser();
   const { signOut } = useAuth();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation() as any;
   const { resolved } = useTheme();
-  const bgColor = resolved === 'dark' ? '#000000' : 'transparent';
+  const isDark = resolved === 'dark';
+  const bgColor = isDark ? '#0B0E12' : 'transparent';
+  // Inline trilingual labels for items not yet in the shared i18n file.
+  const PSTR: any = {
+    en: { sport_medals: 'Sport & medals', my_medals: 'My medals', achievements: 'Achievements', send_logs: 'Send logs', nutrients: 'Daily nutrients', streaks: 'My streaks' },
+    fr: { sport_medals: 'Sport & médailles', my_medals: 'Mes médailles', achievements: 'Succès', send_logs: 'Envoyer les logs', nutrients: 'Nutriments du jour', streaks: 'Mes séries' },
+    ar: { sport_medals: 'الرياضة والأوسمة', my_medals: 'أوسمتي', achievements: 'الإنجازات', send_logs: 'إرسال السجلات', nutrients: 'عناصر اليوم الغذائية', streaks: 'سلاسلي' },
+  };
+  const P_ = (k: string) => (PSTR[String(language)] || PSTR.en)[k] || PSTR.en[k] || k;
 
   useEffect(() => {
     console.log('[ProfileScreen] mounted — user:', user?.primaryEmailAddress?.emailAddress);
@@ -45,6 +55,43 @@ export default function ProfileScreen() {
   const handleUpgrade = () => {
     console.log('[ProfileScreen] handleUpgrade pressed');
     PurchasesService.showPaywall();
+  };
+
+  // Photo de profil : galerie → recadrage carré → upload Clerk (backend d'auth),
+  // user.imageUrl se met à jour partout automatiquement.
+  const changeAvatar = async () => {
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) return;
+      const r = await ImagePicker.launchImageLibraryAsync({ quality: 0.85, allowsEditing: true, aspect: [1, 1] });
+      if (r.canceled || !r.assets?.[0]?.uri) return;
+      const manip = await ImageManipulator.manipulateAsync(r.assets[0].uri, [{ resize: { width: 400 } }], { base64: true, format: ImageManipulator.SaveFormat.JPEG });
+      await user?.setProfileImage({ file: `data:image/jpeg;base64,${manip.base64}` } as any);
+      // Sans reload, user.imageUrl local reste l'ancienne URL → la nouvelle photo
+      // ne s'affichait pas avant un redémarrage de l'app.
+      await user?.reload();
+      Alert.alert('✅', 'Photo de profil mise à jour / Profile photo updated');
+    } catch {
+      Alert.alert('⚠️', 'Échec de la mise à jour — réessaie.');
+    }
+  };
+
+  // Envoie les diagnostics (device + 50 derniers logs d'erreur) au support —
+  // visibles dans le back-office web (page Feedback, via contact_messages).
+  const sendLogs = async () => {
+    const email = user?.primaryEmailAddress?.emailAddress || '';
+    if (!email) return;
+    try {
+      const { buildDiagnostics } = require('../../lib/logBuffer');
+      const { db, emailToDocId } = require('../../lib/firebase');
+      const { collection, addDoc, serverTimestamp } = require('firebase/firestore');
+      await addDoc(collection(db, 'users', emailToDocId(email), 'contact_messages'), {
+        email, subject: '[LOGS] Diagnostic app', message: buildDiagnostics(), createdAt: serverTimestamp(),
+      });
+      Alert.alert('✅', 'Logs envoyés au support / Logs sent. Merci !');
+    } catch {
+      Alert.alert('⚠️', 'Envoi impossible — réessaie plus tard.');
+    }
   };
 
   const handleLogout = async () => {
@@ -173,6 +220,20 @@ export default function ProfileScreen() {
     </TouchableOpacity>
   );
 
+  // Tuile compacte (allègement : grille 2 colonnes au lieu de lignes empilées).
+  const GridTile = ({ icon: Icon, label, color, onPress }: any) => (
+    <TouchableOpacity
+      style={[styles.gridTile, isDark && { backgroundColor: '#161C23', borderColor: 'rgba(255,255,255,0.08)' }]}
+      activeOpacity={0.85}
+      onPress={onPress}
+    >
+      <View style={[styles.gridIcon, { backgroundColor: color + (isDark ? '26' : '15') }]}>
+        <Icon size={22} color={color} />
+      </View>
+      <Text style={[styles.gridLabel, isDark && { color: '#f1f5f9' }]} numberOfLines={2}>{label}</Text>
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]}>
       <ScrollView 
@@ -193,13 +254,18 @@ export default function ProfileScreen() {
 
         {/* User Identity Card */}
         <Animated.View entering={FadeInDown.duration(600)} style={styles.userCard}>
-          <Image 
-            source={{ uri: user?.imageUrl }} 
-            style={styles.avatar} 
-          />
+          <TouchableOpacity onPress={changeAvatar} activeOpacity={0.8}>
+            <Image
+              source={{ uri: user?.imageUrl }}
+              style={styles.avatar}
+            />
+            <View style={{ position: 'absolute', bottom: -2, right: -2, backgroundColor: Colors.light.primary, borderRadius: 12, padding: 5, borderWidth: 2, borderColor: '#fff' }}>
+              <Camera size={12} color="#fff" />
+            </View>
+          </TouchableOpacity>
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user?.fullName || t('profile.health_explorer')}</Text>
-            <Text style={styles.userEmail}>{user?.primaryEmailAddress?.emailAddress}</Text>
+            <Text style={styles.userName} numberOfLines={1}>{user?.fullName || t('profile.health_explorer')}</Text>
+            <Text style={styles.userEmail} numberOfLines={1}>{user?.primaryEmailAddress?.emailAddress}</Text>
           </View>
         </Animated.View>
 
@@ -223,74 +289,39 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </Animated.View>
 
+        {/* Sport & médailles — d'abord (pattern « You » des leaders : trophées avant réglages) */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: resolved === 'dark' ? '#fff' : undefined }]}>{P_('sport_medals')}</Text>
+        </View>
+        <Animated.View entering={FadeInDown.delay(200).duration(600)} style={styles.grid}>
+          {/* Courses + agenda vivent dans l'onglet Défis (pas de doublon ici) */}
+          <GridTile icon={Award} label={P_('my_medals')} color="#F59E0B" onPress={() => router.push('/medals' as any)} />
+          <GridTile icon={Trophy} label={P_('achievements')} color="#8B5CF6" onPress={() => router.push('/social' as any)} />
+          <GridTile icon={Flame} label={P_('streaks')} color="#EF4444" onPress={() => router.push('/streaks' as any)} />
+        </Animated.View>
+
         {/* Account Section */}
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: resolved === 'dark' ? '#fff' : undefined }]}>{t('profile.account')}</Text>
         </View>
-        <Animated.View entering={FadeInDown.delay(200).duration(600)} style={styles.optionsCard}>
-          <SettingItem 
-            icon={User} 
-            label={t('profile.personal_details')}
-            color={Colors.light.primary} 
-            onPress={() => router.push('/personal-details' as any)}
-          />
-          <View style={styles.separator} />
-          <SettingItem 
-            icon={Bell} 
-            label={t('prefs.notifications')}
-            subtext={t('profile.notif_history')}
-            color={Colors.light.primary} 
-            onPress={() => router.push('/notifications' as any)}
-          />
-          <View style={styles.separator} />
-          <SettingItem 
-            icon={Settings} 
-            label={t('profile.preferences')}
-            color="#6366F1" 
-            onPress={() => router.push('/preferences' as any)}
-          />
-          <View style={styles.separator} />
-          <SettingItem 
-            icon={CreditCard} 
-            label={t('profile.upgrade')}
-            subtext={t('profile.unlock_ai')}
-            color="#EC4899" 
-            onPress={handleUpgrade}
-          />
+        <Animated.View entering={FadeInDown.delay(250).duration(600)} style={styles.grid}>
+          <GridTile icon={User} label={t('profile.personal_details')} color={Colors.light.primary} onPress={() => router.push('/personal-details' as any)} />
+          <GridTile icon={Heart} label={P_('nutrients')} color="#10B981" onPress={() => router.push('/nutrients' as any)} />
+          <GridTile icon={Bell} label={t('prefs.notifications')} color={Colors.light.primary} onPress={() => router.push('/notifications' as any)} />
+          <GridTile icon={Settings} label={t('profile.preferences')} color="#6366F1" onPress={() => router.push('/preferences' as any)} />
+          <GridTile icon={CreditCard} label={t('profile.upgrade')} color="#EC4899" onPress={handleUpgrade} />
         </Animated.View>
 
         {/* Support Section */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('profile.support')}</Text>
+          <Text style={[styles.sectionTitle, { color: resolved === 'dark' ? '#fff' : undefined }]}>{t('profile.support')}</Text>
         </View>
-        <Animated.View entering={FadeInDown.delay(300).duration(600)} style={styles.optionsCard}>
-          <SettingItem 
-            icon={Lightbulb} 
-            label={t('profile.feature_requests')}
-            color="#10B981" 
-            onPress={() => router.push('/feature-requests' as any)}
-          />
-          <View style={styles.separator} />
-          <SettingItem 
-            icon={MessagesSquare} 
-            label={t('profile.contact_us')}
-            color="#3B82F6" 
-            onPress={() => Linking.openURL('mailto:admin@salistar.com?subject=Support Request&body=Hi support team,')}
-          />
-          <View style={styles.separator} />
-          <SettingItem 
-            icon={FileText} 
-            label={t('profile.terms')}
-            color={Colors.light.gray[500]} 
-            onPress={() => router.push('/terms' as any)}
-          />
-          <View style={styles.separator} />
-          <SettingItem 
-            icon={Shield} 
-            label={t('profile.privacy')}
-            color={Colors.light.gray[500]} 
-            onPress={() => router.push('/privacy' as any)}
-          />
+        <Animated.View entering={FadeInDown.delay(300).duration(600)} style={styles.grid}>
+          <GridTile icon={Lightbulb} label={t('profile.feature_requests')} color="#10B981" onPress={() => router.push('/feature-requests' as any)} />
+          <GridTile icon={MessagesSquare} label={t('profile.contact_us')} color="#3B82F6" onPress={() => router.push('/contact' as any)} />
+          <GridTile icon={FileText} label={P_('send_logs')} color="#64748B" onPress={sendLogs} />
+          <GridTile icon={FileText} label={t('profile.terms')} color={Colors.light.gray[500]} onPress={() => router.push('/terms' as any)} />
+          <GridTile icon={Shield} label={t('profile.privacy')} color={Colors.light.gray[500]} onPress={() => router.push('/privacy' as any)} />
         </Animated.View>
 
         {/* Developer-only tools — hidden in production builds */}
@@ -467,6 +498,16 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 3,
   },
+  // Grille compacte (allègement Profile) — 2 colonnes
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 16 },
+  gridTile: {
+    width: '48%', alignItems: 'center', backgroundColor: Colors.light.white,
+    borderRadius: 20, paddingVertical: 18, paddingHorizontal: 8, marginBottom: 12,
+    borderWidth: 1.5, borderColor: Colors.light.gray[50],
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
+  },
+  gridIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  gridLabel: { fontSize: 13, fontWeight: '700', color: Colors.light.gray[900], marginTop: 10, textAlign: 'center' },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',

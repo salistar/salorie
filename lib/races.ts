@@ -7,7 +7,7 @@ import {
   collection, doc, setDoc, getDoc, getDocs, onSnapshot, query, where,
   orderBy, serverTimestamp, updateDoc, addDoc, increment, limit,
 } from 'firebase/firestore';
-import { db, emailToDocId } from './firebase';
+import { db, emailToDocId, logEvent } from './firebase';
 
 export interface RaceParticipant {
   email: string; name: string; imageUrl?: string;
@@ -33,6 +33,7 @@ export async function joinRace(raceId: string, email: string, name: string, imag
   await setDoc(doc(db, 'races', raceId, 'participants', emailToDocId(email)), {
     email, name, imageUrl: imageUrl || '', distanceM: 0, finished: false, updatedAt: serverTimestamp(),
   }, { merge: true });
+  logEvent(email, 'race_joined', { raceId }); // Event Bus
 }
 
 export function listenOpenRaces(cb: (races: Race[]) => void) {
@@ -93,7 +94,11 @@ const GOOGLE_MAPS_KEY = 'AIzaSyAa1lBSroSXA-Om4mio84-SWAcmzQgYv8w';
 // A real street-level photo of a place (gracefully returns a "no imagery" tile
 // when Street View has no coverage at that exact point).
 export function streetViewUrl(lat: number, lng: number, w = 600, h = 360): string {
-  return `https://maps.googleapis.com/maps/api/streetview?size=${w}x${h}&location=${lat},${lng}&fov=85&pitch=5&source=outdoor&key=${GOOGLE_MAPS_KEY}`;
+  // radius=50000 : prend la vue Street View la PLUS PROCHE (couverture Maroc = surtout
+  // axes/villes) — sans ça, les arrêts ruraux renvoient une image « no imagery ».
+  // Coercition numérique : lat/lng peuvent venir d'une saisie admin (jamais de texte en URL).
+  const la = Number(lat) || 0, ln = Number(lng) || 0, ww = Number(w) || 600, hh = Number(h) || 360;
+  return `https://maps.googleapis.com/maps/api/streetview?size=${ww}x${hh}&location=${la},${ln}&fov=85&pitch=5&radius=50000&key=${GOOGLE_MAPS_KEY}`;
 }
 // A satellite/hybrid thumbnail centered on a place — always renders (good fallback).
 export function staticMapUrl(lat: number, lng: number, w = 600, h = 360, zoom = 16): string {
@@ -149,6 +154,7 @@ export async function joinChallenge(challengeId: string, email: string, name: st
   await setDoc(doc(db, 'challenges', challengeId, 'participants', emailToDocId(email)), {
     email, name, imageUrl: imageUrl || '', cumulativeKm: 0, updatedAt: serverTimestamp(),
   }, { merge: true });
+  logEvent(email, 'challenge_joined', { challengeId }); // Event Bus
 }
 
 // Set the absolute cumulative distance for a challenge (used by the live/sim

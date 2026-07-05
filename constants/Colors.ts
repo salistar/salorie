@@ -2,7 +2,7 @@
  * App colors — light & dark palettes
  */
 
-const tintColorLight = '#298f50';
+const tintColorLight = '#2E8B57';
 const tintColorDark = '#4ade80';
 
 export const Colors = {
@@ -13,9 +13,9 @@ export const Colors = {
     icon: '#687076',
     tabIconDefault: '#687076',
     tabIconSelected: tintColorLight,
-    primary: '#298f50',
-    primaryLight: '#ebf5ee',
-    primaryDark: '#1a5e35',
+    primary: '#2E8B57',
+    primaryLight: '#EAF4EE',
+    primaryDark: '#1d6440',
     secondary: '#f59e0b',
     gray: {
       50: '#F8FAFC',

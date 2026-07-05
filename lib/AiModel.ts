@@ -1,9 +1,10 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { CONFIG } from '../constants/config';
 import { UserProfile } from './firebase';
 import { computeNutritionTargets, nutritionAdvice } from './nutrition';
+import { geminiShim } from './aiProxy';
 
-const genAI = new GoogleGenerativeAI(CONFIG.geminiApiKey);
+// Gemini now runs server-side via the backend /ai proxy (no key in the client).
+const genAI = geminiShim;
 
 // Model tiers — use the cheap/fast model for simple structured tasks (micros,
 // insights, tips) and reserve the standard flash model for richer generation.

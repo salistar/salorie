@@ -12,6 +12,7 @@ import {
   getDocs,
   orderBy,
   updateDoc,
+  deleteDoc,
   limit as firestoreLimit
 } from 'firebase/firestore';
 import { CONFIG } from '../constants/config';
@@ -168,6 +169,11 @@ export const saveUserToFirestore = async (user: Partial<UserProfile> & { id?: st
  * @param legacyClerkId  Le Clerk user.id pour lookup legacy
  * @param extraEmails  Emails secondaires (Clerk emailAddresses, externalAccounts) a essayer
  */
+// Cache de résolution (durée de vie = session app) : une fois le docId du user
+// trouvé, les appels suivants font UNE lecture (le doc, données fraîches) au lieu
+// de re-dérouler les ~6-9 lookups de compatibilité legacy à chaque écran.
+const resolvedUserDocId = new Map<string, string>();
+
 export const getUserFromFirestore = async (
   email: string,
   legacyClerkId?: string,
@@ -175,6 +181,17 @@ export const getUserFromFirestore = async (
 ): Promise<UserProfile | null> => {
   try {
     if (!email && !legacyClerkId && (!extraEmails || extraEmails.length === 0)) return null;
+
+    const cacheKey = emailToDocId(email) || legacyClerkId || '';
+    const cachedId = cacheKey ? resolvedUserDocId.get(cacheKey) : undefined;
+    if (cachedId) {
+      const snap = await getDoc(doc(db, 'users', cachedId));
+      if (snap.exists()) {
+        const data = snap.data() as UserProfile;
+        return { ...data, id: (data as any).id || cachedId };
+      }
+      resolvedUserDocId.delete(cacheKey); // doc disparu → re-résolution complète
+    }
 
     // Liste d'emails a essayer, dedupliquee, sanitizee
     const emailsToTry: string[] = [];
@@ -204,7 +221,9 @@ export const getUserFromFirestore = async (
       });
       if (!firstFound) firstFound = { data, id: docId };
       if (data.onboarded) {
-        // Priorise un user deja onboarde (vrai compte)
+        // Priorise un user deja onboarde (vrai compte) + memorise le docId
+        // pour que les prochains appels fassent 1 seule lecture.
+        if (cacheKey) resolvedUserDocId.set(cacheKey, docId);
         return { ...data, id: data.id || docId };
       }
       return null;
@@ -293,7 +312,31 @@ export interface NutritionLog {
   intensity?: string;
   duration?: number;
   serving?: string;
+  // Slot du Diary (breakfast|lunch|snack|dinner) — optionnel ; sinon déduit de l'heure.
+  slot?: string;
+  // Description du repas (ingrédients + qualités/risques) — persistée au scan/log.
+  description?: string;
+  // Note santé (calculée on-device au scan) — persistée pour l'afficher dans diary/activité.
+  note?: { grade: string; score: number; verdict: string; color?: string };
 }
+
+/** Supprime un log (Firestore + cache local) — utilisé par le Diary. */
+export const deleteNutritionLog = async (email: string, logId: string): Promise<boolean> => {
+  try {
+    const docId = emailToDocId(email);
+    if (!docId || !logId) return false;
+    await deleteDoc(doc(db, 'users', docId, 'logs', logId));
+    try {
+      const key = `logs_${docId}`;
+      const raw = await AsyncStorage.getItem(key);
+      if (raw) {
+        const arr = JSON.parse(raw).filter((l: any) => l.id !== logId);
+        await AsyncStorage.setItem(key, JSON.stringify(arr));
+      }
+    } catch {}
+    return true;
+  } catch { return false; }
+};
 
 /**
  * Fetches nutrition logs for a specific user (by email) and date
@@ -332,41 +375,94 @@ export const getNutritionLogs = async (email: string, date: string): Promise<Nut
  * Adds a new nutrition log. `log.userId` must be the user's email.
  */
 export const addNutritionLog = async (log: Omit<NutritionLog, 'id' | 'timestamp'>) => {
+  const docId = emailToDocId(log.userId);
+  if (!docId) throw new Error('addNutritionLog requires an email as userId');
+
+  // 1) OFFLINE-FIRST : on met TOUJOURS le repas dans le cache local d'abord, pour
+  //    qu'il s'affiche immédiatement (dashboards) même sans réseau.
   try {
-    const docId = emailToDocId(log.userId);
-    if (!docId) throw new Error('addNutritionLog requires an email as userId');
-    const logsRef = collection(db, 'users', docId, 'logs');
-    console.log('\x1b[32m[API→Firestore] logs/add REQUEST\x1b[0m', {
-      docId, type: (log as any).type, name: (log as any).name,
-      calories: (log as any).calories, date: (log as any).date,
-    });
-    const t0 = Date.now();
-    await addDoc(logsRef, {
-      ...log,
-      userId: docId,
-      timestamp: serverTimestamp(),
-    });
-    console.log('\x1b[34m[API←Firestore] logs/add OK\x1b[0m', { docId, ms: Date.now() - t0 });
-    // Keep the LOCAL cache in sync so dashboards that read logs_{docId}
-    // (nutrients, analytics, Coach streak) see the new entry IMMEDIATELY,
-    // before the next full Firestore sync.
+    const key = `logs_${docId}`;
+    const raw = await AsyncStorage.getItem(key);
+    const arr = raw ? JSON.parse(raw) : [];
+    arr.push({ ...log, userId: docId });
+    await AsyncStorage.setItem(key, JSON.stringify(arr));
+  } catch {}
+
+  // 2) On détecte l'état réseau AVANT d'écrire. Hors-ligne, on NE lance PAS addDoc
+  //    (Firestore RN ne rejette pas hors-ligne → l'await bloquerait l'UI) : on met
+  //    directement en FILE D'ATTENTE. En ligne, addDoc normal (file si échec réel).
+  //    → jamais de blocage UI, jamais de doublon.
+  const enqueue = async () => {
     try {
-      const key = `logs_${docId}`;
-      const raw = await AsyncStorage.getItem(key);
-      const arr = raw ? JSON.parse(raw) : [];
-      arr.push({ ...log, userId: docId });
-      await AsyncStorage.setItem(key, JSON.stringify(arr));
+      const qkey = `pending_logs_${docId}`;
+      const raw = await AsyncStorage.getItem(qkey);
+      const q = raw ? JSON.parse(raw) : [];
+      q.push({ ...log, userId: docId, queuedAt: Date.now() });
+      await AsyncStorage.setItem(qkey, JSON.stringify(q));
     } catch {}
-    // Fire-and-forget: flip stale=true on week/month/all insight docs so the
-    // next analytics open regenerates. Lazy import to avoid a cycle.
+  };
+  let online = true;
+  try {
+    const Network = await import('expo-network');
+    const s = await Network.getNetworkStateAsync();
+    online = s?.isConnected !== false;
+  } catch { online = true; }
+
+  if (online) {
     try {
-      const { markInsightsStale } = await import('./InsightsService');
-      markInsightsStale(log.userId).catch(() => {});
-    } catch {}
-  } catch (error) {
-    console.error('Error adding nutrition log:', error);
-    throw error;
+      const logsRef = collection(db, 'users', docId, 'logs');
+      const t0 = Date.now();
+      await addDoc(logsRef, { ...log, userId: docId, timestamp: serverTimestamp() });
+      console.log('\x1b[34m[API←Firestore] logs/add OK\x1b[0m', { docId, ms: Date.now() - t0 });
+    } catch (error: any) {
+      console.warn('[offline] addNutritionLog échec en ligne → file de sync:', error?.message || error);
+      await enqueue();
+    }
+  } else {
+    console.warn('[offline] addNutritionLog hors-ligne → mis en file de sync');
+    await enqueue();
   }
+
+  // 3) Best-effort : marquer les insights périmés (lazy import pour éviter un cycle).
+  try {
+    const { markInsightsStale } = await import('./InsightsService');
+    markInsightsStale(log.userId).catch(() => {});
+  } catch {}
+
+  // 4) Event Bus (Étape 2) — émet un événement typé (fire-and-forget, network-safe).
+  logEvent(log.userId, log.type === 'activity' ? 'activity_logged' : 'meal_logged', {
+    name: (log as any).name, calories: (log as any).calories, mealType: log.type,
+  });
+};
+
+/** Nombre de logs en attente de synchronisation (hors-ligne). */
+export const pendingLogsCount = async (email: string): Promise<number> => {
+  const docId = emailToDocId(email);
+  if (!docId) return 0;
+  try {
+    const raw = await AsyncStorage.getItem(`pending_logs_${docId}`);
+    return raw ? (JSON.parse(raw) as any[]).length : 0;
+  } catch { return 0; }
+};
+
+/** Rejoue les logs en file d'attente (appelé au retour réseau). Renvoie le nb synchronisé. */
+export const flushPendingLogs = async (email: string): Promise<number> => {
+  const docId = emailToDocId(email);
+  if (!docId) return 0;
+  const qkey = `pending_logs_${docId}`;
+  let q: any[] = [];
+  try { const raw = await AsyncStorage.getItem(qkey); q = raw ? JSON.parse(raw) : []; } catch { return 0; }
+  if (!q.length) return 0;
+  const remaining: any[] = [];
+  for (const log of q) {
+    try {
+      await addDoc(collection(db, 'users', docId, 'logs'), {
+        ...log, userId: docId, timestamp: serverTimestamp(),
+      });
+    } catch { remaining.push(log); }
+  }
+  try { await AsyncStorage.setItem(qkey, JSON.stringify(remaining)); } catch {}
+  return q.length - remaining.length;
 };
 
 /**
@@ -391,10 +487,33 @@ export const addWeightLog = async (email: string, weight: number) => {
       timestamp: serverTimestamp(),
     });
     console.log('\x1b[34m[API←Firestore] weight_history/add OK\x1b[0m', { docId, ms: Date.now() - t0 });
+    logEvent(email, 'weight_logged', { weight }); // Event Bus (fire-and-forget)
   } catch (error) {
     console.error('Error logging weight:', error);
     throw error;
   }
+};
+
+/**
+ * Event Bus (Lot 4 / Étape 2) — émet un événement typé dans la collection `events`.
+ * Best-effort + network-safe (ne lance addDoc QUE en ligne → pas de hang offline) +
+ * fire-and-forget (les appelants ne l'attendent pas). Consommé par l'admin web.
+ */
+export const logEvent = async (email: string, type: string, data: Record<string, any> = {}) => {
+  try {
+    const docId = emailToDocId(email);
+    if (!docId) return;
+    let online = true;
+    try {
+      const Network = await import('expo-network');
+      const s = await Network.getNetworkStateAsync();
+      online = s?.isConnected !== false;
+    } catch { online = true; }
+    if (!online) return; // événements best-effort : on saute hors-ligne (pas de blocage)
+    // Sous-collection users/{docId}/events (autorisée par les règles Firestore ;
+    // la collection top-level `events` est refusée). Le CDC lit via collectionGroup.
+    await addDoc(collection(db, 'users', docId, 'events'), { userId: docId, type, data, timestamp: serverTimestamp() });
+  } catch { /* best-effort */ }
 };
 
 /**
@@ -425,6 +544,22 @@ export const updateUserLanguage = async (email: string, language: string) => {
     await setDoc(userRef, { language, updatedAt: serverTimestamp() }, { merge: true });
   } catch (error) {
     console.error('Error updating user language:', error);
+  }
+};
+
+/**
+ * Met à jour la cible calorique quotidienne (TDEE adaptatif → "Appliquer").
+ * merge:true → ne touche QUE dailyCalories dans nutritionalPlan (deep merge),
+ * les autres champs du plan sont préservés.
+ */
+export const updateDailyCalories = async (email: string, dailyCalories: number) => {
+  try {
+    const docId = emailToDocId(email);
+    if (!docId || !(dailyCalories > 0)) return;
+    const userRef = doc(db, 'users', docId);
+    await setDoc(userRef, { nutritionalPlan: { dailyCalories }, updatedAt: serverTimestamp() }, { merge: true });
+  } catch (error) {
+    console.error('Error updating dailyCalories:', error);
   }
 };
 

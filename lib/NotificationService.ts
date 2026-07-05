@@ -64,16 +64,17 @@ export class NotificationService {
 
     const config = await getAdminNotificationConfig();
 
+    // SDK 52 : 'daily' = rappel quotidien à heure:minute (repeats implicite).
+    // L'ancien 'calendar' ne planifiait AUCUNE alarme sur Android 14 (0 rappel).
     const triggerOptions = {
-        type: 'calendar' as any,
-        repeats: true,
+        type: 'daily' as any,
     };
 
-    // Breakfast (8:00 AM)
+    // Breakfast (8:00 AM) — message FR "intelligent" en fallback si config vide
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "Breakfast Reminder ☀️",
-        body: config.breakfast,
+        title: "Petit-déjeuner ☀️",
+        body: config.breakfast || "Logge ton petit-déjeuner pour bien démarrer 🍳",
       },
       trigger: {
         ...triggerOptions,
@@ -85,8 +86,8 @@ export class NotificationService {
     // Lunch (1:00 PM)
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "Lunch Reminder 🥗",
-        body: config.lunch,
+        title: "Déjeuner 🥗",
+        body: config.lunch || "C'est l'heure ! Logge ton déjeuner.",
       },
       trigger: {
         ...triggerOptions,
@@ -98,8 +99,8 @@ export class NotificationService {
     // Dinner (7:00 PM)
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "Dinner Reminder 🍲",
-        body: config.dinner,
+        title: "Dîner 🍲",
+        body: config.dinner || "Logge ton dîner avant de te détendre.",
       },
       trigger: {
         ...triggerOptions,
@@ -111,8 +112,8 @@ export class NotificationService {
     // Daily Encouragement (11:00 AM)
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "Stay Active! ⚡",
-        body: config.encouragement,
+        title: "Reste actif ! ⚡",
+        body: config.encouragement || "Petit pas du jour : bouge un peu et logge ton repas 💪",
       },
       trigger: {
         ...triggerOptions,
@@ -120,6 +121,14 @@ export class NotificationService {
         minute: 0,
       } as any,
     });
+
+    // Rappels d'hydratation "bois de l'eau" (15h et 17h) — additif
+    for (const h of [15, 17]) {
+      await Notifications.scheduleNotificationAsync({
+        content: { title: "Hydratation 💧", body: "Bois de l'eau pour rester sur ton objectif." },
+        trigger: { ...triggerOptions, hour: h, minute: 0 } as any,
+      });
+    }
   }
 
   static setupListeners(email: string) {

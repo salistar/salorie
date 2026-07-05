@@ -6,7 +6,8 @@
 //   - ACHIEVEMENTS / badges
 //   - LECON du jour (coaching facon Noom)
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { emailToDocId } from './firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { emailToDocId, db } from './firebase';
 
 const KCAL_PER_KG = 7700; // ~7700 kcal pour 1 kg de masse
 
@@ -88,18 +89,53 @@ const ds = (d: Date) => {
   return `${y}-${m}-${day}`;
 };
 
-const ACH_DEFS: { id: string; icon: string; test: (s: any) => boolean }[] = [
-  { id: 'first_log', icon: '🍽️', test: (s) => s.totalLogs >= 1 },
-  { id: 'streak_3', icon: '🔥', test: (s) => s.streak >= 3 },
-  { id: 'streak_7', icon: '🔥', test: (s) => s.streak >= 7 },
-  { id: 'streak_14', icon: '⚡', test: (s) => s.streak >= 14 },
-  { id: 'streak_30', icon: '🏆', test: (s) => s.streak >= 30 },
-  { id: 'days_7', icon: '📅', test: (s) => s.daysTracked >= 7 },
-  { id: 'days_30', icon: '📆', test: (s) => s.daysTracked >= 30 },
-  { id: 'weigh_1', icon: '⚖️', test: (s) => s.weighIns >= 1 },
-  { id: 'weigh_5', icon: '📉', test: (s) => s.weighIns >= 5 },
-  { id: 'logs_50', icon: '💪', test: (s) => s.totalLogs >= 50 },
+// Achievements par DÉFAUT (fallback). Format unifié metric+threshold = même shape
+// que les définitions gérées depuis le web (Firestore config/achievements).
+// Métriques dispo : streak · daysTracked · weighIns · totalLogs.
+type AchMetric = 'streak' | 'daysTracked' | 'weighIns' | 'totalLogs';
+const ACH_DEFS: { id: string; icon: string; metric: AchMetric; threshold: number }[] = [
+  { id: 'first_log', icon: '🍽️', metric: 'totalLogs', threshold: 1 },
+  { id: 'streak_3', icon: '🔥', metric: 'streak', threshold: 3 },
+  { id: 'streak_7', icon: '🔥', metric: 'streak', threshold: 7 },
+  { id: 'streak_14', icon: '⚡', metric: 'streak', threshold: 14 },
+  { id: 'streak_30', icon: '🏆', metric: 'streak', threshold: 30 },
+  { id: 'days_7', icon: '📅', metric: 'daysTracked', threshold: 7 },
+  { id: 'days_30', icon: '📆', metric: 'daysTracked', threshold: 30 },
+  { id: 'weigh_1', icon: '⚖️', metric: 'weighIns', threshold: 1 },
+  { id: 'weigh_5', icon: '📉', metric: 'weighIns', threshold: 5 },
+  { id: 'logs_50', icon: '💪', metric: 'totalLogs', threshold: 50 },
 ];
+
+interface AchDef { id: string; icon: string; metric: AchMetric; threshold: number; title: string; desc: string; }
+const ACH_CACHE = 'ach_defs_v1';
+
+// Définitions résolues (selon la langue) : Firestore config/achievements géré
+// depuis le web si présent, sinon cache, sinon les défauts hardcodés ci-dessus.
+async function fetchAchDefs(lang: string): Promise<AchDef[]> {
+  const L = ACH_LABELS[lang] || ACH_LABELS.en;
+  const fallback: AchDef[] = ACH_DEFS.map((a) => ({
+    id: a.id, icon: a.icon, metric: a.metric, threshold: a.threshold,
+    title: L[a.id]?.title || a.id, desc: L[a.id]?.desc || '',
+  }));
+  const resolve = (list: any[]): AchDef[] =>
+    list.filter((a) => a && a.enabled !== false && a.metric && a.key).map((a) => ({
+      id: a.key, icon: a.icon || '🏅', metric: a.metric, threshold: Number(a.threshold) || 0,
+      title: a[`title${lang === 'fr' ? 'Fr' : lang === 'ar' ? 'Ar' : 'En'}`] || a.titleEn || a.titleFr || a.key,
+      desc: a[`desc${lang === 'fr' ? 'Fr' : lang === 'ar' ? 'Ar' : 'En'}`] || a.descEn || a.descFr || '',
+    }));
+  try {
+    const snap = await getDoc(doc(db, 'config', 'achievements'));
+    const list = snap.exists() ? (snap.data() as any).list : null;
+    if (Array.isArray(list) && list.length) {
+      AsyncStorage.setItem(ACH_CACHE, JSON.stringify(list)).catch(() => {});
+      const r = resolve(list);
+      if (r.length) return r;
+    }
+  } catch {
+    try { const raw = await AsyncStorage.getItem(ACH_CACHE); if (raw) { const r = resolve(JSON.parse(raw)); if (r.length) return r; } } catch {}
+  }
+  return fallback;
+}
 
 const ACH_LABELS: Record<string, Record<string, { title: string; desc: string }>> = {
   en: {
@@ -140,9 +176,8 @@ const ACH_LABELS: Record<string, Record<string, { title: string; desc: string }>
   },
 };
 
-function evalAchievements(s: { streak: number; daysTracked: number; weighIns: number; totalLogs: number }, lang: string): Achievement[] {
-  const L = ACH_LABELS[lang] || ACH_LABELS.en;
-  return ACH_DEFS.map((a) => ({ id: a.id, icon: a.icon, unlocked: a.test(s), title: L[a.id].title, desc: L[a.id].desc }));
+function evalAchievements(s: { streak: number; daysTracked: number; weighIns: number; totalLogs: number }, defs: AchDef[]): Achievement[] {
+  return defs.map((a) => ({ id: a.id, icon: a.icon, unlocked: (((s as any)[a.metric]) || 0) >= a.threshold, title: a.title, desc: a.desc }));
 }
 
 export async function loadEngagement(email: string, lang: string = 'en'): Promise<EngagementData> {
@@ -226,7 +261,8 @@ export async function loadEngagement(email: string, lang: string = 'en'): Promis
   const weighIns = sortedW.length;
   const totalLogs = logs.length;
 
-  const achievements = evalAchievements({ streak, daysTracked, weighIns, totalLogs }, lang);
+  const achDefs = await fetchAchDefs(lang);
+  const achievements = evalAchievements({ streak, daysTracked, weighIns, totalLogs }, achDefs);
   const lessons = LESSONS_BY_LANG[lang] || LESSONS_BY_LANG.en;
   const lesson = lessons[Math.floor(Date.now() / 86400000) % lessons.length];
 

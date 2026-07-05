@@ -4,37 +4,110 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
   ScrollView,
   SafeAreaView,
   TextInput,
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { 
-  User, 
-  Target, 
-  Activity, 
-  Calendar, 
-  Ruler, 
+import {
+  Ruler,
   Weight,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
 } from 'lucide-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUser } from '@clerk/clerk-expo';
-import { saveUserToFirestore } from '../../lib/firebase';
 import { Colors } from '../../constants/Colors';
-import { useTranslation, Language } from '../../lib/i18n';
+import { useTranslation } from '../../lib/i18n';
+import { useTheme } from '../../lib/ThemeContext';
+import { Stepper } from '../../components/FormKit';
 import ScreenTopBar from '../../components/ScreenTopBar';
 
-const { width } = Dimensions.get('window');
+// i18n LOCAL — toutes les chaînes auparavant codées en dur (placeholders,
+// labels d'unités, boutons) passent ici. Rien d'anglais ne reste en FR/AR.
+const TXT: Record<string, {
+  next: string;
+  finish: string;
+  day: string;
+  month: string;
+  year: string;
+  height: string;
+  weight: string;
+  cm: string;
+  kg: string;
+  yearsInvalid: string;
+  heightInvalid: string;
+  weightInvalid: string;
+  birthHint: string;
+}> = {
+  en: {
+    next: 'Next',
+    finish: 'Finish',
+    day: 'Day',
+    month: 'Month',
+    year: 'Year',
+    height: 'Height',
+    weight: 'Weight',
+    cm: 'cm',
+    kg: 'kg',
+    yearsInvalid: 'Enter a valid birth date',
+    heightInvalid: 'Height must be 120–220 cm',
+    weightInvalid: 'Weight must be 30–250 kg',
+    birthHint: 'DD / MM / YYYY',
+  },
+  fr: {
+    next: 'Suivant',
+    finish: 'Terminer',
+    day: 'Jour',
+    month: 'Mois',
+    year: 'Année',
+    height: 'Taille',
+    weight: 'Poids',
+    cm: 'cm',
+    kg: 'kg',
+    yearsInvalid: 'Entrez une date de naissance valide',
+    heightInvalid: 'La taille doit être 120–220 cm',
+    weightInvalid: 'Le poids doit être 30–250 kg',
+    birthHint: 'JJ / MM / AAAA',
+  },
+  ar: {
+    next: 'التالي',
+    finish: 'إنهاء',
+    day: 'يوم',
+    month: 'شهر',
+    year: 'سنة',
+    height: 'الطول',
+    weight: 'الوزن',
+    cm: 'سم',
+    kg: 'كغ',
+    yearsInvalid: 'أدخل تاريخ ميلاد صحيح',
+    heightInvalid: 'يجب أن يكون الطول بين 120 و220 سم',
+    weightInvalid: 'يجب أن يكون الوزن بين 30 و250 كغ',
+    birthHint: 'يوم / شهر / سنة',
+  },
+};
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const { user } = useUser();
-  const { t, language, setLanguage } = useTranslation();
+  const { t, language } = useTranslation() as any;
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const tx = TXT[language as string] || TXT.en;
   const [currentStep, setCurrentStep] = useState(0);
+
+  // Palette theme-aware (accent toujours = Colors.light.primary).
+  const C = {
+    bg: isDark ? '#000' : '#F8FAFC',
+    card: isDark ? Colors.dark.card : Colors.light.white,
+    border: isDark ? '#2d3543' : Colors.light.gray[200],
+    title: isDark ? '#fff' : Colors.light.gray[800],
+    sub: isDark ? '#9BA1A6' : Colors.light.gray[500],
+    text: isDark ? '#fff' : Colors.light.gray[800],
+    accent: Colors.light.primary,
+    backBtn: isDark ? Colors.dark.gray[100] : Colors.light.gray[200],
+    backIcon: isDark ? '#9BA1A6' : Colors.light.gray[600],
+  };
 
   const STEPS = [
     { id: 'gender', title: t('onboarding.step1_title') },
@@ -44,15 +117,45 @@ export default function OnboardingScreen() {
     { id: 'metrics', title: t('onboarding.step5_title') },
   ];
 
-  // Form State
+  // Form State — clés INCHANGÉES (consommées par le calcul du plan).
+  // Valeurs par défaut intelligentes pré-remplies pour réduire la friction.
   const [gender, setGender] = useState('');
   const [goal, setGoal] = useState('');
-  const [workout, setWorkout] = useState('');
+  const [workout, setWorkout] = useState('3-4');          // défaut "3-4/sem"
   const [birthdate, setBirthdate] = useState({ day: '', month: '', year: '' });
-  const [height, setHeight] = useState({ feet: '', inches: '' });
-  const [weight, setWeight] = useState('');
+  const [height, setHeight] = useState('170');             // cm (un seul champ)
+  const [weight, setWeight] = useState('70');              // kg
+
+  // ── VALIDATION PAR ÉTAPE ──────────────────────────────────────────
+  const birthValid = (() => {
+    const d = parseInt(birthdate.day, 10);
+    const m = parseInt(birthdate.month, 10);
+    const y = parseInt(birthdate.year, 10);
+    if (!d || !m || !y) return false;
+    if (d < 1 || d > 31) return false;
+    if (m < 1 || m > 12) return false;
+    if (y < 1940 || y > 2012) return false;  // année plausible
+    return true;
+  })();
+  const heightNum = parseInt(height, 10);
+  const weightNum = parseFloat(weight);
+  const heightValid = heightNum >= 120 && heightNum <= 220;
+  const weightValid = weightNum >= 30 && weightNum <= 250;
+
+  const isStepValid = (step: number): boolean => {
+    switch (step) {
+      case 0: return !!gender;            // genre requis
+      case 1: return !!goal;              // objectif requis
+      case 2: return !!workout;           // fréquence requise
+      case 3: return birthValid;          // date plausible
+      case 4: return heightValid && weightValid; // métriques valides
+      default: return true;
+    }
+  };
+  const canProceed = isStepValid(currentStep);
 
   const nextStep = () => {
+    if (!canProceed) return;
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -61,9 +164,7 @@ export default function OnboardingScreen() {
   };
 
   const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
+    if (currentStep > 0) setCurrentStep(currentStep - 1);
   };
 
   const completeOnboarding = async () => {
@@ -73,15 +174,14 @@ export default function OnboardingScreen() {
       goal,
       workoutFrequency: workout,
       birthdate: `${birthdate.year}-${birthdate.month}-${birthdate.day}`,
-      height: { feet: parseInt(height.feet), inches: parseInt(height.inches) },
+      height: parseInt(height, 10),  // cm (nombre) — heightCm() le lit tel quel
       weight: parseFloat(weight),
     };
 
     try {
-      // Navigate to results screen with data
       router.push({
         pathname: '/(onboarding)/results' as any,
-        params: { data: JSON.stringify(data) }
+        params: { data: JSON.stringify(data) },
       });
     } catch (error) {
       console.error('Error completing onboarding:', error);
@@ -96,7 +196,7 @@ export default function OnboardingScreen() {
           key={index}
           style={[
             styles.progressSegment,
-            index <= currentStep ? styles.progressActive : styles.progressInactive,
+            { backgroundColor: index <= currentStep ? C.accent : (isDark ? Colors.dark.gray[100] : Colors.light.gray[200]) },
           ]}
         />
       ))}
@@ -108,27 +208,27 @@ export default function OnboardingScreen() {
       case 0:
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>{t('onboarding.step1_title')}</Text>
+            <Text style={[styles.stepTitle, { color: C.title }]}>{t('onboarding.step1_title')}</Text>
             <View style={styles.optionsRow}>
               <TouchableOpacity
-                style={[styles.imageOptionBox, gender === 'male' && styles.optionSelected]}
+                style={[styles.imageOptionBox, { backgroundColor: C.card, borderColor: C.border }, gender === 'male' && { borderColor: C.accent, backgroundColor: C.accent }]}
                 onPress={() => setGender('male')}
               >
                 <Image
                   source={require('../../assets/images/illustrations/male.jpg')}
                   style={styles.genderImage}
                 />
-                <Text style={[styles.optionLabel, gender === 'male' && styles.textWhite]}>{t('onboarding.male')}</Text>
+                <Text style={[styles.optionLabel, { color: C.text }, gender === 'male' && styles.textWhite]}>{t('onboarding.male')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.imageOptionBox, gender === 'female' && styles.optionSelected]}
+                style={[styles.imageOptionBox, { backgroundColor: C.card, borderColor: C.border }, gender === 'female' && { borderColor: C.accent, backgroundColor: C.accent }]}
                 onPress={() => setGender('female')}
               >
                 <Image
                   source={require('../../assets/images/illustrations/female.jpg')}
                   style={styles.genderImage}
                 />
-                <Text style={[styles.optionLabel, gender === 'female' && styles.textWhite]}>{t('onboarding.female')}</Text>
+                <Text style={[styles.optionLabel, { color: C.text }, gender === 'female' && styles.textWhite]}>{t('onboarding.female')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -136,7 +236,7 @@ export default function OnboardingScreen() {
       case 1:
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>{t('onboarding.step2_title')}</Text>
+            <Text style={[styles.stepTitle, { color: C.title }]}>{t('onboarding.step2_title')}</Text>
             {[
               { id: 'lose', label: t('onboarding.lose'), img: require('../../assets/images/illustrations/lose_weight.jpg') },
               { id: 'maintain', label: t('onboarding.maintain'), img: require('../../assets/images/illustrations/healthy_food.jpg') },
@@ -144,11 +244,11 @@ export default function OnboardingScreen() {
             ].map((item) => (
               <TouchableOpacity
                 key={item.id}
-                style={[styles.imageListOption, goal === item.id && styles.listOptionSelected]}
+                style={[styles.imageListOption, { backgroundColor: C.card, borderColor: C.border }, goal === item.id && { borderColor: C.accent, backgroundColor: C.accent }]}
                 onPress={() => setGoal(item.id)}
               >
                 <Image source={item.img} style={styles.listImage} />
-                <Text style={[styles.listOptionLabel, goal === item.id && styles.textWhite]}>{item.label}</Text>
+                <Text style={[styles.listOptionLabel, { color: C.text }, goal === item.id && styles.textWhite]}>{item.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -156,7 +256,7 @@ export default function OnboardingScreen() {
       case 2:
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>{t('onboarding.step3_title')}</Text>
+            <Text style={[styles.stepTitle, { color: C.title }]}>{t('onboarding.step3_title')}</Text>
             {[
               { id: '2-3', label: '2-3 / 7', img: require('../../assets/images/illustrations/running.jpg') },
               { id: '3-4', label: '3-4 / 7', img: require('../../assets/images/illustrations/workout.jpg') },
@@ -164,11 +264,11 @@ export default function OnboardingScreen() {
             ].map((item) => (
               <TouchableOpacity
                 key={item.id}
-                style={[styles.imageListOption, workout === item.id && styles.listOptionSelected]}
+                style={[styles.imageListOption, { backgroundColor: C.card, borderColor: C.border }, workout === item.id && { borderColor: C.accent, backgroundColor: C.accent }]}
                 onPress={() => setWorkout(item.id)}
               >
                 <Image source={item.img} style={styles.listImage} />
-                <Text style={[styles.listOptionLabel, workout === item.id && styles.textWhite]}>{item.label}</Text>
+                <Text style={[styles.listOptionLabel, { color: C.text }, workout === item.id && styles.textWhite]}>{item.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -176,78 +276,83 @@ export default function OnboardingScreen() {
       case 3:
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>{t('onboarding.step4_title')}</Text>
+            <Text style={[styles.stepTitle, { color: C.title }]}>{t('onboarding.step4_title')}</Text>
             <Image
               source={require('../../assets/images/illustrations/birthdate.jpg')}
               style={styles.stepHeroImage}
             />
             <View style={styles.dateRow}>
               <TextInput
-                style={styles.dateInput}
-                placeholder="Day"
+                style={[styles.dateInput, { backgroundColor: C.card, color: C.text }]}
+                placeholder={tx.day}
+                placeholderTextColor={C.sub}
                 keyboardType="number-pad"
                 maxLength={2}
                 value={birthdate.day}
                 onChangeText={(text) => setBirthdate({ ...birthdate, day: text })}
               />
               <TextInput
-                style={styles.dateInput}
-                placeholder="Month"
+                style={[styles.dateInput, { backgroundColor: C.card, color: C.text }]}
+                placeholder={tx.month}
+                placeholderTextColor={C.sub}
                 keyboardType="number-pad"
                 maxLength={2}
                 value={birthdate.month}
                 onChangeText={(text) => setBirthdate({ ...birthdate, month: text })}
               />
               <TextInput
-                style={[styles.dateInput, { flex: 1.5 }]}
-                placeholder="Year"
+                style={[styles.dateInput, { flex: 1.5, backgroundColor: C.card, color: C.text }]}
+                placeholder={tx.year}
+                placeholderTextColor={C.sub}
                 keyboardType="number-pad"
                 maxLength={4}
                 value={birthdate.year}
                 onChangeText={(text) => setBirthdate({ ...birthdate, year: text })}
               />
             </View>
+            {!birthValid && (birthdate.day || birthdate.month || birthdate.year)
+              ? <Text style={styles.errorText}>{tx.yearsInvalid}</Text>
+              : <Text style={[styles.hintText, { color: C.sub }]}>{tx.birthHint}</Text>}
           </View>
         );
       case 4:
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>{t('onboarding.step5_title')}</Text>
+            <Text style={[styles.stepTitle, { color: C.title }]}>{t('onboarding.step5_title')}</Text>
             <Image
               source={require('../../assets/images/illustrations/measure.jpg')}
               style={styles.stepHeroImage}
             />
             <View style={styles.metricsContainer}>
-              <Text style={styles.metricsLabel}>Height</Text>
-              <View style={styles.metricsRow}>
-                <Ruler size={24} color={Colors.light.primary} />
-                <TextInput
-                  style={styles.metricsInput}
-                  placeholder="Feet"
-                  keyboardType="number-pad"
-                  value={height.feet}
-                  onChangeText={(text) => setHeight({ ...height, feet: text })}
-                />
-                <TextInput
-                  style={styles.metricsInput}
-                  placeholder="Inches"
-                  keyboardType="number-pad"
-                  value={height.inches}
-                  onChangeText={(text) => setHeight({ ...height, inches: text })}
-                />
+              {/* Taille — un seul champ en CM via le Stepper de FormKit */}
+              <View style={styles.metricHeader}>
+                <Ruler size={20} color={C.accent} />
+                <Text style={[styles.metricsLabel, { color: C.sub }]}>{tx.height}</Text>
               </View>
+              <Stepper
+                value={height}
+                onChange={setHeight}
+                step={1}
+                min={120}
+                max={220}
+                unit={tx.cm}
+                error={!heightValid && height ? tx.heightInvalid : undefined}
+              />
 
-              <Text style={[styles.metricsLabel, { marginTop: 24 }]}>Weight (kg)</Text>
-              <View style={styles.metricsRow}>
-                <Weight size={24} color={Colors.light.primary} />
-                <TextInput
-                  style={[styles.metricsInput, { flex: 1 }]}
-                  placeholder="kg"
-                  keyboardType="decimal-pad"
-                  value={weight}
-                  onChangeText={setWeight}
-                />
+              {/* Poids — kg via le Stepper de FormKit */}
+              <View style={[styles.metricHeader, { marginTop: 8 }]}>
+                <Weight size={20} color={C.accent} />
+                <Text style={[styles.metricsLabel, { color: C.sub }]}>{tx.weight}</Text>
               </View>
+              <Stepper
+                value={weight}
+                onChange={setWeight}
+                step={1}
+                min={30}
+                max={250}
+                unit={tx.kg}
+                error={!weightValid && weight ? tx.weightInvalid : undefined}
+              />
             </View>
           </View>
         );
@@ -256,8 +361,10 @@ export default function OnboardingScreen() {
     }
   };
 
+  const isLast = currentStep === STEPS.length - 1;
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: C.bg }]}>
       <ScreenTopBar showNotif={false} />
 
       {renderProgressBar()}
@@ -268,19 +375,20 @@ export default function OnboardingScreen() {
 
       <View style={styles.footer}>
         {currentStep > 0 && (
-          <TouchableOpacity style={styles.backButton} onPress={prevStep}>
-            <ArrowLeft size={24} color={Colors.light.gray[600]} />
+          <TouchableOpacity style={[styles.backButton, { backgroundColor: C.backBtn }]} onPress={prevStep}>
+            <ArrowLeft size={22} color={C.backIcon} />
           </TouchableOpacity>
         )}
+        {/* Bouton "Suivant" harmonisé sur SubmitBar (h.56, radius 18). */}
         <TouchableOpacity
-          style={[styles.nextButton, (!gender && currentStep === 0) && styles.buttonDisabled]}
+          style={[styles.nextButton, { backgroundColor: C.accent }, !canProceed && styles.buttonDisabled]}
           onPress={nextStep}
-          disabled={!gender && currentStep === 0}
+          disabled={!canProceed}
         >
           <Text style={styles.nextButtonText}>
-            {currentStep === STEPS.length - 1 ? t('onboarding.finish') : t('onboarding.next')}
+            {isLast ? tx.finish : tx.next}
           </Text>
-          <ArrowRight size={24} color={Colors.light.white} />
+          <ArrowRight size={22} color="#fff" />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -290,47 +398,13 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  langPickerRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  langPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderWidth: 1,
-    borderColor: Colors.light.gray[200],
-  },
-  langPillActive: {
-    backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primary,
-  },
-  langPillText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  langPillTextActive: {
-    color: '#fff',
   },
   imageOptionBox: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: Colors.light.white,
     borderRadius: 24,
     padding: 12,
     borderWidth: 2,
-    borderColor: Colors.light.gray[200],
     gap: 12,
   },
   genderImage: {
@@ -341,12 +415,10 @@ const styles = StyleSheet.create({
   imageListOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.white,
     borderRadius: 20,
     padding: 12,
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: Colors.light.gray[200],
     gap: 16,
   },
   listImage: {
@@ -371,12 +443,6 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
   },
-  progressActive: {
-    backgroundColor: Colors.light.primary,
-  },
-  progressInactive: {
-    backgroundColor: Colors.light.gray[200],
-  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
@@ -388,7 +454,6 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 28,
     fontWeight: '800',
-    color: Colors.light.gray[800],
     marginBottom: 40,
     textAlign: 'center',
   },
@@ -397,55 +462,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 16,
   },
-  optionBox: {
-    flex: 1,
-    aspectRatio: 1,
-    backgroundColor: Colors.light.white,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  optionSelected: {
-    borderColor: Colors.light.primary,
-    backgroundColor: Colors.light.primary,
-  },
   optionLabel: {
     marginTop: 12,
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.gray[800],
-  },
-  listOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 24,
-    backgroundColor: Colors.light.white,
-    borderRadius: 24,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  listOptionSelected: {
-    backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primary,
   },
   listOptionLabel: {
     marginLeft: 16,
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.light.gray[800],
   },
   dateRow: {
     flexDirection: 'row',
@@ -453,47 +478,42 @@ const styles = StyleSheet.create({
   },
   dateInput: {
     flex: 1,
-    backgroundColor: Colors.light.white,
     borderRadius: 16,
     height: 64,
     textAlign: 'center',
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.light.gray[800],
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
     elevation: 2,
+  },
+  errorText: {
+    color: '#e11d48',
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  hintText: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 12,
+    textAlign: 'center',
   },
   metricsContainer: {
     paddingTop: 10,
   },
+  metricHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
   metricsLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.gray[500],
-    marginBottom: 12,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.light.white,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    height: 64,
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
-  },
-  metricsInput: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.light.gray[800],
   },
   footer: {
     padding: 24,
@@ -502,18 +522,16 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   backButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: Colors.light.gray[200],
+    width: 56,
+    height: 56,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
   nextButton: {
     flex: 1,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: Colors.light.primary,
+    height: 56,
+    borderRadius: 18,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -521,20 +539,20 @@ const styles = StyleSheet.create({
     shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 5,
+    shadowRadius: 10,
+    elevation: 6,
   },
   nextButtonText: {
-    color: Colors.light.white,
-    fontSize: 18,
-    fontWeight: '700',
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '800',
   },
   buttonDisabled: {
-    backgroundColor: Colors.light.gray[300],
+    backgroundColor: '#CBD5E1',
     shadowOpacity: 0,
     elevation: 0,
   },
   textWhite: {
-    color: Colors.light.white,
+    color: '#fff',
   },
 });
