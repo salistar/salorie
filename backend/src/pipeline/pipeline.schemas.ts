@@ -14,6 +14,8 @@ export class MirrorEvent {
   @Prop({ index: true }) eventTs: number;
 }
 export const MirrorEventSchema = SchemaFactory.createForClass(MirrorEvent);
+// recentEvents / aggregate features : match { tenantId } puis sort/group par eventTs.
+MirrorEventSchema.index({ tenantId: 1, eventTs: -1 });
 
 @Schema({ timestamps: true, collection: 'mirror_users' })
 export class MirrorUser {
@@ -41,9 +43,13 @@ export class OutboxItem {
   @Prop({ index: true }) topic: string;
   @Prop() userId: string;
   @Prop({ type: Object }) payload: any;
-  @Prop({ default: 'pending', index: true }) status: string; // pending | delivered | skipped | failed
+  @Prop({ default: 'pending' }) status: string; // pending | delivered | skipped | failed (indexé via { status, createdAt })
   @Prop({ default: 0 }) attempts: number;
   @Prop() deliveredAt: number;
   @Prop({ unique: true, sparse: true }) dedupKey: string;
 }
 export const OutboxItemSchema = SchemaFactory.createForClass(OutboxItem);
+// deliverOutbox : find({ status: 'pending' }).limit(N) — livraison la plus ancienne d'abord.
+OutboxItemSchema.index({ status: 1, createdAt: 1 });
+// outboxItems (admin) : find({ tenantId }).sort({ createdAt: -1 }).
+OutboxItemSchema.index({ tenantId: 1, createdAt: -1 });

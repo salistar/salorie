@@ -32,6 +32,46 @@ export class AiService {
     return text;
   }
 
+  /** TTL du cache meal-plan : 7 jours (un même objectif+budget+conditions donne
+   *  le même plan → inutile de re-payer Gemini pendant une semaine). */
+  private static readonly MEALPLAN_CACHE_TTL = 604800; // 7 j en secondes
+
+  /**
+   * Génère (ou récupère) un plan de repas, caché par hash des ENTRÉES métier
+   * (objectif + budget + conditions/restrictions…), pas du prompt brut. Deux
+   * requêtes aux mêmes entrées partagent le même plan → 1 seul appel Gemini.
+   *
+   * ADDITIF : ne change ni la forme de réponse (string) ni la logique de
+   * génération (délègue à generate()). Le cache est best-effort : si Redis est
+   * KO, getJSON→null / setJSON no-op et on retombe sur une génération normale.
+   *
+   * @param inputs entrées métier déterminant le plan (sérialisées de façon
+   *   STABLE pour la clé de cache). @param prompt prompt envoyé à Gemini.
+   */
+  async generateMealPlan(
+    inputs: Record<string, unknown>,
+    prompt: string,
+    model?: string,
+  ): Promise<string> {
+    if (!this.genAI) throw new Error('GEMINI_API_KEY not configured');
+    const m = model || this.defaultModel;
+    // Sérialisation stable des entrées : clés triées → même hash quel que soit
+    // l'ordre des propriétés fourni par l'appelant.
+    const stable = JSON.stringify(inputs ?? {}, Object.keys(inputs ?? {}).sort());
+    const key = `mealplan:${createHash('sha1').update(m + '|' + stable).digest('hex')}`;
+
+    // 1) Tentative cache (silencieuse : getJSON renvoie null si Redis KO).
+    const cached = await this.redis.getJSON<string>(key);
+    if (cached != null) { this.logger.log('cache HIT meal-plan'); return cached; }
+
+    // 2) Miss → génération (délègue à generate(), logique inchangée).
+    const text = await this.generate(prompt, m);
+
+    // 3) Mise en cache best-effort (setJSON no-op si Redis KO).
+    if (text) await this.redis.setJSON(key, text, AiService.MEALPLAN_CACHE_TTL);
+    return text;
+  }
+
   // Vision : modèle LITE par défaut (latence 2-3× plus faible que flash, suffisant
   // pour reconnaître un plat / une machine). Overridable par GEMINI_VISION_MODEL.
   private visionModel = process.env.GEMINI_VISION_MODEL || 'gemini-2.5-flash-lite';
