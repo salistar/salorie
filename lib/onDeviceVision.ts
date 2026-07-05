@@ -1,0 +1,89 @@
+// Vision ON-DEVICE partagée (tier 1 de la cascade scan : ON-DEVICE → LOCAL DB → GEMINI).
+// Classifieur on-device partagé (utilisé par scan-analysis, tier 1 de la cascade).
+// Classification TFLite MobileNet (food_v1, 2024 classes) + lookup macros hors-ligne
+// dans assets/data/local-foods.json (502 aliments FR/AR + k/p/c/f).
+import * as ImageManipulator from 'expo-image-manipulator';
+import { decode as jpegDecode } from 'jpeg-js';
+import { Buffer } from 'buffer';
+import { FOOD_LABELS } from './foodLabels';
+
+export type Pred = { label: string; score: number };
+
+let modelPromise: Promise<any> | null = null;
+async function getModel() {
+  if (!modelPromise) {
+    const { loadTensorflowModel } = await import('react-native-fast-tflite');
+    modelPromise = loadTensorflowModel(require('../assets/models/food_v1.tflite'));
+  }
+  return modelPromise;
+}
+
+/** Classification 100% on-device → top-3 classes alimentaires. Lève si modèle natif absent. */
+export async function classifyOnDevice(uri: string): Promise<Pred[]> {
+  const model = await getModel();
+  const shape: number[] = model.inputs[0].shape; // [1, H, W, 3]
+  const H = shape[1], W = shape[2];
+  const dtype: string = model.inputs[0].dataType;
+
+  const manip = await ImageManipulator.manipulateAsync(
+    uri, [{ resize: { width: W, height: H } }],
+    { base64: true, format: ImageManipulator.SaveFormat.JPEG },
+  );
+  const raw = Buffer.from(manip.base64 as string, 'base64');
+  const { data } = jpegDecode(raw, { useTArray: true }); // RGBA
+
+  const px = W * H;
+  let input: Uint8Array | Float32Array;
+  if (dtype === 'uint8') {
+    input = new Uint8Array(px * 3);
+    for (let i = 0, j = 0; i < px; i++) { input[j++] = data[i * 4]; input[j++] = data[i * 4 + 1]; input[j++] = data[i * 4 + 2]; }
+  } else {
+    input = new Float32Array(px * 3);
+    for (let i = 0, j = 0; i < px; i++) { input[j++] = data[i * 4] / 255; input[j++] = data[i * 4 + 1] / 255; input[j++] = data[i * 4 + 2] / 255; }
+  }
+
+  const out = await model.run([input]);
+  const probs: ArrayLike<number> = out[0];
+  const idx: number[] = [];
+  for (let i = 1; i < probs.length; i++) idx.push(i); // ignore index 0 (__background__)
+  idx.sort((a, b) => (probs[b] as number) - (probs[a] as number));
+  const max = probs[idx[0]] as number;
+  const norm = (v: number) => (max > 1 ? v / 255 : v);
+  return idx.slice(0, 3).map((i) => ({
+    label: FOOD_LABELS[i] || `class ${i}`,
+    score: Math.min(1, norm(probs[i] as number)),
+  }));
+}
+
+// ── Lookup macros HORS-LIGNE (tier 1 bis) ──────────────────────────────────
+// Les labels AIY sont en anglais ; la base locale est FR/AR. On normalise et on
+// tente une correspondance souple (mots-clés). Retourne null si pas de match fiable.
+let LOCAL: any[] | null = null;
+function localFoods(): any[] {
+  if (!LOCAL) { try { LOCAL = require('../assets/data/local-foods.json'); } catch { LOCAL = []; } }
+  return LOCAL || [];
+}
+function norm(s: string): string {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9؀-ۿ ]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+export type LocalMacro = { name: string; kcal: number; protein: number; carbs: number; fat: number } | null;
+
+/** Cherche les macros d'un label (on-device) dans la base locale. null si pas de match. */
+export function localMacroForLabel(label: string): LocalMacro {
+  const q = norm(label.replace(/_/g, ' '));
+  if (!q) return null;
+  const words = q.split(' ').filter((w) => w.length > 2);
+  let best: any = null; let bestScore = 0;
+  for (const it of localFoods()) {
+    const hay = norm(`${it.n || ''} ${it.ar || ''}`);
+    if (!hay) continue;
+    let score = 0;
+    if (hay === q) score = 100;
+    else if (hay.includes(q) || q.includes(hay)) score = 60;
+    else { for (const w of words) if (hay.includes(w)) score += 20; }
+    if (score > bestScore) { bestScore = score; best = it; }
+  }
+  if (!best || bestScore < 40) return null; // pas assez sûr → on laissera Gemini
+  return { name: best.n || label, kcal: Number(best.k) || 0, protein: Number(best.p) || 0, carbs: Number(best.c) || 0, fat: Number(best.f) || 0 };
+}

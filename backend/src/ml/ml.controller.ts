@@ -1,0 +1,102 @@
+import { Body, Controller, Get, Post, Query, Req, UseGuards, BadRequestException, HttpException } from '@nestjs/common';
+import { MlService } from './ml.service';
+import { RedisService } from '../redis.service';
+import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
+import { AdminKeyGuard } from '../auth/admin-key.guard';
+
+@UseGuards(FirebaseAuthGuard)
+@Controller('ml')
+export class MlController {
+  constructor(private ml: MlService, private redis: RedisService) {}
+
+  /** Taille max d'une image décodée acceptée sur les endpoints vision (8 Mo). */
+  private static readonly MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+
+  /**
+   * Garde de sécurité pour les endpoints vision : valide qu'une image base64
+   * (sans préfixe data-URI) est bien un JPEG (FF D8 FF) ou un PNG (89 50 4E 47)
+   * et que sa taille décodée reste sous la limite. Rejette sinon (BadRequest).
+   * N'altère PAS l'image renvoyée : validation en lecture seule.
+   */
+  private assertValidImage(imageBase64: unknown): void {
+    if (typeof imageBase64 !== 'string' || imageBase64.length === 0)
+      throw new BadRequestException('invalid image');
+    // Tolère un éventuel préfixe data-URI pour la validation (le service reçoit le base64 tel quel).
+    const b64 = imageBase64.startsWith('data:')
+      ? imageBase64.slice(imageBase64.indexOf(',') + 1)
+      : imageBase64;
+    let buf: Buffer;
+    try {
+      buf = Buffer.from(b64, 'base64');
+    } catch {
+      throw new BadRequestException('invalid image');
+    }
+    if (buf.length === 0 || buf.length > MlController.MAX_IMAGE_BYTES)
+      throw new BadRequestException('invalid image');
+    const isJpeg = buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+    const isPng =
+      buf.length > 8 &&
+      buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
+    if (!isJpeg && !isPng) throw new BadRequestException('invalid image');
+  }
+
+  /** Prévision de poids + plateau pour l'utilisateur authentifié. */
+  @Get('weight-forecast')
+  weightForecast(@Req() req: any, @Query('targetWeight') target?: string) {
+    const email = req.user?.uid || req.user?.email;
+    if (!email) throw new BadRequestException('no user');
+    return this.ml.weightForecast(email, target ? Number(target) : undefined);
+  }
+
+  /** Recommandation de repas selon macros restantes + objectif. */
+  @Post('meal-reco')
+  mealReco(@Body() body: any) {
+    return this.ml.mealReco(body || {});
+  }
+
+  /** Vision via MODÈLE LOCAL auto-hébergé (Ollama) + repli API food — PAS Gemini. */
+  @Post('vision')
+  visionLocal(@Body() body: any) {
+    if (!body?.imageBase64) throw new BadRequestException('imageBase64 required');
+    this.assertValidImage(body.imageBase64);
+    return this.ml.visionLocal(String(body.prompt || 'Describe the food/drink and return JSON.'), body.imageBase64, body.mimeType);
+  }
+
+  /** Estimation de portion (grammes) à partir d'une photo (Gemini Vision serveur). */
+  @Post('portion-estimate')
+  portionEstimate(@Body() body: any) {
+    if (!body?.imageBase64) throw new BadRequestException('imageBase64 required');
+    this.assertValidImage(body.imageBase64);
+    return this.ml.portionEstimate(body.imageBase64, body.foodName);
+  }
+
+  /** Active learning : enregistre une correction de scan (image + vrai label) pour ré-entraîner.
+   *  Anti-abus : 30 envois / min / utilisateur (sinon saturation disque du volume partagé). */
+  @Post('feedback')
+  async recordFeedback(@Req() req: any, @Body() body: any) {
+    const uid = req.user?.uid || req.user?.email || 'anon';
+    const ok = await this.redis.rateLimit(`mlfb:${uid}`, 30, 60);
+    if (!ok) throw new HttpException('Trop de requêtes — réessaie dans une minute.', 429);
+    const b64 = body?.imageBase64;
+    if (typeof b64 !== 'string' || b64.length < 100)
+      throw new BadRequestException('invalid image');
+    this.assertValidImage(b64);
+    if (body?.mimeType && !['image/jpeg', 'image/png'].includes(String(body.mimeType)))
+      throw new BadRequestException('invalid mimeType');
+    return this.ml.recordScanFeedback(body, uid);
+  }
+
+  /** Stats du dataset collecté (utilisateur authentifié). */
+  @Get('feedback/stats')
+  feedbackStats() {
+    return this.ml.feedbackStats();
+  }
+
+  /** Télémétrie cascade vision : usage par tier + taux cloud payant / cache (admin).
+   *  Protégé par AdminKeyGuard (en-tête x-admin-key) EN PLUS de l'auth Firebase. */
+  @UseGuards(AdminKeyGuard)
+  @Get('cascade-stats')
+  cascadeStats() {
+    return this.ml.getCascadeStats();
+  }
+}

@@ -60,6 +60,7 @@ jobs:
             printf '%s\n' 'USDA_API_KEY=${{ secrets.USDA_API_KEY }}' >> .env
             printf '%s\n' 'ADMIN_USER=${{ secrets.ADMIN_USER }}' >> .env
             printf '%s\n' 'ADMIN_PASS=${{ secrets.ADMIN_PASS }}' >> .env
+            printf '%s\n' 'AUTH_SECRET=${{ secrets.AUTH_SECRET }}' >> .env
             docker compose up -d --build --remove-orphans
             docker compose ps
             docker image prune -f

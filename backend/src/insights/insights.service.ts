@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { FirebaseService } from '../firebase.service';
+import { createHash } from 'crypto';
 
 // Mirrors lib/InsightsService.ts on the app so the precomputed docs are read
 // instantly by the mobile app (0 AI on open).
@@ -12,6 +13,15 @@ export class InsightsService {
   private model = process.env.GEMINI_LITE_MODEL || 'gemini-2.0-flash-lite';
 
   constructor(private fb: FirebaseService) {}
+
+  // Petit délai réparti (jitter) pour étaler le traitement par utilisateur et
+  // éviter le thundering herd (rafale d'appels Gemini/Firestore au tick du cron).
+  private sleep(ms: number) {
+    return new Promise<void>((resolve) => setTimeout(resolve, ms));
+  }
+  // Base (ms) entre deux utilisateurs, plafonnée pour ne pas trop allonger le batch.
+  private readonly STAGGER_MS = Math.max(0, Number(process.env.INSIGHTS_STAGGER_MS ?? 200) || 0);
+  private readonly STAGGER_MAX_MS = Math.max(0, Number(process.env.INSIGHTS_STAGGER_MAX_MS ?? 30000) || 0);
 
   // ── ISO week key, identical to the app's buildPeriodKey('week') ──
   weekKey(ref = new Date()): string {
@@ -51,10 +61,14 @@ export class InsightsService {
 
   async generate(profile: any, logs: any[], periodLabel: string) {
     if (!this.genAI || logs.length === 0) return this.offline(logs, periodLabel);
+    // RGPD/anonymisation : on n'envoie à Gemini AUCUN identifiant (ni nom, ni email,
+    // ni uid) — uniquement l'objectif et un poids ARRONDI, plus les aliments loggés.
+    const goal = String(profile?.goal || 'general health').slice(0, 40);
+    const weightRounded = Math.round(Number(profile?.weight) || 0) || 'unknown';
     const logsSummary = logs.slice(-200).map((l) => `${l.date}: ${l.name} (${l.calories} ${l.type === 'water' ? 'ml' : 'kcal'}, ${l.type}${l.intensity ? ', ' + l.intensity : ''})`).join('\n');
     const prompt = `You are a nutrition & fitness analyst. Analyse the user's ${periodLabel} logs.
-User goal: ${profile?.goal}
-Current weight: ${profile?.weight}kg
+User goal: ${goal}
+Current weight: ${weightRounded}kg
 Logs (${logs.length}):
 ${logsSummary || 'No logs yet.'}
 Return ONLY strict JSON, no backticks, with this exact shape:
@@ -82,6 +96,17 @@ Rules: summary=1 sentence; topFood=most frequent food or "—"; hydrationStatus=
     }
   }
 
+  // Signature stable des ENTRÉES qui déterminent l'analyse (objectif + poids arrondi +
+  // logs). Inchangée d'une nuit à l'autre → on réutilise le doc IA déjà calculé = 0 appel Gemini.
+  private inputSignature(profile: any, logs: any[]): string {
+    const goal = String(profile?.goal || '').slice(0, 40);
+    const w = Math.round(Number(profile?.weight) || 0);
+    const parts = logs
+      .map((l) => `${l.date}|${l.name}|${l.calories}|${l.type}|${l.intensity || ''}`)
+      .sort();
+    return createHash('sha1').update(`${goal}|${w}|${logs.length}|${parts.join(String.fromCharCode(10))}`).digest('hex');
+  }
+
   // ── Nightly precompute for active users → Firestore (app reads it, 0 AI) ──
   @Cron(process.env.INSIGHTS_CRON || '0 3 * * *')
   async nightly() {
@@ -95,24 +120,37 @@ Rules: summary=1 sentence; topFood=most frequent food or "—"; hydrationStatus=
     const wKey = this.weekKey();
     const mKey = this.monthKey();
     const since = new Date(Date.now() - 35 * 24 * 3600 * 1000).toISOString().slice(0, 10); // YYYY-MM-DD
-    let done = 0, skipped = 0;
+    let done = 0, skipped = 0, reused = 0, calls = 0;
+    let idx = 0;
     for (const u of users.docs) {
+      // Stagger : petit délai réparti entre utilisateurs pour lisser la charge
+      // (Gemini/Firestore) au démarrage du cron. Additif, plafonné, n'altère aucune analyse.
+      if (idx > 0 && this.STAGGER_MS > 0) {
+        await this.sleep(Math.min(idx * this.STAGGER_MS, this.STAGGER_MAX_MS));
+      }
+      idx++;
       try {
         const profile = u.data();
         const logsSnap = await db.collection('users').doc(u.id).collection('logs').where('date', '>=', since).get();
         const logs = logsSnap.docs.map((d) => d.data());
         if (!logs.length) { skipped++; continue; } // inactive — don't waste a call
+        const sig = this.inputSignature(profile, logs);
         for (const [scope, key, label] of [['week', wKey, 'this week'], ['month', mKey, 'this month']] as const) {
+          const ref = db.collection('users').doc(u.id).collection('ai_insights').doc(key);
+          const prev = (await ref.get()).data();
+          // MINIMISE GEMINI : données inchangées + déjà une vraie analyse IA → on réutilise, 0 appel.
+          if (prev && prev.inputSig === sig && prev.source === 'ai') { reused++; continue; }
           const ins = await this.generate(profile, logs, label);
-          await db.collection('users').doc(u.id).collection('ai_insights').doc(key).set(
-            { ...ins, scope, periodKey: key, updatedAt: Date.now(), generatedAt: Date.now(), stale: false },
+          if ((ins as any).source === 'ai') calls++;
+          await ref.set(
+            { ...ins, scope, periodKey: key, inputSig: sig, updatedAt: Date.now(), generatedAt: Date.now(), stale: false },
             { merge: true },
           );
         }
         done++;
       } catch (e: any) { this.logger.warn(`user ${u.id}: ${e.message}`); }
     }
-    const res = { weekKey: wKey, monthKey: mKey, users: users.size, precomputed: done, skipped };
+    const res = { weekKey: wKey, monthKey: mKey, users: users.size, precomputed: done, skipped, reused, geminiCalls: calls };
     this.logger.log(`Insights precompute done: ${JSON.stringify(res)}`);
     return res;
   }

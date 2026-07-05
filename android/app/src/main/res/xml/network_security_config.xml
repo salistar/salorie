@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- HTTPS-only (pas de cleartext) MAIS on déclare EXPLICITEMENT les autorités de
+     certification système. Sans <trust-anchors>, certains OEM (Samsung) cassent
+     toute la confiance TLS de l'app → tous les appels HTTPS (Clerk, API…) échouent
+     silencieusement → écran blanc. Avec src="system", l'app fait confiance aux CA
+     publiques (Cloudflare/Let's Encrypt) comme le navigateur. -->
+<network-security-config>
+  <base-config cleartextTrafficPermitted="false">
+    <trust-anchors>
+      <certificates src="system" />
+    </trust-anchors>
+  </base-config>
+</network-security-config>

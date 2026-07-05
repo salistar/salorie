@@ -1,0 +1,25 @@
+# MongoDB EN LOCAL pour le développement (auth web, etc.).
+# Lancer :   docker compose -f docker-compose.local.yml up -d
+# Le web/backend en local utilisent alors MONGO_URI=mongodb://localhost:27017/salorie
+# Mongo Express (UI) sur http://localhost:8081 (admin/admin).
+services:
+  mongo:
+    image: mongo:7
+    container_name: salorie-mongo-local
+    restart: unless-stopped
+    ports: ['27017:27017']
+    volumes: ['salorie_mongo_local:/data/db']
+
+  mongo-ui:
+    image: mongo-express:1.0.2
+    container_name: salorie-mongo-ui-local
+    restart: unless-stopped
+    depends_on: [mongo]
+    ports: ['8081:8081']
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongo:27017
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+
+volumes:
+  salorie_mongo_local:

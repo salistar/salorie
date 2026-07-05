@@ -1,86 +1,24 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Buffer } from 'buffer';
 
-const CLIENT_ID = process.env.EXPO_PUBLIC_FATSECRET_CLIENT_ID || '';
-const CLIENT_SECRET = process.env.EXPO_PUBLIC_FATSECRET_CLIENT_SECRET || '';
-
-const TOKEN_KEY = 'fatsecret_token';
-const EXPIRY_KEY = 'fatsecret_token_expiry';
-
-/**
- * Fetches a new OAuth 2.0 access token from FatSecret
- */
-async function fetchNewToken(): Promise<string | null> {
-  if (!CLIENT_ID || !CLIENT_SECRET) {
-    console.warn('FatSecret credentials not configured');
-    return null;
-  }
-
-  const credentials = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
-
+// ── Cache on-device des appels OpenFoodFacts (réduit les appels provider) ──
+// Produit (barcode) = immuable → cache long ; recherche = TTL plus court.
+async function cacheGet<T>(key: string): Promise<T | undefined> {
   try {
-    console.log('\x1b[32m[API→FatSecret] /connect/token REQUEST\x1b[0m', {
-      url: 'https://oauth.fatsecret.com/connect/token',
-      method: 'POST',
-      body: 'grant_type=client_credentials&scope=basic',
-      clientId: CLIENT_ID ? `${CLIENT_ID.slice(0, 6)}…` : '(missing)',
-    });
-    const t0 = Date.now();
-    const response = await fetch('https://oauth.fatsecret.com/connect/token', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: 'grant_type=client_credentials&scope=basic',
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.warn('\x1b[34m[API←FatSecret] /connect/token ERROR\x1b[0m', {
-        ms: Date.now() - t0,
-        status: response.status,
-        body: errorText,
-      });
-      return null;
-    }
-
-    const data = await response.json();
-    console.log('\x1b[34m[API←FatSecret] /connect/token RESPONSE\x1b[0m', {
-      ms: Date.now() - t0,
-      status: response.status,
-      expiresIn: data.expires_in,
-      tokenType: data.token_type,
-      tokenPreview: data.access_token ? `${data.access_token.slice(0, 12)}…` : null,
-    });
-    if (data.access_token) {
-      // Cache token with expiry (subtract 60s buffer)
-      const expiry = Date.now() + ((data.expires_in - 60) * 1000);
-      await AsyncStorage.setItem(TOKEN_KEY, data.access_token);
-      await AsyncStorage.setItem(EXPIRY_KEY, expiry.toString());
-      return data.access_token;
-    }
-  } catch (error) {
-    console.warn('\x1b[34m[API←FatSecret] /connect/token THROWN:\x1b[0m', error);
-  }
-  return null;
+    const raw = await AsyncStorage.getItem(key);
+    if (!raw) return undefined;
+    const { v, exp } = JSON.parse(raw);
+    if (exp && Date.now() > exp) { AsyncStorage.removeItem(key).catch(() => {}); return undefined; }
+    return v as T;
+  } catch { return undefined; }
+}
+async function cacheSet(key: string, v: unknown, ttlMs: number): Promise<void> {
+  try { await AsyncStorage.setItem(key, JSON.stringify({ v, exp: ttlMs ? Date.now() + ttlMs : 0 })); } catch {}
 }
 
-/**
- * Returns a valid access token, refreshing if necessary
- */
-export async function getAccessToken(): Promise<string | null> {
-  try {
-    const token = await AsyncStorage.getItem(TOKEN_KEY);
-    const expiry = await AsyncStorage.getItem(EXPIRY_KEY);
-
-    if (token && expiry && Date.now() < parseInt(expiry)) {
-      return token;
-    }
-  } catch {}
-
-  return await fetchNewToken();
-}
+// S4: Food search uses OpenFoodFacts ONLY (free, no API key, no client secret).
+// The former FatSecret OAuth helpers were removed — a client secret must never
+// ship in the app bundle, and FatSecret rejects mobile IPs anyway. A server-side
+// proxy can be added later in the backend if FatSecret data is ever needed.
 
 /**
  * Searches foods via OpenFoodFacts (free, no API key, NO IP allowlist).
@@ -174,6 +112,9 @@ async function salSearch(query: string): Promise<{ code: string; name: string }[
 // Fetches one product's nutriments from the reliable v2 product API and maps it
 // to the UI shape. Returns null if the product has no usable energy value.
 async function fetchProductItem(code: string, fallbackName: string): Promise<any | null> {
+  const ck = `off_prod_${code}`;
+  const cached = await cacheGet<any>(ck);
+  if (cached !== undefined) return cached; // cache on-device → 0 appel provider
   const url = `https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=code,product_name,brands,nutriments`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
@@ -189,11 +130,13 @@ async function fetchProductItem(code: string, fallbackName: string): Promise<any
     // sometimes stores per-serving values mislabeled as per-100g (e.g. 1900).
     if (!(kcal > 0) || kcal > 900) return null;
     const name = [p.product_name || fallbackName, (p.brands || '').split(',')[0]].filter(Boolean).join(' ').trim();
-    return {
+    const item = {
       food_id: code,
       food_name: name || fallbackName,
       food_description: `Per 100g - Calories: ${Math.round(kcal)}kcal | Fat: ${round100(n.fat_100g)}g | Carbs: ${round100(n.carbohydrates_100g)}g | Protein: ${round100(n.proteins_100g)}g`,
     };
+    cacheSet(ck, item, 30 * 24 * 3600 * 1000); // produit ~immuable → cache 30 j
+    return item;
   } catch {
     return null;
   } finally {
@@ -211,6 +154,18 @@ async function fetchProductItem(code: string, fallbackName: string): Promise<any
  *   "Per 100g - Calories: Xkcal | Fat: Yg | Carbs: Zg | Protein: Wg" }.
  */
 export async function searchFood(query: string): Promise<any[]> {
+  const q = query.trim().toLowerCase();
+  if (q.length < 3) return [];
+  // Cache on-device de la recherche (mêmes termes → 0 appel provider, TTL 7 j).
+  const ck = `off_search_${q}`;
+  const cached = await cacheGet<any[]>(ck);
+  if (cached !== undefined) return cached;
+  const items = await searchFoodRaw(query);
+  if (items && items.length) cacheSet(ck, items, 7 * 24 * 3600 * 1000);
+  return items;
+}
+
+async function searchFoodRaw(query: string): Promise<any[]> {
   if (query.trim().length < 3) return [];
 
   // 1) Reliable full-text discovery.
@@ -235,6 +190,32 @@ export async function searchFood(query: string): Promise<any[]> {
     if (items && items.length === 0) break;
     if (attempt === 0) await new Promise((r) => setTimeout(r, 700));
   }
+  // 4) Dernier filet : base LOCALE embarquée (~500 aliments dont marocains) —
+  //    fonctionne HORS-LIGNE et quand OpenFoodFacts est indisponible.
+  const local = searchLocalFoods(query);
+  if (local.length) {
+    console.log('[search] base locale embarquée', { query, count: local.length });
+    return local;
+  }
   console.warn('[search] no results (OFF unavailable)', { query });
   return [];
+}
+
+// ── Base d'aliments locale (assets/data/local-foods.json) ──
+let LOCAL_FOODS: any[] | null = null;
+function searchLocalFoods(query: string): any[] {
+  try {
+    if (!LOCAL_FOODS) LOCAL_FOODS = require('../assets/data/local-foods.json');
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return [];
+    return (LOCAL_FOODS || [])
+      .filter((x: any) => String(x.n).toLowerCase().includes(q) || (x.ar && String(x.ar).includes(query.trim())))
+      .slice(0, 15)
+      .map((x: any, i: number) => ({
+        food_id: `local_${x.n}_${i}`,
+        food_name: x.n,
+        food_description: `Per 100g - Calories: ${Math.round(x.k)}kcal | Fat: ${x.f}g | Carbs: ${x.c}g | Protein: ${x.p}g`,
+        _kcal: Number(x.k) || 0,
+      }));
+  } catch { return []; }
 }

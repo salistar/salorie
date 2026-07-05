@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Dimensions, Alert } from 'react-native';
-import { Zap, Droplets, Database, Scan, Crown } from 'lucide-react-native';
+import { useState } from 'react';
+import { Zap, Droplets, Database, Scan, Crown, Mic, ScanBarcode, Scale, Camera, Image as ImageIcon, X } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { useLogging } from '../lib/LoggingContext';
 import { useTranslation } from '../lib/i18n';
@@ -19,36 +20,27 @@ const PENDING_SCAN_KEY = 'pending_scan_v1';
 
 export default function ActionMenu() {
   const { isActionMenuVisible, hideActionMenu, showLogModal, setScanImageBase64 } = useLogging();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation() as any;
+  // Libellés des 3 nouvelles actions (pas de clés centrales) — trilingue local.
+  const L: any = {
+    en: { voice: 'Voice log', barcode: 'Barcode', weight: 'Weight', scan: 'Scan (food / barcode)', camHint: 'Dish or barcode' },
+    fr: { voice: 'Vocal', barcode: 'Code-barres', weight: 'Poids', scan: 'Scanner (plat / code-barres)', camHint: 'Plat ou code-barres' },
+    ar: { voice: 'صوتي', barcode: 'باركود', weight: 'الوزن', scan: 'مسح (طعام / باركود)', camHint: 'طبق أو باركود' },
+  };
+  const lx = L[language] || L.en;
 
-  const handleScanFood = () => {
-    Alert.alert(
-      t('menu.scan_food'),
-      t('menu.how_photo'),
-      [
-        {
-          text: t('menu.take_photo'),
-          onPress: () => {
-            // FIX Expo Go reload : on NE lance PAS ImagePicker.launchCameraAsync
-            // (qui fire un Intent Android → l OS kill l activite RN → reload JS).
-            // A la place, on navigue vers /scan-camera qui utilise expo-camera
-            // CameraView INLINE : pas d Intent, pas de kill, pas de reload.
-            explain('navigation vers /scan-camera (camera inline RN) au lieu de launchCameraAsync Intent');
-            colorLog('GREEN', '[Nav] router.push /scan-camera');
-            hideActionMenu();
-            router.push('/scan-camera' as any);
-          },
-        },
-        {
-          text: t('menu.gallery'),
-          onPress: handleGalleryAction,
-        },
-        {
-          text: t('menu.cancel'),
-          style: 'cancel',
-        },
-      ]
-    );
+  // Le scanner unifié (scan-camera) gère désormais TOUT : toggle Plat/Code-barres
+  // en haut, galerie intégrée, et choix du modèle (appareil/backend/Gemini).
+  const [scanChoice, setScanChoice] = useState(false);
+  const handleScanFood = () => { hideActionMenu(); router.push('/scan-camera' as any); };
+  const closeMenu = () => { setScanChoice(false); hideActionMenu(); };
+  const goCamera = () => {
+    // FIX Expo Go reload : on navigue vers /scan-camera (CameraView inline,
+    // pas d'Intent Android qui tue l'activité RN).
+    explain('navigation vers /scan-camera (camera inline RN) au lieu de launchCameraAsync Intent');
+    colorLog('GREEN', '[Nav] router.push /scan-camera');
+    closeMenu();
+    router.push('/scan-camera' as any);
   };
 
   const handleCameraAction = async () => {
@@ -186,12 +178,28 @@ export default function ActionMenu() {
       },
     },
     {
+      // Card fusionnée : Scan plat + Code-barres. À l'ouverture → 2 choix
+      // (Caméra / Galerie). La caméra détecte le code-barres OU photographie un plat.
       id: 'scan',
-      title: t('menu.scan_food'),
+      title: lx.scan,
       icon: <Scan size={24} color="#FF5C5C" />,
       bg: '#FFEEED',
       premium: true,
       onPress: handleScanFood,
+    },
+    {
+      id: 'voice',
+      title: lx.voice,
+      icon: <Mic size={24} color="#8B5CF6" />,
+      bg: '#F3EEFF',
+      onPress: () => { hideActionMenu(); router.push('/voice-log' as any); },
+    },
+    {
+      id: 'weight',
+      title: lx.weight,
+      icon: <Scale size={24} color="#B45309" />,
+      bg: '#FEF3E2',
+      onPress: () => { hideActionMenu(); router.push('/update-weight' as any); },
     },
   ];
 
@@ -202,34 +210,59 @@ export default function ActionMenu() {
       visible={isActionMenuVisible}
       transparent
       animationType="fade"
-      onRequestClose={hideActionMenu}
+      onRequestClose={closeMenu}
     >
-      <TouchableOpacity 
-        style={styles.overlay} 
-        activeOpacity={1} 
-        onPress={hideActionMenu}
+      <TouchableOpacity
+        style={styles.overlay}
+        activeOpacity={1}
+        onPress={closeMenu}
       >
         <View style={styles.container}>
-          <View style={styles.grid}>
-            {actions.map((action) => (
-              <TouchableOpacity
-                key={action.id}
-                style={styles.card}
-                activeOpacity={0.7}
-                onPress={action.onPress}
-              >
-                <View style={[styles.iconBox, { backgroundColor: action.bg }]}>
-                  {action.icon}
-                  {action.premium && (
-                    <View style={styles.premiumBadge}>
-                      <Crown size={10} color={Colors.light.white} strokeWidth={3} />
-                    </View>
-                  )}
+          {scanChoice ? (
+            /* Étape 2 du Scan Food : choix Caméra / Galerie en cartes (même design que le menu) */
+            <View style={styles.grid}>
+              <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={goCamera}>
+                <View style={[styles.iconBox, { backgroundColor: '#FFEEED' }]}>
+                  <Camera size={24} color="#FF5C5C" />
                 </View>
-                <Text style={styles.actionTitle}>{action.title}</Text>
+                <Text style={styles.actionTitle}>{t('menu.take_photo')}</Text>
+                <Text style={styles.cardHint}>{lx.camHint}</Text>
               </TouchableOpacity>
-            ))}
-          </View>
+              <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => { setScanChoice(false); handleGalleryAction(); }}>
+                <View style={[styles.iconBox, { backgroundColor: '#E0F2FE' }]}>
+                  <ImageIcon size={24} color="#0EA5E9" />
+                </View>
+                <Text style={styles.actionTitle}>{t('menu.gallery')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => setScanChoice(false)}>
+                <View style={[styles.iconBox, { backgroundColor: '#F1F5F9' }]}>
+                  <X size={24} color="#64748B" />
+                </View>
+                <Text style={styles.actionTitle}>{t('menu.cancel')}</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.grid}>
+              {actions.map((action) => (
+                <TouchableOpacity
+                  key={action.id}
+                  style={styles.card}
+                  activeOpacity={0.7}
+                  onPress={action.onPress}
+                >
+                  <View style={[styles.iconBox, { backgroundColor: action.bg }]}>
+                    {action.icon}
+                    {action.premium && (
+                      <View style={styles.premiumBadge}>
+                        <Crown size={10} color={Colors.light.white} strokeWidth={3} />
+                      </View>
+                    )}
+                  </View>
+                  <Text style={styles.actionTitle}>{action.title}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
       </TouchableOpacity>
     </Modal>
@@ -293,5 +326,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: Colors.light.gray[900],
     textAlign: 'center',
+  },
+  cardHint: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.light.gray[500],
+    textAlign: 'center',
+    marginTop: 2,
   },
 });

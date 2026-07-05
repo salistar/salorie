@@ -25,10 +25,18 @@ services:
     volumes: [salorie_minio:/data]
     expose: ["9000", "9001"]
 
+  # Modèle de vision LOCAL auto-hébergé (tier "Backend" du scan aliment) — CPU.
+  # Le modèle est tiré après le démarrage : docker compose exec ollama ollama pull moondream
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes: [salorie_ollama:/root/.ollama]
+    expose: ["11434"]
+
   backend:
     build: ./backend
     restart: unless-stopped
-    depends_on: [mongo, redis, minio]
+    depends_on: [mongo, redis, minio, ollama]
     environment:
       PORT: 4000
       MONGO_URI: mongodb://mongo:27017/salorie
@@ -39,16 +47,28 @@ services:
       USDA_API_KEY: ${USDA_API_KEY:-DEMO_KEY}
       GEMINI_LITE_MODEL: gemini-2.0-flash-lite
       INSIGHTS_CRON: 0 3 * * *
+      # Vision backend local (Ollama) — tier "Backend" du scan, distinct de Gemini.
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+      OLLAMA_VISION_MODEL: ${OLLAMA_VISION_MODEL:-moondream}
+      # Repli optionnel : API food gratuite (option 3). Vide = désactivé.
+      FOOD_VISION_API_URL: ${FOOD_VISION_API_URL:-}
+      FOOD_VISION_API_KEY: ${FOOD_VISION_API_KEY:-}
+      # Outbox webhook : défaut = sink interne public ; override par ${OUTBOX_WEBHOOK_URL}.
+      OUTBOX_WEBHOOK_URL: ${OUTBOX_WEBHOOK_URL:-https://api.salorie.salistar.com/pipeline/webhook-sink}
     volumes: [salorie_uploads:/data/uploads]
     ports: ["4000:4000"]
 
   web:
     build: ./web
     restart: unless-stopped
-    depends_on: [backend]
+    depends_on: [backend, mongo]
     environment:
       FIREBASE_SERVICE_ACCOUNT: ${FIREBASE_SERVICE_ACCOUNT}
       NEXT_PUBLIC_API_URL: http://backend:4000
+      # Auth admin (mongoose + JWT) — DOIT être présent sinon login/register cassent.
+      MONGO_URI: mongodb://mongo:27017/salorie
+      AUTH_SECRET: ${AUTH_SECRET}
+      # Conservés (compat / fallback) :
       ADMIN_USER: ${ADMIN_USER:-admin}
       ADMIN_PASS: ${ADMIN_PASS:-}
     ports: ["3000:3000"]
@@ -57,3 +77,4 @@ volumes:
   salorie_mongo:
   salorie_minio:
   salorie_uploads:
+  salorie_ollama:

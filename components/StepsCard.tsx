@@ -7,13 +7,13 @@ import { Footprints, Flame, ChevronRight } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { useTranslation } from '../lib/i18n';
 import { isHealthAvailable, readToday } from '../lib/health';
-import { getStepsMode, getActivitySteps, getSimSteps, getNativeDeviceSteps, syncActivityFile } from '../lib/steps';
+import { getStepsMode, getActivitySteps, getSimSteps, getNativeDeviceSteps, syncActivityFile, flushStepHistory } from '../lib/steps';
 import { rememberEmail, ensureNotifPermission } from '../lib/stepsNotif';
 
-const TXT: Record<string, { steps: string; today: string; kcal: string; goal: string; connect: string }> = {
-  en: { steps: 'Steps', today: 'Today', kcal: 'kcal', goal: 'Goal 10,000', connect: 'Connect Health Connect →' },
-  fr: { steps: 'Pas', today: "Aujourd'hui", kcal: 'kcal', goal: 'Objectif 10 000', connect: 'Connecter Health Connect →' },
-  ar: { steps: 'خطوات', today: 'اليوم', kcal: 'سعرة', goal: 'الهدف 10٬000', connect: '← اربط Health Connect' },
+const TXT: Record<string, { steps: string; today: string; kcal: string; goal: string; connect: string; real: string }> = {
+  en: { steps: 'Steps', today: 'Today', kcal: 'kcal', goal: 'Goal 10,000', connect: 'Connect Health Connect →', real: 'REAL' },
+  fr: { steps: 'Pas', today: "Aujourd'hui", kcal: 'kcal', goal: 'Objectif 10 000', connect: 'Connecter Health Connect →', real: 'RÉEL' },
+  ar: { steps: 'خطوات', today: 'اليوم', kcal: 'سعرة', goal: 'الهدف 10٬000', connect: '← اربط Health Connect', real: 'حقيقي' },
 };
 const GOAL = 10000;
 
@@ -63,7 +63,7 @@ export default function StepsCard() {
         } catch { /* show connect CTA */ }
         finally { if (alive) setLoading(false); }
       };
-      if (email) { rememberEmail(email); ensureNotifPermission(); syncActivityFile(email); }
+      if (email) { rememberEmail(email); ensureNotifPermission(); syncActivityFile(email); flushStepHistory(email); }
       load();
       const timer = setInterval(load, 3000);
       return () => { alive = false; clearInterval(timer); };
@@ -93,14 +93,14 @@ export default function StepsCard() {
                 </View>
               </View>
               <View style={[styles.head, row(), { gap: 8 }]}>
-                <View style={styles.modePill}><Text style={styles.modePillTxt}>{mode === 'sim' ? 'SIM' : 'RÉEL'}</Text></View>
+                <View style={styles.modePill}><Text style={styles.modePillTxt}>{mode === 'sim' ? 'SIM' : t.real}</Text></View>
                 <ChevronRight size={22} color="rgba(255,255,255,0.9)" style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
               </View>
             </View>
 
             <View style={[styles.valueRow, row()]}>
-              <Text style={styles.steps}>{steps.toLocaleString()}</Text>
-              <Text style={styles.unit}>  /10k</Text>
+              <Text style={styles.steps} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>{steps.toLocaleString()}</Text>
+              <Text style={styles.unit} numberOfLines={1}>  /10k</Text>
             </View>
 
             <View style={styles.track}>
@@ -132,8 +132,8 @@ const styles = StyleSheet.create({
   label: { color: '#fff', fontSize: 17, fontWeight: '900', letterSpacing: -0.3 },
   today: { color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: '600', marginTop: 1 },
   valueRow: { alignItems: 'flex-end', marginTop: 16 },
-  steps: { color: '#fff', fontSize: 44, fontWeight: '900', letterSpacing: -2 },
-  unit: { color: 'rgba(255,255,255,0.85)', fontSize: 16, fontWeight: '800', marginBottom: 7 },
+  steps: { color: '#fff', fontSize: 44, fontWeight: '900', letterSpacing: -2, flexShrink: 1 },
+  unit: { color: 'rgba(255,255,255,0.85)', fontSize: 16, fontWeight: '800', marginBottom: 7, flexShrink: 0 },
   track: { height: 10, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden', marginTop: 14 },
   fill: { height: 10, borderRadius: 6, backgroundColor: '#fff' },
   footer: { alignItems: 'center', justifyContent: 'space-between', marginTop: 14 },

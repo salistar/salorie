@@ -1,9 +1,67 @@
-import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl, TouchableOpacity, Modal, Pressable } from 'react-native';
+import React, { useCallback, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl, TouchableOpacity, Modal, Pressable, TextInput } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer, Wallet, Refrigerator, Replace, Ruler, Moon, Smile, Droplets, BookmarkPlus, Award, ShoppingCart, Link2, UtensilsCrossed, Receipt, FileText, Swords, Droplet, Activity, PersonStanding, Mic, Search, UtensilsCrossed as EatIcon, BarChart3, History } from 'lucide-react-native';
+
+// Sections par INTENTION utilisateur (4 au lieu de 8) + recherche + récents :
+// l'utilisateur ne voit que 6 tuiles par section (divulgation progressive).
+const SEC_TXT: any = {
+  en: { eat: 'Eat', move: 'Move', track: 'Track me', ai: 'AI Coach & more', search: 'Search a tool…', recents: 'Recents', seeAll: 'See all', less: 'Show less' },
+  fr: { eat: 'Manger', move: 'Bouger', track: 'Me suivre', ai: 'Coach IA & plus', search: 'Chercher un outil…', recents: 'Récents', seeAll: 'Voir tout', less: 'Réduire' },
+  ar: { eat: 'الأكل', move: 'الحركة', track: 'متابعتي', ai: 'مدرب AI والمزيد', search: 'ابحث عن أداة…', recents: 'الأخيرة', seeAll: 'عرض الكل', less: 'تقليص' },
+};
+
+// i18n des libellés de tuiles par route (corrige le reste FR en mode EN/AR).
+const TILE_I18N: Record<string, { en: string; ar: string }> = {
+  '/diary': { en: 'Food diary', ar: 'يوميات الطعام' },
+  '/kitchen': { en: 'Kitchen & meals', ar: 'المطبخ والوجبات' },
+  '/scan-camera': { en: 'Recognize a food', ar: 'تعرّف على طعام' },
+  '/voice-log': { en: 'Voice log', ar: 'تسجيل صوتي' },
+  '/scan-barcode': { en: 'Barcode scan', ar: 'مسح الباركود' },
+  '/label-scan': { en: 'Scan label', ar: 'مسح الملصق' },
+  '/meal-builder': { en: 'Build a meal', ar: 'كوّن وجبة' },
+  '/ai-meal-plan': { en: 'AI meal plan', ar: 'خطة وجبات AI' },
+  '/meal-templates': { en: 'Meal templates', ar: 'قوالب الوجبات' },
+  '/fridge-recipes': { en: 'Fridge → recipes', ar: 'الثلاجة ← وصفات' },
+  '/substitutions': { en: 'Substitutions', ar: 'بدائل' },
+  '/import-recipe': { en: 'Import recipe', ar: 'استيراد وصفة' },
+  '/shopping-list': { en: 'Shopping list', ar: 'قائمة التسوق' },
+  '/nutri-score': { en: 'Nutri-Score', ar: 'نوتري-سكور' },
+  '/restaurant-mode': { en: 'Restaurant mode', ar: 'وضع المطعم' },
+  '/receipt-ocr': { en: 'Receipt scan', ar: 'مسح الإيصال' },
+  '/fasting': { en: 'Intermittent fasting', ar: 'الصيام المتقطع' },
+  '/log-exercise': { en: 'Log a workout', ar: 'سجّل تمريناً' },
+  '/move-goals': { en: 'Daily moves', ar: 'حركات اليوم' },
+  '/activity': { en: 'Activity', ar: 'النشاط' },
+  '/sport-agenda': { en: 'Sport agenda', ar: 'أجندة الرياضة' },
+  '/equipment-scan': { en: 'Equipment scanner', ar: 'ماسح الأجهزة' },
+  '/rep-counter': { en: 'Rep counter', ar: 'عدّاد التكرارات' },
+  '/battle': { en: '1v1 Battle', ar: 'تحدٍ 1ضد1' },
+  '/body-measurements': { en: 'Body measurements', ar: 'قياسات الجسم' },
+  '/sleep-tracker': { en: 'Sleep', ar: 'النوم' },
+  '/mood-tracker': { en: 'Mood & energy', ar: 'المزاج والطاقة' },
+  '/smart-hydration': { en: 'Smart hydration', ar: 'ترطيب ذكي' },
+  '/progress-photos': { en: 'Progress photos', ar: 'صور التقدم' },
+  '/streaks': { en: 'My streaks', ar: 'سلاسلي' },
+  '/body-composition': { en: 'Body composition', ar: 'تكوين الجسم' },
+  '/glucose-tracker': { en: 'Glucose', ar: 'السكر' },
+  '/microbiome': { en: 'Microbiome', ar: 'الميكروبيوم' },
+  '/doctor-export': { en: 'Doctor export', ar: 'تصدير للطبيب' },
+  '/adaptive-tdee': { en: 'Adaptive TDEE', ar: 'TDEE تكيّفي' },
+  '/metabolic-twin': { en: 'Metabolic twin', ar: 'التوأم الأيضي' },
+  '/calorie-budget': { en: 'Calorie budget', ar: 'ميزانية السعرات' },
+  '/journal': { en: 'Journal & news', ar: 'اليوميات والأخبار' },
+  '/ai-coach': { en: 'AI Coach', ar: 'مدرب الذكاء' },
+  '/meal-plan': { en: 'Meal plan', ar: 'خطة الوجبات' },
+  '/nutrients': { en: 'Nutrients', ar: 'العناصر الغذائية' },
+  '/health': { en: 'Health Connect', ar: 'ربط الصحة' },
+  '/social': { en: 'Social & friends', ar: 'المجتمع والأصدقاء' },
+};
+const tileLabel = (route: string, fr: string, lang: string) => (lang === 'fr' ? fr : (TILE_I18N[route]?.[lang as 'en' | 'ar'] || fr));
+import { useFeatureFlags, isEnabled } from '../../lib/featureFlags';
 
 const PLANS_CTA: Record<string, { t: string; s: string }> = {
   en: { t: 'Workout plans', s: 'Ready-made training programs' },
@@ -44,19 +102,49 @@ export default function CoachScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selAch, setSelAch] = useState<any>(null);
+  const flags = useFeatureFlags(); // Feature Flags (Étape 3) — masque les features désactivées par l'admin
+  // UX anti-perte : recherche d'outils + 4 derniers outils utilisés + sections repliées.
+  const st = SEC_TXT[language] || SEC_TXT.en;
+  const [toolSearch, setToolSearch] = useState('');
+  const [expandedSecs, setExpandedSecs] = useState<Record<string, boolean>>({});
+  const [recents, setRecents] = useState<string[]>([]);
+  useEffect(() => { AsyncStorage.getItem('coach_recents').then((v) => { try { if (v) setRecents(JSON.parse(v)); } catch {} }).catch(() => {}); }, []);
+  const openTool = (route: string) => {
+    router.push(route as any);
+    setRecents((prev) => {
+      const next = [route, ...prev.filter((r) => r !== route)].slice(0, 4);
+      AsyncStorage.setItem('coach_recents', JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  };
   const astr = ACH_STR[language] || ACH_STR.en;
 
   const load = useCallback(async () => {
     const email = user?.primaryEmailAddress?.emailAddress || '';
-    if (!email) { setLoading(false); return; }
+    // Stats calculées 100% ON-DEVICE (AsyncStorage + JS, aucun modèle/réseau).
+    // Les OUTILS du Coach ne dépendent PAS de ces stats : on rend TOUJOURS
+    // l'écran, même déconnecté ou si le chargement échoue. Sans ça, `data`
+    // restait null → spinner infini → "le Coach ne s'ouvre pas".
+    const FALLBACK: EngagementData = {
+      adaptiveTDEE: null, recommendedTarget: null, staticTarget: null, avgIntake: null,
+      weightTrendKgPerWeek: null, confidence: 'low' as any, streak: 0, daysTracked: 0,
+      weighIns: 0, totalLogs: 0, achievements: [], lesson: { title: '', body: '' }, goal: '',
+    };
+    if (!email) { setData(FALLBACK); setLoading(false); return; }
     try {
-      const d = await loadEngagement(email, language);
+      // TIMEOUT 8s : sur réseau faible, les lectures peuvent pendre. .catch sur
+      // loadEngagement → la course ne REJETTE jamais (sinon data restait null).
+      const d = await Promise.race([
+        loadEngagement(email, language).catch((e) => { console.warn('[Coach] loadEngagement', e); return FALLBACK; }),
+        new Promise<EngagementData>((resolve) => setTimeout(() => resolve(FALLBACK), 8000)),
+      ]);
       setData(d);
       // Publish public stats so friends' leaderboards stay fresh.
       const name = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.fullName || email.split('@')[0];
       publishStats(email, { name, imageUrl: user?.imageUrl || undefined, streak: d.streak, daysTracked: d.daysTracked }).catch(() => {});
     } catch (e) {
       console.warn('[Coach] load failed', e);
+      setData(FALLBACK); // garantit le rendu de l'écran quoi qu'il arrive
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -68,9 +156,11 @@ export default function CoachScreen() {
   const text = isDark ? '#fff' : Colors.light.gray[900];
   const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
   const card = isDark ? Colors.dark.card : '#fff';
-  const bg = isDark ? '#000' : 'transparent';
+  const bg = isDark ? '#0B0E12' : 'transparent';
 
-  if (loading) {
+  // !data couvre aussi le cas DÉCONNECTÉ (pas d'email → data jamais chargée) :
+  // sans ce garde, `data!` crashait l'onglet Coach pour un user signé out.
+  if (loading || !data) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
         <ScreenTopBar />
@@ -79,7 +169,7 @@ export default function CoachScreen() {
     );
   }
 
-  const d = data!;
+  const d = data;
   const hasPlan = d.recommendedTarget != null;
   const trend = d.weightTrendKgPerWeek;
   const TrendIcon = trend == null || Math.abs(trend) < 0.05 ? Minus : trend < 0 ? TrendingDown : TrendingUp;
@@ -105,7 +195,7 @@ export default function CoachScreen() {
           <Text style={styles.heroLabel}>{t('coach.adaptive_label')}</Text>
           {hasPlan ? (
             <>
-              <Text style={styles.heroValue}>{d.recommendedTarget}<Text style={styles.heroUnit}> kcal</Text></Text>
+              <Text style={styles.heroValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>{d.recommendedTarget}<Text style={styles.heroUnit}> kcal</Text></Text>
               <View style={styles.heroRow}>
                 <View style={styles.heroStat}>
                   <Text style={styles.heroStatLabel}>{t('coach.real_burn')}</Text>
@@ -136,75 +226,98 @@ export default function CoachScreen() {
           )}
         </LinearGradient>
 
-        {/* ── Meal plan CTA ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/meal-plan' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><ChefHat size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>{t('coach.meal_title')}</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>{t('coach.meal_sub')}</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
+        {/* ── Outils — 4 sections par INTENTION + recherche + récents + repli (anti-perte) ── */}
+        {(() => {
+          const sections = [
+            { key: 'eat', Icon: UtensilsCrossed, items: [
+              // Journal alimentaire est désormais en accès rapide sur l'Accueil.
+              { Icon: ChefHat, label: 'Cuisine & repas', route: '/kitchen' },
+            ]},
+            { key: 'move', Icon: Dumbbell, items: [
+              // Course solo, Courses & défis et Agenda sport vivent dans l'onglet Défis
+              // (évite les doublons). On garde ici les outils d'entraînement.
+              { Icon: Dumbbell, label: 'Mouvements du jour', route: '/move-goals' },
+              { Icon: Dumbbell, label: (PLANS_CTA[language] || PLANS_CTA.en).t, route: '/workout-plans' },
+              { Icon: Dumbbell, label: 'Compteur de reps', route: '/rep-counter' },
+              { Icon: ScanText, label: "Scanner d'équipement", route: '/equipment-scan' },
+              { Icon: Swords, label: 'Battle 1v1', route: '/battle' },
+            ]},
+            { key: 'track', Icon: BarChart3, items: [
+              { Icon: Activity, label: 'Activité', route: '/activity' },
+              { Icon: Ruler, label: 'Mesures corporelles', route: '/body-measurements' },
+              { Icon: Moon, label: 'Sommeil', route: '/sleep-tracker' },
+              { Icon: Smile, label: 'Humeur & énergie', route: '/mood-tracker' },
+              { Icon: Droplets, label: 'Hydratation intelligente', route: '/smart-hydration' },
+              { Icon: TrendingUp, label: 'Photos de progression', route: '/progress-photos' },
+              { Icon: PersonStanding, label: 'Composition corporelle', route: '/body-composition' },
+              { Icon: Droplet, label: 'Glycémie', route: '/glucose-tracker' },
+              { Icon: Activity, label: 'Microbiote', route: '/microbiome' },
+              { Icon: HeartPulse, label: t('coach.health_title'), route: '/health' },
+              { Icon: FileText, label: 'Export médecin', route: '/doctor-export' },
+            ]},
+            { key: 'ai', Icon: Sparkles, items: [
+              // Journal & actus + Social & amis ont été déplacés dans l'onglet Défis.
+              { Icon: Sparkles, label: 'Coach IA', route: '/ai-coach' },
+              { Icon: Activity, label: 'TDEE adaptatif', route: '/adaptive-tdee' },
+              { Icon: TrendingDown, label: 'Jumeau métabolique', route: '/metabolic-twin' },
+              { Icon: Wallet, label: 'Budget calories', route: '/calorie-budget' },
+            ]},
+          ];
+          const allItems = sections.flatMap((g) => g.items);
+          const q = toolSearch.trim().toLowerCase();
+          return (
+            <>
+              {/* Recherche d'outil */}
+              <View style={[styles.searchBox, { backgroundColor: card }]}>
+                <Search size={17} color={sub} />
+                <TextInput style={[styles.searchInput, { color: text }]} placeholder={st.search} placeholderTextColor={sub} value={toolSearch} onChangeText={setToolSearch} />
+                {!!toolSearch && <TouchableOpacity onPress={() => setToolSearch('')}><X size={16} color={sub} /></TouchableOpacity>}
+              </View>
 
-        {/* ── Today's nutrients CTA ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/nutrients' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><Apple size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>{t('coach.nutrients_title')}</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>{t('coach.nutrients_sub')}</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
+              {/* Récents — l'app s'adapte à l'usage */}
+              {!q && recents.length > 0 && (
+                <>
+                  <View style={styles.secHeadRow}><History size={15} color={Colors.light.primary} /><Text style={[styles.gridSection, { color: sub, marginTop: 0, marginBottom: 0 }]}>{st.recents}</Text></View>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 6 }}>
+                    {recents.map((r) => { const it = allItems.find((i) => i.route === r); if (!it) return null; const I = it.Icon; return (
+                      <TouchableOpacity key={r} style={[styles.recentChip, { backgroundColor: card }]} onPress={() => openTool(r)}>
+                        <I size={15} color={Colors.light.primary} /><Text style={[styles.recentTxt, { color: text }]} numberOfLines={1}>{tileLabel(it.route, it.label, language)}</Text>
+                      </TouchableOpacity>
+                    ); })}
+                  </ScrollView>
+                </>
+              )}
 
-        {/* ── Social / leaderboard CTA ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/social' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><Trophy size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>{t('coach.social_title')}</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>{t('coach.social_sub')}</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
-
-        {/* ── Health sync CTA ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/health' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><HeartPulse size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>{t('coach.health_title')}</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>{t('coach.health_sub')}</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
-
-        {/* ── Workout plans CTA ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/workout-plans' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><Dumbbell size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>{(PLANS_CTA[language] || PLANS_CTA.en).t}</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>{(PLANS_CTA[language] || PLANS_CTA.en).s}</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
-
-        {/* ── Solo run (GPS) CTA ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/run' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><MapPin size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>{(RUN_CTA[language] || RUN_CTA.en).t}</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>{(RUN_CTA[language] || RUN_CTA.en).s}</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
-
-        {/* ── Races & challenges CTA (Phase 2 + 3) ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/races' as any)} style={[styles.mealCta, { backgroundColor: card }]}>
-          <View style={styles.mealCtaIcon}><Trophy size={24} color={Colors.light.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.mealCtaTitle, { color: text }]}>{(RACES_CTA[language] || RACES_CTA.en).t}</Text>
-            <Text style={[styles.mealCtaSub, { color: sub }]}>{(RACES_CTA[language] || RACES_CTA.en).s}</Text>
-          </View>
-          <ChevronRight size={22} color={sub} />
-        </TouchableOpacity>
+              {sections.map((group) => {
+                const items = group.items
+                  .filter((it) => isEnabled(flags, it.route.replace(/^\//, '')))
+                  .filter((it) => !q || it.label.toLowerCase().includes(q) || tileLabel(it.route, it.label, language).toLowerCase().includes(q));
+                if (!items.length) return null;
+                const isOpen = !!expandedSecs[group.key] || !!q;
+                const visible = isOpen ? items : items.slice(0, 6);
+                const GIcon = group.Icon;
+                return (
+                  <View key={group.key}>
+                    <View style={styles.secHeadRow}><GIcon size={15} color={Colors.light.primary} /><Text style={[styles.gridSection, { color: sub, marginTop: 0, marginBottom: 0 }]}>{st[group.key]}</Text></View>
+                    <View style={styles.featGrid}>
+                      {visible.map((it) => { const Icon = it.Icon; return (
+                        <TouchableOpacity key={it.route} activeOpacity={0.85} onPress={() => openTool(it.route)} style={[styles.featCard, { backgroundColor: card }]}>
+                          <View style={styles.mealCtaIcon}><Icon size={22} color={Colors.light.primary} /></View>
+                          <Text style={[styles.featLabel, { color: text }]} numberOfLines={2}>{tileLabel(it.route, it.label, language)}</Text>
+                        </TouchableOpacity>
+                      ); })}
+                    </View>
+                    {items.length > 6 && !q && (
+                      <TouchableOpacity style={styles.seeAllBtn} onPress={() => setExpandedSecs((p) => ({ ...p, [group.key]: !p[group.key] }))}>
+                        <Text style={styles.seeAllTxt}>{isOpen ? st.less : `${st.seeAll} (${items.length})`}</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                );
+              })}
+            </>
+          );
+        })()}
 
         {/* ── Streak ── */}
         <View style={[styles.streakCard, { backgroundColor: card }]}>
@@ -303,6 +416,18 @@ const styles = StyleSheet.create({
   mealCtaIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center' },
   mealCtaTitle: { fontSize: 17, fontWeight: '800' },
   mealCtaSub: { fontSize: 13, marginTop: 3, lineHeight: 18 },
+  // Grille compacte (Coach allégé) — 2 colonnes, sections
+  gridSection: { fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 14, marginBottom: 8, opacity: 0.7 },
+  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 4, marginTop: 16, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
+  searchInput: { flex: 1, fontSize: 14, paddingVertical: 10 },
+  secHeadRow: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 18, marginBottom: 10 },
+  recentChip: { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 999, paddingHorizontal: 13, paddingVertical: 9, maxWidth: 190 },
+  recentTxt: { fontSize: 12.5, fontWeight: '700', flexShrink: 1 },
+  seeAllBtn: { alignItems: 'center', paddingVertical: 4, marginBottom: 6 },
+  seeAllTxt: { color: Colors.light.primary, fontWeight: '800', fontSize: 13 },
+  featGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  featCard: { width: '48%', alignItems: 'center', borderRadius: 16, paddingVertical: 16, paddingHorizontal: 8, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  featLabel: { fontSize: 13, fontWeight: '700', marginTop: 8, textAlign: 'center' },
   streakCard: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, padding: 18, marginBottom: 22, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
   streakIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#FEF3E0', alignItems: 'center', justifyContent: 'center' },
   streakValue: { fontSize: 20, fontWeight: '900' },

@@ -1,6 +1,8 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { AdminKeyGuard } from '../auth/admin-key.guard';
 
+@UseGuards(AdminKeyGuard) // fix IDOR : dump utilisateurs reserve au super-admin (X-Admin-Key)
 @Controller('users')
 export class UsersController {
   constructor(private users: UsersService) {}

@@ -151,7 +151,7 @@ const DayItem = React.memo(({ date, isToday, isSelected, isFuture, consumed, goa
           Now every cell reserves the label slot → all circles line up. */}
       {(isToday || isFuture) && (
         <Text style={[styles.caloriesLabel, { opacity: 0 }]}>
-          {'+0 kcal'}
+          {'+0'}
         </Text>
       )}
 
@@ -169,11 +169,14 @@ const DayItem = React.memo(({ date, isToday, isSelected, isFuture, consumed, goa
         const c = consumed || 0;
         const remaining = g - c;
         const over = remaining < 0;
+        // D7: compact label — drop the verbose " kcal" suffix; the green/red
+        // colour already conveys "remaining" vs "over". Keeps the week strip
+        // readable (one clean number per day) instead of dense "+1570 kcal".
         const display = over
-          ? `-${Math.abs(remaining)} kcal`
+          ? `-${Math.abs(remaining)}`
           : remaining === 0
-            ? '0 kcal'
-            : `+${remaining} kcal`;
+            ? '0'
+            : `+${remaining}`;
         return (
           <Text style={[styles.caloriesLabel, { color: over ? '#EF4444' : '#10B981' }]}>
             {display}
