@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { FirebaseService } from '../firebase.service';
 import { AiService } from '../ai/ai.service';
+import { RedisService } from '../redis.service';
+import * as fs from 'fs';
+import { join } from 'path';
+import { randomUUID, createHmac, createHash } from 'crypto';
 
 /**
  * ML / analytics service (backend models).
@@ -15,7 +19,49 @@ export class MlService {
   constructor(
     private firebase: FirebaseService,
     private ai: AiService,
+    private redis: RedisService,
   ) {}
+
+  // ---------------------------------------------------------------------------
+  // #47 CIRCUIT-BREAKER (par tier, en mémoire process). Un tier qui échoue
+  //   CB_FAILS fois de suite est "ouvert" pendant CB_OPEN_MS : on le SKIP sans
+  //   même tenter l'appel (économise le timeout réseau), puis on le retente
+  //   (half-open) au premier appel après openUntil. Succès -> reset fails.
+  //   NB: additif — n'altère ni l'ordre des tiers ni les seuils de confiance.
+  // ---------------------------------------------------------------------------
+  private cbState = new Map<string, { fails: number; openUntil: number }>();
+  private get cbMaxFails() { return parseInt(process.env.CB_FAILS || '3', 10) || 3; }
+  private get cbOpenMs() { return parseInt(process.env.CB_OPEN_MS || '30000', 10) || 30000; }
+
+  /** true = le tier est actuellement "ouvert" (à skipper). */
+  private cbIsOpen(tier: string): boolean {
+    const s = this.cbState.get(tier);
+    return !!(s && s.openUntil > Date.now());
+  }
+
+  /** Succès d'un tier : on remet le compteur d'échecs à zéro (ferme le circuit). */
+  private cbRecordSuccess(tier: string): void {
+    if (this.cbState.has(tier)) this.cbState.set(tier, { fails: 0, openUntil: 0 });
+  }
+
+  /** Échec d'un tier : incrémente ; au-delà du seuil, ouvre le circuit pour cbOpenMs. */
+  private cbRecordFailure(tier: string): void {
+    const s = this.cbState.get(tier) || { fails: 0, openUntil: 0 };
+    s.fails += 1;
+    if (s.fails >= this.cbMaxFails) {
+      s.openUntil = Date.now() + this.cbOpenMs;
+      this.log(`circuit OPEN ${tier} (${s.fails} échecs) pour ${this.cbOpenMs}ms`);
+    }
+    this.cbState.set(tier, s);
+  }
+
+  // ---------------------------------------------------------------------------
+  // #67 COALESCING des requêtes vision identiques (même hash d'image+prompt+mime)
+  //   en vol simultanément : on ne lance qu'UN seul appel réel et on partage la
+  //   même promesse. Map nettoyée au settle (succès OU échec) pour ne jamais
+  //   mémoriser une promesse rejetée.
+  // ---------------------------------------------------------------------------
+  private inflightVision = new Map<string, Promise<{ text: string; engine: string }>>();
 
   // ---------------------------------------------------------------------------
   // 1) PRÉVISION DE POIDS + DÉTECTION DE PLATEAU
@@ -120,11 +166,21 @@ export class MlService {
         : Date.parse(x.date || '') || 0;
       return { weight: Number(x.weight), ts };
     });
-    // fallback: si pas d'historique mais profil a un poids, on tente le profil
+    // fallback: si pas d'historique mais profil a un poids, on tente le profil.
+    // On pousse DEUX points (createdAt et maintenant) pour que la régression sorte
+    // une prévision. Confiance faible car le poids profil est supposé stable.
     if (entries.length < 2) {
       const u = (await db.collection('users').doc(email).get()).data() as any;
       if (u?.weight && u?.createdAt) {
-        entries.push({ weight: Number(u.weight), ts: Date.now() });
+        const w = Number(u.weight);
+        const createdMs =
+          typeof u.createdAt === 'number' ? u.createdAt
+          : u.createdAt?.toMillis ? u.createdAt.toMillis()
+          : u.createdAt?._seconds ? u.createdAt._seconds * 1000
+          : Date.parse(u.createdAt || '') || Date.now();
+        const now = Date.now();
+        entries.push({ weight: w, ts: createdMs });
+        entries.push({ weight: w, ts: now > createdMs ? now : createdMs + 1 });
       }
     }
     const target = targetWeight ?? (await db.collection('users').doc(email).get()).data()?.['targetWeight'];
@@ -217,17 +273,93 @@ export class MlService {
   //       texte brut du modèle, l'app le parse.
   // ---------------------------------------------------------------------------
   async visionLocal(prompt: string, imageBase64: string, mimeType = 'image/jpeg'): Promise<{ text: string; engine: string }> {
-    // 1) Ollama auto-hébergé (même pattern que WHISPER_URL).
-    const ollamaUrl = process.env.OLLAMA_URL; // ex: http://ollama:11434
-    const model = process.env.OLLAMA_VISION_MODEL || 'llava';
-    if (ollamaUrl) {
+    // ------------------------------------------------------------------
+    // #67 COALESCING : deux requêtes IDENTIQUES en vol → un seul appel réel,
+    // promesse partagée. Clé = hash (mime, prompt, image) — même définition
+    // que la clé de cache. Nettoyée au settle pour ne pas garder de rejet.
+    // ------------------------------------------------------------------
+    let coalesceKey: string | null = null;
+    try {
+      coalesceKey = createHash('sha256').update(`${mimeType}:${prompt}:${imageBase64}`).digest('hex');
+    } catch { coalesceKey = null; }
+
+    if (coalesceKey) {
+      const existing = this.inflightVision.get(coalesceKey);
+      if (existing) return existing;
+      const p = this.visionLocalUncoalesced(prompt, imageBase64, mimeType);
+      this.inflightVision.set(coalesceKey, p);
+      // Nettoyage au settle (succès OU échec) : jamais de promesse rejetée mémorisée.
+      p.finally(() => { if (this.inflightVision.get(coalesceKey!) === p) this.inflightVision.delete(coalesceKey!); }).catch(() => {});
+      return p;
+    }
+    return this.visionLocalUncoalesced(prompt, imageBase64, mimeType);
+  }
+
+  private async visionLocalUncoalesced(prompt: string, imageBase64: string, mimeType = 'image/jpeg'): Promise<{ text: string; engine: string }> {
+    // ------------------------------------------------------------------
+    // CACHE REDIS : même (mime, prompt, image) → même réponse. La vision
+    // devient GRATUITE + illimitée sur les scans répétés (TTL 7 jours).
+    // ------------------------------------------------------------------
+    let cacheKey: string | null = null;
+    try {
+      cacheKey = 'vlm:' + createHash('sha256').update(`${mimeType}:${prompt}:${imageBase64}`).digest('hex');
+      const cached = await this.redis.getJSON<string>(cacheKey);
+      if (cached && String(cached).trim()) {
+        await this.bumpTierCounter('cache');
+        return { text: String(cached), engine: 'cache' };
+      }
+    } catch (e: any) { this.log(`cache read KO: ${e?.message}`); }
+
+    // ------------------------------------------------------------------
+    // Tiers de vision (chacun skip proprement si non configuré, jamais
+    // d'exception qui casse). Chaque helper renvoie {text,engine} ou null.
+    // ------------------------------------------------------------------
+
+    // Cloudflare Workers AI (edge GPU) — rapide + précis + gratuit, NON-Gemini.
+    const tryCloudflare = async (): Promise<{ text: string; engine: string } | null> => {
+      const cfAccount = process.env.CF_ACCOUNT_ID;
+      const cfToken = process.env.CF_API_TOKEN;
+      // VLM fort (vocabulaire ouvert, bien meilleur sur les plats MENA) ; overridable par env.
+      const cfModel = process.env.CF_VISION_MODEL || '@cf/meta/llama-3.2-11b-vision-instruct';
+      if (!cfAccount || !cfToken) return null;
+      try {
+        // Cloudflare llava attend l'image en TABLEAU D'OCTETS (uint8), pas en base64.
+        const bytes = Array.from(Buffer.from(imageBase64, 'base64'));
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 30000);
+        const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${cfAccount}/ai/run/${cfModel}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfToken}` },
+          body: JSON.stringify({ prompt, image: bytes, max_tokens: 512 }),
+          signal: ctrl.signal,
+        });
+        clearTimeout(to);
+        if (r.ok) {
+          const j: any = await r.json();
+          const text = j?.result?.description || j?.result?.response || '';
+          if (text && String(text).trim()) return { text: String(text), engine: `cloudflare:${cfModel}` };
+          this.log(`cloudflare réponse vide: ${JSON.stringify(j).slice(0, 200)}`);
+        } else {
+          this.log(`cloudflare ${r.status}: ${(await r.text()).slice(0, 200)}`);
+        }
+      } catch (e: any) { this.log(`cloudflare KO: ${e?.message}`); }
+      return null;
+    };
+
+    // Ollama auto-hébergé (srv3) — gratuit/illimité (même pattern que WHISPER_URL).
+    const tryOllama = async (): Promise<{ text: string; engine: string } | null> => {
+      const ollamaUrl = process.env.OLLAMA_URL; // ex: http://ollama:11434
+      const model = process.env.OLLAMA_VISION_MODEL || 'llava';
+      if (!ollamaUrl) return null;
       try {
         const ctrl = new AbortController();
         const to = setTimeout(() => ctrl.abort(), 60000); // CPU inference = lent
         const r = await fetch(`${ollamaUrl}/api/generate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model, prompt, images: [imageBase64], stream: false }),
+          // format:'json' force une sortie JSON VALIDE (moondream/llava entourent
+          // sinon le JSON de prose → JSON.parse échouait côté app).
+          body: JSON.stringify({ model, prompt, images: [imageBase64], stream: false, format: 'json' }),
           signal: ctrl.signal,
         });
         clearTimeout(to);
@@ -240,28 +372,228 @@ export class MlService {
           this.log(`ollama ${r.status}`);
         }
       } catch (e: any) { this.log(`ollama KO: ${e?.message}`); }
-    }
+      return null;
+    };
 
-    // 2) Repli : API de reconnaissance d'aliments gratuite (option 3) — configurable.
-    //    FOOD_VISION_API_URL doit renvoyer { text } ou { name }. Sinon on saute.
-    const foodApi = process.env.FOOD_VISION_API_URL;
-    if (foodApi) {
+    // Groq vision (OpenAI-compatible) — repli GRATUIT rapide, APRÈS Ollama+Cloudflare, AVANT Gemini.
+    const tryGroq = async (): Promise<{ text: string; engine: string } | null> => {
+      const groqKey = process.env.GROQ_API_KEY;
+      if (!groqKey) return null; // skip proprement si non configuré
+      const groqModel = process.env.GROQ_VISION_MODEL || 'llama-3.2-90b-vision-preview';
       try {
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 30000);
+        const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${groqKey}` },
+          body: JSON.stringify({
+            model: groqModel,
+            max_tokens: 512,
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  { type: 'text', text: prompt },
+                  { type: 'image_url', image_url: { url: `data:${mimeType};base64,${imageBase64}` } },
+                ],
+              },
+            ],
+          }),
+          signal: ctrl.signal,
+        });
+        clearTimeout(to);
+        if (r.ok) {
+          const j: any = await r.json();
+          const text = j?.choices?.[0]?.message?.content || '';
+          if (text && String(text).trim()) return { text: String(text), engine: `groq:${groqModel}` };
+          this.log(`groq réponse vide: ${JSON.stringify(j).slice(0, 200)}`);
+        } else {
+          this.log(`groq ${r.status}: ${(await r.text()).slice(0, 200)}`);
+        }
+      } catch (e: any) { this.log(`groq KO: ${e?.message}`); }
+      return null;
+    };
+
+    // API de reconnaissance d'aliments gratuite (option 3) — configurable.
+    // FOOD_VISION_API_URL doit renvoyer { text } ou { name }. Sinon on saute.
+    const tryFoodApi = async (): Promise<{ text: string; engine: string } | null> => {
+      const foodApi = process.env.FOOD_VISION_API_URL;
+      if (!foodApi) return null;
+      try {
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 30000);
         const r = await fetch(foodApi, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...(process.env.FOOD_VISION_API_KEY ? { Authorization: `Bearer ${process.env.FOOD_VISION_API_KEY}` } : {}) },
           body: JSON.stringify({ imageBase64, mimeType }),
+          signal: ctrl.signal,
         });
+        clearTimeout(to);
         if (r.ok) {
           const j: any = await r.json();
           const text = j?.text || (j?.name ? JSON.stringify(j) : '');
           if (text) return { text, engine: 'food-api' };
         }
       } catch (e: any) { this.log(`food-api KO: ${e?.message}`); }
+      return null;
+    };
+
+    // TIER-0 food4k — classifieur ONNX auto-hébergé (Food-101, 91% top-1), CPU rapide.
+    // Placé AVANT les VLM : si confiance >= FOOD4K_MIN_CONF, réponse directe (nom +
+    // nutrition per-100g) → on court-circuite toute la cascade payante. Sinon → null,
+    // et on retombe naturellement sur Cloudflare/Groq/Ollama/Gemini (plats hors Food-101,
+    // notamment MENA, qui obtiennent une confiance basse et ne déclenchent donc PAS le tier-0).
+    const tryFood4k = async (): Promise<{ text: string; engine: string } | null> => {
+      // #150 kill-switch : FOOD4K_ENABLED=false court-circuite tout le tier-0
+      // (retour null → la cascade continue normalement). Défaut 'true'.
+      if (process.env.FOOD4K_ENABLED === 'false') return null;
+      const url = process.env.FOOD4K_URL;
+      if (!url) return null;
+      const minConf = parseFloat(process.env.FOOD4K_MIN_CONF || '0.6');
+      // Langue déduite du prompt (l'app y injecte « répondre EN FRANÇAIS / بالعربية / in ENGLISH »)
+      // → le sidecar renvoie le nom Food-101 localisé (table i18n des 101 classes).
+      const lang = /fran[cç]ais/i.test(prompt) ? 'fr' : /العربية|بالعربية/.test(prompt) ? 'ar' : 'en';
+      try {
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 8000);
+        const r = await fetch(`${url}/classify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64, lang }),
+          signal: ctrl.signal,
+        });
+        clearTimeout(to);
+        if (r.ok) {
+          const j: any = await r.json();
+          if (j?.ok && typeof j.confidence === 'number' && j.confidence >= minConf && Number(j.kcal) > 0) {
+            // Format attendu par l'app (parseVision) : name + calories + macros + serving.
+            const text = JSON.stringify({
+              name: j.name, calories: j.kcal, protein: j.protein, carbs: j.carbs, fat: j.fat,
+              serving: j.serving || '100 g', description: '', source: 'tier0',
+            });
+            return { text, engine: `tier0:food4k@${j.confidence.toFixed(2)}` };
+          }
+        }
+      } catch (e: any) { this.log(`food4k KO: ${e?.message}`); }
+      return null;
+    };
+
+    // ------------------------------------------------------------------
+    // ORDRE CONFIGURABLE (env VISION_PRIMARY, défaut 'cloudflare').
+    //  - 'cloudflare' : CF llama-3.2 (rapide+bon) d'abord ; repli GRATUIT = Groq (rapide)
+    //                   puis Ollama (auto-hébergé, illimité mais lent CPU) puis food-api.
+    //  - 'ollama'     : Ollama (gratuit/illimité) d'ABORD (si un bon modèle est tiré + latence OK).
+    // Dans les DEUX cas Groq (gratuit+rapide) passe AVANT Ollama (lent) pour la latence.
+    // Gemini reste géré ailleurs comme tout dernier recours.
+    // ------------------------------------------------------------------
+    const primary = (process.env.VISION_PRIMARY || 'cloudflare').toLowerCase();
+    // tryFood4k EN TÊTE : fast-path gratuit sur les plats Food-101 confiants.
+    const tiers =
+      primary === 'ollama'
+        ? [tryFood4k, tryOllama, tryGroq, tryCloudflare, tryFoodApi]
+        : [tryFood4k, tryCloudflare, tryGroq, tryOllama, tryFoodApi];
+
+    for (const tier of tiers) {
+      const tierName = (tier as any).name || 'tier';
+      // #47 circuit-breaker : si ce tier est "ouvert" (trop d'échecs récents),
+      // on le SKIP sans tenter l'appel (évite le timeout) — la cascade continue.
+      if (this.cbIsOpen(tierName)) {
+        this.log(`tier ${tierName} SKIP (circuit ouvert)`);
+        continue;
+      }
+      // #61 timing : durée (ms) de chaque tier tenté, via le logger existant.
+      const tStart = Date.now();
+      let res: { text: string; engine: string } | null = null;
+      let threw = false;
+      try {
+        res = await tier();
+      } catch (e: any) {
+        // Les helpers avalent déjà leurs erreurs (renvoient null), mais on protège
+        // le circuit-breaker contre toute exception imprévue.
+        threw = true;
+        this.log(`tier ${tierName} exception: ${e?.message}`);
+      }
+      const tMs = Date.now() - tStart;
+      this.log(`tier ${tierName} ${tMs}ms -> ${res ? res.engine : 'miss'}`);
+      if (res && res.text && String(res.text).trim()) {
+        // #47 succès -> ferme le circuit de ce tier.
+        this.cbRecordSuccess(tierName);
+        // Télémétrie cascade : compte le tier réellement utilisé (best-effort).
+        await this.bumpTierCounter(res.engine);
+        // Stocke en cache (TTL 7 jours) — les scans répétés deviennent gratuits.
+        if (cacheKey) {
+          try { await this.redis.setJSON(cacheKey, res.text, 7 * 24 * 3600); }
+          catch (e: any) { this.log(`cache write KO: ${e?.message}`); }
+        }
+        return res;
+      }
+      // #47 miss/erreur (null, vide, ou exception) -> compte un échec pour ce tier.
+      if (threw || !res) this.cbRecordFailure(tierName);
     }
 
     // Aucun modèle backend dispo (Ollama non déployé + pas d'API food) → erreur claire.
     throw new Error('backend_vision_unavailable');
+  }
+
+  // ---------------------------------------------------------------------------
+  // 2ter) TÉLÉMÉTRIE CASCADE : compteurs Redis par famille de tier vision.
+  //   engine ∈ {'cache','cloudflare:...','ollama:...','groq:...','food-api','gemini'}
+  //   famille = préfixe avant ':'  →  cache / cloudflare / ollama / groq / food-api / gemini
+  //   Sert à mesurer le "≤10 % cloud payant" (Gemini) et la part gratuite.
+  // ---------------------------------------------------------------------------
+
+  /** Familles de tiers connues (ordre stable pour l'affichage). */
+  private static readonly TIER_FAMILIES = ['cache', 'tier0', 'cloudflare', 'ollama', 'groq', 'food-api', 'gemini'];
+
+  /** Extrait la famille (préfixe avant ':') d'un identifiant d'engine. */
+  private static tierFamily(engine: string): string {
+    const raw = String(engine || '').trim().toLowerCase();
+    const fam = raw.split(':')[0];
+    return fam || 'unknown';
+  }
+
+  /**
+   * Incrémente 'ml:tier:total' + 'ml:tier:<famille>' (best-effort, ne casse jamais).
+   * Appelé après CHAQUE résultat de visionLocal, y compris les hits de cache.
+   */
+  private async bumpTierCounter(engine: string): Promise<void> {
+    try {
+      const fam = MlService.tierFamily(engine);
+      await this.redis.incr('ml:tier:total');
+      await this.redis.incr(`ml:tier:${fam}`);
+    } catch (e: any) { this.log(`tier counter KO: ${e?.message}`); }
+  }
+
+  /**
+   * Lit les compteurs de cascade et calcule les taux d'usage par tier.
+   *  - cloudPaidRate = part de Gemini (SEUL tier cloud PAYANT) sur le total.
+   *  - cacheHitRate  = part servie par le cache (gratuit + instantané).
+   *  - freeRate      = tout sauf Gemini (cache/ollama/cloudflare/groq/food-api sont gratuits).
+   * Best-effort : renvoie des zéros si Redis indisponible.
+   */
+  async getCascadeStats() {
+    const families = MlService.TIER_FAMILIES;
+    const keys = ['ml:tier:total', ...families.map((f) => `ml:tier:${f}`)];
+    const counts = await this.redis.mgetNumbers(keys);
+
+    const total = counts['ml:tier:total'] || 0;
+    const byTier: Record<string, { count: number; pct: number }> = {};
+    for (const f of families) {
+      const count = counts[`ml:tier:${f}`] || 0;
+      byTier[f] = { count, pct: total ? +((count / total) * 100).toFixed(2) : 0 };
+    }
+
+    const paid = byTier['gemini'].count; // seul tier cloud payant
+    const free = total - paid;           // tout le reste est gratuit
+    const rate = (n: number) => (total ? +((n / total) * 100).toFixed(2) : 0);
+
+    return {
+      total,
+      byTier,
+      cloudPaidRate: rate(paid),                 // % Gemini (objectif ≤ 10 %)
+      freeRate: rate(free),                       // % servi gratuitement
+      cacheHitRate: rate(byTier['cache'].count),  // % servi par le cache
+    };
   }
 
   private log(m: string) { try { (this as any).logger?.warn?.(m); } catch {} console.warn('[ml.visionLocal]', m); }
@@ -283,5 +615,76 @@ export class MlService {
       parsed = m ? JSON.parse(m[0]) : null;
     } catch { /* noop */ }
     return { ok: !!parsed, model: 'gemini-vision', raw: parsed ? undefined : text, ...parsed };
+  }
+
+  // ---------------------------------------------------------------------------
+  // 4) ACTIVE LEARNING : collecte des corrections de scan (image + vrai label)
+  //    -> dataset réel persistant dans /data/uploads/ml-feedback pour ré-entraîner.
+  // ---------------------------------------------------------------------------
+  private feedbackDir() {
+    return join(process.env.UPLOAD_DIR || join(process.cwd(), 'uploads'), 'ml-feedback');
+  }
+
+  async recordScanFeedback(body: any, userId?: string) {
+    const dir = this.feedbackDir();
+    const imgDir = join(dir, 'images');
+    fs.mkdirSync(imgDir, { recursive: true });
+    const id = randomUUID();
+
+    // Pseudonymisation RGPD : on ne stocke JAMAIS l'email/uid en clair dans le dataset.
+    // HMAC-SHA256 stable (même user -> même pseudo : permet dédup et droit à l'effacement)
+    // avec un secret serveur DÉDIÉ. Sans AL_HASH_SECRET configuré -> on ne stocke PAS l'uid
+    // (user=null) : jamais de repli sur une constante littérale ni sur ADMIN_API_KEY.
+    const secret = process.env.AL_HASH_SECRET;
+    const user = userId && secret ? createHmac('sha256', secret).update(String(userId)).digest('hex').slice(0, 24) : null;
+
+    let image: string | null = null;
+    let imageHash: string | null = null;
+    const b64 = body?.imageBase64;
+    if (typeof b64 === 'string' && b64.length > 100 && b64.length < 8_000_000) {
+      try {
+        const buf = Buffer.from(b64, 'base64');
+        // Vérif signature (magic bytes) : on n'écrit QUE de vraies images JPEG/PNG.
+        const isJpeg = buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+        const isPng = buf.length > 8 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
+        if (isJpeg || isPng) {
+          image = id + (isPng ? '.png' : '.jpg');
+          imageHash = createHash('sha1').update(buf).digest('hex'); // dédup à l'export
+          fs.writeFileSync(join(imgDir, image), buf);
+        }
+      } catch { image = null; imageHash = null; }
+    }
+
+    const predicted = body?.predicted != null && String(body.predicted) ? String(body.predicted).slice(0, 80) : null;
+    const finalName = String(body?.finalName ?? '').slice(0, 120);
+    // VRAIE correction = l'app indique que l'utilisateur a édité le nom (userEdited).
+    // Repli heuristique (label modèle EN vs nom retenu) seulement si l'app ne l'a pas fourni.
+    const userEdited = typeof body?.userEdited === 'boolean' ? body.userEdited : null;
+    const corrected = userEdited !== null
+      ? userEdited
+      : !!(predicted && finalName && predicted.toLowerCase() !== finalName.toLowerCase());
+
+    const rec = {
+      id, ts: Date.now(), user,
+      predicted, predictedScore: typeof body?.predictedScore === 'number' ? body.predictedScore : null,
+      finalName, tier: body?.tier ? String(body.tier).slice(0, 16) : null,
+      userEdited,                 // signal explicite de l'app (null si inconnu)
+      corrected,                  // = userEdited si connu, sinon heuristique
+      gold: userEdited === true,  // exemple "or" : vraie correction utilisateur
+      modelVersion: body?.modelVersion ? String(body.modelVersion).slice(0, 32) : null,
+      language: body?.language ? String(body.language).slice(0, 8) : null,
+      imageHash, image,
+    };
+    try { fs.appendFileSync(join(dir, 'feedback.jsonl'), JSON.stringify(rec) + String.fromCharCode(10)); } catch {}
+    return { ok: true, id, corrected, gold: rec.gold };
+  }
+
+  feedbackStats() {
+    const f = join(this.feedbackDir(), 'feedback.jsonl');
+    if (!fs.existsSync(f)) return { total: 0, corrected: 0, gold: 0, withImage: 0 };
+    const lines = fs.readFileSync(f, 'utf-8').split(String.fromCharCode(10)).filter(Boolean);
+    let corrected = 0, gold = 0, withImage = 0;
+    for (const l of lines) { try { const r = JSON.parse(l); if (r.corrected) corrected++; if (r.gold) gold++; if (r.image) withImage++; } catch {} }
+    return { total: lines.length, corrected, gold, withImage };
   }
 }

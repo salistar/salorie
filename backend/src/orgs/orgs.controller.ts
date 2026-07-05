@@ -38,12 +38,16 @@ export class OrgsController {
 
   @Get(':id/members')
   @UseGuards(FirebaseAuthGuard)
-  members(@Param('id') id: string) { return this.svc.listMembers(id); }
+  async members(@Param('id') id: string, @Req() req: any) {
+    if (!(await this.svc.isActiveMember(id, req.user.uid))) throw new ForbiddenException('non membre de cette organisation');
+    return this.svc.listMembers(id);
+  }
 
   @Post(':id/invite')
   @UseGuards(FirebaseAuthGuard)
-  invite(@Param('id') id: string, @Req() req: any, @Body() b: any) {
+  async invite(@Param('id') id: string, @Req() req: any, @Body() b: any) {
     // un coach/owner crée une invite ; coachUserId = lui-même par défaut (rattache le client)
+    if (!(await this.svc.canManageOrg(id, req.user.uid))) throw new ForbiddenException('droits insuffisants sur cette organisation');
     return this.svc.createInvite(id, b?.role || 'client', b?.email || '', b?.coachUserId || req.user.uid);
   }
 

@@ -54,6 +54,9 @@ export class OrgsService {
 
   // ── Membres / clients ──
   listMembers(orgId: string) { return this.members.find({ orgId, status: { $ne: 'removed' } }).sort({ createdAt: -1 }).lean(); }
+  // fix IDOR : verifier l'appartenance / les droits avant d'exposer les membres d'une org
+  async isActiveMember(orgId: string, userId: string) { return !!(await this.members.findOne({ orgId, userId, status: 'active' })); }
+  async canManageOrg(orgId: string, userId: string) { const m: any = await this.members.findOne({ orgId, userId, status: 'active' }); return !!m && (m.role === 'owner' || m.role === 'coach'); }
   async removeMember(orgId: string, userId: string) { await this.members.updateOne({ orgId, userId }, { $set: { status: 'removed' } }); return { ok: true }; }
 
   // Organisations d'un utilisateur (avec le détail de l'org).

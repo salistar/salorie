@@ -30,15 +30,18 @@ export class VirtualRace {
   @Prop({ default: 'rabat' }) medalFrame: string;     // (rétro-compat) thème simple
   @Prop({ type: Object }) medalSpec: any;             // modèle conçu au builder : { shape, color, metal, centerType, customPath }
   @Prop({ type: [WaypointSchema], default: [] }) waypoints: Waypoint[];
-  @Prop({ default: true, index: true }) active: boolean;
+  @Prop({ default: true }) active: boolean;
 }
 export const VirtualRaceSchema = SchemaFactory.createForClass(VirtualRace);
+// listRaces / listActive : find({ tenantId[, active] }).sort({ createdAt: -1 }).
+VirtualRaceSchema.index({ tenantId: 1, active: 1, createdAt: -1 });
 
 @Schema({ timestamps: true, collection: 'race_participants' })
 export class RaceParticipant {
-  @Prop({ index: true, default: 'default' }) tenantId: string;
-  @Prop({ index: true, required: true }) raceId: string;
-  @Prop({ index: true, required: true }) userId: string;   // uid Firebase
+  @Prop({ default: 'default' }) tenantId: string;
+  // raceId/userId : couverts par l'index composé unique { raceId, userId } (voir bas de fichier).
+  @Prop({ required: true }) raceId: string;
+  @Prop({ required: true }) userId: string;   // uid Firebase
   @Prop() email: string;
   @Prop() userName: string;
   @Prop({ default: 0 }) cumulativeKm: number;
@@ -48,13 +51,19 @@ export class RaceParticipant {
   @Prop({ default: 0 }) notifiedMilestone: number;         // dernier jalon % notifié (anti-spam push)
 }
 export const RaceParticipantSchema = SchemaFactory.createForClass(RaceParticipant);
+// join/progress/finish : findOne({ raceId, userId }) (unique par coureur+course).
+RaceParticipantSchema.index({ raceId: 1, userId: 1 }, { unique: true });
+// leaderboard : find({ raceId }).sort({ finishedAt: 1, cumulativeKm: -1 }).
+RaceParticipantSchema.index({ raceId: 1, finishedAt: 1, cumulativeKm: -1 });
+// getUserMedals côté participant / "mes courses" : find({ userId }).
+RaceParticipantSchema.index({ userId: 1 });
 
 @Schema({ timestamps: true, collection: 'medals' })
 export class Medal {
   @Prop({ index: true, default: 'default' }) tenantId: string;
-  @Prop({ index: true, required: true }) raceId: string;
+  @Prop({ required: true }) raceId: string;
   @Prop() raceName: string;
-  @Prop({ index: true, required: true }) userId: string;
+  @Prop({ required: true }) userId: string;
   @Prop() userName: string;
   @Prop({ default: 0 }) rank: number;                      // classement final
   @Prop({ default: 'rabat' }) frame: string;               // (rétro-compat) thème
@@ -66,3 +75,9 @@ export class Medal {
   @Prop({ default: '' }) photoUrl: string;                 // photo glissée dans la médaille
 }
 export const MedalSchema = SchemaFactory.createForClass(Medal);
+// finish/generateMedals : upsert findOneAndUpdate({ raceId, userId }) — 1 médaille/coureur/course.
+MedalSchema.index({ raceId: 1, userId: 1 }, { unique: true });
+// getUserMedals : find({ userId }).sort({ createdAt: -1 }) (écran "Mes médailles").
+MedalSchema.index({ userId: 1, createdAt: -1 });
+// listAllMedals (admin) : find({ tenantId }).sort({ createdAt: -1 }).
+MedalSchema.index({ tenantId: 1, createdAt: -1 });
