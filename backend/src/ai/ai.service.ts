@@ -19,12 +19,32 @@ export class AiService {
 
   constructor(private redis: RedisService) {}
 
+  // #16 — plafond MENSUEL d'appels Gemini (protection coût, principe "≤10% payant").
+  //   GEMINI_MONTHLY_CAP=0 (défaut) → désactivé. Compteur souple via Redis (une
+  //   légère sous/sur-estimation sous forte concurrence est acceptable pour un
+  //   plafond de sécurité). Au plafond → on jette : les appelants (cascade vision,
+  //   insights) gèrent l'erreur et retombent gracieusement sur le reste.
+  private async guardGeminiBudget(): Promise<void> {
+    const cap = Number(process.env.GEMINI_MONTHLY_CAP || 0);
+    if (!cap) return;
+    const month = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const key = `gemini:count:${month}`;
+    let n = 0;
+    try { n = (await this.redis.getJSON<number>(key)) || 0; } catch {}
+    if (n >= cap) {
+      this.logger.warn(`Gemini cap mensuel atteint (${n}/${cap}) pour ${month} — appel refusé`);
+      throw new Error('Gemini monthly cap reached');
+    }
+    try { await this.redis.setJSON(key, n + 1, 3456000); } catch {} // TTL ~40 j
+  }
+
   async generate(prompt: string, model?: string): Promise<string> {
     if (!this.genAI) throw new Error('GEMINI_API_KEY not configured');
     const m = model || this.defaultModel;
     const key = `ai:gen:${createHash('sha1').update(m + '|' + prompt).digest('hex')}`;
     const cached = await this.redis.getJSON<string>(key);
     if (cached != null) { this.logger.log('cache HIT /ai/generate'); return cached; }
+    await this.guardGeminiBudget();
     const gm = this.genAI.getGenerativeModel({ model: m });
     const r = await gm.generateContent(prompt);
     const text = (await r.response).text();
@@ -99,6 +119,7 @@ export class AiService {
   }
   async vision(prompt: string, imageBase64: string, mimeType = 'image/jpeg', model?: string): Promise<string> {
     if (!this.genAI) throw new Error('GEMINI_API_KEY not configured');
+    await this.guardGeminiBudget();
     const m = this.genAI.getGenerativeModel({ model: model || this.visionModel });
     const r = await m.generateContent([
       { text: prompt },

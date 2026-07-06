@@ -322,6 +322,10 @@ export class MlService {
       // VLM fort (vocabulaire ouvert, bien meilleur sur les plats MENA) ; overridable par env.
       const cfModel = process.env.CF_VISION_MODEL || '@cf/meta/llama-3.2-11b-vision-instruct';
       if (!cfAccount || !cfToken) return null;
+      // #9 — skip Cloudflare si l'image dépasse ~4 Mo décodés (llava renvoie 413) :
+      //   on évite le round-trip perdu + le délai, et on passe direct au tier suivant
+      //   (Ollama/Groq/Gemini). base64 ≈ 4/3 des octets → length*0.75 ≈ octets réels.
+      if (imageBase64.length * 0.75 > 4_000_000) { this.log('cloudflare skip: image > 4 Mo (évite 413)'); return null; }
       try {
         // Cloudflare llava attend l'image en TABLEAU D'OCTETS (uint8), pas en base64.
         const bytes = Array.from(Buffer.from(imageBase64, 'base64'));
