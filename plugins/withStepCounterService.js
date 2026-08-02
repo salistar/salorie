@@ -183,7 +183,10 @@ module.exports = function withStepCounterService(config) {
     }
     if (!src.includes('StepCounterService::class.java')) {
       const call = `\n    try { val svc = Intent(this, StepCounterService::class.java); if (android.os.Build.VERSION.SDK_INT >= 26) startForegroundService(svc) else startService(svc) } catch (_: Exception) {}`;
-      src = src.replace(/(super\.onCreate\([^)]*\)\s*;?)/, `$1${call}`);
+      // Voir la note dans withHealthConnectPermissionDelegate.js : pas de `\s*` avant la
+      // fin du groupe, sinon la capture avale le saut de ligne et cet appel se retrouve
+      // colle a celui de l'autre plugin sur une seule ligne (Kotlin refuse).
+      src = src.replace(/(super\.onCreate\([^)]*\);?)/, `$1${call}`);
     }
     cfg.modResults.contents = src;
     return cfg;
