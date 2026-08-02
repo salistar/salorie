@@ -164,7 +164,6 @@ export default function SocialScreen() {
       <FlashList
         data={feedLoading ? [] : feed}
         keyExtractor={(it: FeedItem) => `${it.ownerDocId}_${it.id}`}
-        estimatedItemSize={88}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

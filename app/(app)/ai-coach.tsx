@@ -6,7 +6,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Act
 import { Sparkles, Send, RefreshCw, Volume2, VolumeX, Mic, Square } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useScreenGate } from '../../components/FeatureGate';
 import { aiGenerate, aiTranscribe } from '../../lib/aiProxy';

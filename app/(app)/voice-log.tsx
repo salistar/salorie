@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { Audio } from 'expo-av';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Mic, Square, Check, RotateCcw } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { addNutritionLog } from '../../lib/firebase';

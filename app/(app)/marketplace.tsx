@@ -122,7 +122,6 @@ export default function MarketplaceScreen() {
       <FlashList
         data={loading ? [] : listings}
         numColumns={2}
-        estimatedItemSize={200}
         keyExtractor={(l: MarketplaceListing) => l.id}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}

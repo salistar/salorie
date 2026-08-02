@@ -90,7 +90,13 @@ export default function FeatureRequestsScreen() {
         snapshot = await getDocs(collection(db, 'feature_requests'));
       }
       const data = snapshot.docs
-        .map(doc => ({ id: doc.id, upvotes: [], ...doc.data() } as FeatureRequest))
+        // Le type dit ce qui est vrai : les documents anciens n'ont pas forcement le
+        // champ `upvotes`, d'ou le `?` — sans lui le defaut ci-dessous serait du code
+        // mort. Et `id` vient du document, jamais d'un champ stocke.
+        .map(doc => {
+          const d = doc.data() as Omit<FeatureRequest, 'id' | 'upvotes'> & { upvotes?: string[] };
+          return { ...d, upvotes: d.upvotes ?? [], id: doc.id };
+        })
         .sort((a: any, b: any) => ((b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
       setRequests(data);
     } catch (error) {

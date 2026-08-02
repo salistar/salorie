@@ -18,7 +18,7 @@
 //
 // Le cache va dans documentDirectory et non cacheDirectory : l'OS peut vider le second
 // quand il veut, ce qui viderait précisément la vidéo qu'on a gardée pour l'hors-ligne.
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 const BASE = 'https://api.salorie.com/videos';
 const DIR = `${FileSystem.documentDirectory}exercise-videos/`;

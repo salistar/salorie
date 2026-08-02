@@ -206,7 +206,10 @@ export default function RacesScreen() {
   const onJoinRace = async (race: Race) => {
     try {
       await joinRace(race.id, email, displayName);
-      router.push('/race-live?id=' + race.id);
+      // Forme objet plutot que concatenation : expo-router 6 type les chemins, et
+      // surtout il encode lui-meme les parametres — un identifiant contenant un
+      // caractere reserve cassait silencieusement l'URL construite a la main.
+      router.push({ pathname: '/race-live', params: { id: race.id } });
     } catch (e) {
       console.warn('[races] join failed', e);
     }
@@ -324,7 +327,7 @@ export default function RacesScreen() {
               const stops = (r.waypoints || []).length;
               const w0 = (r.waypoints || [])[0];
               return (
-                <TouchableOpacity key={r._id} activeOpacity={0.9} style={[styles.challengeCard, { backgroundColor: card }]} onPress={() => router.push('/challenge?id=' + r._id + '&src=mongo')}>
+                <TouchableOpacity key={r._id} activeOpacity={0.9} style={[styles.challengeCard, { backgroundColor: card }]} onPress={() => router.push({ pathname: '/challenge', params: { id: r._id, src: 'mongo' } })}>
                   <View style={styles.heroWrap}>
                     {/* Photo héro = Street View du départ ; badge = la MÉDAILLE (pas d'émoji). */}
                     {w0 ? <Image source={{ uri: streetViewUrl(w0.lat, w0.lng, 640, 400) }} style={styles.hero} resizeMode="cover" /> : <View style={[styles.hero, { backgroundColor: '#dbe4ee' }]} />}
@@ -361,7 +364,7 @@ export default function RacesScreen() {
                 const hero = poiPhoto(c.id, 0);
                 const stops = (c.pois as any[])?.length || 0;
                 return (
-                  <TouchableOpacity key={c.id} activeOpacity={0.9} style={[styles.challengeCard, { backgroundColor: card }]} onPress={() => router.push('/challenge?id=' + c.id)}>
+                  <TouchableOpacity key={c.id} activeOpacity={0.9} style={[styles.challengeCard, { backgroundColor: card }]} onPress={() => router.push({ pathname: '/challenge', params: { id: c.id } })}>
                     {/* GRANDE photo du lieu + médaille en BADGE (coin) */}
                     <View style={styles.heroWrap}>
                       {hero ? <Image source={hero} style={styles.hero} resizeMode="cover" /> : <View style={[styles.hero, { backgroundColor: '#cbd5e1' }]} />}
