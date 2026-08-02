@@ -31,7 +31,7 @@ export default function RegisterPage() {
         <div style={S.brand}>🔥 Salorie <span style={{ color: '#64748b', fontWeight: 400 }}>Admin</span></div>
         <h1 style={S.h1}>Créer un compte</h1>
         <input style={S.input} type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input style={S.input} type="password" placeholder="Mot de passe (6+ caractères)" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+        <input style={S.input} type="password" placeholder="Mot de passe (12+ caractères)" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={12} />
         {err && <div style={S.err}>{err}</div>}
         <button style={{ ...S.btn, opacity: loading ? 0.6 : 1 }} disabled={loading}>{loading ? '…' : 'Créer le compte'}</button>
         <div style={S.foot}>Déjà un compte ? <Link href="/login" style={S.link}>Se connecter</Link></div>

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "770964711105",
+    "project_id": "salistar-salorie",
+    "storage_bucket": "salistar-salorie.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:770964711105:android:542d8f3326f91b0da09640",
+        "android_client_info": {
+          "package_name": "com.idriss.kriouile.salorie"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "770964711105-l97t92dn9ngu4gl7l7aelgn20s85e7uj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDfeBeXzIai3MFcO9T15ui2UQ9oltAkeK4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "770964711105-l97t92dn9ngu4gl7l7aelgn20s85e7uj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

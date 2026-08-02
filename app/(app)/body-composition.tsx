@@ -1,15 +1,18 @@
 // Composition corporelle — poids, masse grasse %, muscle (manuel). Balance connectée = à venir.
 import React, { useEffect, useState } from 'react';
+import { numLocaleFor } from '../../lib/format';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { PersonStanding } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { useScreenGate } from '../../components/FeatureGate';
 import { FormCard, Stepper, SubmitBar } from '../../components/FormKit';
 import { logEntry, getEntries } from '../../lib/tracking';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
+import { rowDir, txtAlign } from '../../lib/rtl';
+import { type as typo } from '../../constants/theme';
 
-const GREEN = '#2E8B57';
 const F = [
   { k: 'weight', u: 'kg', step: 0.5 },
   { k: 'fat', u: '%', step: 0.5 },
@@ -25,6 +28,7 @@ const TXT: any = {
     save: 'Save',
     history: 'History',
     empty: 'No measurements.',
+    disclaimer: 'Manual measurements for tracking only — not a medical assessment. Consult a professional for a body-composition diagnosis.',
   },
   fr: {
     title: 'Composition corporelle',
@@ -33,6 +37,7 @@ const TXT: any = {
     save: 'Enregistrer',
     history: 'Historique',
     empty: 'Aucune mesure.',
+    disclaimer: 'Mesures manuelles à titre de suivi — pas un bilan médical. Consultez un professionnel pour un diagnostic de composition corporelle.',
   },
   ar: {
     title: 'تكوين الجسم',
@@ -41,20 +46,30 @@ const TXT: any = {
     save: 'حفظ',
     history: 'السجل',
     empty: 'لا توجد قياسات.',
+    disclaimer: 'قياسات يدوية للمتابعة فقط — وليست تقييماً طبياً. استشر مختصاً لتشخيص تكوين الجسم.',
   },
 };
 
 export default function BodyCompositionScreen() {
+  const __gate = useScreenGate('body-composition');
   const { user } = useUser();
-  const { resolved } = useTheme();
+  const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
+  // i18n #90 — formatage localisé des nombres (affichage seul, aucun calcul modifié).
+  const numLocale = numLocaleFor(language);
+  const fmtNum = (n: number) => {
+    try { return Number(n).toLocaleString(numLocale); } catch { return String(n); }
+  };
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  const GREEN = colors.primary;
+  const bg = isDark ? '#0f1419' : '#F4F7F9';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0F172A';
   const sub = isDark ? '#94a3b8' : '#64748B';
-  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+  const muted = isDark ? '#64748b' : '#94A3B8';
+  const align: any = { textAlign: txtAlign(isRTL) };
+  const cardBorder = isDark ? { borderWidth: 1, borderColor: '#283241' } : null;
 
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const [v, setV] = useState<Record<string, string>>({});
@@ -73,18 +88,20 @@ export default function BodyCompositionScreen() {
 
   const last = hist[0];
 
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <View style={styles.head}><PersonStanding size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}><PersonStanding size={24} color={GREEN} /><Text style={[styles.title, { color: text }, align]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
         <FormCard>
           {F.map((f) => (
             <Stepper
               key={f.k}
-              label={last?.[f.k] != null ? `${t[f.k]} · ${last[f.k]}${f.u}` : t[f.k]}
+              label={last?.[f.k] != null ? `${t[f.k]} · ${fmtNum(last[f.k])}${f.u}` : t[f.k]}
               unit={f.u}
               step={f.step}
               value={v[f.k] || ''}
@@ -97,12 +114,14 @@ export default function BodyCompositionScreen() {
         </View>
 
         <Text style={[styles.histLabel, { color: sub }, align]}>{t.history}</Text>
-        {loading ? <ActivityIndicator color={GREEN} /> : hist.length === 0 ? <Text style={[styles.empty, align]}>{t.empty}</Text> : hist.map((h) => (
-          <View key={h.id} style={[styles.histRow, { backgroundColor: card }]}>
+        {loading ? <ActivityIndicator color={GREEN} /> : hist.length === 0 ? <Text style={[styles.empty, { color: muted }, align]}>{t.empty}</Text> : hist.map((h) => (
+          <View key={h.id} style={[styles.histRow, { backgroundColor: card }, cardBorder, { flexDirection: rowDir(isRTL) }]}>
             <Text style={[styles.histDate, { color: sub }]}>{h.date}</Text>
-            <Text style={[styles.histVal, { color: text }]}>{F.filter((f) => h[f.k] != null).map((f) => `${h[f.k]}${f.u}`).join(' · ')}</Text>
+            <Text style={[styles.histVal, { color: text, textAlign: isRTL ? 'left' : 'right' }]}>{F.filter((f) => h[f.k] != null).map((f) => `${fmtNum(h[f.k])}${f.u}`).join(' · ')}</Text>
           </View>
         ))}
+
+        <Text style={[typo.micro, styles.disclaimer, { color: muted }, align]}>{t.disclaimer}</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -119,11 +138,12 @@ const styles = StyleSheet.create({
   inputWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   input: { fontSize: 18, fontWeight: '800', color: '#0F172A', minWidth: 70, textAlign: 'right', paddingVertical: 12 },
   unit: { fontSize: 13, color: '#94A3B8', fontWeight: '700', width: 26 },
-  saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GREEN, borderRadius: 14, paddingVertical: 15, marginTop: 8 },
+  saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#2E8B57', borderRadius: 14, paddingVertical: 15, marginTop: 8 },
   saveTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
   histLabel: { fontSize: 13, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 14, marginBottom: 10 },
   empty: { color: '#94A3B8', fontSize: 14 },
   histRow: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 8 },
   histDate: { fontSize: 13, color: '#64748B' },
   histVal: { fontSize: 13, fontWeight: '700', color: '#0F172A', flex: 1, textAlign: 'right' },
+  disclaimer: { marginTop: 18, lineHeight: 16, fontWeight: '500' },
 });

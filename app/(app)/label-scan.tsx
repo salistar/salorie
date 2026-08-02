@@ -1,21 +1,37 @@
 // OCR d'étiquettes nutritionnelles ON-DEVICE (MLKit Text Recognition).
 // Photo (caméra/galerie) → reconnaissance de texte locale → parsing kcal/macros.
 // 100% on-device, hors-ligne. Gestion d'erreur robuste (jamais de crash).
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Image } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Image, Animated, Easing } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as Haptics from 'expo-haptics';
 import { Camera, Images, ScanText, AlertTriangle } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { useUser } from '@clerk/clerk-expo';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
+import { rowDir } from '../../lib/rtl';
 import { computeHealthScore, VERDICT_TXT } from '../../lib/healthScore';
+import { scoreFood, type FoodScore } from '../../lib/objective/scoring';
+import { buildObjectiveContext } from '../../lib/objective/buildContext';
+import { useNutritionData } from '../../hooks/useNutritionData';
+import { useScreenGate } from '../../components/FeatureGate';
+
+// Verdict objectif (couleur + emoji + libellé i18n).
+const OBJ_VERDICT_COLOR: Record<FoodScore['verdict'], string> = { great: '#16A34A', ok: '#D97706', avoid: '#DC2626' };
+const OBJ_VERDICT_EMOJI: Record<FoodScore['verdict'], string> = { great: '✅', ok: '⚠️', avoid: '🚫' };
+const OBJ_VERDICT_TXT: Record<string, Record<FoodScore['verdict'], string>> = {
+  en: { great: 'On point for your goal', ok: 'OK for your goal', avoid: 'Avoid for your goal' },
+  fr: { great: 'Idéal pour ton objectif', ok: 'OK pour ton objectif', avoid: 'À éviter pour ton objectif' },
+  ar: { great: 'مثالي لهدفك', ok: 'مقبول لهدفك', avoid: 'تجنّبه لهدفك' },
+};
 
 const GREEN = '#2E8B57';
 
 const TXT: any = {
-  en: { title: 'Scan a label', sub: 'Snap the nutrition facts table — 100% on-device text recognition (MLKit).', camera: 'Camera', gallery: 'Gallery', detected: 'Detected values', calories: 'Calories', protein: 'Protein', carbs: 'Carbs', fat: 'Fat', recognized: 'Recognized text', note: 'Model: MLKit Text Recognition (on-device, offline).', permDenied: 'Permission denied', ocrUnavailable: 'OCR unavailable' },
-  fr: { title: 'Scanner une étiquette', sub: 'Photographie le tableau nutritionnel — lecture de texte 100% on-device (MLKit).', camera: 'Caméra', gallery: 'Galerie', detected: 'Valeurs détectées', calories: 'Calories', protein: 'Protéines', carbs: 'Glucides', fat: 'Lipides', recognized: 'Texte reconnu', note: 'Modèle : MLKit Text Recognition (on-device, hors-ligne).', permDenied: 'Permission refusée', ocrUnavailable: 'OCR indisponible' },
-  ar: { title: 'مسح ملصق غذائي', sub: 'صوّر جدول القيم الغذائية — قراءة نص 100% على الجهاز (MLKit).', camera: 'الكاميرا', gallery: 'المعرض', detected: 'القيم المكتشفة', calories: 'السعرات', protein: 'البروتين', carbs: 'الكربوهيدرات', fat: 'الدهون', recognized: 'النص المتعرف عليه', note: 'النموذج: MLKit Text Recognition (على الجهاز، دون اتصال).', permDenied: 'تم رفض الإذن', ocrUnavailable: 'OCR غير متوفر' },
+  en: { title: 'Scan a label', sub: 'Snap the nutrition facts table — 100% on-device text recognition (MLKit).', camera: 'Camera', gallery: 'Gallery', detected: 'Detected values', calories: 'Calories', protein: 'Protein', carbs: 'Carbs', fat: 'Fat', recognized: 'Recognized text', note: 'Model: MLKit Text Recognition (on-device, offline).', permDenied: 'Permission denied', ocrUnavailable: 'OCR unavailable', why: 'Why', verdictScore: 'goal fit' },
+  fr: { title: 'Scanner une étiquette', sub: 'Photographie le tableau nutritionnel — lecture de texte 100% on-device (MLKit).', camera: 'Caméra', gallery: 'Galerie', detected: 'Valeurs détectées', calories: 'Calories', protein: 'Protéines', carbs: 'Glucides', fat: 'Lipides', recognized: 'Texte reconnu', note: 'Modèle : MLKit Text Recognition (on-device, hors-ligne).', permDenied: 'Permission refusée', ocrUnavailable: 'OCR indisponible', why: 'Pourquoi', verdictScore: "adéquation à l'objectif" },
+  ar: { title: 'مسح ملصق غذائي', sub: 'صوّر جدول القيم الغذائية — قراءة نص 100% على الجهاز (MLKit).', camera: 'الكاميرا', gallery: 'المعرض', detected: 'القيم المكتشفة', calories: 'السعرات', protein: 'البروتين', carbs: 'الكربوهيدرات', fat: 'الدهون', recognized: 'النص المتعرف عليه', note: 'النموذج: MLKit Text Recognition (على الجهاز، دون اتصال).', permDenied: 'تم رفض الإذن', ocrUnavailable: 'OCR غير متوفر', why: 'لماذا', verdictScore: 'ملاءمة الهدف' },
 };
 
 type Parsed = { calories?: number; protein?: number; carbs?: number; fat?: number };
@@ -61,24 +77,36 @@ function parseNutrition(text: string): Parsed {
 }
 
 export default function LabelScanScreen() {
-  const { resolved } = useTheme();
+  const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#F8FAFC';
+  const accent = colors.primary;
+  const bg = isDark ? '#0f1419' : '#F8FAFC';
   const card = isDark ? '#1e293b' : '#ffffff';
   const fg = isDark ? '#f1f5f9' : '#0F172A';
   const sub = isDark ? '#94a3b8' : '#64748B';
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
+  const { user } = useUser();
+  const today = new Date().toISOString().slice(0, 10);
+  const nutrition: any = useNutritionData(today);
+
+  const __gate = useScreenGate('label-scan');
 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [uri, setUri] = useState<string | null>(null);
   const [text, setText] = useState<string>('');
   const [parsed, setParsed] = useState<Parsed>({});
+  // Verdict objectif (scoreFood sur les macros OCR) — calculé après parsing.
+  const [objScore, setObjScore] = useState<FoodScore | null>(null);
+  // Animation d'apparition du bloc verdict/résultat (fade + scale-in). Purement
+  // visuel : ne touche pas la logique d'analyse.
+  const resultAnim = useRef(new Animated.Value(0)).current;
 
   const run = async (fromCamera: boolean) => {
-    setErr(null); setText(''); setParsed({});
+    setErr(null); setText(''); setParsed({}); setObjScore(null);
     try {
       const perm = fromCamera
         ? await ImagePicker.requestCameraPermissionsAsync()
@@ -96,7 +124,22 @@ export default function LabelScanScreen() {
       const result = await TextRecognition.recognize(imageUri);
       const full = (result?.text || '').trim();
       setText(full);
-      setParsed(parseNutrition(full));
+      const p = parseNutrition(full);
+      setParsed(p);
+      // Verdict OBJECTIF : scoreFood sur les macros OCR. Tags limités (l'OCR ne
+      // donne pas nova/allergènes ; on n'a que kcal/prot/gluc/lip).
+      if (p.calories || p.protein || p.carbs || p.fat) {
+        try {
+          const email = user?.primaryEmailAddress?.emailAddress || '';
+          const ctx = await buildObjectiveContext(email, user?.id, today, nutrition);
+          setObjScore(
+            scoreFood(
+              { name: t.title, kcal: p.calories || 0, protein: p.protein || 0, carbs: p.carbs || 0, fat: p.fat || 0, tags: [] },
+              ctx,
+            ),
+          );
+        } catch { /* pas de verdict objectif si le contexte échoue */ }
+      }
     } catch (e: any) {
       setErr(e?.message || t.ocrUnavailable);
     } finally {
@@ -106,18 +149,45 @@ export default function LabelScanScreen() {
 
   const hasParsed = parsed.calories || parsed.protein || parsed.carbs || parsed.fat;
 
+  // Quand le verdict/résultat s'affiche (parsing réussi) : retour haptique de
+  // succès + animation d'apparition (fade + léger scale-in). Additif — n'altère
+  // ni le parsing ni le scoring.
+  useEffect(() => {
+    if (hasParsed) {
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+      resultAnim.setValue(0);
+      Animated.timing(resultAnim, {
+        toValue: 1,
+        duration: 320,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasParsed]);
+
+  // Style d'apparition dérivé de la valeur animée (opacité + scale).
+  const resultAnimStyle = {
+    opacity: resultAnim,
+    transform: [
+      { scale: resultAnim.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1] }) },
+    ],
+  };
+
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
-        <View style={styles.head}>
-          <ScanText size={26} color={GREEN} />
+        <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}>
+          <ScanText size={26} color={accent} />
           <Text style={[styles.title, { color: fg }]}>{t.title}</Text>
         </View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
-        <View style={styles.actions}>
-          <TouchableOpacity style={[styles.btn, styles.primary]} onPress={() => run(true)}>
+        <View style={[styles.actions, { flexDirection: rowDir(isRTL) }]}>
+          <TouchableOpacity style={[styles.btn, styles.primary, { backgroundColor: accent }]} onPress={() => run(true)}>
             <Camera size={20} color="#fff" /><Text style={styles.btnTxt}>{t.camera}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.btn, styles.secondary, isDark && { backgroundColor: '#334155' }]} onPress={() => run(false)}>
@@ -126,7 +196,7 @@ export default function LabelScanScreen() {
         </View>
 
         {uri && <Image source={{ uri }} style={styles.preview} resizeMode="cover" />}
-        {loading && <ActivityIndicator color={GREEN} style={{ marginTop: 20 }} />}
+        {loading && <ActivityIndicator color={accent} style={{ marginTop: 20 }} />}
 
         {err && (
           <View style={styles.warn}>
@@ -135,9 +205,10 @@ export default function LabelScanScreen() {
           </View>
         )}
 
+        <Animated.View style={resultAnimStyle}>
         {hasParsed ? (
           <View style={[styles.parsedCard, { backgroundColor: card }, isDark && { borderColor: '#334155' }]}>
-            <Text style={[styles.parsedTitle, align]}>{t.detected}</Text>
+            <Text style={[styles.parsedTitle, { color: accent }, align]}>{t.detected}</Text>
             {parsed.calories != null && <Text style={[styles.parsedRow, { color: isDark ? '#cbd5e1' : '#334155' }, align]}>{t.calories} : <Text style={[styles.bold, { color: fg }]}>{parsed.calories} kcal</Text></Text>}
             {parsed.protein != null && <Text style={[styles.parsedRow, { color: isDark ? '#cbd5e1' : '#334155' }, align]}>{t.protein} : <Text style={[styles.bold, { color: fg }]}>{parsed.protein} g</Text></Text>}
             {parsed.carbs != null && <Text style={[styles.parsedRow, { color: isDark ? '#cbd5e1' : '#334155' }, align]}>{t.carbs} : <Text style={[styles.bold, { color: fg }]}>{parsed.carbs} g</Text></Text>}
@@ -161,6 +232,29 @@ export default function LabelScanScreen() {
             </View>
           );
         })() : null}
+
+        {objScore ? (
+          <View style={[styles.objCard, { backgroundColor: card, borderColor: OBJ_VERDICT_COLOR[objScore.verdict] }]}>
+            <View style={[styles.objHead, { flexDirection: rowDir(isRTL) }]}>
+              <Text style={styles.objEmoji}>{OBJ_VERDICT_EMOJI[objScore.verdict]}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.objVerdict, { color: OBJ_VERDICT_COLOR[objScore.verdict] }, align]}>
+                  {(OBJ_VERDICT_TXT[language] || OBJ_VERDICT_TXT.en)[objScore.verdict]}
+                </Text>
+                <Text style={[styles.objSub, { color: sub }, align]}>{objScore.fit}/100 · {t.verdictScore}</Text>
+              </View>
+            </View>
+            {objScore.reasons?.length ? (
+              <View style={styles.objReasons}>
+                <Text style={[styles.objWhy, { color: sub }, align]}>{t.why}</Text>
+                {objScore.reasons.slice(0, 4).map((r, i) => (
+                  <Text key={i} style={[styles.objReason, { color: isDark ? '#cbd5e1' : '#334155' }, align]}>• {r}</Text>
+                ))}
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+        </Animated.View>
 
         {text ? (
           <View style={[styles.textCard, { backgroundColor: card }]}>
@@ -194,6 +288,19 @@ const styles = StyleSheet.create({
   parsedTitle: { fontSize: 14, fontWeight: '700', color: GREEN, marginBottom: 8 },
   parsedRow: { fontSize: 14, color: '#334155', paddingVertical: 3 },
   bold: { fontWeight: '800', color: '#0F172A' },
+  healthBadge: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, borderWidth: 1.5, padding: 12, marginTop: 14 },
+  healthGrade: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  healthGradeTxt: { color: '#fff', fontSize: 22, fontWeight: '900' },
+  healthVerdict: { fontSize: 16, fontWeight: '800' },
+  healthSub: { fontSize: 12, fontWeight: '600', marginTop: 1 },
+  objCard: { borderRadius: 16, padding: 16, marginTop: 14, borderWidth: 1.5 },
+  objHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  objEmoji: { fontSize: 26 },
+  objVerdict: { fontSize: 16, fontWeight: '800' },
+  objSub: { fontSize: 12.5, fontWeight: '600', marginTop: 1 },
+  objReasons: { marginTop: 10, gap: 3 },
+  objWhy: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 2 },
+  objReason: { fontSize: 13, fontWeight: '600', lineHeight: 19 },
   textCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginTop: 14 },
   textTitle: { fontSize: 13, fontWeight: '700', color: '#334155', marginBottom: 6 },
   rawText: { fontSize: 12, color: '#64748B', lineHeight: 18 },

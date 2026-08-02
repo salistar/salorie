@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowRight, Flame, Droplets, Activity } from 'lucide-react-native';
@@ -12,9 +12,17 @@ import ScreenTopBar from '../../components/ScreenTopBar';
 export default function WelcomeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { resolved } = useTheme();
-  const textColor = resolved === 'dark' ? '#fff' : Colors.light.gray[900];
-  const subTextColor = resolved === 'dark' ? '#aaa' : Colors.light.gray[500];
+  const { resolved, colors } = useTheme();
+  const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const textColor = isDark ? colors.gray[900] : Colors.light.gray[900];
+  const subTextColor = isDark ? colors.gray[500] : Colors.light.gray[500];
+  // FIX dark : les cartes « features » étaient figées en rgba(255,255,255,.85) alors
+  // que leur texte passe en blanc → blanc sur blanc, illisible sur le TOUT PREMIER
+  // écran de l'app. On dérive désormais surface/bordure/accent du thème.
+  const cardBg = isDark ? colors.card : 'rgba(255,255,255,0.85)';
+  const cardBorder = isDark ? colors.gray[200] : Colors.light.white;
+  const accent = isDark ? colors.primary : Colors.light.primary;
 
   const handleGetStarted = async () => {
     await AsyncStorage.setItem('welcome_seen', 'true');
@@ -35,7 +43,7 @@ export default function WelcomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View entering={FadeIn.duration(600)} style={styles.heroWrap}>
+        <Animated.View entering={FadeIn.duration(600)} style={[styles.heroWrap, { borderColor: cardBorder, shadowColor: accent }]}>
           <Image
             source={require('../../assets/images/illustrations/welcome.jpg')}
             style={styles.heroImage}
@@ -43,7 +51,7 @@ export default function WelcomeScreen() {
           />
         </Animated.View>
 
-        <Animated.Text entering={FadeIn.delay(100).duration(600)} style={[styles.brandName, { color: Colors.light.primary }]}>
+        <Animated.Text entering={FadeIn.delay(100).duration(600)} style={[styles.brandName, { color: accent }]}>
           Salorie
         </Animated.Text>
 
@@ -56,23 +64,23 @@ export default function WelcomeScreen() {
         </Animated.Text>
 
         <View style={styles.features}>
-          <Animated.View entering={FadeInDown.delay(400).duration(600)} style={styles.feature}>
-            <View style={[styles.featureIcon, { backgroundColor: '#FEF3E0' }]}>
+          <Animated.View entering={FadeInDown.delay(400).duration(600)} style={[styles.feature, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+            <View style={[styles.featureIcon, { backgroundColor: isDark ? 'rgba(245,158,11,0.18)' : '#FEF3E0' }]}>
               <Flame size={22} color="#f59e0b" />
             </View>
             <Text style={[styles.featureText, { color: textColor }]}>{t('welcome.feature_calories')}</Text>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(500).duration(600)} style={styles.feature}>
-            <View style={[styles.featureIcon, { backgroundColor: '#E0F2FE' }]}>
+          <Animated.View entering={FadeInDown.delay(500).duration(600)} style={[styles.feature, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+            <View style={[styles.featureIcon, { backgroundColor: isDark ? 'rgba(14,165,233,0.18)' : '#E0F2FE' }]}>
               <Droplets size={22} color="#0EA5E9" />
             </View>
             <Text style={[styles.featureText, { color: textColor }]}>{t('welcome.feature_water')}</Text>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(600).duration(600)} style={styles.feature}>
-            <View style={[styles.featureIcon, { backgroundColor: '#ebf5ee' }]}>
-              <Activity size={22} color={Colors.light.primary} />
+          <Animated.View entering={FadeInDown.delay(600).duration(600)} style={[styles.feature, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+            <View style={[styles.featureIcon, { backgroundColor: isDark ? 'rgba(74,222,128,0.18)' : '#ebf5ee' }]}>
+              <Activity size={22} color={accent} />
             </View>
             <Text style={[styles.featureText, { color: textColor }]}>{t('welcome.feature_activity')}</Text>
           </Animated.View>
@@ -80,14 +88,14 @@ export default function WelcomeScreen() {
       </ScrollView>
 
       <Animated.View entering={FadeInDown.delay(800).duration(600)} style={styles.bottomBar}>
-        <TouchableOpacity style={styles.primaryBtn} onPress={handleGetStarted} activeOpacity={0.85}>
+        <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: accent, shadowColor: accent }]} onPress={handleGetStarted} activeOpacity={0.85}>
           <Text style={styles.primaryBtnText}>{t('welcome.get_started')}</Text>
           <ArrowRight size={22} color="#fff" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.secondaryBtn} onPress={handleSignIn}>
           <Text style={[styles.secondaryBtnText, { color: subTextColor }]}>
-            {t('welcome.have_account')} <Text style={{ color: Colors.light.primary, fontWeight: '800' }}>{t('welcome.sign_in')}</Text>
+            {t('welcome.have_account')} <Text style={{ color: accent, fontWeight: '800' }}>{t('welcome.sign_in')}</Text>
           </Text>
         </TouchableOpacity>
       </Animated.View>
@@ -95,7 +103,9 @@ export default function WelcomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -113,8 +123,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 16,
     borderWidth: 4,
-    borderColor: Colors.light.white,
-    shadowColor: Colors.light.primary,
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.2,
     shadowRadius: 20,
@@ -149,6 +158,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   feature: {
+    borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
@@ -182,7 +192,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.primary,
     height: 56,
     borderRadius: 28,
-    shadowColor: Colors.light.primary,
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
     shadowRadius: 16,

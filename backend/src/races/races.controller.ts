@@ -44,12 +44,31 @@ export class RacesController {
 
   @Get(':id/leaderboard')
   @UseGuards(FirebaseAuthGuard)
-  board(@Param('id') id: string) { return this.svc.leaderboard(id); }
+  // Leaderboard PUBLIC entre coureurs authentifiés : on expose le classement
+  // (nom d'affichage + score + rang) SANS PII (pas d'email, pas d'uid Firebase).
+  async board(@Param('id') id: string) {
+    const rows: any[] = await this.svc.leaderboard(id);
+    // S-fix : ne JAMAIS exposer un email dans le classement public. Les anciens membres
+    // inscrits sans nom ont pu voir leur email stocké comme userName → on le masque.
+    const safeName = (raw: any) => {
+      const s = String(raw || '').trim();
+      return !s || s.includes('@') ? 'Coureur' : s;
+    };
+    return rows.map((p: any) => ({
+      name: safeName(p.userName),       // nom d'affichage (garde la forme mobile: `name`)
+      userName: safeName(p.userName),   // rétro-compat clients existants
+      cumulativeKm: p.cumulativeKm || 0,
+      rank: p.rank || 0,
+      finishedAt: p.finishedAt ?? null,
+      startedAt: p.startedAt ?? null,
+    }));
+  }
 
   @Post(':id/join')
   @UseGuards(FirebaseAuthGuard)
   join(@Param('id') id: string, @Req() req: any, @Body() b: any) {
-    return this.svc.join(id, req.user.uid, req.user.email || '', b?.userName || req.user.name || req.user.email || 'Coureur');
+    // S-fix : ne pas stocker l'email comme nom d'affichage public (fallback générique).
+    return this.svc.join(id, req.user.uid, req.user.email || '', b?.userName || req.user.name || 'Coureur');
   }
 
   @Post(':id/progress')

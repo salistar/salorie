@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,8 @@ export default function HomeHeader() {
   const { user } = useUser();
   const { t } = useTranslation();
   const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -82,7 +84,9 @@ export default function HomeHeader() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -105,22 +109,22 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 26,
     borderWidth: 2,
-    borderColor: Colors.light.primary,
+    borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
   },
   avatarFallback: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: Colors.light.primaryLight,
+    backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: Colors.light.primary,
+    borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
   },
   avatarInitials: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.light.primary,
+    color: isDark ? Colors.dark.primary : Colors.light.primary,
   },
   onlineDot: {
     position: 'absolute',
@@ -129,9 +133,9 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: Colors.light.success,
+    backgroundColor: isDark ? Colors.dark.success : Colors.light.success,
     borderWidth: 2.5,
-    borderColor: Colors.light.white,
+    borderColor: isDark ? Colors.dark.white : Colors.light.white,
   },
   textSection: {
     marginLeft: 14,
@@ -139,14 +143,14 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontSize: 14,
-    color: Colors.light.gray[500],
+    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
     fontWeight: '500',
     letterSpacing: -0.2,
   },
   userName: {
     fontSize: 19,
     fontWeight: '800',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     marginTop: 1,
     letterSpacing: -0.5,
   },
@@ -155,12 +159,12 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,
     borderWidth: 1,
-    borderColor: Colors.light.gray[100],
+    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
   },
   notificationDot: {
     position: 'absolute',
@@ -170,9 +174,9 @@ const styles = StyleSheet.create({
     height: 18,
     paddingHorizontal: 4,
     borderRadius: 9,
-    backgroundColor: Colors.light.error,
+    backgroundColor: isDark ? Colors.dark.error : Colors.light.error,
     borderWidth: 2,
-    borderColor: Colors.light.white,
+    borderColor: isDark ? Colors.dark.white : Colors.light.white,
     alignItems: 'center',
     justifyContent: 'center',
   },

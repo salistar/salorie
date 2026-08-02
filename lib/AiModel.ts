@@ -222,68 +222,6 @@ function buildOfflineMultilangInsight(logs: any[], periodLabel: string): Multila
   return { healthScore, en, fr, ar, source: 'computed' };
 }
 
-export const generateBentoInsights = async (
-  userProfile: Partial<UserProfile>,
-  logs: any[],
-  language: 'en' | 'fr' | 'ar' = 'en'
-): Promise<BentoInsight> => {
-  const model = genAI.getGenerativeModel({ model: MODEL_LITE });
-
-  const langLabel = language === 'fr' ? 'French' : language === 'ar' ? 'Arabic' : 'English';
-  const logsSummary = logs.map(l => `${l.date}: ${l.name} (${l.calories} kcal, ${l.type})`).join('\n');
-
-  const prompt = `
-    Analyze this user's nutritional and activity logs for the past 7 days:
-    User Goal: ${userProfile.goal}
-    Current Weight: ${userProfile.weight}kg
-
-    Logs:
-    ${logsSummary || "No logs yet."}
-
-    Generate a personalized "Bento Grid" analysis in JSON format.
-    Return ONLY the JSON object with these keys:
-    {
-      "summary": "Short 1-sentence weekly overlook",
-      "topFood": "The most frequent food item or category logged",
-      "hydrationStatus": "One word status (e.g. Excellent, Dehydrated, Good)",
-      "recommendation": "One actionable next step for the user (staying under 15 words)",
-      "healthScore": number (0-100 score based on consistency and goals)
-    }
-    IMPORTANT: All text fields (summary, topFood, hydrationStatus, recommendation) MUST be written in ${langLabel}.
-  `;
-
-  try {
-    console.log('\x1b[32m[API→Gemini] generateBentoInsights REQUEST\x1b[0m', {
-      model: 'gemini-2.5-flash',
-      language,
-      logsCount: logs.length,
-      promptChars: prompt.length,
-    });
-    const t0 = Date.now();
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-    console.log('\x1b[34m[API←Gemini] generateBentoInsights RESPONSE\x1b[0m', {
-      ms: Date.now() - t0,
-      chars: text.length,
-      preview: text.slice(0, 300),
-    });
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('Invalid AI response');
-    const parsed = JSON.parse(jsonMatch[0]);
-    console.log('\x1b[34m[API←Gemini] generateBentoInsights PARSED\x1b[0m', parsed);
-    return parsed;
-  } catch (error) {
-    console.error('\x1b[34m[API←Gemini] generateBentoInsights FAILED:\x1b[0m', error);
-    return {
-      summary: "Track more meals to get AI insights!",
-      topFood: "None yet",
-      hydrationStatus: "Unknown",
-      recommendation: "Log your first meal to start.",
-      healthScore: 0
-    };
-  }
-};
-
 // ───────────────────────── AI MEAL PLANNER ─────────────────────────
 export interface MealPlanMeal {
   type: string;        // Breakfast / Lunch / Dinner / Snack (localized)

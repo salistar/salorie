@@ -8,7 +8,7 @@ export default function OnboardingLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: isDark ? '#000' : '#F8FAFC' },
+        contentStyle: { backgroundColor: isDark ? '#0f1419' : '#F8FAFC' },
       }}
     />
   );

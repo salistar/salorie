@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { I18nManager } from 'react-native';
 
@@ -8,6 +8,30 @@ const LANG_KEY = 'app_language';
 
 const translations = {
   en: {
+    // LogModal — atteignable depuis le bouton + de chaque ecran.
+    'logmodal.title': 'Add Log',
+    'logmodal.logging_for': 'Logging for:',
+    'logmodal.meal': 'Meal',
+    'logmodal.exercise': 'Exercise',
+    'logmodal.water': 'Water',
+    'logmodal.water_amount': 'Water Amount (ml)',
+    'logmodal.water_ph': 'e.g. 250',
+    'logmodal.water_a11y': 'Water amount in millilitres',
+    'logmodal.name': 'Name',
+    'logmodal.meal_ph': 'e.g. Chicken Salad',
+    'logmodal.activity_ph': 'e.g. Running',
+    'logmodal.meal_name_a11y': 'Meal name',
+    'logmodal.activity_name_a11y': 'Activity name',
+    'logmodal.calories': 'Calories (kcal)',
+    'logmodal.calories_burned': 'Calories Burned (kcal)',
+    'logmodal.calories_a11y': 'Calories in kilocalories',
+    'logmodal.calories_burned_a11y': 'Calories burned in kilocalories',
+    'logmodal.macros': 'Macros (Optional)',
+    'logmodal.protein_a11y': 'Protein in grams',
+    'logmodal.carbs_a11y': 'Carbohydrates in grams',
+    'logmodal.fat_a11y': 'Fat in grams',
+    'logmodal.save': 'Save Entry',
+    'logmodal.saving': 'Saving...',
     'welcome.title': 'Track Smarter,\nLive Healthier',
     'welcome.subtitle': 'AI-powered calorie tracking with personalized nutrition plans just for you.',
     'welcome.feature_calories': 'Smart calorie tracking',
@@ -81,6 +105,21 @@ const translations = {
     'common.seed': 'Seed',
     'common.success': 'Success',
     'common.error': 'Error',
+
+    // Feature gating (feature flags) — disabled / premium screens.
+    'feature.disabled_title': 'Feature unavailable',
+    'feature.disabled_msg': 'This feature is temporarily disabled.',
+    'feature.premium_title': 'Premium feature',
+    'feature.premium_msg': 'Upgrade to Premium to unlock this feature.',
+    'feature.go_premium': 'Go Premium',
+    'feature.back': 'Back',
+
+    // Local MENA serving units (i18n #182) — English fallbacks for the FR/AR terms.
+    'units.glass_tea': 'Glass of tea',
+    'units.khobz': 'Bread (khobz)',
+    'units.tajine': 'Tajine',
+    'units.harira_bowl': 'Bowl of harira',
+    'units.dates_piece': 'Date',
 
     'prefs.title': 'Preferences',
     'prefs.appearance': 'Appearance',
@@ -192,6 +231,16 @@ const translations = {
     'scan.protein_short': 'Protein',
     'scan.carbs_short': 'Carbs',
     'scan.fat_short': 'Fat',
+    'scan.objective_great': 'Ideal for your goal',
+    'scan.objective_ok': 'OK in moderation',
+    'scan.objective_avoid': 'Avoid for your goal',
+    'scan.objective_why': 'Why',
+    'scan.correct_prompt': 'Not this? Correct it',
+    'scan.correct_placeholder': 'Correct food name',
+    'scan.correct_send': 'Send',
+    'scan.correct_cancel': 'Cancel',
+    'scan.correct_thanks': 'Thanks, this will improve recognition',
+    'scan.correct_error': 'Could not send. Please try again.',
 
     // Action Menu (+)
     'menu.log_exercise': 'Log Exercise',
@@ -449,8 +498,45 @@ const translations = {
     'health.no_data': 'No data for today yet. Move around, then refresh.',
     'health.connected': 'Connected ✓',
     'health.logged': 'Added to today ✓',
+
+    // Medical / health conditions (feeds the objective scoring engine)
+    'health_cond.section': 'Health conditions',
+    'health_cond.desc': 'Tailors food scoring to your medical needs.',
+    'health_cond.disclaimer': 'Dietary guidance, not medical advice — always consult your doctor.',
+    'health_cond.diabetes': 'Diabetes',
+    'health_cond.hypertension': 'Hypertension',
+    'health_cond.high_cholesterol': 'Cholesterol',
+    'health_cond.celiac': 'Celiac',
+    'health_cond.kidney': 'Kidney',
+    'health_cond.gout': 'Gout',
+    'health_cond.ibs': 'IBS / FODMAP',
+    'health_cond.pregnancy': 'Pregnancy',
   },
   fr: {
+    // LogModal — atteignable depuis le bouton + de chaque ecran.
+    'logmodal.title': 'Ajouter une entrée',
+    'logmodal.logging_for': 'Journée du',
+    'logmodal.meal': 'Repas',
+    'logmodal.exercise': 'Exercice',
+    'logmodal.water': 'Eau',
+    'logmodal.water_amount': "Quantité d'eau (ml)",
+    'logmodal.water_ph': 'ex. 250',
+    'logmodal.water_a11y': "Quantité d'eau en millilitres",
+    'logmodal.name': 'Nom',
+    'logmodal.meal_ph': 'ex. Salade de poulet',
+    'logmodal.activity_ph': 'ex. Course à pied',
+    'logmodal.meal_name_a11y': 'Nom du repas',
+    'logmodal.activity_name_a11y': "Nom de l'activité",
+    'logmodal.calories': 'Calories (kcal)',
+    'logmodal.calories_burned': 'Calories brûlées (kcal)',
+    'logmodal.calories_a11y': 'Calories en kilocalories',
+    'logmodal.calories_burned_a11y': 'Calories brûlées en kilocalories',
+    'logmodal.macros': 'Macros (facultatif)',
+    'logmodal.protein_a11y': 'Protéines en grammes',
+    'logmodal.carbs_a11y': 'Glucides en grammes',
+    'logmodal.fat_a11y': 'Lipides en grammes',
+    'logmodal.save': 'Enregistrer',
+    'logmodal.saving': 'Enregistrement…',
     'welcome.title': 'Suivez mieux,\nVivez mieux',
     'welcome.subtitle': 'Suivi calorique avec IA et plans nutritionnels personnalisés.',
     'welcome.feature_calories': 'Suivi intelligent des calories',
@@ -524,6 +610,21 @@ const translations = {
     'common.seed': 'Ajouter',
     'common.success': 'Succès',
     'common.error': 'Erreur',
+
+    // Gating de fonctionnalité (feature flags) — écrans désactivé / premium.
+    'feature.disabled_title': 'Fonctionnalité indisponible',
+    'feature.disabled_msg': 'Cette fonctionnalité est temporairement désactivée.',
+    'feature.premium_title': 'Fonctionnalité Premium',
+    'feature.premium_msg': 'Passez Premium pour débloquer cette fonctionnalité.',
+    'feature.go_premium': 'Passer Premium',
+    'feature.back': 'Retour',
+
+    // Unités de portion locales MENA (i18n #182)
+    'units.glass_tea': 'Verre de thé',
+    'units.khobz': 'Khobz (pain)',
+    'units.tajine': 'Tajine',
+    'units.harira_bowl': 'Bol de harira',
+    'units.dates_piece': 'Datte',
 
     'prefs.title': 'Préférences',
     'prefs.appearance': 'Apparence',
@@ -635,6 +736,16 @@ const translations = {
     'scan.protein_short': 'Protéines',
     'scan.carbs_short': 'Glucides',
     'scan.fat_short': 'Lipides',
+    'scan.objective_great': 'Idéal pour ton objectif',
+    'scan.objective_ok': 'OK avec modération',
+    'scan.objective_avoid': 'À éviter pour ton objectif',
+    'scan.objective_why': 'Pourquoi',
+    'scan.correct_prompt': 'Pas ça ? Corriger',
+    'scan.correct_placeholder': 'Nom correct de l\'aliment',
+    'scan.correct_send': 'Envoyer',
+    'scan.correct_cancel': 'Annuler',
+    'scan.correct_thanks': 'Merci, ça améliorera la reco',
+    'scan.correct_error': 'Envoi impossible. Réessaie.',
 
     // Action Menu (+)
     'menu.log_exercise': 'Ajouter un exercice',
@@ -892,8 +1003,45 @@ const translations = {
     'health.no_data': "Pas encore de données aujourd'hui. Bouge, puis actualise.",
     'health.connected': 'Connecté ✓',
     'health.logged': 'Ajouté à aujourd\'hui ✓',
+
+    // Conditions médicales (alimentent le moteur de scoring objectif)
+    'health_cond.section': 'Conditions médicales',
+    'health_cond.desc': 'Adapte la notation des aliments à tes besoins médicaux.',
+    'health_cond.disclaimer': 'Guidance diététique, pas un avis médical — consulte toujours ton médecin.',
+    'health_cond.diabetes': 'Diabète',
+    'health_cond.hypertension': 'Hypertension',
+    'health_cond.high_cholesterol': 'Cholestérol',
+    'health_cond.celiac': 'Cœliaque',
+    'health_cond.kidney': 'Rénal',
+    'health_cond.gout': 'Goutte',
+    'health_cond.ibs': 'SII / FODMAP',
+    'health_cond.pregnancy': 'Grossesse',
   },
   ar: {
+    // LogModal — atteignable depuis le bouton + de chaque ecran.
+    'logmodal.title': 'إضافة سجل',
+    'logmodal.logging_for': 'تسجيل ليوم',
+    'logmodal.meal': 'وجبة',
+    'logmodal.exercise': 'تمرين',
+    'logmodal.water': 'ماء',
+    'logmodal.water_amount': 'كمية الماء (مل)',
+    'logmodal.water_ph': 'مثال 250',
+    'logmodal.water_a11y': 'كمية الماء بالمليلتر',
+    'logmodal.name': 'الاسم',
+    'logmodal.meal_ph': 'مثال: سلطة دجاج',
+    'logmodal.activity_ph': 'مثال: الجري',
+    'logmodal.meal_name_a11y': 'اسم الوجبة',
+    'logmodal.activity_name_a11y': 'اسم النشاط',
+    'logmodal.calories': 'السعرات (كيلوكالوري)',
+    'logmodal.calories_burned': 'السعرات المحروقة (كيلوكالوري)',
+    'logmodal.calories_a11y': 'السعرات بالكيلوكالوري',
+    'logmodal.calories_burned_a11y': 'السعرات المحروقة بالكيلوكالوري',
+    'logmodal.macros': 'الماكروز (اختياري)',
+    'logmodal.protein_a11y': 'البروتين بالغرام',
+    'logmodal.carbs_a11y': 'الكربوهيدرات بالغرام',
+    'logmodal.fat_a11y': 'الدهون بالغرام',
+    'logmodal.save': 'حفظ',
+    'logmodal.saving': 'جارٍ الحفظ…',
     'welcome.title': 'تتبع بذكاء،\nعيش بصحة',
     'welcome.subtitle': 'تتبع السعرات بالذكاء الاصطناعي وخطط غذائية مخصصة لك.',
     'welcome.feature_calories': 'تتبع ذكي للسعرات',
@@ -967,6 +1115,21 @@ const translations = {
     'common.seed': 'إضافة',
     'common.success': 'نجاح',
     'common.error': 'خطأ',
+
+    // بوابة الميزات (أعلام الميزات) — شاشات معطّلة / بريميوم.
+    'feature.disabled_title': 'الميزة غير متاحة',
+    'feature.disabled_msg': 'هذه الميزة معطّلة مؤقتًا.',
+    'feature.premium_title': 'ميزة بريميوم',
+    'feature.premium_msg': 'قم بالترقية إلى بريميوم لفتح هذه الميزة.',
+    'feature.go_premium': 'الاشتراك في بريميوم',
+    'feature.back': 'رجوع',
+
+    // وحدات الحصص المحلية لمنطقة الشرق الأوسط وشمال أفريقيا (i18n #182)
+    'units.glass_tea': 'كأس شاي',
+    'units.khobz': 'خبز',
+    'units.tajine': 'طاجين',
+    'units.harira_bowl': 'وعاء حريرة',
+    'units.dates_piece': 'تمرة',
 
     'prefs.title': 'التفضيلات',
     'prefs.appearance': 'المظهر',
@@ -1078,6 +1241,16 @@ const translations = {
     'scan.protein_short': 'بروتين',
     'scan.carbs_short': 'كربوهيدرات',
     'scan.fat_short': 'دهون',
+    'scan.objective_great': 'مثالي لهدفك',
+    'scan.objective_ok': 'لا بأس باعتدال',
+    'scan.objective_avoid': 'تجنّبه لهدفك',
+    'scan.objective_why': 'السبب',
+    'scan.correct_prompt': 'ليس هذا؟ صحّحه',
+    'scan.correct_placeholder': 'الاسم الصحيح للطعام',
+    'scan.correct_send': 'إرسال',
+    'scan.correct_cancel': 'إلغاء',
+    'scan.correct_thanks': 'شكرًا، هذا سيحسّن التعرّف',
+    'scan.correct_error': 'تعذّر الإرسال. حاول مجددًا.',
 
     // Action Menu
     'menu.log_exercise': 'تسجيل تمرين',
@@ -1335,6 +1508,19 @@ const translations = {
     'health.no_data': 'لا بيانات لليوم بعد. تحرّك ثم حدّث.',
     'health.connected': 'متصل ✓',
     'health.logged': 'أُضيف إلى اليوم ✓',
+
+    // الحالات الصحية (تغذّي محرّك تقييم الأطعمة)
+    'health_cond.section': 'الحالات الصحية',
+    'health_cond.desc': 'يُكيّف تقييم الأطعمة حسب احتياجاتك الطبية.',
+    'health_cond.disclaimer': 'إرشاد غذائي وليس نصيحة طبية — استشر طبيبك دائمًا.',
+    'health_cond.diabetes': 'السكري',
+    'health_cond.hypertension': 'ارتفاع ضغط الدم',
+    'health_cond.high_cholesterol': 'الكوليسترول',
+    'health_cond.celiac': 'الداء البطني',
+    'health_cond.kidney': 'الكلى',
+    'health_cond.gout': 'النقرس',
+    'health_cond.ibs': 'القولون العصبي / فودماب',
+    'health_cond.pregnancy': 'الحمل',
   },
 } as const;
 
@@ -1349,6 +1535,33 @@ interface I18nContextType {
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
+// PERF #22: t() is a purely-local dictionary lookup (no network / async
+// translation), so we memoize resolved strings in-memory per language instead
+// of hitting AsyncStorage. Cache-first read; best-effort write guarded so a
+// caching failure can never break a lookup. Keys are stable and finite, so the
+// map cannot grow unbounded.
+const translationMemo: Record<Language, Map<string, string>> = {
+  en: new Map(),
+  fr: new Map(),
+  ar: new Map(),
+};
+
+function resolveTranslation(language: Language, key: string): string {
+  const cache = translationMemo[language];
+  // Cache-first read.
+  try {
+    const hit = cache?.get(key);
+    if (hit !== undefined) return hit;
+  } catch {}
+  const value =
+    (translations[language] as any)?.[key] ||
+    (translations.en as any)?.[key] ||
+    key;
+  // Best-effort write — never let a cache write throw into the caller.
+  try { cache?.set(key, value); } catch {}
+  return value;
+}
+
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('en');
 
@@ -1361,21 +1574,31 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       .catch(() => {});
   }, []);
 
-  const setLanguage = async (lang: Language) => {
+  const setLanguage = useCallback(async (lang: Language) => {
     // Direction is applied REACTIVELY via the `direction` style at the app root
     // (see app/_layout.tsx) — switching language flips the layout instantly,
     // with NO app restart. We deliberately do NOT call I18nManager.forceRTL
     // (which would require a reload).
     setLanguageState(lang);
     try { await AsyncStorage.setItem(LANG_KEY, lang); } catch {}
-  };
+  }, []);
 
-  const t = (key: TranslationKey): string => {
-    return (translations[language] as any)[key] || (translations.en as any)[key] || key;
-  };
+  // FIX cascade re-renders : la value du Provider était un OBJET INLINE recréé à chaque
+  // render → TOUS les consommateurs de useTranslation() (des dizaines de composants, dont
+  // le layout racine) re-rendaient à chaque tick du provider, amplifiant les transitions
+  // jusqu'à "Maximum update depth". Mémoïsée : ne change QUE quand la langue change.
+  const value = useMemo(
+    () => ({
+      language,
+      t: (key: TranslationKey): string => resolveTranslation(language, key),
+      setLanguage,
+      isRTL: language === 'ar',
+    }),
+    [language, setLanguage]
+  );
 
   return (
-    <I18nContext.Provider value={{ language, t, setLanguage, isRTL: language === 'ar' }}>
+    <I18nContext.Provider value={value}>
       {children}
     </I18nContext.Provider>
   );

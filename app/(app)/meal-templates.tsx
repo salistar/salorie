@@ -10,6 +10,9 @@ import { logEntry, getEntries, todayStr } from '../../lib/tracking';
 import { addNutritionLog } from '../../lib/firebase';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
+import { rowDir, txtAlign } from '../../lib/rtl';
+import { SkeletonCard } from '../../components/ui';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const GREEN = '#2E8B57';
 const F = [{ k: 'calories', l: 'Calories', u: 'kcal' }, { k: 'protein', l: 'Prot.', u: 'g' }, { k: 'carbs', l: 'Gluc.', u: 'g' }, { k: 'fat', l: 'Lip.', u: 'g' }];
@@ -21,15 +24,17 @@ const TXT: any = {
 };
 
 export default function MealTemplatesScreen() {
+  const __gate = useScreenGate('meal-templates');
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  const accent = isDark ? '#4ade80' : GREEN;
+  const bg = isDark ? '#0f1419' : '#F4F7F9';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0F172A';
   const sub = isDark ? '#94a3b8' : '#64748B';
-  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+  const align: any = { textAlign: txtAlign(isRTL) };
 
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || '';
@@ -60,12 +65,14 @@ export default function MealTemplatesScreen() {
     } catch { Alert.alert(t.errTitle, t.errMsg); }
   };
 
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <Image source={require('../../assets/images/illustrations/welcome.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
-        <View style={styles.head}><BookmarkPlus size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}><BookmarkPlus size={24} color={accent} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <Image source={require('../../assets/images/illustrations/welcome.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginTop: 10, marginBottom: 14 }} resizeMode="cover" />
         <PhotoStrip category="food" />
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
@@ -81,19 +88,19 @@ export default function MealTemplatesScreen() {
               onChange={(v2: string) => setVals((v) => ({ ...v, [f.k]: v2 }))}
             />
           ))}
-          <TouchableOpacity style={styles.addBtn} onPress={create} disabled={busy}>
+          <TouchableOpacity style={[styles.addBtn, { backgroundColor: accent }]} onPress={create} disabled={busy}>
             {busy ? <ActivityIndicator color="#fff" /> : <><Plus size={18} color="#fff" /><Text style={styles.addTxt}>{t.createBtn}</Text></>}
           </TouchableOpacity>
         </FormCard>
 
-        <Text style={[styles.label, { color: sub }]}>{t.myTemplates}</Text>
-        {loading ? <ActivityIndicator color={GREEN} /> : tpls.length === 0 ? <Text style={[styles.empty, { color: sub }]}>{t.empty}</Text> : tpls.map((tp) => (
-          <TouchableOpacity key={tp.id} style={[styles.tpl, { backgroundColor: card }]} onPress={() => quickLog(tp)} activeOpacity={0.85}>
+        <Text style={[styles.label, { color: sub }, align]}>{t.myTemplates}</Text>
+        {loading ? [0, 1, 2].map((i) => <SkeletonCard key={i} />) : tpls.length === 0 ? <Text style={[styles.empty, { color: sub }, align]}>{t.empty}</Text> : tpls.map((tp) => (
+          <TouchableOpacity key={tp.id} style={[styles.tpl, { backgroundColor: card, flexDirection: rowDir(isRTL) }]} onPress={() => quickLog(tp)} activeOpacity={0.85}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.tplName, { color: text }]}>{tp.name}</Text>
-              <Text style={[styles.tplMacro, { color: sub }]}>{Math.round(tp.calories || 0)} kcal · {Math.round(tp.protein || 0)}{t.p}/{Math.round(tp.carbs || 0)}{t.c}/{Math.round(tp.fat || 0)}{t.f}</Text>
+              <Text style={[styles.tplName, { color: text }, align]}>{tp.name}</Text>
+              <Text style={[styles.tplMacro, { color: sub }, align]}>{Math.round(tp.calories || 0)} kcal · {Math.round(tp.protein || 0)}{t.p}/{Math.round(tp.carbs || 0)}{t.c}/{Math.round(tp.fat || 0)}{t.f}</Text>
             </View>
-            <View style={styles.logChip}><Check size={16} color="#fff" /><Text style={styles.logChipTxt}>{t.logBtn}</Text></View>
+            <View style={[styles.logChip, { backgroundColor: accent, flexDirection: rowDir(isRTL) }]}><Check size={16} color="#fff" /><Text style={styles.logChipTxt}>{t.logBtn}</Text></View>
           </TouchableOpacity>
         ))}
       </ScrollView>

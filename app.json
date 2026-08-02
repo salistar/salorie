@@ -12,6 +12,12 @@
     "ios": {
       "supportsTablet": true
     },
+    "assetBundlePatterns": [
+      "assets/images/**/*",
+      "assets/challenges/**/*",
+      "assets/data/**/*",
+      "assets/models/**/*"
+    ],
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#298f50",
@@ -20,6 +26,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "package": "com.idriss.kriouile.salorie",
+      "blockedPermissions": ["android.permission.SYSTEM_ALERT_WINDOW"],
       "permissions": [
         "android.permission.health.READ_STEPS",
         "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
@@ -81,7 +88,7 @@
     ],
     "experiments": {
       "typedRoutes": true,
-      "reactCompiler": true
+      "reactCompiler": false
     },
     "extra": {
       "router": {},

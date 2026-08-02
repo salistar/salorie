@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useState, ReactNode } from 'react';
 
 interface LoggingContextType {
   isLogModalVisible: boolean;
@@ -35,34 +35,43 @@ export function LoggingProvider({ children }: { children: ReactNode }) {
   });
   const [scanImageBase64, setScanImageBase64] = useState<string | null>(null);
 
-  const showLogModal = (type: 'meal' | 'activity' | 'water' = 'meal') => {
+  const showLogModal = useCallback((type: 'meal' | 'activity' | 'water' = 'meal') => {
     setInitialLogType(type);
     setIsLogModalVisible(true);
     setIsActionMenuVisible(false); // Hide menu when modal opens
-  };
-  const hideLogModal = () => setIsLogModalVisible(false);
-  
-  const showActionMenu = () => setIsActionMenuVisible(true);
-  const hideActionMenu = () => setIsActionMenuVisible(false);
+  }, []);
+  const hideLogModal = useCallback(() => setIsLogModalVisible(false), []);
 
-  const triggerRefresh = () => setRefreshCount(prev => prev + 1);
+  const showActionMenu = useCallback(() => setIsActionMenuVisible(true), []);
+  const hideActionMenu = useCallback(() => setIsActionMenuVisible(false), []);
 
-  return (
-    <LoggingContext.Provider value={{ 
-      isLogModalVisible, 
+  const triggerRefresh = useCallback(() => setRefreshCount(prev => prev + 1), []);
+
+  // FIX cascade re-renders : value inline recréée à chaque render → tous les consommateurs
+  // (ActionMenu/LogModal montés GLOBALEMENT + de nombreux écrans) re-rendaient en cascade.
+  // Mémoïsée : ne change que quand un état du contexte change réellement.
+  const value = useMemo(
+    () => ({
+      isLogModalVisible,
       initialLogType,
-      showLogModal, 
-      hideLogModal, 
+      showLogModal,
+      hideLogModal,
       isActionMenuVisible,
       showActionMenu,
       hideActionMenu,
-      triggerRefresh, 
+      triggerRefresh,
       refreshCount,
       selectedDate,
       setSelectedDate,
       scanImageBase64,
-      setScanImageBase64
-    }}>
+      setScanImageBase64,
+    }),
+    [isLogModalVisible, initialLogType, showLogModal, hideLogModal, isActionMenuVisible,
+     showActionMenu, hideActionMenu, triggerRefresh, refreshCount, selectedDate, scanImageBase64]
+  );
+
+  return (
+    <LoggingContext.Provider value={value}>
       {children}
     </LoggingContext.Provider>
   );

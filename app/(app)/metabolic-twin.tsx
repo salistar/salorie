@@ -4,12 +4,14 @@ import { Image, View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollVi
 import { useUser } from '@clerk/clerk-expo';
 import { Minus, Plus, TrendingDown, Flag } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { useScreenGate } from '../../components/FeatureGate';
+import ScreenTitle from '../../components/ui/ScreenTitle';
+import { spacing, type } from '../../constants/theme';
 import { getUserFromFirestore } from '../../lib/firebase';
 import { ProfileLite, estimateTDEE, projectWeight, weeklyRate, weeksToGoal } from '../../lib/projections';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
-
-const GREEN = '#2E8B57';
+import { rowDir, txtAlign } from '../../lib/rtl';
 
 const TXT: any = {
   en: {
@@ -26,6 +28,8 @@ const TXT: any = {
     fProjBody: 'Future weight = current weight + ((intake − TDEE) × days) ÷ 7700',
     fPlug: 'With your numbers',
     fRate: 'Weekly rate = (intake − TDEE) × 7 ÷ 7700',
+    kcalDay: 'kcal/day',
+    disclaimer: 'Estimate for guidance only — not a medical diagnosis.',
   },
   fr: {
     title: 'Jumeau métabolique', sub1: "Simule l'effet de ton alimentation sur ton poids (estimation, TDEE ≈ ", sub2: ' kcal).', ifIEat: 'Si je mange chaque jour…', heroLabel: 'Poids estimé dans 30 jours', perWeek: 'kg/sem', d7: '7 jours', d30: '30 jours', d90: '90 jours', goal: 'Objectif', notSet: '(non défini)', etaA: '≈ ', etaB: ' semaines à ce rythme (~', etaC: ' mois)', etaEmpty: 'Définis un objectif de poids et un déficit/surplus pour estimer la date.',
@@ -41,6 +45,8 @@ const TXT: any = {
     fProjBody: 'Poids futur = poids actuel + ((apport − TDEE) × jours) ÷ 7700',
     fPlug: 'Avec tes chiffres',
     fRate: 'Rythme hebdo = (apport − TDEE) × 7 ÷ 7700',
+    kcalDay: 'kcal/jour',
+    disclaimer: 'Estimation à titre indicatif — pas un diagnostic médical.',
   },
   ar: {
     title: 'التوأم الأيضي', sub1: 'حاكِ تأثير غذائك على وزنك (تقدير، TDEE ≈ ', sub2: ' سعرة).', ifIEat: 'إذا أكلت كل يوم…', heroLabel: 'الوزن المقدَّر بعد 30 يوماً', perWeek: 'كغ/أسبوع', d7: '7 أيام', d30: '30 يوماً', d90: '90 يوماً', goal: 'الهدف', notSet: '(غير محدد)', etaA: '≈ ', etaB: ' أسبوعاً بهذا الإيقاع (~', etaC: ' أشهر)', etaEmpty: 'حدد هدف وزن وعجزاً/فائضاً لتقدير الموعد.',
@@ -56,19 +62,25 @@ const TXT: any = {
     fProjBody: 'الوزن المستقبلي = الوزن الحالي + ((الاستهلاك − TDEE) × الأيام) ÷ 7700',
     fPlug: 'بأرقامك',
     fRate: 'المعدل الأسبوعي = (الاستهلاك − TDEE) × 7 ÷ 7700',
+    kcalDay: 'سعرة/يوم',
+    disclaimer: 'تقدير لأغراض إرشادية فقط — ليس تشخيصاً طبياً.',
   },
 };
 
 export default function MetabolicTwinScreen() {
-  const { resolved } = useTheme();
+  const __gate = useScreenGate('metabolic-twin');
+  const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  const GREEN = colors.primary;
+  const bg = isDark ? '#0f1419' : '#F4F7F9';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0F172A';
   const sub = isDark ? '#94a3b8' : '#64748B';
-  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+  const align: any = { textAlign: txtAlign(isRTL) };
+  const cardBorder = isDark ? { borderWidth: 1, borderColor: '#283241' } : null;
+  const shadow = isDark ? { shadowColor: 'transparent', elevation: 0 } : null;
 
   const { user } = useUser();
   const [p, setP] = useState<ProfileLite | null>(null);
@@ -105,34 +117,37 @@ export default function MetabolicTwinScreen() {
   const eta = weeksToGoal({ ...p, dailyCalories: intake });
   const rate = weeklyRate({ ...p, dailyCalories: intake });
 
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
         <Image source={require('../../assets/images/illustrations/scale.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
-        <View style={styles.head}><TrendingDown size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
-        <Text style={[styles.sub, { color: sub }, align]}>{t.sub1}{tdee}{t.sub2}</Text>
+        <View style={{ marginHorizontal: -spacing.xl }}>
+          <ScreenTitle title={t.title} icon={<TrendingDown size={24} color={GREEN} />} subtitle={`${t.sub1}${tdee}${t.sub2}`} />
+        </View>
 
         <Text style={[styles.label, { color: sub }, align]}>{t.ifIEat}</Text>
-        <View style={styles.stepper}>
+        <View style={[styles.stepper, { flexDirection: rowDir(isRTL) }]}>
           <TouchableOpacity style={[styles.stepBtn, isDark && { backgroundColor: '#1e3a2f' }]} onPress={() => setIntake((v) => Math.max(800, v - 100))}><Minus size={22} color={GREEN} /></TouchableOpacity>
           <View style={styles.intakeWrap}><Text style={[styles.intake, { color: text }]}>{intake}</Text><Text style={[styles.unit, { color: sub }]}>kcal</Text></View>
           <TouchableOpacity style={[styles.stepBtn, isDark && { backgroundColor: '#1e3a2f' }]} onPress={() => setIntake((v) => Math.min(5000, v + 100))}><Plus size={22} color={GREEN} /></TouchableOpacity>
         </View>
 
-        <View style={styles.hero}>
+        <View style={[styles.hero, { backgroundColor: GREEN }]}>
           <Text style={styles.heroLabel}>{t.heroLabel}</Text>
           <Text style={styles.heroValue}>{w30}<Text style={styles.heroUnit}> kg</Text></Text>
-          <Text style={[styles.heroDelta, { color: delta30 <= 0 ? GREEN : '#E11D48' }]}>{delta30 > 0 ? '+' : ''}{delta30} kg · {rate > 0 ? '+' : ''}{rate} {t.perWeek}</Text>
+          <Text style={[styles.heroDelta, { color: delta30 <= 0 ? '#fff' : '#FECDD3' }]}>{delta30 > 0 ? '+' : ''}{delta30} kg · {rate > 0 ? '+' : ''}{rate} {t.perWeek}</Text>
         </View>
 
-        <View style={styles.row}>
-          <View style={[styles.cell, { backgroundColor: card }]}><Text style={[styles.cellV, { color: text }]}>{w7} kg</Text><Text style={[styles.cellL, { color: sub }]}>{t.d7}</Text></View>
-          <View style={[styles.cell, { backgroundColor: card }]}><Text style={[styles.cellV, { color: text }]}>{w30} kg</Text><Text style={[styles.cellL, { color: sub }]}>{t.d30}</Text></View>
-          <View style={[styles.cell, { backgroundColor: card }]}><Text style={[styles.cellV, { color: text }]}>{w90} kg</Text><Text style={[styles.cellL, { color: sub }]}>{t.d90}</Text></View>
+        <View style={[styles.row, { flexDirection: rowDir(isRTL) }]}>
+          <View style={[styles.cell, { backgroundColor: card }, cardBorder, shadow]}><Text style={[styles.cellV, { color: text }]}>{w7} kg</Text><Text style={[styles.cellL, { color: sub }]}>{t.d7}</Text></View>
+          <View style={[styles.cell, { backgroundColor: card }, cardBorder, shadow]}><Text style={[styles.cellV, { color: text }]}>{w30} kg</Text><Text style={[styles.cellL, { color: sub }]}>{t.d30}</Text></View>
+          <View style={[styles.cell, { backgroundColor: card }, cardBorder, shadow]}><Text style={[styles.cellV, { color: text }]}>{w90} kg</Text><Text style={[styles.cellL, { color: sub }]}>{t.d90}</Text></View>
         </View>
 
-        <View style={[styles.etaCard, { backgroundColor: card }]}>
+        <View style={[styles.etaCard, { backgroundColor: card }, cardBorder, shadow, { flexDirection: rowDir(isRTL) }]}>
           <Flag size={20} color={GREEN} />
           <View style={{ flex: 1 }}>
             <Text style={[styles.etaTitle, { color: text }, align]}>{t.goal} {p.targetWeight ? `${p.targetWeight} kg` : t.notSet}</Text>
@@ -140,7 +155,7 @@ export default function MetabolicTwinScreen() {
           </View>
         </View>
 
-        <View style={[styles.howCard, { backgroundColor: card }]}>
+        <View style={[styles.howCard, { backgroundColor: card }, cardBorder, shadow]}>
           <Text style={[styles.howTitle, { color: GREEN }, align]}>{t.howTitle}</Text>
           <Text style={[styles.howBody, { color: sub }, align]}>{t.howBody1}</Text>
 
@@ -150,7 +165,7 @@ export default function MetabolicTwinScreen() {
           <View style={[styles.mathBox, { backgroundColor: GREEN + '14' }]}>
             <Text style={[styles.mathLabel, { color: GREEN }, align]}>{t.fTdee}</Text>
             <Text style={[styles.mathBody, { color: text }, align]}>{t.fTdeeBody}</Text>
-            <Text style={[styles.mathFormula, { color: text }, align]}>TDEE ≈ {p.weight} kg × 31 = {tdee} kcal/day</Text>
+            <Text style={[styles.mathFormula, { color: text }, align]}>TDEE ≈ {p.weight} kg × 31 = {tdee} {t.kcalDay}</Text>
 
             <View style={[styles.mathSep, { backgroundColor: isDark ? '#334155' : '#D7E8DD' }]} />
             <Text style={[styles.mathLabel, { color: GREEN }, align]}>{t.fEnergy}</Text>
@@ -166,6 +181,8 @@ export default function MetabolicTwinScreen() {
             <Text style={[styles.mathFormula, { color: text }, align]}>({intake} − {tdee}) × 7 ÷ 7700 = {rate} {t.perWeek}</Text>
           </View>
         </View>
+
+        <Text style={[styles.disclaimer, { color: sub }]}>{t.disclaimer}</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -184,7 +201,7 @@ const styles = StyleSheet.create({
   intakeWrap: { alignItems: 'center' },
   intake: { fontSize: 40, fontWeight: '900', color: '#0F172A', letterSpacing: -1 },
   unit: { fontSize: 13, color: '#94A3B8', fontWeight: '700' },
-  hero: { backgroundColor: GREEN, borderRadius: 24, padding: 24, alignItems: 'center', marginBottom: 16 },
+  hero: { borderRadius: 24, padding: 24, alignItems: 'center', marginBottom: 16 },
   heroLabel: { color: '#E7F5EC', fontSize: 13, fontWeight: '600' },
   heroValue: { color: '#fff', fontSize: 48, fontWeight: '900', letterSpacing: -2, marginTop: 4 },
   heroUnit: { fontSize: 20, fontWeight: '700' },
@@ -205,4 +222,5 @@ const styles = StyleSheet.create({
   mathBody: { fontSize: 13, lineHeight: 19, marginBottom: 4 },
   mathFormula: { fontSize: 13, fontWeight: '800', lineHeight: 19, marginBottom: 2 },
   mathSep: { height: 1, marginVertical: 12 },
+  disclaimer: { ...type.micro, textAlign: 'center', marginTop: spacing.lg, lineHeight: 18 },
 });

@@ -8,6 +8,7 @@ import { FormCard, Stepper, SubmitBar } from '../../components/FormKit';
 import { logEntry, getEntries } from '../../lib/tracking';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const GREEN = '#2E8B57';
 const FIELDS = [
@@ -42,12 +43,16 @@ const TXT: any = {
 };
 
 export default function BodyMeasurementsScreen() {
+  const __gate = useScreenGate('body-measurements');
   const { user } = useUser();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
+  const bg = isDark ? '#0f1419' : '#F4F7F9';
   const text = isDark ? '#f1f5f9' : '#0F172A';
   const sub = isDark ? '#94a3b8' : '#64748B';
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
@@ -73,11 +78,13 @@ export default function BodyMeasurementsScreen() {
     setVals({}); await load(); setSaving(false);
   };
 
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <View style={styles.head}><Ruler size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <View style={styles.head}><Ruler size={24} color={accent} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
         <FormCard>
           {FIELDS.map((f) => (
@@ -93,7 +100,7 @@ export default function BodyMeasurementsScreen() {
             />
           ))}
         </FormCard>
-        {loading ? <ActivityIndicator color={GREEN} style={{ marginTop: 20 }} /> : last && (
+        {loading ? <ActivityIndicator color={accent} style={{ marginTop: 20 }} /> : last && (
           <Text style={[styles.lastNote, { color: sub }, align]}>{t.lastEntry} ({last.date}) : {FIELDS.filter((f) => last[f.key] != null).map((f) => `${t[f.key]} ${last[f.key]}cm`).join(' · ') || '—'}</Text>
         )}
       </ScrollView>

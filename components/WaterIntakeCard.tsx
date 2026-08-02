@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Pencil } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
@@ -26,6 +26,7 @@ export default function WaterIntakeCard({
   const { t } = useTranslation();
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const cardBg = isDark ? '#161C23' : Colors.light.white;
   const titleColor = isDark ? '#f1f5f9' : Colors.light.gray[900];
   const borderColor = isDark ? 'rgba(255,255,255,0.08)' : Colors.light.gray[50];
@@ -64,7 +65,7 @@ export default function WaterIntakeCard({
       <View style={styles.header}>
         <Text style={[styles.title, { color: titleColor }]}>{t('home.water')}</Text>
         <TouchableOpacity style={styles.editBtn} activeOpacity={0.6} onPress={onEditPress}>
-          <Pencil size={20} color={Colors.light.gray[400]} strokeWidth={2.5} />
+          <Pencil size={20} color={isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
 
@@ -81,12 +82,14 @@ export default function WaterIntakeCard({
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   card: {
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     borderRadius: 32,
     padding: CARD_PADDING,
-    shadowColor: Colors.light.primary,
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.08,
     shadowRadius: 24,
@@ -103,7 +106,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     letterSpacing: -0.5,
   },
   editBtn: {
@@ -135,13 +138,13 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: Colors.light.gray[50],
+    borderTopColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     alignItems: 'center',
   },
   footerText: {
     fontSize: 14,
     fontWeight: '700',
-    color: Colors.light.gray[500],
+    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
     fontStyle: 'italic',
   },
 });

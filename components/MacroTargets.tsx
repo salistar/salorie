@@ -20,7 +20,7 @@ const TXT: any = {
   ar: { title: 'الماكروز حسب الهدف', perDay: 'سعرة/يوم', protein: 'بروتين', carbs: 'كربوهيدرات', fat: 'دهون', footer: 'أهداف مشتقة من هدفك وخطتك الغذائية.' },
 };
 
-export default function MacroTargets() {
+function MacroTargets() {
   const { language, isRTL } = useTranslation() as any;
   const tx = TXT[language] || TXT.en;
   const { resolved } = useTheme();
@@ -32,7 +32,7 @@ export default function MacroTargets() {
   const trackBg = isDark ? '#334155' : '#F1F5F9';
   const footerColor = isDark ? '#475569' : '#CBD5E1';
 
-  const data: any = useNutritionData();
+  const data: any = useNutritionData(new Date().toISOString().split('T')[0]);
   const goals = data?.goals || { protein: 0, carbs: 0, fat: 0, calories: 0 };
   const consumed = data?.consumed || { protein: 0, carbs: 0, fat: 0 };
 
@@ -61,6 +61,10 @@ export default function MacroTargets() {
     </View>
   );
 }
+
+// Présentational / props-driven (aucune prop) : mémoïsé pour éviter les re-renders
+// inutiles quand le parent se re-render ; ne re-render que sur changement d'état des hooks.
+export default React.memo(MacroTargets);
 
 const styles = StyleSheet.create({
   card: { backgroundColor: '#fff', borderRadius: 18, padding: 16, marginHorizontal: 16, marginVertical: 8,

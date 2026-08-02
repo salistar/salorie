@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
@@ -11,9 +10,10 @@ import {
   Dimensions,
   ScrollView,
 } from 'react-native';
-import { useSignUp, useSSO } from '@clerk/clerk-expo';
+import { useSignUp } from '@clerk/clerk-expo';
+import { useGoogleSSO, OAUTH_REDIRECT } from '../../lib/googleSSO';
 import { useRouter, Link } from 'expo-router';
-import { Mail, Lock, User, ArrowRight, Globe, ArrowLeft } from 'lucide-react-native';
+import { Mail, Lock, User, ArrowRight, Globe, ArrowLeft, Hash } from 'lucide-react-native';
 import { useTranslation, Language } from '../../lib/i18n';
 import { LinearGradient } from 'expo-linear-gradient';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -22,6 +22,34 @@ import * as Linking from 'expo-linking';
 import * as AuthSession from 'expo-auth-session';
 import { saveUserToFirestore } from '../../lib/firebase';
 import { Colors } from '../../constants/Colors';
+import { useTheme } from '../../lib/ThemeContext';
+import { rowDir, txtAlign } from '../../lib/rtl';
+import { Input } from '../../components/ui';
+
+// Verification step strings (kept local — pas de clés dans lib/i18n.tsx)
+const TXT = {
+  en: {
+    verify_email: 'Verify Email',
+    sent_code: "We've sent a code to",
+    enter_code: 'Enter Verification Code',
+    verifying: 'Verifying...',
+    sign_in: 'Sign In',
+  },
+  fr: {
+    verify_email: "Vérifier l'e-mail",
+    sent_code: 'Nous avons envoyé un code à',
+    enter_code: 'Entrez le code de vérification',
+    verifying: 'Vérification...',
+    sign_in: 'Connexion',
+  },
+  ar: {
+    verify_email: 'تأكيد البريد الإلكتروني',
+    sent_code: 'لقد أرسلنا رمزًا إلى',
+    enter_code: 'أدخل رمز التحقق',
+    verifying: 'جارٍ التحقق...',
+    sign_in: 'تسجيل الدخول',
+  },
+};
 
 const { width } = Dimensions.get('window');
 
@@ -29,8 +57,12 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function SignUpScreen() {
   const { t, language, setLanguage, isRTL } = useTranslation();
+  const { colors, resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const tx = TXT[language as keyof typeof TXT] ?? TXT.en;
   const { isLoaded, signUp, setActive } = useSignUp();
-  const { startSSOFlow } = useSSO();
+  const { startGoogleSSO } = useGoogleSSO();
   const router = useRouter();
 
   React.useEffect(() => {
@@ -52,6 +84,10 @@ export default function SignUpScreen() {
   const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  // Audit formulaires : chaînage du focus prénom → nom → e-mail → mot de passe.
+  const lastNameRef = useRef<import('react-native').TextInput>(null);
+  const emailRef = useRef<import('react-native').TextInput>(null);
+  const signupPwRef = useRef<import('react-native').TextInput>(null);
 
   const onSignUpPress = async () => {
     if (!isLoaded) return;
@@ -59,7 +95,9 @@ export default function SignUpScreen() {
 
     try {
       console.log('\x1b[32m[API→Clerk] signUp.create REQUEST\x1b[0m', {
-        firstName, lastName, emailAddress,
+        hasFirstName: !!firstName,
+        hasLastName: !!lastName,
+        emailDomain: emailAddress.includes('@') ? emailAddress.split('@')[1] : undefined,
       });
       const t0 = Date.now();
       await signUp.create({
@@ -127,10 +165,7 @@ export default function SignUpScreen() {
       // Use the oauth-callback path explicitly so deep link lands on the dedicated
       // route (which calls WebBrowser.maybeCompleteAuthSession). Empty path = "/"
       // which causes a white screen if no index route exists.
-      const redirectUrl = AuthSession.makeRedirectUri({
-        scheme: 'salorie',
-        path: 'oauth-callback',
-      });
+      const redirectUrl = OAUTH_REDIRECT; // App Link HTTPS vérifié (fix définitif OAuth)
       const linkingUrl = Linking.createURL('');
       const linkingUrlOAuth = Linking.createURL('oauth-callback');
       console.log('\x1b[35m[sign-up.tsx] Diagnostic URLs\x1b[0m', {
@@ -150,8 +185,7 @@ export default function SignUpScreen() {
       );
 
       const result: any = await Promise.race([
-        startSSOFlow({
-          strategy: 'oauth_google',
+        startGoogleSSO({
           redirectUrl,
         }),
         timeoutPromise,
@@ -189,40 +223,53 @@ export default function SignUpScreen() {
       console.warn('[Google SSO sign-up] No session created');
     } catch (err: any) {
       const code = err?.errors?.[0]?.code || err?.code;
-      // Deja connecte (Google a renvoye une session existante) -> on entre dans l app.
-      if (code === 'session_exists') {
-        console.log('[Google SSO sign-up] session_exists -> deja connecte, on entre dans l app');
-        router.replace('/(tabs)' as any);
+      const msg = err?.errors?.[0]?.message || err?.message || '';
+      // Déjà connecté / "Signed out" transitoire = session conclue en parallèle → pas d'alerte.
+      if (code === 'session_exists' || /signed[\s_-]?out|session|already/i.test(msg)) {
+        console.log('[Google SSO sign-up] état bénin, pas d\'alerte:', code || msg);
         return;
       }
       console.error('[API<-Clerk] Google Sign Up FAILED:', JSON.stringify(err, null, 2));
-      alert(err.errors?.[0]?.message || err?.message || 'Google sign up failed');
+      alert(msg || 'Google sign up failed');
     }
   };
 
+  // Couleurs dérivées du thème (l'écran était tout blanc en dur)
+  const cardBg = isDark ? colors.card : '#fff';
+  const inputBg = isDark ? Colors.dark.gray[100] : Colors.light.gray[100];
+  const textPrimary = isDark ? '#fff' : Colors.light.gray[800];
+  const textMuted = isDark ? Colors.dark.gray[400] : Colors.light.gray[500];
+  const placeholderColor = isDark ? Colors.dark.gray[400] : '#666';
+  const iconColor = isDark ? Colors.dark.gray[400] : '#666';
+  const dividerColor = isDark ? Colors.dark.gray[200] : Colors.light.gray[200];
+  const orLabel = language === 'fr' ? 'OU' : language === 'ar' ? 'أو' : 'OR';
+
   if (pendingVerification) {
     return (
-      <View style={styles.container}>
-        <View style={styles.verifyForm}>
-            <Text style={styles.label}>Verify Email</Text>
-            <Text style={styles.description}>We've sent a code to {emailAddress}</Text>
-            
-            <View style={styles.inputContainer}>
-                <Lock size={20} color="#666" style={styles.inputIcon} />
-                <TextInput
-                    value={code}
-                    placeholder="Enter Verification Code"
-                    onChangeText={setCode}
-                    style={styles.input}
-                    keyboardType="number-pad"
-                />
-            </View>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.verifyForm, { backgroundColor: colors.background }]}>
+            <Text style={[styles.label, { color: textPrimary, textAlign: txtAlign(isRTL) }]}>{tx.verify_email}</Text>
+            <Text style={[styles.description, { color: textMuted, textAlign: txtAlign(isRTL) }]}>{tx.sent_code} {emailAddress}</Text>
+
+            <Input
+                icon={<Hash size={20} color={iconColor} />}
+                value={code}
+                placeholder={tx.enter_code}
+                onChangeText={setCode}
+                keyboardType="number-pad"
+                accessibilityLabel={tx.enter_code}
+                autoComplete="one-time-code"
+                textContentType="oneTimeCode"
+                maxLength={6}
+                returnKeyType="go"
+                onSubmitEditing={() => { if (!loading) onPressVerify(); }}
+            />
 
             <TouchableOpacity
-                style={[styles.button, loading && styles.buttonDisabled]}
+                style={[styles.button, { backgroundColor: colors.primary, shadowColor: isDark ? 'transparent' : colors.primary }, loading && styles.buttonDisabled]}
                 onPress={onPressVerify}
             >
-                <Text style={styles.buttonText}>{loading ? 'Verifying...' : 'Verify Email'}</Text>
+                <Text style={styles.buttonText}>{loading ? tx.verifying : tx.verify_email}</Text>
             </TouchableOpacity>
         </View>
       </View>
@@ -234,9 +281,9 @@ export default function SignUpScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <View style={[styles.topRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+      <View style={[styles.topRow, { flexDirection: rowDir(isRTL) }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/welcome' as any)}>
-          <ArrowLeft size={20} color={Colors.light.gray[700]} style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }} />
+          <ArrowLeft size={20} color={isDark ? Colors.dark.gray[700] : Colors.light.gray[700]} style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <ScreenTopBar showBrand={false} showNotif={false} />
@@ -251,57 +298,82 @@ export default function SignUpScreen() {
               resizeMode="cover"
             />
           </View>
-          <Text style={styles.brandName}>Salorie</Text>
-          <Text style={styles.title}>{t('auth.create_account')}</Text>
-          <Text style={styles.subtitle}>{t('auth.join_salorie')}</Text>
+          <Text style={[styles.brandName, { color: colors.primary }]}>Salorie</Text>
+          <Text style={[styles.title, { color: textPrimary }]}>{t('auth.create_account')}</Text>
+          <Text style={[styles.subtitle, { color: textMuted }]}>{t('auth.join_salorie')}</Text>
         </View>
 
-        <View style={styles.form}>
-          <View style={styles.row}>
-            <View style={[styles.inputContainer, { flex: 1, marginRight: 8 }]}>
-              <User size={18} color="#666" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder={t('auth.first_name')}
-                value={firstName}
-                onChangeText={setFirstName}
-              />
-            </View>
-            <View style={[styles.inputContainer, { flex: 1, marginLeft: 8 }]}>
-              <TextInput
-                style={styles.input}
-                placeholder={t('auth.last_name')}
-                value={lastName}
-                onChangeText={setLastName}
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Mail size={20} color="#666" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder={t('auth.email')}
-              value={emailAddress}
-              onChangeText={setEmailAddress}
-              autoCapitalize="none"
-              keyboardType="email-address"
+        <View style={[
+          styles.form,
+          { backgroundColor: cardBg, borderWidth: 1, borderColor: isDark ? '#283241' : 'transparent' },
+          isDark && { shadowColor: 'transparent' },
+        ]}>
+          <View style={[styles.row, { flexDirection: rowDir(isRTL) }]}>
+            <Input
+              containerStyle={{ flex: 1, marginRight: 8, marginBottom: 0 }}
+              icon={<User size={18} color={iconColor} />}
+              placeholder={t('auth.first_name')}
+              accessibilityLabel={t('auth.first_name')}
+              value={firstName}
+              onChangeText={setFirstName}
+              autoComplete="name-given"
+              textContentType="givenName"
+              autoCapitalize="words"
+              returnKeyType="next"
+              onSubmitEditing={() => lastNameRef.current?.focus()}
+              blurOnSubmit={false}
+            />
+            <Input
+              containerStyle={{ flex: 1, marginLeft: 8, marginBottom: 0 }}
+              ref={lastNameRef}
+              placeholder={t('auth.last_name')}
+              accessibilityLabel={t('auth.last_name')}
+              value={lastName}
+              onChangeText={setLastName}
+              autoComplete="name-family"
+              textContentType="familyName"
+              autoCapitalize="words"
+              returnKeyType="next"
+              onSubmitEditing={() => emailRef.current?.focus()}
+              blurOnSubmit={false}
             />
           </View>
 
-          <View style={styles.inputContainer}>
-            <Lock size={20} color="#666" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder={t('auth.password')}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-          </View>
+          <Input
+            icon={<Mail size={20} color={iconColor} />}
+            ref={emailRef}
+            placeholder={t('auth.email')}
+            accessibilityLabel={t('auth.email')}
+            value={emailAddress}
+            onChangeText={setEmailAddress}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+            autoComplete="email"
+            textContentType="username"
+            returnKeyType="next"
+            onSubmitEditing={() => signupPwRef.current?.focus()}
+            blurOnSubmit={false}
+          />
+
+          <Input
+            icon={<Lock size={20} color={iconColor} />}
+            ref={signupPwRef}
+            placeholder={t('auth.password')}
+            accessibilityLabel={t('auth.password')}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="new-password"
+            textContentType="newPassword"
+            returnKeyType="go"
+            onSubmitEditing={() => { if (!loading) onSignUpPress(); }}
+          />
 
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[styles.button, { backgroundColor: colors.primary, shadowColor: isDark ? 'transparent' : colors.primary }, loading && styles.buttonDisabled]}
             onPress={onSignUpPress}
             disabled={loading}
           >
@@ -310,25 +382,25 @@ export default function SignUpScreen() {
           </TouchableOpacity>
 
           <View style={styles.dividerContainer}>
-            <View style={styles.divider} />
-            <Text style={styles.dividerText}>OR</Text>
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: dividerColor }]} />
+            <Text style={[styles.dividerText, { color: textMuted }]}>{orLabel}</Text>
+            <View style={[styles.divider, { backgroundColor: dividerColor }]} />
           </View>
 
           <TouchableOpacity
-            style={styles.googleButton}
+            style={[styles.googleButton, { backgroundColor: cardBg, borderColor: dividerColor, flexDirection: rowDir(isRTL) }]}
             onPress={onGoogleSignUpPress}
           >
-            <Globe size={20} color="#222" style={styles.googleIcon} />
-            <Text style={styles.googleButtonText}>{t('auth.continue_google')}</Text>
+            <Globe size={20} color={isDark ? '#fff' : '#222'} style={styles.googleIcon} />
+            <Text style={[styles.googleButtonText, { color: textPrimary }]}>{t('auth.continue_google')}</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>{t('welcome.have_account')} </Text>
+        <View style={[styles.footer, { flexDirection: rowDir(isRTL) }]}>
+          <Text style={[styles.footerText, { color: textMuted }]}>{t('welcome.have_account')} </Text>
           <Link href="/(auth)/sign-in" asChild>
             <TouchableOpacity>
-              <Text style={styles.linkText}>Sign In</Text>
+              <Text style={[styles.linkText, { color: colors.primary }]}>{tx.sign_in}</Text>
             </TouchableOpacity>
           </Link>
         </View>
@@ -337,7 +409,9 @@ export default function SignUpScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -355,7 +429,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginLeft: 16,
     borderWidth: 1,
-    borderColor: Colors.light.gray[200],
+    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
   },
   langPickerRow: {
     flexDirection: 'row',
@@ -369,11 +443,11 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: 'rgba(255,255,255,0.7)',
     borderWidth: 1,
-    borderColor: Colors.light.gray[200],
+    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
   },
   langPillActive: {
     backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primary,
+    borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
   },
   langPillText: {
     fontSize: 14,
@@ -399,7 +473,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 16,
     borderWidth: 4,
-    borderColor: Colors.light.white,
+    borderColor: isDark ? Colors.dark.white : Colors.light.white,
   },
   heroPhoto: {
     width: '100%',
@@ -411,19 +485,19 @@ const styles = StyleSheet.create({
   brandName: {
     fontSize: 28,
     fontWeight: '900',
-    color: Colors.light.primary,
+    color: isDark ? Colors.dark.primary : Colors.light.primary,
     letterSpacing: -0.5,
     marginBottom: 12,
   },
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: Colors.light.gray[800],
+    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.light.gray[500],
+    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
     marginTop: 8,
   },
   form: {
@@ -460,7 +534,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.gray[100],
+    backgroundColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
     borderRadius: 16,
     paddingHorizontal: 16,
     marginBottom: 16,
@@ -472,7 +546,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: Colors.light.gray[800],
+    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
   },
   button: {
     backgroundColor: Colors.light.primary,
@@ -482,7 +556,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
-    shadowColor: Colors.light.primary,
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -505,18 +579,18 @@ const styles = StyleSheet.create({
   divider: {
     flex: 1,
     height: 1,
-    backgroundColor: Colors.light.gray[200],
+    backgroundColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
   },
   dividerText: {
     marginHorizontal: 12,
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     fontSize: 12,
     fontWeight: '600',
   },
   googleButton: {
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: Colors.light.gray[200],
+    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
     borderRadius: 16,
     height: 56,
     flexDirection: 'row',
@@ -527,7 +601,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   googleButtonText: {
-    color: Colors.light.gray[800],
+    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
     fontSize: 16,
     fontWeight: '600',
   },
@@ -537,11 +611,11 @@ const styles = StyleSheet.create({
     marginTop: 32,
   },
   footerText: {
-    color: Colors.light.gray[500],
+    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
     fontSize: 15,
   },
   linkText: {
-    color: Colors.light.primary,
+    color: isDark ? Colors.dark.primary : Colors.light.primary,
     fontSize: 15,
     fontWeight: '700',
   },

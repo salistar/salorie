@@ -2,6 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Colors } from '../constants/Colors';
+import { useTheme } from '../lib/ThemeContext';
 
 /**
  * HalfProgress — a semicircular arc gauge rendered with SVG so the green
@@ -30,10 +31,17 @@ export default function HalfProgress({
   progress,
   size = 220,
   strokeWidth = 20,
-  color = Colors.light.primary,
-  trackColor = Colors.light.gray[100],
+  color,
+  trackColor,
   children,
 }: HalfProgressProps) {
+  // Défauts calculés ICI et non dans la signature : les valeurs par défaut d'un paramètre
+  // sont évaluées hors de tout contexte de thème. `trackColor` valait gray[100] (#F1F5F9),
+  // soit un arc quasi blanc sur une carte sombre — l'unique appelant ne le surchargeant pas.
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const arcColor = color ?? (isDark ? Colors.dark.primary : Colors.light.primary);
+  const arcTrack = trackColor ?? (isDark ? Colors.dark.gray[100] : Colors.light.gray[100]);
   const p = Math.min(1, Math.max(0, progress));
 
   // Centre-line radius of the stroke (so the stroke stays inside the size box)
@@ -62,7 +70,7 @@ export default function HalfProgress({
         {/* Track (always visible, full half-circle, gray) */}
         <Path
           d={arcPath}
-          stroke={trackColor}
+          stroke={arcTrack}
           strokeWidth={strokeWidth}
           fill="none"
           strokeLinecap="round"
@@ -71,7 +79,7 @@ export default function HalfProgress({
         {p > 0 && (
           <Path
             d={arcPath}
-            stroke={color}
+            stroke={arcColor}
             strokeWidth={strokeWidth}
             fill="none"
             strokeLinecap="round"

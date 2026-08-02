@@ -23,11 +23,14 @@ export default function DailyHealthScore() {
   const { resolved } = useTheme();
   const tx = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
   const cardBg = isDark ? '#161C23' : '#fff';
   const txtColor = isDark ? '#f1f5f9' : '#0f172a';
   const subColor = isDark ? '#94a3b8' : '#64748b';
   const trackBg = isDark ? '#334155' : '#e2e8f0';
-  const data: any = useNutritionData();
+  const data: any = useNutritionData(new Date().toISOString().split('T')[0]);
   const goals = data?.goals || { calories: 2000, protein: 150, water: 2000 };
   const consumed = data?.consumed || { calories: 0, protein: 0, water: 0 };
 
@@ -41,7 +44,7 @@ export default function DailyHealthScore() {
   const score = Math.round((calScore * 0.4 + protScore * 0.3 + waterScore * 0.3) * 100);
 
   const label = score >= 80 ? tx.excellent : score >= 55 ? tx.good : score >= 30 ? tx.ongoing : tx.start;
-  const color = score >= 80 ? GREEN : score >= 55 ? '#16A34A' : score >= 30 ? '#D97706' : '#94A3B8';
+  const color = score >= 80 ? accent : score >= 55 ? '#16A34A' : score >= 30 ? '#D97706' : '#94A3B8';
 
   const Bar = ({ label, v }: { label: string; v: number }) => (
     <View style={[styles.barRow, isRTL && { flexDirection: 'row-reverse' }]}>

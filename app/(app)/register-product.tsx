@@ -1,7 +1,7 @@
 // Register a product whose barcode wasn't found in OpenFoodFacts. Saves the
 // nutrition the user enters + a product photo + a barcode photo to the shared
 // custom_products collection, so the next scan of this barcode resolves instantly.
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity,
   Image, Alert, KeyboardAvoidingView, Platform,
@@ -16,16 +16,64 @@ import { FormCard, FormInput, Stepper, SubmitBar } from '../../components/FormKi
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
+import { txtAlign } from '../../lib/rtl';
 import { saveCustomProduct } from '../../lib/aiStore';
+
+const TXT: any = {
+  en: {
+    title: 'New product', barcode: 'Barcode',
+    photoProduct: 'Product photo', photoBarcode: 'Barcode photo',
+    namePh: 'e.g. Marrakech orange juice', brandPh: 'e.g. Marrakech',
+    nameLabel: 'Product name *', brandLabel: 'Brand',
+    per100: 'Values per 100 g / 100 ml',
+    calories: 'Calories', protein: 'Protein', carbs: 'Carbs', fat: 'Fat',
+    submit: 'Save to database',
+    photoSrcTitle: 'Image source', camera: '📷 Camera', gallery: '🖼️ Gallery / Downloads', cancel: 'Cancel',
+    galleryTitle: 'Gallery', galleryPerm: 'Allow photo access to choose an image.', galleryOpenErr: "Can't open the gallery.",
+    errTitle: 'Error', errBarcode: 'Missing barcode.', nameReqTitle: 'Name required', nameReq: 'Enter at least the product name.',
+    savedTitle: '✅ Product saved', savedBody: 'It will be recognized at the next scan of this barcode.', ok: 'OK',
+    oops: 'Oops', saveFail: 'Save failed. Try again.',
+  },
+  fr: {
+    title: 'Nouveau produit', barcode: 'Code-barres',
+    photoProduct: 'Photo produit', photoBarcode: 'Photo code-barres',
+    namePh: "ex. Jus d'orange Marrakech", brandPh: 'ex. Marrakech',
+    nameLabel: 'Nom du produit *', brandLabel: 'Marque',
+    per100: 'Valeurs pour 100 g / 100 ml',
+    calories: 'Calories', protein: 'Protéines', carbs: 'Glucides', fat: 'Lipides',
+    submit: 'Enregistrer dans la base',
+    photoSrcTitle: "Source de l'image", camera: '📷 Caméra', gallery: '🖼️ Galerie / Téléchargements', cancel: 'Annuler',
+    galleryTitle: 'Galerie', galleryPerm: "Autorise l'accès aux photos pour choisir une image.", galleryOpenErr: "Impossible d'ouvrir la galerie.",
+    errTitle: 'Erreur', errBarcode: 'Code-barres manquant.', nameReqTitle: 'Nom requis', nameReq: 'Indique au moins le nom du produit.',
+    savedTitle: '✅ Produit enregistré', savedBody: 'Il sera reconnu au prochain scan de ce code-barres.', ok: 'OK',
+    oops: 'Oups', saveFail: "Échec de l'enregistrement. Réessaie.",
+  },
+  ar: {
+    title: 'منتج جديد', barcode: 'الرمز الشريطي',
+    photoProduct: 'صورة المنتج', photoBarcode: 'صورة الرمز الشريطي',
+    namePh: 'مثال: عصير برتقال مراكش', brandPh: 'مثال: مراكش',
+    nameLabel: 'اسم المنتج *', brandLabel: 'العلامة التجارية',
+    per100: 'القيم لكل 100 غ / 100 مل',
+    calories: 'السعرات', protein: 'البروتين', carbs: 'الكربوهيدرات', fat: 'الدهون',
+    submit: 'حفظ في قاعدة البيانات',
+    photoSrcTitle: 'مصدر الصورة', camera: '📷 الكاميرا', gallery: '🖼️ المعرض / التنزيلات', cancel: 'إلغاء',
+    galleryTitle: 'المعرض', galleryPerm: 'اسمح بالوصول إلى الصور لاختيار صورة.', galleryOpenErr: 'تعذّر فتح المعرض.',
+    errTitle: 'خطأ', errBarcode: 'الرمز الشريطي مفقود.', nameReqTitle: 'الاسم مطلوب', nameReq: 'أدخل اسم المنتج على الأقل.',
+    savedTitle: '✅ تم حفظ المنتج', savedBody: 'سيتم التعرف عليه عند المسح التالي لهذا الرمز.', ok: 'حسناً',
+    oops: 'عذراً', saveFail: 'فشل الحفظ. حاول مرة أخرى.',
+  },
+};
 
 export default function RegisterProductScreen() {
   const { code } = useLocalSearchParams<{ code: string }>();
   const barcode = String(code || '');
   const { user } = useUser();
   const { resolved } = useTheme();
-  const { language } = useTranslation() as any;
+  const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
-  const newProductTitle = language === 'fr' ? 'Nouveau produit' : language === 'ar' ? 'منتج جديد' : 'New product';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const tx = TXT[language] || TXT.en;
+  const newProductTitle = tx.title;
   const [permission, requestPermission] = useCameraPermissions();
 
   const [name, setName] = useState('');
@@ -43,7 +91,7 @@ export default function RegisterProductScreen() {
   const text = isDark ? '#fff' : Colors.light.gray[900];
   const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
   const card = isDark ? Colors.dark.card : '#fff';
-  const bg = isDark ? '#000' : 'transparent';
+  const bg = isDark ? '#0f1419' : 'transparent';
   const inputBg = isDark ? '#1e293b' : '#f1f5f9';
 
   const capture = async () => {
@@ -65,7 +113,7 @@ export default function RegisterProductScreen() {
   const pickFromGallery = async (mode: 'product' | 'barcode') => {
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!perm.granted) { Alert.alert('Galerie', 'Autorise l\'accès aux photos pour choisir une image.'); return; }
+      if (!perm.granted) { Alert.alert(tx.galleryTitle, tx.galleryPerm); return; }
       const res = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.25, base64: true,
       });
@@ -73,20 +121,20 @@ export default function RegisterProductScreen() {
         const uri = `data:image/jpeg;base64,${res.assets[0].base64}`;
         if (mode === 'product') setProductImage(uri); else setBarcodeImage(uri);
       }
-    } catch { Alert.alert('Galerie', 'Impossible d\'ouvrir la galerie.'); }
+    } catch { Alert.alert(tx.galleryTitle, tx.galleryOpenErr); }
   };
 
   const choosePhoto = (mode: 'product' | 'barcode') => {
-    Alert.alert(mode === 'product' ? 'Photo du produit' : 'Photo du code-barres', 'Source de l\'image', [
-      { text: '📷 Caméra', onPress: () => openCam(mode) },
-      { text: '🖼️ Galerie / Téléchargements', onPress: () => pickFromGallery(mode) },
-      { text: 'Annuler', style: 'cancel' },
+    Alert.alert(mode === 'product' ? tx.photoProduct : tx.photoBarcode, tx.photoSrcTitle, [
+      { text: tx.camera, onPress: () => openCam(mode) },
+      { text: tx.gallery, onPress: () => pickFromGallery(mode) },
+      { text: tx.cancel, style: 'cancel' },
     ]);
   };
 
   const save = async () => {
-    if (!barcode) { Alert.alert('Erreur', 'Code-barres manquant.'); return; }
-    if (!name.trim()) { Alert.alert('Nom requis', 'Indique au moins le nom du produit.'); return; }
+    if (!barcode) { Alert.alert(tx.errTitle, tx.errBarcode); return; }
+    if (!name.trim()) { Alert.alert(tx.nameReqTitle, tx.nameReq); return; }
     setSaving(true);
     try {
       await saveCustomProduct({
@@ -94,9 +142,9 @@ export default function RegisterProductScreen() {
         calories: calories || '0', protein: protein || '0', carbs: carbs || '0', fat: fat || '0',
         productImage: productImage || undefined, barcodeImage: barcodeImage || undefined,
       }, user?.primaryEmailAddress?.emailAddress || '');
-      Alert.alert('✅ Produit enregistré', 'Il sera reconnu au prochain scan de ce code-barres.', [{ text: 'OK', onPress: () => router.back() }]);
+      Alert.alert(tx.savedTitle, tx.savedBody, [{ text: tx.ok, onPress: () => router.back() }]);
     } catch {
-      Alert.alert('Oups', 'Échec de l\'enregistrement. Réessaie.');
+      Alert.alert(tx.oops, tx.saveFail);
     } finally { setSaving(false); }
   };
 
@@ -105,10 +153,10 @@ export default function RegisterProductScreen() {
     return (
       <View style={styles.black}>
         <CameraView ref={camRef} style={StyleSheet.absoluteFillObject} facing="back" />
-        <View style={styles.camTop}><Text style={styles.camTitle}>{capMode === 'product' ? 'Photo du produit' : 'Photo du code-barres'}</Text></View>
+        <View style={styles.camTop}><Text style={styles.camTitle}>{capMode === 'product' ? tx.photoProduct : tx.photoBarcode}</Text></View>
         <View style={styles.camBottom}>
           <TouchableOpacity style={styles.shutter} onPress={capture}><View style={styles.shutterInner} /></TouchableOpacity>
-          <TouchableOpacity onPress={() => setCapMode('none')}><Text style={styles.camCancel}>Annuler</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => setCapMode('none')}><Text style={styles.camCancel}>{tx.cancel}</Text></TouchableOpacity>
         </View>
       </View>
     );
@@ -119,42 +167,44 @@ export default function RegisterProductScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <ScreenTopBar showBack title={newProductTitle} showBrand={false} showNotif={false} />
-          <Text style={[styles.codeLine, { color: sub }]}><ScanBarcode size={14} color={sub} /> Code-barres : {barcode}</Text>
+          <Text style={[styles.codeLine, { color: sub, textAlign: txtAlign(isRTL) }]}><ScanBarcode size={14} color={sub} /> {tx.barcode} : {barcode}</Text>
 
           {/* Photos */}
-          <View style={styles.photoRow}>
+          <View style={[styles.photoRow, isRTL && { flexDirection: 'row-reverse' }]}>
             <TouchableOpacity style={[styles.photoBox, { backgroundColor: inputBg }]} onPress={() => choosePhoto('product')}>
-              {productImage ? <Image source={{ uri: productImage }} style={styles.photo} /> : <><Camera size={26} color={sub} /><Text style={[styles.photoTxt, { color: sub }]}>Photo produit</Text></>}
+              {productImage ? <Image source={{ uri: productImage }} style={styles.photo} /> : <><Camera size={26} color={sub} /><Text style={[styles.photoTxt, { color: sub }]}>{tx.photoProduct}</Text></>}
             </TouchableOpacity>
             <TouchableOpacity style={[styles.photoBox, { backgroundColor: inputBg }]} onPress={() => choosePhoto('barcode')}>
-              {barcodeImage ? <Image source={{ uri: barcodeImage }} style={styles.photo} /> : <><ScanBarcode size={26} color={sub} /><Text style={[styles.photoTxt, { color: sub }]}>Photo code-barres</Text></>}
+              {barcodeImage ? <Image source={{ uri: barcodeImage }} style={styles.photo} /> : <><ScanBarcode size={26} color={sub} /><Text style={[styles.photoTxt, { color: sub }]}>{tx.photoBarcode}</Text></>}
             </TouchableOpacity>
           </View>
 
           {/* Fields */}
           <FormCard>
-            <FormInput label="Nom du produit *" value={name} onChangeText={setName} placeholder="ex. Jus d'orange Marrakech" />
-            <FormInput label="Marque" value={brand} onChangeText={setBrand} placeholder="ex. Marrakech" />
+            <FormInput label={tx.nameLabel} value={name} onChangeText={setName} placeholder={tx.namePh} />
+            <FormInput label={tx.brandLabel} value={brand} onChangeText={setBrand} placeholder={tx.brandPh} />
           </FormCard>
-          <Text style={[styles.per100, { color: sub }]}>Valeurs pour 100 g / 100 ml</Text>
+          <Text style={[styles.per100, { color: sub, textAlign: txtAlign(isRTL) }]}>{tx.per100}</Text>
           <FormCard>
-            <Stepper label="Calories" value={calories} onChange={setCalories} step={10} unit="kcal" />
-            <Stepper label="Protéines" value={protein} onChange={setProtein} step={1} unit="g" />
-            <Stepper label="Glucides" value={carbs} onChange={setCarbs} step={1} unit="g" />
-            <Stepper label="Lipides" value={fat} onChange={setFat} step={1} unit="g" />
+            <Stepper label={tx.calories} value={calories} onChange={setCalories} step={10} unit="kcal" />
+            <Stepper label={tx.protein} value={protein} onChange={setProtein} step={1} unit="g" />
+            <Stepper label={tx.carbs} value={carbs} onChange={setCarbs} step={1} unit="g" />
+            <Stepper label={tx.fat} value={fat} onChange={setFat} step={1} unit="g" />
           </FormCard>
         </ScrollView>
-        <SubmitBar label="Enregistrer dans la base" onPress={save} loading={saving} />
+        <SubmitBar label={tx.submit} onPress={save} loading={saving} />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 60 },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
-  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.light.gray[50] },
+  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] },
   title: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5 },
   codeLine: { fontSize: 13, fontWeight: '700', marginTop: 10, marginBottom: 16 },
   photoRow: { flexDirection: 'row', gap: 12, marginBottom: 18 },

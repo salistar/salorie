@@ -1,6 +1,7 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
+apply plugin: "com.google.gms.google-services" // FCM (push) — lit google-services.json
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
@@ -91,7 +92,7 @@ android {
         applicationId 'com.idriss.kriouile.salorie'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
+        versionCode (project.findProperty('appVersionCode')?.toInteger() ?: 2)
         versionName "1.0.0"
     }
     signingConfigs {
@@ -115,8 +116,10 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            // Signed with the Salistar production keystore (see android/gradle.properties).
-            signingConfig project.hasProperty('MYAPP_RELEASE_STORE_FILE') ? signingConfigs.release : signingConfigs.debug
+            // Signé avec le keystore de PRODUCTION (android/gradle.properties). AUCUN repli sur
+            // le keystore DEBUG : un release sans keystore de prod DOIT échouer (sinon APK
+            // debug-signé → rejet Google Play). Le garde-fou en bas du fichier donne un message clair.
+            signingConfig signingConfigs.release
             shrinkResources (findProperty('android.enableShrinkResourcesInReleaseBuilds')?.toBoolean() ?: false)
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
@@ -179,5 +182,19 @@ dependencies {
         implementation("com.facebook.react:hermes-android")
     } else {
         implementation jscFlavor
+    }
+}
+
+// ── Garde-fou Play Store : interdit un build RELEASE / BUNDLE sans le keystore de
+// production (sinon Gradle échouerait de façon cryptique, ou pire signerait mal). On
+// n'affecte JAMAIS les builds debug. Message explicite listant les propriétés à définir.
+gradle.taskGraph.whenReady { graph ->
+    def isRelease = graph.allTasks.any { it.name ==~ /(?i).*(assemble|bundle)release.*/ }
+    if (isRelease && !project.hasProperty('MYAPP_RELEASE_STORE_FILE')) {
+        throw new GradleException(
+            "Keystore de RELEASE manquant — build annulé pour ne PAS produire un artefact " +
+            "debug-signé (rejet Google Play). Définis dans ~/.gradle/gradle.properties : " +
+            "MYAPP_RELEASE_STORE_FILE, MYAPP_RELEASE_STORE_PASSWORD, MYAPP_RELEASE_KEY_ALIAS, " +
+            "MYAPP_RELEASE_KEY_PASSWORD.")
     }
 }

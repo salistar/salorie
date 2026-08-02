@@ -5,26 +5,52 @@ import { useUser } from '@clerk/clerk-expo';
 import { Moon, Check } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { FormCard, Stepper, ChipGroup } from '../../components/FormKit';
+import { EmptyState, SkeletonCard } from '../../components/ui';
 import { logEntry, getEntries } from '../../lib/tracking';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
+import { type } from '../../constants/theme';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const GREEN = '#2E8B57';
 const QUALITY = ['😫', '😴', '😐', '🙂', '🤩'];
 
 const TXT: any = {
-  en: { title: 'Sleep tracker', sub: 'How many hours did you sleep?', hours: 'hours', quality: 'Quality', save: 'Save my night', last7: 'Last 7 days', empty: 'No night logged yet.' },
-  fr: { title: 'Suivi du sommeil', sub: "Combien d'heures as-tu dormi ?", hours: 'heures', quality: 'Qualité', save: 'Enregistrer ma nuit', last7: '7 derniers jours', empty: 'Aucune nuit enregistrée.' },
-  ar: { title: 'تتبع النوم', sub: 'كم ساعة نمت؟', hours: 'ساعات', quality: 'الجودة', save: 'حفظ ليلتي', last7: 'آخر 7 أيام', empty: 'لم تُسجَّل أي ليلة بعد.' },
+  en: {
+    title: 'Sleep tracker', sub: 'How many hours did you sleep?', hours: 'hours', quality: 'Quality', save: 'Save my night', last7: 'Last 7 days', empty: 'No night logged yet.',
+    recovery: 'Recovery', recLow: 'Low recovery — aim for 7-9h', recGood: 'Good recovery', recHigh: 'Plenty of rest, all good', recHint: 'Sleep shapes your energy and cravings the next day.',
+    disclaimer: 'Indicative only, not medical advice.',
+  },
+  fr: {
+    title: 'Suivi du sommeil', sub: "Combien d'heures as-tu dormi ?", hours: 'heures', quality: 'Qualité', save: 'Enregistrer ma nuit', last7: '7 derniers jours', empty: 'Aucune nuit enregistrée.',
+    recovery: 'Récupération', recLow: 'Récupération faible — vise 7-9h', recGood: 'Bonne récupération', recHigh: 'Repos suffisant, tout va bien', recHint: "Le sommeil influence ton énergie et tes fringales le lendemain.",
+    disclaimer: 'Indicatif, pas un avis médical.',
+  },
+  ar: {
+    title: 'تتبع النوم', sub: 'كم ساعة نمت؟', hours: 'ساعات', quality: 'الجودة', save: 'حفظ ليلتي', last7: 'آخر 7 أيام', empty: 'لم تُسجَّل أي ليلة بعد.',
+    recovery: 'التعافي', recLow: 'تعافٍ ضعيف — استهدف 7-9 ساعات', recGood: 'تعافٍ جيد', recHigh: 'راحة كافية، كل شيء على ما يرام', recHint: 'النوم يؤثر على طاقتك ورغباتك في الطعام في اليوم التالي.',
+    disclaimer: 'إرشادي فقط، وليس نصيحة طبية.',
+  },
 };
 
+// Note de récupération non-clinique dérivée des heures saisies (présentation seulement).
+function recoveryNote(t: any, h: number): { label: string; color: string } {
+  if (h < 6) return { label: t.recLow, color: '#EF4444' };
+  if (h <= 9) return { label: t.recGood, color: GREEN };
+  return { label: t.recHigh, color: '#F59E0B' };
+}
+
 export default function SleepTrackerScreen() {
+  const __gate = useScreenGate('sleep-tracker');
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
+  const bg = isDark ? '#0f1419' : '#F4F7F9';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0F172A';
   const sub = isDark ? '#94a3b8' : '#64748B';
@@ -42,12 +68,14 @@ export default function SleepTrackerScreen() {
 
   const save = async () => { setSaving(true); await logEntry(email, 'sleep', { hours, quality }); await load(); setSaving(false); };
 
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
         <Image source={require('../../assets/images/illustrations/dashboard_cover.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
-        <View style={styles.head}><Moon size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <View style={styles.head}><Moon size={24} color={accent} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
         <FormCard>
@@ -68,17 +96,33 @@ export default function SleepTrackerScreen() {
           />
         </FormCard>
 
+        {(() => {
+          const rec = recoveryNote(t, hours);
+          return (
+            <View style={[styles.recCard, { backgroundColor: card, borderColor: rec.color }]}>
+              <View style={[styles.recDot, { backgroundColor: rec.color }]} />
+              <View style={styles.recTextWrap}>
+                <Text style={[styles.recLabel, { color: sub }, align]}>{t.recovery}</Text>
+                <Text style={[styles.recValue, { color: text }, align]}>{rec.label}</Text>
+                <Text style={[styles.recHint, { color: sub }, align]}>{t.recHint}</Text>
+              </View>
+            </View>
+          );
+        })()}
+
         <TouchableOpacity style={styles.saveBtn} onPress={save} disabled={saving}>
           {saving ? <ActivityIndicator color="#fff" /> : <><Check size={20} color="#fff" /><Text style={styles.saveTxt}>{t.save}</Text></>}
         </TouchableOpacity>
 
         <Text style={[styles.label, { color: sub }, align]}>{t.last7}</Text>
-        {loading ? <ActivityIndicator color={GREEN} /> : hist.length === 0 ? <Text style={[styles.empty, align]}>{t.empty}</Text> : hist.map((h) => (
+        {loading ? <><SkeletonCard /><SkeletonCard /><SkeletonCard /></> : hist.length === 0 ? <EmptyState icon={<Moon size={26} color={accent} />} title={t.empty} /> : hist.map((h) => (
           <View key={h.id} style={[styles.histRow, { backgroundColor: card }]}>
             <Text style={[styles.histDate, { color: sub }]}>{h.date}</Text>
             <Text style={[styles.histVal, { color: text }]}>{h.hours}h {QUALITY[(h.quality || 3) - 1]}</Text>
           </View>
         ))}
+
+        <Text style={[styles.disclaimer, { color: sub }]}>{t.disclaimer}</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -91,10 +135,17 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
   sub: { fontSize: 14, color: '#64748B', marginBottom: 20 },
   label: { fontSize: 13, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10, marginTop: 8 },
+  recCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, borderRadius: 16, borderLeftWidth: 4, padding: 14, marginBottom: 12 },
+  recDot: { width: 10, height: 10, borderRadius: 5, marginTop: 5 },
+  recTextWrap: { flex: 1 },
+  recLabel: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+  recValue: { fontSize: 15, fontWeight: '800', marginBottom: 4 },
+  recHint: { fontSize: 12, fontWeight: '500', lineHeight: 17 },
   saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GREEN, borderRadius: 16, paddingVertical: 15, marginBottom: 8 },
   saveTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
   empty: { color: '#94A3B8', fontSize: 14 },
   histRow: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 8 },
   histDate: { fontSize: 13, color: '#64748B' },
   histVal: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
+  disclaimer: { ...type.micro, textAlign: 'center', marginTop: 18, opacity: 0.75 },
 });

@@ -2,6 +2,7 @@
 // leaders MFP/Yazio) : 4 slots (petit-déj/déjeuner/snack/dîner) avec totaux par
 // slot, suppression, « copier hier », navigation par date. Trilingue + dark + RTL.
 import React, { useCallback, useEffect, useState } from 'react';
+import { numLocaleFor } from '../../lib/format';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { ChevronLeft, ChevronRight, Trash2, CopyPlus, Coffee, Sun, Cookie, Moon, Flame, Plus } from 'lucide-react-native';
@@ -43,12 +44,22 @@ export default function Diary() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#f7faf8';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
+  const bg = isDark ? '#0f1419' : '#f7faf8';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0f172a';
   const sub = isDark ? '#94a3b8' : '#64748b';
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
   const rowDir: any = { flexDirection: isRTL ? 'row-reverse' : 'row' };
+  // i18n #90 : formatage localisé des nombres affichés (totaux/macros) — additif,
+  // n'altère pas les calculs. Fallback sûr si toLocaleString indisponible.
+  const numLocale = numLocaleFor(language);
+  const fmt = (n: number) => {
+    const v = Number(n) || 0;
+    try { return v.toLocaleString(numLocale); } catch { return String(v); }
+  };
 
   const [date, setDate] = useState(dstr(new Date()));
   const [logs, setLogs] = useState<NutritionLog[]>([]);
@@ -120,18 +131,18 @@ export default function Diary() {
 
         {/* Total du jour */}
         <View style={[s.totalCard, { backgroundColor: card }, rowDir]}>
-          <Flame size={20} color={GREEN} />
-          <Text style={[s.totalTxt, { color: text }]}>{t.total} : <Text style={{ color: GREEN }}>{dayKcal} {t.kcal}</Text></Text>
-          <Text style={[s.macroTxt, { color: sub }]}>P{dayP} · C{dayC} · F{dayF}</Text>
+          <Flame size={20} color={accent} />
+          <Text style={[s.totalTxt, { color: text }]}>{t.total} : <Text style={{ color: accent }}>{fmt(dayKcal)} {t.kcal}</Text></Text>
+          <Text style={[s.macroTxt, { color: sub }]}>P{fmt(dayP)} · C{fmt(dayC)} · F{fmt(dayF)}</Text>
         </View>
 
         {/* Copier hier */}
         <TouchableOpacity style={[s.copyBtn, rowDir]} onPress={copyYesterday} disabled={busy}>
-          {busy ? <ActivityIndicator size="small" color={GREEN} /> : <CopyPlus size={16} color={GREEN} />}
+          {busy ? <ActivityIndicator size="small" color={accent} /> : <CopyPlus size={16} color={accent} />}
           <Text style={s.copyTxt}>{t.copy}</Text>
         </TouchableOpacity>
 
-        {loading ? <ActivityIndicator size="large" color={GREEN} style={{ marginTop: 30 }} /> : (
+        {loading ? <ActivityIndicator size="large" color={accent} style={{ marginTop: 30 }} /> : (
           <>
             {SLOTS.map(({ key, Icon }) => {
               const items = bySlot[key];
@@ -139,11 +150,11 @@ export default function Diary() {
               return (
                 <View key={key} style={[s.slotCard, { backgroundColor: card }]}>
                   <View style={[s.slotHead, rowDir]}>
-                    <Icon size={17} color={GREEN} />
+                    <Icon size={17} color={accent} />
                     <Text style={[s.slotTitle, { color: text }]}>{t[key]}</Text>
                     <View style={{ flex: 1 }} />
-                    <Text style={[s.slotKcal, { color: slotKcal ? GREEN : sub }]}>{slotKcal} {t.kcal}</Text>
-                    <TouchableOpacity style={s.addBtn} onPress={() => router.push('/log-manual' as any)}>
+                    <Text style={[s.slotKcal, { color: slotKcal ? accent : sub }]}>{fmt(slotKcal)} {t.kcal}</Text>
+                    <TouchableOpacity style={s.addBtn} onPress={() => router.push({ pathname: '/food-database', params: { slot: key } } as any)}>
                       <Plus size={15} color="#fff" />
                     </TouchableOpacity>
                   </View>
@@ -153,14 +164,14 @@ export default function Diary() {
                     <View key={l.id} style={[s.itemRow, rowDir]}>
                       {/* Badge note santé (grade) si présent */}
                       {(l as any).note?.grade ? (
-                        <View style={[s.gradeBadge, { backgroundColor: (l as any).note.color || GREEN }]}>
+                        <View style={[s.gradeBadge, { backgroundColor: (l as any).note.color || accent }]}>
                           <Text style={s.gradeTxt}>{(l as any).note.grade}</Text>
                         </View>
                       ) : null}
                       <View style={{ flex: 1 }}>
                         <Text style={[{ color: text, fontWeight: '700', fontSize: 13.5 }, align]} numberOfLines={1}>{l.name}</Text>
                         <Text style={[{ color: sub, fontSize: 11.5, marginTop: 1 }, align]}>
-                          {Math.round(l.calories)} {t.kcal}{l.protein ? ` · P${Math.round(l.protein)}` : ''}{l.carbs ? ` C${Math.round(l.carbs)}` : ''}{l.fat ? ` F${Math.round(l.fat)}` : ''}{l.serving ? ` · ${l.serving}` : ''}
+                          {fmt(Math.round(l.calories))} {t.kcal}{l.protein ? ` · P${fmt(Math.round(l.protein))}` : ''}{l.carbs ? ` C${fmt(Math.round(l.carbs))}` : ''}{l.fat ? ` F${fmt(Math.round(l.fat))}` : ''}{l.serving ? ` · ${l.serving}` : ''}
                         </Text>
                         {(l as any).description ? (
                           <Text style={[{ color: sub, fontSize: 11, marginTop: 3, lineHeight: 15, opacity: 0.9 }, align]} numberOfLines={3}>{(l as any).description}</Text>

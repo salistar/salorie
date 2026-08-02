@@ -1,20 +1,21 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
-import { Award } from 'lucide-react-native';
+import { Award, HandHeart, ChevronRight, Gift } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import Medal from '../../components/Medal';
 import { getMyMedals } from '../../lib/racesApi';
 import { CHALLENGES, getMyChallengeProgress, streetViewUrl } from '../../lib/races';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
-
-const GREEN = '#2E8B57';
+import { rowDir, txtAlign } from '../../lib/rtl';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const TXT: any = {
-  en: { title: 'My medals', sub: 'Finish a virtual race to earn its medal, with your rank, your time and your photo.', empty: 'No medals yet.', emptyHint: 'Here is what your first medal will look like:', you: 'You' },
-  fr: { title: 'Mes médailles', sub: 'Termine une course virtuelle pour gagner sa médaille, avec ton classement, ton temps et ta photo.', empty: "Aucune médaille pour l'instant.", emptyHint: 'Voici à quoi ressemblera ta première médaille :', you: 'Toi' },
-  ar: { title: 'ميدالياتي', sub: 'أكمل سباقاً افتراضياً لتفوز بميداليته، مع ترتيبك ووقتك وصورتك.', empty: 'لا ميداليات حتى الآن.', emptyHint: 'هكذا ستبدو ميداليتك الأولى:', you: 'أنت' },
+  en: { title: 'My medals', sub: 'Finish a virtual race to earn its medal, with your rank, your time and your photo.', empty: 'No medals yet.', emptyHint: 'Here is what your first medal will look like:', you: 'You', sadaqa: 'Sadaqa Jariya', rewards: 'Local rewards' },
+  fr: { title: 'Mes médailles', sub: 'Termine une course virtuelle pour gagner sa médaille, avec ton classement, ton temps et ta photo.', empty: "Aucune médaille pour l'instant.", emptyHint: 'Voici à quoi ressemblera ta première médaille :', you: 'Toi', sadaqa: 'Sadaqa Jariya', rewards: 'Récompenses locales' },
+  ar: { title: 'ميدالياتي', sub: 'أكمل سباقاً افتراضياً لتفوز بميداليته، مع ترتيبك ووقتك وصورتك.', empty: 'لا ميداليات حتى الآن.', emptyHint: 'هكذا ستبدو ميداليتك الأولى:', you: 'أنت', sadaqa: 'صدقة جارية', rewards: 'مكافآت محلية' },
 };
 const CHALLENGE_FRAME: Record<string, string> = { 'casa-loop': 'casablanca' };
 
@@ -27,14 +28,17 @@ function fmt(d?: any): string {
 }
 
 export default function Medals() {
-  const { resolved } = useTheme();
+  const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#f3f6f4';
+  const GREEN = colors.primary;
+  const bg = isDark ? '#0f1419' : '#f3f6f4';
   const text = isDark ? '#f1f5f9' : '#1B2A33';
   const sub = isDark ? '#94a3b8' : '#667085';
-  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+  const hint = isDark ? '#64748b' : '#94a3b8';
+  const align: any = { textAlign: txtAlign(isRTL) };
+  const __gate = useScreenGate('medals');
 
   const [loading, setLoading] = useState(true);
   const [medals, setMedals] = useState<any[]>([]);
@@ -67,12 +71,28 @@ export default function Medals() {
   }, [email, uname]);
   useEffect(() => { load(); }, [load]);
 
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body}>
-        <View style={s.head}><Award size={26} color={GREEN} /><Text style={[s.title, { color: text }]}>{t.title}</Text></View>
+        <View style={[s.head, { flexDirection: rowDir(isRTL) }]}><Award size={26} color={GREEN} /><Text style={[s.title, { color: text }, align]}>{t.title}</Text></View>
         <Text style={[s.sub, { color: sub }, align]}>{t.sub}</Text>
+
+        {/* Lien discret vers Sadaqa Jariya (effort → don traçable). */}
+        <TouchableOpacity style={[s.sadaqaLink, { flexDirection: rowDir(isRTL) }]} activeOpacity={0.7} onPress={() => router.push('/sadaqa')}>
+          <HandHeart size={16} color={GREEN} />
+          <Text style={[s.sadaqaTxt, { color: GREEN }]}>{t.sadaqa}</Text>
+          <ChevronRight size={15} color={GREEN} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+        </TouchableOpacity>
+
+        {/* Lien vers les Récompenses commerçants locaux (O2O : effort → bon partenaire). */}
+        <TouchableOpacity style={[s.sadaqaLink, { flexDirection: rowDir(isRTL) }]} activeOpacity={0.7} onPress={() => router.push('/rewards')}>
+          <Gift size={16} color={GREEN} />
+          <Text style={[s.sadaqaTxt, { color: GREEN }]}>{t.rewards}</Text>
+          <ChevronRight size={15} color={GREEN} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+        </TouchableOpacity>
 
         {loading ? <ActivityIndicator color={GREEN} style={{ marginTop: 40 }} />
           : medals.length ? (
@@ -89,7 +109,7 @@ export default function Medals() {
             <View>
               <View style={s.empty}>
                 <Text style={[s.emptyTxt, { color: sub }]}>{t.empty}{err ? `\n(${err})` : ''}</Text>
-                <Text style={s.emptyHint}>{t.emptyHint}</Text>
+                <Text style={[s.emptyHint, { color: hint }]}>{t.emptyHint}</Text>
               </View>
               <View style={{ alignItems: 'center', marginTop: 8 }}>
                 <Medal width={200} frame="rabat" title="Rabat" km={91} time="4h 28min" name={t.you} rank={3} dates="01.03.2025 — 28.05.2025" />
@@ -109,6 +129,8 @@ const s = StyleSheet.create({
   sub: { fontSize: 13, color: '#667085', marginTop: 6, lineHeight: 19 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 16 },
   cell: { width: '48%', alignItems: 'center', marginBottom: 16 },
+  sadaqaLink: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, alignSelf: 'flex-start' },
+  sadaqaTxt: { fontSize: 13.5, fontWeight: '800' },
   empty: { marginTop: 30, alignItems: 'center' },
   emptyTxt: { fontSize: 14, color: '#667085', textAlign: 'center', fontWeight: '600' },
   emptyHint: { fontSize: 12, color: '#94a3b8', marginTop: 14 },

@@ -32,8 +32,13 @@ export class OrgsService {
   updateOrg(id: string, dto: any) { return this.orgs.findByIdAndUpdate(id, dto, { new: true }); }
   async deleteOrg(id: string) { await this.orgs.findByIdAndDelete(id); await this.members.deleteMany({ orgId: id }); await this.invites.deleteMany({ orgId: id }); return { ok: true }; }
 
+  // Membership d'un user dans une org (pour les gardes d'autorisation controller).
+  getMembership(orgId: string, userId: string) {
+    return this.members.findOne({ orgId, userId, status: { $ne: 'removed' } }).lean();
+  }
+
   // ── Invitations ──
-  async createInvite(orgId: string, role = 'member', email = '', coachUserId?: string) {
+  async createInvite(orgId: string, role = 'client', email = '', coachUserId?: string) {
     await this.getOrg(orgId);
     const code = randomBytes(4).toString('hex').toUpperCase(); // 8 hex
     return this.invites.create({ orgId, code, role, email, coachUserId, expiresAt: Date.now() + 30 * 86400000 });

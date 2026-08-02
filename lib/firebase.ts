@@ -31,6 +31,19 @@ export const emailToDocId = (email: string): string => {
   return email.trim().toLowerCase();
 };
 
+/**
+ * Hash court non-reversible d'un email pour les logs (sécurité : jamais
+ * d'email en clair dans la console). Suffisant pour corréler des lignes de
+ * log sans exposer la PII. Déterministe (djb2), tronqué en hex.
+ */
+const emailHash = (email?: string): string => {
+  const e = (email || '').trim().toLowerCase();
+  if (!e) return 'anon';
+  let h = 5381;
+  for (let i = 0; i < e.length; i++) h = ((h << 5) + h + e.charCodeAt(i)) >>> 0;
+  return 'u_' + h.toString(16).padStart(8, '0');
+};
+
 export interface UserProfile {
   id: string;           // kept for backward compat, also written to doc — actual key is email
   email: string;
@@ -64,7 +77,7 @@ export const saveUserToFirestore = async (user: Partial<UserProfile> & { id?: st
     }
     const docId = emailToDocId(user.email);
     const userRef = doc(db, 'users', docId);
-    console.log('\x1b[32m[API→Firestore] users/get REQUEST\x1b[0m', { docId, email: user.email });
+    console.log('\x1b[32m[API→Firestore] users/get REQUEST\x1b[0m', { docId, user: emailHash(user.email) });
     const t0 = Date.now();
     const existingSnap = await getDoc(userRef);
     console.log('\x1b[34m[API←Firestore] users/get RESPONSE\x1b[0m', {
@@ -135,7 +148,7 @@ export const saveUserToFirestore = async (user: Partial<UserProfile> & { id?: st
     }
 
     // Case 4: truly new user → create fresh doc keyed by email
-    console.log('\x1b[32m[API→Firestore] users/create REQUEST\x1b[0m', { docId, email: user.email });
+    console.log('\x1b[32m[API→Firestore] users/create REQUEST\x1b[0m', { docId, user: emailHash(user.email) });
     const tNew = Date.now();
     await setDoc(userRef, {
       ...user,
@@ -205,9 +218,9 @@ export const getUserFromFirestore = async (
     (extraEmails || []).forEach(addEmail);
 
     console.log('\x1b[35m[Firestore] Lookup user — emails a essayer\x1b[0m', {
-      primary: email,
+      primary: emailHash(email),
       total: emailsToTry.length,
-      list: emailsToTry,
+      list: emailsToTry.map((e) => emailHash(e)),
       clerkId: legacyClerkId,
     });
 
@@ -319,6 +332,57 @@ export interface NutritionLog {
   // Note santé (calculée on-device au scan) — persistée pour l'afficher dans diary/activité.
   note?: { grade: string; score: number; verdict: string; color?: string };
 }
+
+/**
+ * SUPPRESSION DE COMPTE (exigence Google Play + RGPD).
+ *
+ * L'effacement RÉEL est fait par le backend (`DELETE /account`), pour deux raisons que
+ * le client ne peut pas contourner :
+ *   • le SDK client ne sait PAS lister les sous-collections. L'ancienne version les
+ *     devinait dans un tableau écrit à la main, et ce tableau avait dérivé : `blocked`,
+ *     `events`, `meal_plans`, `micros` et `notifications_history` n'y figuraient pas et
+ *     survivaient donc à la suppression, tandis que quatre noms listés n'existaient plus.
+ *     Côté serveur, `recursiveDelete` descend tout l'arbre — plus rien à deviner.
+ *   • les données de l'utilisateur vivent aussi dans des collections transverses
+ *     (annonces, kudos, réservations…) où les règles Firestore interdisent au client
+ *     d'écrire — et c'est très bien ainsi.
+ *
+ * Il reste ici le seul nettoyage que le serveur ne peut pas faire : le cache local.
+ */
+export const deleteAllUserData = async (email: string): Promise<void> => {
+  const docId = emailToDocId(email);
+  if (!docId) return;
+
+  const API = (process.env.EXPO_PUBLIC_API_URL || '').trim();
+  if (API) {
+    // Import PARESSEUX, volontairement : `firebaseAuth` importe `app` depuis CE fichier.
+    // Un import en tête de module créait un cycle firebase → firebaseAuth → firebase,
+    // et au chargement l'un des deux recevait un module à moitié initialisé : l'init
+    // Firebase échouait et l'app restait bloquée sur le splash. Ici la fonction ne
+    // s'exécute que bien après que les deux modules sont prêts.
+    const { auth } = require('./firebaseAuth') as typeof import('./firebaseAuth');
+    const tok = await auth.currentUser?.getIdToken().catch(() => null);
+    if (tok) {
+      const res = await fetch(`${API}/account`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${tok}` },
+      });
+      // On PROPAGE l'échec : mieux vaut dire « réessaie » que supprimer l'identité
+      // Clerk en laissant les données derrière — l'utilisateur perdrait alors tout
+      // moyen de relancer la suppression.
+      if (!res.ok) throw new Error(`Suppression serveur échouée (${res.status})`);
+    } else {
+      throw new Error('Session expirée');
+    }
+  }
+
+  // Cache local : hors de portée du serveur, et seul endroit encore à nettoyer.
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const mine = keys.filter((k) => k.includes(docId) || /^(logs_|pending_|scan_|user_|free_usage:|onboarded_)/.test(k));
+    if (mine.length) await AsyncStorage.multiRemove(mine);
+  } catch { /* cache best-effort : l'essentiel (serveur) est déjà fait */ }
+};
 
 /** Supprime un log (Firestore + cache local) — utilisé par le Diary. */
 export const deleteNutritionLog = async (email: string, logId: string): Promise<boolean> => {
@@ -445,24 +509,50 @@ export const pendingLogsCount = async (email: string): Promise<number> => {
   } catch { return 0; }
 };
 
+// Verrou module-level : flushPendingLogs peut être appelé en concurrence
+// (plusieurs composants montés + événement de reconnexion réseau). Sans garde,
+// deux appels lisent la même file et REJOUENT les mêmes repas → doublons en base.
+let flushing = false;
+
 /** Rejoue les logs en file d'attente (appelé au retour réseau). Renvoie le nb synchronisé. */
 export const flushPendingLogs = async (email: string): Promise<number> => {
   const docId = emailToDocId(email);
   if (!docId) return 0;
+  // Idempotence : si un flush est déjà en cours, on ne relance pas (sinon la même
+  // batch part deux fois). L'appel concurrent est simplement ignoré.
+  if (flushing) return 0;
   const qkey = `pending_logs_${docId}`;
   let q: any[] = [];
-  try { const raw = await AsyncStorage.getItem(qkey); q = raw ? JSON.parse(raw) : []; } catch { return 0; }
-  if (!q.length) return 0;
-  const remaining: any[] = [];
-  for (const log of q) {
+  try {
+    flushing = true;
+    try { const raw = await AsyncStorage.getItem(qkey); q = raw ? JSON.parse(raw) : []; } catch { return 0; }
+    if (!q.length) return 0;
+    // DEDUP ATOMIQUE : on retire IMMÉDIATEMENT la batch en cours de la file
+    // persistée AVANT d'envoyer. Ainsi un flush ultérieur (ou un addNutritionLog
+    // qui enfile en parallèle) ne re-flushera jamais ces entrées. On ne ré-enfile
+    // à la fin QUE celles qui ont réellement échoué, en préservant tout ce qui a
+    // pu être ajouté à la file pendant l'envoi.
+    try { await AsyncStorage.setItem(qkey, JSON.stringify([])); } catch {}
+    const remaining: any[] = [];
+    for (const log of q) {
+      try {
+        await addDoc(collection(db, 'users', docId, 'logs'), {
+          ...log, userId: docId, timestamp: serverTimestamp(),
+        });
+      } catch { remaining.push(log); }
+    }
+    // Ré-enfilage sûr : on relit la file (des entrées ont pu être ajoutées pendant
+    // l'envoi) et on y remet uniquement les échecs, en tête, sans les perdre.
     try {
-      await addDoc(collection(db, 'users', docId, 'logs'), {
-        ...log, userId: docId, timestamp: serverTimestamp(),
-      });
-    } catch { remaining.push(log); }
+      const raw = await AsyncStorage.getItem(qkey);
+      const added = raw ? JSON.parse(raw) : [];
+      const merged = remaining.concat(Array.isArray(added) ? added : []);
+      await AsyncStorage.setItem(qkey, JSON.stringify(merged));
+    } catch {}
+    return q.length - remaining.length;
+  } finally {
+    flushing = false;
   }
-  try { await AsyncStorage.setItem(qkey, JSON.stringify(remaining)); } catch {}
-  return q.length - remaining.length;
 };
 
 /**
@@ -529,6 +619,18 @@ export const updatePushToken = async (email: string, token: string) => {
     await setDoc(userRef, { pushToken: token, updatedAt: serverTimestamp() }, { merge: true });
   } catch (error) {
     console.error('Error updating push token:', error);
+  }
+};
+
+/** Token FCM NATIF (getDevicePushTokenAsync) → permet l'envoi push DIRECT via
+ *  firebase-admin côté serveur/admin (sans passer par Expo Push / EAS). */
+export const updateFcmToken = async (email: string, fcmToken: string) => {
+  try {
+    const docId = emailToDocId(email);
+    if (!docId || !fcmToken) return;
+    await setDoc(doc(db, 'users', docId), { fcmToken, updatedAt: serverTimestamp() }, { merge: true });
+  } catch (error) {
+    console.error('Error updating fcm token:', error);
   }
 };
 

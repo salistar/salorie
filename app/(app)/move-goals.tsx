@@ -60,7 +60,10 @@ export default function MoveGoals() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#f7faf8';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
+  const bg = isDark ? '#0f1419' : '#f7faf8';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0f172a';
   const sub = isDark ? '#94a3b8' : '#64748b';
@@ -96,13 +99,13 @@ export default function MoveGoals() {
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
         <View style={[s.head, rowDir]}>
-          <Dumbbell size={26} color={GREEN} />
+          <Dumbbell size={26} color={accent} />
           <Text style={[s.title, { color: text }]}>{t.title}</Text>
         </View>
         <Text style={[s.sub, { color: sub }, align]}>{t.sub}</Text>
 
         <View style={[s.summary, { backgroundColor: card }, rowDir]}>
-          <Text style={[s.summaryBig, { color: GREEN }]}>{doneGoals}/{totalGoals}</Text>
+          <Text style={[s.summaryBig, { color: accent }]}>{doneGoals}/{totalGoals}</Text>
           <View style={{ flex: 1 }}>
             <Text style={[s.summaryLabel, { color: text }, align]}>{t.done}</Text>
             <Text style={[s.summaryKcal, { color: sub }, align]}>🔥 ~{kcal} kcal</Text>
@@ -120,16 +123,16 @@ export default function MoveGoals() {
                 <Image source={MOVE_IMG[m.key]} style={[s.moveImg, isDark && { backgroundColor: '#334155' }]} resizeMode="cover" />
                 <View style={{ flex: 1 }}>
                   <Text style={[s.moveName, { color: text }, align]}>{(m as any)[language] || m.en}</Text>
-                  <Text style={[s.moveMeta, { color: done ? GREEN : sub }, align]}>{c} / {m.goal}{done ? ` · ${t.done}` : ''}</Text>
+                  <Text style={[s.moveMeta, { color: done ? accent : sub }, align]}>{c} / {m.goal}{done ? ` · ${t.done}` : ''}</Text>
                 </View>
-                <TouchableOpacity style={[s.addBtn, { backgroundColor: done ? GREEN : '#eef2f7' }]} onPress={() => addSet(m)}>
-                  {done ? <Check size={16} color="#fff" /> : <Plus size={16} color={GREEN} />}
-                  <Text style={[s.addTxt, { color: done ? '#fff' : GREEN }]}>{m.per}</Text>
+                <TouchableOpacity style={[s.addBtn, { backgroundColor: done ? accent : '#eef2f7' }]} onPress={() => addSet(m)}>
+                  {done ? <Check size={16} color="#fff" /> : <Plus size={16} color={accent} />}
+                  <Text style={[s.addTxt, { color: done ? '#fff' : accent }]}>{m.per}</Text>
                 </TouchableOpacity>
               </View>
               <Text style={[s.moveDesc, { color: sub }, align]}>{language === 'fr' ? m.descFr : language === 'ar' ? m.descAr : m.descEn}</Text>
               <View style={[s.track, { backgroundColor: isDark ? '#334155' : '#e2e8f0' }]}>
-                <View style={[s.fill, { width: `${pct}%`, backgroundColor: done ? GREEN : '#86b8a0' }]} />
+                <View style={[s.fill, { width: `${pct}%`, backgroundColor: done ? accent : '#86b8a0' }]} />
               </View>
             </View>
           );

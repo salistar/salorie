@@ -341,6 +341,15 @@ async function _syncAllUserDataInner(email: string, docId: string) {
     profileChanged: JSON.stringify(cachedProfile || {}) !== JSON.stringify(data.profile || {}),
   });
 
+  // fix data-loss (audit) : fusionner les logs HORS-LIGNE en attente (pending_logs)
+  // non encore synchronises au serveur, sinon l'ecrasement du cache ci-dessous les perd
+  // jusqu'au prochain flush+resync (l'utilisateur voit son repas disparaitre).
+  try {
+    const praw = await AsyncStorage.getItem(`pending_logs_${docId}`);
+    const pend = praw ? JSON.parse(praw) : [];
+    if (Array.isArray(pend) && pend.length) data.logs = [ ...(data.logs || []), ...pend ];
+  } catch {}
+
   // -----------------------------------------------------------------------
   // 4) WRITE CACHE si premiere connexion ou diff
   // -----------------------------------------------------------------------

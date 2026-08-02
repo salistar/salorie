@@ -14,6 +14,7 @@ import {
   ChevronRight,
   CreditCard,
   Heart,
+  Activity,
   ArrowRight
 } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
@@ -26,10 +27,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useTheme } from '../../lib/ThemeContext';
 import { triggerSeededNotifications, syncAllUserData, clearAllLocalData } from '../../lib/LocalDataStore';
-import { BellRing, Trash2, Award, Trophy, Camera, Flame } from 'lucide-react-native';
+import { BellRing, Trash2, Award, Trophy, Camera, Flame, Sparkles, Users, HeartPulse } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 const { width } = Dimensions.get('window');
 
@@ -39,12 +40,13 @@ export default function ProfileScreen() {
   const { t, language } = useTranslation() as any;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  const bgColor = isDark ? '#0B0E12' : 'transparent';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const bgColor = isDark ? '#0f1419' : 'transparent';
   // Inline trilingual labels for items not yet in the shared i18n file.
   const PSTR: any = {
-    en: { sport_medals: 'Sport & medals', my_medals: 'My medals', achievements: 'Achievements', send_logs: 'Send logs', nutrients: 'Daily nutrients', streaks: 'My streaks' },
-    fr: { sport_medals: 'Sport & médailles', my_medals: 'Mes médailles', achievements: 'Succès', send_logs: 'Envoyer les logs', nutrients: 'Nutriments du jour', streaks: 'Mes séries' },
-    ar: { sport_medals: 'الرياضة والأوسمة', my_medals: 'أوسمتي', achievements: 'الإنجازات', send_logs: 'إرسال السجلات', nutrients: 'عناصر اليوم الغذائية', streaks: 'سلاسلي' },
+    en: { sport_medals: 'Sport & medals', my_medals: 'My medals', achievements: 'Achievements', send_logs: 'Send logs', nutrients: 'Daily nutrients', streaks: 'My streaks', avatar: 'My avatar', family: 'My family', vitals: 'Glucose & blood pressure', referral: 'Referral', doctor_report: 'Doctor report (PDF)' },
+    fr: { sport_medals: 'Sport & médailles', my_medals: 'Mes médailles', achievements: 'Succès', send_logs: 'Envoyer les logs', nutrients: 'Nutriments du jour', streaks: 'Mes séries', avatar: 'Mon avatar', family: 'Ma famille', vitals: 'Glycémie & tension', referral: 'Parrainage', doctor_report: 'Rapport médecin (PDF)' },
+    ar: { sport_medals: 'الرياضة والأوسمة', my_medals: 'أوسمتي', achievements: 'الإنجازات', send_logs: 'إرسال السجلات', nutrients: 'عناصر اليوم الغذائية', streaks: 'سلاسلي', avatar: 'بطلي', family: 'عائلتي', vitals: 'سكر الدم والضغط', referral: 'الإحالة', doctor_report: 'تقرير للطبيب (PDF)' },
   };
   const P_ = (k: string) => (PSTR[String(language)] || PSTR.en)[k] || PSTR.en[k] || k;
 
@@ -52,9 +54,12 @@ export default function ProfileScreen() {
     console.log('[ProfileScreen] mounted — user:', user?.primaryEmailAddress?.emailAddress);
   }, []);
 
+  // Avant : `PurchasesService.showPaywall()` → `PurchasesUI.presentPaywall`, qui exige
+  // une clé RevenueCat de production ET un paywall configuré côté dashboard. Sans ça,
+  // l'appui ne produisait RIEN — bouton mort. On envoie désormais sur notre propre écran,
+  // qui se referme tout seul s'il n'y a aucune offre à vendre.
   const handleUpgrade = () => {
-    console.log('[ProfileScreen] handleUpgrade pressed');
-    PurchasesService.showPaywall();
+    router.push('/(app)/upgrade' as any);
   };
 
   // Photo de profil : galerie → recadrage carré → upload Clerk (backend d'auth),
@@ -216,7 +221,7 @@ export default function ProfileScreen() {
         <Text style={styles.menuLabel}>{label}</Text>
         {subtext && <Text style={styles.menuSubtext}>{subtext}</Text>}
       </View>
-      <ChevronRight size={18} color={Colors.light.gray[300]} />
+      <ChevronRight size={18} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} />
     </TouchableOpacity>
   );
 
@@ -271,15 +276,23 @@ export default function ProfileScreen() {
 
         {/* Subscription Upsell */}
         <Animated.View entering={FadeInDown.delay(100).duration(600)}>
-          <TouchableOpacity style={styles.trialCard} onPress={handleUpgrade}>
+          <TouchableOpacity
+            style={[
+              styles.trialCard,
+              resolved === 'dark' && { backgroundColor: 'rgba(245,158,11,0.10)', borderColor: 'rgba(245,158,11,0.32)' },
+            ]}
+            onPress={handleUpgrade}
+            accessibilityRole="button"
+            accessibilityLabel={`${t('profile.start_trial')} — ${t('profile.trial_desc')}`}
+          >
             <View style={styles.trialContent}>
               <View style={styles.trialTextWrapper}>
-                <View style={styles.trialBadge}>
+                <View style={[styles.trialBadge, resolved === 'dark' && { backgroundColor: 'rgba(245,158,11,0.18)' }]}>
                   <Crown size={12} color="#F59E0B" fill="#F59E0B" />
-                  <Text style={styles.trialBadgeText}>{t('profile.premium_plan')}</Text>
+                  <Text style={[styles.trialBadgeText, resolved === 'dark' && { color: '#FCD34D' }]}>{t('profile.premium_plan')}</Text>
                 </View>
-                <Text style={styles.trialTitle}>{t('profile.start_trial')}</Text>
-                <Text style={styles.trialSubtitle}>{t('profile.trial_desc')}</Text>
+                <Text style={[styles.trialTitle, resolved === 'dark' && { color: '#FCD34D' }]}>{t('profile.start_trial')}</Text>
+                <Text style={[styles.trialSubtitle, resolved === 'dark' && { color: '#E5B769' }]}>{t('profile.trial_desc')}</Text>
               </View>
               <View style={styles.trialButton}>
                 <Text style={styles.trialButtonText}>{t('profile.start')}</Text>
@@ -298,6 +311,7 @@ export default function ProfileScreen() {
           <GridTile icon={Award} label={P_('my_medals')} color="#F59E0B" onPress={() => router.push('/medals' as any)} />
           <GridTile icon={Trophy} label={P_('achievements')} color="#8B5CF6" onPress={() => router.push('/social' as any)} />
           <GridTile icon={Flame} label={P_('streaks')} color="#EF4444" onPress={() => router.push('/streaks' as any)} />
+          <GridTile icon={Sparkles} label={P_('avatar')} color={isDark ? Colors.dark.primary : Colors.light.primary} onPress={() => router.push('/avatar' as any)} />
         </Animated.View>
 
         {/* Account Section */}
@@ -305,9 +319,13 @@ export default function ProfileScreen() {
           <Text style={[styles.sectionTitle, { color: resolved === 'dark' ? '#fff' : undefined }]}>{t('profile.account')}</Text>
         </View>
         <Animated.View entering={FadeInDown.delay(250).duration(600)} style={styles.grid}>
-          <GridTile icon={User} label={t('profile.personal_details')} color={Colors.light.primary} onPress={() => router.push('/personal-details' as any)} />
+          <GridTile icon={User} label={t('profile.personal_details')} color={isDark ? Colors.dark.primary : Colors.light.primary} onPress={() => router.push('/personal-details' as any)} />
+          <GridTile icon={Users} label={P_('family')} color="#0EA5E9" onPress={() => router.push('/family' as any)} />
+          <GridTile icon={Users} label={P_('referral')} color="#14B8A6" onPress={() => router.push('/referral' as any)} />
           <GridTile icon={Heart} label={P_('nutrients')} color="#10B981" onPress={() => router.push('/nutrients' as any)} />
-          <GridTile icon={Bell} label={t('prefs.notifications')} color={Colors.light.primary} onPress={() => router.push('/notifications' as any)} />
+          <GridTile icon={Activity} label={P_('vitals')} color="#F43F5E" onPress={() => router.push('/vitals' as any)} />
+          <GridTile icon={HeartPulse} label={P_('doctor_report')} color="#0891B2" onPress={() => router.push('/health-export' as any)} />
+          <GridTile icon={Bell} label={t('prefs.notifications')} color={isDark ? Colors.dark.primary : Colors.light.primary} onPress={() => router.push('/notifications' as any)} />
           <GridTile icon={Settings} label={t('profile.preferences')} color="#6366F1" onPress={() => router.push('/preferences' as any)} />
           <GridTile icon={CreditCard} label={t('profile.upgrade')} color="#EC4899" onPress={handleUpgrade} />
         </Animated.View>
@@ -320,8 +338,8 @@ export default function ProfileScreen() {
           <GridTile icon={Lightbulb} label={t('profile.feature_requests')} color="#10B981" onPress={() => router.push('/feature-requests' as any)} />
           <GridTile icon={MessagesSquare} label={t('profile.contact_us')} color="#3B82F6" onPress={() => router.push('/contact' as any)} />
           <GridTile icon={FileText} label={P_('send_logs')} color="#64748B" onPress={sendLogs} />
-          <GridTile icon={FileText} label={t('profile.terms')} color={Colors.light.gray[500]} onPress={() => router.push('/terms' as any)} />
-          <GridTile icon={Shield} label={t('profile.privacy')} color={Colors.light.gray[500]} onPress={() => router.push('/privacy' as any)} />
+          <GridTile icon={FileText} label={t('profile.terms')} color={isDark ? Colors.dark.gray[500] : Colors.light.gray[500]} onPress={() => router.push('/terms' as any)} />
+          <GridTile icon={Shield} label={t('profile.privacy')} color={isDark ? Colors.dark.gray[500] : Colors.light.gray[500]} onPress={() => router.push('/privacy' as any)} />
         </Animated.View>
 
         {/* Developer-only tools — hidden in production builds */}
@@ -337,8 +355,8 @@ export default function ProfileScreen() {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: Colors.light.primaryLight, marginBottom: 12 }]} onPress={handleSeedData}>
-              <Text style={[styles.logoutText, { color: Colors.light.primary }]}>🌱 {t('common.seed_btn')}</Text>
+            <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight, marginBottom: 12 }]} onPress={handleSeedData}>
+              <Text style={[styles.logoutText, { color: isDark ? Colors.dark.primary : Colors.light.primary }]}>🌱 {t('common.seed_btn')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -353,7 +371,7 @@ export default function ProfileScreen() {
 
         {/* Logout Button */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <LogOut size={20} color={Colors.light.error} />
+          <LogOut size={20} color={isDark ? Colors.dark.error : Colors.light.error} />
           <Text style={styles.logoutText}>{t('profile.logout')}</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -361,7 +379,9 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -377,13 +397,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     fontWeight: '900',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     letterSpacing: -1,
   },
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.gray[900],
+    backgroundColor: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     padding: 20,
     borderRadius: 32,
     marginBottom: 20,
@@ -481,17 +501,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     textTransform: 'uppercase',
     letterSpacing: 1.5,
   },
   optionsCard: {
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     borderRadius: 32,
     paddingVertical: 10,
     marginBottom: 24,
     borderWidth: 1.5,
-    borderColor: Colors.light.gray[50],
+    borderColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
@@ -501,13 +521,13 @@ const styles = StyleSheet.create({
   // Grille compacte (allègement Profile) — 2 colonnes
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 16 },
   gridTile: {
-    width: '48%', alignItems: 'center', backgroundColor: Colors.light.white,
+    width: '48%', alignItems: 'center', backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     borderRadius: 20, paddingVertical: 18, paddingHorizontal: 8, marginBottom: 12,
-    borderWidth: 1.5, borderColor: Colors.light.gray[50],
+    borderWidth: 1.5, borderColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
   },
   gridIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
-  gridLabel: { fontSize: 13, fontWeight: '700', color: Colors.light.gray[900], marginTop: 10, textAlign: 'center' },
+  gridLabel: { fontSize: 13, fontWeight: '700', color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900], marginTop: 10, textAlign: 'center' },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -528,17 +548,17 @@ const styles = StyleSheet.create({
   menuLabel: {
     fontSize: 16,
     fontWeight: '700',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
   },
   menuSubtext: {
     fontSize: 12,
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     fontWeight: '500',
     marginTop: 2,
   },
   separator: {
     height: 1,
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     marginHorizontal: 20,
   },
   logoutBtn: {
@@ -556,6 +576,6 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: 16,
     fontWeight: '800',
-    color: Colors.light.error,
+    color: isDark ? Colors.dark.error : Colors.light.error,
   },
 });

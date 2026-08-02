@@ -1,0 +1,29 @@
+# Maestro — flux CONNECTÉ (à lancer APRÈS connexion qa.salorie@gmail.com sur le device).
+# Navigue les onglets principaux et vérifie qu'ils rendent. Étendre par feature.
+# Lancer : maestro test .maestro/flow_logged_in.yaml
+appId: com.idriss.kriouile.salorie
+---
+- launchApp:
+    clearState: false
+# Accueil (un repère du dashboard connecté)
+- assertVisible:
+    text: ".*(Aujourd|Today|Accueil|kcal).*"
+    optional: true
+# Onglet Analyse / Coach / Profil (libellés de la tab bar — adapter si besoin)
+- runFlow:
+    when:
+      visible: "Analyse"
+    commands:
+      - tapOn: "Analyse"
+      - assertVisible:
+          text: ".*(Macros|Progression|Score).*"
+          optional: true
+- runFlow:
+    when:
+      visible: "Profil"
+    commands:
+      - tapOn: "Profil"
+      - assertVisible:
+          text: ".*(Objectif|Poids|Nutriments).*"
+          optional: true
+# TODO : scan repas, log, courses, défis — à compléter une fois le device connecté.

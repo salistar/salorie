@@ -1,7 +1,16 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import { updatePushToken, getAdminNotificationConfig, saveNotificationToHistory } from './firebase';
+import { updatePushToken, updateFcmToken, getAdminNotificationConfig, saveNotificationToHistory } from './firebase';
+
+// EAS projectId — OBLIGATOIRE pour getExpoPushTokenAsync en build standalone
+// (hors Expo Go). Sans lui, l'enregistrement du token push échoue silencieusement
+// → l'admin ne trouve aucune cible. On le lit depuis la config, fallback en dur.
+const EXPO_PROJECT_ID =
+  (Constants?.expoConfig as any)?.extra?.eas?.projectId ||
+  (Constants as any)?.easConfig?.projectId ||
+  '398124d2-f1df-4613-a1f7-62f2feb0d362';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -39,7 +48,7 @@ export class NotificationService {
       }
       console.log('\x1b[32m[API→Expo] getExpoPushTokenAsync REQUEST\x1b[0m');
       const t0 = Date.now();
-      token = (await Notifications.getExpoPushTokenAsync()).data;
+      token = (await Notifications.getExpoPushTokenAsync({ projectId: EXPO_PROJECT_ID })).data;
       console.log('\x1b[34m[API←Expo] getExpoPushTokenAsync RESPONSE\x1b[0m', {
         ms: Date.now() - t0,
         tokenPreview: token ? `${String(token).slice(0, 20)}…` : null,
@@ -51,6 +60,18 @@ export class NotificationService {
         });
         await updatePushToken(email, token);
         console.log('\x1b[34m[API←Firestore] users/updatePushToken OK\x1b[0m');
+      }
+
+      // Token FCM NATIF (getDevicePushTokenAsync) → envoi push DIRECT via
+      // firebase-admin côté serveur, sans dépendre d'Expo Push / EAS.
+      try {
+        const dev = await Notifications.getDevicePushTokenAsync();
+        if (dev && typeof dev.data === 'string') {
+          await updateFcmToken(email, dev.data);
+          console.log('\x1b[34m[FCM] device token enregistré\x1b[0m', String(dev.data).slice(0, 18) + '…');
+        }
+      } catch (e: any) {
+        console.log('\x1b[33m[FCM] getDevicePushTokenAsync KO\x1b[0m', e?.message);
       }
     } else {
       console.log('Must use physical device for Push Notifications');

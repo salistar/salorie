@@ -18,8 +18,11 @@ export function useFormTheme() {
   const { resolved } = useTheme();
   const { isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
   return {
-    isDark, isRTL,
+    isDark, isRTL, accent,
     bg: isDark ? '#0B0F14' : '#ffffff',
     card: isDark ? '#161C23' : '#FFFFFF',
     border: isDark ? '#283241' : '#E8EDF2',
@@ -40,7 +43,7 @@ export function FormHeader({ icon: Icon, title, subtitle }: any) {
       <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 12 }, th.isRTL && { flexDirection: 'row-reverse' }]}>
         {Icon ? (
           <View style={[s.headIcon, { backgroundColor: th.tint }]}>
-            <Icon size={22} color={GREEN} />
+            <Icon size={22} color={th.accent} />
           </View>
         ) : null}
         <Text style={[s.headTitle, { color: th.text }, th.align]}>{title}</Text>
@@ -66,13 +69,17 @@ export function FormLabel({ children }: any) {
 export function FormInput({ label, error, style, icon: Icon, ...props }: any) {
   const th = useFormTheme();
   const [focus, setFocus] = useState(false);
-  const bColor = error ? '#e11d48' : focus ? GREEN : th.border;
+  const bColor = error ? '#e11d48' : focus ? th.accent : th.border;
   return (
     <View style={{ marginBottom: 14 }}>
       {label ? <FormLabel>{label}</FormLabel> : null}
       <View style={[s.inputWrap, { backgroundColor: th.inputBg, borderColor: bColor }, focus && s.focusGlow, th.rowDir]}>
-        {Icon ? <Icon size={18} color={focus ? GREEN : th.sub} style={{ marginHorizontal: 4 }} /> : null}
+        {Icon ? <Icon size={18} color={focus ? th.accent : th.sub} style={{ marginHorizontal: 4 }} /> : null}
+        {/* Audit formulaires : le label est un <Text> FRÈRE du champ — RN ne fait aucune
+            association automatique, donc TalkBack annonçait « champ de saisie » sans nom.
+            On dérive accessibilityLabel du label (surchargeable par props). */}
         <TextInput
+          accessibilityLabel={typeof label === 'string' ? label : undefined}
           style={[s.input, { color: th.text }, th.align, style]}
           placeholderTextColor={th.sub}
           onFocus={(e) => { setFocus(true); props.onFocus?.(e); }}
@@ -88,7 +95,9 @@ export function FormInput({ label, error, style, icon: Icon, ...props }: any) {
 /** Erreur inline (sous le champ). */
 export function InlineError({ error }: { error?: string }) {
   if (!error) return null;
-  return <Text style={s.error}>{error}</Text>;
+  // L'erreur n'était que rouge : invisible pour les lecteurs d'écran ET pour les
+  // daltoniens si la couleur est le seul signal. Live region = annonce à l'apparition.
+  return <Text accessibilityLiveRegion="polite" accessibilityRole="alert" style={s.error}>{error}</Text>;
 }
 
 /** Stepper numérique (+/-) avec saisie directe — boutons ronds teintés. */
@@ -100,21 +109,42 @@ export function Stepper({ label, value, onChange, step = 1, min = 0, max = 10000
     <View style={{ marginBottom: 14 }}>
       {label ? <FormLabel>{label}</FormLabel> : null}
       <View style={[s.stepperWrap, { backgroundColor: th.inputBg, borderColor: error ? '#e11d48' : th.border }, th.rowDir]}>
-        <TouchableOpacity style={[s.stepBtn, { backgroundColor: th.tint }]} onPress={() => set(num - step)} hitSlop={{ top: 8, bottom: 8 }} activeOpacity={0.7}>
-          <Minus size={18} color={GREEN} strokeWidth={3} />
+        {/* Les boutons −/+ n'étaient que des icônes : TalkBack annonçait « bouton » sans dire
+            lequel ni sur quoi il agit. hitSlop horizontal ajouté aussi (cible < 48dp). */}
+        <TouchableOpacity
+          style={[s.stepBtn, { backgroundColor: th.tint }]}
+          onPress={() => set(num - step)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={label ? `Diminuer ${label}` : 'Diminuer'}
+        >
+          <Minus size={18} color={th.accent} strokeWidth={3} />
         </TouchableOpacity>
         <View style={s.stepValueWrap}>
           <TextInput
+            accessibilityLabel={typeof label === 'string' ? label : undefined}
             style={[s.stepInput, { color: th.text }]}
             value={String(value ?? '')}
             onChangeText={onChange}
             keyboardType="numeric"
+            // Le clavier numérique n'a pas de touche « OK » sur Android : sans returnKeyType
+            // l'utilisateur restait bloqué clavier ouvert au-dessus du bouton d'envoi.
+            returnKeyType="done"
+            maxLength={7}
             textAlign="center"
           />
           {unit ? <Text style={[s.unit, { color: th.sub }]}>{unit}</Text> : null}
         </View>
-        <TouchableOpacity style={[s.stepBtn, { backgroundColor: th.tint }]} onPress={() => set(num + step)} hitSlop={{ top: 8, bottom: 8 }} activeOpacity={0.7}>
-          <Plus size={18} color={GREEN} strokeWidth={3} />
+        <TouchableOpacity
+          style={[s.stepBtn, { backgroundColor: th.tint }]}
+          onPress={() => set(num + step)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={label ? `Augmenter ${label}` : 'Augmenter'}
+        >
+          <Plus size={18} color={th.accent} strokeWidth={3} />
         </TouchableOpacity>
       </View>
       <InlineError error={error} />
@@ -128,14 +158,19 @@ export function ChipGroup({ label, options, value, onChange }: any) {
   return (
     <View style={{ marginBottom: 14 }}>
       {label ? <FormLabel>{label}</FormLabel> : null}
-      <View style={[s.chipRow, th.rowDir]}>
+      {/* Choix unique = sémantique radio. Sans accessibilityState, la coche verte est le
+          SEUL indice de sélection → invisible pour TalkBack et pour un daltonien. */}
+      <View style={[s.chipRow, th.rowDir]} accessibilityRole="radiogroup" accessibilityLabel={typeof label === 'string' ? label : undefined}>
         {options.map((o: any) => {
           const active = o.value === value;
           return (
             <TouchableOpacity
               key={o.value}
               activeOpacity={0.8}
-              style={[s.chip, { backgroundColor: active ? GREEN : th.inputBg, borderColor: active ? GREEN : th.border }, active && s.chipActiveShadow, th.rowDir]}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: active, checked: active }}
+              accessibilityLabel={typeof o.label === 'string' ? o.label : undefined}
+              style={[s.chip, { backgroundColor: active ? th.accent : th.inputBg, borderColor: active ? th.accent : th.border }, active && s.chipActiveShadow, th.rowDir]}
               onPress={() => onChange(o.value)}
             >
               {active ? <Check size={14} color="#fff" strokeWidth={3} style={{ marginRight: 5 }} /> : null}
@@ -150,12 +185,23 @@ export function ChipGroup({ label, options, value, onChange }: any) {
 
 /** CTA unique : vert dégradé, plein, en bas d'écran. */
 export function SubmitBar({ label, onPress, disabled, loading }: any) {
+  const th = useFormTheme();
   const off = disabled || loading;
   return (
     <View style={s.footer}>
-      <TouchableOpacity activeOpacity={0.85} onPress={onPress} disabled={off} style={s.submitTouch}>
+      {/* En chargement le libellé disparaît au profit du spinner : sans accessibilityLabel
+          le bouton devient anonyme, et sans busy/disabled l'état n'est pas annoncé. */}
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={onPress}
+        disabled={off}
+        style={s.submitTouch}
+        accessibilityRole="button"
+        accessibilityLabel={typeof label === 'string' ? label : undefined}
+        accessibilityState={{ disabled: !!off, busy: !!loading }}
+      >
         <LinearGradient
-          colors={off ? ['#CBD5E1', '#CBD5E1'] : [GREEN, GREEN_DARK]}
+          colors={off ? ['#CBD5E1', '#CBD5E1'] : [th.accent, GREEN_DARK]}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={[s.submit, !off && s.submitShadow]}
         >

@@ -22,7 +22,9 @@ export default function NotFound() {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: Colors.light.white,
+      // transparent : le layout racine peint déjà le fond. Un blanc en dur
+      // provoquait un flash clair de 100 ms en mode sombre avant la redirection.
+      backgroundColor: 'transparent',
     }}>
       <ActivityIndicator size="large" color={Colors.light.primary} />
     </View>

@@ -8,6 +8,7 @@ import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { useScreenGate } from '../../components/FeatureGate';
 import { aiGenerate, aiTranscribe } from '../../lib/aiProxy';
 import { useNutritionData } from '../../hooks/useNutritionData';
 import { auth } from '../../lib/firebaseAuth';
@@ -15,8 +16,7 @@ import { getUserFromFirestore, fetchAllUserData } from '../../lib/firebase';
 import { mlWeightForecast } from '../../lib/mlApi';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
-
-const GREEN = '#2E8B57';
+import { rowDir } from '../../lib/rtl';
 
 const TXT: any = {
   en: {
@@ -44,6 +44,38 @@ const TXT: any = {
     replyLang: 'Réponds en arabe',
   },
 };
+
+// Personas du coach : ton/caractère injecté dans le prompt. En arabe, le coach répond
+// en DARIJA marocaine (pas arabe standard) avec une persona culturelle.
+const PERSONAS = [
+  {
+    id: 'motiv',
+    label: { en: 'Motivating', fr: 'Motivant', ar: 'محفّز' },
+    p: {
+      en: 'an energetic, motivating coach who hypes the user up',
+      fr: "un coach énergique et motivant qui booste l'utilisateur",
+      ar: 'مدرب نشيط ومحفّز كيشجّع المستعمل بزّاف بالدارجة المغربية',
+    },
+  },
+  {
+    id: 'zen',
+    label: { en: 'Gentle', fr: 'Bienveillant', ar: 'لطيف' },
+    p: {
+      en: 'a gentle, caring and reassuring coach',
+      fr: 'un coach doux, bienveillant et rassurant',
+      ar: 'مدرب لطيف وحنين كيطمّن المستعمل بالدارجة المغربية',
+    },
+  },
+  {
+    id: 'pro',
+    label: { en: 'Technical', fr: 'Technique', ar: 'تقني' },
+    p: {
+      en: 'a precise, science-based performance coach',
+      fr: 'un coach technique, précis et basé sur la science',
+      ar: 'مدرب تقني ودقيق مبني على العلم بالدارجة المغربية',
+    },
+  },
+];
 
 type Msg = { role: 'coach' | 'user'; text: string };
 
@@ -87,12 +119,14 @@ async function buildContext(goals: any, consumed: any): Promise<string> {
 }
 
 export default function AiCoachScreen() {
-  const data: any = useNutritionData();
-  const { resolved } = useTheme();
+  const __gate = useScreenGate('ai-coach');
+  const data: any = useNutritionData(new Date().toISOString().split('T')[0]);
+  const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#F8FAFC';
+  const GREEN = colors.primary;
+  const bg = isDark ? '#0f1419' : '#F8FAFC';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0F172A';
   const sub = isDark ? '#94a3b8' : '#94A3B8';
@@ -103,6 +137,9 @@ export default function AiCoachScreen() {
   ]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState('');
+  const [personaId, setPersonaId] = useState('motiv');
+  const personaRef = useRef('motiv'); // lu dans ask() pour éviter la stale-closure
+  const changePersona = (id: string) => { setPersonaId(id); personaRef.current = id; ask('', true); };
   const scroll = useRef<ScrollView>(null);
   const [voice, setVoice] = useState(false);
   const voiceRef = useRef(false);
@@ -122,9 +159,14 @@ export default function AiCoachScreen() {
     if (!isAuto) setMsgs((m) => [...m, { role: 'user', text: question }]);
     try {
       const ctx = await buildContext(data?.goals || {}, data?.consumed || {});
+      const persona = PERSONAS.find((p) => p.id === personaRef.current) || PERSONAS[0];
+      const tone = (persona.p as any)[language] || persona.p.en;
+      const langInstr = language === 'ar'
+        ? 'Réponds en DARIJA MAROCAINE (arabe dialectal du Maroc, en lettres arabes) — surtout PAS en arabe standard. Tiens compte du contexte marocain (plats locaux, halal, Ramadan le cas échéant).'
+        : language === 'fr' ? 'Réponds en français.' : 'Reply in English.';
       const prompt = isAuto
-        ? `Tu es un coach nutrition & sport bienveillant. Contexte de l'utilisateur: ${ctx} Donne 3 conseils personnalisés, courts et actionnables pour aujourd'hui. ${t.replyLang}, format liste à puces.`
-        : `Tu es un coach nutrition & sport. Contexte: ${ctx} Question de l'utilisateur: "${question}". ${t.replyLang}, court et actionnable.`;
+        ? `Tu es ${tone}, coach nutrition & sport. Contexte de l'utilisateur: ${ctx} Donne 3 conseils personnalisés, courts et actionnables pour aujourd'hui. ${langInstr} Format liste à puces.`
+        : `Tu es ${tone}, coach nutrition & sport. Contexte: ${ctx} Question de l'utilisateur: "${question}". ${langInstr} Court et actionnable.`;
       const text = await aiGenerate(prompt);
       setMsgs((m) => [...m, { role: 'coach', text: text.trim() }]);
       if (voiceRef.current) Speech.speak(text.trim(), { language: language === 'ar' ? 'ar-SA' : language === 'en' ? 'en-US' : 'fr-FR' }); // coach vocal
@@ -170,23 +212,36 @@ export default function AiCoachScreen() {
   };
   const micPress = () => (recording ? stopRec() : startRec());
 
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
-      <View style={styles.head}>
+      <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}>
         <Sparkles size={22} color={GREEN} />
-        <Text style={[styles.title, { color: text }]}>{t.title}</Text>
-        <TouchableOpacity onPress={toggleVoice} style={{ marginLeft: 'auto' }} hitSlop={10}>
+        <Text style={[styles.title, { color: text }, align]}>{t.title}</Text>
+        <TouchableOpacity onPress={toggleVoice} style={isRTL ? { marginRight: 'auto' } : { marginLeft: 'auto' }} hitSlop={10}>
           {voice ? <Volume2 size={20} color={GREEN} /> : <VolumeX size={20} color={sub} />}
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => ask('', true)} style={{ marginLeft: 14 }} hitSlop={10}><RefreshCw size={18} color={sub} /></TouchableOpacity>
+        <TouchableOpacity onPress={() => ask('', true)} style={isRTL ? { marginRight: 14 } : { marginLeft: 14 }} hitSlop={10}><RefreshCw size={18} color={sub} /></TouchableOpacity>
+      </View>
+      <View style={[styles.personaRow, { flexDirection: rowDir(isRTL) }]}>
+        {PERSONAS.map((p) => {
+          const on = personaId === p.id;
+          return (
+            <TouchableOpacity key={p.id} onPress={() => changePersona(p.id)} disabled={loading}
+              style={[styles.personaChip, { backgroundColor: on ? GREEN : (isDark ? '#1e293b' : '#E2E8F0') }, loading && { opacity: 0.6 }]}>
+              <Text style={[styles.personaTxt, { color: on ? '#fff' : (isDark ? '#cbd5e1' : '#475569') }]}>{(p.label as any)[language] || p.label.en}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
       <ScrollView ref={scroll} contentContainerStyle={styles.body}>
         {msgs.map((m, i) => (
-          <View key={i} style={[styles.bubble, m.role === 'user' ? styles.user : [styles.coach, { backgroundColor: card, borderColor: isDark ? '#334155' : '#EEF2F6' }]]}>
+          <View key={i} style={[styles.bubble, m.role === 'user' ? [styles.user, { backgroundColor: GREEN }] : [styles.coach, { backgroundColor: card, borderColor: isDark ? '#334155' : '#EEF2F6' }]]}>
             <Text style={[styles.bubbleTxt, { color: text }, align, m.role === 'user' && { color: '#fff' }]}>{m.text}</Text>
             {m.role === 'coach' && (
-              <TouchableOpacity onPress={() => speakMsg(m.text)} style={styles.speakBtn} hitSlop={8}>
+              <TouchableOpacity onPress={() => speakMsg(m.text)} style={[styles.speakBtn, { alignSelf: isRTL ? 'flex-end' : 'flex-start' }]} hitSlop={8}>
                 <Volume2 size={15} color={GREEN} />
               </TouchableOpacity>
             )}
@@ -194,9 +249,9 @@ export default function AiCoachScreen() {
         ))}
         {loading && <View style={[styles.bubble, styles.coach, { backgroundColor: card, borderColor: isDark ? '#334155' : '#EEF2F6' }]}><ActivityIndicator color={GREEN} /></View>}
       </ScrollView>
-      <View style={[styles.inputRow, { backgroundColor: card, borderTopColor: isDark ? '#334155' : '#EEF2F6' }]}>
+      <View style={[styles.inputRow, { flexDirection: rowDir(isRTL), backgroundColor: card, borderTopColor: isDark ? '#334155' : '#EEF2F6' }]}>
         <TextInput
-          style={[styles.input, { backgroundColor: isDark ? '#0f172a' : '#F1F5F9', color: text, borderWidth: 1.5, borderColor: isDark ? '#334155' : '#E2E8F0' }]}
+          style={[styles.input, { backgroundColor: isDark ? '#0f1419' : '#F1F5F9', color: text, borderWidth: 1.5, borderColor: isDark ? '#334155' : '#E2E8F0' }, align]}
           placeholder={t.placeholder}
           placeholderTextColor={sub}
           value={q}
@@ -207,7 +262,7 @@ export default function AiCoachScreen() {
         <TouchableOpacity style={[styles.micBtn, recording && { backgroundColor: '#DC2626' }]} onPress={micPress} disabled={loading && !recording}>
           {recording ? <Square size={18} color="#fff" /> : <Mic size={20} color="#fff" />}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.sendBtn} onPress={send} disabled={loading}><Send size={20} color="#fff" /></TouchableOpacity>
+        <TouchableOpacity style={[styles.sendBtn, { backgroundColor: GREEN }]} onPress={send} disabled={loading}><Send size={20} color="#fff" /></TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -220,11 +275,14 @@ const styles = StyleSheet.create({
   body: { padding: 16, gap: 10 },
   bubble: { maxWidth: '88%', borderRadius: 16, padding: 13 },
   coach: { backgroundColor: '#fff', alignSelf: 'flex-start', borderWidth: 1, borderColor: '#EEF2F6' },
-  user: { backgroundColor: GREEN, alignSelf: 'flex-end' },
+  user: { alignSelf: 'flex-end' },
   bubbleTxt: { fontSize: 14, lineHeight: 20, color: '#1F2937' },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderTopWidth: 1, borderTopColor: '#EEF2F6', backgroundColor: '#fff' },
   input: { flex: 1, backgroundColor: '#F1F5F9', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 11, fontSize: 14 },
-  sendBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: GREEN, alignItems: 'center', justifyContent: 'center' },
+  sendBtn: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   micBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#0EA5E9', alignItems: 'center', justifyContent: 'center' },
   speakBtn: { marginTop: 8, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4 },
+  personaRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 20, paddingBottom: 8, flexWrap: 'wrap' },
+  personaChip: { paddingVertical: 7, paddingHorizontal: 14, borderRadius: 11 },
+  personaTxt: { fontWeight: '700', fontSize: 13 },
 });

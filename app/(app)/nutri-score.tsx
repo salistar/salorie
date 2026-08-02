@@ -1,12 +1,15 @@
 // Nutri-Score — note nutritionnelle A→E d'un aliment (pour 100 g).
-import React, { useState, useMemo } from 'react';
-import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
-import { Award } from 'lucide-react-native';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, Animated, Easing, Share } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { Award, Share2 } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { FormCard, Stepper } from '../../components/FormKit';
+import { SecondaryButton } from '../../components/ui/Button';
 import { nutriScore, GRADE_COLOR, NutriGrade } from '../../lib/nutriScore';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const GREEN = '#2E8B57';
 const FIELDS = [
@@ -24,18 +27,31 @@ const TXT: any = {
     grade: 'Grade', score: 'score',
     f_energy: 'Energy', f_sugars: 'Sugars', f_satfat: 'Sat. fat', f_sodium: 'Sodium', f_fiber: 'Fiber', f_protein: 'Protein',
     tip: '💡 Find these values on the nutrition label ("per 100 g" table).',
+    share: 'Share', product: 'Product',
+    scaleTitle: 'What the scale means',
+    scaleHint: 'A = best nutritional quality, E = lowest. Grade computed from the values per 100 g.',
+    verdict: { A: 'Excellent nutritional quality', B: 'Good nutritional quality', C: 'Average nutritional quality', D: 'Poor nutritional quality', E: 'Low nutritional quality' } as Record<NutriGrade, string>,
+    shareMsg: (g: NutriGrade, s: number, verd: string) => `Nutri-Score ${g} · score ${s} — ${verd}. (Salorie)`,
   },
   fr: {
     title: 'Nutri-Score', sub: 'Saisis les valeurs pour 100 g → note A→E en direct.',
     grade: 'Note', score: 'score',
     f_energy: 'Énergie', f_sugars: 'Sucres', f_satfat: 'Graisses sat.', f_sodium: 'Sodium', f_fiber: 'Fibres', f_protein: 'Protéines',
     tip: '💡 Trouve ces valeurs sur l\'étiquette nutritionnelle (tableau « pour 100 g »).',
+    share: 'Partager', product: 'Produit',
+    scaleTitle: 'Ce que signifie l\'échelle',
+    scaleHint: 'A = meilleure qualité nutritionnelle, E = la plus faible. Note calculée à partir des valeurs pour 100 g.',
+    verdict: { A: 'Excellente qualité nutritionnelle', B: 'Bonne qualité nutritionnelle', C: 'Qualité nutritionnelle moyenne', D: 'Qualité nutritionnelle médiocre', E: 'Faible qualité nutritionnelle' } as Record<NutriGrade, string>,
+    shareMsg: (g: NutriGrade, s: number, verd: string) => `Nutri-Score ${g} · score ${s} — ${verd}. (Salorie)`,
   },
   ar: {
     title: 'نوتري-سكور', sub: 'أدخل القيم لكل 100 غ ← تقييم A→E مباشر.',
     grade: 'التقييم', score: 'النقاط',
     f_energy: 'الطاقة', f_sugars: 'السكريات', f_satfat: 'دهون مشبعة', f_sodium: 'الصوديوم', f_fiber: 'الألياف', f_protein: 'البروتين',
     tip: '💡 ستجد هذه القيم على الملصق الغذائي (جدول «لكل 100 غ»).',
+    share: 'مشاركة', product: 'المنتج',
+    verdict: { A: 'جودة غذائية ممتازة', B: 'جودة غذائية جيدة', C: 'جودة غذائية متوسطة', D: 'جودة غذائية ضعيفة', E: 'جودة غذائية منخفضة' } as Record<NutriGrade, string>,
+    shareMsg: (g: NutriGrade, s: number, verd: string) => `Nutri-Score ${g} · ${s} — ${verd}. (Salorie)`,
   },
 };
 
@@ -44,11 +60,16 @@ export default function NutriScoreScreen() {
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
+  const bg = isDark ? '#0f1419' : '#F4F7F9';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0F172A';
   const sub = isDark ? '#94a3b8' : '#64748B';
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
+
+  const __gate = useScreenGate('nutri-score');
 
   const [v, setV] = useState<Record<string, string>>({});
   const num = (k: string) => parseFloat(v[k]) || 0;
@@ -58,12 +79,50 @@ export default function NutriScoreScreen() {
   }), [v]);
   const hasInput = Object.values(v).some((x) => x);
 
+  // #199 (parité verdict) — quand le verdict/note s'affiche (ou change de note),
+  // retour haptique Success + apparition (fade + léger scale-in). Additif :
+  // n'altère ni le calcul du Nutri-Score ni la logique de saisie.
+  const verdictAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (hasInput) {
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+      verdictAnim.setValue(0);
+      Animated.timing(verdictAnim, {
+        toValue: 1,
+        duration: 320,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    } else {
+      verdictAnim.setValue(0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasInput, grade]);
+
+  const verdictAnimStyle = {
+    opacity: verdictAnim,
+    transform: [
+      { scale: verdictAnim.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1] }) },
+    ],
+  };
+
+  // #100 — partage d'un résumé texte (note + score + verdict) via l'API Share.
+  // Additif : ne touche ni le calcul du Nutri-Score ni l'haptique/anim ci-dessus.
+  const onShare = async () => {
+    try {
+      const verd = t.verdict?.[grade] || '';
+      await Share.share({ message: t.shareMsg(grade, score, verd) });
+    } catch {}
+  };
+
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <Image source={require('../../assets/images/illustrations/healthy_food.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
-        <View style={styles.head}><Award size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <View style={styles.head}><Award size={24} color={accent} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
         <View style={styles.scaleRow}>
@@ -73,7 +132,24 @@ export default function NutriScoreScreen() {
             </View>
           ))}
         </View>
-        {hasInput && <Text style={[styles.scoreNote, { color: sub }]}>{t.grade} <Text style={{ color: GRADE_COLOR[grade], fontWeight: '900' }}>{grade}</Text> · {t.score} {score}</Text>}
+
+        {/* #107 — clarification/légende du Nutri-Score déjà affiché (A→E).
+            NOVA (nova_group) non disponible sur cet écran de saisie manuelle → voir skipped.
+            Additif : n'altère ni le calcul, ni le partage (#100), ni l'haptique/anim (#199). */}
+        <View style={styles.legendRow}>
+          <Text style={[styles.legendGrade, { color: GRADE_COLOR.A }]}>A</Text>
+          <Text style={[styles.legendArrow, { color: sub }]}>→</Text>
+          <Text style={[styles.legendGrade, { color: GRADE_COLOR.E }]}>E</Text>
+          <Text style={[styles.legendHint, { color: sub }, align]} numberOfLines={2}>{t.scaleHint}</Text>
+        </View>
+        {hasInput && (
+          <Animated.View style={verdictAnimStyle}>
+            <Text style={[styles.scoreNote, { color: sub }]}>{t.grade} <Text style={{ color: GRADE_COLOR[grade], fontWeight: '900' }}>{grade}</Text> · {t.score} {score}</Text>
+            <View style={styles.shareRow}>
+              <SecondaryButton title={t.share} onPress={onShare} full={false} size="sm" icon={<Share2 size={16} color={accent} />} />
+            </View>
+          </Animated.View>
+        )}
 
         <FormCard>
           {FIELDS.map((f) => (
@@ -103,7 +179,12 @@ const styles = StyleSheet.create({
   scaleItem: { width: 52, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center', opacity: 0.4 },
   scaleActive: { opacity: 1, transform: [{ scale: 1.18 }], shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 6, elevation: 4 },
   scaleTxt: { color: '#fff', fontSize: 22, fontWeight: '900' },
-  scoreNote: { textAlign: 'center', fontSize: 15, color: '#64748B', marginBottom: 18, fontWeight: '600' },
+  legendRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 12, flexWrap: 'wrap' },
+  legendGrade: { fontSize: 15, fontWeight: '900' },
+  legendArrow: { fontSize: 13, fontWeight: '700' },
+  legendHint: { flexShrink: 1, fontSize: 12, lineHeight: 17, fontWeight: '500', maxWidth: 260 },
+  scoreNote: { textAlign: 'center', fontSize: 15, color: '#64748B', marginBottom: 10, fontWeight: '600' },
+  shareRow: { flexDirection: 'row', justifyContent: 'center', marginBottom: 18 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 4, marginBottom: 10 },
   label: { fontSize: 15, fontWeight: '600', color: '#0F172A' },
   inputWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },

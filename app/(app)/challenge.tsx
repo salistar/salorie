@@ -15,6 +15,7 @@ import { addNutritionLog, emailToDocId } from '../../lib/firebase';
 import { addActivitySteps } from '../../lib/steps';
 import { refreshStepsNotification } from '../../lib/stepsNotif';
 import { Colors } from '../../constants/Colors';
+import { elevation } from '../../constants/theme';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import {
@@ -29,6 +30,8 @@ import {
   streetViewUrl,
 } from '../../lib/races';
 import { poiPhoto } from '../../assets/challenges/registry';
+import { getWeather, Weather } from '../../lib/weather';
+import { getHistory } from '../../lib/timeMachine';
 import Medal from '../../components/Medal';
 import { getRace as apiGetRace, joinRace as apiJoinRace, raceProgress as apiProgress } from '../../lib/racesApi';
 
@@ -37,7 +40,9 @@ const CHALLENGE_FRAME: Record<string, string> = { 'casa-loop': 'casablanca' };
 
 // Google Maps JS in a WebView — same approach as run.tsx (the JS API key works in a
 // WebView with a baseUrl; react-native-maps would need a Maps SDK for Android key).
-const GOOGLE_MAPS_KEY = 'AIzaSyAa1lBSroSXA-Om4mio84-SWAcmzQgYv8w';
+// Clé Maps lue depuis l'env (EXPO_PUBLIC_GOOGLE_MAPS_KEY) — plus de clé en dur dans le
+// bundle. Clé publiable côté client : DOIT être restreinte dans GCP (package + SHA-1 + API).
+const GOOGLE_MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY ?? '';
 const PRIMARY = Colors.light.primary;
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -55,6 +60,11 @@ const TXT: Record<string, any> = {
     simHint: 'Simulation — replaying the route.',
     realHint: 'Live GPS — move to advance. Stand still and nothing moves.',
     locNeeded: 'Enable location to use live GPS navigation.',
+    medalWon: '🎉 Medal earned!', medalToUnlock: 'Your medal to unlock', rankSuffix: '',
+    wind: 'Wind', headwind: 'Headwind', normal: 'Normal', tailwind: 'Tailwind',
+    perceivedGoal: 'Perceived goal', windHint: 'Display only — your real progress and medal are unchanged.',
+    timeMachine: 'Time machine', timeMachineSub: 'This place through the ages',
+    timeMachineErr: 'History unavailable right now. Try again later.',
   },
   fr: {
     title: 'Défi', join: 'Rejoindre le défi', joined: 'Rejoint !', joining: 'Connexion…',
@@ -69,6 +79,11 @@ const TXT: Record<string, any> = {
     simHint: 'Simulation — rejoue le parcours.',
     realHint: 'GPS réel — bouge pour avancer. Si tu ne bouges pas, rien ne bouge.',
     locNeeded: 'Active la localisation pour la navigation GPS réelle.',
+    medalWon: '🎉 Médaille gagnée !', medalToUnlock: 'Ta médaille à débloquer', rankSuffix: 'ᵉ',
+    wind: 'Vent', headwind: 'Vent de face', normal: 'Normal', tailwind: 'Vent arrière',
+    perceivedGoal: 'Objectif perçu', windHint: 'Affichage seul — ta progression réelle et ta médaille restent inchangées.',
+    timeMachine: 'Remonter le temps', timeMachineSub: 'Ce lieu à travers les époques',
+    timeMachineErr: 'Histoire indisponible pour le moment. Réessaie plus tard.',
   },
   ar: {
     title: 'التحدي', join: 'انضم إلى التحدي', joined: 'تم الانضمام!', joining: 'جارٍ الانضمام…',
@@ -83,6 +98,11 @@ const TXT: Record<string, any> = {
     simHint: 'محاكاة — إعادة تشغيل المسار.',
     realHint: 'GPS مباشر — تحرّك للتقدّم. إن لم تتحرّك لا شيء يتحرّك.',
     locNeeded: 'فعّل الموقع لاستخدام ملاحة GPS المباشرة.',
+    medalWon: '🎉 تم الفوز بالميدالية!', medalToUnlock: 'ميداليتك لفتحها', rankSuffix: '',
+    wind: 'الرياح', headwind: 'رياح معاكسة', normal: 'عادي', tailwind: 'رياح خلفية',
+    perceivedGoal: 'الهدف المُدرَك', windHint: 'للعرض فقط — تقدّمك الحقيقي وميداليتك لا يتغيّران.',
+    timeMachine: 'عبر الزمن', timeMachineSub: 'هذا المكان عبر العصور',
+    timeMachineErr: 'التاريخ غير متاح حاليًا. حاول لاحقًا.',
   },
 };
 
@@ -337,6 +357,14 @@ export default function ChallengeScreen() {
   const navStartKm = useRef(0);        // progress when this nav session started
   const segmentLogged = useRef(false); // guard so a segment is logged to activity once
   const [weight, setWeight] = useState(70);
+  // Météo live du waypoint courant + préférence Headwind/Normal/Tailwind (confort d'affichage seul).
+  const [weather, setWeather] = useState<Weather | null>(null);
+  const [wind, setWind] = useState<'head' | 'normal' | 'tail'>('normal');
+  // Time Machine : récit historique du lieu courant (couche additive, IA Gemini).
+  const [tmOpen, setTmOpen] = useState(false);
+  const [tmLoading, setTmLoading] = useState(false);
+  const [tmStory, setTmStory] = useState<string | null>(null);
+  const [tmPlace, setTmPlace] = useState('');
 
   const pois: ChallengePOI[] = (challenge?.pois as ChallengePOI[]) || [];
 
@@ -375,6 +403,42 @@ export default function ChallengeScreen() {
     })();
   }, [email]);
 
+  // Préférence Headwind/Normal/Tailwind (par défi, persistée localement — affichage seul).
+  useEffect(() => {
+    if (!challengeId) return;
+    (async () => {
+      try {
+        const v = await AsyncStorage.getItem(`challenge_wind_${challengeId}`);
+        if (v === 'head' || v === 'normal' || v === 'tail') setWind(v);
+      } catch {}
+    })();
+  }, [challengeId]);
+
+  const setWindPref = (v: 'head' | 'normal' | 'tail') => {
+    setWind(v);
+    AsyncStorage.setItem(`challenge_wind_${challengeId}`, v).catch(() => {});
+    Haptics.selectionAsync().catch(() => {});
+  };
+
+  // Ouvre le modal "Remonter le temps" et charge le récit du lieu (best-effort).
+  const openTimeMachine = async (placeName: string) => {
+    const name = String(placeName || '').trim();
+    if (!name) return;
+    Haptics.selectionAsync().catch(() => {});
+    setTmPlace(name);
+    setTmStory(null);
+    setTmOpen(true);
+    setTmLoading(true);
+    try {
+      const story = await getHistory(name, language);
+      setTmStory(story);
+    } catch {
+      setTmStory(null);
+    } finally {
+      setTmLoading(false);
+    }
+  };
+
   // Initial progress fetch.
   useEffect(() => {
     let alive = true;
@@ -409,6 +473,10 @@ export default function ChallengeScreen() {
   const fraction = totalKm > 0 ? Math.min(1, myCumulativeKm / totalKm) : 0;
   const pct = Math.round(fraction * 100);
   const joined = myKm !== null;
+  // Objectif PERÇU (affichage seul) : Headwind +20 %, Tailwind -20 %. Ne touche NI les
+  // données de la course (totalKm/fraction/médaille) NI la progression réelle.
+  const windMult = wind === 'head' ? 1.2 : wind === 'tail' ? 0.8 : 1;
+  const perceivedTotalKm = totalKm * windMult;
 
   // ── Style Conqueror : prochain arrêt + position réelle + jalons ──
   const nextPoi = pois.find((p) => (p.atKm || 0) > myCumulativeKm) || null;
@@ -455,6 +523,19 @@ export default function ChallengeScreen() {
     [challengeId, challenge?.id] // inclut challenge?.id : recalcule quand la course Mongo (async) se charge
   );
 
+  // Waypoint courant = prochain arrêt visé (sinon ma position sur le tracé). Météo live du lieu.
+  const curWaypoint: LatLng | null = nextPoi
+    ? { lat: nextPoi.lat, lng: nextPoi.lng }
+    : (mePoint.lat || mePoint.lng ? mePoint : null);
+  useEffect(() => {
+    if (!curWaypoint) { setWeather(null); return; }
+    let alive = true;
+    getWeather(curWaypoint.lat, curWaypoint.lng)
+      .then((w) => { if (alive) setWeather(w); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [curWaypoint?.lat?.toFixed(2), curWaypoint?.lng?.toFixed(2)]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Draw the real road-following route once it's loaded + the map is ready.
   useEffect(() => {
     if (mapReady && roadPath.length > 1) {
@@ -500,8 +581,11 @@ export default function ChallengeScreen() {
     if (!force && now - lastWrite.current < 1500) return;
     lastWrite.current = now;
     const clamped = Math.min(totalKm || km, Math.max(baseKm, km));
+    // ANTI-TRICHE : en SIMULATION (navKind!=='real') on met à jour le classement mais on
+    // NE crédite PAS les compteurs réels (défi annuel / XP / Sadaqa / O2O) — distance non parcourue.
+    const credit = navKind === 'real';
     if (isMongo) apiProgress(challengeId, clamped).catch(() => {}); // backend auto-finit + génère la médaille au total
-    else setChallengeProgress(challengeId, email, clamped);
+    else setChallengeProgress(challengeId, email, clamped, credit);
   };
 
   // Finishing a navigation segment → log the distance covered to recent activity
@@ -651,7 +735,9 @@ export default function ChallengeScreen() {
   const text = isDark ? '#fff' : Colors.light.gray[900];
   const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
   const card = isDark ? Colors.dark.card : '#fff';
-  const bg = isDark ? '#000' : '#fff';
+  const bg = isDark ? '#0f1419' : '#fff';
+  // Accent thémé : vert clair en sombre (#4ade80) pour le contraste, vert marque en clair.
+  const primary = isDark ? Colors.dark.primary : Colors.light.primary;
   const trackBg = isDark ? '#2a2a2a' : Colors.light.gray[200];
   const rtlRow = isRTL ? { flexDirection: 'row-reverse' as const } : undefined;
   const align = isRTL ? ({ textAlign: 'right' } as const) : ({ textAlign: 'left' } as const);
@@ -659,9 +745,9 @@ export default function ChallengeScreen() {
   if (!challenge) {
     return (
       <View style={[styles.center, { backgroundColor: bg, padding: 32 }]}>
-        <Flag size={48} color={PRIMARY} />
+        <Flag size={48} color={primary} />
         <Text style={[styles.notFound, { color: text }]}>{t.notFound}</Text>
-        <TouchableOpacity style={styles.primaryBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: primary }]} onPress={() => router.back()}>
           <Text style={styles.primaryBtnTxt}>{t.title}</Text>
         </TouchableOpacity>
       </View>
@@ -693,6 +779,14 @@ export default function ChallengeScreen() {
         <TouchableOpacity style={[styles.back, { backgroundColor: card }]} onPress={() => router.back()}>
           <ArrowLeft size={22} color={text} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
         </TouchableOpacity>
+
+        {/* Météo live du waypoint courant (Open-Meteo) — badge temp + emoji */}
+        {!navMode && weather && (
+          <View style={[styles.weatherBadge, rtlRow]} pointerEvents="none">
+            <Text style={styles.weatherEmoji}>{weather.label.split(' ')[0]}</Text>
+            <Text style={styles.weatherTxt}>{weather.tempC}°</Text>
+          </View>
+        )}
 
         {/* Street View de MA position sur le parcours (style Conqueror) */}
         {joined && (
@@ -734,12 +828,12 @@ export default function ChallengeScreen() {
           <Medal width={44} frame={isMongo ? undefined : CHALLENGE_FRAME[challengeId]} {...(isMongo && mongoSpec ? mongoSpec : {})} title={challenge.name} km={totalKm} mode="template" />
           <View style={{ flex: 1 }}>
             <Text style={[styles.chName, { color: text }, align]} numberOfLines={1}>{challenge.name}</Text>
-            <Text style={[styles.bigKm, { color: PRIMARY }, align]}>
+            <Text style={[styles.bigKm, { color: primary }, align]}>
               {myCumulativeKm.toFixed(1)}{' '}
               <Text style={[styles.bigKmSub, { color: sub }]}>/ {totalKm} {t.km}</Text>
             </Text>
             <View style={[styles.track, { backgroundColor: trackBg }]}>
-              <View style={[styles.fill, { width: `${pct}%` }]} />
+              <View style={[styles.fill, { width: `${pct}%`, backgroundColor: primary }]} />
             </View>
             <Text style={[styles.pctTxt, { color: sub }, align]}>{pct}% · {t.progress}</Text>
           </View>
@@ -748,12 +842,60 @@ export default function ChallengeScreen() {
         {/* 📍 Prochain arrêt (style Conqueror) : km de parcours restants + distance réelle */}
         {joined && nextPoi && (
           <View style={[styles.nextStopCard, { backgroundColor: card }]}>
-            <Text style={[styles.nextStopKicker, { color: PRIMARY }, align]}>📍 {language === 'fr' ? 'Prochain arrêt' : language === 'ar' ? 'المحطة التالية' : 'Next stop'}</Text>
+            <Text style={[styles.nextStopKicker, { color: primary }, align]}>📍 {language === 'fr' ? 'Prochain arrêt' : language === 'ar' ? 'المحطة التالية' : 'Next stop'}</Text>
             <Text style={[styles.nextStopName, { color: text }, align]} numberOfLines={1}>{nextPoi.name}</Text>
             <Text style={[styles.nextStopMeta, { color: sub }, align]}>
               {(nextPoi.atKm - myCumulativeKm).toFixed(1)} {t.km} {language === 'fr' ? 'de parcours restants' : language === 'ar' ? 'متبقية في المسار' : 'left on the route'}
               {realPos ? ` · ${(haversine(realPos, { lat: nextPoi.lat, lng: nextPoi.lng }) / 1000).toFixed(1)} ${t.km} ${language === 'fr' ? 'de ta position réelle' : language === 'ar' ? 'من موقعك الحقيقي' : 'from your real position'}` : ''}
             </Text>
+            {/* Time Machine : récit historique du lieu courant (couche additive) */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={[styles.tmBtn, rtlRow, { borderColor: primary }]}
+              onPress={() => openTimeMachine(nextPoi.name)}
+            >
+              <Text style={styles.tmBtnEmoji}>⏳</Text>
+              <Text style={[styles.tmBtnTxt, { color: primary }]} numberOfLines={1}>{t.timeMachine}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Sélecteur Headwind / Normal / Tailwind — modificateur d'AFFICHAGE seul (objectif perçu) */}
+        {joined && totalKm > 0 && (
+          <View style={[styles.windCard, { backgroundColor: card }]}>
+            <View style={[styles.windHead, rtlRow]}>
+              <Text style={[styles.windTitle, { color: text }, align]}>
+                🌬️ {t.wind}
+                {weather ? `  ·  ${weather.label}  ·  ${weather.wind} km/h` : ''}
+              </Text>
+            </View>
+            <View style={[styles.windRow, rtlRow]}>
+              {([
+                { k: 'head' as const, l: t.headwind, e: '🌬️' },
+                { k: 'normal' as const, l: t.normal, e: '➖' },
+                { k: 'tail' as const, l: t.tailwind, e: '💨' },
+              ]).map((opt) => {
+                const on = wind === opt.k;
+                return (
+                  <TouchableOpacity
+                    key={opt.k}
+                    activeOpacity={0.85}
+                    onPress={() => setWindPref(opt.k)}
+                    style={[
+                      styles.windSeg,
+                      { borderColor: on ? primary : trackBg, backgroundColor: on ? primary : 'transparent' },
+                    ]}
+                  >
+                    <Text style={[styles.windSegEmoji, on && { opacity: 1 }]}>{opt.e}</Text>
+                    <Text style={[styles.windSegTxt, { color: on ? '#fff' : sub }]} numberOfLines={1}>{opt.l}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <Text style={[styles.windGoal, { color: primary }, align]}>
+              {t.perceivedGoal} : {perceivedTotalKm.toFixed(1)} {t.km}
+            </Text>
+            <Text style={[styles.windHint, { color: sub }, align]}>{t.windHint}</Text>
           </View>
         )}
 
@@ -763,21 +905,21 @@ export default function ChallengeScreen() {
           const myRank = completed ? ((board.findIndex((b) => b.email === email) + 1) || 1) : 0;
           return (
             <View style={{ alignItems: 'center', marginTop: 14 }}>
-              <Text style={{ fontSize: 14, fontWeight: '800', marginBottom: 6, color: completed ? PRIMARY : sub }}>
-                {completed ? '🎉 Médaille gagnée !' : 'Ta médaille à débloquer'}
+              <Text style={{ fontSize: 14, fontWeight: '800', marginBottom: 6, color: completed ? primary : sub }}>
+                {completed ? t.medalWon : t.medalToUnlock}
               </Text>
               <View style={completed ? undefined : { opacity: 0.5 }}>
                 <Medal width={190} frame={isMongo ? undefined : CHALLENGE_FRAME[challengeId]} {...(isMongo && mongoSpec ? mongoSpec : {})} title={challenge.name}
                   km={totalKm} rank={myRank || undefined} name={user?.fullName || t.you} photoSource={isMongo ? undefined : poiPhoto(challengeId, 0)} />
               </View>
-              {completed && <Text style={{ fontSize: 14, fontWeight: '700', marginTop: 6, color: text }}>{t.leaderboard} : {myRank}{language === 'fr' ? 'ᵉ' : ''}</Text>}
+              {completed && <Text style={{ fontSize: 14, fontWeight: '700', marginTop: 6, color: text }}>{t.leaderboard} : {myRank}{t.rankSuffix}</Text>}
             </View>
           );
         })()}
 
         {/* Join button (only when not joined) */}
         {!joined && (
-          <TouchableOpacity style={[styles.joinBtn, joining && { opacity: 0.7 }]} onPress={onJoin} disabled={joining}>
+          <TouchableOpacity style={[styles.joinBtn, { backgroundColor: primary }, joining && { opacity: 0.7 }]} onPress={onJoin} disabled={joining}>
             <Text style={styles.joinBtnTxt}>{joining ? t.joining : t.join}</Text>
           </TouchableOpacity>
         )}
@@ -788,7 +930,7 @@ export default function ChallengeScreen() {
             {!navMode ? (
               <>
                 <View style={[styles.actionRow, rtlRow, { marginHorizontal: 0, marginTop: 0 }]}>
-                  <TouchableOpacity style={[styles.navBtn, { backgroundColor: PRIMARY }]} onPress={startSim}>
+                  <TouchableOpacity style={[styles.navBtn, { backgroundColor: primary }]} onPress={startSim}>
                     <Play size={17} color="#fff" fill="#fff" />
                     <Text style={styles.navBtnTxt}>{t.simMode}</Text>
                   </TouchableOpacity>
@@ -798,11 +940,11 @@ export default function ChallengeScreen() {
                   </TouchableOpacity>
                 </View>
                 <TouchableOpacity
-                  style={[styles.arBtnWide, { borderColor: PRIMARY }]}
+                  style={[styles.arBtnWide, { borderColor: primary }]}
                   onPress={() => router.push(`/challenge-ar?id=${challengeId}` as any)}
                 >
-                  <Camera size={18} color={PRIMARY} />
-                  <Text style={[styles.arBtnTxt, { color: PRIMARY }]}>{t.arMode}</Text>
+                  <Camera size={18} color={primary} />
+                  <Text style={[styles.arBtnTxt, { color: primary }]}>{t.arMode}</Text>
                 </TouchableOpacity>
               </>
             ) : (
@@ -852,7 +994,7 @@ export default function ChallengeScreen() {
                     </View>
                     <View style={{ padding: 10 }}>
                       <Text style={[styles.poiName, { color: text }]} numberOfLines={1}>{p.name}</Text>
-                      <Text style={[styles.poiKm, { color: isReached ? PRIMARY : sub }]}>
+                      <Text style={[styles.poiKm, { color: isReached ? primary : sub }]}>
                         {isReached ? `✓ ${t.reached}` : `${p.atKm} ${t.km}`}
                       </Text>
                     </View>
@@ -878,16 +1020,16 @@ export default function ChallengeScreen() {
                 styles.row,
                 rtlRow,
                 { backgroundColor: card },
-                isMe && { borderColor: PRIMARY, borderWidth: 2 },
+                isMe && { borderColor: primary, borderWidth: 2 },
               ]}
             >
-              <Text style={styles.rank}>{i < 3 ? medals[i] : `${i + 1}`}</Text>
+              <Text style={[styles.rank, i >= 3 && { color: sub }]}>{i < 3 ? medals[i] : `${i + 1}`}</Text>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowName, { color: text }, align]} numberOfLines={1}>
                   {isMe ? t.you : (p.name || (p.email ? p.email.split('@')[0] : '—'))}
                 </Text>
               </View>
-              <Text style={[styles.rowKm, { color: isMe ? PRIMARY : text }]}>
+              <Text style={[styles.rowKm, { color: isMe ? primary : text }]}>
                 {(p.cumulativeKm || 0).toFixed(1)}
                 <Text style={[styles.rowKmSub, { color: sub }]}> / {totalKm} {t.km}</Text>
               </Text>
@@ -927,6 +1069,33 @@ export default function ChallengeScreen() {
           </TouchableOpacity>
         </View>
       </Modal>
+
+      {/* Time Machine : récit historique du lieu courant (IA) */}
+      <Modal visible={tmOpen} animationType="fade" transparent onRequestClose={() => setTmOpen(false)}>
+        <View style={styles.tmOverlay}>
+          <View style={[styles.tmCard, { backgroundColor: card }]}>
+            <View style={[styles.tmHead, rtlRow]}>
+              <Text style={styles.tmHeadEmoji}>⏳</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.tmTitle, { color: text }, align]} numberOfLines={1}>{t.timeMachine}</Text>
+                <Text style={[styles.tmSub, { color: sub }, align]} numberOfLines={1}>{tmPlace || t.timeMachineSub}</Text>
+              </View>
+              <TouchableOpacity style={styles.tmClose} onPress={() => setTmOpen(false)}>
+                <X size={22} color={text} />
+              </TouchableOpacity>
+            </View>
+            {tmLoading ? (
+              <View style={styles.tmLoading}>
+                <ActivityIndicator size="large" color={primary} />
+              </View>
+            ) : (
+              <Text style={[styles.tmStory, { color: text }, align]}>
+                {tmStory || t.timeMachineErr}
+              </Text>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -937,18 +1106,18 @@ const styles = StyleSheet.create({
   primaryBtn: { backgroundColor: PRIMARY, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
   primaryBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
   mapWrap: { width: '100%' },
-  back: { position: 'absolute', top: 50, left: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
+  back: { position: 'absolute', top: 50, left: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', ...elevation.sm },
 
   navBanner: { position: 'absolute', top: 50, left: 72, right: 16, backgroundColor: 'rgba(15,23,42,0.85)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8 },
   navBannerTxt: { color: '#fff', fontSize: 12, fontWeight: '600', flex: 1 },
-  navCard: { position: 'absolute', bottom: 14, left: 14, right: 14, backgroundColor: '#fff', borderRadius: 16, flexDirection: 'row', overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 12, elevation: 10 },
+  navCard: { position: 'absolute', bottom: 14, left: 14, right: 14, backgroundColor: '#fff', borderRadius: 16, flexDirection: 'row', overflow: 'hidden', ...elevation.lg },
   navCardImg: { width: 120, height: 92 },
   navCardBody: { flex: 1, padding: 12, justifyContent: 'center' },
   navCardKicker: { fontSize: 11, fontWeight: '800', color: '#0ea5e9' },
   navCardName: { fontSize: 16, fontWeight: '900', color: '#111', marginTop: 2 },
   navCardView: { fontSize: 12, fontWeight: '700', color: PRIMARY, marginTop: 4 },
 
-  header: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18, marginHorizontal: 16, marginTop: -20, borderRadius: 22, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18, marginHorizontal: 16, marginTop: -20, borderRadius: 22, ...elevation.md },
   emoji: { fontSize: 40 },
   chName: { fontSize: 17, fontWeight: '800' },
   bigKm: { fontSize: 30, fontWeight: '900', letterSpacing: -1, marginTop: 2 },
@@ -960,8 +1129,25 @@ const styles = StyleSheet.create({
   nextStopKicker: { fontSize: 11.5, fontWeight: '900', letterSpacing: 0.4, textTransform: 'uppercase' },
   nextStopName: { fontSize: 16, fontWeight: '800', marginTop: 3 },
   nextStopMeta: { fontSize: 12.5, marginTop: 4, lineHeight: 18 },
+  tmBtn: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1.5 },
+  tmBtnEmoji: { fontSize: 14 },
+  tmBtnTxt: { fontSize: 12.5, fontWeight: '800' },
   myViewBtn: { position: 'absolute', right: 12, bottom: 14, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 6 },
   myViewTxt: { color: '#fff', fontSize: 11.5, fontWeight: '800' },
+
+  weatherBadge: { position: 'absolute', top: 50, right: 16, backgroundColor: 'rgba(15,23,42,0.85)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  weatherEmoji: { fontSize: 15 },
+  weatherTxt: { color: '#fff', fontSize: 14, fontWeight: '800' },
+
+  windCard: { marginHorizontal: 16, marginTop: 12, borderRadius: 16, padding: 14 },
+  windHead: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  windTitle: { fontSize: 13.5, fontWeight: '800', flex: 1 },
+  windRow: { flexDirection: 'row', gap: 8 },
+  windSeg: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 9, borderRadius: 12, borderWidth: 2 },
+  windSegEmoji: { fontSize: 16 },
+  windSegTxt: { fontSize: 11.5, fontWeight: '800' },
+  windGoal: { fontSize: 13, fontWeight: '800', marginTop: 10 },
+  windHint: { fontSize: 11.5, fontWeight: '500', marginTop: 4, lineHeight: 16 },
 
   joinBtn: { backgroundColor: PRIMARY, marginHorizontal: 16, marginTop: 16, paddingVertical: 16, borderRadius: 16, alignItems: 'center' },
   joinBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
@@ -979,7 +1165,7 @@ const styles = StyleSheet.create({
   lbTitle: { fontSize: 18, fontWeight: '800' },
   lbCount: { fontSize: 13, fontWeight: '600' },
 
-  poiCard: { width: 200, borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 },
+  poiCard: { width: 200, borderRadius: 16, overflow: 'hidden', ...elevation.sm },
   poiImgWrap: { width: '100%', height: 112, backgroundColor: '#e5e7eb' },
   poiImg: { width: '100%', height: '100%' },
   poiLock: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(17,24,39,0.55)', alignItems: 'center', justifyContent: 'center' },
@@ -1001,4 +1187,14 @@ const styles = StyleSheet.create({
   viewerName: { color: '#fff', fontSize: 24, fontWeight: '900' },
   viewerKm: { color: '#cbd5e1', fontSize: 14, fontWeight: '600', marginTop: 6 },
   viewerClose: { position: 'absolute', top: 54, right: 20, width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
+
+  tmOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  tmCard: { width: '100%', maxWidth: 460, borderRadius: 20, padding: 18, ...elevation.lg },
+  tmHead: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
+  tmHeadEmoji: { fontSize: 24 },
+  tmTitle: { fontSize: 17, fontWeight: '900' },
+  tmSub: { fontSize: 12.5, fontWeight: '600', marginTop: 2 },
+  tmClose: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  tmLoading: { paddingVertical: 28, alignItems: 'center', justifyContent: 'center' },
+  tmStory: { fontSize: 14.5, fontWeight: '500', lineHeight: 22 },
 });

@@ -25,17 +25,69 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // The top-level user doc holds public-ish fields (name, avatar,
-      // publicStats) the Social leaderboard reads for friends.
-      // Readable by any signed-in user; writable only by the owner.
-      allow read: if signedIn();
-      allow create, update, delete: if isOwner(userId);
+      // S-fix (CRITIQUE PII/santé) : le doc user contient email + conditions santé + poids
+      // + profil. `allow read: if signedIn()` autorisait AUSSI `list` → n'importe quel
+      // compte connecté pouvait ÉNUMÉRER toute la collection et aspirer la PII de tous.
+      // La lecture est désormais RÉSERVÉE au propriétaire. Les champs PUBLICS (nom, avatar,
+      // streak, activité récente) ont été déplacés dans `public_profiles/{docId}` (plus bas),
+      // lisibles par les amis SANS exposer la moindre donnée privée.
+      allow read: if isOwner(userId);
+
+      // S-fix (premium gratuit) : `premiumOverride` et `subscription` ne sont JAMAIS écrits
+      // par le client — seulement par l'admin (SDK) / le webhook RevenueCat serveur. On les
+      // rend immuables côté client : impossible de s'auto-accorder Premium.
+      allow create: if isOwner(userId)
+        && request.resource.data.get('premiumOverride', false) == false
+        && !('subscription' in request.resource.data)
+        // Même raisonnement que premiumOverride : `premiumTrialUntil` accorde le Premium
+        // (cf. lib/FlagsContext), et `referredBy`/`referralCount` pilotent le parrainage.
+        // Laisser le client les écrire, c'était s'offrir un abonnement en une requête.
+        // Seul le backend (SDK Admin, qui contourne ces règles) les pose.
+        && !('premiumTrialUntil' in request.resource.data)
+        && !('referredBy' in request.resource.data)
+        && !('referralCount' in request.resource.data);
+      allow update: if isOwner(userId)
+        && request.resource.data.get('premiumOverride', false) == resource.data.get('premiumOverride', false)
+        && request.resource.data.get('subscription', '') == resource.data.get('subscription', '')
+        && request.resource.data.get('premiumTrialUntil', 0) == resource.data.get('premiumTrialUntil', 0)
+        && request.resource.data.get('referredBy', '') == resource.data.get('referredBy', '')
+        && request.resource.data.get('referralCount', 0) == resource.data.get('referralCount', 0);
+      allow delete: if isOwner(userId);
+
+      // S-fix (réciprocité d'amitié) : un AUTRE utilisateur peut UNIQUEMENT s'ajouter lui-même
+      // (et lui seul) au tableau `friends` de ce doc — jamais lire le doc, ni toucher un autre
+      // champ, ni retirer un ami existant. Remplace l'ancienne écriture cross-user non bornée.
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friends'])
+        && request.resource.data.friends.hasAll(resource.data.get('friends', []))
+        && request.resource.data.friends.removeAll(resource.data.get('friends', [])).hasOnly([request.auth.uid]);
+
+      // SUIVI GLYCÉMIE / TENSION (boucle santé, données privées).
+      // Déjà couvert par le wildcard {document=**} ci-dessous — explicité ici pour
+      // la lisibilité / documentation (à conserver si le wildcard est durci plus tard).
+      match /glucose/{entryId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /blood_pressure/{entryId} {
+        allow read, write: if isOwner(userId);
+      }
 
       // Everything private (logs, weight_history, ai_insights, notifications…)
       // is readable/writable ONLY by the owner — friends never see your meals.
       match /{document=**} {
         allow read, write: if isOwner(userId);
       }
+    }
+
+    // S-fix : PROFILS PUBLICS (leaderboard social, foyer, ligues, battle).
+    // Contient UNIQUEMENT des champs non sensibles : { name, imageUrl, streak,
+    // daysTracked, recentActivity, updatedAt }. AUCUN email, AUCUNE donnée santé.
+    // - lecture : tout utilisateur connecté (c'est le remplaçant sûr de l'ancienne
+    //   lecture ouverte du doc user).
+    // - écriture : le propriétaire seulement (docId = emailToDocId de son email).
+    match /public_profiles/{docId} {
+      allow read: if signedIn();
+      allow write: if isOwner(docId);
     }
 
     // Courses de GROUPE : lisibles par tout utilisateur connecté ; le doc course
@@ -66,11 +118,267 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // SECRETS (clés API des providers LLM, etc.) — TOTALEMENT fermés au client :
+    // ni lecture ni écriture. Seuls les service-accounts (admin web + backend) y accèdent
+    // (ils bypassent les règles). Empêche toute fuite de clé vers l'app mobile.
+    match /secrets/{doc} {
+      allow read, write: if false;
+    }
+
     // Feature flags (config/features) — lus par l'app (client), écrits uniquement
     // par l'admin (firebase-admin SDK, qui bypass les règles).
     match /config/{doc} {
       allow read: if signedIn();
       allow write: if false;
+    }
+
+    // SIGNALEMENTS UGC (report) — exigence de modération Google Play. Tout utilisateur
+    // connecté peut CRÉER un signalement (reporterId == son propre uid) ; PERSONNE côté
+    // client ne peut le relire, le modifier ni le supprimer → traitement uniquement par
+    // l'admin/back-office (service-account, qui bypass les règles). Le BLOCAGE, lui, vit
+    // dans users/{uid}/blocked/* (déjà couvert par la règle users/{uid}/{document=**}).
+    match /reports/{reportId} {
+      allow read, update, delete: if false;
+      allow create: if signedIn()
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.targetType in ['listing', 'feed', 'user', 'comment', 'route']
+        && request.resource.data.targetId is string
+        && request.resource.data.targetId.size() > 0;
+    }
+
+    // KUDOS (👏) du feed social : 1 doc par {activité, donneur}.
+    // Lisibles par tout utilisateur connecté (compteur). Chacun ne peut créer/supprimer
+    // QUE son propre kudo (fromId == son uid), jamais celui d'un autre, ni le modifier.
+    // Le feed lui-même ne passe PAS par ici : il lit `recentActivity` sur le doc user
+    // (déjà `allow read: if signedIn()`) — aucune donnée privée n'est exposée.
+    match /kudos/{kudoId} {
+      allow read: if signedIn();
+      // Création : seulement MON propre kudo (fromId == uid) ET docId ancré au contenu
+      // → garantit 1 doc max par (propriétaire, activité, donneur) = pas de gonflage du compteur.
+      allow create: if signedIn()
+        && request.resource.data.fromId == request.auth.uid
+        && kudoId == request.resource.data.ownerDocId + '__' + request.resource.data.eventId + '__' + request.auth.uid
+        && request.resource.data.kudoKey == request.resource.data.ownerDocId + '__' + request.resource.data.eventId;
+      // Update idempotent borné à mon propre kudo (absorbe un setDoc-merge répété sans 403).
+      allow update: if signedIn()
+        && resource.data.fromId == request.auth.uid
+        && request.resource.data.fromId == request.auth.uid;
+      allow delete: if signedIn() && resource.data.fromId == request.auth.uid;
+    }
+
+    // FOYERS (Compte famille) : doc 'families/{id}'. Lisibles par tout connecté
+    // (nom + km publics des membres ; aucune donnée privée). Création réservée au
+    // créateur (ownerUid == uid). Update autorisé aux connectés car un membre s'AJOUTE
+    // lui-même au join (à durcir au owner/membres quand le bridge Clerk→Firebase sera
+    // pleinement durci). Suppression réservée au propriétaire.
+    match /families/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      // S-fix : l'update n'était borné à RIEN (tout connecté pouvait renommer/altérer
+      // n'importe quel foyer, voire tenter d'en changer le propriétaire). Désormais :
+      //  - ownerUid IMMUABLE ;
+      //  - soit je suis le propriétaire (plein contrôle de MON foyer),
+      //  - soit je ne touche QUE la liste `members` + `updatedAt` (join/leave) — jamais
+      //    le nom/le code. (Le join par code reste possible ; le squat de nom/code non.)
+      allow update: if signedIn()
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && (
+          resource.data.ownerUid == request.auth.uid
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'updatedAt'])
+        );
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // LIGUES HEBDOMADAIRES : `leagues/{weekId}/members/{uid}`.
+    // - lecture : tout utilisateur connecté (classement lisible par les membres du tier).
+    // - écriture : chacun n'écrit QUE sa propre ligne (uid == auth.uid) — à la création
+    //   comme à l'update (incrément d'XP). La promotion/relégation (changement de tier au
+    //   tournant de semaine) est appliquée côté admin (firebase-admin SDK, bypass règles).
+    match /leagues/{weekId}/members/{uid} {
+      allow read: if signedIn();
+      // S-fix : l'XP self-écrite n'était pas bornée → classement hebdo falsifiable
+      // (un joueur pouvait se poser xp=999999). On borne : XP monotone (jamais en baisse)
+      // et incrément ≤ 2000 par écriture (addXp incrémente de petits paliers). La
+      // promotion/relégation reste appliquée côté admin (SDK, bypass).
+      allow create: if isOwner(uid) && request.resource.data.uid == uid
+        && request.resource.data.get('xp', 0) is number
+        && request.resource.data.get('xp', 0) <= 2000;
+      allow update: if isOwner(uid) && request.resource.data.uid == uid
+        && request.resource.data.xp is number
+        && request.resource.data.xp >= resource.data.xp
+        && request.resource.data.xp <= resource.data.xp + 2000;
+      allow delete: if false;
+    }
+
+    // PARCOURS COMMUNAUTAIRES (Marketplace UGC) : 'community_routes/{id}'.
+    // - lecture : les parcours APPROUVÉS (tout connecté) OU les SIENS (tout statut).
+    // - création : seulement au nom de l'auteur (authorId == uid) ET status forcé à
+    //   'pending' → impossible de s'auto-approuver.
+    // - update/delete INTERDITS au client ; la modération (pending→approved) passe par
+    //   l'admin (firebase-admin SDK, qui bypass les règles).
+    match /community_routes/{id} {
+      allow read: if signedIn() && resource.data.status == 'approved';
+      allow read: if signedIn() && resource.data.authorId == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.status == 'pending';
+      allow update, delete: if false;
+    }
+
+    // SPORTS COLLECTIFS — Matchs à monter (foot, basket, padel…) : 'sport_matches/{id}'.
+    // Champs client (cf. lib/groupSports.ts) : hostUid, participants[], status…
+    // - lecture : tout utilisateur connecté (découverte des matchs ouverts).
+    // - création : seulement au nom de l'hôte (hostUid == uid).
+    // - update : l'HÔTE peut modifier/annuler SON match ; OU un participant peut se
+    //   JOINDRE/QUITTER (l'hôte ne change pas ; seules la liste 'participants', le
+    //   'status' et 'updatedAt' bougent lors d'un join/leave transactionnel).
+    // - delete : réservé à l'hôte.
+    match /sport_matches/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.hostUid == request.auth.uid;
+      // Hôte : plein contrôle sur son match.
+      allow update: if signedIn() && resource.data.hostUid == request.auth.uid;
+      // Participant : join/leave — l'hôte ne change pas ; on borne aux champs touchés
+      // par la transaction (participants + status + updatedAt) ET le delta de la liste
+      // 'participants' se limite au SEUL request.auth.uid : soit je m'ajoute (le nouveau
+      // set contient tout l'ancien + moi), soit je me retire (l'ancien set contient tout
+      // le nouveau + moi) — jamais toucher un autre participant. En plus le status ne peut
+      // prendre que 'open'/'full' → un non-hôte ne peut pas passer le match à cancelled/done.
+      allow update: if signedIn()
+        && request.resource.data.hostUid == resource.data.hostUid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants', 'status', 'updatedAt'])
+        && request.resource.data.status in ['open', 'full']
+        && (
+          // Join : nouveau = ancien ∪ {uid}, et je n'étais pas déjà dedans.
+          (
+            request.resource.data.participants.hasAll(resource.data.participants)
+            && request.resource.data.participants.removeAll(resource.data.participants) == [request.auth.uid]
+          )
+          // Leave : ancien = nouveau ∪ {uid}, et je n'y suis plus après.
+          || (
+            resource.data.participants.hasAll(request.resource.data.participants)
+            && resource.data.participants.removeAll(request.resource.data.participants) == [request.auth.uid]
+          )
+        );
+      allow delete: if signedIn() && resource.data.hostUid == request.auth.uid;
+    }
+
+    // TERRAINS / LIEUX de sport (UGC) : 'sport_fields/{id}'.
+    // Champ client : ownerUid (cf. lib/groupSports.ts proposeField).
+    // - lecture : tout connecté.
+    // - création : au nom du proposeur (ownerUid == uid) ET forcé à approved:false
+    //   → impossible de s'auto-approuver ; la validation passe par l'admin (SDK, bypass).
+    // - update/delete INTERDITS au client (modération admin uniquement).
+    match /sport_fields/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.approved == false;
+      allow update, delete: if false;
+    }
+
+    // RÉSERVATIONS de créneaux : 'sport_reservations/{id}'.
+    // Champ client : uid, fieldId, startTs, endTs, status (cf. lib/groupSports.ts reserveField).
+    // - lecture : tout connecté (détection de conflit + créneaux occupés).
+    // - création : au nom du propriétaire (uid == uid) ET durcie :
+    //     • types validés (uid/fieldId strings, startTs/endTs numbers) ;
+    //     • créneau cohérent : endTs > startTs ;
+    //     • créneau dans le futur : startTs >= now (millisecondes serveur) ;
+    //     • status borné à ['pending','confirmed'] → pas de statut arbitraire.
+    //   (Idéalement on validerait aussi via get() que le field est approuvé ;
+    //    laissé à la modération/read-side faute de field approved fiable côté doc.)
+    // - update/delete : réservés au propriétaire de la réservation.
+    match /sport_reservations/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.uid is string
+        && request.resource.data.fieldId is string
+        && request.resource.data.startTs is number
+        && request.resource.data.endTs is number
+        && request.resource.data.endTs > request.resource.data.startTs
+        && request.resource.data.startTs >= request.time.toMillis()
+        && request.resource.data.status in ['pending', 'confirmed'];
+      allow update, delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // PETITES ANNONCES (Marketplace UGC) : 'marketplace_listings/{id}'.
+    // Champ client : ownerUid, approved, status.
+    // Pattern SÛR calqué sur sport_fields (PAS sport_matches) :
+    // - lecture : tout connecté.
+    // - création : au nom du propriétaire (ownerUid == uid) ET forcé approved:false
+    //   ET status:'active' → impossible de s'auto-approuver ; la (ré)approbation
+    //   passe par l'admin (firebase-admin SDK, qui bypass les règles).
+    // - update : le propriétaire peut SEULEMENT changer le status (sold/removed) sur
+    //   SON annonce, strictement borné aux clés ['status','updatedAt'] → 'approved'
+    //   reste immuable côté client (pas d'auto-ré-approbation).
+    // - delete : réservé au propriétaire.
+    match /marketplace_listings/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.approved == false
+        && request.resource.data.status == 'active';
+      allow update: if signedIn()
+        && request.auth.uid == resource.data.ownerUid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && request.resource.data.approved == resource.data.approved
+        && request.resource.data.status in ['sold', 'removed', 'active'];
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // DÉFIS INTER-VILLES (viralité locale) — cf. en-tête de lib/cityChallenges.ts.
+    // - Le DÉFI `city_challenges/{id}` est SEEDÉ côté admin (firebase-admin SDK, bypass
+    //   règles) ; le client ne fait que le LIRE (comme races/challenges).
+    // - Chaque contribution vit dans `city_challenges/{id}/contrib/{uid}` où uid =
+    //   emailToDocId(email) = request.auth.uid : l'utilisateur n'écrit QUE SA ligne.
+    match /city_challenges/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+      match /contrib/{uid} {
+        allow read: if signedIn();
+        allow create, update: if isOwner(uid);
+      }
+    }
+
+    // PARRAINAGE : code de parrainage `referrals/{code}` porté par son propriétaire.
+    // - lecture : tout connecté peut vérifier/lire un code (résolution filleul→parrain).
+    // - création : le propriétaire matérialise SON doc (ownerUid == auth.uid). Sur un
+    //   create, `resource` est null → on ne peut PAS comparer à resource.data ; on ancre
+    //   donc ownerUid à l'appelant (cf. getMyCode qui écrit { ownerUid: uid, count: 0 }).
+    // - update propriétaire : plein contrôle sur son doc, ownerUid IMMUABLE.
+    // - update filleul (increment best-effort) : tout connecté peut incrémenter le
+    //   compteur du parrain, borné aux SEULS champs ['count','updatedAt'] et ownerUid
+    //   inchangé → aucune prise de contrôle du code (cf. claimReferral setDoc merge
+    //   count:increment(1)).
+    match /referrals/{code} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid;
+      // Propriétaire : plein contrôle, ownerUid immuable.
+      allow update: if request.auth != null
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid;
+      // Filleul : increment field-scopé du compteur du parrain, ownerUid inchangé.
+      // S-fix : le compteur ne peut être fixé à une valeur arbitraire — STRICTEMENT +1
+      // (matérialise le setDoc merge count:increment(1) de claimReferral).
+      allow update: if request.auth != null
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['count', 'updatedAt'])
+        && request.resource.data.count == resource.data.get('count', 0) + 1;
+      allow delete: if false;
+    }
+
+    // CLAIMS de parrainage : `referrals_claims/{newUid}` (clé = uid du filleul).
+    // - lecture : tout connecté.
+    // - create-only : le filleul écrit son claim (clé = son uid) une seule fois.
+    // - update/delete INTERDITS (anti-double : jamais d'écrasement).
+    match /referrals_claims/{newUid} {
+      allow read: if request.auth != null;
+      // S-fix : le claim est ancré au filleul lui-même (clé = SON uid) → un tiers ne peut
+      // pas squatter/bloquer la récompense d'un autre en pré-écrivant son claim.
+      allow create: if request.auth != null && newUid == request.auth.uid;
+      allow update, delete: if false;
     }
   }
 }

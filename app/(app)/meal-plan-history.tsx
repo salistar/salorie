@@ -1,28 +1,56 @@
-import React, { useEffect, useState } from 'react';
-import { Image, View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Image, View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, History, ChevronDown } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
+import { rowDir, txtAlign } from '../../lib/rtl';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { EmptyState, SkeletonCard } from '../../components/ui';
 import { listMealPlans, SavedMealPlan } from '../../lib/aiStore';
 
-function fmtDate(ts: any): string {
+// Libellés locaux à cet écran (trilingues) — pas de clés ajoutées à lib/i18n.
+const TXT = {
+  en: {
+    saved: 'Saved plans',
+    empty: 'No saved plan yet. Generate a meal plan and tap “Save the whole plan”.',
+    plan: 'Plan',
+  },
+  fr: {
+    saved: 'Plans enregistrés',
+    empty: 'Aucun plan enregistré pour l\'instant. Génère un plan de repas et appuie sur « Enregistrer tout le plan ».',
+    plan: 'Plan',
+  },
+  ar: {
+    saved: 'الخطط المحفوظة',
+    empty: 'لا توجد خطة محفوظة بعد. أنشئ خطة وجبات واضغط على «حفظ الخطة بالكامل».',
+    plan: 'خطة',
+  },
+} as const;
+
+const LOCALES: Record<string, string> = { en: 'en-US', fr: 'fr-FR', ar: 'ar' };
+
+function fmtDate(ts: any, locale: string): string {
   try {
     const d = ts?.seconds ? new Date(ts.seconds * 1000) : (ts?.toDate ? ts.toDate() : null);
     if (!d) return '';
-    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} · ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    const date = d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const time = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+    return `${date} · ${time}`;
   } catch { return ''; }
 }
 
 export default function MealPlanHistoryScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
-  const { language } = useTranslation() as any;
+  const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
-  const savedTitle = language === 'fr' ? 'Plans enregistrés' : language === 'ar' ? 'الخطط المحفوظة' : 'Saved plans';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const tx = TXT[language as keyof typeof TXT] ?? TXT.en;
+  const locale = LOCALES[language] ?? LOCALES.en;
+  const savedTitle = tx.saved;
   const [plans, setPlans] = useState<SavedMealPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState<number | null>(0);
@@ -30,7 +58,8 @@ export default function MealPlanHistoryScreen() {
   const text = isDark ? '#fff' : Colors.light.gray[900];
   const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
   const card = isDark ? Colors.dark.card : '#fff';
-  const bg = isDark ? '#000' : 'transparent';
+  const bg = isDark ? '#0f1419' : 'transparent';
+  const accent = isDark ? Colors.dark.primary : Colors.light.primary;
 
   useEffect(() => {
     (async () => {
@@ -48,9 +77,12 @@ export default function MealPlanHistoryScreen() {
         <Image source={require('../../assets/images/illustrations/splash_bg.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
 
         {loading ? (
-          <View style={{ paddingVertical: 60, alignItems: 'center' }}><ActivityIndicator size="large" color={Colors.light.primary} /></View>
+          <View>
+            <SkeletonCard />
+            <SkeletonCard />
+          </View>
         ) : plans.length === 0 ? (
-          <Text style={[styles.empty, { color: sub }]}>Aucun plan enregistré pour l'instant. Génère un plan de repas et appuie sur « Enregistrer tout le plan ».</Text>
+          <EmptyState icon={<History size={26} color={accent} />} title={tx.saved} subtitle={tx.empty} />
         ) : (
           plans.map((sp, i) => {
             const p = sp.plan || {};
@@ -58,20 +90,20 @@ export default function MealPlanHistoryScreen() {
             const totals = p.totals || {};
             return (
               <View key={sp.id || i} style={[styles.planCard, { backgroundColor: card }]}>
-                <TouchableOpacity activeOpacity={0.85} style={styles.planHead} onPress={() => setOpen(isOpen ? null : i)}>
+                <TouchableOpacity activeOpacity={0.85} style={[styles.planHead, { flexDirection: rowDir(isRTL) }]} onPress={() => setOpen(isOpen ? null : i)}>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.planDate, { color: text }]}>{fmtDate(sp.createdAt) || `Plan ${i + 1}`}</Text>
-                    <Text style={[styles.planTotals, { color: Colors.light.primary }]}>
+                    <Text style={[styles.planDate, { color: text, textAlign: txtAlign(isRTL) }]}>{fmtDate(sp.createdAt, locale) || `${tx.plan} ${i + 1}`}</Text>
+                    <Text style={[styles.planTotals, { color: accent, textAlign: txtAlign(isRTL) }]}>
                       {Math.round(totals.calories || 0)} kcal · {Math.round(totals.protein || 0)}P / {Math.round(totals.carbs || 0)}C / {Math.round(totals.fat || 0)}F
                     </Text>
                   </View>
-                  <ChevronDown size={22} color={sub} style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }] }} />
+                  <ChevronDown size={22} color={sub} style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }, { scaleX: isRTL ? -1 : 1 }] }} />
                 </TouchableOpacity>
                 {isOpen && (p.meals || []).map((m: any, j: number) => (
                   <View key={j} style={styles.mealRow}>
-                    <Text style={[styles.mealType, { color: sub }]}>{m.type} · {Math.round(m.calories || 0)} kcal</Text>
-                    <Text style={[styles.mealTitle, { color: text }]}>{m.title}</Text>
-                    {!!m.items?.length && <Text style={[styles.mealItems, { color: sub }]}>{m.items.join(' · ')}</Text>}
+                    <Text style={[styles.mealType, { color: sub, textAlign: txtAlign(isRTL) }]}>{m.type} · {Math.round(m.calories || 0)} kcal</Text>
+                    <Text style={[styles.mealTitle, { color: text, textAlign: txtAlign(isRTL) }]}>{m.title}</Text>
+                    {!!m.items?.length && <Text style={[styles.mealItems, { color: sub, textAlign: txtAlign(isRTL) }]}>{m.items.join(' · ')}</Text>}
                   </View>
                 ))}
               </View>
@@ -83,11 +115,13 @@ export default function MealPlanHistoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 60 },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
-  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.light.gray[50] },
+  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   title: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5 },
   empty: { fontSize: 14, lineHeight: 20, marginTop: 30, textAlign: 'center' },

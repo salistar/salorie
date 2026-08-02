@@ -11,20 +11,29 @@ import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { addNutritionLog, emailToDocId, logEvent } from '../../lib/firebase';
+import { creditKm } from '../../lib/progressHooks';
+import { publishActivity } from '../../lib/socialFeed';
+import { sampleStops, labelStops, defaultRouteName, isRouteWorthy, type TrackPoint } from '../../lib/routeFromRun';
+import { submitRoute } from '../../lib/communityRoutes';
 import { addDistanceToJoinedChallenges } from '../../lib/races';
 import { addActivitySteps } from '../../lib/steps';
 import { refreshStepsNotification } from '../../lib/stepsNotif';
+import { isPlausibleMove } from '../../lib/antiCheat';
+import { PrimaryButton, SecondaryButton } from '../../components/ui';
+import { useScreenGate } from '../../components/FeatureGate';
 
 // Google Maps JS in a WebView — same approach as the Sally apps (the JS API key
 // works in a WebView with a baseUrl; react-native-maps would need a Maps SDK for
 // Android key instead).
-const GOOGLE_MAPS_KEY = 'AIzaSyAa1lBSroSXA-Om4mio84-SWAcmzQgYv8w';
+// Clé Maps lue depuis l'env (EXPO_PUBLIC_GOOGLE_MAPS_KEY) — plus de clé en dur dans le
+// bundle. Clé publiable côté client : DOIT être restreinte dans GCP (package + SHA-1 + API).
+const GOOGLE_MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY ?? '';
 const PRIMARY = Colors.light.primary;
 
 const TXT: Record<string, any> = {
-  en: { title: 'Solo Run', perm: 'Location permission is required to track your run.', grant: 'Grant access', dist: 'Distance', time: 'Time', pace: 'Pace', kcal: 'Calories', start: 'Start', pause: 'Pause', resume: 'Resume', finish: 'Finish', saved: 'Run saved', savedMsg: 'kcal added to your activity for today.', waiting: 'Getting your location…', gps: 'GPS', sim: 'Simulation', history: 'Recent runs', noHistory: 'No runs yet — start one above.' },
-  fr: { title: 'Course solo', perm: 'La permission de localisation est requise pour suivre ta course.', grant: 'Autoriser', dist: 'Distance', time: 'Temps', pace: 'Allure', kcal: 'Calories', start: 'Démarrer', pause: 'Pause', resume: 'Reprendre', finish: 'Terminer', saved: 'Course enregistrée', savedMsg: 'kcal ajoutées à ton activité du jour.', waiting: 'Localisation en cours…', gps: 'GPS', sim: 'Simulation', history: 'Courses récentes', noHistory: 'Aucune course — démarres-en une ci-dessus.' },
-  ar: { title: 'جري فردي', perm: 'إذن الموقع مطلوب لتتبّع جريك.', grant: 'السماح', dist: 'المسافة', time: 'الوقت', pace: 'الإيقاع', kcal: 'سعرات', start: 'ابدأ', pause: 'إيقاف', resume: 'استئناف', finish: 'إنهاء', saved: 'تم حفظ الجري', savedMsg: 'سعرة أُضيفت إلى نشاط اليوم.', waiting: 'جارٍ تحديد موقعك…', gps: 'GPS', sim: 'محاكاة', history: 'الجريات الأخيرة', noHistory: 'لا جريات بعد — ابدأ واحدة بالأعلى.' },
+  en: { title: 'Solo Run', perm: 'Location permission is required to track your run.', grant: 'Grant access', dist: 'Distance', time: 'Time', pace: 'Pace', kcal: 'Calories', start: 'Start', pause: 'Pause', resume: 'Resume', finish: 'Finish', saved: 'Run saved', savedMsg: 'kcal added to your activity for today.', saveFailed: 'Save failed', saveFailedMsg: 'Your run could not be saved. Please check your connection and try again.', waiting: 'Getting your location…', gps: 'GPS', sim: 'Simulation', history: 'Recent runs', noHistory: 'No runs yet — start one above.', routeAskTitle: 'Share this route?', routeAskBody: 'Turn your {km} km run into a community route others can follow. Your track is simplified to a few points.', routeYes: 'Share it', routeNo: 'Not now', routeSentTitle: 'Sent for review', routeSentBody: 'Your route will appear in the community list once approved.', ghost: '👻 AR Ghost Mode', liveTwin: '🎧 Live Twin' },
+  fr: { title: 'Course solo', perm: 'La permission de localisation est requise pour suivre ta course.', grant: 'Autoriser', dist: 'Distance', time: 'Temps', pace: 'Allure', kcal: 'Calories', start: 'Démarrer', pause: 'Pause', resume: 'Reprendre', finish: 'Terminer', saved: 'Course enregistrée', savedMsg: 'kcal ajoutées à ton activité du jour.', saveFailed: 'Échec de l’enregistrement', saveFailedMsg: 'Ta course n’a pas pu être enregistrée. Vérifie ta connexion et réessaie.', waiting: 'Localisation en cours…', gps: 'GPS', sim: 'Simulation', history: 'Courses récentes', noHistory: 'Aucune course — démarres-en une ci-dessus.', routeAskTitle: 'Partager ce parcours ?', routeAskBody: 'Transforme ta sortie de {km} km en parcours que la communauté pourra suivre. Ton tracé est simplifié en quelques étapes.', routeYes: 'Partager', routeNo: 'Pas maintenant', routeSentTitle: 'Envoyé pour validation', routeSentBody: 'Ton parcours apparaîtra dans la liste communautaire une fois approuvé.', ghost: '👻 Mode fantôme AR', liveTwin: '🎧 Jumeau live' },
+  ar: { title: 'جري فردي', perm: 'إذن الموقع مطلوب لتتبّع جريك.', grant: 'السماح', dist: 'المسافة', time: 'الوقت', pace: 'الإيقاع', kcal: 'سعرات', start: 'ابدأ', pause: 'إيقاف', resume: 'استئناف', finish: 'إنهاء', saved: 'تم حفظ الجري', savedMsg: 'سعرة أُضيفت إلى نشاط اليوم.', saveFailed: 'فشل الحفظ', saveFailedMsg: 'تعذّر حفظ جريك. تحقّق من اتصالك وحاول مجددًا.', waiting: 'جارٍ تحديد موقعك…', gps: 'GPS', sim: 'محاكاة', history: 'الجريات الأخيرة', noHistory: 'لا جريات بعد — ابدأ واحدة بالأعلى.', routeAskTitle: 'مشاركة هذا المسار؟', routeAskBody: 'حوّل جريك ({km} كم) إلى مسار يتبعه الآخرون. يُبسَّط تتبعك إلى بضع محطات.', routeYes: 'شارك', routeNo: 'ليس الآن', routeSentTitle: 'أُرسل للمراجعة', routeSentBody: 'سيظهر مسارك في قائمة المجتمع بعد الموافقة.', ghost: '👻 وضع الشبح', liveTwin: '🎧 التوأم المباشر' },
 };
 
 type LatLng = { lat: number; lng: number };
@@ -112,6 +121,7 @@ function pointAtDist(p: LatLng[], d: number): LatLng {
 }
 
 export default function RunScreen() {
+  const __gate = useScreenGate('run');
   const { user } = useUser();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
@@ -129,6 +139,11 @@ export default function RunScreen() {
 
   const subRef = useRef<Location.LocationSubscription | null>(null);
   const lastPt = useRef<LatLng | null>(null);
+  // Tracé complet de la sortie : nécessaire pour la publier en parcours communautaire.
+  // Un ref et non un state — il grossit d'un point toutes les ~3 s et ne doit RIEN
+  // re-rendre. Borné à 3000 points (~2 h 30 de course) pour ne pas enfler sans limite.
+  const trackRef = useRef<TrackPoint[]>([]);
+  const lastTs = useRef<number | null>(null); // anti-triche : horodatage du dernier point GPS retenu
   const timerRef = useRef<any>(null);
   const webRef = useRef<WebView | null>(null);
   const mapReady = useRef(false);
@@ -177,7 +192,15 @@ export default function RunScreen() {
   };
 
   const startTracking = async () => {
+    // fix audit : start idempotent — nettoyer tout timer/abonnement existant avant d'en
+    // recreer (le Resume rappelle startTracking → sinon timers/subscriptions en double).
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    if (simTimer.current) { clearInterval(simTimer.current); simTimer.current = null; }
+    if (subRef.current) { try { subRef.current.remove(); } catch {} subRef.current = null; }
     setStatus('running');
+    // Une reprise (Resume) rappelle startTracking : on ne remet le tracé à zéro que
+    // s'il s'agit d'une nouvelle sortie, jamais au milieu d'une course en pause.
+    if (meters === 0) trackRef.current = [];
     timerRef.current = setInterval(() => setSecs((s) => s + 1), 1000);
     if (mode === 'sim') {
       // Simulation : on avance 10 m/s LE LONG D'UNE VRAIE ROUTE (Directions walking)
@@ -205,16 +228,64 @@ export default function RunScreen() {
       { accuracy: Location.Accuracy.High, distanceInterval: 6, timeInterval: 3000 },
       (loc) => {
         const pt = { lat: loc.coords.latitude, lng: loc.coords.longitude };
-        if (lastPt.current) {
+        const ts = loc.timestamp || Date.now();
+        if (lastPt.current && lastTs.current != null) {
+          // Anti-triche : on rejette le point si la vitesse implicite est
+          // aberrante (téléport / Δt nul) AVANT de cumuler la distance — sinon
+          // on gonflerait artificiellement le parcours. Le filtre jitter
+          // existant (d < 80 m) est conservé et complété, pas remplacé.
+          const plausible = isPlausibleMove(
+            lastPt.current.lat, lastPt.current.lng, lastTs.current,
+            pt.lat, pt.lng, ts, 'run',
+          );
+          if (!plausible) return; // point ignoré : ni distance, ni mise à jour du dernier point/horodatage
           const d = haversine(lastPt.current, pt);
           if (d < 80) setMeters((m) => m + d);
         }
         lastPt.current = pt;
+        lastTs.current = ts;
+        // Après les filtres (anti-triche + jitter) : seuls les points RETENUS forment
+        // le tracé, sinon un parcours publié contiendrait les aberrations rejetées.
+        if (trackRef.current.length < 3000) trackRef.current.push(pt);
         if (mapReady.current) webRef.current?.injectJavaScript(`window.addPoint && window.addPoint(${pt.lat},${pt.lng}); true;`);
       }
     );
   };
   const pause = () => { setStatus('paused'); subRef.current?.remove(); subRef.current = null; if (timerRef.current) clearInterval(timerRef.current); if (simTimer.current) { clearInterval(simTimer.current); simTimer.current = null; } };
+
+  /**
+   * Propose de transformer la sortie en parcours communautaire.
+   *
+   * Deux étapes volontaires : on DEMANDE d'abord (personne n'aime voir sa trace publiée
+   * sans son accord — c'est de la donnée de localisation), puis on envoie en modération.
+   * Le tracé brut est réduit à ~6 étapes : un parcours se lit, il ne se rejoue pas point
+   * par point, et 1200 coordonnées seraient illisibles autant qu'inutiles.
+   */
+  const offerRouteShare = (track: TrackPoint[], km: number, email: string) => {
+    Alert.alert(
+      t.routeAskTitle,
+      t.routeAskBody.replace('{km}', km.toFixed(1)),
+      [
+        { text: t.routeNo, style: 'cancel' },
+        {
+          text: t.routeYes,
+          onPress: async () => {
+            try {
+              const stops = labelStops(sampleStops(track, 6), String(language));
+              const id = await submitRoute(email, {
+                name: defaultRouteName(km, String(language), new Date().toISOString()),
+                totalKm: +km.toFixed(2),
+                waypoints: stops,
+              });
+              Alert.alert(id ? t.routeSentTitle : t.saveFailed, id ? t.routeSentBody : t.saveFailedMsg);
+            } catch {
+              Alert.alert(t.saveFailed, t.saveFailedMsg);
+            }
+          },
+        },
+      ],
+    );
+  };
 
   const finish = async () => {
     pause();
@@ -222,24 +293,47 @@ export default function RunScreen() {
     const km = meters / 1000;
     const kcal = Math.max(0, Math.round(weight * km * 1.036));
     const email = user?.primaryEmailAddress?.emailAddress || '';
+    // Bug fix : n'afficher l'alerte de succès QUE si l'écriture Firestore a réussi.
+    // `saved` reste false tant que addNutritionLog (l'écriture principale) n'a pas
+    // résolu ; en cas d'échec on montre une alerte d'erreur au lieu d'un faux succès.
+    let saved = false;
     if (email && kcal > 0) {
       try {
         const d = new Date();
         const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         await addNutritionLog({ userId: email, type: 'activity', name: `${t.title} · ${km.toFixed(2)} km`, calories: kcal, protein: 0, carbs: 0, fat: 0, date, duration: Math.round(secs / 60), intensity: 'medium' } as any);
+        saved = true; // l'écriture principale a réussi
         logEvent(email, 'run_completed', { km: +km.toFixed(2), kcal, durationMin: Math.round(secs / 60) }); // Event Bus
 
         // Phase 3 sync: a solo run also advances every virtual challenge you joined.
         addDistanceToJoinedChallenges(email, km).catch(() => {});
         // Steps from this run are added to today's Home step count + notification.
         addActivitySteps(email, km).then(() => refreshStepsNotification()).catch(() => {});
+        // Crédite les compteurs des nouvelles features : défi annuel, XP avatar, km Sadaqa/récompenses.
+        creditKm(km).catch(() => {});
+        // Publie un résumé NON sensible (type + km) dans le feed social des amis.
+        publishActivity(email, { type: 'run_completed', km }).catch(() => {});
       } catch (e) { console.warn('[run] save failed', e); }
     }
+    // PARCOURS COMMUNAUTAIRE : proposer de publier la sortie AVANT la remise à zéro —
+    // c'est le seul instant où le tracé existe encore et où l'utilisateur a le contexte.
+    // Uniquement en GPS réel : publier un parcours simulé polluerait la bibliothèque.
+    const track = trackRef.current.slice();
+    if (mode !== 'sim' && email && isRouteWorthy(track, km)) {
+      offerRouteShare(track, km, email);
+    }
+
     // Reset for the next run, refresh the history list, and stay on the screen.
-    setMeters(0); setSecs(0); lastPt.current = null; simStep.current = 0;
+    setMeters(0); setSecs(0); lastPt.current = null; lastTs.current = null; simStep.current = 0;
+    trackRef.current = [];
     if (mapReady.current) webRef.current?.injectJavaScript(`window.resetPath && window.resetPath(); true;`);
     await loadHistory();
-    Alert.alert(t.saved, `${kcal} ${t.savedMsg}`);
+    if (saved) {
+      Alert.alert(t.saved, `${kcal} ${t.savedMsg}`);
+    } else if (email && kcal > 0) {
+      // L'écriture a échoué : prévenir l'utilisateur au lieu de laisser croire que c'est sauvé.
+      Alert.alert(t.saveFailed, t.saveFailedMsg);
+    }
   };
 
   const km = meters / 1000;
@@ -251,7 +345,7 @@ export default function RunScreen() {
   const text = isDark ? '#fff' : Colors.light.gray[900];
   const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
   const card = isDark ? Colors.dark.card : '#fff';
-  const bg = isDark ? '#000' : '#fff';
+  const bg = isDark ? '#0f1419' : '#fff';
 
   const html = useMemo(() => (center ? buildHtml(center, PRIMARY) : ''), [center]);
 
@@ -266,6 +360,8 @@ export default function RunScreen() {
       </View>
     );
   }
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
@@ -319,21 +415,56 @@ export default function RunScreen() {
         </View>
         <View style={styles.controls}>
           {status === 'idle' && (
-            <TouchableOpacity style={[styles.bigBtn, mode === 'sim' && { backgroundColor: '#0ea5e9' }]} onPress={startTracking}>
-              {mode === 'sim' ? <Zap size={24} color="#fff" fill="#fff" /> : <Play size={26} color="#fff" fill="#fff" />}
-              <Text style={styles.bigBtnTxt}>{mode === 'sim' ? `${t.start} · ${t.sim}` : t.start}</Text>
-            </TouchableOpacity>
+            <PrimaryButton
+              title={mode === 'sim' ? `${t.start} · ${t.sim}` : t.start}
+              onPress={startTracking}
+              icon={mode === 'sim' ? <Zap size={24} color="#fff" fill="#fff" /> : <Play size={26} color="#fff" fill="#fff" />}
+              style={[styles.bigBtn, mode === 'sim' && { backgroundColor: '#0ea5e9' }] as any}
+            />
           )}
           {status === 'running' && (
-            <TouchableOpacity style={[styles.bigBtn, { backgroundColor: '#f59e0b' }]} onPress={pause}><Pause size={26} color="#fff" fill="#fff" /><Text style={styles.bigBtnTxt}>{t.pause}</Text></TouchableOpacity>
+            <SecondaryButton
+              title={t.pause}
+              onPress={pause}
+              icon={<Pause size={26} color="#f59e0b" fill="#f59e0b" />}
+              style={[styles.bigBtn, { backgroundColor: 'transparent', borderColor: '#f59e0b' }] as any}
+            />
           )}
           {status === 'paused' && (
             <>
-              <TouchableOpacity style={[styles.bigBtn, { flex: 1 }]} onPress={startTracking}><Play size={24} color="#fff" fill="#fff" /><Text style={styles.bigBtnTxt}>{t.resume}</Text></TouchableOpacity>
-              <TouchableOpacity style={[styles.bigBtn, { flex: 1, backgroundColor: '#ef4444' }]} onPress={finish}><Square size={22} color="#fff" fill="#fff" /><Text style={styles.bigBtnTxt}>{t.finish}</Text></TouchableOpacity>
+              <SecondaryButton
+                title={t.resume}
+                onPress={startTracking}
+                icon={<Play size={24} color={PRIMARY} fill={PRIMARY} />}
+                style={[styles.bigBtn, { flex: 1, backgroundColor: 'transparent' }] as any}
+              />
+              <PrimaryButton
+                title={t.finish}
+                onPress={finish}
+                icon={<Square size={22} color="#fff" fill="#fff" />}
+                style={[styles.bigBtn, { flex: 1, backgroundColor: '#ef4444' }] as any}
+              />
             </>
           )}
         </View>
+
+        {/* Mode fantôme AR + Live Twin — coureur virtuel / jumeau live (only when idle) */}
+        {status === 'idle' && (
+          <View style={[styles.idleBtnRow, isRTL && { flexDirection: 'row-reverse' }]}>
+            <TouchableOpacity
+              style={[styles.ghostBtn, { flex: 1, marginTop: 0 }, { borderColor: isDark ? '#334155' : '#e2e8f0', backgroundColor: isDark ? '#1e293b' : '#f8fafc' }]}
+              onPress={() => router.push('/ar-ghost' as any)}
+            >
+              <Text style={[styles.ghostBtnTxt, { color: text }]} numberOfLines={1}>{t.ghost}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.ghostBtn, { flex: 1, marginTop: 0 }, { borderColor: isDark ? '#334155' : '#e2e8f0', backgroundColor: isDark ? '#1e293b' : '#f8fafc' }]}
+              onPress={() => router.push('/live-twin' as any)}
+            >
+              <Text style={[styles.ghostBtnTxt, { color: text }]} numberOfLines={1}>{t.liveTwin}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Recent runs history (only when idle) */}
         {status === 'idle' && (
@@ -390,6 +521,9 @@ const styles = StyleSheet.create({
   modeRow: { flexDirection: 'row', borderRadius: 14, padding: 4, marginBottom: 16, gap: 4 },
   modeBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 11, shadowColor: '#000', shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
   modeTxt: { fontSize: 14, fontWeight: '800' },
+  idleBtnRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
+  ghostBtn: { marginTop: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14, borderWidth: 1.5 },
+  ghostBtnTxt: { fontSize: 15, fontWeight: '800' },
   histWrap: { marginTop: 18 },
   histHead: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 6 },
   histTitle: { fontSize: 15, fontWeight: '800' },

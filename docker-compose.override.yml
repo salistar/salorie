@@ -1,0 +1,26 @@
+# Override — ajoute le tier "Backend" du scan : vision LOCALE auto-hébergée (Ollama),
+# distincte du provider Gemini. Fusionné automatiquement par `docker compose` PAR-DESSUS
+# le docker-compose.yml (patché serveur : whisper, edge, container_names) sans l'altérer.
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: salorie-ollama
+    restart: unless-stopped
+    volumes: [salorie_ollama:/root/.ollama]
+    expose: ["11434"]
+    networks: [default]
+
+  backend:
+    depends_on: [mongo, redis, minio, ollama]
+    environment:
+      # Tier Backend = Cloudflare Workers AI (edge GPU) PRIORITAIRE, repli Ollama.
+      CF_ACCOUNT_ID: ${CF_ACCOUNT_ID:-}
+      CF_API_TOKEN: ${CF_API_TOKEN:-}
+      CF_VISION_MODEL: ${CF_VISION_MODEL:-@cf/llava-hf/llava-1.5-7b-hf}
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_VISION_MODEL: moondream
+      FOOD_VISION_API_URL: ${FOOD_VISION_API_URL:-}
+      FOOD_VISION_API_KEY: ${FOOD_VISION_API_KEY:-}
+
+volumes:
+  salorie_ollama:

@@ -4,8 +4,10 @@ import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, Tou
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ShoppingCart, Plus, Check, Trash2 } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { EmptyState } from '../../components/ui';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const GREEN = '#2E8B57';
 const KEY = 'shopping_list_v1';
@@ -18,11 +20,15 @@ const TXT: any = {
 };
 
 export default function ShoppingListScreen() {
+  const __gate = useScreenGate('shopping-list');
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
+  const bg = isDark ? '#0f1419' : '#F4F7F9';
   const card = isDark ? '#1e293b' : '#ffffff';
   const textCol = isDark ? '#f1f5f9' : '#0F172A';
   const sub = isDark ? '#94a3b8' : '#64748B';
@@ -41,12 +47,14 @@ export default function ShoppingListScreen() {
 
   const left = items.filter((i) => !i.done).length;
 
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <Image source={require('../../assets/images/illustrations/generating.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
-        <View style={styles.head}><ShoppingCart size={24} color={GREEN} /><Text style={[styles.title, { color: textCol }]}>{t.title}</Text></View>
+        <Image source={require('../../assets/images/photos/veggies_0.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
+        <View style={styles.head}><ShoppingCart size={24} color={accent} /><Text style={[styles.title, { color: textCol }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{items.length ? `${left} ${t.to_buy}` : t.add_what}</Text>
 
         <View style={styles.addRow}>
@@ -54,7 +62,9 @@ export default function ShoppingListScreen() {
           <TouchableOpacity style={styles.addBtn} onPress={add}><Plus size={22} color="#fff" /></TouchableOpacity>
         </View>
 
-        {items.length === 0 ? <Text style={styles.empty}>{t.empty}</Text> : items.map((i) => (
+        {items.length === 0 ? (
+          <EmptyState icon={<ShoppingCart size={26} color={accent} />} title={t.title} subtitle={t.empty} ctaLabel={t.add_what} />
+        ) : items.map((i) => (
           <View key={i.id} style={[styles.item, { backgroundColor: card }]}>
             <TouchableOpacity style={[styles.check, i.done && styles.checkDone]} onPress={() => toggle(i.id)}>
               {i.done && <Check size={16} color="#fff" />}
@@ -79,7 +89,6 @@ const styles = StyleSheet.create({
   addRow: { flexDirection: 'row', gap: 10, marginBottom: 18 },
   input: { flex: 1, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: '#0F172A', borderWidth: 1.5, borderColor: '#E2E8F0' },
   addBtn: { width: 52, height: 52, borderRadius: 14, backgroundColor: GREEN, alignItems: 'center', justifyContent: 'center' },
-  empty: { color: '#94A3B8', fontSize: 14, textAlign: 'center', marginTop: 20 },
   item: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 10 },
   check: { width: 26, height: 26, borderRadius: 8, borderWidth: 2, borderColor: '#CBD5E1', alignItems: 'center', justifyContent: 'center' },
   checkDone: { backgroundColor: GREEN, borderColor: GREEN },

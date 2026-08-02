@@ -27,6 +27,19 @@ export class RedisService implements OnModuleDestroy {
     try { return (await this.get().ping()) === 'PONG'; } catch { return false; }
   }
 
+  /**
+   * Incrément d'un compteur persistant (ex. plafond mensuel de coût Gemini).
+   * Renvoie la nouvelle valeur, ou null si Redis est indisponible (l'appelant décide
+   * du comportement de dégradation). TTL posé au premier incrément.
+   */
+  async incrCounter(key: string, by = 1, ttlSec = 40 * 86400): Promise<number | null> {
+    try {
+      const n = await this.get().incrby(key, by);
+      if (n === by) await this.get().expire(key, ttlSec);
+      return n;
+    } catch { return null; }
+  }
+
   /** Rate limiting fenêtre fixe : true = autorisé. Dégrade OUVERT si Redis indisponible. */
   async rateLimit(key: string, limit: number, windowSec: number): Promise<boolean> {
     try {

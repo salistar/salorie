@@ -13,6 +13,7 @@ expo-env.d.ts
 .kotlin/
 *.orig.*
 *.jks
+*.keystore
 *.p8
 *.p12
 *.key
@@ -64,3 +65,14 @@ app-example
 
 # Firebase CLI debug log
 firebase-debug.log
+captures-audit/
+captures-test-onboarding/
+rapports/
+*.bak
+expo_doctor_report.txt
+run_android_log.txt
+android/app/src/main/assets/index.android.bundle
+
+# Keystore encodé pour les secrets CI — équivaut au .jks lui-même, ne JAMAIS committer.
+*.jks.base64
+*.keystore.base64

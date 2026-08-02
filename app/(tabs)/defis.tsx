@@ -3,10 +3,10 @@
 // écrans existants (zéro duplication de logique) : courses virtuelles (photos),
 // mes médailles, journal/actus, agenda. Trilingue + dark + RTL.
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Image } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
-import { Trophy, Flag, Newspaper, CalendarDays, ChevronRight, Award, MapPin, Users, Activity } from 'lucide-react-native';
+import { Trophy, Flag, Newspaper, ChevronRight, Award, MapPin, Users, Mountain, Ghost, Radio, Route as RouteIcon, Timer, Volleyball, Store, Moon, Swords, CalendarDays } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import Medal from '../../components/Medal';
 import { getActiveRaces, getMyMedals, getNews } from '../../lib/racesApi';
@@ -14,26 +14,27 @@ import { CHALLENGES, streetViewUrl, getMyChallengeProgress } from '../../lib/rac
 import { poiPhoto } from '../../assets/challenges/registry';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
-
-const GREEN = '#2E8B57';
+import { useFlagsCtx } from '../../lib/FlagsContext';
+import { isRouteEnabled } from '../../lib/navFlags';
+import { Card, PrimaryButton, SecondaryButton, SectionHeader, EmptyState, SkeletonCard, HeroImage } from '../../components/ui';
+import { spacing, radius, type } from '../../constants/theme';
+import { HERO } from '../../constants/heroImages';
 
 const TXT: any = {
-  en: { title: 'Challenges', sub: 'Virtual races, medals and news.', races: 'Virtual races', medals: 'My medals', news: 'News', agenda: 'Sport agenda', solo: 'Solo run (GPS)', journal: 'Journal & news', social: 'Social & friends', activity: 'Activity', seeAll: 'See all', km: 'km', noMedals: 'Finish a race to earn your first medal!', join: 'Open' },
-  fr: { title: 'Défis', sub: 'Courses virtuelles, médailles et actus.', races: 'Courses virtuelles', medals: 'Mes médailles', news: 'Actualités', agenda: 'Agenda sport', solo: 'Course solo (GPS)', journal: 'Journal & actus', social: 'Social & amis', activity: 'Activité', seeAll: 'Voir tout', km: 'km', noMedals: 'Termine une course pour gagner ta première médaille !', join: 'Ouvrir' },
-  ar: { title: 'التحديات', sub: 'سباقات افتراضية وميداليات وأخبار.', races: 'سباقات افتراضية', medals: 'ميدالياتي', news: 'الأخبار', agenda: 'أجندة الرياضة', solo: 'جري فردي (GPS)', journal: 'اليوميات والأخبار', social: 'المجتمع والأصدقاء', activity: 'النشاط', seeAll: 'عرض الكل', km: 'كلم', noMedals: 'أكمل سباقاً لتفوز بأول ميدالية!', join: 'افتح' },
+  en: { title: 'Challenges', sub: 'Virtual races, medals and news.', league: 'League', races: 'Virtual races', medals: 'My medals', news: 'News', agenda: 'Sport agenda', solo: 'Solo run (GPS)', annual: 'Annual challenge', journal: 'Journal & news', social: 'Social & friends', activity: 'Activity', seeAll: 'See all', km: 'km', noMedals: 'Finish a race to earn your first medal!', join: 'Open', community: 'Community routes', ghost: 'AR ghost run', twin: 'Live twin', fasting: 'Intermittent fasting', groupSports: 'Group sports', marketplace: 'Marketplace', ramadan: 'Ramadan mode', cityChallenges: 'City vs city challenges', more: 'More' },
+  fr: { title: 'Défis', sub: 'Courses virtuelles, médailles et actus.', league: 'Ligue', races: 'Courses virtuelles', medals: 'Mes médailles', news: 'Actualités', agenda: 'Agenda sport', solo: 'Course solo (GPS)', annual: 'Défi annuel', journal: 'Journal & actus', social: 'Social & amis', activity: 'Activité', seeAll: 'Voir tout', km: 'km', noMedals: 'Termine une course pour gagner ta première médaille !', join: 'Ouvrir', community: 'Parcours communautaires', ghost: 'Course fantôme AR', twin: 'Jumeau live', fasting: 'Jeûne intermittent', groupSports: 'Sports de groupe', marketplace: 'Marketplace', ramadan: 'Mode Ramadan', cityChallenges: 'Défis inter-villes', more: 'Plus' },
+  ar: { title: 'التحديات', sub: 'سباقات افتراضية وميداليات وأخبار.', league: 'الدوري', races: 'سباقات افتراضية', medals: 'ميدالياتي', news: 'الأخبار', agenda: 'أجندة الرياضة', solo: 'جري فردي (GPS)', annual: 'تحدي السنة', journal: 'اليوميات والأخبار', social: 'المجتمع والأصدقاء', activity: 'النشاط', seeAll: 'عرض الكل', km: 'كلم', noMedals: 'أكمل سباقاً لتفوز بأول ميدالية!', join: 'افتح', community: 'مسارات المجتمع', ghost: 'جري الشبح AR', twin: 'التوأم المباشر', fasting: 'الصيام المتقطع', groupSports: 'الرياضات الجماعية', marketplace: 'السوق', ramadan: 'وضع رمضان', cityChallenges: 'تحديات بين المدن', more: 'المزيد' },
 };
 
 export default function DefisTab() {
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || '';
-  const { resolved } = useTheme();
+  const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
+  // Feature-flags lus UNE fois (pas de hook dans les .map) — masque les tuiles OFF.
+  const { flags } = useFlagsCtx();
+  const routeOn = (route: string) => isRouteEnabled(flags, route);
   const t = TXT[language] || TXT.en;
-  const isDark = resolved === 'dark';
-  const bg = isDark ? '#0B0E12' : '#f7faf8';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0f172a';
-  const sub = isDark ? '#94a3b8' : '#64748b';
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
   const rowDir: any = { flexDirection: isRTL ? 'row-reverse' : 'row' };
 
@@ -58,36 +59,80 @@ export default function DefisTab() {
     return () => { alive = false; };
   }, [email]));
 
-  const Section = ({ icon: Icon, label, onSeeAll }: any) => (
-    <View style={[s.secHead, rowDir]}>
-      <Icon size={17} color={GREEN} />
-      <Text style={[s.secTitle, { color: text }]}>{label}</Text>
-      <View style={{ flex: 1 }} />
-      {onSeeAll && <TouchableOpacity onPress={onSeeAll}><Text style={s.seeAll}>{t.seeAll}</Text></TouchableOpacity>}
-    </View>
+  // Tuile compacte 2 colonnes (grille) — un seul langage pour tous les modes du hub.
+  const Tile = ({ icon: Icon, label, onPress }: any) => (
+    <TouchableOpacity style={{ flex: 1 }} activeOpacity={0.85} onPress={onPress}>
+      <Card variant="raised" padded={false} style={{ padding: spacing.lg, gap: spacing.sm, alignItems: 'center', minHeight: 96, justifyContent: 'center' }}>
+        <View style={{ width: 40, height: 40, borderRadius: radius.pill, backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon size={20} color={colors.primary} />
+        </View>
+        <Text style={{ ...(type.sub as any), color: colors.gray[900], textAlign: 'center' }} numberOfLines={2}>{label}</Text>
+      </Card>
+    </TouchableOpacity>
   );
 
+  // Grille 2 colonnes construite depuis un tableau (déjà filtré par flag). La section
+  // ENTIÈRE (titre inclus) disparaît si aucune tuile ne reste ; on ajoute un intercalaire
+  // vide quand une ligne n'a qu'une tuile → la grille ne casse pas (Tile = flex:1).
+  const renderTileGrid = (
+    title: string,
+    HeaderIcon: any,
+    tiles: { icon: any; label: string; route: string }[],
+    headerIconNode?: React.ReactNode,
+  ) => {
+    if (!tiles.length) return null;
+    const rows: (typeof tiles)[] = [];
+    for (let i = 0; i < tiles.length; i += 2) rows.push(tiles.slice(i, i + 2));
+    return (
+      <>
+        <SectionHeader title={title} icon={headerIconNode || <HeaderIcon size={18} color={colors.primary} />} />
+        <View style={{ paddingHorizontal: spacing.xl, gap: spacing.md }}>
+          {rows.map((row, ri) => (
+            <View key={ri} style={[s.tileRow, rowDir]}>
+              {row.map((tl) => (
+                <Tile key={tl.route} icon={tl.icon} label={tl.label} onPress={() => router.push(tl.route as any)} />
+              ))}
+              {row.length === 1 ? <View style={{ flex: 1 }} /> : null}
+            </View>
+          ))}
+        </View>
+      </>
+    );
+  };
+
   return (
-    <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
+    <SafeAreaView style={[s.safe, { backgroundColor: colors.gray[50] }]}>
       <ScreenTopBar />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
-        <View style={[s.head, rowDir]}>
-          <Trophy size={26} color={GREEN} />
-          <Text style={[s.title, { color: text }]}>{t.title}</Text>
+        <View style={{ paddingHorizontal: spacing.xl }}>
+          <HeroImage source={HERO.defis} height={170} eyebrow={t.sub} title={t.title} />
         </View>
-        <Text style={[s.sub, { color: sub }, align]}>{t.sub}</Text>
 
-        {loading ? <ActivityIndicator size="large" color={GREEN} style={{ marginTop: 36 }} /> : (
+        {loading ? (
+          <View style={{ paddingHorizontal: spacing.xl, marginTop: spacing.xl }}>
+            <SkeletonCard height={120} />
+            <SkeletonCard height={96} />
+          </View>
+        ) : (
           <>
-            {/* Courses virtuelles — cartes photo horizontales */}
-            <Section icon={Flag} label={t.races} onSeeAll={() => router.push('/races' as any)} />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 4 }}>
+            {/* CTA phares : Ligue (rétention → flag 'social') + Course solo (sport → flag 'run') */}
+            {(routeOn('/leagues') || routeOn('/run')) && (
+              <View style={{ paddingHorizontal: spacing.xl, marginTop: spacing.xl, gap: spacing.md }}>
+                {routeOn('/leagues') && <PrimaryButton title={t.league} icon={<Trophy size={20} color="#fff" />} onPress={() => router.push('/leagues' as any)} />}
+                {routeOn('/run') && <SecondaryButton title={t.solo} icon={<MapPin size={20} color={colors.primary} />} onPress={() => router.push('/run' as any)} />}
+              </View>
+            )}
+
+            {/* Courses virtuelles — cartes photo horizontales (flag 'races') */}
+            {routeOn('/races') && (<>
+            <SectionHeader title={t.races} icon={<Flag size={18} color={colors.primary} />} actionLabel={t.seeAll} onAction={() => router.push('/races' as any)} />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.md, paddingBottom: spacing.xs, paddingHorizontal: spacing.xl }}>
               {races.map((r) => {
                 const w0 = (r.waypoints || [])[0];
                 return (
                   <TouchableOpacity key={r._id} activeOpacity={0.9} onPress={() => router.push(('/challenge?id=' + r._id + '&src=mongo') as any)}>
                     <View style={s.raceCard}>
-                      {w0 ? <Image source={{ uri: streetViewUrl(w0.lat, w0.lng, 400, 300) }} style={s.raceImg} /> : <View style={[s.raceImg, { backgroundColor: '#cbd5e1' }]} />}
+                      {w0 ? <Image source={{ uri: streetViewUrl(w0.lat, w0.lng, 400, 300) }} style={s.raceImg} /> : <View style={[s.raceImg, { backgroundColor: colors.gray[200] }]} />}
                       <View style={s.raceShade} />
                       <View style={{ position: 'absolute', top: 6, left: 6 }}>
                         <Medal width={46} {...(r.medalSpec || {})} title={r.name} km={r.totalKm} mode="template" />
@@ -102,11 +147,13 @@ export default function DefisTab() {
               })}
               {/* (Anciens défis intégrés migrés en base → déjà dans `races` ci-dessus) */}
             </ScrollView>
+            </>)}
 
-            {/* Mes médailles — bande horizontale */}
-            <Section icon={Award} label={t.medals} onSeeAll={() => router.push('/medals' as any)} />
+            {/* Mes médailles — bande horizontale (flag 'medals') */}
+            {routeOn('/medals') && (<>
+            <SectionHeader title={t.medals} icon={<Award size={18} color={colors.primary} />} actionLabel={t.seeAll} onAction={() => router.push('/medals' as any)} />
             {medals.length ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingHorizontal: spacing.xl }}>
                 {medals.slice(0, 6).map((m, i) => (
                   <TouchableOpacity key={m._id || i} onPress={() => router.push('/medals' as any)}>
                     <Medal width={92} frame={m.frame} {...(m.spec || {})} title={m.raceName} km={m.distanceKm} rank={m.rank} time={m.timeLabel} name={m.userName} />
@@ -114,51 +161,58 @@ export default function DefisTab() {
                 ))}
               </ScrollView>
             ) : (
-              <Text style={[{ color: sub, fontSize: 13 }, align]}>{t.noMedals}</Text>
+              <View style={{ paddingHorizontal: spacing.xl }}>
+                <EmptyState icon={<Award size={26} color={colors.primary} />} title={t.medals} subtitle={t.noMedals} ctaLabel={t.races} onCta={() => router.push('/races' as any)} />
+              </View>
             )}
+            </>)}
 
             {/* Actus */}
             {news.length > 0 && (
               <>
-                <Section icon={Newspaper} label={t.news} onSeeAll={() => router.push('/journal' as any)} />
-                {news.map((n) => (
-                  <TouchableOpacity key={n._id} style={[s.newsRow, { backgroundColor: card }, rowDir]} activeOpacity={0.85} onPress={() => router.push('/journal' as any)}>
-                    {n.imageUrl ? <Image source={{ uri: n.imageUrl }} style={s.newsThumb} /> : <View style={[s.newsThumb, { backgroundColor: 'rgba(46,139,87,0.12)', alignItems: 'center', justifyContent: 'center' }]}><Newspaper size={18} color={GREEN} /></View>}
-                    <View style={{ flex: 1 }}>
-                      <Text style={[{ color: text, fontWeight: '800', fontSize: 13.5 }, align]} numberOfLines={1}>{n.title}</Text>
-                      {n.body ? <Text style={[{ color: sub, fontSize: 12, marginTop: 2 }, align]} numberOfLines={1}>{n.body}</Text> : null}
-                    </View>
-                    <ChevronRight size={16} color={sub} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
-                  </TouchableOpacity>
-                ))}
+                <SectionHeader title={t.news} icon={<Newspaper size={18} color={colors.primary} />} actionLabel={t.seeAll} onAction={() => router.push('/journal' as any)} />
+                <View style={{ paddingHorizontal: spacing.xl, gap: spacing.sm }}>
+                  {news.map((n) => (
+                    <TouchableOpacity key={n._id} activeOpacity={0.85} onPress={() => router.push('/journal' as any)}>
+                      <Card variant="flat" padded={false} style={[{ padding: spacing.md, alignItems: 'center', gap: spacing.md }, rowDir]}>
+                        {n.imageUrl ? <Image source={{ uri: n.imageUrl }} style={s.newsThumb} /> : <View style={[s.newsThumb, { backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center' }]}><Newspaper size={18} color={colors.primary} /></View>}
+                        <View style={{ flex: 1 }}>
+                          <Text style={[{ ...(type.cardTitle as any), color: colors.gray[900], fontSize: 13.5 }, align]} numberOfLines={1}>{n.title}</Text>
+                          {n.body ? <Text style={[{ ...(type.micro as any), color: colors.gray[500], marginTop: 2 }, align]} numberOfLines={1}>{n.body}</Text> : null}
+                        </View>
+                        <ChevronRight size={16} color={colors.gray[400]} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+                      </Card>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </>
             )}
 
-            {/* Course solo (GPS) — déplacée depuis Coach pour regrouper le sport ici */}
-            <TouchableOpacity style={[s.soloCta, rowDir]} activeOpacity={0.85} onPress={() => router.push('/run' as any)}>
-              <MapPin size={20} color={GREEN} />
-              <Text style={[s.soloTxt, { color: text }]}>{t.solo}</Text>
-              <ChevronRight size={18} color={sub} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
-            </TouchableOpacity>
+            {/* Sport solo & modes avancés — grille compacte 2 colonnes (tuiles OFF masquées) */}
+            {(() => {
+              const tiles = [
+                { icon: Mountain, label: t.annual, route: '/annual-challenge' },
+                { icon: Timer, label: t.fasting, route: '/fasting' },
+                { icon: Ghost, label: t.ghost, route: '/ar-ghost' },
+                { icon: Radio, label: t.twin, route: '/live-twin' },
+                { icon: Moon, label: t.ramadan, route: '/ramadan' },
+                { icon: CalendarDays, label: t.agenda, route: '/sport-agenda' },
+              ].filter((tl) => routeOn(tl.route));
+              return renderTileGrid(t.activity, Mountain, tiles);
+            })()}
 
-            {/* Agenda */}
-            <TouchableOpacity style={[s.agendaCta, rowDir]} activeOpacity={0.85} onPress={() => router.push('/sport-agenda' as any)}>
-              <CalendarDays size={20} color="#fff" />
-              <Text style={s.agendaTxt}>{t.agenda}</Text>
-              <ChevronRight size={18} color="#fff" style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
-            </TouchableOpacity>
-
-            {/* Journal & actus + Social & amis (Activité a été déplacée dans l'Accueil) */}
-            <View style={[s.dualRow, rowDir]}>
-              <TouchableOpacity style={[s.dualCard, { backgroundColor: card }]} activeOpacity={0.85} onPress={() => router.push('/journal' as any)}>
-                <Newspaper size={22} color={GREEN} />
-                <Text style={[s.dualTxt, { color: text }]} numberOfLines={2}>{t.journal}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[s.dualCard, { backgroundColor: card }]} activeOpacity={0.85} onPress={() => router.push('/social' as any)}>
-                <Users size={22} color={GREEN} />
-                <Text style={[s.dualTxt, { color: text }]} numberOfLines={2}>{t.social}</Text>
-              </TouchableOpacity>
-            </View>
+            {/* Communauté & social — grille compacte 2 colonnes (tuiles OFF masquées) */}
+            {(() => {
+              const tiles = [
+                { icon: RouteIcon, label: t.community, route: '/community-routes' },
+                { icon: Swords, label: t.cityChallenges, route: '/city-challenges' },
+                { icon: Volleyball, label: t.groupSports, route: '/group-sports' },
+                { icon: Store, label: t.marketplace, route: '/marketplace' },
+                { icon: Newspaper, label: t.journal, route: '/journal' },
+                { icon: Users, label: t.social, route: '/social' },
+              ].filter((tl) => routeOn(tl.route));
+              return renderTileGrid(t.social, Users, tiles, <Users size={18} color={colors.primary} />);
+            })()}
           </>
         )}
       </ScrollView>
@@ -168,26 +222,13 @@ export default function DefisTab() {
 
 const s = StyleSheet.create({
   safe: { flex: 1 },
-  body: { padding: 18, paddingBottom: 130 },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  title: { fontSize: 24, fontWeight: '900', letterSpacing: -0.4 },
-  sub: { fontSize: 13.5, marginTop: 6, lineHeight: 19 },
-  secHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 22, marginBottom: 12 },
-  secTitle: { fontSize: 16, fontWeight: '800' },
-  seeAll: { color: GREEN, fontWeight: '800', fontSize: 12.5 },
-  raceCard: { width: 190, height: 130, borderRadius: 18, overflow: 'hidden' },
+  body: { paddingTop: spacing.md, paddingBottom: 130 },
+  tileRow: { flexDirection: 'row', gap: spacing.md },
+  raceCard: { width: 190, height: 130, borderRadius: radius.lg, overflow: 'hidden' },
   raceImg: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
   raceShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.30)' },
   raceTxtWrap: { position: 'absolute', left: 10, right: 10, bottom: 8 },
   raceName: { color: '#fff', fontWeight: '900', fontSize: 13.5, textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 4 },
   raceMeta: { color: 'rgba(255,255,255,0.9)', fontWeight: '700', fontSize: 11.5, marginTop: 1 },
-  newsRow: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 14, padding: 10, marginBottom: 8 },
-  newsThumb: { width: 44, height: 44, borderRadius: 10 },
-  agendaCta: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: GREEN, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 16, marginTop: 12 },
-  agendaTxt: { color: '#fff', fontWeight: '800', fontSize: 14.5, flex: 1 },
-  soloCta: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 16, marginTop: 22, borderWidth: 1.5, borderColor: GREEN },
-  soloTxt: { fontWeight: '800', fontSize: 14.5, flex: 1 },
-  dualRow: { flexDirection: 'row', gap: 12, marginTop: 12 },
-  dualCard: { flex: 1, borderRadius: 16, paddingVertical: 18, paddingHorizontal: 14, alignItems: 'center', gap: 8, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  dualTxt: { fontWeight: '800', fontSize: 13.5, textAlign: 'center' },
+  newsThumb: { width: 44, height: 44, borderRadius: radius.sm },
 });

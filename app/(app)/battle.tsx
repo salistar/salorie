@@ -1,18 +1,22 @@
 // Battle nutrition 1v1 — compare ton score d'assiduité hebdo avec un ami.
 import React, { useEffect, useState } from 'react';
-import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+import { ymd } from '../../lib/format';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Swords } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { FormCard, FormInput, SubmitBar } from '../../components/FormKit';
-import { db, emailToDocId, getUserFromFirestore } from '../../lib/firebase';
+import { HeroImage } from '../../components/ui';
+import { spacing, radius, elevation, type } from '../../constants/theme';
+import { emailToDocId } from '../../lib/firebase';
+import { readPublicProfile, writePublicProfile } from '../../lib/publicProfile';
 import { getEntries } from '../../lib/tracking';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
+import { rowDir } from '../../lib/rtl';
+import { useScreenGate } from '../../components/FeatureGate';
 
-const GREEN = '#2E8B57';
-const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const fmt = ymd;
 
 const TXT: any = {
   en: {
@@ -29,6 +33,12 @@ const TXT: any = {
     behind: "You're behind, hang in there! 💪",
     tie: 'Perfect tie ⚖️',
     noScore: "hasn't published a score yet — invite them to open Battle.",
+    gageLabel: "Loser's forfeit (optional)",
+    gagePh: 'e.g. buys the coffee ☕',
+    gageTitle: '🎲 The bet',
+    gageYouPay: 'You lost — your forfeit:',
+    gageTheyPay: 'wins! Their forfeit:',
+    gageTie: 'Tie — forfeit cancelled:',
   },
   fr: {
     title: 'Battle 1v1',
@@ -44,6 +54,12 @@ const TXT: any = {
     behind: 'Tu es mené, accroche-toi ! 💪',
     tie: 'Égalité parfaite ⚖️',
     noScore: "n'a pas encore de score publié — invite-le à ouvrir Battle.",
+    gageLabel: 'Gage du perdant (optionnel)',
+    gagePh: 'ex : offre le café ☕',
+    gageTitle: '🎲 Le gage',
+    gageYouPay: 'Tu as perdu — ton gage :',
+    gageTheyPay: 'gagne ! Son gage :',
+    gageTie: 'Égalité — gage annulé :',
   },
   ar: {
     title: 'تحدي 1 ضد 1',
@@ -59,27 +75,36 @@ const TXT: any = {
     behind: 'أنت متأخر، تماسك! 💪',
     tie: 'تعادل تام ⚖️',
     noScore: 'لم ينشر نقاطاً بعد — ادعُه لفتح التحدي.',
+    gageLabel: 'رهان الخاسر (اختياري)',
+    gagePh: 'مثال: يدفع القهوة ☕',
+    gageTitle: '🎲 الرهان',
+    gageYouPay: 'لقد خسرت — رهانك:',
+    gageTheyPay: 'يفوز! رهانه:',
+    gageTie: 'تعادل — أُلغي الرهان:',
   },
 };
 
 export default function BattleScreen() {
   const { user } = useUser();
-  const { resolved } = useTheme();
+  const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  const GREEN = colors.primary;
+  const bg = isDark ? '#0f1419' : '#F4F7F9';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0F172A';
   const sub = isDark ? '#94a3b8' : '#64748B';
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
+  const __gate = useScreenGate('battle');
 
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const [myScore, setMyScore] = useState(0);
+  const [gage, setGage] = useState('');
   const [friend, setFriend] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<{ name: string; score: number } | null>(null);
+  const [result, setResult] = useState<{ name: string; score: number; gage: string } | null>(null);
   const [err, setErr] = useState('');
 
   // Score = nombre de jours actifs (logs) sur les 7 derniers jours (0-7).
@@ -95,37 +120,54 @@ export default function BattleScreen() {
       try {
         const s = await computeMyScore();
         setMyScore(s);
-        // Publie le score pour que les amis puissent te défier.
         const id = emailToDocId(email);
-        if (id) await setDoc(doc(db, 'users', id), { publicStats: { weeklyScore: s, updatedAt: serverTimestamp() } }, { merge: true });
+        // Restaure le gage déjà publié depuis MON profil public.
+        const mine: any = await readPublicProfile(id);
+        const savedGage = mine?.gage;
+        if (typeof savedGage === 'string') setGage(savedGage);
+        // Publie le score dans public_profiles pour que les amis puissent te défier.
+        if (id) await writePublicProfile(id, { weeklyScore: s });
       } catch {} finally { setLoading(false); }
     })();
   }, []);
+
+  // Persiste le gage du perdant avec le battle (même profil public que le score).
+  const persistGage = async (g: string) => {
+    try {
+      const id = emailToDocId(email);
+      if (id) await writePublicProfile(id, { gage: g });
+    } catch {}
+  };
 
   const challenge = async () => {
     const e = friend.trim().toLowerCase();
     if (!e || !e.includes('@')) { setErr(t.errEmail); return; }
     setErr(''); setBusy(true); setResult(null);
     try {
-      const p: any = await getUserFromFirestore(e, undefined);
+      await persistGage(gage.trim());
+      // Lecture du profil PUBLIC de l'adversaire (score + gage), jamais son doc user privé.
+      const p: any = await readPublicProfile(emailToDocId(e));
       if (!p) { setErr(t.errNotFound); }
-      else { setResult({ name: p.firstName || e.split('@')[0], score: Number(p?.publicStats?.weeklyScore ?? -1) }); }
+      else { setResult({ name: p.name || e.split('@')[0], score: Number(p?.weeklyScore ?? -1), gage: typeof p?.gage === 'string' ? p.gage : '' }); }
     } catch { setErr(t.errProfile); } finally { setBusy(false); }
   };
 
   const verdict = result && result.score >= 0 ? (myScore > result.score ? t.leading : myScore < result.score ? t.behind : t.tie) : null;
 
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <Image source={require('../../assets/images/illustrations/gain_weight.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
-        <View style={styles.head}><Swords size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
-        <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
+        <View style={styles.hero}>
+          <HeroImage source={require('../../assets/images/illustrations/gain_weight.jpg')} height={140} title={t.title} />
+        </View>
+        <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}><Swords size={24} color={GREEN} /><Text style={[styles.sub, { color: sub, flex: 1 }, align]}>{t.sub}</Text></View>
 
         {loading ? <ActivityIndicator color={GREEN} style={{ marginTop: 20 }} /> : (
           <>
-            <View style={styles.myCard}>
+            <View style={[styles.myCard, { backgroundColor: GREEN }]}>
               <Text style={styles.myLabel}>{t.myLabel}</Text>
               <Text style={styles.myScore}>{myScore}<Text style={styles.myMax}>/7</Text></Text>
             </View>
@@ -141,19 +183,41 @@ export default function BattleScreen() {
                 onSubmitEditing={challenge}
                 error={err || undefined}
               />
+              <FormInput
+                label={t.gageLabel}
+                placeholder={t.gagePh}
+                value={gage}
+                onChangeText={setGage}
+                onSubmitEditing={challenge}
+              />
             </FormCard>
-            <View style={{ marginHorizontal: -20, marginTop: -8 }}>
+            <View style={{ marginHorizontal: -spacing.xl, marginTop: -spacing.sm }}>
               <SubmitBar label={t.challenge} onPress={challenge} loading={busy} />
             </View>
 
             {result && (
-              <View style={[styles.vsCard, { backgroundColor: card }]}>
-                <View style={styles.vsRow}>
+              <View style={[styles.vsCard, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? '#283241' : 'transparent' }, !isDark && { shadowColor: '#000' }]}>
+                <View style={[styles.vsRow, { flexDirection: rowDir(isRTL) }]}>
                   <View style={styles.vsP}><Text style={[styles.vsName, { color: text }]}>{t.you}</Text><Text style={[styles.vsScore, { color: GREEN }]}>{myScore}</Text></View>
                   <Text style={styles.vsX}>VS</Text>
                   <View style={styles.vsP}><Text style={[styles.vsName, { color: text }]}>{result.name}</Text><Text style={styles.vsScore}>{result.score >= 0 ? result.score : '—'}</Text></View>
                 </View>
                 <Text style={[styles.verdict, { color: text }]}>{result.score >= 0 ? verdict : `${result.name} ${t.noScore}`}</Text>
+                {result.score >= 0 && (() => {
+                  // Le gage du PERDANT s'applique : si je perds -> mon gage, s'il perd -> son gage.
+                  const iLose = myScore < result.score;
+                  const theyLose = myScore > result.score;
+                  const loserGage = iLose ? gage.trim() : theyLose ? result.gage : (gage.trim() || result.gage);
+                  if (!loserGage) return null;
+                  const line = iLose ? t.gageYouPay : theyLose ? `${result.name} ${t.gageTheyPay}` : t.gageTie;
+                  return (
+                    <View style={[styles.gageBox, { backgroundColor: isDark ? '#3b2f12' : '#FEF3C7', borderColor: isDark ? '#a16207' : '#FDE68A' }]}>
+                      <Text style={[styles.gageTitle, { color: isDark ? '#fcd34d' : '#92400E' }, align]}>{t.gageTitle}</Text>
+                      <Text style={[styles.gageLine, { color: isDark ? '#fde68a' : '#78350F' }, align]}>{line}</Text>
+                      <Text style={[styles.gageText, { color: text }, align]}>{loserGage}</Text>
+                    </View>
+                  );
+                })()}
               </View>
             )}
           </>
@@ -164,25 +228,24 @@ export default function BattleScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
-  body: { padding: 20, paddingBottom: 100 },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 26, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', marginBottom: 20, lineHeight: 20 },
-  myCard: { backgroundColor: GREEN, borderRadius: 20, padding: 22, alignItems: 'center', marginBottom: 18 },
-  myLabel: { color: '#E7F5EC', fontSize: 13, fontWeight: '600' },
-  myScore: { color: '#fff', fontSize: 48, fontWeight: '900', letterSpacing: -2, marginTop: 2 },
+  safe: { flex: 1 },
+  body: { padding: spacing.xl, paddingBottom: 100 },
+  hero: { marginBottom: spacing.lg },
+  head: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.xl },
+  sub: { ...type.body, lineHeight: 20 },
+  myCard: { borderRadius: radius.xl, padding: spacing.xxl, alignItems: 'center', marginBottom: spacing.lg },
+  myLabel: { color: '#E7F5EC', ...type.sub },
+  myScore: { color: '#fff', ...type.hero, fontSize: 48, letterSpacing: -2, marginTop: spacing.xs / 2 },
   myMax: { fontSize: 22, fontWeight: '700' },
-  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 4 },
-  input: { flex: 1, fontSize: 15, color: '#0F172A', paddingVertical: 12 },
-  go: { backgroundColor: GREEN, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8 },
-  goTxt: { color: '#fff', fontWeight: '800' },
-  err: { color: '#E11D48', fontSize: 13, marginTop: 10 },
-  vsCard: { backgroundColor: '#fff', borderRadius: 20, padding: 20, marginTop: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  vsCard: { borderRadius: radius.xl, padding: spacing.xl, marginTop: spacing.lg, ...elevation.sm },
   vsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   vsP: { alignItems: 'center', flex: 1 },
-  vsName: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
-  vsScore: { fontSize: 38, fontWeight: '900', color: '#94A3B8', marginTop: 4 },
+  vsName: { ...type.body, fontWeight: '700' },
+  vsScore: { fontSize: 38, fontWeight: '900', color: '#94A3B8', marginTop: spacing.xs },
   vsX: { fontSize: 16, fontWeight: '900', color: '#CBD5E1' },
-  verdict: { textAlign: 'center', fontSize: 15, fontWeight: '800', color: '#0F172A', marginTop: 14 },
+  verdict: { textAlign: 'center', fontSize: 15, fontWeight: '800', marginTop: spacing.md },
+  gageBox: { borderRadius: radius.md, borderWidth: 1, padding: spacing.md, marginTop: spacing.md },
+  gageTitle: { ...type.sub, fontWeight: '900', marginBottom: spacing.xs },
+  gageLine: { ...type.sub, fontWeight: '700', marginBottom: 2 },
+  gageText: { fontSize: 16, fontWeight: '800', lineHeight: 22 },
 });

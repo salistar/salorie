@@ -5,6 +5,7 @@ import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { LoggingProvider, useLogging } from '../../lib/LoggingContext';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
+import * as Haptics from 'expo-haptics';
 
 function TabsContent() {
   const { showActionMenu } = useLogging();
@@ -17,7 +18,6 @@ function TabsContent() {
   return (
     <>
       <Tabs
-        sceneContainerStyle={{ backgroundColor: 'transparent' }}
         screenOptions={{
           headerShown: false,
           tabBarActiveTintColor: colors.primary,
@@ -38,6 +38,7 @@ function TabsContent() {
           name="index"
           options={{
             tabBarLabel: t('tabs.home'),
+            tabBarAccessibilityLabel: t('tabs.home'),
             tabBarIcon: ({ color }) => <Home size={22} color={color} />,
           }}
         />
@@ -45,6 +46,7 @@ function TabsContent() {
           name="coach"
           options={{
             tabBarLabel: t('tabs.coach'),
+            tabBarAccessibilityLabel: t('tabs.coach'),
             tabBarIcon: ({ color }) => <Sparkles size={22} color={color} />,
           }}
         />
@@ -52,6 +54,7 @@ function TabsContent() {
           name="defis"
           options={{
             tabBarLabel: defisLabel,
+            tabBarAccessibilityLabel: defisLabel,
             tabBarIcon: ({ color }) => <Trophy size={22} color={color} />,
           }}
         />
@@ -59,6 +62,7 @@ function TabsContent() {
           name="analytics"
           options={{
             tabBarLabel: t('tabs.analytics'),
+            tabBarAccessibilityLabel: t('tabs.analytics'),
             tabBarIcon: ({ color }) => <BarChart3 size={22} color={color} />,
           }}
         />
@@ -66,6 +70,7 @@ function TabsContent() {
           name="profile"
           options={{
             tabBarLabel: t('tabs.profile'),
+            tabBarAccessibilityLabel: t('tabs.profile'),
             tabBarIcon: ({ color }) => <User size={22} color={color} />,
           }}
         />
@@ -77,7 +82,10 @@ function TabsContent() {
         activeOpacity={0.8}
         accessibilityRole="button"
         accessibilityLabel="Quick add"
-        onPress={() => showActionMenu()}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          showActionMenu();
+        }}
       >
         <Plus size={32} color={Colors.light.white} strokeWidth={3} />
       </TouchableOpacity>
@@ -111,8 +119,9 @@ const styles = StyleSheet.create({
   },
   floatingButton: {
     position: 'absolute',
-    bottom: 100,
-    right: 24,
+    bottom: 118,
+    left: '50%',
+    marginLeft: -32,
     width: 64,
     height: 64,
     borderRadius: 32,

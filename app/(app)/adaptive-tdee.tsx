@@ -4,13 +4,14 @@ import { useUser } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
 import { Activity, TrendingDown, TrendingUp, Check, Scale, Utensils } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { useScreenGate } from '../../components/FeatureGate';
+import { ScreenTitle } from '../../components/ui';
 import { getUserFromFirestore, updateDailyCalories } from '../../lib/firebase';
 import { getEntries } from '../../lib/tracking';
 import { computeAdaptiveTDEE, AdaptiveResult } from '../../lib/adaptiveTDEE';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
-
-const GREEN = '#2E8B57';
+import { rowDir, txtAlign } from '../../lib/rtl';
 
 const TXT: any = {
   en: {
@@ -22,6 +23,8 @@ const TXT: any = {
     perDay: 'kcal / day',
     confidence: 'Confidence:',
     confHigh: 'High', confMed: 'Medium', confLow: 'Low',
+    confGeneric: 'Adjusted every week',
+    recalibrateNote: 'Your TDEE recalibrates itself automatically every week as new meals and weigh-ins come in.',
     avgIntake: 'Real average intake',
     days: 'd', kcalDay: 'kcal/day',
     weightTrend: 'Weight trend',
@@ -52,6 +55,8 @@ const TXT: any = {
     perDay: 'kcal / jour',
     confidence: 'Confiance :',
     confHigh: 'Élevée', confMed: 'Moyenne', confLow: 'Faible',
+    confGeneric: 'Ajusté chaque semaine',
+    recalibrateNote: 'Ton TDEE se recalibre tout seul automatiquement chaque semaine, au fil des nouveaux repas et pesées.',
     avgIntake: 'Apport moyen réel',
     days: 'j', kcalDay: 'kcal/j',
     weightTrend: 'Tendance poids',
@@ -82,6 +87,8 @@ const TXT: any = {
     perDay: 'سعرة / يوم',
     confidence: 'الثقة:',
     confHigh: 'عالية', confMed: 'متوسطة', confLow: 'منخفضة',
+    confGeneric: 'يُضبط كل أسبوع',
+    recalibrateNote: 'يُعيد TDEE الخاص بك معايرة نفسه تلقائياً كل أسبوع مع كل وجبة ووزنة جديدة.',
     avgIntake: 'متوسط الاستهلاك الفعلي',
     days: 'ي', kcalDay: 'سعرة/يوم',
     weightTrend: 'اتجاه الوزن',
@@ -106,17 +113,21 @@ const TXT: any = {
 };
 
 export default function AdaptiveTDEE() {
+  const __gate = useScreenGate('adaptive-tdee');
   const { user } = useUser();
-  const { resolved } = useTheme();
+  const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#f3f6f4';
+  const GREEN = colors.primary;
+  const bg = isDark ? '#0f1419' : '#f3f6f4';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#1B2A33';
   const sub = isDark ? '#94a3b8' : '#667085';
+  const muted = isDark ? '#64748b' : '#94a3b8';
   const border = isDark ? '#334155' : '#e6ece8';
-  const align: any = { textAlign: isRTL ? 'right' : 'left' };
+  const align: any = { textAlign: txtAlign(isRTL) };
+  const rowAlign: any = { flexDirection: rowDir(isRTL) };
 
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const [loading, setLoading] = useState(true);
@@ -155,62 +166,75 @@ export default function AdaptiveTDEE() {
   const confColor = conf === 'high' ? GREEN : conf === 'medium' ? '#B45309' : '#94a3b8';
   const losing = (res?.trendKgPerWeek || 0) < 0;
 
+  // Feature #141 — badge de confiance dérivé du nombre de jours de données déjà
+  // disponibles (>=14 j = élevée, 7-13 = moyenne, <7 = faible). Additif : sert
+  // notamment au badge de l'état « pas encore assez de données ».
+  const dataDays = res?.intakeDays ?? 0;
+  const dayConf: 'high' | 'medium' | 'low' = dataDays >= 14 ? 'high' : dataDays >= 7 ? 'medium' : 'low';
+  const dayConfLabel = dayConf === 'high' ? t.confHigh : dayConf === 'medium' ? t.confMed : t.confLow;
+  const dayConfColor = dayConf === 'high' ? GREEN : dayConf === 'medium' ? '#B45309' : '#94a3b8';
+
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body}>
         <Image source={require('../../assets/images/illustrations/lose_weight.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
-        <View style={s.head}>
-          <Activity size={26} color={GREEN} />
-          <Text style={[s.title, { color: text }]}>{t.title}</Text>
-        </View>
-        <Text style={[s.sub, { color: sub }, align]}>{t.sub}</Text>
+        <ScreenTitle title={t.title} icon={<Activity size={26} color={GREEN} />} subtitle={t.sub} />
 
         {loading ? (
           <ActivityIndicator color={GREEN} style={{ marginTop: 40 }} />
         ) : !res?.tdee ? (
           <View style={[s.card, { backgroundColor: card, borderColor: border }]}>
             <Text style={[s.cardLabel, { color: text }, align]}>{t.notEnough}</Text>
+            <View style={[s.confPill, s.confPillInline, { backgroundColor: dataDays > 0 ? dayConfColor + '22' : GREEN + '22' }]}>
+              <Text style={[s.confTxt, { color: dataDays > 0 ? dayConfColor : GREEN }]}>
+                {dataDays > 0 ? `${t.confidence} ${dayConfLabel}` : t.confGeneric}
+              </Text>
+            </View>
             <Text style={[s.note, { color: sub }, align]}>{res?.note}</Text>
-            <Text style={[s.hint, align]}>{t.hint}</Text>
+            <Text style={[s.note, { color: sub }, align]}>{t.recalibrateNote}</Text>
+            <Text style={[s.hint, { color: muted }, align]}>{t.hint}</Text>
           </View>
         ) : (
           <>
             <View style={[s.heroCard, { backgroundColor: card, borderColor: border }]}>
-              <Text style={s.heroLabel}>{t.heroLabel}</Text>
-              <Text style={s.heroValue}>{res.tdee}</Text>
+              <Text style={[s.heroLabel, { color: muted }]}>{t.heroLabel}</Text>
+              <Text style={[s.heroValue, { color: GREEN }]}>{res.tdee}</Text>
               <Text style={[s.heroUnit, { color: sub }]}>{t.perDay}</Text>
               <View style={[s.confPill, { backgroundColor: confColor + '22' }]}>
                 <Text style={[s.confTxt, { color: confColor }]}>{t.confidence} {confLabel}</Text>
               </View>
+              <Text style={[s.recalibrate, { color: sub }]}>{t.recalibrateNote}</Text>
             </View>
 
-            <View style={s.row}>
+            <View style={[s.row, rowAlign]}>
               <View style={[s.statCard, { backgroundColor: card, borderColor: border }]}>
-                <Text style={s.statLabel}>{t.avgIntake}</Text>
-                <Text style={[s.statValue, { color: text }]}>{res.avgIntake}</Text>
-                <Text style={s.statUnit}>{t.kcalDay} · {res.intakeDays} {t.days}</Text>
+                <Text style={[s.statLabel, { color: muted }, align]}>{t.avgIntake}</Text>
+                <Text style={[s.statValue, { color: text }, align]}>{res.avgIntake}</Text>
+                <Text style={[s.statUnit, { color: muted }, align]}>{t.kcalDay} · {res.intakeDays} {t.days}</Text>
               </View>
               <View style={[s.statCard, { backgroundColor: card, borderColor: border }]}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <View style={{ flexDirection: rowDir(isRTL), alignItems: 'center', gap: 4 }}>
                   {losing ? <TrendingDown size={14} color={GREEN} /> : <TrendingUp size={14} color="#B45309" />}
-                  <Text style={s.statLabel}>{t.weightTrend}</Text>
+                  <Text style={[s.statLabel, { color: muted }]}>{t.weightTrend}</Text>
                 </View>
-                <Text style={[s.statValue, { color: losing ? GREEN : '#B45309' }]}>
+                <Text style={[s.statValue, { color: losing ? GREEN : '#B45309' }, align]}>
                   {res.trendKgPerWeek > 0 ? '+' : ''}{res.trendKgPerWeek}
                 </Text>
-                <Text style={s.statUnit}>{t.kgWeek} · {res.weighIns} {t.weighIns}</Text>
+                <Text style={[s.statUnit, { color: muted }, align]}>{t.kgWeek} · {res.weighIns} {t.weighIns}</Text>
               </View>
             </View>
 
             <View style={[s.card, { backgroundColor: card, borderColor: border }]}>
               <Text style={[s.cardLabel, { color: text }, align]}>{t.recommended}{goal ? ` (${goal})` : ''}</Text>
-              <Text style={s.recValue}>{res.recommendedTarget} <Text style={[s.recUnit, { color: sub }]}>{t.kcalDay}</Text></Text>
+              <Text style={[s.recValue, { color: GREEN }, align]}>{res.recommendedTarget} <Text style={[s.recUnit, { color: sub }]}>{t.kcalDay}</Text></Text>
               {currentTarget ? (
                 <Text style={[s.note, { color: sub }, align]}>{t.currentTarget} {currentTarget} {t.kcalDay}</Text>
               ) : null}
               <TouchableOpacity
-                style={[s.applyBtn, (applied || currentTarget === res.recommendedTarget) && s.applyBtnDone]}
+                style={[s.applyBtn, { backgroundColor: GREEN, flexDirection: rowDir(isRTL) }, (applied || currentTarget === res.recommendedTarget) && s.applyBtnDone]}
                 onPress={apply}
                 disabled={applied || currentTarget === res.recommendedTarget}
               >
@@ -221,7 +245,7 @@ export default function AdaptiveTDEE() {
               </TouchableOpacity>
             </View>
 
-            <Text style={s.foot}>{res.note} {t.foot}</Text>
+            <Text style={[s.foot, { color: muted }]}>{res.note} {t.foot}</Text>
           </>
         )}
 
@@ -240,12 +264,12 @@ export default function AdaptiveTDEE() {
         {user ? (
           <View style={s.dataCard}>
             <Text style={[s.dataTitle, { color: text }, align]}>{t.addData}</Text>
-            <View style={s.dataRow}>
-              <TouchableOpacity style={[s.dataBtn, { backgroundColor: GREEN }]} onPress={() => router.push('/update-weight' as any)}>
+            <View style={[s.dataRow, rowAlign]}>
+              <TouchableOpacity style={[s.dataBtn, { backgroundColor: GREEN, flexDirection: rowDir(isRTL) }]} onPress={() => router.push('/update-weight' as any)}>
                 <Scale size={18} color="#fff" />
                 <Text style={s.dataBtnTxt}>{t.addWeight}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[s.dataBtn, s.dataBtnAlt, { borderColor: GREEN }]} onPress={() => router.push('/log-manual' as any)}>
+              <TouchableOpacity style={[s.dataBtn, s.dataBtnAlt, { borderColor: GREEN, flexDirection: rowDir(isRTL) }]} onPress={() => router.push('/log-manual' as any)}>
                 <Utensils size={18} color={GREEN} />
                 <Text style={[s.dataBtnTxt, { color: GREEN }]}>{t.logMeal}</Text>
               </TouchableOpacity>
@@ -267,10 +291,12 @@ const s = StyleSheet.create({
   sub: { fontSize: 13, color: '#667085', marginTop: 6, lineHeight: 19 },
   heroCard: { backgroundColor: '#fff', borderRadius: 20, padding: 22, alignItems: 'center', marginTop: 18, borderWidth: 1, borderColor: '#e6ece8' },
   heroLabel: { fontSize: 11, fontWeight: '700', color: '#94a3b8', letterSpacing: 1 },
-  heroValue: { fontSize: 52, fontWeight: '900', color: GREEN, marginTop: 4 },
+  heroValue: { fontSize: 52, fontWeight: '900', marginTop: 4 },
   heroUnit: { fontSize: 13, color: '#667085', marginTop: -4 },
   confPill: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, marginTop: 12 },
+  confPillInline: { alignSelf: 'flex-start', marginTop: 8 },
   confTxt: { fontSize: 12, fontWeight: '700' },
+  recalibrate: { fontSize: 11, marginTop: 10, lineHeight: 16, textAlign: 'center' },
   row: { flexDirection: 'row', gap: 12, marginTop: 14 },
   statCard: { flex: 1, backgroundColor: '#fff', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#e6ece8' },
   statLabel: { fontSize: 11, color: '#94a3b8', fontWeight: '600' },
@@ -278,11 +304,11 @@ const s = StyleSheet.create({
   statUnit: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
   card: { backgroundColor: '#fff', borderRadius: 18, padding: 18, marginTop: 14, borderWidth: 1, borderColor: '#e6ece8' },
   cardLabel: { fontSize: 13, fontWeight: '700', color: '#1B2A33' },
-  recValue: { fontSize: 38, fontWeight: '900', color: GREEN, marginTop: 6 },
+  recValue: { fontSize: 38, fontWeight: '900', marginTop: 6 },
   recUnit: { fontSize: 15, fontWeight: '600', color: '#667085' },
   note: { fontSize: 12, color: '#667085', marginTop: 6, lineHeight: 18 },
   hint: { fontSize: 12, color: '#94a3b8', marginTop: 10, lineHeight: 18 },
-  applyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GREEN, borderRadius: 14, paddingVertical: 14, marginTop: 16 },
+  applyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 14, marginTop: 16 },
   applyBtnDone: { backgroundColor: '#94a3b8' },
   applyTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
   foot: { fontSize: 11, color: '#94a3b8', marginTop: 16, lineHeight: 17, textAlign: 'center' },

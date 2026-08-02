@@ -14,9 +14,9 @@ import { useTranslation } from '../lib/i18n';
 const GREEN = '#2E8B57';
 
 const TXT: any = {
-  en: { title: 'Discover', races: 'Virtual races', challenge: 'Casablanca challenge', eat: 'Eat healthy', paris: 'Paris Marathon', progress: 'My progress', workout: 'Train now' },
-  fr: { title: 'Découvrir', races: 'Courses virtuelles', challenge: 'Défi Casablanca', eat: 'Manger sain', paris: 'Marathon de Paris', progress: 'Ma progression', workout: 'M\'entraîner' },
-  ar: { title: 'اكتشف', races: 'سباقات افتراضية', challenge: 'تحدي الدار البيضاء', eat: 'كُل صحياً', paris: 'ماراثون باريس', progress: 'تقدمي', workout: 'تمرّن الآن' },
+  en: { title: 'Discover', races: 'Virtual races', challenge: 'Casablanca challenge', eat: 'Eat healthy', paris: 'Paris Marathon', progress: 'My progress', workout: 'Train now', community: 'Community routes', ramadan: '🌙 Ramadan mode' },
+  fr: { title: 'Découvrir', races: 'Courses virtuelles', challenge: 'Défi Casablanca', eat: 'Manger sain', paris: 'Marathon de Paris', progress: 'Ma progression', workout: 'M\'entraîner', community: 'Parcours communautaires', ramadan: '🌙 Mode Ramadan' },
+  ar: { title: 'اكتشف', races: 'سباقات افتراضية', challenge: 'تحدي الدار البيضاء', eat: 'كُل صحياً', paris: 'ماراثون باريس', progress: 'تقدمي', workout: 'تمرّن الآن', community: 'مسارات المجتمع', ramadan: '🌙 وضع رمضان' },
 };
 
 export default function HomeDiscover() {
@@ -24,6 +24,9 @@ export default function HomeDiscover() {
   const { language } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
   const [raceImg, setRaceImg] = useState<string | null>(null);
 
   // Photo Street View du départ de la 1re course active (image vivante, pilotée par l'admin).
@@ -35,18 +38,20 @@ export default function HomeDiscover() {
   }, []);
 
   const CARDS = [
+    { label: t.ramadan, img: require('../assets/images/illustrations/plan.jpg'), onPress: () => router.push('/ramadan' as any) },
     { label: t.races, img: raceImg ? { uri: raceImg } : poiPhoto('casa-loop', 1), onPress: () => router.push('/races' as any) },
     { label: t.challenge, img: poiPhoto('casa-loop', 0), onPress: () => router.push('/challenge?id=casa-loop' as any) },
-    { label: t.eat, img: require('../assets/images/illustrations/healthy_food.jpg'), onPress: () => router.push('/meal-plan' as any) },
+    { label: t.eat, img: require('../assets/images/illustrations/healthy_food.jpg'), onPress: () => router.push('/ai-meal-plan' as any) },
     { label: t.paris, img: poiPhoto('paris-marathon', 0), onPress: () => router.push('/challenge?id=paris-marathon' as any) },
     { label: t.workout, img: require('../assets/images/illustrations/gain_weight.jpg'), onPress: () => router.push('/log-exercise' as any) },
     { label: t.progress, img: require('../assets/images/illustrations/analytics_cover.jpg'), onPress: () => router.push('/progress-photos' as any) },
+    { label: t.community, img: poiPhoto('casa-loop', 2), onPress: () => router.push('/community-routes' as any) },
   ];
 
   return (
     <View style={styles.wrap}>
       <View style={styles.header}>
-        <Compass size={16} color={GREEN} />
+        <Compass size={16} color={accent} />
         <Text style={[styles.title, { color: isDark ? '#f1f5f9' : '#0F172A' }]}>{t.title}</Text>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>

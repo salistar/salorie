@@ -10,6 +10,7 @@ import { todayStr } from '../../lib/tracking';
 import { parseMealFromAudio, ParsedMeal } from '../../lib/voiceMeal';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const GREEN = '#2E8B57';
 type Phase = 'idle' | 'recording' | 'analyzing' | 'preview' | 'saved';
@@ -50,7 +51,10 @@ export default function VoiceLog() {
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#f3f6f4';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
+  const bg = isDark ? '#0f1419' : '#f3f6f4';
   const cardBg = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#1B2A33';
   const sub = isDark ? '#94a3b8' : '#667085';
@@ -61,6 +65,8 @@ export default function VoiceLog() {
   const [meal, setMeal] = useState<ParsedMeal | null>(null);
   const [err, setErr] = useState('');
   const recRef = useRef<Audio.Recording | null>(null);
+
+  const __gate = useScreenGate('voice-log');
 
   const start = async () => {
     setErr('');
@@ -105,11 +111,13 @@ export default function VoiceLog() {
 
   const reset = () => { setMeal(null); setErr(''); setPhase('idle'); };
 
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body}>
-        <View style={s.head}><Mic size={26} color={GREEN} /><Text style={[s.title, { color: text }]}>{t.title}</Text></View>
+        <View style={s.head}><Mic size={26} color={accent} /><Text style={[s.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[s.sub, { color: sub }, align]}>{t.sub}</Text>
 
         {(phase === 'idle' || phase === 'recording' || phase === 'analyzing') && (
@@ -143,7 +151,7 @@ export default function VoiceLog() {
               <View style={s.macro}><Text style={[s.mVal, { color: text }]}>{meal.fat}g</Text><Text style={s.mLbl}>{t.fat}</Text></View>
             </View>
             <View style={s.actions}>
-              <TouchableOpacity style={s.retry} onPress={reset}><RotateCcw size={15} color={GREEN} /><Text style={s.retryTxt} numberOfLines={1}>{t.retry}</Text></TouchableOpacity>
+              <TouchableOpacity style={s.retry} onPress={reset}><RotateCcw size={15} color={accent} /><Text style={s.retryTxt} numberOfLines={1}>{t.retry}</Text></TouchableOpacity>
               <TouchableOpacity style={s.add} onPress={save}><Check size={17} color="#fff" /><Text style={s.addTxt} numberOfLines={1}>{t.add}</Text></TouchableOpacity>
             </View>
           </View>
@@ -151,7 +159,7 @@ export default function VoiceLog() {
 
         {phase === 'saved' && meal && (
           <View style={[s.card, { backgroundColor: cardBg }, isDark && { borderColor: '#334155' }]}>
-            <Check size={40} color={GREEN} style={{ alignSelf: 'center' }} />
+            <Check size={40} color={accent} style={{ alignSelf: 'center' }} />
             <Text style={[s.savedTxt, { color: text }]}>« {meal.name} » {t.added_b} ({meal.calories} {t.kcal}) ✅</Text>
             <TouchableOpacity style={s.add} onPress={reset}><Mic size={18} color="#fff" /><Text style={s.addTxt}>{t.log_another}</Text></TouchableOpacity>
           </View>

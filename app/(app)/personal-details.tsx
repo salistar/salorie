@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -120,8 +120,9 @@ export default function PersonalDetailsScreen() {
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
 
-  const pageBg = isDark ? '#000' : Colors.light.white;
+  const pageBg = isDark ? '#0f1419' : Colors.light.white;
   const cardBg = isDark ? Colors.dark.card : Colors.light.gray[50];
   const primaryText = isDark ? '#fff' : Colors.light.gray[900];
   const secondaryText = isDark ? '#9BA1A6' : Colors.light.gray[500];
@@ -209,7 +210,7 @@ export default function PersonalDetailsScreen() {
     <Animated.View entering={FadeInRight.delay(delay).duration(600)} style={styles.inputContainer}>
       <View style={[styles.labelRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <View style={[styles.iconBackground, isRTL ? { marginRight: 0, marginLeft: 10 } : null]}>
-          <Icon size={18} color={Colors.light.primary} />
+          <Icon size={18} color={isDark ? Colors.dark.primary : Colors.light.primary} />
         </View>
         <Text style={[styles.inputLabel, { color: secondaryText, textAlign: isRTL ? 'right' : 'left' }]}>{label}</Text>
       </View>
@@ -227,7 +228,7 @@ export default function PersonalDetailsScreen() {
 
         {loading ? (
           <View style={styles.loadingWrapper}>
-            <ActivityIndicator size="large" color={Colors.light.primary} />
+            <ActivityIndicator size="large" color={isDark ? Colors.dark.primary : Colors.light.primary} />
           </View>
         ) : (
           <ScrollView 
@@ -301,10 +302,12 @@ export default function PersonalDetailsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
   },
   header: {
     flexDirection: 'row',
@@ -317,14 +320,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
   },
   loadingWrapper: {
     flex: 1,
@@ -341,12 +344,12 @@ const styles = StyleSheet.create({
   introTitle: {
     fontSize: 28,
     fontWeight: '900',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     marginBottom: 8,
   },
   introDesc: {
     fontSize: 16,
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     fontWeight: '500',
     lineHeight: 22,
   },
@@ -371,28 +374,28 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: Colors.light.gray[600],
+    color: isDark ? Colors.dark.gray[600] : Colors.light.gray[600],
   },
   textInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     borderRadius: 20,
     paddingHorizontal: 20,
     borderWidth: 1.5,
-    borderColor: Colors.light.gray[100],
+    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
   },
   textInput: {
     flex: 1,
     height: 56,
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
   },
   unitText: {
     fontSize: 16,
     fontWeight: '800',
-    color: Colors.light.primary,
+    color: isDark ? Colors.dark.primary : Colors.light.primary,
   },
   saveButton: {
     backgroundColor: Colors.light.primary,
@@ -403,7 +406,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 12,
     marginTop: 16,
-    shadowColor: Colors.light.primary,
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
     shadowRadius: 15,
