@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text } from 'react-native';
-import { render } from '@testing-library/react-native';
+import { render as rtlRender } from '@testing-library/react-native';
 
 // Mock react-native-svg so we can introspect the rendered <Path> elements
 // (their props) without a native SVG renderer. Vars used inside jest.mock
@@ -14,6 +14,13 @@ jest.mock('react-native-svg', () => {
 });
 
 import HalfProgress from '../../components/HalfProgress';
+import { ThemeProvider } from '../../lib/ThemeContext';
+
+// HalfProgress lit le thème pour choisir ses couleurs, et useTheme jette hors d'un
+// ThemeProvider — c'est un garde volontaire, pas un accident : un composant rendu sans
+// thème afficherait des couleurs par défaut silencieusement fausses. Les tests doivent
+// donc fournir le contexte, comme l'application le fait.
+const render = (ui: React.ReactElement) => rtlRender(<ThemeProvider>{ui}</ThemeProvider>);
 
 describe('<HalfProgress />', () => {
   it('rend la piste (track) + le remplissage quand progress > 0', () => {
