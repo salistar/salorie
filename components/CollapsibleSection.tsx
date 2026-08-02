@@ -43,6 +43,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingVertical: 12, paddingHorizontal: 4,
   },
-  title: { fontSize: 16, fontWeight: '800', color: Colors.light.gray[900], letterSpacing: -0.2 },
+  // Pas de `color` ici : il est TOUJOURS surchargé par `titleColor` (theme-aware)
+  // au point d'usage. Le laisser donnait l'illusion d'une couleur en dur.
+  title: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
   body: { marginTop: 4 },
 });

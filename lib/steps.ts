@@ -91,18 +91,29 @@ export function stepsDay(d: Date = new Date()): string {
 const actKey = (email: string, date: string) => `actsteps_${emailToDocId(email)}_${date}`;
 const simKey = (email: string, date: string) => `simsteps_${emailToDocId(email)}_${date}`;
 const MODE_KEY = 'steps_mode';
+// fix audit : verrou par cle pour serialiser les read-modify-write AsyncStorage
+// (sinon deux increments concurrents se lisent la meme valeur -> un increment perdu).
+const __locks: Record<string, Promise<any>> = {};
+function withLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const prev = __locks[key] || Promise.resolve();
+  const next = prev.then(fn, fn);
+  __locks[key] = next.catch(() => {});
+  return next;
+}
 
 // ── Activity steps (from runs / challenges), added to Home regardless of mode ──
 export async function addActivitySteps(email: string, km: number): Promise<number> {
   if (!email || !km || km <= 0) return 0;
   const key = actKey(email, stepsDay());
-  try {
-    const prev = Number((await AsyncStorage.getItem(key)) || '0');
-    const next = prev + kmToSteps(km);
-    await AsyncStorage.setItem(key, String(next));
-    writeActivityFile(next); // share with the native step service notification
-    return next;
-  } catch { return 0; }
+  return withLock(key, async () => {
+    try {
+      const prev = Number((await AsyncStorage.getItem(key)) || '0');
+      const next = prev + kmToSteps(km);
+      await AsyncStorage.setItem(key, String(next));
+      writeActivityFile(next); // share with the native step service notification
+      return next;
+    } catch { return 0; }
+  });
 }
 export async function getActivitySteps(email: string, date = stepsDay()): Promise<number> {
   try { return Number((await AsyncStorage.getItem(actKey(email, date))) || '0'); } catch { return 0; }
@@ -123,12 +134,14 @@ export async function getSimSteps(email: string, date = stepsDay()): Promise<num
 export async function addSimSteps(email: string, count: number): Promise<number> {
   if (!email || !count) return 0;
   const key = simKey(email, stepsDay());
-  try {
-    const prev = Number((await AsyncStorage.getItem(key)) || '0');
-    const next = Math.max(0, prev + Math.round(count));
-    await AsyncStorage.setItem(key, String(next));
-    return next;
-  } catch { return 0; }
+  return withLock(key, async () => {
+    try {
+      const prev = Number((await AsyncStorage.getItem(key)) || '0');
+      const next = Math.max(0, prev + Math.round(count));
+      await AsyncStorage.setItem(key, String(next));
+      return next;
+    } catch { return 0; }
+  });
 }
 export async function resetSimSteps(email: string): Promise<void> {
   try { await AsyncStorage.setItem(simKey(email, stepsDay()), '0'); } catch {}

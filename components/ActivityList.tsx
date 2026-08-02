@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Utensils, Zap, Droplets, ClipboardList, Check, Footprints, Weight, Flame } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
@@ -12,10 +12,11 @@ interface ActivityListProps {
   onAddPress?: () => void;
 }
 
-export default function ActivityList({ logs, onAddPress }: ActivityListProps) {
+function ActivityList({ logs, onAddPress }: ActivityListProps) {
   const { t, language } = useTranslation();
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const titleColor = isDark ? '#f1f5f9' : Colors.light.gray[900];
   const itemBg = isDark ? '#161C23' : Colors.light.white;
   const itemBorder = isDark ? 'rgba(255,255,255,0.08)' : Colors.light.gray[50];
@@ -106,7 +107,7 @@ export default function ActivityList({ logs, onAddPress }: ActivityListProps) {
   const renderEmptyState = () => (
     <View style={[styles.emptyState, { backgroundColor: emptyBg }]}>
       <View style={styles.emptyIconWrapper}>
-        <ClipboardList size={40} color={Colors.light.primary} strokeWidth={2} />
+        <ClipboardList size={40} color={isDark ? Colors.dark.primary : Colors.light.primary} strokeWidth={2} />
       </View>
       <Text style={[styles.emptyTitle, { color: isDark ? '#f1f5f9' : Colors.light.gray[800] }]}>{t('home.no_activity')}</Text>
       <Text style={styles.emptySub}>{t('home.add_first')}</Text>
@@ -176,7 +177,7 @@ export default function ActivityList({ logs, onAddPress }: ActivityListProps) {
           ))}
           {logs.length > visibleCount && (
             <TouchableOpacity onPress={() => setVisibleCount((c) => c + 30)} style={{ paddingVertical: 12, alignItems: 'center' }}>
-              <Text style={{ color: Colors.light.primary, fontWeight: '700', fontSize: 13 }}>
+              <Text style={{ color: isDark ? Colors.dark.primary : Colors.light.primary, fontWeight: '700', fontSize: 13 }}>
                 + {Math.min(30, logs.length - visibleCount)} {language === 'fr' ? 'de plus' : language === 'ar' ? 'المزيد' : 'more'}
               </Text>
             </TouchableOpacity>
@@ -187,7 +188,17 @@ export default function ActivityList({ logs, onAddPress }: ActivityListProps) {
   );
 }
 
-const styles = StyleSheet.create({
+// Composant de PRESENTATION piloté par props → memo pour éviter les re-renders
+// quand `logs`/`onAddPress` sont identiques (ex. autre state du Home qui change).
+// Note : le parent passe `onAddPress={() => showLogModal()}` (fonction inline
+// recréée à chaque rendu), donc le memo n'aide que partiellement tant que le
+// parent ne stabilise pas ce callback (useCallback). On memo quand même car
+// `logs` reste souvent stable et coupe les re-renders inutiles.
+export default React.memo(ActivityList);
+
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     marginTop: 10,
     marginBottom: 40,
@@ -195,7 +206,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     letterSpacing: -0.5,
     marginBottom: 20,
     paddingHorizontal: 2,
@@ -207,7 +218,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     padding: 18,
     borderRadius: 28,
     shadowColor: '#000',
@@ -217,7 +228,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     position: 'relative',
     borderWidth: 1,
-    borderColor: Colors.light.gray[50],
+    borderColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
   },
   itemTimestamp: {
     position: 'absolute',
@@ -225,7 +236,7 @@ const styles = StyleSheet.create({
     right: 18,
     fontSize: 11,
     fontWeight: '700',
-    color: Colors.light.gray[300],
+    color: isDark ? Colors.dark.gray[300] : Colors.light.gray[300],
     textTransform: 'uppercase',
   },
   left: {
@@ -238,7 +249,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 18,
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -248,12 +259,12 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 17,
     fontWeight: '800',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     marginBottom: 4,
   },
   subtext: {
     fontSize: 13,
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     fontWeight: '600',
   },
   gradeBadge: { width: 24, height: 24, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
@@ -267,7 +278,7 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 17,
     fontWeight: '900',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     letterSpacing: -0.5,
   },
   activityValue: {
@@ -275,14 +286,14 @@ const styles = StyleSheet.create({
   },
   macrosPreview: {
     fontSize: 12,
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     fontWeight: '600',
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 60,
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     borderRadius: 32,
     borderWidth: 2,
     borderColor: 'transparent',
@@ -292,11 +303,11 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
-    shadowColor: Colors.light.gray[400],
+    shadowColor: isDark ? 'transparent' : Colors.light.gray[400],
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
     shadowRadius: 20,
@@ -305,12 +316,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: Colors.light.gray[800],
+    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
     marginBottom: 8,
   },
   emptySub: {
     fontSize: 14,
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     textAlign: 'center',
     paddingHorizontal: 40,
     lineHeight: 20,
@@ -325,7 +336,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     borderRadius: 16,
     gap: 8,
-    shadowColor: Colors.light.primary,
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,

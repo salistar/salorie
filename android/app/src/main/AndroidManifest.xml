@@ -2,11 +2,13 @@
   <uses-permission android:name="android.permission.CAMERA"/>
   <uses-permission android:name="android.permission.INTERNET"/>
   <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
-  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" tools:replace="android:maxSdkVersion"/>
   <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-  <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+  <!-- SYSTEM_ALERT_WINDOW retiré : non utilisé (aucun overlay draw-over-apps) + red flag Play. tools:node=remove le strippe même si une lib le fusionne. -->
+  <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" tools:node="remove"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
-  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+  <!-- WRITE_EXTERNAL_STORAGE limité aux vieux Android (≤28) ; sur 33+ on lit via READ_MEDIA_IMAGES et on écrit en scoped storage (MediaLibrary). -->
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" tools:replace="android:maxSdkVersion"/>
   <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED"/>
   <uses-permission android:name="android.permission.health.READ_STEPS"/>
   <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED"/>
@@ -45,6 +47,15 @@
         <data android:scheme="salorie"/>
         <data android:scheme="com.idriss.kriouile.salorie"/>
         <data android:scheme="exp+salorie"/>
+      </intent-filter>
+      <!-- App Links VÉRIFIÉ (fix définitif OAuth Google) : le redirect HTTPS ouvre l'app
+           DIRECTEMENT via l'OS (assetlinks.json), quel que soit le navigateur (Samsung inclus).
+           Remplace le fragile redirect à schéma custom salorie:// que Samsung Internet perd. -->
+      <intent-filter android:autoVerify="true">
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="https" android:host="app.salorie.com" android:pathPrefix="/oauth-callback"/>
       </intent-filter>
       <intent-filter>
         <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>

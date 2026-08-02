@@ -9,6 +9,7 @@ import { router } from 'expo-router';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const GREEN = '#2E8B57';
 // Seuils (en g). Un rep = la magnitude passe au-dessus de HIGH puis revient sous LOW.
@@ -68,11 +69,15 @@ const TXT: any = {
 };
 
 export default function RepCounterScreen() {
+  const __gate = useScreenGate('rep-counter');
   const { language } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#F8FAFC';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
+  const bg = isDark ? '#0f1419' : '#F8FAFC';
   const text = isDark ? '#f1f5f9' : '#0F172A';
   const sub = isDark ? '#94a3b8' : '#64748B';
 
@@ -115,6 +120,8 @@ export default function RepCounterScreen() {
 
   const reset = () => { stop(); setReps(0); phase.current = 'idle'; };
 
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
@@ -128,7 +135,7 @@ export default function RepCounterScreen() {
         </View>
 
         <View style={styles.magRow}>
-          <Activity size={16} color={running ? GREEN : '#CBD5E1'} />
+          <Activity size={16} color={running ? accent : '#CBD5E1'} />
           <Text style={[styles.magTxt, { color: sub }]}>{mag.toFixed(2)} g {running ? t.running : t.stopped}</Text>
         </View>
 
@@ -153,7 +160,7 @@ export default function RepCounterScreen() {
         <Text style={[styles.note, { color: sub }]}>{t.note}</Text>
 
         <View style={[styles.howCard, { backgroundColor: isDark ? '#1e293b' : '#ffffff', borderColor: isDark ? '#334155' : '#E2E8F0' }]}>
-          <Text style={[styles.howTitle, { color: GREEN }]}>{t.howTitle}</Text>
+          <Text style={[styles.howTitle, { color: accent }]}>{t.howTitle}</Text>
           <Text style={[styles.howIntro, { color: sub }]}>{t.howIntro}</Text>
 
           {[

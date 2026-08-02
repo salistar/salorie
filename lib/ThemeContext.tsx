@@ -49,10 +49,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     SystemUI.setBackgroundColorAsync(rootColor).catch(() => {});
   }, [resolved, mode]);
 
+  const value = React.useMemo(
+    () => ({ mode, resolved, colors, setMode }),
+    [mode, resolved, colors]
+  );
+
   return (
-    <ThemeContext.Provider value={{ mode, resolved, colors, setMode }}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 }
 

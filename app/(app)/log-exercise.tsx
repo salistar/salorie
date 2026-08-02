@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ export default function LogExerciseScreen() {
   const { colors, resolved } = useTheme();
   const { t, isRTL } = useTranslation();
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
 
   const bg = isDark ? '#0B0F14' : Colors.light.white;
   const textPrimary = isDark ? colors.gray[900] : Colors.light.gray[900];
@@ -116,7 +117,9 @@ export default function LogExerciseScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   safeArea: { flex: 1 },
   header: { paddingHorizontal: 20, paddingTop: 4, marginBottom: 16 },
   backBtn: {

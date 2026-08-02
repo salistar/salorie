@@ -91,7 +91,7 @@ export default function RaceForm({ onCreated }: { onCreated?: () => void }) {
 
   return (
     <div className="card" style={{ padding: 20 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="grid-2col">
         <Field label="Nom de la course"><input style={inp} value={name} onChange={(e) => setName(e.target.value)} placeholder="Tour du Maroc" /></Field>
         <Field label="Distance totale (km) — 80 à 2000"><input style={inp} type="number" value={totalKm} onChange={(e) => setTotalKm(e.target.value)} /></Field>
         <Field label="Temps imparti (jours)"><input style={inp} type="number" value={timeLimitDays} onChange={(e) => setTimeLimitDays(e.target.value)} /></Field>
@@ -121,7 +121,7 @@ export default function RaceForm({ onCreated }: { onCreated?: () => void }) {
       </div>
 
       {wps.map((w, i) => (
-        <div key={i} style={{ display: 'grid', gridTemplateColumns: '70px 1fr 130px 70px 110px 28px', gap: 6, marginBottom: 6, alignItems: 'center' }}>
+        <div key={i} className="wp-grid">
           <span style={{ fontSize: 12, fontWeight: 700, color: i === 0 ? '#2E8B57' : i === wps.length - 1 ? '#e11d48' : '#2563eb' }}>{i + 1}. {kindLabel(i, wps.length)}</span>
           <input style={inpSm} placeholder="Lieu" value={w.name} onChange={(e) => setWp(i, 'name', e.target.value)} />
           <span style={{ fontSize: 11, color: '#94a3b8' }}>{w.lat.toFixed(3)}, {w.lng.toFixed(3)}</span>

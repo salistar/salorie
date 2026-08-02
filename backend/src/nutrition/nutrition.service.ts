@@ -60,6 +60,9 @@ const USDA_MAP: Record<string, string> = {
 
 @Injectable()
 export class NutritionService {
+  private readonly logger = new Logger(NutritionService.name);
+  private usdaKeyWarned = false;
+
   constructor(private redis: RedisService) {}
 
   // Per-food micronutrients per 100g — NORMALIZED to RDI units. Tries USDA
@@ -97,10 +100,16 @@ export class NutritionService {
     }
 
     // 2) Generic name → USDA FoodData Central (rich micronutrients for whole foods)
-    if (!found && food.name) {
+    // Requires a real USDA_API_KEY. If absent, skip cleanly (no public DEMO_KEY);
+    // the OpenFoodFacts text-search fallback below takes over.
+    const usdaKey = process.env.USDA_API_KEY;
+    if (!found && food.name && !usdaKey && !this.usdaKeyWarned) {
+      this.usdaKeyWarned = true;
+      this.logger.warn('USDA_API_KEY not set — skipping USDA FoodData Central lookup (cascade falls back to OpenFoodFacts).');
+    }
+    if (!found && food.name && usdaKey) {
       try {
-        const key = process.env.USDA_API_KEY || 'DEMO_KEY';
-        const r = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${key}&query=${encodeURIComponent(food.name)}&pageSize=5&dataType=Foundation,SR%20Legacy`, { headers: { 'User-Agent': 'Salorie/1.0' } } as any);
+        const r = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${usdaKey}&query=${encodeURIComponent(food.name)}&pageSize=5&dataType=Foundation,SR%20Legacy`, { headers: { 'User-Agent': 'Salorie/1.0' } } as any);
         const j: any = await r.json();
         const foods: any[] = j?.foods || [];
         // Pick the result that covers the MOST of our target nutrients.

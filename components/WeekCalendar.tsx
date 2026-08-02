@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -83,9 +83,10 @@ interface DayItemProps {
 
 // ── DayItem ────────────────────────────────────────────────────────────────
 const DayItem = React.memo(({ date, isToday, isSelected, isFuture, consumed, goal, onPress }: DayItemProps) => {
-  const { resolved } = useTheme();
+  const { resolved, colors } = useTheme();
   const { t } = useTranslation();
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const dayLabel = t(DAY_KEYS[date.getDay()] as any);
   const dateNumber = date.getDate();
 
@@ -108,8 +109,8 @@ const DayItem = React.memo(({ date, isToday, isSelected, isFuture, consumed, goa
         style={[
           styles.dayLabel,
           isDark && !isSelected && { color: '#ccc' },
-          isToday && !isSelected && styles.dayLabelToday,
-          isSelected && styles.dayLabelSelected,
+          isToday && !isSelected && (isDark ? { color: colors.primary, fontWeight: '800' } : styles.dayLabelToday),
+          isSelected && (isDark ? { color: colors.gray[900], fontWeight: '800' } : styles.dayLabelSelected),
           isFuture && !isSelected && !isToday && styles.dayLabelFuture,
         ]}
       >
@@ -120,17 +121,19 @@ const DayItem = React.memo(({ date, isToday, isSelected, isFuture, consumed, goa
       <View
         style={[
           styles.circle,
-          isToday && styles.circleToday,
-          isSelected && styles.circleSelected,
-          isFuture && !isSelected && !isToday && styles.circleFuture,
-          !isToday && !isSelected && !isFuture && styles.circlePast,
+          isDark && { borderColor: colors.gray[200] },
+          isToday && (isDark ? { backgroundColor: colors.primaryLight, borderColor: colors.primary } : styles.circleToday),
+          isSelected && (isDark ? { backgroundColor: colors.primary, borderColor: colors.primaryDark, borderWidth: 2 } : styles.circleSelected),
+          isSelected && styles.circleSelectedShadow,
+          isFuture && !isSelected && !isToday && (isDark ? { borderColor: colors.gray[200], borderStyle: 'dashed' } : styles.circleFuture),
+          !isToday && !isSelected && !isFuture && (isDark ? { backgroundColor: colors.gray[50], borderColor: colors.gray[200] } : styles.circlePast),
         ]}
       >
         <Text
           style={[
             styles.dateNumber,
-            isDark && !isSelected && !isToday && { color: '#fff' },
-            isToday && !isSelected && styles.dateNumberToday,
+            isDark && !isSelected && !isToday && { color: colors.gray[900] },
+            isToday && !isSelected && (isDark ? { color: colors.primary } : styles.dateNumberToday),
             isSelected && styles.dateNumberSelected,
             isFuture && !isSelected && !isToday && styles.dateNumberFuture,
             !isToday && !isSelected && !isFuture && !isDark && styles.dateNumberPast,
@@ -178,7 +181,12 @@ const DayItem = React.memo(({ date, isToday, isSelected, isFuture, consumed, goa
             ? '0'
             : `+${remaining}`;
         return (
-          <Text style={[styles.caloriesLabel, { color: over ? '#EF4444' : '#10B981' }]}>
+          <Text
+            style={[styles.caloriesLabel, { color: over ? '#EF4444' : '#10B981' }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.6}
+          >
             {display}
           </Text>
         );
@@ -197,7 +205,11 @@ interface WeekRowProps {
   onPress: (date: Date) => void;
 }
 
-const WeekRow = React.memo(({ week, today, selectedDate, caloriesByDate, dailyGoal, onPress }: WeekRowProps) => (
+const WeekRow = React.memo(({ week, today, selectedDate, caloriesByDate, dailyGoal, onPress }: WeekRowProps) => {
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  return (
   <View style={styles.weekRow}>
     {week.map((date) => {
       const key = toLocalDateString(date);
@@ -215,10 +227,14 @@ const WeekRow = React.memo(({ week, today, selectedDate, caloriesByDate, dailyGo
       );
     })}
   </View>
-));
+  );
+});
 
 // ── WeekCalendar ───────────────────────────────────────────────────────────
 export default function WeekCalendar() {
+  const { colors, resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const { selectedDate, setSelectedDate } = useLogging();
   const { user } = useUser();
   const today = startOfDay(new Date());
@@ -321,7 +337,7 @@ export default function WeekCalendar() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { borderBottomColor: colors.gray[100] }]}>
       <FlatList
         ref={flatListRef}
         data={weeks}
@@ -348,13 +364,15 @@ export default function WeekCalendar() {
 // ── styles ─────────────────────────────────────────────────────────────────
 const CIRCLE_SIZE = 44;
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     backgroundColor: 'transparent',
     paddingTop: 12,
     paddingBottom: 24,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.gray[100],
+    borderBottomColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
   },
   weekRow: {
     width: SCREEN_WIDTH,
@@ -372,25 +390,26 @@ const styles = StyleSheet.create({
     // week. flex-start keeps every circle at the same Y.
     justifyContent: 'flex-start',
     paddingVertical: 8, // Vertical touch surface around the circle
+    overflow: 'hidden', // Clip any long calorie label instead of overflowing the fixed-width cell
   },
   dayLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     marginBottom: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
   dayLabelToday: {
-    color: Colors.light.primary,
+    color: isDark ? Colors.dark.primary : Colors.light.primary,
     fontWeight: '800',
   },
   dayLabelSelected: {
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     fontWeight: '800',
   },
   dayLabelFuture: {
-    color: Colors.light.gray[300],
+    color: isDark ? Colors.dark.gray[300] : Colors.light.gray[300],
   },
   circle: {
     width: CIRCLE_SIZE,
@@ -400,46 +419,48 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
     borderWidth: 1.5,
-    borderColor: Colors.light.gray[200], // Default border
+    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200], // Default border
   },
   circlePast: {
-    backgroundColor: Colors.light.gray[50],
-    borderColor: Colors.light.gray[200],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
   },
   circleToday: {
-    backgroundColor: Colors.light.primaryLight,
-    borderColor: Colors.light.primary,
+    backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight,
+    borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
   },
   circleSelected: {
     backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primaryDark,
+    borderColor: isDark ? Colors.dark.primaryDark : Colors.light.primaryDark,
     borderWidth: 2,
-    shadowColor: Colors.light.primary,
+  },
+  circleSelectedShadow: {
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
     elevation: 6,
   },
   circleFuture: {
-    borderColor: Colors.light.gray[200],
+    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
     borderStyle: 'dashed',
   },
   dateNumber: {
     fontSize: 15,
     fontWeight: '700',
-    color: Colors.light.gray[800],
+    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
   },
   dateNumberPast: {
-    color: Colors.light.gray[600],
+    color: isDark ? Colors.dark.gray[600] : Colors.light.gray[600],
   },
   dateNumberToday: {
-    color: Colors.light.primary,
+    color: isDark ? Colors.dark.primary : Colors.light.primary,
   },
   dateNumberSelected: {
     color: '#FFFFFF', // Ensuring white is pure and forced
   },
   dateNumberFuture: {
-    color: Colors.light.gray[300],
+    color: isDark ? Colors.dark.gray[300] : Colors.light.gray[300],
   },
   todayIndicator: {
     position: 'absolute',
@@ -455,5 +476,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#10B981', // GREEN
     letterSpacing: -0.2,
+    maxWidth: DAY_ITEM_WIDTH - 4, // Never exceed the fixed-width day cell
+    textAlign: 'center',
   },
 });

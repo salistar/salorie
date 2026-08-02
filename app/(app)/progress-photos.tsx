@@ -11,6 +11,7 @@ import PhotoStrip from '../../components/PhotoStrip';
 import { aiVision, aiGenerate } from '../../lib/aiProxy';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const GREEN = '#2E8B57';
 const KEY = 'progress_photos_v1';
@@ -23,11 +24,15 @@ const TXT: any = {
 };
 
 export default function ProgressPhotosScreen() {
+  const __gate = useScreenGate('progress-photos');
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
+  const bg = isDark ? '#0f1419' : '#F4F7F9';
   const text = isDark ? '#f1f5f9' : '#0F172A';
   const sub = isDark ? '#94a3b8' : '#64748B';
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
@@ -77,17 +82,19 @@ export default function ProgressPhotosScreen() {
     } catch {}
   };
 
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
-        <View style={styles.head}><TrendingUp size={24} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <View style={styles.head}><TrendingUp size={24} color={accent} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <PhotoStrip category="health" />
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
         <View style={styles.btnRow}>
           <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={() => add(true)}><Camera size={20} color="#fff" /><Text style={styles.btnPrimaryTxt}>{t.photo}</Text></TouchableOpacity>
-          <TouchableOpacity style={[styles.btn, styles.btnGhost]} onPress={() => add(false)}><ImageIcon size={20} color={GREEN} /><Text style={styles.btnGhostTxt}>{t.gallery}</Text></TouchableOpacity>
+          <TouchableOpacity style={[styles.btn, styles.btnGhost]} onPress={() => add(false)}><ImageIcon size={20} color={accent} /><Text style={styles.btnGhostTxt}>{t.gallery}</Text></TouchableOpacity>
         </View>
 
         {photos.length >= 2 && (

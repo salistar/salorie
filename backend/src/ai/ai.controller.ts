@@ -27,6 +27,9 @@ export class AiController {
   async vision(@Body() body: { prompt?: string; imageBase64?: string; mimeType?: string; model?: string }, @Req() req: any) {
     await this.limit(req, 'vis');
     if (!body?.prompt || !body?.imageBase64) throw new BadRequestException('prompt and imageBase64 required');
+    // S-fix : borne la taille de l'image AVANT tout envoi cloud (anti-abus coût/mémoire).
+    if (typeof body.imageBase64 !== 'string' || body.imageBase64.length > 8_000_000)
+      throw new BadRequestException('image too large');
     return { text: await this.ai.vision(body.prompt, body.imageBase64, body.mimeType || 'image/jpeg', body.model) };
   }
 

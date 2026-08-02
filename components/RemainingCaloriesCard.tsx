@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -85,6 +85,7 @@ export default function RemainingCaloriesCard({
   const tx = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   // Theme-aware surface so the card doesn't stay bright white on the dark home.
   const cardBg = isDark ? '#161C23' : Colors.light.white;
   const titleColor = isDark ? '#f1f5f9' : Colors.light.gray[900];
@@ -141,7 +142,7 @@ export default function RemainingCaloriesCard({
               setModalVisible(true);
             }}
           >
-            <Pencil size={20} color={Colors.light.gray[400]} strokeWidth={2.5} />
+            <Pencil size={20} color={isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} strokeWidth={2.5} />
           </TouchableOpacity>
         </View>
 
@@ -228,7 +229,7 @@ export default function RemainingCaloriesCard({
                 <Text style={[styles.modalSubtitle, { color: isDark ? '#9BA1A6' : Colors.light.gray[400], textAlign: isRTL ? 'right' : 'left' }]}>{tx.adjustGoals}</Text>
               </View>
               <TouchableOpacity onPress={() => setModalVisible(false)} style={[styles.closeBtn, isDark && { backgroundColor: Colors.dark.gray[50] }]}>
-                <X size={24} color={Colors.light.gray[400]} />
+                <X size={24} color={isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} />
               </TouchableOpacity>
             </View>
 
@@ -237,7 +238,7 @@ export default function RemainingCaloriesCard({
               <View style={styles.inputGroup}>
                 <View style={[styles.labelRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                   <View style={[styles.miniIconCircle, { backgroundColor: 'rgba(41, 143, 80, 0.1)' }]}>
-                    <Flame size={16} color={Colors.light.primary} />
+                    <Flame size={16} color={isDark ? Colors.dark.primary : Colors.light.primary} />
                   </View>
                   <Text style={[styles.inputLabel, { color: isDark ? '#9BA1A6' : Colors.light.gray[600], textAlign: isRTL ? 'right' : 'left' }]}>{tx.dailyCalories}</Text>
                 </View>
@@ -246,7 +247,10 @@ export default function RemainingCaloriesCard({
                     style={[styles.textInput, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}
                     value={inputs.calories}
                     onChangeText={(v) => setInputs(prev => ({ ...prev, calories: v }))}
+                    accessibilityLabel={tx.dailyCalories}
                     keyboardType="numeric"
+                    returnKeyType="done"
+                    maxLength={5}
                     placeholder="2000"
                     placeholderTextColor={isDark ? '#9BA1A6' : undefined}
                   />
@@ -268,7 +272,10 @@ export default function RemainingCaloriesCard({
                       style={[styles.textInput, { fontSize: 16, color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}
                       value={inputs.protein}
                       onChangeText={(v) => setInputs(prev => ({ ...prev, protein: v }))}
+                      accessibilityLabel={tx.protein}
                       keyboardType="numeric"
+                      returnKeyType="done"
+                      maxLength={4}
                       placeholder="g"
                       placeholderTextColor={isDark ? '#9BA1A6' : undefined}
                     />
@@ -289,7 +296,10 @@ export default function RemainingCaloriesCard({
                       style={[styles.textInput, { fontSize: 16, color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}
                       value={inputs.carbs}
                       onChangeText={(v) => setInputs(prev => ({ ...prev, carbs: v }))}
+                      accessibilityLabel={tx.carbs}
                       keyboardType="numeric"
+                      returnKeyType="done"
+                      maxLength={4}
                       placeholder="g"
                       placeholderTextColor={isDark ? '#9BA1A6' : undefined}
                     />
@@ -310,7 +320,10 @@ export default function RemainingCaloriesCard({
                       style={[styles.textInput, { fontSize: 16, color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}
                       value={inputs.fats}
                       onChangeText={(v) => setInputs(prev => ({ ...prev, fats: v }))}
+                      accessibilityLabel={tx.fats}
                       keyboardType="numeric"
+                      returnKeyType="done"
+                      maxLength={4}
                       placeholder="g"
                       placeholderTextColor={isDark ? '#9BA1A6' : undefined}
                     />
@@ -331,12 +344,14 @@ export default function RemainingCaloriesCard({
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   card: {
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     borderRadius: 32,
     padding: 24,
-    shadowColor: Colors.light.primary,
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.08,
     shadowRadius: 24,
@@ -352,7 +367,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     letterSpacing: -0.5,
   },
   editIconBtn: {
@@ -373,13 +388,13 @@ const styles = StyleSheet.create({
   remainingValue: {
     fontSize: 48,
     fontWeight: '900',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     letterSpacing: -1.5,
   },
   remainingLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     marginTop: -4,
   },
   macrosGrid: {
@@ -390,7 +405,7 @@ const styles = StyleSheet.create({
   },
   macroBox: {
     flex: 1,
-    backgroundColor: Colors.light.primaryLight,
+    backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight,
     borderRadius: 20,
     padding: 16, // More padding
     alignItems: 'center',
@@ -414,12 +429,12 @@ const styles = StyleSheet.create({
   macroValue: {
     fontSize: 16, // Bigger
     fontWeight: '800',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
   },
   macroName: {
     fontSize: 12, // Bigger
     fontWeight: '700',
-    color: Colors.light.gray[500],
+    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
     marginTop: 1,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -430,7 +445,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: Colors.light.gray[50],
+    borderTopColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
   },
   statItem: {
     flex: 1,
@@ -439,7 +454,7 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     marginBottom: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -447,12 +462,12 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: Colors.light.gray[800],
+    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
   },
   divider: {
     width: 1,
     height: 24,
-    backgroundColor: Colors.light.gray[100],
+    backgroundColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
   },
   modalOverlay: {
     flex: 1,
@@ -460,7 +475,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalCard: {
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     borderTopLeftRadius: 36,
     borderTopRightRadius: 36,
     padding: 32,
@@ -475,17 +490,17 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontWeight: '900',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     letterSpacing: -0.5,
   },
   modalSubtitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     marginTop: 2,
   },
   closeBtn: {
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     padding: 8,
     borderRadius: 12,
   },
@@ -512,28 +527,28 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: Colors.light.gray[600],
+    color: isDark ? Colors.dark.gray[600] : Colors.light.gray[600],
   },
   textInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     borderRadius: 16,
     paddingHorizontal: 16,
     borderWidth: 1.5,
-    borderColor: Colors.light.gray[100],
+    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
   },
   textInput: {
     flex: 1,
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     paddingVertical: 14,
   },
   unitText: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
   },
   multiInputRow: {
     flexDirection: 'row',
@@ -547,7 +562,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingVertical: 18,
     gap: 10,
-    shadowColor: Colors.light.primary,
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 12,

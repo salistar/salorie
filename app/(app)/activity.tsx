@@ -39,7 +39,10 @@ export default function ActivityScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0B0E12' : '#F4F7F9';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
+  const bg = isDark ? '#0f1419' : '#F4F7F9';
   const card = isDark ? '#161C23' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0F172A';
   const sub = isDark ? '#94a3b8' : '#64748B';
@@ -98,7 +101,7 @@ export default function ActivityScreen() {
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
         <View style={[s.head, rowDir]}>
-          <ActivityIcon size={26} color={GREEN} />
+          <ActivityIcon size={26} color={accent} />
           <Text style={[s.title, { color: text }]}>{t.title}</Text>
         </View>
         <Text style={[s.sub, { color: sub }, align]}>{t.sub}</Text>
@@ -110,7 +113,7 @@ export default function ActivityScreen() {
             <Text style={[s.statLbl, { color: sub }]}>{t.sessions}</Text>
           </View>
           <View style={[s.statCard, { backgroundColor: card, borderColor: border }]}>
-            <Text style={[s.statVal, { color: GREEN }]}>{totalKcal}</Text>
+            <Text style={[s.statVal, { color: accent }]}>{totalKcal}</Text>
             <Text style={[s.statLbl, { color: sub }]}>{t.burned} ({t.kcal})</Text>
           </View>
           <View style={[s.statCard, { backgroundColor: card, borderColor: border }]}>
@@ -120,7 +123,7 @@ export default function ActivityScreen() {
         </View>
 
         {loading ? (
-          <ActivityIndicator size="large" color={GREEN} style={{ marginTop: 40 }} />
+          <ActivityIndicator size="large" color={accent} style={{ marginTop: 40 }} />
         ) : items.length === 0 ? (
           <Text style={[s.empty, { color: sub }]}>{t.empty}</Text>
         ) : (
@@ -137,7 +140,7 @@ export default function ActivityScreen() {
                       <Text style={[s.itemName, { color: text }, align]} numberOfLines={1}>{l.name}</Text>
                       {meta ? <Text style={[s.itemMeta, { color: sub }, align]}>{meta}</Text> : null}
                     </View>
-                    <Text style={[s.itemKcal, { color: GREEN }]}>{Math.round(l.calories)} {t.kcal}</Text>
+                    <Text style={[s.itemKcal, { color: accent }]}>{Math.round(l.calories)} {t.kcal}</Text>
                   </View>
                 );
               })}

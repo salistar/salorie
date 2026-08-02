@@ -31,6 +31,28 @@ function slope(points: { x: number; y: number }[]): number {
   return (n * sxy - sx * sy) / d;
 }
 
+// ───── CŒUR CANONIQUE PARTAGÉ (écran TDEE + coach engagement.ts → mêmes chiffres) ─────
+/** Pente de poids (kg/jour) par régression linéaire sur des pesées datées (.timestamp ou .date). */
+export function slopeKgPerDay(weights: { weight?: number; timestamp?: any; date?: any }[]): number {
+  const pts = weights
+    .map((w) => ({ x: toMs(w.timestamp ?? w.date) / 86400000, y: Number(w.weight) }))
+    .filter((pt) => pt.x > 0 && pt.y > 0)
+    .sort((a, b) => a.x - b.x);
+  return pts.length >= 2 ? slope(pts) : 0;
+}
+/** TDEE = apport moyen − énergie stockée/déstockée (pente×7700). null si aberrant (garde-fou 1000–6000). */
+export function tdeeFromIntakeAndSlope(avgIntake: number, slopeKgPerDayVal: number): number | null {
+  const tdee = Math.round(avgIntake - slopeKgPerDayVal * KCAL_PER_KG);
+  return tdee >= 1000 && tdee <= 6000 ? tdee : null;
+}
+/** Cible quotidienne conseillée : lose −500 / gain +300 / maintain ; plancher 1200, arrondi 10. */
+export function recommendedTargetFor(tdee: number, goal?: string): number {
+  let t = tdee;
+  if (goal === 'lose') t = tdee - 500;       // ≈ −0,45 kg/sem
+  else if (goal === 'gain') t = tdee + 300;  // ≈ +0,27 kg/sem
+  return Math.max(1200, Math.round(t / 10) * 10);
+}
+
 export interface AdaptiveResult {
   tdee: number | null;            // maintenance apprise (kcal/j) — null si pas assez de données
   avgIntake: number;              // apport moyen réel sur la fenêtre (kcal/j)
@@ -69,8 +91,8 @@ export function computeAdaptiveTDEE(
     .filter((p) => p.x >= cutoff && p.y > 0)
     .sort((a, b) => a.x - b.x);
   const spanDays = wp.length >= 2 ? (wp[wp.length - 1].x - wp[0].x) / 86400000 : 0;
-  const slopeKgPerDay = wp.length >= 2 ? slope(wp.map((p) => ({ x: p.x / 86400000, y: p.y }))) : 0;
-  const trendKgPerWeek = Math.round(slopeKgPerDay * 7 * 100) / 100;
+  const skpd = wp.length >= 2 ? slope(wp.map((p) => ({ x: p.x / 86400000, y: p.y }))) : 0;
+  const trendKgPerWeek = Math.round(skpd * 7 * 100) / 100;
 
   // Pas assez de données → on reste honnête (pas de TDEE inventé).
   if (intakeDays < 7 || wp.length < 2 || spanDays < 7) {
@@ -81,17 +103,15 @@ export function computeAdaptiveTDEE(
     };
   }
 
-  const tdee = Math.round(avgIntake - slopeKgPerDay * KCAL_PER_KG);
+  const tdee = tdeeFromIntakeAndSlope(avgIntake, skpd);
   const confidence: AdaptiveResult['confidence'] = intakeDays >= 14 && spanDays >= 14 ? 'high' : 'medium';
-
-  let recommendedTarget = tdee;
-  if (goal === 'lose') recommendedTarget = tdee - 500;      // ≈ -0,45 kg/sem
-  else if (goal === 'gain') recommendedTarget = tdee + 300; // ≈ +0,27 kg/sem
-  recommendedTarget = Math.max(1200, Math.round(recommendedTarget / 10) * 10);
+  const recommendedTarget = tdee != null ? recommendedTargetFor(tdee, goal) : null;
 
   return {
     tdee, avgIntake, intakeDays, weighIns: wp.length, spanDays: Math.round(spanDays),
     trendKgPerWeek, confidence, recommendedTarget,
-    note: `Recalibré sur ${intakeDays} j de repas et ${wp.length} pesées (${Math.round(spanDays)} j).`,
+    note: tdee != null
+      ? `Recalibré sur ${intakeDays} j de repas et ${wp.length} pesées (${Math.round(spanDays)} j).`
+      : `Données trop incohérentes pour un TDEE fiable (${intakeDays} j de repas, ${wp.length} pesées).`,
   };
 }

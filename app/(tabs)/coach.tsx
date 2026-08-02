@@ -1,10 +1,12 @@
-import React, { useCallback, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl, TouchableOpacity, Modal, Pressable, TextInput } from 'react-native';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, RefreshControl, TouchableOpacity, Modal, Pressable, TextInput, ViewStyle } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer, Wallet, Refrigerator, Replace, Ruler, Moon, Smile, Droplets, BookmarkPlus, Award, ShoppingCart, Link2, UtensilsCrossed, Receipt, FileText, Swords, Droplet, Activity, PersonStanding, Mic, Search, UtensilsCrossed as EatIcon, BarChart3, History } from 'lucide-react-native';
+import { SecondaryButton, SkeletonCard, HeroImage, Card } from '../../components/ui';
+import { spacing, radius } from '../../constants/theme';
+import { HERO } from '../../constants/heroImages';
+import { Flame, TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles, ChefHat, ChevronRight, Apple, Trophy, HeartPulse, Lock, CheckCircle2, X, Dumbbell, MapPin, ScanText, Timer, Wallet, Refrigerator, Replace, Ruler, Moon, Smile, Droplets, BookmarkPlus, Award, ShoppingCart, Link2, UtensilsCrossed, Receipt, FileText, Swords, Droplet, Activity, PersonStanding, Mic, Search, UtensilsCrossed as EatIcon, BarChart3, History, Coffee, Sun } from 'lucide-react-native';
 
 // Sections par INTENTION utilisateur (4 au lieu de 8) + recherche + récents :
 // l'utilisateur ne voit que 6 tuiles par section (divulgation progressive).
@@ -47,21 +49,21 @@ const TILE_I18N: Record<string, { en: string; ar: string }> = {
   '/progress-photos': { en: 'Progress photos', ar: 'صور التقدم' },
   '/streaks': { en: 'My streaks', ar: 'سلاسلي' },
   '/body-composition': { en: 'Body composition', ar: 'تكوين الجسم' },
-  '/glucose-tracker': { en: 'Glucose', ar: 'السكر' },
+  '/vitals': { en: 'Glucose', ar: 'السكر' },
   '/microbiome': { en: 'Microbiome', ar: 'الميكروبيوم' },
-  '/doctor-export': { en: 'Doctor export', ar: 'تصدير للطبيب' },
+  '/health-export': { en: 'Doctor export', ar: 'تصدير للطبيب' },
   '/adaptive-tdee': { en: 'Adaptive TDEE', ar: 'TDEE تكيّفي' },
   '/metabolic-twin': { en: 'Metabolic twin', ar: 'التوأم الأيضي' },
   '/calorie-budget': { en: 'Calorie budget', ar: 'ميزانية السعرات' },
   '/journal': { en: 'Journal & news', ar: 'اليوميات والأخبار' },
   '/ai-coach': { en: 'AI Coach', ar: 'مدرب الذكاء' },
-  '/meal-plan': { en: 'Meal plan', ar: 'خطة الوجبات' },
   '/nutrients': { en: 'Nutrients', ar: 'العناصر الغذائية' },
   '/health': { en: 'Health Connect', ar: 'ربط الصحة' },
   '/social': { en: 'Social & friends', ar: 'المجتمع والأصدقاء' },
 };
 const tileLabel = (route: string, fr: string, lang: string) => (lang === 'fr' ? fr : (TILE_I18N[route]?.[lang as 'en' | 'ar'] || fr));
-import { useFeatureFlags, isEnabled } from '../../lib/featureFlags';
+import { useFeatureFlags } from '../../lib/featureFlags';
+import { isRouteEnabled } from '../../lib/navFlags';
 
 const PLANS_CTA: Record<string, { t: string; s: string }> = {
   en: { t: 'Workout plans', s: 'Ready-made training programs' },
@@ -86,23 +88,60 @@ const ACH_STR: Record<string, { hint: string; unlocked: string; locked: string; 
   fr: { hint: 'Touche un trophée pour voir comment le débloquer', unlocked: 'Débloqué', locked: 'Verrouillé', lockedMsg: 'Continue comme ça pour débloquer ce trophée !' },
   ar: { hint: 'اضغط على وسام لمعرفة كيفية فتحه', unlocked: 'مفتوح', locked: 'مقفل', lockedMsg: 'واصل لفتح هذا الوسام!' },
 };
+// Suggestion contextuelle selon l'heure locale (new Date().getHours()) : additif,
+// n'altère pas les tuiles/nav. 4 tranches → petit-déj / déjeuner / dîner / hydratation.
+type TimeTip = { eyebrow: string; title: string; sub: string };
+const TIME_TIP: Record<'morning' | 'midday' | 'evening' | 'late', Record<string, TimeTip>> = {
+  morning: {
+    en: { eyebrow: 'Good morning', title: 'Breakfast idea', sub: 'Kick off with protein + fiber to stay full: oats, eggs or Greek yogurt with fruit.' },
+    fr: { eyebrow: 'Bonjour', title: 'Idée petit-déjeuner', sub: 'Démarre avec protéines + fibres pour tenir : flocons, œufs ou yaourt grec aux fruits.' },
+    ar: { eyebrow: 'صباح الخير', title: 'فكرة فطور', sub: 'ابدأ ببروتين وألياف لتبقى شبعان: شوفان أو بيض أو زبادي يوناني مع الفاكهة.' },
+  },
+  midday: {
+    en: { eyebrow: 'Midday', title: 'Lunch idea', sub: 'Build a balanced plate: lean protein, whole grains and half a plate of veggies.' },
+    fr: { eyebrow: 'Midi', title: 'Idée déjeuner', sub: 'Compose une assiette équilibrée : protéine maigre, féculents complets et moitié de légumes.' },
+    ar: { eyebrow: 'الظهيرة', title: 'فكرة غداء', sub: 'كوّن طبقاً متوازناً: بروتين قليل الدهن، حبوب كاملة ونصف الطبق خضار.' },
+  },
+  evening: {
+    en: { eyebrow: 'Evening', title: 'Dinner idea', sub: 'Go lighter tonight: fish or legumes with vegetables, easy on late heavy carbs.' },
+    fr: { eyebrow: 'Soir', title: 'Idée dîner', sub: 'Un dîner plus léger : poisson ou légumineuses avec des légumes, peu de féculents tard.' },
+    ar: { eyebrow: 'المساء', title: 'فكرة عشاء', sub: 'عشاء أخف: سمك أو بقوليات مع الخضار، وقلل النشويات الثقيلة متأخراً.' },
+  },
+  late: {
+    en: { eyebrow: 'Late night', title: 'Stay hydrated', sub: 'If you feel snacky, try water or a caffeine-free herbal tea before bed.' },
+    fr: { eyebrow: 'Tard le soir', title: 'Pense à t’hydrater', sub: 'Une petite faim ? Un verre d’eau ou une tisane sans caféine avant de dormir.' },
+    ar: { eyebrow: 'وقت متأخر', title: 'حافظ على ترطيبك', sub: 'إذا أحسست بالجوع، جرّب الماء أو شاي أعشاب بلا كافيين قبل النوم.' },
+  },
+};
+const timeBucket = (h: number): keyof typeof TIME_TIP =>
+  h >= 5 && h < 11 ? 'morning' : h >= 11 && h < 15 ? 'midday' : h >= 15 && h < 22 ? 'evening' : 'late';
+const TIME_TIP_ICON = { morning: Coffee, midday: Sun, evening: Moon, late: Droplets } as const;
+
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { loadEngagement, EngagementData } from '../../lib/engagement';
 import { publishStats } from '../../lib/social';
+import { useExperiment } from '../../lib/experiments';
 
 export default function CoachScreen() {
   const { user } = useUser();
-  const { resolved } = useTheme();
+  const { resolved, colors } = useTheme();
   const { t, language } = useTranslation();
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const [data, setData] = useState<EngagementData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selAch, setSelAch] = useState<any>(null);
   const flags = useFeatureFlags(); // Feature Flags (Étape 3) — masque les features désactivées par l'admin
+  // A/B RÉEL sur la carte-suggestion horaire (TIME_TIP) : la variante 'accent' lui donne
+  // un traitement visuel plus fort (fond teinté primary + bordure accent). Contenu, texte
+  // et logique STRICTEMENT identiques dans les 2 variantes — différence présentationnelle
+  // seulement, 100% réversible. Exposition loggée une fois via useExperiment ('[exp] ...').
+  const abUserId = user?.primaryEmailAddress?.emailAddress || user?.id || 'anon';
+  const { variant: tipStyle } = useExperiment(abUserId, 'coach_tip_style', ['control', 'accent']);
   // UX anti-perte : recherche d'outils + 4 derniers outils utilisés + sections repliées.
   const st = SEC_TXT[language] || SEC_TXT.en;
   const [toolSearch, setToolSearch] = useState('');
@@ -127,7 +166,7 @@ export default function CoachScreen() {
     // restait null → spinner infini → "le Coach ne s'ouvre pas".
     const FALLBACK: EngagementData = {
       adaptiveTDEE: null, recommendedTarget: null, staticTarget: null, avgIntake: null,
-      weightTrendKgPerWeek: null, confidence: 'low' as any, streak: 0, daysTracked: 0,
+      weightTrendKgPerWeek: null, confidence: 'low' as any, streak: 0, freezesUsed: 0, freezeActive: false, daysTracked: 0,
       weighIns: 0, totalLogs: 0, achievements: [], lesson: { title: '', body: '' }, goal: '',
     };
     if (!email) { setData(FALLBACK); setLoading(false); return; }
@@ -156,7 +195,7 @@ export default function CoachScreen() {
   const text = isDark ? '#fff' : Colors.light.gray[900];
   const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
   const card = isDark ? Colors.dark.card : '#fff';
-  const bg = isDark ? '#0B0E12' : 'transparent';
+  const bg = isDark ? '#0f1419' : 'transparent';
 
   // !data couvre aussi le cas DÉCONNECTÉ (pas d'email → data jamais chargée) :
   // sans ce garde, `data!` crashait l'onglet Coach pour un user signé out.
@@ -164,7 +203,11 @@ export default function CoachScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
         <ScreenTopBar />
-        <View style={styles.center}><ActivityIndicator size="large" color={Colors.light.primary} /></View>
+        <View style={styles.content}>
+          <SkeletonCard height={150} />
+          <SkeletonCard height={96} />
+          <SkeletonCard height={96} />
+        </View>
       </SafeAreaView>
     );
   }
@@ -181,50 +224,81 @@ export default function CoachScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={Colors.light.primary} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
       >
         <ScreenTopBar />
 
         <View style={styles.titleRow}>
-          <Sparkles size={26} color={Colors.light.primary} />
+          <Sparkles size={26} color={colors.primary} />
           <Text style={[styles.title, { color: text }]}>{t('coach.title')}</Text>
         </View>
 
-        {/* ── Adaptive target hero ── */}
-        <LinearGradient colors={[Colors.light.primary, Colors.light.primaryDark]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
-          <Text style={styles.heroLabel}>{t('coach.adaptive_label')}</Text>
-          {hasPlan ? (
-            <>
-              <Text style={styles.heroValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>{d.recommendedTarget}<Text style={styles.heroUnit}> kcal</Text></Text>
-              <View style={styles.heroRow}>
-                <View style={styles.heroStat}>
-                  <Text style={styles.heroStatLabel}>{t('coach.real_burn')}</Text>
-                  <Text style={styles.heroStatValue}>{d.adaptiveTDEE} kcal</Text>
-                </View>
-                <View style={styles.heroDivider} />
-                <View style={styles.heroStat}>
-                  <Text style={styles.heroStatLabel}>{t('coach.weight_trend')}</Text>
-                  <View style={styles.trendRow}>
-                    <TrendIcon size={16} color="#fff" />
-                    <Text style={styles.heroStatValue}>{trend != null ? `${trend > 0 ? '+' : ''}${trend} kg/wk` : '—'}</Text>
+        {/* ── Suggestion contextuelle selon l'heure locale (additif) ── */}
+        {(() => {
+          const bucket = timeBucket(new Date().getHours());
+          const tip = (TIME_TIP[bucket][language] || TIME_TIP[bucket].en);
+          const TipIcon = TIME_TIP_ICON[bucket];
+          // Variante 'accent' : fond primary-teinté + bordure accent (traitement plus fort).
+          // 'control' : rendu actuel inchangé. Différence purement visuelle.
+          const accent = tipStyle === 'accent';
+          const tipCardStyle: ViewStyle[] = accent
+            ? [styles.timeTipCard, { backgroundColor: colors.primaryLight, borderWidth: 1.5, borderColor: colors.primary }]
+            : [styles.timeTipCard];
+          return (
+            <Card style={tipCardStyle}>
+              <View style={[styles.timeTipIcon, { backgroundColor: accent ? colors.primary : colors.primaryLight }]}>
+                <TipIcon size={22} color={accent ? '#fff' : colors.primary} />
+              </View>
+              <View style={styles.timeTipBody}>
+                <Text style={[styles.timeTipEyebrow, { color: colors.primary }]}>{tip.eyebrow}</Text>
+                <Text style={[styles.timeTipTitle, { color: text }]}>{tip.title}</Text>
+                <Text style={[styles.timeTipSub, { color: sub }]}>{tip.sub}</Text>
+              </View>
+            </Card>
+          );
+        })()}
+
+        {/* ── Adaptive target hero (photo + scrim, valeur kcal adaptative conservée) ── */}
+        <View style={styles.heroWrap}>
+          <HeroImage
+            source={HERO.coach}
+            height={hasPlan ? 220 : 210}
+            eyebrow={t('coach.adaptive_label')}
+            value={hasPlan ? String(d.recommendedTarget) : undefined}
+            valueUnit={hasPlan ? 'kcal' : undefined}
+          >
+            {hasPlan ? (
+              <>
+                <View style={styles.heroRow}>
+                  <View style={styles.heroStat}>
+                    <Text style={styles.heroStatLabel}>{t('coach.real_burn')}</Text>
+                    <Text style={styles.heroStatValue}>{d.adaptiveTDEE} kcal</Text>
+                  </View>
+                  <View style={styles.heroDivider} />
+                  <View style={styles.heroStat}>
+                    <Text style={styles.heroStatLabel}>{t('coach.weight_trend')}</Text>
+                    <View style={styles.trendRow}>
+                      <TrendIcon size={16} color="#fff" />
+                      <Text style={styles.heroStatValue}>{trend != null ? `${trend > 0 ? '+' : ''}${trend} kg/wk` : '—'}</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-              <View style={styles.confChip}>
-                <Text style={styles.confText}>{t('coach.confidence')}: {t(`coach.conf_${d.confidence}` as any)}</Text>
-              </View>
-            </>
-          ) : (
-            <>
-              <Text style={styles.heroBuilding}>{t('coach.building_title')}</Text>
-              <Text style={styles.heroBuildingSub}>{t('coach.building_sub')}</Text>
-              <View style={styles.progressTrack}>
-                <View style={[styles.progressFill, { width: `${Math.min(100, (d.daysTracked / 7) * 100)}%` }]} />
-              </View>
-              <Text style={styles.heroBuildingSub}>{Math.min(d.daysTracked, 7)}/7 {t('coach.days_tracked')}</Text>
-            </>
-          )}
-        </LinearGradient>
+                <View style={styles.confChip}>
+                  <Text style={styles.confText}>{t('coach.confidence')}: {t(`coach.conf_${d.confidence}` as any)}</Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={styles.heroBuilding}>{t('coach.building_title')}</Text>
+                <Text style={styles.heroBuildingSub}>{t('coach.building_sub')}</Text>
+                <View style={styles.progressTrack}>
+                  <View style={[styles.progressFill, { width: `${Math.min(100, (d.daysTracked / 7) * 100)}%` }]} />
+                </View>
+                <Text style={styles.heroBuildingSub}>{Math.min(d.daysTracked, 7)}/7 {t('coach.days_tracked')}</Text>
+              </>
+            )}
+          </HeroImage>
+        </View>
 
         {/* ── Outils — 4 sections par INTENTION + recherche + récents + repli (anti-perte) ── */}
         {(() => {
@@ -250,10 +324,10 @@ export default function CoachScreen() {
               { Icon: Droplets, label: 'Hydratation intelligente', route: '/smart-hydration' },
               { Icon: TrendingUp, label: 'Photos de progression', route: '/progress-photos' },
               { Icon: PersonStanding, label: 'Composition corporelle', route: '/body-composition' },
-              { Icon: Droplet, label: 'Glycémie', route: '/glucose-tracker' },
+              { Icon: Droplet, label: 'Glycémie', route: '/vitals' },
               { Icon: Activity, label: 'Microbiote', route: '/microbiome' },
               { Icon: HeartPulse, label: t('coach.health_title'), route: '/health' },
-              { Icon: FileText, label: 'Export médecin', route: '/doctor-export' },
+              { Icon: FileText, label: 'Export médecin', route: '/health-export' },
             ]},
             { key: 'ai', Icon: Sparkles, items: [
               // Journal & actus + Social & amis ont été déplacés dans l'onglet Défis.
@@ -277,11 +351,11 @@ export default function CoachScreen() {
               {/* Récents — l'app s'adapte à l'usage */}
               {!q && recents.length > 0 && (
                 <>
-                  <View style={styles.secHeadRow}><History size={15} color={Colors.light.primary} /><Text style={[styles.gridSection, { color: sub, marginTop: 0, marginBottom: 0 }]}>{st.recents}</Text></View>
+                  <View style={styles.secHeadRow}><History size={15} color={colors.primary} /><Text style={[styles.gridSection, { color: sub, marginTop: 0, marginBottom: 0 }]}>{st.recents}</Text></View>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 6 }}>
-                    {recents.map((r) => { const it = allItems.find((i) => i.route === r); if (!it) return null; const I = it.Icon; return (
+                    {recents.map((r) => { const it = allItems.find((i) => i.route === r); if (!it || !isRouteEnabled(flags, it.route)) return null; const I = it.Icon; return (
                       <TouchableOpacity key={r} style={[styles.recentChip, { backgroundColor: card }]} onPress={() => openTool(r)}>
-                        <I size={15} color={Colors.light.primary} /><Text style={[styles.recentTxt, { color: text }]} numberOfLines={1}>{tileLabel(it.route, it.label, language)}</Text>
+                        <I size={15} color={colors.primary} /><Text style={[styles.recentTxt, { color: text }]} numberOfLines={1}>{tileLabel(it.route, it.label, language)}</Text>
                       </TouchableOpacity>
                     ); })}
                   </ScrollView>
@@ -290,7 +364,8 @@ export default function CoachScreen() {
 
               {sections.map((group) => {
                 const items = group.items
-                  .filter((it) => isEnabled(flags, it.route.replace(/^\//, '')))
+                  // Masque une tuile seulement si SON flag (FLAG_KEYS/exceptions) est OFF.
+                  .filter((it) => isRouteEnabled(flags, it.route))
                   .filter((it) => !q || it.label.toLowerCase().includes(q) || tileLabel(it.route, it.label, language).toLowerCase().includes(q));
                 if (!items.length) return null;
                 const isOpen = !!expandedSecs[group.key] || !!q;
@@ -298,19 +373,24 @@ export default function CoachScreen() {
                 const GIcon = group.Icon;
                 return (
                   <View key={group.key}>
-                    <View style={styles.secHeadRow}><GIcon size={15} color={Colors.light.primary} /><Text style={[styles.gridSection, { color: sub, marginTop: 0, marginBottom: 0 }]}>{st[group.key]}</Text></View>
+                    <View style={styles.secHeadRow}><GIcon size={15} color={colors.primary} /><Text style={[styles.gridSection, { color: sub, marginTop: 0, marginBottom: 0 }]}>{st[group.key]}</Text></View>
                     <View style={styles.featGrid}>
                       {visible.map((it) => { const Icon = it.Icon; return (
                         <TouchableOpacity key={it.route} activeOpacity={0.85} onPress={() => openTool(it.route)} style={[styles.featCard, { backgroundColor: card }]}>
-                          <View style={styles.mealCtaIcon}><Icon size={22} color={Colors.light.primary} /></View>
+                          <View style={[styles.mealCtaIcon, { backgroundColor: colors.primaryLight }]}><Icon size={22} color={colors.primary} /></View>
                           <Text style={[styles.featLabel, { color: text }]} numberOfLines={2}>{tileLabel(it.route, it.label, language)}</Text>
                         </TouchableOpacity>
                       ); })}
                     </View>
                     {items.length > 6 && !q && (
-                      <TouchableOpacity style={styles.seeAllBtn} onPress={() => setExpandedSecs((p) => ({ ...p, [group.key]: !p[group.key] }))}>
-                        <Text style={styles.seeAllTxt}>{isOpen ? st.less : `${st.seeAll} (${items.length})`}</Text>
-                      </TouchableOpacity>
+                      <View style={styles.seeAllBtn}>
+                        <SecondaryButton
+                          size="sm"
+                          full={false}
+                          title={isOpen ? st.less : `${st.seeAll} (${items.length})`}
+                          onPress={() => setExpandedSecs((p) => ({ ...p, [group.key]: !p[group.key] }))}
+                        />
+                      </View>
                     )}
                   </View>
                 );
@@ -346,7 +426,7 @@ export default function CoachScreen() {
             >
               {/* status corner: check when unlocked, lock when not */}
               <View style={styles.badgeCorner}>
-                {a.unlocked ? <CheckCircle2 size={16} color={Colors.light.primary} /> : <Lock size={14} color={sub} />}
+                {a.unlocked ? <CheckCircle2 size={16} color={colors.primary} /> : <Lock size={14} color={sub} />}
               </View>
               <Text style={[styles.badgeIcon, !a.unlocked && styles.badgeIconLocked]}>{a.icon}</Text>
               <Text style={[styles.badgeTitle, { color: a.unlocked ? text : sub }]} numberOfLines={1}>{a.title}</Text>
@@ -364,8 +444,8 @@ export default function CoachScreen() {
               <Text style={[styles.modalTitle, { color: text }]}>{selAch?.title}</Text>
               <Text style={[styles.modalDesc, { color: sub }]}>{selAch?.desc}</Text>
               <View style={[styles.statusPill, { backgroundColor: selAch?.unlocked ? 'rgba(41,143,80,0.15)' : 'rgba(120,140,130,0.15)' }]}>
-                {selAch?.unlocked ? <CheckCircle2 size={16} color={Colors.light.primary} /> : <Lock size={14} color={sub} />}
-                <Text style={[styles.statusText, { color: selAch?.unlocked ? Colors.light.primaryDark : sub }]}>
+                {selAch?.unlocked ? <CheckCircle2 size={16} color={colors.primary} /> : <Lock size={14} color={sub} />}
+                <Text style={[styles.statusText, { color: selAch?.unlocked ? colors.primaryDark : sub }]}>
                   {selAch?.unlocked ? astr.unlocked : astr.locked}
                 </Text>
               </View>
@@ -379,7 +459,7 @@ export default function CoachScreen() {
           <Text style={[styles.section, { color: text }]}>{t('coach.lesson_title')}</Text>
         </View>
         <View style={[styles.lessonCard, { backgroundColor: card }]}>
-          <View style={styles.lessonIcon}><Lightbulb size={22} color={Colors.light.primary} /></View>
+          <View style={[styles.lessonIcon, { backgroundColor: colors.primaryLight }]}><Lightbulb size={22} color={colors.primary} /></View>
           <Text style={[styles.lessonTitle, { color: text }]}>{d.lesson.title}</Text>
           <Text style={[styles.lessonBody, { color: sub }]}>{d.lesson.body}</Text>
         </View>
@@ -388,17 +468,22 @@ export default function CoachScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   container: { flex: 1 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   content: { paddingHorizontal: 20, paddingBottom: 130 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4, marginBottom: 18 },
   title: { fontSize: 30, fontWeight: '900', letterSpacing: -1 },
 
-  hero: { borderRadius: 26, padding: 24, marginBottom: 18 },
-  heroLabel: { color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: '800', letterSpacing: 1 },
-  heroValue: { color: '#fff', fontSize: 52, fontWeight: '900', marginTop: 4, letterSpacing: -2 },
-  heroUnit: { fontSize: 22, fontWeight: '800' },
+  timeTipCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginBottom: spacing.lg },
+  timeTipIcon: { width: 44, height: 44, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  timeTipBody: { flex: 1 },
+  timeTipEyebrow: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  timeTipTitle: { fontSize: 17, fontWeight: '800', marginTop: 2 },
+  timeTipSub: { fontSize: 13.5, marginTop: 4, lineHeight: 19 },
+
+  heroWrap: { marginBottom: spacing.lg },
   heroRow: { flexDirection: 'row', marginTop: 14, gap: 16 },
   heroStat: { flex: 1 },
   heroDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.25)' },
@@ -413,7 +498,7 @@ const styles = StyleSheet.create({
   progressFill: { height: 8, borderRadius: 4, backgroundColor: '#fff' },
 
   mealCta: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, padding: 16, marginBottom: 14, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
-  mealCtaIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center' },
+  mealCtaIcon: { width: 52, height: 52, borderRadius: radius.pill, backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center' },
   mealCtaTitle: { fontSize: 17, fontWeight: '800' },
   mealCtaSub: { fontSize: 13, marginTop: 3, lineHeight: 18 },
   // Grille compacte (Coach allégé) — 2 colonnes, sections
@@ -424,12 +509,11 @@ const styles = StyleSheet.create({
   recentChip: { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 999, paddingHorizontal: 13, paddingVertical: 9, maxWidth: 190 },
   recentTxt: { fontSize: 12.5, fontWeight: '700', flexShrink: 1 },
   seeAllBtn: { alignItems: 'center', paddingVertical: 4, marginBottom: 6 },
-  seeAllTxt: { color: Colors.light.primary, fontWeight: '800', fontSize: 13 },
   featGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   featCard: { width: '48%', alignItems: 'center', borderRadius: 16, paddingVertical: 16, paddingHorizontal: 8, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   featLabel: { fontSize: 13, fontWeight: '700', marginTop: 8, textAlign: 'center' },
   streakCard: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, padding: 18, marginBottom: 22, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
-  streakIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#FEF3E0', alignItems: 'center', justifyContent: 'center' },
+  streakIcon: { width: 52, height: 52, borderRadius: radius.pill, backgroundColor: '#FEF3E0', alignItems: 'center', justifyContent: 'center' },
   streakValue: { fontSize: 20, fontWeight: '900' },
   streakSub: { fontSize: 13, marginTop: 3, lineHeight: 18 },
 
@@ -457,7 +541,7 @@ const styles = StyleSheet.create({
   modalHint: { fontSize: 13, marginTop: 14, textAlign: 'center', lineHeight: 18 },
 
   lessonCard: { borderRadius: 20, padding: 20, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
-  lessonIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  lessonIcon: { width: 44, height: 44, borderRadius: radius.pill, backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   lessonTitle: { fontSize: 18, fontWeight: '800' },
   lessonBody: { fontSize: 14, marginTop: 6, lineHeight: 21 },
 });

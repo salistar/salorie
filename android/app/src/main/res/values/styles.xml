@@ -5,6 +5,10 @@
     <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
     <item name="colorPrimary">@color/colorPrimary</item>
     <item name="android:statusBarColor">#298f50</item>
+    <!-- targetSdk 35 (API 35 exigée par Google Play depuis le 31/08/2025). Opt-out TEMPORAIRE
+         de l'edge-to-edge forcé d'Android 15 pour éviter tout contenu passant sous les barres
+         système, le temps de valider la gestion des insets sur device ; à retirer ensuite. -->
+    <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
   </style>
   <style name="ResetEditText" parent="@android:style/Widget.EditText">
     <item name="android:padding">0dp</item>

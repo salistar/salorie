@@ -51,11 +51,14 @@ type Props = {
   goal?: 'lose' | 'maintain' | 'gain';
 };
 
-export default function MlInsightsCard({ weightHistory, remaining: propRemaining, goal: propGoal }: Props = {}) {
+function MlInsightsCard({ weightHistory, remaining: propRemaining, goal: propGoal }: Props = {}) {
   const { language, isRTL } = useTranslation() as any;
   const tx = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
   const cardBg = isDark ? '#161C23' : '#fff';
   const titleColor = isDark ? '#f1f5f9' : '#0F172A';
   const blockColor = isDark ? '#cbd5e1' : '#334155';
@@ -122,7 +125,7 @@ export default function MlInsightsCard({ weightHistory, remaining: propRemaining
   return (
     <View style={[styles.card, { backgroundColor: cardBg }]}>
       <View style={[styles.header, isRTL && { flexDirection: 'row-reverse' }]}>
-        <Sparkles size={18} color={GREEN} />
+        <Sparkles size={18} color={accent} />
         <Text style={[styles.title, { color: titleColor }, isRTL && { marginLeft: 0, marginRight: 8, textAlign: 'right' }]}>{tx.title}</Text>
         {source && !loading && (
           <View style={[styles.srcBadge, { backgroundColor: isDark ? 'rgba(46,139,87,0.18)' : '#EAF4EE' }]}>
@@ -134,7 +137,7 @@ export default function MlInsightsCard({ weightHistory, remaining: propRemaining
         </TouchableOpacity>
       </View>
 
-      {loading && <ActivityIndicator color={GREEN} style={{ marginVertical: 16 }} />}
+      {loading && <ActivityIndicator color={accent} style={{ marginVertical: 16 }} />}
       {!loading && err && <Text style={[styles.muted, { color: subColor }]}>{tx.unavailable} ({err})</Text>}
 
       {!loading && !err && (
@@ -145,7 +148,7 @@ export default function MlInsightsCard({ weightHistory, remaining: propRemaining
             {forecast?.ok ? (
               <View>
                 <View style={[styles.row, isRTL && { flexDirection: 'row-reverse' }]}>
-                  {forecast.direction === 'losing' ? <TrendingDown size={18} color={GREEN} />
+                  {forecast.direction === 'losing' ? <TrendingDown size={18} color={accent} />
                     : forecast.direction === 'gaining' ? <TrendingUp size={18} color="#E11D48" />
                     : <Minus size={18} color="#94A3B8" />}
                   <Text style={[styles.trend, { color: trendColor }, isRTL && { marginLeft: 0, marginRight: 8, textAlign: 'right' }]}>
@@ -173,7 +176,7 @@ export default function MlInsightsCard({ weightHistory, remaining: propRemaining
           {/* Reco repas */}
           <View style={styles.block}>
             <View style={[styles.row, isRTL && { flexDirection: 'row-reverse' }]}>
-              <Utensils size={15} color={GREEN} />
+              <Utensils size={15} color={accent} />
               <Text style={[styles.blockTitle, { color: blockColor }]}>  {tx.recoMeals}</Text>
             </View>
             {meals?.recommendations?.length ? meals.recommendations.map((m, i) => (
@@ -212,3 +215,7 @@ const styles = StyleSheet.create({
   muted: { fontSize: 13, color: '#94A3B8', marginTop: 4 },
   footer: { fontSize: 10, color: '#CBD5E1', marginTop: 12, textAlign: 'right' },
 });
+
+// PERF #17 : carte presentational / props-driven — memoïsée pour éviter les
+// re-rendus quand les props (weightHistory/remaining/goal) sont inchangées.
+export default React.memo(MlInsightsCard);

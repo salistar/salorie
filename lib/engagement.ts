@@ -8,8 +8,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getDoc } from 'firebase/firestore';
 import { emailToDocId, db } from './firebase';
+import { slopeKgPerDay, tdeeFromIntakeAndSlope, recommendedTargetFor } from './adaptiveTDEE';
 
-const KCAL_PER_KG = 7700; // ~7700 kcal pour 1 kg de masse
 
 export type Confidence = 'low' | 'medium' | 'high';
 export interface Achievement { id: string; title: string; desc: string; icon: string; unlocked: boolean; }
@@ -22,6 +22,8 @@ export interface EngagementData {
   weightTrendKgPerWeek: number | null;
   confidence: Confidence;
   streak: number;
+  freezesUsed: number;
+  freezeActive: boolean;
   daysTracked: number;
   weighIns: number;
   totalLogs: number;
@@ -225,37 +227,49 @@ export async function loadEngagement(email: string, lang: string = 'en'): Promis
   let weightTrendKgPerWeek: number | null = null;
   let adaptiveTDEE: number | null = null;
   if (useW.length >= 2 && avgIntake != null) {
-    const first = useW[0];
-    const last = useW[useW.length - 1];
-    const days = Math.max(1, (new Date(last.date).getTime() - new Date(first.date).getTime()) / 86400000);
-    const changeKg = last.weight - first.weight;
-    weightTrendKgPerWeek = +((changeKg / days) * 7).toFixed(2);
-    const tdee = Math.round(avgIntake - (changeKg * KCAL_PER_KG) / days);
-    adaptiveTDEE = tdee >= 1000 && tdee <= 6000 ? tdee : null; // garde-fou anti-aberration
+    // UNIFIÉ (fix audit) : même cœur canonique que l'écran TDEE (régression + garde-fou) →
+    // mêmes chiffres pour les mêmes données (avant : pente 2-points + offset gain divergents).
+    const skpd = slopeKgPerDay(useW);
+    weightTrendKgPerWeek = +(skpd * 7).toFixed(2);
+    adaptiveTDEE = tdeeFromIntakeAndSlope(avgIntake, skpd);
   }
 
   let confidence: Confidence = 'low';
   if (intakeVals.length >= 14 && useW.length >= 3) confidence = 'high';
   else if (intakeVals.length >= 7 && useW.length >= 2) confidence = 'medium';
 
-  let recommendedTarget: number | null = null;
-  if (adaptiveTDEE != null) {
-    if (goal === 'lose') recommendedTarget = Math.max(1200, adaptiveTDEE - 500);
-    else if (goal === 'gain') recommendedTarget = adaptiveTDEE + 350;
-    else recommendedTarget = adaptiveTDEE;
-  }
+  const recommendedTarget: number | null =
+    adaptiveTDEE != null ? recommendedTargetFor(adaptiveTDEE, goal) : null;
 
-  // --- streak (jours consecutifs avec un repas, en tolerant 'aujourd hui pas encore logue') ---
-  const countStreakFrom = (offset: number) => {
-    let s = 0;
+  // --- streak INTELLIGENT avec "gel" (facon Duolingo) ---
+  // Jours consecutifs avec un repas, MAIS on tolere des trous grace aux gels :
+  //   • ~1 gel par semaine de streak (budget = floor(joursParcourus/7)+1),
+  //   • jamais 2 jours rates d'affilee (un gel ne peut pas suivre un gel),
+  //   • un gel ne DEMARRE jamais une serie (il ne fait que ponter un trou interne).
+  // Le jour gele ne compte pas dans le nombre, mais ne casse pas la chaine.
+  const FREEZE = { used: 0, protectedByFreeze: false };
+  const computeStreak = (offset: number) => {
+    let s = 0, freezes = 0, prevFroze = false, spanned = 0, protectedFlag = false;
     for (let i = offset; ; i++) {
       const d = new Date(today); d.setDate(today.getDate() - i);
-      if (mealDates.has(ds(d))) s++; else break;
+      spanned++;
+      if (mealDates.has(ds(d))) { s++; prevFroze = false; }
+      else {
+        if (s === 0) break;                             // pas de gel avant le 1er jour loggue
+        const budget = Math.floor((spanned - 1) / 7) + 1;
+        if (!prevFroze && freezes < budget) { freezes++; prevFroze = true; protectedFlag = true; }
+        else break;
+      }
     }
-    return s;
+    return { s, freezes, protectedFlag };
   };
-  let streak = countStreakFrom(0);
-  if (streak === 0) streak = countStreakFrom(1); // aujourd hui pas encore logue -> on compte depuis hier
+  let r = computeStreak(0);
+  if (r.s === 0) r = computeStreak(1);                  // aujourd hui pas encore logue -> depuis hier
+  let streak = r.s;
+  FREEZE.used = r.freezes;
+  FREEZE.protectedByFreeze = r.protectedFlag;
+  const freezesUsed = FREEZE.used;                 // nb de jours manques ponte par un gel
+  const freezeActive = FREEZE.protectedByFreeze;   // un gel protege actuellement la serie
 
   const daysTracked = mealDates.size;
   const weighIns = sortedW.length;
@@ -268,6 +282,6 @@ export async function loadEngagement(email: string, lang: string = 'en'): Promis
 
   return {
     adaptiveTDEE, recommendedTarget, staticTarget, avgIntake, weightTrendKgPerWeek,
-    confidence, streak, daysTracked, weighIns, totalLogs, achievements, lesson, goal,
+    confidence, streak, freezesUsed, freezeActive, daysTracked, weighIns, totalLogs, achievements, lesson, goal,
   };
 }

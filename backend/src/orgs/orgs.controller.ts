@@ -33,18 +33,30 @@ export class OrgsController {
   @Post('join')
   @UseGuards(FirebaseAuthGuard)
   join(@Req() req: any, @Body() b: any) {
-    return this.svc.joinByCode(req.user.uid, req.user.email || '', b?.userName || req.user.name || req.user.email || 'Membre', b?.code || '');
+    // S-fix : ne pas exposer l'email comme nom d'affichage (fallback générique).
+    return this.svc.joinByCode(req.user.uid, req.user.email || '', b?.userName || req.user.name || 'Membre', b?.code || '');
   }
 
+  // S-fix (IDOR) : seuls les MEMBRES ACTIFS de l'org peuvent lister ses membres.
   @Get(':id/members')
   @UseGuards(FirebaseAuthGuard)
-  members(@Param('id') id: string) { return this.svc.listMembers(id); }
+  async members(@Param('id') id: string, @Req() req: any) {
+    const me = await this.svc.getMembership(id, req.user.uid);
+    if (!me || me.status !== 'active') throw new ForbiddenException('Réservé aux membres de l\'organisation');
+    return this.svc.listMembers(id);
+  }
 
+  // S-fix (CRITIQUE — takeover B2B) : seul un owner/coach ACTIF de CETTE org peut inviter,
+  // et le rôle est FORCÉ à 'client' (jamais choisi par l'appelant). L'attribution
+  // owner/coach passe exclusivement par la route admin (X-Admin-Key).
   @Post(':id/invite')
   @UseGuards(FirebaseAuthGuard)
-  invite(@Param('id') id: string, @Req() req: any, @Body() b: any) {
-    // un coach/owner crée une invite ; coachUserId = lui-même par défaut (rattache le client)
-    return this.svc.createInvite(id, b?.role || 'client', b?.email || '', b?.coachUserId || req.user.uid);
+  async invite(@Param('id') id: string, @Req() req: any, @Body() b: any) {
+    const me = await this.svc.getMembership(id, req.user.uid);
+    if (!me || me.status !== 'active' || !['owner', 'coach'].includes(me.role)) {
+      throw new ForbiddenException('Réservé aux coachs/propriétaires de l\'organisation');
+    }
+    return this.svc.createInvite(id, 'client', b?.email || '', req.user.uid);
   }
 
   @Get('clients')

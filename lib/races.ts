@@ -8,6 +8,8 @@ import {
   orderBy, serverTimestamp, updateDoc, addDoc, increment, limit,
 } from 'firebase/firestore';
 import { db, emailToDocId, logEvent } from './firebase';
+import { creditKm } from './progressHooks';
+import { publishActivity } from './socialFeed';
 
 export interface RaceParticipant {
   email: string; name: string; imageUrl?: string;
@@ -89,7 +91,7 @@ export interface Challenge {
 export interface ChallengeProgress { email: string; name: string; imageUrl?: string; cumulativeKm: number; updatedAt?: any; }
 
 // Same Google key the maps use; Street View Static + Places work with it too.
-const GOOGLE_MAPS_KEY = 'AIzaSyAa1lBSroSXA-Om4mio84-SWAcmzQgYv8w';
+const GOOGLE_MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '' /* clé déplacée hors du code (fix audit) — À RÉVOQUER+RESTREINDRE dans GCP */;
 
 // A real street-level photo of a place (gracefully returns a "no imagery" tile
 // when Street View has no coverage at that exact point).
@@ -160,15 +162,45 @@ export async function joinChallenge(challengeId: string, email: string, name: st
 // Set the absolute cumulative distance for a challenge (used by the live/sim
 // navigation to push progress as you advance). Merges so it works even if the
 // participant doc is sparse.
-export async function setChallengeProgress(challengeId: string, email: string, km: number) {
+//
+// ANTI-DOUBLE-COMPTAGE : c'est ICI (progression DIRECTE d'une course virtuelle
+// depuis l'écran challenge.tsx) qu'on câble les compteurs — PAS dans
+// addDistanceToJoinedChallenges, car celle-ci est appelée depuis run.tsx:finish
+// qui fait DÉJÀ creditKm (un run solo ne doit pas créditer 2×). Comme km est une
+// valeur ABSOLUE (cumul), on ne crédite que le DELTA réellement gagné depuis la
+// dernière écriture (lecture de l'ancien cumul) → jamais le total à chaque tick.
+// `credit` = false en mode SIMULATION (fly-through sans GPS) : on écrit la position
+// au classement mais on NE crédite PAS les compteurs réels (anti-triche : pas de km/XP
+// gagnés sans déplacement). Le GPS réel appelle avec credit=true (défaut).
+export async function setChallengeProgress(challengeId: string, email: string, km: number, credit = true) {
   if (!challengeId || !email) return;
+  const ref = doc(db, 'challenges', challengeId, 'participants', emailToDocId(email));
+  const next = Math.max(0, km);
+  let prev = 0;
   try {
-    await setDoc(
-      doc(db, 'challenges', challengeId, 'participants', emailToDocId(email)),
-      { cumulativeKm: Math.max(0, km), updatedAt: serverTimestamp() },
-      { merge: true }
-    );
-  } catch (e) { console.warn('[challenge] setChallengeProgress failed', e); }
+    const snap = await getDoc(ref);
+    prev = snap.exists() ? ((snap.data() as any).cumulativeKm || 0) : 0;
+  } catch { /* best-effort : si la lecture échoue on n'invente pas de delta */ }
+  try {
+    await setDoc(ref, { cumulativeKm: next, updatedAt: serverTimestamp() }, { merge: true });
+  } catch (e) { console.warn('[challenge] setChallengeProgress failed', e); return; }
+
+  // ANTI-TRICHE : on ne crédite RIEN si c'est une simulation (credit=false).
+  if (!credit) return;
+
+  // Crédite les compteurs (défi annuel, XP avatar, km Sadaqa/récompenses) sur le SEUL
+  // delta gagné — best-effort, ne bloque jamais.
+  const delta = next - prev;
+  if (delta > 0) creditKm(delta).catch(() => {});
+
+  // À la COMPLÉTION (atteinte de la distance cible) : publie un résumé NON sensible
+  // au feed social, une seule fois (au franchissement du seuil, pas à chaque tick).
+  try {
+    const ch = getChallenge(challengeId);
+    if (ch && ch.totalKm > 0 && next >= ch.totalKm && prev < ch.totalKm) {
+      publishActivity(email, { type: 'race_finished', km: next, label: ch.name }).catch(() => {});
+    }
+  } catch { /* best-effort */ }
 }
 
 export async function getMyChallengeProgress(challengeId: string, email: string): Promise<number | null> {

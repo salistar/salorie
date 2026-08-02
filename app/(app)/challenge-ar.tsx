@@ -11,6 +11,9 @@ import { useTranslation } from '../../lib/i18n';
 import { getChallenge, Challenge, ChallengePOI } from '../../lib/races';
 import { poiPhoto } from '../../assets/challenges/registry';
 import { Dimensions } from 'react-native';
+import Card from '../../components/ui/Card';
+import { PrimaryButton, SecondaryButton } from '../../components/ui/Button';
+import { spacing, type as typeTokens } from '../../constants/theme';
 
 const PRIMARY = Colors.light.primary;
 const { width: W, height: H } = Dimensions.get('window');
@@ -118,15 +121,14 @@ export default function ChallengeARScreen() {
   }
   if (!permission.granted) {
     return (
-      <View style={[styles.fill, styles.center, { backgroundColor: '#000', padding: 32 }]}>
-        <Navigation2 size={48} color={PRIMARY} />
-        <Text style={styles.permTxt}>{t.perm}</Text>
-        <TouchableOpacity style={styles.permBtn} onPress={requestPermission}>
-          <Text style={styles.permBtnTxt}>{t.grant}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={{ marginTop: 18 }} onPress={() => router.back()}>
-          <Text style={{ color: '#9ca3af', fontWeight: '700' }}>← {t.title}</Text>
-        </TouchableOpacity>
+      <View style={[styles.fill, styles.center, { backgroundColor: '#000', padding: spacing.xl }]}>
+        <Card variant="flat" style={styles.permCard}>
+          <Navigation2 size={48} color={PRIMARY} />
+          <Text style={styles.permTitle}>{t.title}</Text>
+          <Text style={styles.permTxt}>{t.perm}</Text>
+          <PrimaryButton title={t.grant} onPress={requestPermission} style={styles.permAction} />
+          <SecondaryButton title={t.title} onPress={() => router.back()} style={styles.permAction} />
+        </Card>
       </View>
     );
   }
@@ -229,9 +231,10 @@ export default function ChallengeARScreen() {
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   center: { alignItems: 'center', justifyContent: 'center' },
-  permTxt: { color: '#fff', fontSize: 16, fontWeight: '700', textAlign: 'center', marginTop: 18, marginBottom: 22, lineHeight: 22 },
-  permBtn: { backgroundColor: PRIMARY, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
-  permBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  permCard: { alignItems: 'center', alignSelf: 'stretch', paddingVertical: spacing.xl, paddingHorizontal: spacing.xl, gap: spacing.md, backgroundColor: 'rgba(15,23,42,0.72)' },
+  permTitle: { ...(typeTokens.h2 as any), color: '#fff', textAlign: 'center', marginTop: spacing.sm },
+  permTxt: { color: '#fff', fontSize: 16, fontWeight: '700', textAlign: 'center', lineHeight: 22 },
+  permAction: { marginTop: spacing.sm },
 
   reticle: { position: 'absolute', left: W / 2 - 26, top: H / 2 - 26, width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
   reticleRing: { position: 'absolute', width: 52, height: 52, borderRadius: 26, borderWidth: 2, borderColor: 'rgba(255,255,255,0.7)' },

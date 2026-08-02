@@ -3,21 +3,27 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Image, View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Play, Square, Timer, Utensils, Users } from 'lucide-react-native';
+import { Play, Square, Timer, Utensils, Users, Moon, Sunrise, Droplets } from 'lucide-react-native';
 import { useUser } from '@clerk/clerk-expo';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { logEvent } from '../../lib/firebase';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
+import { rowDir, txtAlign } from '../../lib/rtl';
 import { connectFasting, joinFasting, updateFasting, leaveFasting, disconnectFasting, getFastingSocket, FastParticipant } from '../../lib/fastingSocket';
+import { getTodayPrayerTimes, PrayerTimes } from '../../lib/prayerTimes';
+import { Card, SectionHeader } from '../../components/ui';
+import { type } from '../../constants/theme';
+import { useScreenGate } from '../../components/FeatureGate';
 
-const GREEN = '#2E8B57';
+const LOCALES: any = { en: 'en-US', fr: 'fr-FR', ar: 'ar' };
 const KEY = 'fasting_state_v1';
 const PROTOCOLS = [
   { id: '16:8', fast: 16, label: '16:8' },
   { id: '18:6', fast: 18, label: '18:6' },
   { id: '20:4', fast: 20, label: '20:4' },
   { id: 'OMAD', fast: 23, label: 'OMAD' },
+  { id: 'ramadan', fast: 0, label: 'Ramadan' }, // fenêtre dynamique Fajr→Maghrib (horaires de prière)
 ];
 
 const TXT: any = {
@@ -31,6 +37,7 @@ const TXT: any = {
     goal: 'goal',
     goalCap: 'Goal',
     eatWindow: 'Eating window at ~',
+    ram: { mode: 'Ramadan', suhoor: 'Suhoor', iftar: 'Iftar', fasting: 'Fasting (until Iftar)', untilSuhoor: 'Suhoor ends in', fastStartsAt: 'Suhoor — fast starts at', eatNow: 'Iftar 🌙 — you can eat', suhoorEndsAt: 'Next Suhoor ends at', hydrate: 'Hydrate well between Iftar and Suhoor.', unavailable: 'Prayer times unavailable — check your connection.', loading: 'Loading prayer times…' },
     stop: 'Stop the fast',
     start: 'Start',
     note: 'The timer keeps running even with the app closed (start time saved locally).',
@@ -46,6 +53,7 @@ const TXT: any = {
     goal: 'objectif',
     goalCap: 'Objectif',
     eatWindow: 'Fenêtre repas à ~',
+    ram: { mode: 'Ramadan', suhoor: 'Suhoor', iftar: 'Iftar', fasting: "Jeûne (jusqu'à l'Iftar)", untilSuhoor: 'Le Suhoor se termine dans', fastStartsAt: 'Suhoor — le jeûne commence à', eatNow: 'Iftar 🌙 — tu peux manger', suhoorEndsAt: 'Prochain Suhoor jusqu\'à', hydrate: "Hydrate-toi bien entre l'Iftar et le Suhoor.", unavailable: 'Horaires de prière indisponibles — vérifie ta connexion.', loading: 'Chargement des horaires…' },
     stop: 'Arrêter le jeûne',
     start: 'Démarrer',
     note: 'Le minuteur continue même app fermée (heure de début sauvegardée localement).',
@@ -61,6 +69,7 @@ const TXT: any = {
     goal: 'الهدف',
     goalCap: 'الهدف',
     eatWindow: 'نافذة الأكل عند ~',
+    ram: { mode: 'رمضان', suhoor: 'السحور', iftar: 'الإفطار', fasting: 'صيام (حتى الإفطار)', untilSuhoor: 'ينتهي السحور خلال', fastStartsAt: 'السحور — يبدأ الصيام عند', eatNow: 'الإفطار 🌙 — يمكنك الأكل', suhoorEndsAt: 'السحور القادم حتى', hydrate: 'اشرب جيداً بين الإفطار والسحور.', unavailable: 'مواقيت الصلاة غير متوفرة — تحقق من اتصالك.', loading: 'تحميل المواقيت…' },
     stop: 'إيقاف الصيام',
     start: 'ابدأ',
     note: 'يستمر المؤقت حتى مع إغلاق التطبيق (وقت البدء محفوظ محلياً).',
@@ -76,20 +85,34 @@ function fmt(ms: number) {
 }
 
 export default function FastingScreen() {
+  const __gate = useScreenGate('fasting');
   const { user } = useUser();
-  const { resolved } = useTheme();
-  const { language } = useTranslation() as any;
+  const { colors, resolved } = useTheme();
+  const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#F8FAFC';
+  const GREEN = colors.primary;
+  const bg = isDark ? '#0f1419' : '#F8FAFC';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0F172A';
   const sub = isDark ? '#94a3b8' : '#64748B';
+  const border = isDark ? '#283241' : 'transparent';
 
   const [proto, setProto] = useState(PROTOCOLS[0]);
   const [startTs, setStartTs] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
   const timer = useRef<any>(null);
+  const isRamadan = proto.id === 'ramadan';
+  const [prayer, setPrayer] = useState<PrayerTimes | null>(null);
+  const [loadingPrayer, setLoadingPrayer] = useState(false);
+  const tr = t.ram; // libellés Ramadan
+
+  // Mode Ramadan : on récupère les horaires de prière du jour (Fajr/Maghrib) une fois.
+  useEffect(() => {
+    if (proto.id !== 'ramadan' || prayer) return;
+    setLoadingPrayer(true);
+    getTodayPrayerTimes().then(setPrayer).catch(() => {}).finally(() => setLoadingPrayer(false));
+  }, [proto.id]);
 
   // ── Défi temps-réel (socket.io) ──────────────────────────────
   const [code, setCode] = useState('');
@@ -130,9 +153,9 @@ export default function FastingScreen() {
   }, []);
 
   useEffect(() => {
-    if (startTs || joined) { timer.current = setInterval(() => setNow(Date.now()), 1000); }
+    if (startTs || joined || isRamadan) { timer.current = setInterval(() => setNow(Date.now()), 1000); }
     return () => { if (timer.current) clearInterval(timer.current); };
-  }, [startTs, joined]);
+  }, [startTs, joined, isRamadan]);
 
   const start = async () => {
     const ts = Date.now();
@@ -159,76 +182,125 @@ export default function FastingScreen() {
   const pct = startTs ? Math.min(100, (elapsed / targetMs) * 100) : 0;
   const done = startTs && remaining <= 0;
   const eatTs = startTs ? startTs + targetMs : null;
-  const eatTime = eatTs ? new Date(eatTs).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--';
+  const eatTime = eatTs ? new Date(eatTs).toLocaleTimeString(LOCALES[language] || 'en-US', { hour: '2-digit', minute: '2-digit' }) : '--';
+
+  // ── Mode Ramadan : phase courante selon l'heure vs Fajr/Maghrib ──
+  const fmtClock = (ts: number) => new Date(ts).toLocaleTimeString(LOCALES[language] || 'en-US', { hour: '2-digit', minute: '2-digit' });
+  const ramPhase = isRamadan && prayer
+    ? (now < prayer.fajr ? 'suhoor' : now < prayer.maghrib ? 'fast' : 'iftar')
+    : null;
+  const ramTarget = !prayer ? 0 : ramPhase === 'suhoor' ? prayer.fajr : ramPhase === 'fast' ? prayer.maghrib : prayer.nextFajr;
+  const ramPct = ramPhase === 'fast' && prayer ? Math.min(100, ((now - prayer.fajr) / (prayer.maghrib - prayer.fajr)) * 100) : ramPhase === 'iftar' ? 100 : 0;
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
         <Image source={require('../../assets/images/illustrations/plan.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
-        <View style={styles.head}><Timer size={26} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}><Timer size={26} color={GREEN} /><Text style={[styles.title, { color: text, textAlign: txtAlign(isRTL) }]}>{t.title}</Text></View>
 
-        <View style={styles.protoRow}>
-          {PROTOCOLS.map((p) => (
-            <TouchableOpacity key={p.id} disabled={!!startTs}
-              onPress={() => setProto(p)}
-              style={[styles.proto, { backgroundColor: isDark ? '#334155' : '#E2E8F0' }, proto.id === p.id && styles.protoActive, !!startTs && { opacity: 0.5 }]}>
-              <Text style={[styles.protoTxt, { color: isDark ? '#cbd5e1' : '#475569' }, proto.id === p.id && styles.protoTxtActive]}>{p.label}</Text>
-            </TouchableOpacity>
-          ))}
+        <View style={styles.section}>
+          <SectionHeader title={t.goalCap} />
         </View>
+        <Card variant="flat" style={styles.protoCard}>
+          <View style={[styles.protoRow, { flexDirection: rowDir(isRTL) }]}>
+            {PROTOCOLS.map((p) => (
+              <TouchableOpacity key={p.id} disabled={!!startTs}
+                onPress={() => setProto(p)}
+                style={[styles.proto, { backgroundColor: isDark ? '#334155' : '#E2E8F0' }, proto.id === p.id && { backgroundColor: GREEN }, !!startTs && { opacity: 0.5 }]}>
+                <Text style={[styles.protoTxt, { color: isDark ? '#cbd5e1' : '#475569' }, proto.id === p.id && styles.protoTxtActive]}>{p.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Card>
 
-        <View style={[styles.timerCard, { backgroundColor: card }]}>
-          <Text style={[styles.timerLabel, { color: sub }]}>{startTs ? (done ? t.done : t.fastingTime) : t.ready}</Text>
-          <Text style={[styles.timer, { color: text }, done ? { color: GREEN } : null]}>{startTs ? fmt(elapsed) : '00:00:00'}</Text>
-          <View style={[styles.track, { backgroundColor: isDark ? '#334155' : '#F1F5F9' }]}><View style={[styles.fill, { width: `${pct}%` }]} /></View>
-          <Text style={[styles.sub, { color: sub }]}>
-            {startTs ? (done ? t.canEat : `${t.remaining} ${fmt(remaining)} · ${t.goal} ${proto.fast}h`) : `${t.goalCap} ${proto.fast}h`}
-          </Text>
-        </View>
-
-        {startTs && !done && (
-          <View style={styles.eatRow}><Utensils size={15} color={sub} /><Text style={[styles.eatTxt, { color: sub }]}>  {t.eatWindow}{eatTime}</Text></View>
-        )}
-
-        {startTs ? (
-          <TouchableOpacity style={[styles.btn, styles.stop]} onPress={stop}>
-            <Square size={18} color="#fff" /><Text style={styles.btnTxt}>{t.stop}</Text>
-          </TouchableOpacity>
+        {isRamadan ? (
+          <View style={[styles.timerCard, { backgroundColor: card, borderWidth: 1, borderColor: border }, !isDark && styles.cardShadow]}>
+            {loadingPrayer && !prayer ? (
+              <ActivityIndicator color={GREEN} style={{ marginVertical: 24 }} />
+            ) : !prayer ? (
+              <Text style={[styles.sub, { color: sub, textAlign: 'center' }]}>{tr.unavailable}</Text>
+            ) : (
+              <>
+                <View style={[styles.eatRow, { flexDirection: rowDir(isRTL), marginTop: 0, marginBottom: 8, gap: 8, flexWrap: 'wrap', justifyContent: 'center' }]}>
+                  <Sunrise size={15} color={sub} /><Text style={[styles.eatTxt, { color: sub }]}>{tr.suhoor} {prayer.fajrStr}</Text>
+                  <Moon size={15} color={GREEN} /><Text style={[styles.eatTxt, { color: sub }]}>{tr.iftar} {prayer.maghribStr}</Text>
+                </View>
+                <Text style={[styles.timerLabel, type.body, { color: sub }]}>{ramPhase === 'suhoor' ? tr.suhoor : ramPhase === 'fast' ? tr.fasting : tr.iftar}</Text>
+                <Text style={[styles.timer, type.hero, { color: ramPhase === 'iftar' ? GREEN : text }]}>{fmt(ramTarget - now)}</Text>
+                <View style={[styles.track, { backgroundColor: isDark ? '#334155' : '#F1F5F9' }]}><View style={[styles.fill, { width: `${ramPct}%`, backgroundColor: GREEN }]} /></View>
+                <Text style={[styles.sub, { color: sub, textAlign: 'center' }]}>
+                  {ramPhase === 'suhoor'
+                    ? `${tr.fastStartsAt} ${prayer.fajrStr}`
+                    : ramPhase === 'fast'
+                    ? `${tr.iftar} ${prayer.maghribStr}`
+                    : `${tr.eatNow} · ${tr.suhoorEndsAt} ${fmtClock(prayer.nextFajr)}`}
+                </Text>
+                <View style={[styles.eatRow, { flexDirection: rowDir(isRTL), marginTop: 12, gap: 6 }]}>
+                  <Droplets size={15} color={GREEN} /><Text style={[styles.eatTxt, { color: sub, flex: 1, textAlign: txtAlign(isRTL) }]}>{tr.hydrate}</Text>
+                </View>
+              </>
+            )}
+          </View>
         ) : (
-          <TouchableOpacity style={[styles.btn, styles.startBtn]} onPress={start}>
-            <Play size={18} color="#fff" /><Text style={styles.btnTxt}>{t.start} ({proto.label})</Text>
-          </TouchableOpacity>
+          <>
+            <View style={[styles.timerCard, { backgroundColor: card, borderWidth: 1, borderColor: border }, !isDark && styles.cardShadow]}>
+              <Text style={[styles.timerLabel, type.body, { color: sub }]}>{startTs ? (done ? t.done : t.fastingTime) : t.ready}</Text>
+              <Text style={[styles.timer, type.hero, { color: text }, done ? { color: GREEN } : null]}>{startTs ? fmt(elapsed) : '00:00:00'}</Text>
+              <View style={[styles.track, { backgroundColor: isDark ? '#334155' : '#F1F5F9' }]}><View style={[styles.fill, { width: `${pct}%`, backgroundColor: GREEN }]} /></View>
+              <Text style={[styles.sub, { color: sub }]}>
+                {startTs ? (done ? t.canEat : `${t.remaining} ${fmt(remaining)} · ${t.goal} ${proto.fast}h`) : `${t.goalCap} ${proto.fast}h`}
+              </Text>
+            </View>
+
+            {startTs && !done && (
+              <View style={[styles.eatRow, { flexDirection: rowDir(isRTL) }]}><Utensils size={15} color={sub} /><Text style={[styles.eatTxt, { color: sub }]}>  {t.eatWindow}{eatTime}</Text></View>
+            )}
+
+            {startTs ? (
+              <TouchableOpacity style={[styles.btn, styles.stop, { flexDirection: rowDir(isRTL) }]} onPress={stop}>
+                <Square size={18} color="#fff" /><Text style={styles.btnTxt}>{t.stop}</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={[styles.btn, { backgroundColor: GREEN, flexDirection: rowDir(isRTL) }]} onPress={start}>
+                <Play size={18} color="#fff" /><Text style={styles.btnTxt}>{t.start} ({proto.label})</Text>
+              </TouchableOpacity>
+            )}
+          </>
         )}
 
         {/* ── Défi de jeûne TEMPS RÉEL (socket.io) ── */}
-        <View style={[styles.challengeCard, { backgroundColor: card }]}>
-          <View style={styles.cHead}><Users size={18} color={GREEN} /><Text style={[styles.cTitle, { color: text }]}>{t.challengeTitle}</Text></View>
+        <View style={styles.section}>
+          <SectionHeader title={t.challengeTitle} icon={<Users size={18} color={GREEN} />} />
+        </View>
+        <View style={[styles.challengeCard, { backgroundColor: card, borderWidth: 1, borderColor: border }]}>
           {!joined ? (
-            <View style={styles.cJoinRow}>
+            <View style={[styles.cJoinRow, { flexDirection: rowDir(isRTL) }]}>
               <TextInput
-                style={[styles.codeInput, { color: text, backgroundColor: isDark ? '#0f172a' : '#F1F5F9', borderColor: isDark ? '#334155' : '#E2E8F0' }]}
+                style={[styles.codeInput, { color: text, backgroundColor: isDark ? '#0f1419' : '#F1F5F9', borderColor: isDark ? '#334155' : '#E2E8F0', textAlign: txtAlign(isRTL) }]}
                 placeholder={t.codePh} placeholderTextColor={sub} value={code} onChangeText={setCode} autoCapitalize="none"
               />
-              <TouchableOpacity style={[styles.joinBtn, (!code.trim() || connecting) && { opacity: 0.6 }]} onPress={joinChallenge} disabled={connecting || !code.trim()}>
+              <TouchableOpacity style={[styles.joinBtn, { backgroundColor: GREEN }, (!code.trim() || connecting) && { opacity: 0.6 }]} onPress={joinChallenge} disabled={connecting || !code.trim()}>
                 {connecting ? <ActivityIndicator color="#fff" /> : <Text style={styles.joinTxt}>{t.joinBtn}</Text>}
               </TouchableOpacity>
             </View>
           ) : (
             <>
-              <View style={styles.cJoinRow}>
-                <Text style={[styles.codeBadge, { color: GREEN }]}>#{cidOf()}</Text>
+              <View style={[styles.cJoinRow, { flexDirection: rowDir(isRTL) }]}>
+                <Text style={[styles.codeBadge, { color: GREEN, textAlign: txtAlign(isRTL) }]}>#{cidOf()}</Text>
                 <TouchableOpacity style={styles.leaveBtn} onPress={leaveChallenge}><Text style={styles.leaveTxt}>{t.leaveBtn}</Text></TouchableOpacity>
               </View>
-              <Text style={[styles.liveLabel, { color: sub }]}>{t.live} ({participants.length})</Text>
+              <Text style={[styles.liveLabel, { color: sub, textAlign: txtAlign(isRTL) }]}>{t.live} ({participants.length})</Text>
               {participants.length === 0 ? (
-                <Text style={[styles.sub, { color: sub }]}>{t.noOne}</Text>
+                <Text style={[styles.sub, { color: sub, textAlign: txtAlign(isRTL) }]}>{t.noOne}</Text>
               ) : participants.map((p, i) => {
                 const el = p.startTs ? (now - p.startTs) : 0;
                 const pc = p.startTs ? Math.min(100, Math.round((el / (p.targetHours * 3600000)) * 100)) : 0;
                 return (
-                  <View key={i} style={styles.pRow}>
-                    <Text style={[styles.pName, { color: text }]} numberOfLines={1}>{p.name}</Text>
+                  <View key={i} style={[styles.pRow, { flexDirection: rowDir(isRTL) }]}>
+                    <Text style={[styles.pName, { color: text, textAlign: txtAlign(isRTL) }]} numberOfLines={1}>{p.name}</Text>
                     <View style={[styles.pTrack, { backgroundColor: isDark ? '#334155' : '#F1F5F9' }]}>
                       <View style={[styles.pFill, { width: `${pc}%`, backgroundColor: p.status === 'fasting' ? GREEN : '#94A3B8' }]} />
                     </View>
@@ -240,7 +312,7 @@ export default function FastingScreen() {
           )}
         </View>
 
-        <Text style={styles.note}>{t.note}</Text>
+        <Text style={[styles.note, { color: isDark ? '#64748b' : '#94A3B8' }]}>{t.note}</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -251,22 +323,22 @@ const styles = StyleSheet.create({
   body: { padding: 20, alignItems: 'center' },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, alignSelf: 'flex-start' },
   title: { fontSize: 22, fontWeight: '800', color: '#0F172A' },
-  protoRow: { flexDirection: 'row', gap: 10, marginTop: 22 },
+  section: { width: '100%' },
+  protoCard: { width: '100%' },
+  protoRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap', justifyContent: 'center' },
   proto: { paddingVertical: 10, paddingHorizontal: 18, borderRadius: 12, backgroundColor: '#E2E8F0' },
-  protoActive: { backgroundColor: GREEN },
   protoTxt: { fontWeight: '700', color: '#475569' },
   protoTxtActive: { color: '#fff' },
-  timerCard: { width: '100%', backgroundColor: '#fff', borderRadius: 20, padding: 24, marginTop: 28, alignItems: 'center',
-    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  cardShadow: { shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  timerCard: { width: '100%', backgroundColor: '#fff', borderRadius: 20, padding: 24, marginTop: 28, alignItems: 'center' },
   timerLabel: { fontSize: 13, color: '#64748B' },
   timer: { fontSize: 52, fontWeight: '900', color: '#0F172A', marginVertical: 8, fontVariant: ['tabular-nums'] },
   track: { width: '100%', height: 10, borderRadius: 6, backgroundColor: '#F1F5F9', overflow: 'hidden', marginTop: 8 },
-  fill: { height: 10, borderRadius: 6, backgroundColor: GREEN },
+  fill: { height: 10, borderRadius: 6 },
   sub: { fontSize: 13, color: '#64748B', marginTop: 10 },
   eatRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16 },
   eatTxt: { fontSize: 13, color: '#64748B' },
   btn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 16, marginTop: 28, width: '100%' },
-  startBtn: { backgroundColor: GREEN },
   stop: { backgroundColor: '#E11D48' },
   btnTxt: { color: '#fff', fontWeight: '700', fontSize: 16 },
   note: { fontSize: 11, color: '#94A3B8', textAlign: 'center', marginTop: 20 },
@@ -275,7 +347,7 @@ const styles = StyleSheet.create({
   cTitle: { fontSize: 16, fontWeight: '800' },
   cJoinRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   codeInput: { flex: 1, borderRadius: 12, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14 },
-  joinBtn: { backgroundColor: GREEN, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
+  joinBtn: { borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
   joinTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
   codeBadge: { flex: 1, fontSize: 16, fontWeight: '900' },
   leaveBtn: { backgroundColor: '#FEE2E2', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 9 },

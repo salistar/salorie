@@ -1,5 +1,5 @@
 import ScreenTopBar from '../../components/ScreenTopBar';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   SafeAreaView,
   TouchableOpacity,
   ActivityIndicator,
-  FlatList,
   Modal,
   ScrollView,
 } from 'react-native';
@@ -23,6 +22,7 @@ import {
   Circle,
   X,
 } from 'lucide-react-native';
+import { FlashList } from '@shopify/flash-list';
 import { Colors } from '../../constants/Colors';
 import {
   collection,
@@ -142,6 +142,7 @@ export default function NotificationsScreen() {
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const docId = emailToDocId(email);
@@ -340,13 +341,13 @@ export default function NotificationsScreen() {
         ]}
       >
         <View style={[styles.iconWrapper, isRTL ? { marginRight: 0, marginLeft: 16 } : null, isDark && { backgroundColor: Colors.dark.gray[100] }]}>
-          <Bell size={20} color={Colors.light.primary} />
+          <Bell size={20} color={isDark ? Colors.dark.primary : Colors.light.primary} />
         </View>
         <View style={styles.content}>
           <Text style={[styles.notifTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{item.title}</Text>
           <Text style={[styles.notifBody, { color: isDark ? '#9BA1A6' : Colors.light.gray[500], textAlign: isRTL ? 'right' : 'left' }]}>{item.body}</Text>
           <View style={[styles.footer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-            <Clock size={12} color={Colors.light.gray[400]} />
+            <Clock size={12} color={isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} />
             <Text style={styles.timeText}>
               {new Date(item.receivedAt).toLocaleTimeString([], {
                 hour: '2-digit',
@@ -355,8 +356,8 @@ export default function NotificationsScreen() {
             </Text>
             <Circle
               size={4}
-              color={Colors.light.gray[200]}
-              fill={Colors.light.gray[200]}
+              color={isDark ? Colors.dark.gray[200] : Colors.light.gray[200]}
+              fill={isDark ? Colors.dark.gray[200] : Colors.light.gray[200]}
               style={{ marginHorizontal: 8 }}
             />
             <Text style={styles.timeText}>
@@ -390,12 +391,12 @@ export default function NotificationsScreen() {
 
       {loading ? (
         <View style={styles.loadingWrapper}>
-          <ActivityIndicator size="large" color={Colors.light.primary} />
+          <ActivityIndicator size="large" color={isDark ? Colors.dark.primary : Colors.light.primary} />
         </View>
       ) : notifications.length === 0 ? (
         <View style={styles.emptyState}>
           <View style={[styles.emptyIconCircle, isDark && { backgroundColor: Colors.dark.gray[50] }]}>
-            <Inbox size={48} color={Colors.light.gray[200]} />
+            <Inbox size={48} color={isDark ? Colors.dark.gray[200] : Colors.light.gray[200]} />
           </View>
           <Text style={[styles.emptyTitle, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{t.inboxEmpty}</Text>
           <Text style={[styles.emptySubtitle, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>
@@ -403,12 +404,16 @@ export default function NotificationsScreen() {
           </Text>
         </View>
       ) : (
-        <FlatList
+        // FlashList : l'historique de notifications n'est borné par rien côté client et
+        // grossit indéfiniment. estimatedItemSize = hauteur moyenne d'une carte ; sans
+        // elle FlashList doit mesurer et perd une bonne part de son intérêt.
+        <FlashList
           data={notifications}
           renderItem={({ item, index }) => (
             <NotificationCard item={item} index={index} />
           )}
           keyExtractor={(item) => item.id}
+          estimatedItemSize={112}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
         />
@@ -440,10 +445,12 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
   },
   header: {
     flexDirection: 'row',
@@ -456,14 +463,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
   },
   clearButton: {
     width: 44,
@@ -481,17 +488,17 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     borderRadius: 24,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: Colors.light.gray[100],
+    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
   },
   cardUnread: {
-    backgroundColor: Colors.light.white,
-    borderColor: Colors.light.primary + '33',
-    shadowColor: Colors.light.primary,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    borderColor: isDark ? Colors.dark.primary : Colors.light.primary + '33',
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
@@ -501,7 +508,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -512,12 +519,12 @@ const styles = StyleSheet.create({
   notifTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     marginBottom: 4,
   },
   notifBody: {
     fontSize: 14,
-    color: Colors.light.gray[500],
+    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
     lineHeight: 20,
     fontWeight: '500',
     marginBottom: 8,
@@ -528,7 +535,7 @@ const styles = StyleSheet.create({
   },
   timeText: {
     fontSize: 12,
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     fontWeight: '600',
     marginLeft: 4,
   },
@@ -550,7 +557,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
@@ -558,12 +565,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 15,
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     textAlign: 'center',
     lineHeight: 22,
     fontWeight: '500',
@@ -574,7 +581,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: 24,
@@ -590,17 +597,17 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: '900',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     marginRight: 12,
   },
   modalBody: {
     fontSize: 15,
-    color: Colors.light.gray[600],
+    color: isDark ? Colors.dark.gray[600] : Colors.light.gray[600],
     lineHeight: 22,
     marginBottom: 20,
   },
   detailCard: {
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     borderRadius: 20,
     padding: 20,
     gap: 12,
@@ -608,7 +615,7 @@ const styles = StyleSheet.create({
   detailTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     marginBottom: 4,
   },
   detailRow: {
@@ -617,16 +624,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.gray[100],
+    borderBottomColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
   },
   detailLabel: {
     fontSize: 14,
-    color: Colors.light.gray[500],
+    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
     fontWeight: '600',
   },
   detailValue: {
     fontSize: 14,
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     fontWeight: '800',
   },
   detailAction: {

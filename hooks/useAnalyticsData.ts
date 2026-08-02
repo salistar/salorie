@@ -11,6 +11,34 @@ const toLocalDateString = (d: Date) => {
   return `${y}-${m}-${day}`;
 };
 
+// Build the 7 local 'YYYY-MM-DD' keys for the current week (Mon→Sun).
+// Anchored at local noon so day arithmetic never crosses a DST boundary,
+// and keyed via toLocalDateString (same local format the logs are stored in) —
+// no UTC/toISOString() shift. Shared by cache-path and remote-path.
+const computeWeekDates = (): string[] => {
+  const now = new Date();
+  const currentDay = now.getDay(); // 0 = Sunday
+  const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay; // days back to Monday
+  // Anchor at local noon of *this Monday* using calendar components only.
+  const monday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + mondayOffset,
+    12, 0, 0, 0
+  );
+  const arr: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(
+      monday.getFullYear(),
+      monday.getMonth(),
+      monday.getDate() + i,
+      12, 0, 0, 0
+    );
+    arr.push(toLocalDateString(d));
+  }
+  return arr;
+};
+
 export interface DailyActivity {
   date: string;
   hasActivity: boolean;
@@ -39,20 +67,7 @@ export function useAnalyticsData() {
     setLoading(true);
 
     // ── helpers shared between cache-path and remote-path ─────────────────
-    const buildWeekDates = () => {
-      const now = new Date();
-      const currentDay = now.getDay();
-      const diff = now.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
-      const monday = new Date(now.setDate(diff));
-      monday.setHours(0, 0, 0, 0);
-      const arr: string[] = [];
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(monday);
-        d.setDate(monday.getDate() + i);
-        arr.push(toLocalDateString(d));
-      }
-      return arr;
-    };
+    const buildWeekDates = () => computeWeekDates();
 
     const processLogs = (logs: any[], weekDates: string[]) => {
       const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -105,21 +120,9 @@ export function useAnalyticsData() {
     }
 
     try {
-      // 1. Get dates for current week (Monday to Sunday)
-      const now = new Date();
-      const currentDay = now.getDay(); // 0 is Sunday
-      const diff = now.getDate() - currentDay + (currentDay === 0 ? -6 : 1); // Adjust to Monday
-      const monday = new Date(now.setDate(diff));
-      monday.setHours(0, 0, 0, 0);
-
-      const weekDates: string[] = [];
+      // 1. Get dates for current week (Monday to Sunday) — local, DST-safe keys.
+      const weekDates: string[] = computeWeekDates();
       const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(monday);
-        d.setDate(monday.getDate() + i);
-        weekDates.push(toLocalDateString(d));
-      }
 
       // 2. Fetch logs for this week — EMAIL-KEYED doc path
       const logsRef = collection(db, 'users', docId, 'logs');

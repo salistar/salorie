@@ -1,0 +1,12 @@
+# Maestro — smoke mobile SANS auth : écran d'accueil → navigation vers connexion.
+# Prérequis : APK installé + 1 device adb. Lancer : maestro test .maestro/smoke_welcome.yaml
+appId: com.idriss.kriouile.salorie
+---
+- launchApp:
+    clearState: false
+- assertVisible: "Commencer"
+- assertVisible: "Se connecter"
+- tapOn: "Se connecter"
+# l'écran de connexion doit apparaître (email / mot de passe)
+- assertVisible:
+    text: ".*([Cc]onnexion|[Ee]mail|[Mm]ot de passe).*"

@@ -11,6 +11,9 @@ export class NutritionController {
   // Body: { foods: [{ name, calories, barcode? }], lang? }
   @Post('micros')
   micros(@Body() body: { foods: FoodInput[]; lang?: string }) {
-    return this.nutrition.micros(body?.foods || [], body?.lang || 'fr');
+    // S-fix : borne la liste (chaque aliment peut déclencher un appel OpenFoodFacts) →
+    // évite l'amplification de requêtes externes via un foods[] géant.
+    const foods = Array.isArray(body?.foods) ? body.foods.slice(0, 50) : [];
+    return this.nutrition.micros(foods, body?.lang || 'fr');
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -16,10 +16,12 @@ import { Flame, Beef, Wheat, Droplets, FileText } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { useLogging } from '../../lib/LoggingContext';
 import { addNutritionLog } from '../../lib/firebase';
+import { submitScanFeedback } from '../../lib/mlFeedback';
 import { useUser } from '@clerk/clerk-expo';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { FormInput, Stepper, SubmitBar, ChipGroup } from '../../components/FormKit';
+import { useNutritionData } from '../../hooks/useNutritionData';
 
 // Repas (slot) du Diary — libellés trilingues + défaut selon l'heure.
 const SLOT_LABELS: any = {
@@ -49,6 +51,7 @@ export default function LogFoodDetailsScreen() {
   const sl = SLOT_LABELS[language] || SLOT_LABELS.en;
 
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
 
   // Helper : parse "250 g" / "1 cup" → { quantity, unit }
   const parseServing = (servingStr: string) => {
@@ -104,6 +107,22 @@ export default function LogFoodDetailsScreen() {
     quantity: initialQuantity,
   });
 
+  // FEATURE #93 — contexte budget du jour (goals/consumed déjà dérivables ici).
+  // On lit le budget calorique du jour sélectionné puis on compare à l'aliment
+  // en cours de saisie pour dire s'il rentre ou dépasse. Purement informatif.
+  const { goals, consumed, loading: budgetLoading } = useNutritionData(selectedDate);
+  const foodKcal = Math.max(0, Math.round(parseFloat(calories) || 0));
+  const remainingKcal = Math.round((goals.calories || 0) - (consumed.calories || 0));
+  const fits = foodKcal <= Math.max(0, remainingKcal);
+  const budgetContext =
+    !budgetLoading && (goals.calories || 0) > 0
+      ? language === 'fr'
+        ? `Il te reste ${remainingKcal} kcal aujourd'hui — cet aliment (${foodKcal} kcal) ${fits ? 'rentre' : 'dépasse'}.`
+        : language === 'ar'
+        ? `تبقّى لك ${remainingKcal} سعرة اليوم — هذا الطعام (${foodKcal} سعرة) ${fits ? 'يدخل ضمن الحدّ' : 'يتجاوز الحدّ'}.`
+        : `You have ${remainingKcal} kcal left today — this food (${foodKcal} kcal) ${fits ? 'fits' : 'goes over'}.`
+      : null;
+
   const handleLog = async () => {
     const email = user?.primaryEmailAddress?.emailAddress || '';
     if (!user || !email) return;
@@ -143,6 +162,20 @@ export default function LogFoodDetailsScreen() {
       }
       await addNutritionLog(payload);
       colorLog('BLUE', '[API←Firestore] addNutritionLog OK', { ms: Date.now() - t0 });
+      // ACTIVE LEARNING : on capture le label FINAL (édité par l'utilisateur = vraie correction)
+      // + l'image + ce que le on-device avait prédit -> dataset "or" pour ré-entraîner.
+      try {
+        submitScanFeedback({
+          imageUri: rawImageUri || '',
+          predicted: (params.scanPredicted as string) || null,
+          predictedScore: Number(params.scanScore) || 0,
+          finalName: name,
+          tier: (params.scanTier as string) || 'unknown',
+          // VRAIE correction = l'utilisateur a modifié le nom proposé (indépendant de la langue).
+          userEdited: name !== ((params.name as string) || ''),
+          language,
+        });
+      } catch {}
       // Mémorise l'aliment pour le re-logger en 1 tap (Récents).
       try {
         const { addRecentFood } = require('../../lib/recentFoods');
@@ -173,6 +206,7 @@ export default function LogFoodDetailsScreen() {
   };
 
   // ----- Theme-aware palette -----
+  const accent = colors.primary;
   const bg = isDark ? '#0B0F14' : Colors.light.white;
   const textPrimary = isDark ? colors.gray[900] : Colors.light.gray[900];
   const textSecondary = isDark ? colors.gray[500] : Colors.light.gray[500];
@@ -180,6 +214,7 @@ export default function LogFoodDetailsScreen() {
   const cardBg = isDark ? '#161C23' : Colors.light.gray[50];
   const cardBorder = isDark ? colors.gray[200] : Colors.light.gray[100];
   const inputBorder = isDark ? colors.gray[200] : Colors.light.gray[100];
+  const hintColor = isDark ? '#7E858E' : '#9AA0A6';
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: bg }]}>
@@ -192,7 +227,7 @@ export default function LogFoodDetailsScreen() {
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Captured image preview */}
           {displayUri ? (
-            <Animated.View entering={FadeInDown.duration(600)} style={styles.imageContainer}>
+            <Animated.View entering={FadeInDown.duration(600)} style={[styles.imageContainer, isDark && { shadowColor: 'transparent', elevation: 0 }]}>
               <Image
                 source={{ uri: displayUri }}
                 style={styles.image}
@@ -218,6 +253,16 @@ export default function LogFoodDetailsScreen() {
               multiline
               placeholder={t('logfood.food_name_ph')}
             />
+            {/* Invite à corriger (uniquement après un scan) -> améliore le signal d'active learning */}
+            {params.scanTier ? (
+              <Text style={{ color: hintColor, fontSize: 12, marginTop: -6, marginBottom: 10, paddingHorizontal: 4, textAlign: isRTL ? 'right' : 'left' }}>
+                {language === 'fr'
+                  ? "Pas le bon plat ? Corrigez le nom ci-dessus — ça améliore la reconnaissance."
+                  : language === 'ar'
+                  ? "ليس الطبق الصحيح؟ صحّح الاسم أعلاه لتحسين التعرّف."
+                  : 'Wrong dish? Fix the name above — it improves recognition.'}
+              </Text>
+            ) : null}
 
             <Stepper
               value={quantity}
@@ -232,7 +277,7 @@ export default function LogFoodDetailsScreen() {
                 const active = Math.abs((parseFloat(quantity) || 0) - baseData.quantity * q.m) < 0.01;
                 return (
                   <TouchableOpacity key={q.k} onPress={() => updateQuantity(String(+(baseData.quantity * q.m).toFixed(2)))}
-                    style={{ paddingHorizontal: 18, paddingVertical: 9, borderRadius: 999, borderWidth: 1.5, backgroundColor: active ? Colors.light.primary : 'transparent', borderColor: active ? Colors.light.primary : inputBorder }}>
+                    style={{ paddingHorizontal: 18, paddingVertical: 9, borderRadius: 999, borderWidth: 1.5, backgroundColor: active ? accent : 'transparent', borderColor: active ? accent : inputBorder }}>
                     <Text style={{ fontWeight: '800', fontSize: 14, color: active ? '#fff' : textSecondary }}>{q.k}</Text>
                   </TouchableOpacity>
                 );
@@ -267,7 +312,7 @@ export default function LogFoodDetailsScreen() {
               style={[styles.descCard, { backgroundColor: cardBg, borderColor: cardBorder }]}
             >
               <View style={[styles.descCardHeader, isRTL && { flexDirection: 'row-reverse' }]}>
-                <FileText size={18} color={Colors.light.primary} />
+                <FileText size={18} color={accent} />
                 <Text style={[styles.descCardTitle, { color: textSecondary }]}>
                   {t('logfood.description')}
                 </Text>
@@ -292,7 +337,7 @@ export default function LogFoodDetailsScreen() {
             style={[styles.caloriesCard, { backgroundColor: cardBg, borderColor: cardBorder }]}
           >
             <View style={[styles.cardHeader, isRTL && { flexDirection: 'row-reverse' }]}>
-              <Flame size={24} color={Colors.light.primary} />
+              <Flame size={24} color={accent} />
               <Text style={[styles.cardTitle, { color: textSecondary }]}>{t('logfood.calories')}</Text>
             </View>
             <View style={[styles.mainInputWrapper, isRTL && { flexDirection: 'row-reverse' }]}>
@@ -308,7 +353,7 @@ export default function LogFoodDetailsScreen() {
           </Animated.View>
 
           {/* Macros Grid */}
-          <View style={styles.macrosContainer}>
+          <View style={[styles.macrosContainer, isRTL && { flexDirection: 'row-reverse' }]}>
             <Animated.View
               entering={FadeInDown.delay(200).duration(600)}
               style={[styles.macroCard, { backgroundColor: isDark ? '#1F2833' : Colors.light.white, borderColor: cardBorder }]}
@@ -368,13 +413,40 @@ export default function LogFoodDetailsScreen() {
           </View>
         </ScrollView>
 
+        {/* FEATURE #93 — ligne de contexte budget, juste au-dessus du bouton d'ajout */}
+        {budgetContext ? (
+          <View
+            style={[
+              styles.budgetContextRow,
+              {
+                backgroundColor: fits
+                  ? (isDark ? '#12241A' : '#ECFDF5')
+                  : (isDark ? '#2A1518' : '#FEF2F2'),
+                borderColor: fits ? '#10B981' : '#EF4444',
+              },
+            ]}
+          >
+            <Flame size={15} color={fits ? '#10B981' : '#EF4444'} />
+            <Text
+              style={[
+                styles.budgetContextText,
+                { color: textSecondary, textAlign: isRTL ? 'right' : 'left' },
+              ]}
+            >
+              {budgetContext}
+            </Text>
+          </View>
+        ) : null}
+
         <SubmitBar label={t('logfood.log_btn')} onPress={handleLog} loading={loading} />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   safeArea: { flex: 1 },
   header: {
     flexDirection: 'row',
@@ -482,4 +554,21 @@ const styles = StyleSheet.create({
   macroInputRow: { flexDirection: 'row', alignItems: 'baseline', gap: 2 },
   macroInput: { fontSize: 18, fontWeight: '800', padding: 0, textAlign: 'center' },
   macroUnit: { fontSize: 13, fontWeight: '700' },
+  budgetContextRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  budgetContextText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
 });

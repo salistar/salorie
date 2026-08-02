@@ -6,6 +6,7 @@ import { Camera, ImageIcon, Dumbbell, Flame, BookOpen } from 'lucide-react-nativ
 import { LinearGradient } from 'expo-linear-gradient';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { aiVision } from '../../lib/aiProxy';
+import { analyzeImageUri } from '../../lib/imageAI';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 
@@ -22,7 +23,10 @@ export default function EquipmentScan() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#f7faf8';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
+  const bg = isDark ? '#0f1419' : '#f7faf8';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0f172a';
   const sub = isDark ? '#94a3b8' : '#64748b';
@@ -39,11 +43,11 @@ export default function EquipmentScan() {
     if (r.canceled || !r.assets?.[0]?.uri) return;
     setPhoto(r.assets[0].uri); setRes(null); setBusy(true);
     try {
-      const manip = await ImageManipulator.manipulateAsync(r.assets[0].uri, [{ resize: { width: 800 } }], { base64: true, format: ImageManipulator.SaveFormat.JPEG });
       const langName = language === 'fr' ? 'French' : language === 'ar' ? 'Arabic' : 'English';
-      const out = await aiVision(
+      const out = await analyzeImageUri(
         `You are a certified gym coach. Identify the gym equipment/machine in this photo. Reply ONLY with JSON: {"name":"...","muscles":["..."],"howto":"3 short steps, beginner friendly","kcal30":number} in ${langName}.`,
-        manip.base64 as string,
+        r.assets[0].uri,
+        { maxWidth: 800 },
       );
       const m = out.match(/\{[\s\S]*\}/);
       setRes(m ? JSON.parse(m[0]) : null);
@@ -55,7 +59,7 @@ export default function EquipmentScan() {
     <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
-        <LinearGradient colors={[GREEN, '#1d6440']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.heroBanner}>
+        <LinearGradient colors={[accent, '#1d6440']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.heroBanner}>
           <Dumbbell size={30} color="#fff" />
           <View style={{ flex: 1 }}>
             <Text style={[s.heroTitle, align]}>{t.title}</Text>
@@ -64,7 +68,7 @@ export default function EquipmentScan() {
         </LinearGradient>
 
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 18 }}>
-          <TouchableOpacity style={[s.btn, { backgroundColor: GREEN }]} onPress={() => pick(true)} disabled={busy}>
+          <TouchableOpacity style={[s.btn, { backgroundColor: accent }]} onPress={() => pick(true)} disabled={busy}>
             <Camera size={18} color="#fff" /><Text style={s.btnTxt} numberOfLines={1}>{t.cam}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[s.btn, { backgroundColor: isDark ? '#334155' : '#e2e8f0' }]} onPress={() => pick(false)} disabled={busy}>
@@ -75,7 +79,7 @@ export default function EquipmentScan() {
         {photo && <Image source={{ uri: photo }} style={s.photo} resizeMode="cover" />}
         {busy && (
           <View style={{ alignItems: 'center', marginTop: 20 }}>
-            <ActivityIndicator size="large" color={GREEN} />
+            <ActivityIndicator size="large" color={accent} />
             <Text style={{ color: sub, marginTop: 8 }}>{t.analyzing}</Text>
           </View>
         )}
@@ -84,7 +88,7 @@ export default function EquipmentScan() {
           <View style={[s.card, { backgroundColor: card }]}>
             <Text style={[s.resName, { color: text }, align]}>{res.name}</Text>
             <View style={[s.row, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-              <Dumbbell size={16} color={GREEN} />
+              <Dumbbell size={16} color={accent} />
               <Text style={[s.rowTxt, { color: sub }, align]}>{t.muscles} : {(res.muscles || []).join(', ')}</Text>
             </View>
             <View style={[s.row, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
@@ -92,7 +96,7 @@ export default function EquipmentScan() {
               <Text style={[s.rowTxt, { color: sub }, align]}>{t.cal} : ~{res.kcal30} kcal</Text>
             </View>
             <View style={[s.row, { flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'flex-start' }]}>
-              <BookOpen size={16} color={GREEN} style={{ marginTop: 2 }} />
+              <BookOpen size={16} color={accent} style={{ marginTop: 2 }} />
               <Text style={[s.rowTxt, { color: text, flex: 1 }, align]}>{res.howto}</Text>
             </View>
           </View>

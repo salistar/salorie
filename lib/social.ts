@@ -1,12 +1,15 @@
 // Social — amis & classement, 100% sur Firestore (pas de backend dédié).
-// Chaque user publie un petit `publicStats` { name, imageUrl, streak, daysTracked }
-// sur son doc users/{docId}; les amis sont une liste d'emails sur ce même doc.
-// Le classement lit les publicStats de soi + de ses amis et les trie par streak.
+// Les stats PUBLIQUES { name, imageUrl, streak, daysTracked } vivent dans la collection
+// dédiée `public_profiles/{docId}` (cf. lib/publicProfile.ts), lisible par tout utilisateur
+// connecté et écrite uniquement par son propriétaire. La liste d'amis (emails) reste sur le
+// doc PRIVÉ users/{docId}. Le classement lit les profils publics de soi + de ses amis.
 //
-// NOTE sécurité : tant que les règles Firestore sont ouvertes (cf. audit C2),
-// ces données sont lisibles publiquement. À durcir via le bridge Clerk→Firebase.
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+// SÉCURITÉ : plus aucune PII (email) ni donnée santé n'est exposée aux amis — le doc user
+// est verrouillé en lecture à son propriétaire ; seuls les champs publics sortent via
+// public_profiles.
+import { doc, getDoc, setDoc, arrayUnion } from 'firebase/firestore';
 import { db, emailToDocId } from './firebase';
+import { readPublicProfile, writePublicProfile } from './publicProfile';
 
 export interface PublicStats {
   name?: string;
@@ -28,21 +31,15 @@ const norm = (e: string) => e.trim().toLowerCase();
 
 /** Publishes the current user's public stats so friends can see them on the board. */
 export async function publishStats(email: string, stats: PublicStats): Promise<void> {
-  try {
-    const ref = doc(db, 'users', emailToDocId(email));
-    await setDoc(ref, {
-      publicStats: {
-        name: stats.name || '',
-        imageUrl: stats.imageUrl || '',
-        streak: stats.streak || 0,
-        daysTracked: stats.daysTracked || 0,
-        email: norm(email),
-        updatedAt: Date.now(),
-      },
-    }, { merge: true });
-  } catch (e) {
-    console.warn('[social] publishStats failed', e);
-  }
+  const docId = emailToDocId(email);
+  if (!docId) return;
+  // Champs PUBLICS uniquement, dans public_profiles — JAMAIS l'email ni de donnée santé.
+  await writePublicProfile(docId, {
+    name: stats.name || '',
+    imageUrl: stats.imageUrl || '',
+    streak: stats.streak || 0,
+    daysTracked: stats.daysTracked || 0,
+  });
 }
 
 /** Adds a friend by email (must already be a Salorie user). Reciprocal. */
@@ -50,27 +47,25 @@ export async function addFriend(email: string, friendEmailRaw: string): Promise<
   const friendEmail = norm(friendEmailRaw);
   if (!friendEmail || friendEmail === norm(email)) return { ok: false, reason: 'self' };
   try {
-    const fref = doc(db, 'users', emailToDocId(friendEmail));
-    const fsnap = await getDoc(fref);
-    if (!fsnap.exists()) return { ok: false, reason: 'notfound' };
-    const fdata: any = fsnap.data() || {};
+    const friendDocId = emailToDocId(friendEmail);
+    // SÉCURITÉ : le doc user privé d'autrui n'est plus lisible. L'existence se vérifie via
+    // le profil PUBLIC (créé au 1er publishStats). Un compte jamais ouvert n'est pas ajoutable.
+    const fp = await readPublicProfile(friendDocId);
+    if (!fp) return { ok: false, reason: 'notfound' };
 
-    // add friend to my list
+    // add friend to my list (mon propre doc — autorisé au propriétaire)
     const myref = doc(db, 'users', emailToDocId(email));
     const mysnap = await getDoc(myref);
     const myFriends: string[] = (mysnap.data()?.friends as string[]) || [];
     if (!myFriends.includes(friendEmail)) myFriends.push(friendEmail);
     await setDoc(myref, { friends: myFriends }, { merge: true });
 
-    // reciprocal: add me to their list
-    const theirFriends: string[] = (fdata.friends as string[]) || [];
-    const me = norm(email);
-    if (!theirFriends.includes(me)) {
-      theirFriends.push(me);
-      await setDoc(fref, { friends: theirFriends }, { merge: true });
-    }
+    // reciprocal: add me to their list — écriture ATOMIQUE field-scopée `friends` : la règle
+    // Firestore autorise un tiers à s'ajouter (et lui seul) au tableau `friends` d'autrui,
+    // sans lire ni modifier aucun autre champ du doc privé.
+    await setDoc(doc(db, 'users', friendDocId), { friends: arrayUnion(norm(email)) }, { merge: true });
 
-    const name = fdata.publicStats?.name || [fdata.firstName, fdata.lastName].filter(Boolean).join(' ') || friendEmail.split('@')[0];
+    const name = fp?.name || friendEmail.split('@')[0];
     return { ok: true, name };
   } catch (e) {
     console.warn('[social] addFriend failed', e);
@@ -89,15 +84,14 @@ export async function getLeaderboard(email: string): Promise<LeaderRow[]> {
 
     const rows: LeaderRow[] = await Promise.all(
       emails.map(async (e) => {
-        const snap = await getDoc(doc(db, 'users', emailToDocId(e)));
-        const d: any = snap.data() || {};
-        const ps = d.publicStats || {};
+        // Lecture des stats publiques (de soi + des amis) via public_profiles.
+        const pp = await readPublicProfile(emailToDocId(e));
         return {
           email: e,
-          name: ps.name || [d.firstName, d.lastName].filter(Boolean).join(' ') || e.split('@')[0],
-          imageUrl: ps.imageUrl || d.imageUrl || undefined,
-          streak: ps.streak || 0,
-          daysTracked: ps.daysTracked || 0,
+          name: pp?.name || e.split('@')[0],
+          imageUrl: pp?.imageUrl || undefined,
+          streak: pp?.streak || 0,
+          daysTracked: pp?.daysTracked || 0,
           isMe: norm(e) === me,
         } as LeaderRow;
       })

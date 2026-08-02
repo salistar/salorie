@@ -8,6 +8,8 @@ import PhotoStrip from '../../components/PhotoStrip';
 import { getUserFromFirestore } from '../../lib/firebase';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
+import { useScreenGate } from '../../components/FeatureGate';
+import { useFeature } from '../../lib/FlagsContext';
 
 const GREEN = '#2E8B57';
 
@@ -18,12 +20,21 @@ const TXT: any = {
 };
 
 export default function SmartHydrationScreen() {
+  const __gate = useScreenGate('smart-hydration');
+  // Seuils paramétrables sans redéploiement (admin web → flag « smart-hydration » → params JSON).
+  // Défauts = valeurs actuelles → aucun changement de comportement tant que rien n'est réglé.
+  const { config: hydrCfg } = useFeature('smart-hydration');
+  const mlPerKg = Number(hydrCfg?.mlPerKg) > 0 ? Number(hydrCfg.mlPerKg) : 35;
+  const mlPerGlass = Number(hydrCfg?.mlPerGlass) > 0 ? Number(hydrCfg.mlPerGlass) : 250;
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#F4F7F9';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
+  const bg = isDark ? '#0f1419' : '#F4F7F9';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0F172A';
   const sub = isDark ? '#94a3b8' : '#64748B';
@@ -43,17 +54,19 @@ export default function SmartHydrationScreen() {
     })();
   }, []);
 
-  const base = Math.round(weight * 35); // ~35 ml/kg
+  const base = Math.round(weight * mlPerKg); // défaut ~35 ml/kg (paramétrable via flag)
   const actBonus = activity === 2 ? 700 : activity === 1 ? 350 : 0;
   const hotBonus = hot ? 500 : 0;
   const goal = base + actBonus + hotBonus;
-  const glasses = Math.round(goal / 250);
+  const glasses = Math.round(goal / mlPerGlass);
 
   const ActLvl = ({ i, label }: any) => (
     <TouchableOpacity style={[styles.opt, { backgroundColor: card }, activity === i && styles.optActive]} onPress={() => setActivity(i)}>
       <Text style={[styles.optTxt, { color: sub }, activity === i && { color: '#fff' }]}>{label}</Text>
     </TouchableOpacity>
   );
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
@@ -64,7 +77,7 @@ export default function SmartHydrationScreen() {
         <PhotoStrip category="health" />
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
-        {loading ? <ActivityIndicator color={GREEN} style={{ marginTop: 40 }} /> : (
+        {loading ? <ActivityIndicator color={accent} style={{ marginTop: 40 }} /> : (
           <>
             <View style={styles.hero}>
               <Text style={styles.heroLabel}>{t.hero}</Text>

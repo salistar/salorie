@@ -3,7 +3,7 @@
 //  • Code-barres : détection live + scan depuis la galerie (scanFromURLAsync).
 //  • Plat : capture photo OU image galerie → analyse, avec CHOIX du modèle
 //    (Appareil / Backend / Gemini) transmis à scan-analysis (forceModel).
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import BrandOverlay from '../../components/BrandOverlay';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, SafeAreaView } from 'react-native';
 import { CameraView, useCameraPermissions, scanFromURLAsync } from 'expo-camera';
@@ -15,28 +15,48 @@ import { Colors } from '../../constants/Colors';
 import { colorLog, explain } from '../../lib/LocalDataStore';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
+import { canUseFree, consume, freeLimit } from '../../lib/freemium';
+import { PurchasesService } from '../../lib/PurchasesService';
+import { useFlagsCtx } from '../../lib/FlagsContext';
 
 const PENDING_SCAN_KEY = 'pending_scan_v1';
+// FEATURE #152 : onboarding scan affiché UNE seule fois (1er lancement).
+const SCAN_DEMO_SEEN_KEY = '@salorie/scan_demo_seen';
+// FEATURE #118 : mode économie de données. Si activé (persisté par un réglage
+// ailleurs dans l'app), on compresse un peu plus la photo envoyée à l'analyse
+// (upload plus léger) SANS descendre au point de dégrader la reconnaissance.
+const DATA_SAVER_KEY = '@salorie/data_saver';
+// Qualités capture/galerie : [normal, économie de données].
+const CAP_Q = { normal: 0.4, saver: 0.3 };   // capture appareil / fallback caméra système
+const GAL_Q = { normal: 0.5, saver: 0.35 };  // sélection galerie
 const GREEN = '#2E8B57';
 const BARCODE_TYPES: any = ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39'];
 
 const TXT: Record<string, any> = {
   en: { loading: 'Loading camera...', accessTitle: 'Camera Access Needed', accessText: 'We need camera access to scan.', grant: 'Grant Access', cancel: 'Cancel', processing: 'Processing…',
     dish: 'Dish', barcode: 'Barcode', gallery: 'Gallery', tapDish: 'Tap to capture the dish', aimBarcode: 'Point at a barcode', noBarcode: 'No barcode found in this image.',
-    mDevice: 'Mobile', mBackend: 'Backend', mGemini: 'Gemini', model: 'Model' },
+    mCascade: 'Auto', mDevice: 'Mobile', mBackend: 'Backend', mGemini: 'Gemini', model: 'Model',
+    demoTitle: 'Snap your plate', demoBody: 'Take a photo of your meal to analyze it instantly.', demoGot: 'Got it' },
   fr: { loading: 'Chargement de la caméra...', accessTitle: 'Accès à la caméra requis', accessText: 'Nous avons besoin de la caméra pour scanner.', grant: "Autoriser l'accès", cancel: 'Annuler', processing: 'Traitement…',
     dish: 'Plat', barcode: 'Code-barres', gallery: 'Galerie', tapDish: 'Touchez pour capturer le plat', aimBarcode: 'Visez un code-barres', noBarcode: 'Aucun code-barres trouvé dans cette image.',
-    mDevice: 'Mobile', mBackend: 'Backend', mGemini: 'Gemini', model: 'Modèle' },
+    mCascade: 'Auto', mDevice: 'Mobile', mBackend: 'Backend', mGemini: 'Gemini', model: 'Modèle',
+    demoTitle: 'Prends ton assiette en photo', demoBody: 'Prends ton assiette en photo pour l\'analyser instantanément.', demoGot: 'Compris' },
   ar: { loading: 'جارٍ تحميل الكاميرا...', accessTitle: 'الوصول إلى الكاميرا مطلوب', accessText: 'نحتاج إلى الكاميرا للمسح.', grant: 'منح الإذن', cancel: 'إلغاء', processing: 'جارٍ المعالجة…',
     dish: 'طبق', barcode: 'باركود', gallery: 'المعرض', tapDish: 'اضغط لالتقاط الطبق', aimBarcode: 'وجّه نحو الباركود', noBarcode: 'لا يوجد باركود في هذه الصورة.',
-    mDevice: 'الجهاز', mBackend: 'الخادم', mGemini: 'Gemini', model: 'النموذج' },
+    mCascade: 'تلقائي', mDevice: 'الجهاز', mBackend: 'الخادم', mGemini: 'Gemini', model: 'النموذج',
+    demoTitle: 'صوّر طبقك', demoBody: 'التقط صورة لوجبتك لتحليلها على الفور.', demoGot: 'فهمت' },
 };
 
 export default function ScanCameraScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
+  const { isPremium } = useFlagsCtx();
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
   const params = useLocalSearchParams();
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
@@ -44,15 +64,43 @@ export default function ScanCameraScreen() {
   const [capturing, setCapturing] = useState(false);
   const [ready, setReady] = useState(false);
   const [mode, setMode] = useState<'dish' | 'barcode'>(params.mode === 'barcode' ? 'barcode' : 'dish');
-  const [model, setModel] = useState<'device' | 'backend' | 'gemini'>('gemini'); // modèle pour le scan de PLAT
+  // 'cascade' = auto (mobile → backend → Gemini) ; les autres = un seul tier forcé.
+  const [model, setModel] = useState<'cascade' | 'device' | 'backend' | 'gemini'>('cascade'); // modèle pour le scan de PLAT
   const barcodeLock = useRef(false);
+  // FEATURE #152 : overlay d'onboarding non bloquant, affiché au 1er lancement uniquement.
+  const [showDemo, setShowDemo] = useState(false);
+  // FEATURE #118 : lu au montage ; conditionne la qualité de la photo uploadée.
+  const dataSaver = useRef(false);
 
   useEffect(() => {
     if (permission && !permission.granted && permission.canAskAgain) requestPermission();
   }, [permission]);
 
+  // Au montage : lit le flag ; si jamais vu → affiche l'overlay d'onboarding.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const seen = await AsyncStorage.getItem(SCAN_DEMO_SEEN_KEY);
+        if (alive && !seen) setShowDemo(true);
+      } catch {}
+      // FEATURE #118 : lit le flag économie de données (valeur '1' = activé).
+      try {
+        const ds = await AsyncStorage.getItem(DATA_SAVER_KEY);
+        if (alive) dataSaver.current = ds === '1' || ds === 'true';
+      } catch {}
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  // Ferme l'overlay ET pose le flag (ne réapparaît plus).
+  const dismissDemo = async () => {
+    setShowDemo(false);
+    try { await AsyncStorage.setItem(SCAN_DEMO_SEEN_KEY, 'true'); } catch {}
+  };
+
   if (!permission) {
-    return <View style={styles.loadingWrap}><ActivityIndicator size="large" color={Colors.light.primary} /><Text style={styles.loadingText}>{t.loading}</Text></View>;
+    return <View style={styles.loadingWrap}><ActivityIndicator size="large" color={isDark ? Colors.dark.primary : Colors.light.primary} /><Text style={styles.loadingText}>{t.loading}</Text></View>;
   }
   if (!permission.granted) {
     return (
@@ -74,24 +122,47 @@ export default function ScanCameraScreen() {
   };
 
   const goAnalysis = async (uri: string) => {
+    // Freemium : quota gratuit de scans/jour (Premium = illimité). Au-delà → paywall.
+    try {
+      const ok = await canUseFree('scan', isPremium);
+      if (!ok) {
+        Alert.alert(
+          language === 'fr' ? 'Limite gratuite atteinte' : language === 'ar' ? 'بلغت الحدّ المجاني' : 'Free limit reached',
+          language === 'fr'
+            ? `Tu as utilisé tes ${freeLimit('scan')} scans gratuits du jour. Passe en Premium pour des scans illimités.`
+            : language === 'ar'
+            ? `لقد استخدمت ${freeLimit('scan')} عمليات مسح مجانية اليوم. اشترك في Premium لمسح غير محدود.`
+            : `You've used your ${freeLimit('scan')} free scans today. Go Premium for unlimited scans.`,
+          [
+            { text: language === 'fr' ? 'Passer Premium' : language === 'ar' ? 'الاشتراك' : 'Go Premium', onPress: () => { PurchasesService.showPaywall(); } },
+            { text: language === 'fr' ? 'Retour' : language === 'ar' ? 'رجوع' : 'Back', style: 'cancel' },
+          ],
+        );
+        setCapturing(false);
+        return;
+      }
+      await consume('scan');
+    } catch { /* jamais bloquer sur une erreur de quota */ }
     try { await AsyncStorage.setItem(PENDING_SCAN_KEY, JSON.stringify({ uri, at: Date.now() })); } catch {}
-    router.replace({ pathname: '/scan-analysis' as any, params: { imageUri: uri, forceModel: model } });
+    router.replace({ pathname: '/scan-analysis' as any, params: { imageUri: uri, forceModel: model === 'cascade' ? '' : model } });
   };
 
   const handleCapture = async () => {
     if (!cameraRef.current || capturing) return;
     if (!ready) { Alert.alert(t.processing, t.loading); return; }
     setCapturing(true);
-    colorLog('GREEN', '[API→expo-camera] takePictureAsync REQUEST', { model });
+    // FEATURE #118 : qualité réduite si économie de données (reste ≥ 0.3 → reco préservée).
+    const capQ = dataSaver.current ? CAP_Q.saver : CAP_Q.normal;
+    colorLog('GREEN', '[API→expo-camera] takePictureAsync REQUEST', { model, quality: capQ, dataSaver: dataSaver.current });
     try {
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.4, base64: false, exif: false });
+      const photo = await cameraRef.current.takePictureAsync({ quality: capQ, base64: false, exif: false });
       if (!photo?.uri) throw new Error('Failed to capture image');
       await goAnalysis(photo.uri);
     } catch (e: any) {
       // FALLBACK Samsung : caméra système (Intent) — fiable en build release.
       colorLog('YELLOW', '[scan-camera] takePictureAsync KO → fallback', { err: e?.message });
       try {
-        const res = await ImagePicker.launchCameraAsync({ quality: 0.4, exif: false, mediaTypes: ['images'] as any });
+        const res = await ImagePicker.launchCameraAsync({ quality: capQ, exif: false, mediaTypes: ['images'] as any });
         if (!res.canceled && res.assets?.[0]?.uri) { await goAnalysis(res.assets[0].uri); return; }
         setCapturing(false);
       } catch (e2: any) { Alert.alert('Capture error', e2?.message || 'Unknown error'); setCapturing(false); }
@@ -100,7 +171,9 @@ export default function ScanCameraScreen() {
 
   // Galerie : selon le mode → analyse plat OU décodage code-barres depuis l'image.
   const pickGallery = async () => {
-    const res = await ImagePicker.launchImageLibraryAsync({ quality: 0.5, exif: false, mediaTypes: ['images'] as any });
+    // FEATURE #118 : compression un peu plus forte en mode économie de données.
+    const galQ = dataSaver.current ? GAL_Q.saver : GAL_Q.normal;
+    const res = await ImagePicker.launchImageLibraryAsync({ quality: galQ, exif: false, mediaTypes: ['images'] as any });
     if (res.canceled || !res.assets?.[0]?.uri) return;
     const uri = res.assets[0].uri;
     if (mode === 'barcode') {
@@ -116,8 +189,8 @@ export default function ScanCameraScreen() {
     }
   };
 
-  const MODELS: { k: 'device' | 'backend' | 'gemini'; label: string }[] = [
-    { k: 'device', label: t.mDevice }, { k: 'backend', label: t.mBackend }, { k: 'gemini', label: t.mGemini },
+  const MODELS: { k: 'cascade' | 'device' | 'backend' | 'gemini'; label: string }[] = [
+    { k: 'cascade', label: t.mCascade }, { k: 'device', label: t.mDevice }, { k: 'backend', label: t.mBackend }, { k: 'gemini', label: t.mGemini },
   ];
 
   return (
@@ -190,7 +263,7 @@ export default function ScanCameraScreen() {
               {/* Shutter (plat uniquement) */}
               {mode === 'dish' ? (
                 <TouchableOpacity style={[styles.shutter, capturing && styles.shutterDisabled]} onPress={handleCapture} disabled={capturing} activeOpacity={0.7}>
-                  {capturing ? <ActivityIndicator color={GREEN} size="large" /> : <View style={styles.shutterInner} />}
+                  {capturing ? <ActivityIndicator color={accent} size="large" /> : <View style={styles.shutterInner} />}
                 </TouchableOpacity>
               ) : (
                 <View style={styles.shutterPlaceholder} />
@@ -201,13 +274,34 @@ export default function ScanCameraScreen() {
             </View>
             <Text style={styles.hintBottom}>{capturing ? t.processing : mode === 'dish' ? t.tapDish : t.aimBarcode}</Text>
           </View>
+
+          {/* FEATURE #152 : onboarding scan (1er lancement) — non bloquant, dismissable. */}
+          {showDemo && (
+            <View style={styles.demoWrap} pointerEvents="box-none">
+              <View style={[styles.demoCard, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                <View style={styles.demoIcon}><UtensilsCrossed size={22} color="#fff" /></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.demoTitle, { textAlign: isRTL ? 'right' : 'left' }]}>{t.demoTitle}</Text>
+                  <Text style={[styles.demoBody, { textAlign: isRTL ? 'right' : 'left' }]}>{t.demoBody}</Text>
+                  <TouchableOpacity style={styles.demoBtn} onPress={dismissDemo} activeOpacity={0.85}>
+                    <Text style={styles.demoBtnTxt}>{t.demoGot}</Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity style={styles.demoClose} onPress={dismissDemo} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <X size={18} color="#cbd5e1" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </View>
       </CameraView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000' },
   camera: { flex: 1 },
   overlay: { flex: 1, justifyContent: 'space-between', backgroundColor: 'transparent' },
@@ -234,6 +328,15 @@ const styles = StyleSheet.create({
   shutterInner: { width: 66, height: 66, borderRadius: 33, backgroundColor: GREEN },
   shutterPlaceholder: { width: 82, height: 82 },
   hintBottom: { color: '#fff', textAlign: 'center', marginTop: 12, fontSize: 13, fontWeight: '600' },
+  // FEATURE #152 : overlay d'onboarding scan (non bloquant).
+  demoWrap: { position: 'absolute', left: 0, right: 0, top: '32%', alignItems: 'center', paddingHorizontal: 20 },
+  demoCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, maxWidth: 420, backgroundColor: 'rgba(15,23,42,0.92)', borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)', padding: 16 },
+  demoIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: GREEN, alignItems: 'center', justifyContent: 'center' },
+  demoTitle: { color: '#fff', fontSize: 15, fontWeight: '800', marginBottom: 4 },
+  demoBody: { color: '#cbd5e1', fontSize: 13, fontWeight: '500', lineHeight: 18 },
+  demoBtn: { alignSelf: 'flex-start', marginTop: 12, backgroundColor: GREEN, paddingHorizontal: 18, paddingVertical: 8, borderRadius: 999 },
+  demoBtnTxt: { color: '#fff', fontSize: 13, fontWeight: '800' },
+  demoClose: { padding: 2 },
   loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, backgroundColor: '#000' },
   loadingText: { color: '#fff', fontSize: 14 },
   permissionWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 16, backgroundColor: '#000' },

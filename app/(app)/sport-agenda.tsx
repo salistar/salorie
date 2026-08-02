@@ -27,7 +27,10 @@ export default function SportAgenda() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#f7faf8';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
+  const bg = isDark ? '#0f1419' : '#f7faf8';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0f172a';
   const sub = isDark ? '#94a3b8' : '#64748b';
@@ -68,7 +71,7 @@ export default function SportAgenda() {
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Bandeau héro visuel */}
-        <LinearGradient colors={[GREEN, '#1d6440']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.heroBanner}>
+        <LinearGradient colors={[accent, '#1d6440']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.heroBanner}>
           <CalendarDays size={30} color="#fff" />
           <View style={{ flex: 1 }}>
             <Text style={[s.heroTitle, align]}>{t.title}</Text>
@@ -86,13 +89,13 @@ export default function SportAgenda() {
             {busy ? <ActivityIndicator size="small" color="#fff" /> : (<><Plus size={17} color="#fff" /><Text style={s.addTxt}>{t.add}</Text></>)}
           </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/log-exercise' as any)}>
-            <Text style={{ color: GREEN, fontWeight: '700', fontSize: 13, marginTop: 10, textAlign: 'center' }}>{t.logIt} →</Text>
+            <Text style={{ color: accent, fontWeight: '700', fontSize: 13, marginTop: 10, textAlign: 'center' }}>{t.logIt} →</Text>
           </TouchableOpacity>
         </FormCard>
 
         {/* Séances planifiées */}
-        <View style={[s.secHead, rowDir]}><Dumbbell size={17} color={GREEN} /><Text style={[s.secTitle, { color: text }]}>{t.planned}</Text></View>
-        {loading ? <ActivityIndicator color={GREEN} /> : items.length === 0 ? (
+        <View style={[s.secHead, rowDir]}><Dumbbell size={17} color={accent} /><Text style={[s.secTitle, { color: text }]}>{t.planned}</Text></View>
+        {loading ? <ActivityIndicator color={accent} /> : items.length === 0 ? (
           <Text style={[{ color: sub, fontSize: 13 }, align]}>{t.empty}</Text>
         ) : items.map((it) => (
           <View key={it.id} style={[s.row, { backgroundColor: card }, rowDir]}>
@@ -107,7 +110,7 @@ export default function SportAgenda() {
         ))}
 
         {/* Courses à venir */}
-        <View style={[s.secHead, rowDir]}><Flag size={17} color={GREEN} /><Text style={[s.secTitle, { color: text }]}>{t.races}</Text></View>
+        <View style={[s.secHead, rowDir]}><Flag size={17} color={accent} /><Text style={[s.secTitle, { color: text }]}>{t.races}</Text></View>
         {races.map((r) => (
           <TouchableOpacity key={r._id} style={[s.row, { backgroundColor: card }, rowDir]} activeOpacity={0.85}
             onPress={() => router.push(('/challenge?id=' + r._id + '&src=mongo') as any)}>

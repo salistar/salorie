@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -38,6 +38,7 @@ export default function AddWaterScreen() {
   const [loading, setLoading] = useState(false);
 
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const bg = isDark ? '#0B0F14' : Colors.light.white;
   const textPrimary = isDark ? colors.gray[900] : Colors.light.gray[900];
   const textMuted = isDark ? colors.gray[400] : Colors.light.gray[400];
@@ -123,17 +124,17 @@ export default function AddWaterScreen() {
 
         <Animated.View entering={FadeInDown.delay(200)} style={styles.controlsContainer}>
           <Text style={[styles.amountLabel, { color: textMuted }]}>{t('water.total')}</Text>
-          <View style={styles.counterRow}>
+          <View style={[styles.counterRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <TouchableOpacity
               style={[
                 styles.controlBtn,
-                { backgroundColor: Colors.light.primaryLight },
+                { backgroundColor: colors.primaryLight },
                 ml === 0 && { backgroundColor: cardBg },
               ]}
               onPress={handleRemove}
               disabled={ml === 0}
             >
-              <Minus size={30} color={ml === 0 ? textMuted : Colors.light.primary} strokeWidth={3} />
+              <Minus size={30} color={ml === 0 ? textMuted : colors.primary} strokeWidth={3} />
             </TouchableOpacity>
 
             <View style={styles.amountWrapper}>
@@ -144,13 +145,13 @@ export default function AddWaterScreen() {
             <TouchableOpacity
               style={[
                 styles.controlBtn,
-                { backgroundColor: Colors.light.primaryLight },
+                { backgroundColor: colors.primaryLight },
                 ml === maxMl && { backgroundColor: cardBg },
               ]}
               onPress={handleAdd}
               disabled={ml === maxMl}
             >
-              <Plus size={30} color={ml === maxMl ? textMuted : Colors.light.primary} strokeWidth={3} />
+              <Plus size={30} color={ml === maxMl ? textMuted : colors.primary} strokeWidth={3} />
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -158,7 +159,12 @@ export default function AddWaterScreen() {
 
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.logBtn, (ml === 0 || loading) && styles.disabledBtn]}
+          style={[
+            styles.logBtn,
+            { backgroundColor: colors.primary },
+            isDark && { shadowOpacity: 0, elevation: 0 },
+            (ml === 0 || loading) && styles.disabledBtn,
+          ]}
           onPress={handleLog}
           disabled={ml === 0 || loading}
         >
@@ -176,7 +182,9 @@ export default function AddWaterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   safeArea: { flex: 1 },
   header: {
     paddingHorizontal: 20,
@@ -216,12 +224,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    shadowColor: Colors.light.primary,
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
   },
-  disabledBtn: { backgroundColor: Colors.light.gray[200], shadowOpacity: 0, elevation: 0 },
+  disabledBtn: { backgroundColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200], shadowOpacity: 0, elevation: 0 },
   logText: { fontSize: 18, fontWeight: '800', color: Colors.light.white },
 });

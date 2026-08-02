@@ -23,7 +23,10 @@ export default function Journal() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#f7faf8';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
+  const bg = isDark ? '#0f1419' : '#f7faf8';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0f172a';
   const sub = isDark ? '#94a3b8' : '#64748b';
@@ -43,7 +46,7 @@ export default function Journal() {
 
   const Section = ({ icon: Icon, label }: any) => (
     <View style={[s.secHead, rowDir]}>
-      <Icon size={18} color={GREEN} />
+      <Icon size={18} color={accent} />
       <Text style={[s.secTitle, { color: text }]}>{label}</Text>
     </View>
   );
@@ -53,12 +56,12 @@ export default function Journal() {
       <ScreenTopBar showBack />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
         <View style={[s.head, rowDir]}>
-          <Newspaper size={26} color={GREEN} />
+          <Newspaper size={26} color={accent} />
           <Text style={[s.title, { color: text }]}>{t.title}</Text>
         </View>
         <Text style={[s.sub, { color: sub }, align]}>{t.sub}</Text>
 
-        {loading ? <ActivityIndicator size="large" color={GREEN} style={{ marginTop: 30 }} /> : (
+        {loading ? <ActivityIndicator size="large" color={accent} style={{ marginTop: 30 }} /> : (
           <>
             {/* Actus publiées depuis le back-office */}
             {news.length > 0 && (
@@ -71,7 +74,7 @@ export default function Journal() {
                       {/* Image de l'actu si fournie depuis le back-office */}
                       {n.imageUrl ? <Image source={{ uri: n.imageUrl }} style={s.newsImg} resizeMode="cover" /> : null}
                       <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 12 }, isRTL && { flexDirection: 'row-reverse' }]}>
-                        <View style={s.iconWrap}><Icon size={18} color={GREEN} /></View>
+                        <View style={s.iconWrap}><Icon size={18} color={accent} /></View>
                         <View style={{ flex: 1 }}>
                           <Text style={[s.cardTitle, { color: text }, align]}>{n.title}</Text>
                           {n.body ? <Text style={[s.cardBody, { color: sub }, align]}>{n.body}</Text> : null}

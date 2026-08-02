@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,12 @@ import {
   Image,
   ActivityIndicator,
   ScrollView,
+  TextInput,
+  Share,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { Check, Circle, Flame, Beef, Wheat, Droplets, Scale, FileText } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
+import { Check, Circle, Flame, Beef, Wheat, Droplets, Scale, FileText, Share2 } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import Animated, {
   FadeInDown,
@@ -31,9 +34,16 @@ import { useTranslation } from '../../lib/i18n';
 import { useLogging } from '../../lib/LoggingContext';
 import { colorLog, explain } from '../../lib/LocalDataStore';
 import { geminiShim, aiVisionLocal } from '../../lib/aiProxy';
+import { sendFeedback } from '../../lib/feedback';
 import { classifyOnDevice, localMacroForLabel } from '../../lib/onDeviceVision';
 import { computeHealthScore, VERDICT_TXT, HealthScore } from '../../lib/healthScore';
+import { translate } from '../../lib/translator';
 import { CheckCircle2, AlertTriangle } from 'lucide-react-native';
+import { useUser } from '@clerk/clerk-expo';
+import { useNutritionData } from '../../hooks/useNutritionData';
+import { scoreFood, FoodScore } from '../../lib/objective/scoring';
+import { buildObjectiveContext } from '../../lib/objective/buildContext';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const PENDING_SCAN_KEY = 'pending_scan_v1';
 
@@ -78,6 +88,22 @@ function heuristicQualRisk(p: { kcal: number; protein: number; carbs: number; fa
   return { qualities: Q, risks: R };
 }
 
+// Traduit les champs texte du résultat dans la langue de l'app — utilisé pour
+// Mobile (label TFLite anglais) et Backend (llava/llama répondent souvent en
+// anglais). Gemini, lui, localise déjà → pas appelé pour ce tier.
+async function localizeFields(data: any, lang: 'en' | 'fr' | 'ar'): Promise<void> {
+  if (lang === 'en') return;
+  try {
+    const jobs: Promise<any>[] = [];
+    if (data.name) jobs.push(translate(String(data.name), lang).then((t) => { data.name = t; }));
+    if (data.description) jobs.push(translate(String(data.description), lang).then((t) => { data.description = t; }));
+    if (data.serving) jobs.push(translate(String(data.serving), lang).then((t) => { data.serving = t; }));
+    if (Array.isArray(data.qualities)) jobs.push(Promise.all(data.qualities.map((q: string) => translate(String(q), lang))).then((a) => { data.qualities = a; }));
+    if (Array.isArray(data.risks)) jobs.push(Promise.all(data.risks.map((r: string) => translate(String(r), lang))).then((a) => { data.risks = a; }));
+    await Promise.race([Promise.all(jobs), new Promise((res) => setTimeout(res, 9000))]);
+  } catch {}
+}
+
 // Normalise une valeur IA (string "a; b" ou array) en tableau de strings courts.
 function toList(v: any): string[] {
   if (Array.isArray(v)) return v.map((s) => String(s).trim()).filter(Boolean).slice(0, 4);
@@ -113,9 +139,9 @@ function toDisplayUri(uri: string): string {
 // Map langue app → instruction Gemini pour que le nom + description soient
 // renvoyes dans la langue du user.
 function languageInstruction(lang: 'en' | 'fr' | 'ar'): string {
-  if (lang === 'fr') return 'Respond in FRENCH (français). All text fields in the JSON must be in French.';
-  if (lang === 'ar') return 'Respond in ARABIC (العربية). All text fields in the JSON must be in Arabic.';
-  return 'Respond in ENGLISH. All text fields in the JSON must be in English.';
+  if (lang === 'fr') return 'IMPORTANT: Tu DOIS répondre EN FRANÇAIS uniquement. TOUS les champs texte du JSON (name, description, serving, qualities, risks) DOIVENT être rédigés en français. N\'utilise AUCUN mot anglais.';
+  if (lang === 'ar') return 'هام: يجب أن تجيب بالعربية فقط. كل الحقول النصية في JSON (name, description, serving, qualities, risks) يجب أن تكون بالعربية. لا تستخدم أي كلمة إنجليزية.';
+  return 'IMPORTANT: Respond in ENGLISH only. All text fields in the JSON (name, description, serving, qualities, risks) must be in English.';
 }
 
 export default function ScanAnalysisScreen() {
@@ -137,8 +163,61 @@ export default function ScanAnalysisScreen() {
   const [error, setError] = useState<string | null>(null);
   // Tier de la cascade vision qui a fourni le résultat : on-device / IA (Gemini).
   const [source, setSource] = useState<'device' | 'backend' | 'ai' | null>(null);
+  const [scanPredicted, setScanPredicted] = useState<string | null>(null);
+  const [scanScore, setScanScore] = useState(0);
+  // Base64 de l'image scannée, conservé pour l'active-learning (le cache global
+  // est vidé pendant l'analyse) → sert au POST /ml/feedback si l'user corrige.
+  const [scanBase64, setScanBase64] = useState<string | null>(null);
+  // ───── Correction utilisateur (active-learning) ─────
+  const [correcting, setCorrecting] = useState(false);   // champ de saisie ouvert ?
+  const [correctText, setCorrectText] = useState('');     // nom correct saisi
+  const [correctSending, setCorrectSending] = useState(false);
+  const [correctDone, setCorrectDone] = useState(false);  // confirmation affichée
+  const [correctError, setCorrectError] = useState<string | null>(null);
+  // Envoie la correction au backend (POST /ml/feedback) → dataset d'active-learning.
+  const submitCorrection = async () => {
+    const label = correctText.trim();
+    if (!label || !scanBase64) { setCorrecting(false); return; }
+    setCorrectSending(true); setCorrectError(null);
+    try {
+      await sendFeedback(scanBase64, aiResult?.name || '', label, source || 'device');
+      setCorrectDone(true); setCorrecting(false);
+    } catch {
+      setCorrectError(language === 'fr' ? 'Envoi échoué, réessaie.' : language === 'ar' ? 'فشل الإرسال، حاول مجددًا' : 'Failed, retry.');
+    } finally {
+      setCorrectSending(false);
+    }
+  };
+  // Verdict objectif (calculé localement via scoreFood, AUCUN appel Gemini).
+  // null si l'objectif n'est pas disponible → la carte n'est pas affichée.
+  const [objScore, setObjScore] = useState<FoodScore | null>(null);
+
+  // Macros + grammes D'ORIGINE de l'estimation — base pour l'ajustement de portion.
+  const [baseScan, setBaseScan] = useState<{ calories: number; protein: number; carbs: number; fat: number; quantity: number } | null>(null);
+
+  const { user } = useUser();
+  const today = new Date().toISOString().slice(0, 10);
+  const { goals, consumed } = useNutritionData(today);
+
+  const __gate = useScreenGate('food-recognition');
 
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+
+  // #199 — petite animation d'apparition (fade géré par FadeIn + scale-in ici)
+  // du bloc verdict/résultat dès que l'analyse se termine. Piloté par une shared
+  // value (même pattern que AnimatedLoadingBar) → 100% déclaratif, aucun re-render.
+  const verdictScale = useSharedValue(0.94);
+  useEffect(() => {
+    if (isFinished && aiResult) {
+      verdictScale.value = withTiming(1, { duration: 320 });
+    } else {
+      verdictScale.value = 0.94;
+    }
+  }, [isFinished, aiResult]);
+  const verdictAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: verdictScale.value }],
+  }));
 
   console.log(
     '\x1b[33m[ScanAnalysis] RENDER — imageUri:\x1b[0m',
@@ -163,6 +242,72 @@ export default function ScanAnalysisScreen() {
     console.log('\x1b[33m[ScanAnalysis] useEffect : declenchement analyzeImage()\x1b[0m');
     analyzeImage();
   }, []);
+
+  // ───── VERDICT OBJECTIF (local, sans IA) ─────
+  // Dès que l'aliment est reconnu, on score sa portion vs l'objectif du jour
+  // via scoreFood (port fidèle du backend). Si l'objectif est indisponible
+  // (pas d'utilisateur ou contexte vide) on ne montre AUCUNE carte (pas d'erreur).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!aiResult) { setObjScore(null); return; }
+        const email = user?.primaryEmailAddress?.emailAddress || '';
+        if (!email && !user?.id) { setObjScore(null); return; }
+        const ctx = await buildObjectiveContext(email, user?.id, today, { goals, consumed });
+        // Objectif inexploitable (aucune cible calorique connue) → pas de carte.
+        if (!ctx || (ctx.dailyKcalTarget <= 0 && ctx.remainingKcal <= 0)) {
+          if (!cancelled) setObjScore(null);
+          return;
+        }
+        const candidate = {
+          name: String(aiResult.name || ''),
+          kcal: Number(aiResult.calories) || 0,
+          protein: Number(aiResult.protein) || 0,
+          carbs: Number(aiResult.carbs) || 0,
+          fat: Number(aiResult.fat) || 0,
+        };
+        const verdict = scoreFood(candidate, ctx);
+        if (!cancelled) setObjScore(verdict);
+      } catch {
+        if (!cancelled) setObjScore(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [aiResult, user?.id, goals, consumed]);
+
+  // Capture la base (macros + grammes estimés) UNE seule fois, au 1er résultat —
+  // référence pour recalculer les macros quand l'utilisateur ajuste la portion.
+  useEffect(() => {
+    if (aiResult && !baseScan) {
+      setBaseScan({
+        calories: Number(aiResult.calories) || 0,
+        protein: Number(aiResult.protein) || 0,
+        carbs: Number(aiResult.carbs) || 0,
+        fat: Number(aiResult.fat) || 0,
+        quantity: Number(aiResult.quantity) || 100,
+      });
+    }
+  }, [aiResult, baseScan]);
+
+  // Ajuste la portion (grammes/ml) → recalcule proportionnellement les macros depuis
+  // la base. La note santé (densité /100 g) reste inchangée ; le verdict objectif et le
+  // budget du jour se recalculent via leurs effets (dépendance sur aiResult).
+  const adjustPortion = (newQty: number) => {
+    if (!aiResult || !baseScan || !(baseScan.quantity > 0)) return;
+    const q = Math.max(1, Math.round(newQty));
+    const r = q / baseScan.quantity;
+    try { Haptics.selectionAsync(); } catch {}
+    setAiResult({
+      ...aiResult,
+      quantity: q,
+      calories: Math.round(baseScan.calories * r),
+      protein: +(baseScan.protein * r).toFixed(1),
+      carbs: +(baseScan.carbs * r).toFixed(1),
+      fat: +(baseScan.fat * r).toFixed(1),
+      serving: `${q} ${aiResult.unit}`,
+    });
+  };
 
   const analyzeImage = async () => {
     const tStart = Date.now();
@@ -193,13 +338,21 @@ export default function ScanAnalysisScreen() {
       // la base locale (502 aliments) → résultat instantané SANS appel cloud. Sinon
       // on garde le label comme INDICE pour Gemini (tier 3) → meilleure précision.
       // Finalise un résultat (note santé + qualités/risques on-device) et termine.
-      const finishWith = (data: any, src: 'device' | 'backend' | 'ai') => {
+      let onDevicePred: string | null = null; let onDeviceScore = 0;
+      const finishWith = async (data: any, src: 'device' | 'backend' | 'ai') => {
+        // Retour haptique de succès dès qu'un aliment est reconnu (perçu premium).
+        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
         const p100 = per100(data);
         data.health = computeHealthScore(p100);
         const heur = heuristicQualRisk(p100, language);
         data.qualities = toList(data.qualities); if (!data.qualities.length) data.qualities = heur.qualities;
         data.risks = toList(data.risks); if (!data.risks.length) data.risks = heur.risks;
         if (!data.description) data.description = '';
+        // Mobile : le label TFLite est en anglais → on traduit le NOM dans la langue de l'app
+        // (qualités/risques viennent déjà de l'heuristique localisée).
+        if (src === 'device' && language !== 'en' && data.name) {
+          try { data.name = await translate(String(data.name), language as any); } catch {}
+        }
         setSource(src);
         setAiResult(data);
         setCompletedSteps([1, 2, 3]);
@@ -221,22 +374,44 @@ export default function ScanAnalysisScreen() {
           ]);
           const top = (preds as any)?.[0];
           if (top) {
+            onDevicePred = String(top.label || ''); onDeviceScore = Number(top.score) || 0;
+            // active learning : MÉMORISER la prédiction on-device DÈS qu'elle existe (avant le test
+            // de confiance) -> survit au repli cloud de la cascade. La collecte se fait au SAVE
+            // (log-food-details) avec le label final = vraie correction même si le backend a corrigé.
+            setScanPredicted(onDevicePred); setScanScore(onDeviceScore);
             const macro = localMacroForLabel(top.label);
-            // Appareil forcé : seuil élevé (0.85) ; cascade auto : 0.6. En-dessous → cloud.
-            const need = forceModel === 'device' ? 0.85 : 0.6;
-            colorLog('CYAN', '[ScanAnalysis] TIER1 on-device', { label: top.label, score: Math.round(top.score * 100) + '%', need, forceModel });
-            if (top.score >= need && macro && macro.kcal > 0) {
-              explain('Modèle ON-DEVICE (TFLite) — confiant, aucun appel cloud');
+            colorLog('CYAN', '[ScanAnalysis] TIER1 on-device', { label: top.label, score: Math.round(top.score * 100) + '%', forceModel });
+            // MOBILE forcé = 100% ON-DEVICE : on rend TOUJOURS le résultat local,
+            // JAMAIS de bascule cloud (exigence utilisateur).
+            if (forceModel === 'device') {
+              const m = (macro && macro.kcal > 0) ? macro : { name: top.label.replace(/_/g, ' ') || 'Aliment', kcal: 0, protein: 0, carbs: 0, fat: 0 };
+              explain('Modèle MOBILE (TFLite on-device) — aucun appel cloud, jamais');
+              finishWith({ name: m.name, description: '', calories: Math.round(m.kcal), protein: m.protein, carbs: m.carbs, fat: m.fat, quantity: 100, unit: 'g', serving: '100 g' }, 'device');
+              return;
+            }
+            // Cascade auto (aucun modèle forcé) : on-device si confiant, sinon cloud.
+            if (top.score >= 0.85 && macro && macro.kcal > 0) {
+              explain('Cascade auto : on-device confiant (≥85%), aucun appel cloud');
               finishWith({ name: macro.name, description: '', calories: Math.round(macro.kcal), protein: macro.protein, carbs: macro.carbs, fat: macro.fat, quantity: 100, unit: 'g', serving: '100 g' }, 'device');
               return;
             }
+          } else if (forceModel === 'device') {
+            // Rien reconnu mais Mobile forcé → résultat local minimal (jamais cloud).
+            finishWith({ name: 'Aliment', description: '', calories: 0, protein: 0, carbs: 0, fat: 0, quantity: 100, unit: 'g', serving: '100 g' }, 'device');
+            return;
           }
         } catch (e) {
           colorLog('YELLOW', '[ScanAnalysis] on-device indisponible', { e: String(e) });
+          if (forceModel === 'device') {
+            finishWith({ name: 'Aliment', description: '', calories: 0, protein: 0, carbs: 0, fat: 0, quantity: 100, unit: 'g', serving: '100 g' }, 'device');
+            return;
+          }
         }
       }
-      // → VISION CLOUD (précise) : 'backend' via /ai/vision, sinon Gemini direct.
-      const cloudSource: 'backend' | 'ai' = forceModel === 'backend' ? 'backend' : 'ai';
+      // → VISION CLOUD. Cascade auto (forceModel '') ET mode 'backend' → backend d'abord ;
+      //   seul le mode Gemini FORCÉ part direct sur 'ai'. Le fallback backend→Gemini
+      //   (dernier recours) n'a lieu qu'en cascade auto (voir plus bas).
+      const cloudSource: 'backend' | 'ai' = forceModel === 'gemini' ? 'ai' : 'backend';
       setSource(cloudSource);
 
       let base64 = scanImageBase64;
@@ -247,8 +422,11 @@ export default function ScanAnalysisScreen() {
         // VITESSE : on REDIMENSIONNE la photo (1024px, q0.6) AVANT l'upload — une
         // photo 12MP fait 5-15 Mo en base64 (lenteur 4G + 413) vs ~200 Ko ici.
         try {
+          // Backend (Cloudflare llava) reçoit l'image en tableau d'octets → un 1024px
+          // donne un payload énorme et lent. On réduit à 512px pour ce tier → ~3× plus rapide.
+          const w = cloudSource === 'backend' ? 512 : 1024;
           const manip = await ImageManipulator.manipulateAsync(
-            imageUri, [{ resize: { width: 1024 } }],
+            imageUri, [{ resize: { width: w } }],
             { base64: true, compress: 0.6, format: ImageManipulator.SaveFormat.JPEG },
           );
           if (manip.base64) {
@@ -294,7 +472,7 @@ export default function ScanAnalysisScreen() {
           }
           if (!readOk) throw lastErr;
           colorLog('RED', '[API←FileSystem] readAsStringAsync OK', {
-            chars: base64.length,
+            chars: base64?.length,
             ms: Date.now() - t0Read,
           });
         } catch (e) {
@@ -304,8 +482,15 @@ export default function ScanAnalysisScreen() {
         }
       }
       setScanImageBase64(null);
+      if (!base64) {
+        setError(t('scan.error_read'));
+        return;
+      }
+      // Non-null à partir d'ici (le garde ci-dessus a court-circuité sinon).
+      const b64: string = base64;
+      setScanBase64(b64);   // conservé pour la correction (active-learning) même si le cache global est vidé
 
-      const approxKB = Math.round((base64.length * 0.75) / 1024);
+      const approxKB = Math.round((b64.length * 0.75) / 1024);
       colorLog('CYAN', '[ScanAnalysis] image prete', { base64Chars: base64.length, approxSizeKB: approxKB });
 
       const modelName = process.env.EXPO_PUBLIC_GEMINI_VISION_MODEL || 'gemini-2.5-flash-lite';
@@ -339,47 +524,91 @@ Return STRICT JSON with these keys:
   "fat": 8.5,
   "quantity": 250,
   "unit": "g",
-  "serving": "human-readable serving e.g. '1 bowl (250g)' or '1 bottle (500ml)'"
+  "serving": "human-readable serving e.g. '1 bowl (250g)' or '1 bottle (500ml)'",
+  "portionConfidence": "low | medium | high",
+  "portionBasis": "short reason for the weight estimate (<=6 words), e.g. 'standard dinner plate', '250ml glass', 'two visible pieces'"
 }
 
 Rules:
 - "unit" MUST be exactly "g" for solids or "ml" for liquids. No other unit.
-- "quantity" is a NUMBER (no unit), matching "unit" — realistic portion as visible.
+- PORTION WEIGHT IS CRITICAL — every macro is derived from it. Estimate the TOTAL grams/ml as accurately as you can using visible REFERENCE CUES: plate / bowl / cup / glass size, a fork / spoon / hand for scale, food height and how much of the container it fills. Prefer a realistic SPECIFIC number (e.g. 180, 310) over round defaults like 100 or 250 unless the portion truly is that.
+- "calories", "protein", "carbs", "fat" MUST correspond to that exact "quantity" (the whole visible portion) — NOT per 100 g.
+- "portionConfidence": "high" if the reference cues are clear, "medium" if only partly visible, "low" if you had to guess.
+- "portionBasis": the main visual cue you used for the weight (<=6 words).
 - "qualities" and "risks" are ARRAYS of 2-3 SHORT strings each (max ~5 words). Always give at least one of each.
-- All text ("name", "description", "serving", "qualities", "risks") must be in the requested language.
-- Output ONLY the JSON. No markdown, no code fences, no commentary.`;
+- Output ONLY the JSON. No markdown, no code fences, no commentary.
+
+${langInstr}`;
 
       const t0 = Date.now();
-      let text: string;
+      // Appel d'un tier de vision (backend = modèle serveur vocab ouvert ; ai = Gemini).
+      const callVision = async (src: 'backend' | 'ai'): Promise<string> => {
+        if (src === 'backend') {
+          colorLog('GREEN', '[API→Backend] /ml/vision REQUEST (modèle serveur, vocabulaire ouvert)', { lang: language, approxKB, promptChars: prompt.length });
+          return await aiVisionLocal(prompt, b64, 'image/jpeg');
+        }
+        colorLog('GREEN', '[API→Gemini] vision REQUEST', { model: modelName, lang: language, approxKB, promptChars: prompt.length });
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent([prompt, { inlineData: { data: b64, mimeType: 'image/jpeg' } }]);
+        return (await result.response).text();
+      };
+      // Parse ROBUSTE : certains modèles entourent le JSON de prose → on extrait le 1er objet.
+      const parseVision = (raw: string) => {
+        const tt = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+        const m = tt.match(/\{[\s\S]*\}/);
+        return JSON.parse(m ? m[0] : tt);
+      };
+      // GARDE-FOU CASCADE : une réponse "lisible mais vague" (nom générique, pas de macros)
+      // ne doit PAS être acceptée — on bascule alors sur Gemini (bien plus précis) pour ne
+      // pas afficher un faux résultat (ex : un plat MENA non reconnu par le tier backend).
+      const isWeakResult = (d: any): boolean => {
+        if (!d) return true;
+        const name = String(d?.name || '').trim().toLowerCase();
+        if (!name || name.length < 3) return true;
+        const generic = ['food', 'dish', 'meal', 'plate', 'snack', 'aliment', 'plat', 'repas', 'nourriture', 'unknown', 'inconnu', 'unidentified', 'طعام', 'وجبة', 'أكل', 'غير معروف'];
+        if (generic.some((g) => name === g || name === g + 's' || name.includes(g))) return true;
+        const kcal = Number(d?.calories) || 0;
+        if (kcal <= 0) return true; // pas de macros fiables → on ne fait pas confiance
+        return false;
+      };
+      let data: any;
       try {
-        if (cloudSource === 'backend') {
-          // BACKEND : modèle LOCAL auto-hébergé sur le serveur (Ollama + repli API food),
-          // route /ml/vision — DISTINCT du provider Gemini.
-          colorLog('GREEN', '[API→Backend] /ml/vision REQUEST (modèle local serveur)', { lang: language, approxKB, promptChars: prompt.length });
-          text = await aiVisionLocal(prompt, base64, 'image/jpeg');
-        } else {
-          // GEMINI direct (proxy /ai/vision via le shim).
-          colorLog('GREEN', '[API→Gemini] vision REQUEST', { model: modelName, lang: language, approxKB, promptChars: prompt.length });
-          const model = genAI.getGenerativeModel({ model: modelName });
-          const result = await model.generateContent([prompt, { inlineData: { data: base64, mimeType: 'image/jpeg' } }]);
-          const response = await result.response;
-          text = response.text();
+        const raw = await callVision(cloudSource);
+        colorLog('BLUE', '[API←Vision] returned', { ms: Date.now() - t0, source: cloudSource, chars: raw.length, preview: raw.slice(0, 200) });
+        data = parseVision(raw);
+        // Cascade auto : si le backend répond mais reste vague/générique → Gemini (précision).
+        if (forceModel === '' && cloudSource === 'backend' && isWeakResult(data)) {
+          colorLog('YELLOW', '[Cascade] backend vague/générique → Gemini (garde-fou précision)', { name: data?.name, kcal: data?.calories });
+          explain('Garde-fou : réponse backend trop générique → Gemini (dernier recours)');
+          // RÉSILIENCE : si Gemini est indisponible (clé invalide → 500, timeout…), on GARDE le
+          // résultat backend au lieu d'échouer durement. Cas typique : café noir peu reconnu.
+          const backendData = data;
+          try {
+            setSource('ai');
+            const rawG = await callVision('ai');
+            colorLog('BLUE', '[API←Vision] returned (Gemini garde-fou)', { ms: Date.now() - t0, chars: rawG.length });
+            data = parseVision(rawG);
+          } catch (gErr) {
+            colorLog('YELLOW', '[Cascade] Gemini indisponible → repli sur le résultat backend', { error: String((gErr as Error).message).slice(0, 120) });
+            explain('Gemini indisponible → on garde le résultat backend (pas d\'échec dur)');
+            setSource('backend');
+            data = backendData;
+          }
         }
       } catch (visErr) {
-        const fullMsg = (visErr as Error).message || '';
-        colorLog('RED', '[API←Vision] FAILED', { ms: Date.now() - t0, source: cloudSource, error: fullMsg });
-        throw visErr;
+        // CASCADE auto UNIQUEMENT (forceModel '') : backend KO/illisible → Gemini, dernier recours.
+        if (forceModel === '' && cloudSource === 'backend') {
+          colorLog('YELLOW', '[Cascade] backend échoué/illisible → Gemini (dernier recours)', { error: String((visErr as Error).message).slice(0, 120) });
+          explain('Cascade : on-device peu sûr → backend KO → Gemini (dernier recours)');
+          setSource('ai');
+          const raw2 = await callVision('ai');
+          colorLog('BLUE', '[API←Vision] returned (Gemini fallback)', { ms: Date.now() - t0, chars: raw2.length });
+          data = parseVision(raw2);
+        } else {
+          colorLog('RED', '[API←Vision] FAILED', { ms: Date.now() - t0, source: cloudSource, error: String((visErr as Error).message) });
+          throw visErr;
+        }
       }
-      colorLog('BLUE', '[API←Vision] returned', { ms: Date.now() - t0, source: cloudSource });
-      explain('reponse brute Gemini recue — preview 300 chars');
-      colorLog('BLUE', '[API←Gemini] scan-analysis RESPONSE', {
-        ms: Date.now() - t0,
-        chars: text.length,
-        preview: text.slice(0, 300),
-      });
-
-      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      const data = JSON.parse(text);
 
       // Normalisation defensive : si Gemini oublie unit/quantity on reconstruit
       if (!data.unit || (data.unit !== 'g' && data.unit !== 'ml')) {
@@ -396,6 +625,10 @@ Rules:
       if (!data.description) {
         data.description = '';
       }
+      // Confiance + base de l'estimation de portion (nouveaux champs) — défaut prudent.
+      data.portionConfidence = ['low', 'medium', 'high'].includes(String(data.portionConfidence || '').toLowerCase())
+        ? String(data.portionConfidence).toLowerCase() : 'low';
+      data.portionBasis = typeof data.portionBasis === 'string' ? data.portionBasis.trim().slice(0, 60) : '';
       // Note santé ON-DEVICE à partir des macros/100g (déterministe, hors-ligne).
       const p100ai = per100(data);
       data.health = computeHealthScore(p100ai);
@@ -403,6 +636,12 @@ Rules:
       const heur = heuristicQualRisk(p100ai, language);
       data.qualities = toList(data.qualities); if (!data.qualities.length) data.qualities = heur.qualities;
       data.risks = toList(data.risks); if (!data.risks.length) data.risks = heur.risks;
+
+      // BACKEND (llava/llama) répond souvent en anglais → on traduit dans la langue
+      // de l'app. Gemini localise déjà → on ne traduit pas (évite tout re-mangling).
+      if (cloudSource === 'backend' && language !== 'en') {
+        await localizeFields(data, language as any);
+      }
 
       explain('JSON parse + normalisation OK — macros + description + note santé + qualités/risques');
       colorLog('CYAN', '[ScanAnalysis] macros detectees', {
@@ -415,6 +654,10 @@ Rules:
 
       setCompletedSteps([1, 2]);
       setCurrentStep(2);
+
+      // #199 — retour haptique de succès dès que le verdict cloud est prêt
+      // (le tier on-device le fait déjà dans finishWith → parité entre les tiers).
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
 
       setTimeout(() => {
         setCompletedSteps([1, 2, 3]);
@@ -430,6 +673,38 @@ Rules:
     } finally {
       console.log(`\x1b[33m[ScanAnalysis] ===== FIN analyse (total ${Date.now() - tStart}ms) =====\x1b[0m`);
     }
+  };
+
+  // GROWTH #100 — carte de scan partageable : résumé texte (nom + kcal + verdict)
+  // via l'API Share native. Purement additif — ne touche ni au scan ni au verdict.
+  const handleShare = async () => {
+    if (!aiResult) return;
+    try {
+      const kcal = Math.round(Number(aiResult.calories) || 0);
+      const kcalLine = language === 'fr'
+        ? `${kcal} kcal`
+        : language === 'ar'
+        ? `${kcal} سعرة`
+        : `${kcal} kcal`;
+      // Verdict lisible : note santé on-device si dispo, sinon verdict objectif.
+      let verdictLine = '';
+      if (aiResult.health) {
+        const vTxt = (VERDICT_TXT[language] || VERDICT_TXT.en)[aiResult.health.verdict as keyof typeof VERDICT_TXT.en];
+        verdictLine = `${aiResult.health.grade} · ${vTxt} (${aiResult.health.score}/100)`;
+      } else if (objScore) {
+        verdictLine = objScore.verdict === 'great'
+          ? t('scan.objective_great')
+          : objScore.verdict === 'ok'
+          ? t('scan.objective_ok')
+          : t('scan.objective_avoid');
+      }
+      const parts = [String(aiResult.name || ''), kcalLine];
+      if (verdictLine) parts.push(verdictLine);
+      const tag = language === 'fr' ? 'Scanné avec Salorie' : language === 'ar' ? 'تم المسح عبر Salorie' : 'Scanned with Salorie';
+      const message = `${parts.join(' — ')}\n${tag}`;
+      explain('user clique Partager — partage du résumé texte (nom + kcal + verdict) via Share natif');
+      await Share.share({ message });
+    } catch {}
   };
 
   const handleContinue = () => {
@@ -460,13 +735,19 @@ Rules:
         serving: aiResult.serving || `${aiResult.quantity} ${aiResult.unit}`,
         quantity: String(aiResult.quantity),
         unit: aiResult.unit,
+        portionConfidence: String(aiResult.portionConfidence || ''),
+        portionBasis: String(aiResult.portionBasis || ''),
         description: fullDesc,
         imageUri: displayUri,
+        // active learning : prédiction on-device + tier -> capturés au SAVE avec le label final
+        scanPredicted: scanPredicted ?? '',
+        scanScore: String(scanScore),
+        scanTier: source ?? '',
         // Note santé → persistée sur le repas loggé.
         ...(aiResult.health ? {
           healthGrade: aiResult.health.grade,
           healthScore: String(aiResult.health.score),
-          healthVerdict: (VERDICT_TXT[language] || VERDICT_TXT.en)[aiResult.health.verdict],
+          healthVerdict: (VERDICT_TXT[language] || VERDICT_TXT.en)[aiResult.health.verdict as keyof typeof VERDICT_TXT.en],
           healthColor: aiResult.health.color,
         } : {}),
       },
@@ -481,6 +762,8 @@ Rules:
   const cardBg = isDark ? '#161C23' : Colors.light.gray[50];
   const cardBorder = isDark ? colors.gray[200] : Colors.light.gray[100];
   const activeBg = isDark ? '#1F2833' : Colors.light.white;
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: bg }]}>
@@ -521,7 +804,7 @@ Rules:
                     style={[
                       styles.stepRow,
                       { backgroundColor: cardBg, borderColor: 'transparent' },
-                      isActive && { backgroundColor: activeBg, borderColor: Colors.light.primary },
+                      isActive && { backgroundColor: activeBg, borderColor: isDark ? Colors.dark.primary : Colors.light.primary },
                       isRTL && { flexDirection: 'row-reverse' },
                     ]}
                   >
@@ -536,7 +819,7 @@ Rules:
                       {isCompleted ? (
                         <Check size={16} color={Colors.light.white} strokeWidth={3} />
                       ) : isActive ? (
-                        <ActivityIndicator size="small" color={Colors.light.primary} />
+                        <ActivityIndicator size="small" color={isDark ? Colors.dark.primary : Colors.light.primary} />
                       ) : (
                         <Circle size={16} color={textMuted} />
                       )}
@@ -561,7 +844,7 @@ Rules:
           {isFinished && aiResult && (
             <Animated.View
               entering={FadeIn.duration(500)}
-              style={[styles.resultCard, { backgroundColor: cardBg, borderColor: cardBorder }]}
+              style={[styles.resultCard, { backgroundColor: cardBg, borderColor: cardBorder }, verdictAnimStyle]}
             >
               <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 8 }, isRTL && { flexDirection: 'row-reverse' }]}>
                 <Text style={[styles.resultLabel, { color: textSecondary }]}>
@@ -584,15 +867,44 @@ Rules:
                 {aiResult.name}
               </Text>
 
-              {/* Quantity pill */}
-              <View style={[styles.qtyRow, isRTL && { flexDirection: 'row-reverse' }]}>
-                <View style={[styles.qtyPill, { backgroundColor: Colors.light.primaryLight || '#E6F7EE' }]}>
-                  <Scale size={14} color={Colors.light.primary} strokeWidth={2.5} />
-                  <Text style={[styles.qtyText, { color: Colors.light.primary }]}>
-                    {t('scan.quantity')}: {aiResult.quantity} {aiResult.unit}
-                  </Text>
-                </View>
-              </View>
+              {/* Portion ajustable (grammes auto) — −/valeur/+, macros + verdict recalculés en direct */}
+              {(() => {
+                const baseQ = (baseScan?.quantity || Number(aiResult.quantity)) || 100;
+                const step = Math.max(5, Math.round(baseQ * 0.1));
+                const conf = String(aiResult.portionConfidence || 'low');
+                const confCfg = conf === 'high'
+                  ? { c: '#2E8B57', l: language === 'fr' ? 'confiance élevée' : language === 'ar' ? 'ثقة عالية' : 'high confidence' }
+                  : conf === 'medium'
+                  ? { c: '#D97706', l: language === 'fr' ? 'confiance moyenne' : language === 'ar' ? 'ثقة متوسطة' : 'medium confidence' }
+                  : { c: '#DC2626', l: language === 'fr' ? 'à vérifier' : language === 'ar' ? 'يُنصح بالمراجعة' : 'please check' };
+                return (
+                  <View style={styles.portionBox}>
+                    <View style={[styles.portionRow, isRTL && { flexDirection: 'row-reverse' }]}>
+                      <TouchableOpacity onPress={() => adjustPortion(Number(aiResult.quantity) - step)} style={styles.stepBtn} activeOpacity={0.7}>
+                        <Text style={styles.stepBtnTxt}>−</Text>
+                      </TouchableOpacity>
+                      <View style={styles.portionCenter}>
+                        <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 6 }, isRTL && { flexDirection: 'row-reverse' }]}>
+                          <Scale size={15} color={isDark ? Colors.dark.primary : Colors.light.primary} strokeWidth={2.5} />
+                          <Text style={[styles.portionValue, { color: textPrimary }]}>≈ {aiResult.quantity} {aiResult.unit}</Text>
+                        </View>
+                        <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }, isRTL && { flexDirection: 'row-reverse' }]}>
+                          <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: confCfg.c }} />
+                          <Text style={[styles.portionConf, { color: textMuted }]} numberOfLines={1}>
+                            {confCfg.l}{aiResult.portionBasis ? ` · ${aiResult.portionBasis}` : ''}
+                          </Text>
+                        </View>
+                      </View>
+                      <TouchableOpacity onPress={() => adjustPortion(Number(aiResult.quantity) + step)} style={styles.stepBtn} activeOpacity={0.7}>
+                        <Text style={styles.stepBtnTxt}>＋</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={[styles.portionHint, { color: textMuted, textAlign: isRTL ? 'right' : 'left' }]}>
+                      {language === 'fr' ? 'Ajuste la portion → calories & verdict se recalculent.' : language === 'ar' ? 'عدّل الحصة ← يُعاد حساب السعرات والتقييم.' : 'Adjust the portion → calories & verdict recalculate.'}
+                    </Text>
+                  </View>
+                );
+              })()}
 
               {/* Description */}
               {aiResult.description ? (
@@ -620,7 +932,7 @@ Rules:
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.healthVerdict, { color: aiResult.health.color, textAlign: isRTL ? 'right' : 'left' }]}>
-                      {(VERDICT_TXT[language] || VERDICT_TXT.en)[aiResult.health.verdict]}
+                      {(VERDICT_TXT[language] || VERDICT_TXT.en)[aiResult.health.verdict as keyof typeof VERDICT_TXT.en]}
                     </Text>
                     <Text style={[styles.healthSub, { color: textMuted, textAlign: isRTL ? 'right' : 'left' }]}>
                       {(QR_LABELS[language] || QR_LABELS.en).note} · {aiResult.health.score}/100{aiResult.health.approx ? ' ~' : ''} · {language === 'fr' ? "sur l'appareil" : language === 'ar' ? 'على الجهاز' : 'on-device'}
@@ -628,6 +940,110 @@ Rules:
                   </View>
                 </View>
               )}
+
+              {/* GROWTH #100 — bouton Partager : résumé texte (nom + kcal + verdict)
+                  via l'API Share native. Placé près du verdict. */}
+              <TouchableOpacity
+                onPress={handleShare}
+                style={[styles.shareBtn, { borderColor: cardBorder }, isRTL && { flexDirection: 'row-reverse' }]}
+                activeOpacity={0.85}
+              >
+                <Share2 size={16} color={isDark ? Colors.dark.primary : Colors.light.primary} strokeWidth={2.5} />
+                <Text style={[styles.shareBtnTxt, { color: isDark ? Colors.dark.primary : Colors.light.primary }]}>
+                  {language === 'fr' ? 'Partager' : language === 'ar' ? 'مشاركة' : 'Share'}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Verdict objectif (calculé on-device via scoreFood, AUCUN appel IA) */}
+              {objScore && (() => {
+                const cfg = objScore.verdict === 'great'
+                  ? { color: '#2E8B57', icon: '✅', title: t('scan.objective_great') }
+                  : objScore.verdict === 'ok'
+                  ? { color: '#D97706', icon: '⚠️', title: t('scan.objective_ok') }
+                  : { color: '#DC2626', icon: '🚫', title: t('scan.objective_avoid') };
+                return (
+                  <View style={[styles.objCard, { backgroundColor: cfg.color + '1A', borderColor: cfg.color }]}>
+                    <View style={[styles.objHead, isRTL && { flexDirection: 'row-reverse' }]}>
+                      <Text style={styles.objIcon}>{cfg.icon}</Text>
+                      <Text style={[styles.objTitle, { color: cfg.color, textAlign: isRTL ? 'right' : 'left' }]}>
+                        {cfg.title}
+                      </Text>
+                    </View>
+                    {objScore.reasons?.length ? (
+                      <View style={styles.objReasons}>
+                        {objScore.reasons.map((reason: string, i: number) => (
+                          <Text
+                            key={'obj' + i}
+                            style={[styles.objReason, { color: textPrimary, textAlign: isRTL ? 'right' : 'left' }]}
+                          >
+                            • {reason}
+                          </Text>
+                        ))}
+                      </View>
+                    ) : null}
+                  </View>
+                );
+              })()}
+
+              {/* #93 — Contexte budget calorique du jour : dérivé de goals/consumed
+                  (hook useNutritionData, déjà en scope) vs kcal de l'aliment scanné.
+                  AUCUN appel réseau ; s'affiche dès qu'une cible calorique existe. */}
+              {(() => {
+                const target = Number(goals?.calories) || 0;
+                if (target <= 0) return null;
+                const eaten = Number(consumed?.calories) || 0;
+                const remaining = Math.max(0, Math.round(target - eaten));
+                const foodKcal = Math.round(Number(aiResult?.calories) || 0);
+                const fits = foodKcal <= remaining;
+                const color = fits ? '#2E8B57' : '#DC2626';
+                const verdictTxt = fits
+                  ? (language === 'fr' ? 'ça rentre' : language === 'ar' ? 'يدخل ضمن هدفك' : 'it fits')
+                  : (language === 'fr' ? 'ça dépasse' : language === 'ar' ? 'يتجاوز هدفك' : 'over budget');
+                const lead = language === 'fr'
+                  ? `Il te reste ${remaining} kcal aujourd'hui`
+                  : language === 'ar'
+                  ? `تبقّى لك ${remaining} سعرة اليوم`
+                  : `You have ${remaining} kcal left today`;
+                return (
+                  <View style={[styles.budgetLine, { backgroundColor: color + '14', borderColor: color + '55' }, isRTL && { flexDirection: 'row-reverse' }]}>
+                    <Text style={styles.budgetIcon}>{fits ? '👍' : '⚠️'}</Text>
+                    <Text style={[styles.budgetText, { color: textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
+                      {lead} — <Text style={{ color, fontWeight: '800' }}>{verdictTxt}</Text>
+                    </Text>
+                  </View>
+                );
+              })()}
+
+              {/* Correction utilisateur → active-learning (POST /ml/feedback) */}
+              {!correctDone ? (
+                correcting ? (
+                  <View style={[styles.correctBox, isRTL && { flexDirection: 'row-reverse' }]}>
+                    <TextInput
+                      value={correctText}
+                      onChangeText={setCorrectText}
+                      placeholder={language === 'fr' ? 'Nom correct…' : language === 'ar' ? 'الاسم الصحيح…' : 'Correct name…'}
+                      placeholderTextColor={textMuted}
+                      style={[styles.correctInput, { color: textPrimary, borderColor: cardBorder, textAlign: isRTL ? 'right' : 'left' }]}
+                    />
+                    <TouchableOpacity onPress={submitCorrection} disabled={correctSending || !correctText.trim()} style={[styles.correctSend, { opacity: correctSending || !correctText.trim() ? 0.5 : 1 }]}>
+                      <Text style={styles.correctSendTxt}>{correctSending ? '…' : (language === 'fr' ? 'Envoyer' : language === 'ar' ? 'إرسال' : 'Send')}</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity onPress={() => setCorrecting(true)} style={styles.correctLink}>
+                    <Text style={[styles.correctLinkTxt, { color: textMuted }]}>
+                      {language === 'fr' ? '❌ Pas ça ? Corriger' : language === 'ar' ? '❌ ليس هذا؟ صحّح' : '❌ Not it? Correct it'}
+                    </Text>
+                  </TouchableOpacity>
+                )
+              ) : (
+                <Text style={[styles.correctDoneTxt, { color: '#2E8B57' }]}>
+                  {language === 'fr' ? '✓ Merci, ça améliorera la reco !' : language === 'ar' ? '✓ شكرًا، سيحسّن هذا التعرّف!' : '✓ Thanks, this improves recognition!'}
+                </Text>
+              )}
+              {correctError ? (
+                <Text style={[styles.correctDoneTxt, { color: '#DC2626' }]}>{correctError}</Text>
+              ) : null}
 
               {/* Qualités (vert) & Risques (ambre) */}
               {(aiResult.qualities?.length || aiResult.risks?.length) ? (
@@ -660,7 +1076,7 @@ Rules:
               {/* Macros grid */}
               <View style={styles.macrosGrid}>
                 <MacroTile
-                  icon={<Flame size={18} color={Colors.light.primary} />}
+                  icon={<Flame size={18} color={isDark ? Colors.dark.primary : Colors.light.primary} />}
                   label={t('scan.calories_short')}
                   value={`${aiResult.calories}`}
                   unit="kcal"
@@ -737,6 +1153,9 @@ function MacroTile({
   textPrimary: string;
   textMuted: string;
 }) {
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   return (
     <View style={[styles.macroTile, { backgroundColor: tileBg, borderColor: border }]}>
       {icon}
@@ -750,6 +1169,9 @@ function MacroTile({
 }
 
 function AnimatedLoadingBar() {
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const translateY = useSharedValue(0);
 
   useEffect(() => {
@@ -767,7 +1189,9 @@ function AnimatedLoadingBar() {
   return <Animated.View style={[styles.scanLine, animatedStyle]} />;
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   safeArea: { flex: 1 },
   header: {
     paddingHorizontal: 20,
@@ -822,7 +1246,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: Colors.light.primary,
     opacity: 0.8,
-    shadowColor: Colors.light.primary,
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
     shadowRadius: 10,
@@ -879,6 +1303,23 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   qtyText: { fontSize: 13, fontWeight: '800' },
+  // Portion ajustable (grammes auto)
+  portionBox: {
+    marginTop: 6, marginBottom: 6, padding: 10,
+    borderRadius: 16, borderWidth: 1, borderColor: 'rgba(46,139,87,0.25)',
+    backgroundColor: 'rgba(46,139,87,0.06)',
+  },
+  portionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  portionCenter: { flex: 1, alignItems: 'center' },
+  portionValue: { fontSize: 20, fontWeight: '900', letterSpacing: -0.4 },
+  portionConf: { fontSize: 11.5, fontWeight: '600' },
+  portionHint: { fontSize: 11, fontWeight: '600', marginTop: 8, opacity: 0.9 },
+  stepBtn: {
+    width: 44, height: 44, borderRadius: 14,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#2E8B57',
+  },
+  stepBtnTxt: { color: '#fff', fontSize: 24, fontWeight: '900', lineHeight: 26 },
   descBlock: { gap: 6, marginTop: 4 },
   descHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   descLabel: {
@@ -893,6 +1334,24 @@ const styles = StyleSheet.create({
   healthGradeTxt: { color: '#fff', fontSize: 22, fontWeight: '900' },
   healthVerdict: { fontSize: 16, fontWeight: '800' },
   healthSub: { fontSize: 11, fontWeight: '600', marginTop: 1 },
+  objCard: { borderRadius: 16, borderWidth: 1.5, padding: 12, gap: 6, marginTop: 4 },
+  objHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  objIcon: { fontSize: 18 },
+  objTitle: { flex: 1, fontSize: 15, fontWeight: '800' },
+  objReasons: { gap: 2 },
+  objReason: { fontSize: 12.5, lineHeight: 17, fontWeight: '500' },
+  budgetLine: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 10, marginTop: 4 },
+  shareBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, borderWidth: 1.5, paddingVertical: 10, marginTop: 4 },
+  shareBtnTxt: { fontSize: 14, fontWeight: '800' },
+  budgetIcon: { fontSize: 16 },
+  budgetText: { flex: 1, fontSize: 13, lineHeight: 18, fontWeight: '600' },
+  correctLink: { alignSelf: 'center', paddingVertical: 8, marginTop: 6 },
+  correctLinkTxt: { fontSize: 12.5, fontWeight: '600', textDecorationLine: 'underline' },
+  correctBox: { flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'center' },
+  correctInput: { flex: 1, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14 },
+  correctSend: { backgroundColor: '#2E8B57', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10 },
+  correctSendTxt: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  correctDoneTxt: { fontSize: 13, fontWeight: '600', textAlign: 'center', marginTop: 8 },
   qrWrap: { flexDirection: 'row', gap: 12, marginTop: 4 },
   qrBlock: { flex: 1, gap: 3 },
   qrHead: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 },
@@ -930,14 +1389,14 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.light.primary,
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
   },
   disabledBtn: {
-    backgroundColor: Colors.light.gray[200],
+    backgroundColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
     shadowOpacity: 0,
     elevation: 0,
   },

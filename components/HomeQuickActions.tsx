@@ -10,9 +10,9 @@ import { useTranslation } from '../lib/i18n';
 const GREEN = '#2E8B57';
 
 const TXT: any = {
-  en: { title: 'Quick start', notif: 'Notifications', log: 'Log a meal', diary: 'Diary', workout: 'Workout', races: 'Virtual races', journal: 'Journal', coach: 'AI Coach' },
-  fr: { title: 'Lance-toi', notif: 'Notifications', log: 'Logger un repas', diary: 'Journal repas', workout: 'Séance', races: 'Courses virtuelles', journal: 'Journal', coach: 'Coach IA' },
-  ar: { title: 'انطلق', notif: 'الإشعارات', log: 'سجّل وجبة', diary: 'يوميات الطعام', workout: 'تمرين', races: 'سباقات افتراضية', journal: 'اليوميات', coach: 'مدرب AI' },
+  en: { title: 'Quick start', notif: 'Notifications', log: 'Log a meal', diary: 'Diary', workout: 'Workout', races: 'Virtual races', journal: 'Journal', coach: 'AI Coach', a11yOpen: 'Open' },
+  fr: { title: 'Lance-toi', notif: 'Notifications', log: 'Logger un repas', diary: 'Journal repas', workout: 'Séance', races: 'Courses virtuelles', journal: 'Journal', coach: 'Coach IA', a11yOpen: 'Ouvrir' },
+  ar: { title: 'انطلق', notif: 'الإشعارات', log: 'سجّل وجبة', diary: 'يوميات الطعام', workout: 'تمرين', races: 'سباقات افتراضية', journal: 'اليوميات', coach: 'مدرب AI', a11yOpen: 'فتح' },
 };
 
 export default function HomeQuickActions({ onLog }: { onLog?: () => void }) {
@@ -20,6 +20,9 @@ export default function HomeQuickActions({ onLog }: { onLog?: () => void }) {
   const { language } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0F172A';
   const chipBg = isDark ? '#243b2f' : '#EAF4EE';
@@ -36,9 +39,9 @@ export default function HomeQuickActions({ onLog }: { onLog?: () => void }) {
   return (
     <View style={[styles.card, { backgroundColor: card }]}>
       <View style={styles.header}>
-        <Bell size={16} color={GREEN} />
+        <Bell size={16} color={accent} />
         <Text style={[styles.title, { color: text }]}>{t.title}</Text>
-        <TouchableOpacity onPress={() => router.push('/notifications' as any)} hitSlop={8}>
+        <TouchableOpacity onPress={() => router.push('/notifications' as any)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.notif}>
           <Text style={styles.link}>{t.notif}</Text>
         </TouchableOpacity>
       </View>
@@ -46,8 +49,8 @@ export default function HomeQuickActions({ onLog }: { onLog?: () => void }) {
         {ACTIONS.map((a, i) => {
           const Icon = a.icon;
           return (
-            <TouchableOpacity key={i} style={[styles.chip, { backgroundColor: chipBg }]} activeOpacity={0.85} onPress={a.onPress}>
-              <Icon size={18} color={GREEN} />
+            <TouchableOpacity key={i} style={[styles.chip, { backgroundColor: chipBg }]} activeOpacity={0.85} onPress={a.onPress} accessibilityRole="button" accessibilityLabel={`${t.a11yOpen} ${a.label}`}>
+              <Icon size={18} color={accent} />
               <Text style={[styles.chipTxt, { color: text }]}>{a.label}</Text>
             </TouchableOpacity>
           );

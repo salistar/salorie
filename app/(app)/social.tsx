@@ -1,24 +1,74 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, TextInput, ActivityIndicator, Image } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
-import { ArrowLeft, Trophy, UserPlus, Flame } from 'lucide-react-native';
+import { ArrowLeft, Trophy, UserPlus, Flame, MoreVertical } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useFormTheme } from '../../components/FormKit';
+import { FlashList } from '@shopify/flash-list';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { loadEngagement } from '../../lib/engagement';
 import { publishStats, addFriend, getLeaderboard, LeaderRow } from '../../lib/social';
+import { getFriendsFeed, getKudosStatesBatch, toggleKudos, FeedItem } from '../../lib/socialFeed';
+import { rowDir, txtAlign } from '../../lib/rtl';
+import { SkeletonCard, Skeleton } from '../../components/ui';
+import { useScreenGate } from '../../components/FeatureGate';
+import ModerationSheet from '../../components/ModerationSheet';
+import { getBlockedSet } from '../../lib/moderation';
 
 const MEDAL = ['🥇', '🥈', '🥉'];
+
+// Chaînes LOCALES trilingues (convention : pas de clés i18n.tsx pour les NOUVELLES strings).
+const FEED_STR = {
+  section: { en: 'Activity feed', fr: "Fil d'actualité", ar: 'آخر الأنشطة' },
+  empty: {
+    en: "No recent friend activity yet. They'll appear here once your friends start logging.",
+    fr: "Aucune activité récente. Elle apparaîtra ici dès que tes amis commencent à logger.",
+    ar: 'لا توجد أنشطة حديثة بعد. ستظهر هنا بمجرد أن يبدأ أصدقاؤك التسجيل.',
+  },
+  // Libellés par type d'event (verbe d'action). Fallback générique sinon.
+  types: {
+    meal_logged: { en: 'logged a meal', fr: 'a loggé un repas', ar: 'سجّل وجبة' },
+    activity_logged: { en: 'logged an activity', fr: 'a loggé une activité', ar: 'سجّل نشاطًا' },
+    weight_logged: { en: 'logged a weigh-in', fr: 'a pesé', ar: 'سجّل وزنه' },
+    run_completed: { en: 'finished a run', fr: 'a terminé une course', ar: 'أنهى جريًا' },
+    race_completed: { en: 'finished a race', fr: 'a terminé une course', ar: 'أنهى سباقًا' },
+    race_joined: { en: 'joined a race', fr: 'a rejoint une course', ar: 'انضم إلى سباق' },
+    challenge_joined: { en: 'joined a challenge', fr: 'a rejoint un défi', ar: 'انضم إلى تحدٍّ' },
+    fast_completed: { en: 'completed a fast', fr: 'a terminé un jeûne', ar: 'أكمل صيامًا' },
+    activity: { en: 'was active', fr: 'a été actif', ar: 'كان نشطًا' },
+  } as Record<string, { en: string; fr: string; ar: string }>,
+  ago: {
+    now: { en: 'just now', fr: "à l'instant", ar: 'الآن' },
+    m: { en: 'm ago', fr: 'min', ar: 'د' },
+    h: { en: 'h ago', fr: 'h', ar: 'س' },
+    d: { en: 'd ago', fr: 'j', ar: 'ي' },
+  },
+};
+
+// "il y a …" très léger, trilingue.
+function timeAgo(ms: number, lang: 'en' | 'fr' | 'ar'): string {
+  if (!ms) return '';
+  const diff = Math.max(0, Date.now() - ms);
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return FEED_STR.ago.now[lang];
+  if (min < 60) return lang === 'en' ? `${min}${FEED_STR.ago.m.en}` : `${min} ${FEED_STR.ago.m[lang]}`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return lang === 'en' ? `${h}${FEED_STR.ago.h.en}` : `${h} ${FEED_STR.ago.h[lang]}`;
+  const d = Math.floor(h / 24);
+  return lang === 'en' ? `${d}${FEED_STR.ago.d.en}` : `${d} ${FEED_STR.ago.d[lang]}`;
+}
 
 export default function SocialScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
-  const { t, language } = useTranslation() as any;
+  const { t, language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const th = useFormTheme(); // couleurs FormKit (bordure input harmonisée)
+  const __gate = useScreenGate('social');
 
   const [rows, setRows] = useState<LeaderRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,10 +76,17 @@ export default function SocialScreen() {
   const [msg, setMsg] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
+  // Feed social + kudos
+  const [feed, setFeed] = useState<FeedItem[]>([]);
+  const [feedLoading, setFeedLoading] = useState(true);
+  const [kudos, setKudos] = useState<Record<string, { count: number; mine: boolean }>>({});
+  const [kudosBusy, setKudosBusy] = useState<Record<string, boolean>>({});
+  const [modTarget, setModTarget] = useState<FeedItem | null>(null); // item en cours de signalement/blocage
+
   const email = user?.primaryEmailAddress?.emailAddress || '';
 
   const load = useCallback(async () => {
-    if (!email) { setLoading(false); return; }
+    if (!email) { setLoading(false); setFeedLoading(false); return; }
     try {
       const eng = await loadEngagement(email, language);
       const name = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.fullName || email.split('@')[0];
@@ -40,7 +97,40 @@ export default function SocialScreen() {
     } finally {
       setLoading(false);
     }
+    // Feed (indépendant du leaderboard pour ne rien casser si l'un échoue).
+    try {
+      const blk = await getBlockedSet(email); // masque le contenu des utilisateurs bloqués
+      const items = (await getFriendsFeed(email)).filter((it) => !blk.has(it.ownerDocId));
+      setFeed(items);
+      // Charge l'état kudos de chaque item (best-effort, en parallèle).
+      // Lecture GROUPEE (fix N+1) : ~1 requete par tranche de 10 activites au lieu de
+      // 2 requetes par activite (60 requetes pour 30 items, a chaque focus de l'ecran).
+      setKudos(await getKudosStatesBatch(items, email));
+    } catch (e) {
+      console.warn('[social] feed load failed', e);
+    } finally {
+      setFeedLoading(false);
+    }
   }, [email, language, user]);
+
+  const onKudos = async (it: FeedItem) => {
+    if (kudosBusy[it.id]) return;
+    const cur = kudos[it.id] || { count: 0, mine: false };
+    setKudosBusy((b) => ({ ...b, [it.id]: true }));
+    // Optimiste : on bascule immédiatement l'UI.
+    setKudos((k) => ({
+      ...k,
+      [it.id]: { count: Math.max(0, cur.count + (cur.mine ? -1 : 1)), mine: !cur.mine },
+    }));
+    try {
+      const next = await toggleKudos(it.ownerDocId, it.id, email, cur.mine);
+      setKudos((k) => ({ ...k, [it.id]: next }));
+    } catch {
+      setKudos((k) => ({ ...k, [it.id]: cur })); // rollback
+    } finally {
+      setKudosBusy((b) => ({ ...b, [it.id]: false }));
+    }
+  };
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
@@ -60,11 +150,26 @@ export default function SocialScreen() {
   const text = isDark ? '#fff' : Colors.light.gray[900];
   const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
   const card = isDark ? Colors.dark.card : '#fff';
-  const bg = isDark ? '#000' : 'transparent';
+  const bg = isDark ? '#0f1419' : 'transparent';
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      {/* FlashList : le fil était rendu par `.map()` dans un ScrollView — aucune
+          virtualisation, et chaque ligne porte un avatar distant. Le CLASSEMENT (liste
+          courte, bornée aux amis) passe en ListHeaderComponent : on garde ainsi un seul
+          conteneur défilant au lieu d'imbriquer deux listes, ce que React Native
+          déconseille explicitement. */}
+      <FlashList
+        data={feedLoading ? [] : feed}
+        keyExtractor={(it: FeedItem) => `${it.ownerDocId}_${it.id}`}
+        estimatedItemSize={88}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        ListHeaderComponent={
+          <>
         <View style={styles.topRow}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
             <ArrowLeft size={22} color={text} />
@@ -73,7 +178,7 @@ export default function SocialScreen() {
         </View>
 
         <View style={styles.titleRow}>
-          <Trophy size={26} color={Colors.light.primary} />
+          <Trophy size={26} color={isDark ? Colors.dark.primary : Colors.light.primary} />
           <Text style={[styles.title, { color: text }]}>{t('social.title')}</Text>
         </View>
         <Text style={[styles.subtitle, { color: sub }]}>{t('social.subtitle')}</Text>
@@ -101,10 +206,14 @@ export default function SocialScreen() {
 
         {/* Leaderboard */}
         {loading ? (
-          <View style={styles.loadingBox}><ActivityIndicator size="large" color={Colors.light.primary} /></View>
+          <View style={{ marginTop: 8 }}>
+            <SkeletonCard height={72} />
+            <SkeletonCard height={72} />
+            <SkeletonCard height={72} />
+          </View>
         ) : rows.length <= 1 ? (
           <View style={[styles.emptyBox, { backgroundColor: card }]}>
-            <Trophy size={36} color={Colors.light.gray[300]} />
+            <Trophy size={36} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} />
             <Text style={[styles.emptySub, { color: sub }]}>{t('social.empty')}</Text>
           </View>
         ) : (
@@ -129,16 +238,76 @@ export default function SocialScreen() {
             ))}
           </View>
         )}
-      </ScrollView>
+
+        {/* Fil d'actualité / آخر الأنشطة */}
+        <Text style={[styles.section, { color: text, marginTop: 26 }]}>{FEED_STR.section[language as 'en' | 'fr' | 'ar']}</Text>
+          </>
+        }
+        ListEmptyComponent={
+          feedLoading ? (
+          <View style={{ marginTop: 8 }}>
+            <SkeletonCard height={72} />
+            <SkeletonCard height={72} />
+          </View>
+          ) : (
+          <View style={[styles.emptyBox, { backgroundColor: card }]}>
+            <Text style={[styles.emptySub, { color: sub }]}>{FEED_STR.empty[language as 'en' | 'fr' | 'ar']}</Text>
+          </View>
+          )
+        }
+        renderItem={({ item: it }: { item: FeedItem }) => {
+              const k = kudos[it.id] || { count: 0, mine: false };
+              const label = (FEED_STR.types[it.type] || FEED_STR.types.activity)[language as 'en' | 'fr' | 'ar'];
+              const when = timeAgo(it.at, language as 'en' | 'fr' | 'ar');
+              return (
+                <View key={`${it.ownerDocId}_${it.id}`} style={[styles.feedRow, { backgroundColor: card, flexDirection: rowDir(isRTL) }]}>
+                  {it.imageUrl ? (
+                    <Image source={{ uri: it.imageUrl }} style={styles.avatar} />
+                  ) : (
+                    <View style={[styles.avatar, styles.avatarPh]}><Text style={styles.avatarTxt}>{(it.name || '?').charAt(0).toUpperCase()}</Text></View>
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.feedName, { color: text, textAlign: txtAlign(isRTL) }]} numberOfLines={1}>
+                      {it.name} <Text style={{ color: sub, fontWeight: '600' }}>{label}</Text>
+                    </Text>
+                    {!!when && <Text style={[styles.feedTime, { color: sub, textAlign: txtAlign(isRTL) }]}>{when}</Text>}
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.kudosBtn, { borderColor: k.mine ? Colors.light.primary : th.border, backgroundColor: k.mine ? Colors.light.primaryLight : 'transparent', flexDirection: rowDir(isRTL) }]}
+                    onPress={() => onKudos(it)}
+                    disabled={!!kudosBusy[it.id]}
+                  >
+                    <Text style={styles.kudosEmoji}>👏</Text>
+                    <Text style={[styles.kudosCount, { color: k.mine ? Colors.light.primary : sub }]}>{k.count}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setModTarget(it)} hitSlop={8} style={{ paddingHorizontal: 4, paddingVertical: 6 }} accessibilityLabel="Signaler ou bloquer">
+                    <MoreVertical size={18} color={sub} />
+                  </TouchableOpacity>
+                </View>
+              );
+        }}
+      />
+      <ModerationSheet
+        visible={!!modTarget}
+        onClose={() => setModTarget(null)}
+        targetType="feed"
+        targetId={modTarget?.id || ''}
+        targetOwnerDocId={modTarget?.ownerDocId}
+        targetName={modTarget?.name}
+        reporterEmail={email}
+        onBlocked={(owner) => setFeed((f) => f.filter((x) => x.ownerDocId !== owner))}
+      />
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 60 },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.light.gray[50] },
+  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 30, fontWeight: '900', letterSpacing: -1 },
   subtitle: { fontSize: 14, marginTop: 8, marginBottom: 14, lineHeight: 20 },
@@ -154,13 +323,19 @@ const styles = StyleSheet.create({
   emptyBox: { borderRadius: 18, padding: 26, alignItems: 'center', gap: 12 },
   emptySub: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, padding: 12, marginBottom: 10 },
-  rowMe: { borderWidth: 2, borderColor: Colors.light.primary },
+  rowMe: { borderWidth: 2, borderColor: isDark ? Colors.dark.primary : Colors.light.primary },
   rank: { width: 30, textAlign: 'center', fontSize: 18, fontWeight: '900', color: '#64748B' },
-  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.light.gray[100] },
-  avatarPh: { alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.light.primaryLight },
-  avatarTxt: { fontSize: 18, fontWeight: '800', color: Colors.light.primary },
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100] },
+  avatarPh: { alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight },
+  avatarTxt: { fontSize: 18, fontWeight: '800', color: isDark ? Colors.dark.primary : Colors.light.primary },
   name: { fontSize: 16, fontWeight: '800' },
   daysTracked: { fontSize: 12, marginTop: 2 },
   streakWrap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   streakNum: { fontSize: 18, fontWeight: '900' },
+  feedRow: { alignItems: 'center', gap: 12, borderRadius: 16, padding: 12, marginBottom: 10 },
+  feedName: { fontSize: 15, fontWeight: '800' },
+  feedTime: { fontSize: 12, marginTop: 2 },
+  kudosBtn: { alignItems: 'center', gap: 6, borderWidth: 1.5, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
+  kudosEmoji: { fontSize: 16 },
+  kudosCount: { fontSize: 14, fontWeight: '800' },
 });

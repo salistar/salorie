@@ -2,7 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 import * as Linking from 'expo-linking';
 import { ClerkProvider, ClerkLoaded, ClerkLoading, useAuth, useUser, useSession } from '@clerk/clerk-expo';
 import { Slot, useRouter, useSegments, useRootNavigationState } from 'expo-router';
-import { useEffect, useState, Component } from 'react';
+import { useEffect, useMemo, useRef, useState, Component } from 'react';
 import { ActivityIndicator, View, Text, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CONFIG } from '../constants/config';
@@ -28,6 +28,8 @@ initLogCapture();
 // magenta = meta-explication).
 printLogLegend();
 import { LoggingProvider } from '../lib/LoggingContext';
+import { FlagsProvider } from '../lib/FlagsContext';
+import { RouteFlagGate } from '../components/FeatureGate';
 import { ThemeProvider, useTheme } from '../lib/ThemeContext';
 import { I18nProvider, useTranslation } from '../lib/i18n';
 import { NotificationService } from '../lib/NotificationService';
@@ -42,14 +44,8 @@ const tokenCache = {
   async getToken(key: string) {
     try {
       const item = await SecureStore.getItemAsync(key);
-      if (item) {
-        console.log(`${key} was used 🔐 \n`);
-      } else {
-        console.log('No values stored under key: ' + key);
-      }
       return item;
     } catch (error) {
-      console.error('SecureStore get item error: ', error);
       await SecureStore.deleteItemAsync(key);
       return null;
     }
@@ -427,23 +423,31 @@ function InitialLayout() {
   // ActionMenu a persiste {uri, at} dans AsyncStorage. On verifie ici des
   // que la nav root est prete et on redirige vers /scan-analysis pour
   // reprendre la ou l utilisateur s est arrete.
+  // FIX anti-boucle (audit) : (1) UNE seule tentative de reprise par démarrage (ref) —
+  // avant, chaque churn de rootNavState.key relançait l'effet et ré-émettait le replace ;
+  // (2) la clé est CONSOMMÉE AVANT de naviguer (elle n'était supprimée que bien plus tard
+  // par scan-analysis → les re-runs re-naviguaient en boucle, en ping-pong avec l'effet
+  // redirect) ; (3) émission différée hors du commit en cours.
+  const scanResumedRef = useRef(false);
   useEffect(() => {
-    if (!rootNavState?.key || !isSignedIn) return;
+    if (!rootNavState?.key || !isSignedIn || scanResumedRef.current) return;
     (async () => {
       try {
         const raw = await AsyncStorage.getItem('pending_scan_v1');
         if (!raw) return;
+        scanResumedRef.current = true;                       // une seule reprise par boot
+        await AsyncStorage.removeItem('pending_scan_v1');    // consommer AVANT de naviguer
         const { uri, at } = JSON.parse(raw);
         const ageMs = Date.now() - (at || 0);
         console.log('\x1b[33m[RootLayout] pending_scan_v1 detecte au demarrage\x1b[0m', { uri, ageMs });
         if (ageMs > 5 * 60 * 1000) {
-          console.log('\x1b[31m[RootLayout] pending_scan trop vieux (>5min) — on supprime sans reprendre\x1b[0m');
-          await AsyncStorage.removeItem('pending_scan_v1');
+          console.log('\x1b[31m[RootLayout] pending_scan trop vieux (>5min) — supprime sans reprendre\x1b[0m');
           return;
         }
-        console.log('\x1b[35m  ↳ [pourquoi] Android a tue l app pendant que la camera etait ouverte. On avait persiste l URI — on reprend scan-analysis AUTOMATIQUEMENT pour ne pas perdre la photo.\x1b[0m');
         console.log('\x1b[33m[RootLayout] REPRISE : router.replace(/scan-analysis) avec\x1b[0m', uri);
-        router.replace({ pathname: '/scan-analysis' as any, params: { imageUri: uri } });
+        setTimeout(() => {
+          try { router.replace({ pathname: '/scan-analysis' as any, params: { imageUri: uri } }); } catch {}
+        }, 0);
       } catch (e: any) {
         console.warn('[RootLayout] pending_scan resume failed:', e?.message);
       }
@@ -451,46 +455,81 @@ function InitialLayout() {
   }, [rootNavState?.key, isSignedIn]);
 
   // Handle Redirection — single source of truth is `status`.
+  // RÉÉCRIT (audit anti-boucle) — 5 protections, chacune adossée à un mécanisme observé :
+  //  1. DÉCLARATIF : on calcule UNE cible depuis (status, segments) puis on compare à la
+  //     route courante — plus aucune décision sur un `segments` périmé de closure.
+  //  2. ÉTAT TRANSITOIRE IGNORÉ : pendant un reset inter-groupes, segments passe par
+  //     []/index — on attend un état stable au lieu de le traiter comme « pas à destination ».
+  //  3. VERROU IDEMPOTENT : une cible n'est émise qu'UNE fois tant qu'elle n'est pas atteinte.
+  //  4. ÉMISSION DIFFÉRÉE (setTimeout 0) : jamais de router.replace pendant le commit de
+  //     montage (~90 routes) — c'est ce qui empilait les updates imbriquées (> 50 → crash).
+  //  5. welcome vit DANS (app) → détection par inclusion, et (app) compte comme « dans
+  //     l'app » pour un utilisateur onboardé (sinon il serait éjecté de chaque écran).
+  const lastRedirectRef = useRef<string>('');
+  const paywallShownRef = useRef(false);
   useEffect(() => {
     if (!rootNavState?.key) return;
+    const seg = segments as string[];
+    if (status === 'pending') return; // on ne sait pas encore → jamais de redirect
 
-    // Fast-path: optimistic flag says onboarded and the status already reflects
-    // that. Jump to /(tabs) even before Clerk finishes loading.
-    const inTabs = segments[0] === '(tabs)';
+    // IMPORTANT : segments VIDE = route racine `app/index.tsx` (le passthrough) — c'est
+    // l'état NORMAL du boot et il DOIT être redirigé (une garde « transitoire » ici
+    // bloquait le boot sur l'index transparent). Le churn de transition est déjà couvert
+    // par le verrou + l'émission différée + la ré-évaluation quand segments se pose.
+    const here = seg[0] || 'index';
+    const inWelcome = seg.includes('welcome');
+    let target: string | null = null;
+
     if (status === 'onboarded') {
-      const inOauthCallback = segments[0] === 'oauth-callback';
-      if (!inTabs && !inOauthCallback) {
-        router.replace('/(tabs)' as any);
+      const inApp = here === '(tabs)' || (here === '(app)' && !inWelcome);
+      if (here === 'oauth-callback' || !inApp) target = '/(tabs)';
+    } else if (status === 'signed-out') {
+      if (here === 'oauth-callback') return; // OAuth en cours — ne pas interférer
+      if (here !== '(auth)' && !inWelcome) target = '/welcome';
+    } else if (status === 'not-onboarded') {
+      if (here !== '(onboarding)') target = '/(onboarding)';
+    }
+
+    if (!target) { lastRedirectRef.current = ''; return; } // à destination → verrou libéré
+    if (lastRedirectRef.current === target) return;        // déjà émis — nav en cours
+
+    // FIN D'ONBOARDING (race-free) : finishOnboarding écrit le flag `onboarded_{email}`
+    // AVANT de naviguer vers (tabs), mais `status` (état local) est encore 'not-onboarded'
+    // à ce moment-là → sans ce check, on renvoyait l'utilisateur AU DÉBUT de l'onboarding
+    // qu'il vient de terminer. On consulte le cache AVANT d'émettre ce redirect.
+    if (target === '/(onboarding)') {
+      const email = user?.primaryEmailAddress?.emailAddress?.toLowerCase() || '';
+      (async () => {
+        try {
+          const v = email ? await AsyncStorage.getItem(`onboarded_${email}`) : null;
+          if (v === 'true') { setStatus('onboarded'); return; } // onboarding déjà fini → pas de bounce
+        } catch {}
+        if (lastRedirectRef.current === '/(onboarding)') return;
+        lastRedirectRef.current = '/(onboarding)';
+        setTimeout(() => {
+          if (lastRedirectRef.current !== '/(onboarding)') return;
+          try { router.replace('/(onboarding)' as any); } catch {}
+        }, 0);
+      })();
+      return;
+    }
+
+    lastRedirectRef.current = target;
+    const desired = target;
+    console.log('[Redirect]', status, ':', seg.join('/') || '/', '->', desired);
+    // ÉMISSION DIFFÉRÉE SANS ANNULATION : un cleanup qui clearTimeout créait une course —
+    // si une dep churnait dans la même frame, l'émission était annulée ALORS QUE le verrou
+    // restait posé → plus jamais de replace → app figée sur l'index transparent. Le verrou
+    // garantit déjà l'unicité ; on skippe uniquement si une AUTRE cible a supersédé celle-ci.
+    setTimeout(() => {
+      if (lastRedirectRef.current !== desired) return; // supersédée entre-temps
+      try { router.replace(desired as any); } catch {}
+      if (desired === '/(tabs)' && !paywallShownRef.current) {
+        paywallShownRef.current = true; // one-shot par session (était ré-appelé à chaque churn)
         PurchasesService.showPaywallIfNeeded();
-      } else if (inOauthCallback) {
-        router.replace('/(tabs)' as any);
       }
-      return;
-    }
-
-    // Pending = we don't know yet. NEVER redirect to /(onboarding) from here.
-    if (status === 'pending') return;
-
-    console.log('[Redirect] status:', status, 'segments:', segments[0] || '/');
-
-    const inAuthGroup = segments[0] === '(auth)';
-    const inOnboardingGroup = segments[0] === '(onboarding)';
-
-    if (status === 'signed-out') {
-      const inWelcome = segments[0] === 'welcome';
-      const inOauthCallback = segments[0] === 'oauth-callback';
-      if (inOauthCallback) return;
-      if (!inAuthGroup && !inWelcome) {
-        router.replace('/welcome' as any);
-      }
-      return;
-    }
-
-    // status === 'not-onboarded' — ONLY reached after Firebase explicitly said so
-    if (status === 'not-onboarded' && !inOnboardingGroup) {
-      router.replace('/(onboarding)' as any);
-    }
-  }, [status, rootNavState?.key]);
+    }, 0);
+  }, [status, rootNavState?.key, segments.join('/')]);
 
   // Initialize Notifications only (user sync is handled in the onboarding-check
   // effect above, to avoid a race that would create an empty Firestore doc
@@ -546,15 +585,33 @@ function InitialLayout() {
 
   const bgColor = resolved === 'dark' ? '#000000' : Colors.light.white;
 
+  // FIX DÉFINITIF boucle d'amplification (« Maximum update depth ») : InitialLayout est
+  // abonné à useSegments + useRootNavigationState → il re-rend à CHAQUE tick du store de
+  // navigation (~100+ pendant le montage des groupes (app)/(auth)). Comme son JSX était
+  // recréé à chaque render, CHAQUE tick re-rendait tout le sous-arbre (<Slot/> + navigateurs
+  // + ~90 routes), ce qui re-déclenchait des updates du store → feedback jusqu'à dépasser la
+  // limite React (50 updates imbriquées). En MÉMOÏSANT le sous-arbre, les re-renders
+  // d'InitialLayout deviennent des bail-outs React (même élément) → la boucle meurt.
+  const appTree = useMemo(
+    () => (
+      // `direction` drives RTL/LTR reactively — switching to/from Arabic flips the
+      // whole layout instantly, with no app restart.
+      <View style={{ flex: 1, backgroundColor: bgColor, direction: isRTL ? 'rtl' : 'ltr' }}>
+        {resolved === 'light' && <ScreenBackground />}
+        <RouteFlagGate>
+          <Slot />
+        </RouteFlagGate>
+        <ActionMenu />
+        <LogModal />
+        <SplashIntro />
+      </View>
+    ),
+    [bgColor, isRTL, resolved]
+  );
+
   return (
-    // `direction` drives RTL/LTR reactively — switching to/from Arabic flips the
-    // whole layout instantly, with no app restart.
-    <View style={{ flex: 1, backgroundColor: bgColor, direction: isRTL ? 'rtl' : 'ltr' }}>
-      {resolved === 'light' && <ScreenBackground />}
-      <Slot />
-      <ActionMenu />
-      <LogModal />
-      <SplashIntro />
+    <View style={{ flex: 1 }}>
+      {appTree}
       {showLoading && (
         <View style={{
           position: 'absolute',
@@ -592,10 +649,25 @@ function InitialLayout() {
 }
 
 // Affiche l'erreur a l'ecran au lieu d'un blanc (revele les crashes de rendu en release).
+// AUTO-RÉCUPÉRATION "Maximum update depth" : les grosses transitions (montage du groupe
+// (app) ≈ 90 routes) peuvent générer un PIC transitoire d'updates nav qui effleure la
+// limite React (~50 updates imbriquées). Le pic retombe tout seul (vérifié : le compteur
+// de renders se stabilise) mais sans récupération l'ErrorBoundary figeait l'app sur
+// l'écran d'erreur. On remonte donc l'arbre après 300 ms — PLAFONNÉ à 3 tentatives pour
+// ne jamais masquer une vraie boucle infinie (les 2 vraies boucles, welcome + redirects
+// répétés, sont corrigées à la source dans InitialLayout).
 class ErrorBoundary extends Component<{ children: any }, { error: Error | null }> {
   state: { error: Error | null } = { error: null };
+  private depthRetries = 0;
   static getDerivedStateFromError(error: Error) { return { error }; }
-  componentDidCatch(error: Error) { try { console.log('[ErrorBoundary]', error?.message, error?.stack); } catch {} }
+  componentDidCatch(error: Error) {
+    try { console.log('[ErrorBoundary]', error?.message, error?.stack); } catch {}
+    const msg = String(error?.message || '');
+    if (msg.includes('Maximum update depth') && this.depthRetries < 3) {
+      this.depthRetries += 1;
+      setTimeout(() => { try { this.setState({ error: null }); } catch {} }, 300);
+    }
+  }
   render() {
     if (this.state.error) {
       return (
@@ -636,7 +708,9 @@ export default function RootLayout() {
           </ClerkLoading>
           <ClerkLoaded>
             <LoggingProvider>
-              <InitialLayout />
+              <FlagsProvider>
+                <InitialLayout />
+              </FlagsProvider>
             </LoggingProvider>
           </ClerkLoaded>
         </ClerkProvider>

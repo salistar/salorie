@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import {
 import { useLocalSearchParams, router } from 'expo-router';
 import { Clock, Dumbbell } from 'lucide-react-native';
 import { Video, ResizeMode } from 'expo-av';
-import { getLocalVideo } from '../../assets/videos/registry';
+import { hasVideo, getVideoSource, cacheInBackground, primeCacheIndex } from '../../lib/exerciseVideos';
 import { Colors } from '../../constants/Colors';
 import { getUserFromFirestore } from '../../lib/firebase';
 import { useUser } from '@clerk/clerk-expo';
@@ -169,6 +169,7 @@ export default function WorkoutDetailsScreen() {
   const { colors, resolved } = useTheme();
   const { t, language, isRTL } = useTranslation();
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   // Display name + how-to: wger-sourced exercises carry inline {en,fr,ar} maps;
   // the original catalog uses i18n keys (labelKey / lift.howto.<id>).
   const exLabel = (ex: any): string => (ex?.label ? (ex.label[language] || ex.label.en) : t(ex?.labelKey as any));
@@ -182,6 +183,12 @@ export default function WorkoutDetailsScreen() {
   const [reps, setReps] = useState(10);
   // Track exercises whose remote image failed to load so we can fall back to text.
   const [erroredImgs, setErroredImgs] = useState<Set<string>>(new Set());
+  // Vidéos dont la lecture a échoué (hors-ligne et pas encore en cache) : on retombe
+  // alors sur l'image statique de l'exercice au lieu d'un cadre noir.
+  const [videoFailed, setVideoFailed] = useState<Set<string>>(new Set());
+  // Recense les vidéos déjà en cache AVANT le premier rendu du lecteur, sinon on
+  // repartirait sur le réseau pour un fichier déjà présent en local.
+  useEffect(() => { void primeCacheIndex(); }, []);
   const [customDuration, setCustomDuration] = useState('');
   const [selectedId, setSelectedId] = useState<string>(
     type === 'run' ? RUN_ACTIVITIES[0].id : LIFT_EXERCISES[0].id
@@ -382,7 +389,7 @@ Output a single integer (e.g. 247). No explanation.`;
                     styles.activityCard,
                     { backgroundColor: cardBg, borderColor: cardBorder },
                     isSelected && {
-                      borderColor: Colors.light.primary,
+                      borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
                       backgroundColor: isDark ? '#1F2833' : Colors.light.white,
                     },
                   ]}
@@ -390,7 +397,7 @@ Output a single integer (e.g. 247). No explanation.`;
                     setSelectedId(item.id);
                     colorLog('CYAN', '[WorkoutDetails] exercise chip tapped', {
                       id: item.id,
-                      hasVideo: !!getLocalVideo(item.id),
+                      hasVideo: hasVideo(item.id),
                     });
                   }}
                   activeOpacity={0.8}
@@ -411,7 +418,7 @@ Output a single integer (e.g. 247). No explanation.`;
                     style={[
                       styles.activityLabel,
                       { color: textPrimary },
-                      isSelected && { color: Colors.light.primary },
+                      isSelected && { color: isDark ? Colors.dark.primary : Colors.light.primary },
                     ]}
                     numberOfLines={1}
                   >
@@ -436,27 +443,32 @@ Output a single integer (e.g. 247). No explanation.`;
               directement en card inline (auto-play, loop, muted, controls natifs).
               Sinon on retombe sur l image statique. Plus de bouton/modal separe. */}
           <View style={[styles.heroImgWrap, { backgroundColor: cardBg }]}>
-            {getLocalVideo(selected.id) ? (
+            {hasVideo(selected.id) && !videoFailed.has(selected.id) ? (
               <Video
                 key={selected.id}
-                source={getLocalVideo(selected.id)}
+                source={getVideoSource(selected.id)!}
                 style={styles.heroImg}
                 resizeMode={ResizeMode.COVER}
                 shouldPlay
                 isLooping
                 isMuted
                 useNativeControls
-                onError={(e) =>
+                onError={(e) => {
+                  // Hors-ligne et pas encore en cache : on bascule sur l'image statique
+                  // plutôt que de laisser un cadre noir.
                   colorLog('RED', '[WorkoutDetails] hero Video ERROR', {
                     exercise: selected.id,
                     error: String(e),
-                  })
-                }
-                onLoad={() =>
+                  });
+                  setVideoFailed((s) => new Set(s).add(selected.id));
+                }}
+                onLoad={() => {
                   colorLog('GREEN', '[WorkoutDetails] hero Video LOADED', {
                     exercise: selected.id,
-                  })
-                }
+                  });
+                  // Copie locale pour les fois suivantes (et pour l'hors-ligne).
+                  void cacheInBackground(selected.id);
+                }}
               />
             ) : (selected as any).image && !erroredImgs.has(selected.id) ? (
               <Image
@@ -468,7 +480,7 @@ Output a single integer (e.g. 247). No explanation.`;
             ) : (
               // No video and no (working) image → text-only placeholder.
               <View style={styles.heroFallback}>
-                <Dumbbell size={46} color={Colors.light.primary} />
+                <Dumbbell size={46} color={isDark ? Colors.dark.primary : Colors.light.primary} />
                 <Text style={[styles.heroFallbackTxt, { color: textPrimary }]} numberOfLines={2}>
                   {exLabel(selected) || selected.id}
                 </Text>
@@ -496,7 +508,7 @@ Output a single integer (e.g. 247). No explanation.`;
                       { backgroundColor: isDark ? '#22303C' : '#FFEEED', borderColor: Colors.light.primary },
                     ]}
                   >
-                    <Text style={[styles.muscleBadgeText, { color: Colors.light.primary }]}>
+                    <Text style={[styles.muscleBadgeText, { color: isDark ? Colors.dark.primary : Colors.light.primary }]}>
                       {t(mKey as any)}
                     </Text>
                   </View>
@@ -621,7 +633,9 @@ Output a single integer (e.g. 247). No explanation.`;
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   safeArea: { flex: 1 },
   header: { paddingHorizontal: 20, paddingTop: 4, marginBottom: 4 },
   backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
@@ -727,7 +741,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    shadowColor: Colors.light.primary,
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 12,

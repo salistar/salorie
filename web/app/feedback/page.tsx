@@ -31,8 +31,8 @@ export default async function FeedbackPage() {
               <div style={{ fontSize: 10, color: '#94a3b8' }}>votes</div>
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700 }}>{r.title}</div>
-              <div style={{ fontSize: 13, color: '#475569', marginTop: 2 }}>{r.description}</div>
+              <div style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{r.title}</div>
+              <div style={{ fontSize: 13, color: '#475569', marginTop: 2, overflowWrap: 'anywhere' }}>{r.description}</div>
               <div className="foot" style={{ marginTop: 4 }}>{r.userId || r.email || '—'} · {when(r.createdAt)}{r.status ? ` · ${r.status}` : ''}</div>
             </div>
           </div>
@@ -45,7 +45,7 @@ export default async function FeedbackPage() {
         {msgs.map((m) => (
           <div key={m.id} className="card" style={{ padding: 14 }}>
             <div style={{ fontWeight: 700 }}>{m.subject || '(sans sujet)'}</div>
-            <div style={{ fontSize: 13, color: '#475569', marginTop: 4, whiteSpace: 'pre-wrap' }}>{m.message}</div>
+            <div style={{ fontSize: 13, color: '#475569', marginTop: 4, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{m.message}</div>
             <div className="foot" style={{ marginTop: 6 }}>{m.email || '—'} · {when(m.createdAt)}</div>
           </div>
         ))}

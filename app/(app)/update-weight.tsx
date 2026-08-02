@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -62,8 +62,9 @@ export default function UpdateWeightScreen() {
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
 
-  const pageBg = isDark ? '#000' : Colors.light.white;
+  const pageBg = isDark ? '#0f1419' : Colors.light.white;
   const cardBg = isDark ? Colors.dark.card : Colors.light.gray[50];
   const primaryText = isDark ? '#fff' : Colors.light.gray[900];
   const secondaryText = isDark ? '#9BA1A6' : Colors.light.gray[400];
@@ -113,7 +114,7 @@ export default function UpdateWeightScreen() {
       <View style={styles.content}>
         <Animated.View entering={FadeInDown.duration(800)} style={styles.pickerContainer}>
           <View style={[styles.iconContainer, isDark ? { backgroundColor: cardBg } : null]}>
-            <Scale size={32} color={Colors.light.primary} />
+            <Scale size={32} color={isDark ? Colors.dark.primary : Colors.light.primary} />
           </View>
           
           <RulerPicker
@@ -126,7 +127,7 @@ export default function UpdateWeightScreen() {
             unit="kg"
             width={300}
             height={150}
-            indicatorColor={Colors.light.primary}
+            indicatorColor={isDark ? Colors.dark.primary : Colors.light.primary}
             valueTextStyle={StyleSheet.flatten([styles.rulerValueText, { color: primaryText }])}
             unitTextStyle={StyleSheet.flatten([styles.rulerUnitText, { color: secondaryText }])}
           />
@@ -153,10 +154,12 @@ export default function UpdateWeightScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
   },
   header: {
     flexDirection: 'row',
@@ -172,7 +175,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
   },
   titleSection: {
     paddingHorizontal: 24,
@@ -181,12 +184,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '900',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     letterSpacing: -1,
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     fontWeight: '600',
     marginTop: 4,
   },
@@ -212,12 +215,12 @@ const styles = StyleSheet.create({
   rulerValueText: {
     fontSize: 64,
     fontWeight: '900',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
   },
   rulerUnitText: {
     fontSize: 20,
     fontWeight: '800',
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     marginTop: 10,
   },
   footer: {
@@ -232,14 +235,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    shadowColor: Colors.light.primary,
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
   },
   disabledBtn: {
-    backgroundColor: Colors.light.gray[200],
+    backgroundColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
     shadowOpacity: 0,
     elevation: 0,
   },

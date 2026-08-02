@@ -1,35 +1,45 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView, TextInput } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import BrandOverlay from '../../components/BrandOverlay';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
-import { ArrowLeft, Play, Pause, Square, MapPin, Trophy } from 'lucide-react-native';
+import { ArrowLeft, Play, Pause, Square, MapPin, Trophy, Users } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { addNutritionLog, emailToDocId, logEvent } from '../../lib/firebase';
+import { creditKm } from '../../lib/progressHooks';
+import { publishActivity } from '../../lib/socialFeed';
 import {
   listenRaceParticipants, updateRaceProgress, finishMyRace,
   addDistanceToJoinedChallenges, RaceParticipant,
 } from '../../lib/races';
+import { groupByTeam, hasTeams, setMyTeamName, normalizeTeamName, TeamMember } from '../../lib/raceTeam';
+import { Card, PrimaryButton, SecondaryButton } from '../../components/ui';
+import { spacing, radius } from '../../constants/theme';
 
 // Google Maps JS in a WebView — same approach as run.tsx (the JS API key works in a
 // WebView with a baseUrl; react-native-maps would need a Maps SDK for Android key).
-const GOOGLE_MAPS_KEY = 'AIzaSyAa1lBSroSXA-Om4mio84-SWAcmzQgYv8w';
+// Clé Maps lue depuis l'env (EXPO_PUBLIC_GOOGLE_MAPS_KEY) — plus de clé en dur dans le
+// bundle. Clé publiable côté client : DOIT être restreinte dans GCP (package + SHA-1 + API).
+const GOOGLE_MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY ?? '';
 const PRIMARY = Colors.light.primary;
 const ME_COLOR = '#22c55e';   // current user — green
 const OTHER_COLOR = '#3b82f6'; // others — blue
 
 const TXT: Record<string, any> = {
   en: { title: 'Live Race', perm: 'Location permission is required to join the race.', grant: 'Grant access', dist: 'Distance', time: 'Time', pace: 'Pace', kcal: 'Calories', start: 'Start', pause: 'Pause', resume: 'Resume', finish: 'Finish', saved: 'Race finished', savedMsg: 'kcal added to your activity for today.', waiting: 'Getting your location…', leaderboard: 'Leaderboard', you: 'You', km: 'km', done: 'finished',
-    gps: 'Real (GPS)', sim: 'Simulation', mode: 'Choose your mode', gpsHint: 'Moves only when you move', simHint: 'Auto-advances for you', avgPace: 'Avg pace', rank: 'Rank', savedToActivity: 'Saved to your activity', great: 'Great job!', viewActivity: 'View activity', close: 'Close' },
+    gps: 'Real (GPS)', sim: 'Simulation', mode: 'Choose your mode', gpsHint: 'Moves only when you move', simHint: 'Auto-advances for you', avgPace: 'Avg pace', rank: 'Rank', savedToActivity: 'Saved to your activity', great: 'Great job!', viewActivity: 'View activity', close: 'Close',
+    teamMode: 'Team mode (relay)', teamPlaceholder: 'Team name (optional)', teamSave: 'Join team', teamMine: 'Your team', teamBoard: 'Teams', indivBoard: 'Players', teamHint: 'Add a team name to compete by team — distances add up.', teamSaved: 'Team set' },
   fr: { title: 'Course en direct', perm: 'La permission de localisation est requise pour rejoindre la course.', grant: 'Autoriser', dist: 'Distance', time: 'Temps', pace: 'Allure', kcal: 'Calories', start: 'Démarrer', pause: 'Pause', resume: 'Reprendre', finish: 'Terminer', saved: 'Course terminée', savedMsg: 'kcal ajoutées à ton activité du jour.', waiting: 'Localisation en cours…', leaderboard: 'Classement', you: 'Toi', km: 'km', done: 'terminé',
-    gps: 'Réel (GPS)', sim: 'Simulation', mode: 'Choisis ton mode', gpsHint: "N'avance que si tu bouges", simHint: 'Avance toute seule', avgPace: 'Allure moy.', rank: 'Rang', savedToActivity: 'Enregistré dans ton activité', great: 'Bravo !', viewActivity: "Voir l'activité", close: 'Fermer' },
+    gps: 'Réel (GPS)', sim: 'Simulation', mode: 'Choisis ton mode', gpsHint: "N'avance que si tu bouges", simHint: 'Avance toute seule', avgPace: 'Allure moy.', rank: 'Rang', savedToActivity: 'Enregistré dans ton activité', great: 'Bravo !', viewActivity: "Voir l'activité", close: 'Fermer',
+    teamMode: 'Mode équipe (relais)', teamPlaceholder: "Nom d'équipe (optionnel)", teamSave: "Rejoindre l'équipe", teamMine: 'Ton équipe', teamBoard: 'Équipes', indivBoard: 'Joueurs', teamHint: 'Ajoute un nom d\'équipe pour jouer en équipe — les distances s\'additionnent.', teamSaved: 'Équipe définie' },
   ar: { title: 'سباق مباشر', perm: 'إذن الموقع مطلوب للانضمام إلى السباق.', grant: 'السماح', dist: 'المسافة', time: 'الوقت', pace: 'الإيقاع', kcal: 'سعرات', start: 'ابدأ', pause: 'إيقاف', resume: 'استئناف', finish: 'إنهاء', saved: 'انتهى السباق', savedMsg: 'سعرة أُضيفت إلى نشاط اليوم.', waiting: 'جارٍ تحديد موقعك…', leaderboard: 'الترتيب', you: 'أنت', km: 'كم', done: 'منتهٍ',
-    gps: 'حقيقي (GPS)', sim: 'محاكاة', mode: 'اختر الوضع', gpsHint: 'يتقدّم فقط عند الحركة', simHint: 'يتقدّم تلقائياً', avgPace: 'متوسط الإيقاع', rank: 'الترتيب', savedToActivity: 'حُفظ في نشاطك', great: 'أحسنت!', viewActivity: 'عرض النشاط', close: 'إغلاق' },
+    gps: 'حقيقي (GPS)', sim: 'محاكاة', mode: 'اختر الوضع', gpsHint: 'يتقدّم فقط عند الحركة', simHint: 'يتقدّم تلقائياً', avgPace: 'متوسط الإيقاع', rank: 'الترتيب', savedToActivity: 'حُفظ في نشاطك', great: 'أحسنت!', viewActivity: 'عرض النشاط', close: 'إغلاق',
+    teamMode: 'وضع الفريق (تتابع)', teamPlaceholder: 'اسم الفريق (اختياري)', teamSave: 'انضم إلى الفريق', teamMine: 'فريقك', teamBoard: 'الفرق', indivBoard: 'اللاعبون', teamHint: 'أضف اسم فريق للتنافس بالفرق — تُجمع المسافات.', teamSaved: 'تم تحديد الفريق' },
 };
 
 type LatLng = { lat: number; lng: number };
@@ -120,6 +130,9 @@ export default function RaceLiveScreen() {
   const [participants, setParticipants] = useState<RaceParticipant[]>([]);
   const [mode, setMode] = useState<'gps' | 'sim'>('gps'); // réel (GPS, bouge si on bouge) ou simulation (avance auto)
   const [summary, setSummary] = useState<{ km: string; kcal: number; mmss: string; pace: string; rank: number } | null>(null);
+  const [teamInput, setTeamInput] = useState('');        // saisie locale du nom d'équipe (optionnel)
+  const [teamSaved, setTeamSaved] = useState(false);     // ack visuel après enregistrement
+  const [boardTab, setBoardTab] = useState<'players' | 'teams'>('players'); // onglet du classement
 
   const subRef = useRef<Location.LocationSubscription | null>(null);
   const lastPt = useRef<LatLng | null>(null);
@@ -230,6 +243,13 @@ export default function RaceLiveScreen() {
     try {
       if (raceId && email) await finishMyRace(raceId, email);
       if (email && km > 0) await addDistanceToJoinedChallenges(email, km);
+      // Course de groupe LIVE = effort GPS réel → crédite les compteurs comme un run solo
+      // (défi annuel / XP avatar / Sadaqa / O2O) + feed social. addDistanceToJoinedChallenges
+      // ne fait PAS creditKm → aucun double-comptage. Best-effort.
+      if (email && km > 0) {
+        creditKm(km).catch(() => {});
+        publishActivity(email, { type: 'race_finished', km }).catch(() => {});
+      }
     } catch (e) { console.warn('[race-live] finish failed', e); }
     // Résumé designé (remplace l'Alert basique)
     const myRank = (sorted.findIndex((p) => p.email === email) + 1) || 1;
@@ -252,7 +272,7 @@ export default function RaceLiveScreen() {
   const text = isDark ? '#fff' : Colors.light.gray[900];
   const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
   const card = isDark ? Colors.dark.card : '#fff';
-  const bg = isDark ? '#000' : '#fff';
+  const bg = isDark ? '#0f1419' : '#fff';
 
   const html = useMemo(() => (center ? buildHtml(center) : ''), [center]);
 
@@ -261,6 +281,30 @@ export default function RaceLiveScreen() {
     [participants]
   );
   const medals = ['🥇', '🥈', '🥉'];
+
+  // ── Mode équipe (relais) ──
+  // teamName est porté par le doc participant (champ optionnel) ; on dérive donc
+  // tout depuis le snapshot live, pour rester cohérent avec le suivi individuel.
+  const teamGroups = useMemo(() => groupByTeam(participants as TeamMember[]), [participants]);
+  const anyTeams = useMemo(() => hasTeams(participants as TeamMember[]), [participants]);
+  const myTeam = useMemo(() => {
+    const me = (participants as TeamMember[]).find((p) => p.email === email);
+    return normalizeTeamName(me?.teamName);
+  }, [participants, email]);
+
+  // Pré-remplit l'input avec mon équipe serveur (si je l'ai déjà rejointe).
+  useEffect(() => {
+    if (myTeam && !teamInput) setTeamInput(myTeam);
+  }, [myTeam]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const saveTeam = async () => {
+    const clean = normalizeTeamName(teamInput);
+    if (!clean || !raceId || !email) return;
+    await setMyTeamName(raceId, email, clean);
+    setTeamSaved(true);
+    setBoardTab('teams');
+    setTimeout(() => setTeamSaved(false), 2000);
+  };
 
   if (perm === 'denied') {
     return (
@@ -300,19 +344,49 @@ export default function RaceLiveScreen() {
       {/* Live leaderboard */}
       <View style={[styles.board, { backgroundColor: card }, isRTL && { left: undefined, right: 12 }]}>
         <Text style={[styles.boardTitle, { color: text, textAlign: isRTL ? 'right' : 'left' }]}>{t.leaderboard}</Text>
+        {/* Onglets Joueurs / Équipes — l'onglet Équipes n'apparaît que s'il y a au moins une équipe. */}
+        {anyTeams && (
+          <View style={[styles.tabRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+            {(['players', 'teams'] as const).map((tab) => {
+              const active = boardTab === tab;
+              return (
+                <TouchableOpacity key={tab} activeOpacity={0.85} onPress={() => setBoardTab(tab)}
+                  style={[styles.tab, { backgroundColor: active ? PRIMARY : (isDark ? '#1f2937' : '#f1f5f9') }]}>
+                  <Text style={[styles.tabTxt, { color: active ? '#fff' : sub }]} numberOfLines={1}>
+                    {tab === 'players' ? t.indivBoard : t.teamBoard}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
         <ScrollView style={{ maxHeight: 180 }} showsVerticalScrollIndicator={false}>
-          {sorted.map((p, i) => {
-            const mine = p.email === email;
-            return (
-              <View key={p.email || i} style={[styles.boardRow, mine && { backgroundColor: isDark ? '#14321f' : '#ecfdf3' }, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                <Text style={styles.boardRank}>{medals[i] || `${i + 1}`}</Text>
-                <Text numberOfLines={1} style={[styles.boardName, { color: mine ? ME_COLOR : text, textAlign: isRTL ? 'right' : 'left' }]}>
-                  {mine ? t.you : (p.name || '—')}{p.finished ? ` · ${t.done}` : ''}
-                </Text>
-                <Text style={[styles.boardKm, { color: sub }]}>{((p.distanceM || 0) / 1000).toFixed(2)} {t.km}</Text>
-              </View>
-            );
-          })}
+          {boardTab === 'teams' && anyTeams
+            ? teamGroups.map((g, i) => {
+                const mine = !!myTeam && g.team.toLowerCase() === myTeam.toLowerCase();
+                return (
+                  <View key={g.team || i} style={[styles.boardRow, mine && { backgroundColor: isDark ? '#14321f' : '#ecfdf3' }, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                    <Text style={styles.boardRank}>{medals[i] || `${i + 1}`}</Text>
+                    <Text numberOfLines={1} style={[styles.boardName, { color: mine ? ME_COLOR : text, textAlign: isRTL ? 'right' : 'left' }]}>
+                      {g.team} · {g.members.length}👥
+                    </Text>
+                    <Text style={[styles.boardKm, { color: sub }]}>{g.totalKm.toFixed(2)} {t.km}</Text>
+                  </View>
+                );
+              })
+            : sorted.map((p, i) => {
+                const mine = p.email === email;
+                const tn = normalizeTeamName((p as TeamMember).teamName);
+                return (
+                  <View key={p.email || i} style={[styles.boardRow, mine && { backgroundColor: isDark ? '#14321f' : '#ecfdf3' }, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                    <Text style={styles.boardRank}>{medals[i] || `${i + 1}`}</Text>
+                    <Text numberOfLines={1} style={[styles.boardName, { color: mine ? ME_COLOR : text, textAlign: isRTL ? 'right' : 'left' }]}>
+                      {mine ? t.you : (p.name || '—')}{tn ? ` · ${tn}` : ''}{p.finished ? ` · ${t.done}` : ''}
+                    </Text>
+                    <Text style={[styles.boardKm, { color: sub }]}>{((p.distanceM || 0) / 1000).toFixed(2)} {t.km}</Text>
+                  </View>
+                );
+              })}
         </ScrollView>
       </View>
 
@@ -323,32 +397,71 @@ export default function RaceLiveScreen() {
           <Stat label={t.pace} value={paceStr} unit="/km" text={text} sub={sub} />
           <Stat label={t.kcal} value={`${kcal}`} unit="kcal" text={text} sub={sub} />
         </View>
-        {/* Sélecteur de mode (avant départ) : Réel GPS vs Simulation */}
+        {/* Mode équipe (relais) — nom d'équipe optionnel, avant départ. */}
         {status === 'idle' && (
-          <View style={styles.modeRow}>
-            {(['gps', 'sim'] as const).map((m) => {
-              const active = mode === m;
-              return (
-                <TouchableOpacity key={m} activeOpacity={0.85} onPress={() => setMode(m)}
-                  style={[styles.modeChip, { borderColor: active ? PRIMARY : (isDark ? '#334155' : '#e2e8f0'), backgroundColor: active ? (isDark ? '#14321f' : '#ecfdf3') : 'transparent' }]}>
-                  <Text style={[styles.modeChipTitle, { color: active ? PRIMARY : text }]}>{m === 'gps' ? t.gps : t.sim}</Text>
-                  <Text style={[styles.modeChipHint, { color: sub }]} numberOfLines={1}>{m === 'gps' ? t.gpsHint : t.simHint}</Text>
-                </TouchableOpacity>
-              );
-            })}
+          <View style={styles.teamWrap}>
+            <View style={[styles.teamLabelRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+              <Users size={15} color={PRIMARY} />
+              <Text style={[styles.teamLabel, { color: text, textAlign: isRTL ? 'right' : 'left' }]}>{t.teamMode}</Text>
+            </View>
+            <View style={[styles.teamRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+              <TextInput
+                value={teamInput}
+                onChangeText={setTeamInput}
+                placeholder={t.teamPlaceholder}
+                placeholderTextColor={sub}
+                maxLength={24}
+                style={[styles.teamInput, { color: text, borderColor: isDark ? '#334155' : '#e2e8f0', backgroundColor: isDark ? '#0f1419' : '#f8fafc', textAlign: isRTL ? 'right' : 'left' }]}
+              />
+              <TouchableOpacity activeOpacity={0.85} onPress={saveTeam} disabled={!normalizeTeamName(teamInput)}
+                style={[styles.teamBtn, { opacity: normalizeTeamName(teamInput) ? 1 : 0.5 }]}>
+                <Text style={styles.teamBtnTxt} numberOfLines={1}>{teamSaved ? t.teamSaved : t.teamSave}</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={[styles.teamHint, { color: sub, textAlign: isRTL ? 'right' : 'left' }]}>{t.teamHint}</Text>
           </View>
         )}
+        {/* Sélecteur de mode (avant départ) : Réel GPS vs Simulation — segmented control (Card + SecondaryButton row) */}
+        {status === 'idle' && (
+          <Card variant="outline" padded={false} style={styles.modeCard}>
+            <View style={styles.modeSegRow}>
+              {(['gps', 'sim'] as const).map((m) => {
+                const active = mode === m;
+                return (
+                  <SecondaryButton
+                    key={m}
+                    title={m === 'gps' ? t.gps : t.sim}
+                    onPress={() => setMode(m)}
+                    size="sm"
+                    style={[
+                      styles.modeSeg,
+                      active
+                        ? { backgroundColor: isDark ? '#14321f' : '#ecfdf3', borderColor: PRIMARY }
+                        : { borderColor: 'transparent' },
+                    ]}
+                  />
+                );
+              })}
+            </View>
+            <Text style={[styles.modeSegHint, { color: sub, textAlign: isRTL ? 'right' : 'left' }]} numberOfLines={1}>
+              {mode === 'gps' ? t.gpsHint : t.simHint}
+            </Text>
+          </Card>
+        )}
         <View style={styles.controls}>
+          {/* Action principale (Start → Pause/Resume) en PrimaryButton ; actions secondaires (Finish) en SecondaryButton row dessous. */}
           {status === 'idle' && (
-            <TouchableOpacity style={styles.bigBtn} onPress={() => startTracking(mode)}><Play size={26} color="#fff" fill="#fff" /><Text style={styles.bigBtnTxt}>{t.start}</Text></TouchableOpacity>
+            <PrimaryButton title={t.start} onPress={() => startTracking(mode)} icon={<Play size={22} color="#fff" fill="#fff" />} />
           )}
           {status === 'running' && (
-            <TouchableOpacity style={[styles.bigBtn, { backgroundColor: '#f59e0b' }]} onPress={pause}><Pause size={26} color="#fff" fill="#fff" /><Text style={styles.bigBtnTxt}>{t.pause}</Text></TouchableOpacity>
+            <PrimaryButton title={t.pause} onPress={pause} icon={<Pause size={22} color="#fff" fill="#fff" />} style={{ backgroundColor: '#f59e0b' }} />
           )}
           {status === 'paused' && (
             <>
-              <TouchableOpacity style={[styles.bigBtn, { flex: 1 }]} onPress={() => startTracking(mode)}><Play size={24} color="#fff" fill="#fff" /><Text style={styles.bigBtnTxt}>{t.resume}</Text></TouchableOpacity>
-              <TouchableOpacity style={[styles.bigBtn, { flex: 1, backgroundColor: '#ef4444' }]} onPress={finish}><Square size={22} color="#fff" fill="#fff" /><Text style={styles.bigBtnTxt}>{t.finish}</Text></TouchableOpacity>
+              <PrimaryButton title={t.resume} onPress={() => startTracking(mode)} icon={<Play size={22} color="#fff" fill="#fff" />} />
+              <View style={styles.controlsSecondary}>
+                <SecondaryButton title={t.finish} onPress={finish} icon={<Square size={18} color="#ef4444" fill="#ef4444" />} style={{ borderColor: '#ef4444' }} />
+              </View>
             </>
           )}
         </View>
@@ -409,6 +522,9 @@ const styles = StyleSheet.create({
   back: { position: 'absolute', top: 50, left: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
   board: { position: 'absolute', top: 50, left: 12, width: 220, borderRadius: 18, padding: 12, paddingBottom: 8, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 },
   boardTitle: { fontSize: 14, fontWeight: '900', marginBottom: 8, marginLeft: 50 },
+  tabRow: { gap: 6, marginBottom: 8 },
+  tab: { flex: 1, paddingVertical: 5, borderRadius: 9, alignItems: 'center' },
+  tabTxt: { fontSize: 11.5, fontWeight: '800' },
   boardRow: { alignItems: 'center', paddingVertical: 5, paddingHorizontal: 6, borderRadius: 10, gap: 8 },
   boardRank: { fontSize: 14, fontWeight: '800', width: 22, textAlign: 'center', color: '#888' },
   boardName: { flex: 1, fontSize: 13, fontWeight: '700' },
@@ -418,13 +534,26 @@ const styles = StyleSheet.create({
   stat: { alignItems: 'center', flex: 1 },
   statVal: { fontSize: 23, fontWeight: '900', letterSpacing: -1 },
   statLabel: { fontSize: 11, fontWeight: '600', marginTop: 3 },
-  controls: { flexDirection: 'row', gap: 12 },
+  controls: { gap: spacing.sm },
+  controlsSecondary: { flexDirection: 'row', gap: spacing.sm },
   bigBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: PRIMARY, paddingVertical: 18, borderRadius: 18 },
   bigBtnTxt: { color: '#fff', fontSize: 17, fontWeight: '800' },
+  teamWrap: { marginBottom: 14 },
+  teamLabelRow: { alignItems: 'center', gap: 6, marginBottom: 8 },
+  teamLabel: { fontSize: 14, fontWeight: '800', flex: 1 },
+  teamRow: { gap: 8, alignItems: 'center' },
+  teamInput: { flex: 1, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, fontWeight: '600' },
+  teamBtn: { backgroundColor: PRIMARY, paddingHorizontal: 14, paddingVertical: 11, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  teamBtnTxt: { color: '#fff', fontSize: 13, fontWeight: '800' },
+  teamHint: { fontSize: 11, fontWeight: '600', marginTop: 6, lineHeight: 15 },
   modeRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
   modeChip: { flex: 1, borderRadius: 16, borderWidth: 2, paddingVertical: 12, paddingHorizontal: 12, alignItems: 'center', gap: 2 },
   modeChipTitle: { fontSize: 15, fontWeight: '900' },
   modeChipHint: { fontSize: 11, fontWeight: '600' },
+  modeCard: { marginBottom: 14, padding: spacing.xs },
+  modeSegRow: { flexDirection: 'row', gap: spacing.xs },
+  modeSeg: { flex: 1, borderRadius: radius.md },
+  modeSegHint: { fontSize: 11, fontWeight: '600', marginTop: spacing.sm, marginHorizontal: spacing.xs, marginBottom: spacing.xs },
   sumOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center', padding: 28 },
   sumCard: { width: '100%', maxWidth: 380, borderRadius: 28, padding: 26, alignItems: 'center', gap: 6 },
   sumIcon: { width: 76, height: 76, borderRadius: 38, backgroundColor: '#FEF3E0', alignItems: 'center', justifyContent: 'center', marginBottom: 6 },

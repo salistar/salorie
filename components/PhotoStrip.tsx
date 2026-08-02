@@ -7,31 +7,41 @@ import { View, Text, ScrollView, Image, StyleSheet } from 'react-native';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
 
+// Vraies photos premium (royalty-free bundlées) — remplacent les illustrations génériques
+// pour un rendu haut de gamme et varié, cohérent avec les héros (constants/heroImages).
 const I = {
-  healthy_food: require('../assets/images/illustrations/healthy_food.jpg'),
-  plan: require('../assets/images/illustrations/plan.jpg'),
-  generating: require('../assets/images/illustrations/generating.jpg'),
-  dashboard_cover: require('../assets/images/illustrations/dashboard_cover.jpg'),
-  dashboard_bg: require('../assets/images/illustrations/dashboard_bg.jpg'),
-  analytics_cover: require('../assets/images/illustrations/analytics_cover.jpg'),
-  measure: require('../assets/images/illustrations/measure.jpg'),
-  scale: require('../assets/images/illustrations/scale.jpg'),
-  workout: require('../assets/images/illustrations/workout.jpg'),
-  running: require('../assets/images/illustrations/running.jpg'),
-  weightlifting: require('../assets/images/illustrations/weightlifting.jpg'),
-  gain_weight: require('../assets/images/illustrations/gain_weight.jpg'),
-  lose_weight: require('../assets/images/illustrations/lose_weight.jpg'),
-  welcome: require('../assets/images/illustrations/welcome.jpg'),
-  profile_cover: require('../assets/images/illustrations/profile_cover.jpg'),
-  birthdate: require('../assets/images/illustrations/birthdate.jpg'),
+  food: require('../assets/images/photos/food_0.jpg'),
+  food2: require('../assets/images/photos/food_2.jpg'),
+  salad: require('../assets/images/photos/salad_0.jpg'),
+  salad2: require('../assets/images/photos/salad_2.jpg'),
+  mealprep: require('../assets/images/photos/mealprep_0.jpg'),
+  mealprep2: require('../assets/images/photos/mealprep_2.jpg'),
+  veggies: require('../assets/images/photos/veggies_0.jpg'),
+  fruits: require('../assets/images/photos/fruits_0.jpg'),
+  fruits2: require('../assets/images/photos/fruits_2.jpg'),
+  moroccan: require('../assets/images/photos/moroccan_0.jpg'),
+  moroccan2: require('../assets/images/photos/moroccan_2.jpg'),
+  tajine: require('../assets/images/photos/tajine_0.jpg'),
+  medfood: require('../assets/images/photos/medfood_0.jpg'),
+  breakfast: require('../assets/images/photos/breakfast_0.jpg'),
+  smoothie: require('../assets/images/photos/smoothie_0.jpg'),
+  fish: require('../assets/images/photos/fish_0.jpg'),
+  running: require('../assets/images/photos/running_0.jpg'),
+  running2: require('../assets/images/photos/running_2.jpg'),
+  gym: require('../assets/images/photos/gym_0.jpg'),
+  gym2: require('../assets/images/photos/gym_2.jpg'),
+  yoga: require('../assets/images/photos/yoga_0.jpg'),
+  water: require('../assets/images/photos/water_0.jpg'),
+  wellness: require('../assets/images/photos/wellness_0.jpg'),
+  wellness2: require('../assets/images/photos/wellness_2.jpg'),
 };
 
 const SETS: Record<string, (keyof typeof I)[]> = {
-  food: ['healthy_food', 'plan', 'dashboard_cover', 'generating', 'measure', 'analytics_cover'],
-  sport: ['workout', 'running', 'weightlifting', 'gain_weight', 'lose_weight', 'scale'],
-  health: ['scale', 'measure', 'healthy_food', 'birthdate', 'dashboard_bg', 'profile_cover'],
-  progress: ['analytics_cover', 'dashboard_cover', 'scale', 'measure', 'gain_weight', 'lose_weight'],
-  welcome: ['welcome', 'dashboard_cover', 'healthy_food', 'workout', 'running', 'plan'],
+  food: ['food', 'salad', 'mealprep', 'moroccan', 'veggies', 'medfood'],
+  sport: ['running', 'gym', 'yoga', 'running2', 'gym2', 'wellness'],
+  health: ['wellness', 'water', 'fruits', 'smoothie', 'salad2', 'wellness2'],
+  progress: ['gym', 'running', 'mealprep2', 'veggies', 'fruits2', 'yoga'],
+  welcome: ['food2', 'moroccan2', 'salad', 'running', 'breakfast', 'fish'],
 };
 
 const TITLES: Record<string, Record<string, string>> = {
@@ -40,7 +50,7 @@ const TITLES: Record<string, Record<string, string>> = {
   ar: { food: 'إلهام', sport: 'تحرّك', health: 'صحتك', progress: 'التقدم', welcome: 'اكتشف' },
 };
 
-export default function PhotoStrip({ category = 'food', showTitle = true }: { category?: keyof typeof SETS; showTitle?: boolean }) {
+function PhotoStrip({ category = 'food', showTitle = true }: { category?: keyof typeof SETS; showTitle?: boolean }) {
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
@@ -69,6 +79,11 @@ export default function PhotoStrip({ category = 'food', showTitle = true }: { ca
     </View>
   );
 }
+
+// Presentational / props-driven (category, showTitle) → memo évite les re-rendus
+// inutiles quand un parent se re-render sans changer ces props. Rendu/props inchangés.
+PhotoStrip.displayName = 'PhotoStrip';
+export default React.memo(PhotoStrip);
 
 const styles = StyleSheet.create({
   wrap: { marginVertical: 10 },

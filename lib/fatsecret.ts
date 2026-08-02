@@ -15,6 +15,41 @@ async function cacheSet(key: string, v: unknown, ttlMs: number): Promise<void> {
   try { await AsyncStorage.setItem(key, JSON.stringify({ v, exp: ttlMs ? Date.now() + ttlMs : 0 })); } catch {}
 }
 
+// Lookup produit-par-code CACHÉ (barcode scan). Renvoie le `product` OFF brut
+// avec les champs dont l'écran scan a besoin (nutriments, catégories, allergens,
+// nova, image), ou null si introuvable. Le produit étant ~immuable, on le cache
+// 30 j sous `off_prod_full_{code}` → re-scanner le même code = 0 appel réseau.
+// (clé distincte de `off_prod_{code}` de fetchProductItem qui stocke une forme
+//  réduite UI-search, pas le produit brut.)
+const OFF_PRODUCT_FIELDS =
+  'product_name,brands,categories,categories_tags,nova_group,allergens,allergens_tags,ingredients_text,nutriments,image_front_small_url';
+
+export async function lookupProductByCode(code: string): Promise<any | null> {
+  const ck = `off_prod_full_${code}`;
+  const cached = await cacheGet<any | null>(ck);
+  if (cached !== undefined) return cached; // cache on-device → 0 appel provider (y compris "introuvable")
+  const url = `https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=${OFF_PRODUCT_FIELDS}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(url, { headers: { 'User-Agent': OFF_UA, Accept: 'application/json' }, signal: controller.signal });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.status !== 1 || !data.product) {
+      // Négatif mis en cache brièvement (TTL 1 j) : évite de retaper OFF en boucle
+      // pour un code réellement absent, sans figer 30 j un ajout futur à la base.
+      cacheSet(ck, null, 24 * 3600 * 1000);
+      return null;
+    }
+    cacheSet(ck, data.product, 30 * 24 * 3600 * 1000); // produit ~immuable → cache 30 j
+    return data.product;
+  } catch {
+    return null; // timeout / réseau → non caché, retentable au prochain scan
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // S4: Food search uses OpenFoodFacts ONLY (free, no API key, no client secret).
 // The former FatSecret OAuth helpers were removed — a client secret must never
 // ship in the app bundle, and FatSecret rejects mobile IPs anyway. A server-side

@@ -1,7 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { createHash } from 'crypto';
 import { FirebaseService } from '../firebase.service';
+
+// Le docId user = email sanitisé (emailToDocId) : ne JAMAIS le journaliser en clair.
+// Hash court non réversible, suffisant pour corréler des lignes de log.
+const uidHash = (id: string) => createHash('sha1').update(String(id || '')).digest('hex').slice(0, 8);
 
 // Mirrors lib/InsightsService.ts on the app so the precomputed docs are read
 // instantly by the mobile app (0 AI on open).
@@ -114,7 +119,7 @@ Rules: summary=1 sentence; topFood=most frequent food or "—"; hydrationStatus=
           );
         }
         done++;
-      } catch (e: any) { this.logger.warn(`user ${u.id}: ${e.message}`); }
+      } catch (e: any) { this.logger.warn(`user ${uidHash(u.id)}: ${e.message}`); }
     }
     const res = { weekKey: wKey, monthKey: mKey, users: users.size, precomputed: done, skipped };
     this.logger.log(`Insights precompute done: ${JSON.stringify(res)}`);

@@ -58,6 +58,10 @@ export function useNutritionData(date: string) {
           if (log.type === 'activity') {
             acc.calories -= Number(log.calories) || 0;
           } else if (log.type === 'water') {
+            // NOTE: pour les logs `type: 'water'`, le champ `calories` porte le volume
+            // d'eau en ml (convention du modèle NutritionLog — cf. add-water.tsx où
+            // `calories: ml`, et lib/healthExport.ts). Il n'existe pas de champ `water`
+            // dédié sur le log ; on somme donc bien `calories` (= ml) dans `acc.water`.
             acc.water += Number(log.calories) || 0;
           } else {
             acc.calories += Number(log.calories) || 0;

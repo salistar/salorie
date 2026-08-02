@@ -133,12 +133,19 @@ export interface MedalParams {
 }
 
 export function buildMedalSvg(p: MedalParams): string {
-  let c: Palette = p.color ? colorPalette(p.color) : pal(p.frame);
+  // SÉCURITÉ (anti-XSS) : medalSpec peut venir d'un dto backend non whitelisté et le SVG est
+  // rendu via dangerouslySetInnerHTML côté admin -> on restreint color (hex) et customPath
+  // (caractères de path SVG uniquement). shape/metal sont déjà whitelistés plus bas.
+  const safeHex = (x?: string) => (x && /^#[0-9a-fA-F]{3,8}$/.test(x) ? x : undefined);
+  const safePath = (x?: string) => (x && /^[\sMmLlHhVvCcSsQqTtAaZz0-9.,\-eE]+$/.test(x) ? x : undefined);
+  const col = safeHex(p.color);
+  const cpath = safePath(p.customPath);
+  let c: Palette = col ? colorPalette(col) : pal(p.frame);
   if (p.metal && METALS[p.metal]) c = { ...c, ...METALS[p.metal] };
   const id = (p.frame || p.color || p.shape || 'm').replace(/[^a-z0-9]/gi, '') || 'm';
   const rank = p.rank && p.rank > 0 ? `${p.rank}ᵉ` : '—';
   const shape = (p.shape && (SHAPES as readonly string[]).includes(p.shape)) ? (p.shape as MedalShape) : shapeFor(p.frame);
-  const outline = p.customPath ? `<path d="${p.customPath}" fill="url(#g_${id})" stroke="${c.stroke}" stroke-width="1.3"/>` : shapeLayer(shape, c, id);
+  const outline = cpath ? `<path d="${cpath}" fill="url(#g_${id})" stroke="${c.stroke}" stroke-width="1.3"/>` : shapeLayer(shape, c, id);
   const center = p.centerType === 'geo'
     ? geoCenter(c, id)
     : `<circle cx="132" cy="192" r="54" fill="${c.e2}"/><circle cx="132" cy="192" r="50" fill="url(#g_${id})"/><circle cx="132" cy="192" r="50" fill="${c.e1}" opacity="0.16"/>`;

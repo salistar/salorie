@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Modal, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Bell, Sun, Moon, Smartphone, Globe, ArrowLeft } from 'lucide-react-native';
@@ -12,6 +12,15 @@ const THEME_LABELS: Record<string, Record<string, string>> = {
   en: { light: 'Light', dark: 'Dark', system: 'System' },
   fr: { light: 'Clair', dark: 'Sombre', system: 'Système' },
   ar: { light: 'فاتح', dark: 'داكن', system: 'النظام' },
+};
+
+// A11Y #88 — libellés d'accessibilité pour les boutons icône-seule de la barre du
+// haut (retour, langue, thème, notifications). Inline FR/EN/AR car aucune clé i18n
+// dédiée n'existe ; même pattern que THEME_LABELS ci-dessus. Purement additif.
+const A11Y_LABELS: Record<string, Record<string, string>> = {
+  en: { back: 'Go back', language: 'Change language', theme: 'Change theme', notifications: 'Notifications' },
+  fr: { back: 'Retour', language: 'Changer de langue', theme: 'Changer de thème', notifications: 'Notifications' },
+  ar: { back: 'رجوع', language: 'تغيير اللغة', theme: 'تغيير السمة', notifications: 'الإشعارات' },
 };
 
 interface ScreenTopBarProps {
@@ -37,6 +46,7 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
   const btnBorder = resolved === 'dark' ? colors.gray[200] : Colors.light.gray[200];
   // Dark-aware dropdown menus (theme / language).
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const menuBg = isDark ? '#161C23' : Colors.light.white;
   const menuItemText = isDark ? '#f1f5f9' : Colors.light.gray[800];
   const menuActiveBg = isDark ? 'rgba(46,139,87,0.18)' : Colors.light.primaryLight;
@@ -48,6 +58,9 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
   };
   const ThemeIcon = themeIcons[mode];
 
+  // A11Y #88 — libellés d'accessibilité résolus selon la langue courante.
+  const a11y = A11Y_LABELS[language] || A11Y_LABELS.en;
+
   return (
     <View style={[styles.row, isRTL && { flexDirection: 'row-reverse' }]}>
       <View style={[styles.leading, isRTL && { flexDirection: 'row-reverse' }]}>
@@ -56,7 +69,7 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
             style={[styles.backBtn, { backgroundColor: btnBg, borderColor: btnBorder }]}
             onPress={() => (onBack ? onBack() : router.back())}
             accessibilityRole="button"
-            accessibilityLabel="Back"
+            accessibilityLabel={a11y.back}
           >
             <ArrowLeft size={20} color={iconColor} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
           </TouchableOpacity>
@@ -85,6 +98,8 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
         <TouchableOpacity
           style={[styles.iconBtn, { backgroundColor: btnBg, borderColor: btnBorder }]}
           onPress={() => setLangMenuOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel={a11y.language}
         >
           <Globe size={18} color={iconColor} />
           <Text style={[styles.iconBtnText, { color: iconColor }]}>
@@ -96,6 +111,8 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
         <TouchableOpacity
           style={[styles.iconBtnSquare, { backgroundColor: btnBg, borderColor: btnBorder }]}
           onPress={() => setThemeMenuOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel={a11y.theme}
         >
           <ThemeIcon size={18} color={iconColor} />
         </TouchableOpacity>
@@ -105,6 +122,8 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
           <TouchableOpacity
             style={[styles.iconBtnSquare, { backgroundColor: btnBg, borderColor: btnBorder }]}
             onPress={() => router.push('/notifications' as any)}
+            accessibilityRole="button"
+            accessibilityLabel={a11y.notifications}
           >
             <Bell size={18} color={iconColor} />
           </TouchableOpacity>
@@ -165,7 +184,9 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -234,12 +255,12 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     backgroundColor: 'rgba(255,255,255,0.8)',
     borderWidth: 1,
-    borderColor: Colors.light.gray[200],
+    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
   },
   iconBtnText: {
     fontSize: 11,
     fontWeight: '800',
-    color: Colors.light.gray[700],
+    color: isDark ? Colors.dark.gray[700] : Colors.light.gray[700],
   },
   iconBtnSquare: {
     width: 38,
@@ -249,7 +270,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.8)',
     borderWidth: 1,
-    borderColor: Colors.light.gray[200],
+    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
   },
   modalBackdrop: {
     flex: 1,
@@ -260,7 +281,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   menu: {
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     borderRadius: 16,
     padding: 8,
     gap: 4,
@@ -280,7 +301,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   menuItemActive: {
-    backgroundColor: Colors.light.primaryLight,
+    backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight,
   },
   menuItemFlag: {
     fontSize: 18,
@@ -288,9 +309,9 @@ const styles = StyleSheet.create({
   menuItemText: {
     fontSize: 15,
     fontWeight: '700',
-    color: Colors.light.gray[800],
+    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
   },
   menuItemTextActive: {
-    color: Colors.light.primary,
+    color: isDark ? Colors.dark.primary : Colors.light.primary,
   },
 });

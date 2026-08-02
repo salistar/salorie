@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -19,8 +19,7 @@ import {
   ArrowRight 
 } from 'lucide-react-native';
 import { generateNutritionalPlan, NutritionalPlan } from '../../lib/AiModel';
-import { saveUserToFirestore } from '../../lib/firebase';
-import { useUser } from '@clerk/clerk-expo';
+import { stashPendingOnboarding } from '../../lib/onboardingSave';
 import { Colors } from '../../constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation, Language } from '../../lib/i18n';
@@ -107,11 +106,11 @@ const TXT: Record<string, {
 
 export default function ResultsScreen() {
   const router = useRouter();
-  const { user } = useUser();
   const { language, setLanguage, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const params = useLocalSearchParams();
 
   const [loading, setLoading] = useState(true);
@@ -128,23 +127,26 @@ export default function ResultsScreen() {
   const pendingSave = useRef<{ profile: any; plan: any } | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // C'EST ICI qu'on valide réellement l'onboarding : sauvegarde Firestore +
-  // flag local, PUIS navigation. Tant que l'utilisateur n'a pas appuyé, RIEN
-  // n'est en base. Les deux CTA (logger un repas / plus tard) partagent ce flux
-  // pour préserver la migration/sauvegarde Firestore.
+  // On DÉPOSE le profil + plan, puis on passe au paywall — qui validera réellement
+  // l'onboarding (Firestore + flags) juste avant d'entrer dans l'app.
+  //
+  // Pourquoi ne plus écrire le flag ICI : le garde de `app/_layout.tsx` renvoie vers
+  // `/(tabs)` dès que le statut passe à `onboarded`. Le flag posé avant le paywall
+  // ferait éjecter l'utilisateur de l'écran de vente en une frame. Tant qu'on reste
+  // `not-onboarded` dans le groupe `(onboarding)`, le garde ne touche à rien.
+  // Voir lib/onboardingSave.ts. Si le paywall n'a rien à vendre, il s'efface et
+  // enchaîne tout seul → parcours identique à avant.
   const finishOnboarding = async (destination: string) => {
     if (saving) return;
     setSaving(true);
     try {
       const ps = pendingSave.current;
-      const email = user?.primaryEmailAddress?.emailAddress || '';
-      if (user && email && ps) {
-        await saveUserToFirestore({ id: user.id, email, ...ps.profile, nutritionalPlan: ps.plan, onboarded: true });
-        await AsyncStorage.setItem(`onboarded_${email.toLowerCase()}`, 'true');
-        await AsyncStorage.setItem('last_session_onboarded', 'true');
-      }
-    } catch (e) { console.warn('[Onboarding] finish save failed', e); }
-    router.replace(destination as any);
+      if (ps) await stashPendingOnboarding(ps);
+    } catch (e) { console.warn('[Onboarding] stash failed', e); }
+    router.push({
+      pathname: '/(onboarding)/premium' as any,
+      params: { next: destination, kcal: String(plan?.dailyCalories ?? '') },
+    });
   };
 
   useEffect(() => {
@@ -207,20 +209,20 @@ export default function ResultsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: isDark ? '#000' : Colors.light.white }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: isDark ? '#0f1419' : Colors.light.white }]}>
         <Image
           source={require('../../assets/images/illustrations/generating.jpg')}
           style={{ width: 180, height: 180, borderRadius: 90, marginBottom: 20 }}
         />
-        <Sparkles size={40} color={Colors.light.primary} style={styles.aiIcon} />
+        <Sparkles size={40} color={isDark ? Colors.dark.primary : Colors.light.primary} style={styles.aiIcon} />
         <Text style={[styles.loadingTitle, { color: isDark ? '#fff' : Colors.light.gray[800] }]}>{t.generating}</Text>
         <View style={styles.stepsList}>
           {steps.map((step, index) => (
             <View key={index} style={[styles.stepItem, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: isDark ? Colors.dark.card : Colors.light.gray[50] }]}>
               {step.status === 'completed' ? (
-                <CheckCircle size={24} color={Colors.light.primary} />
+                <CheckCircle size={24} color={isDark ? Colors.dark.primary : Colors.light.primary} />
               ) : step.status === 'loading' ? (
-                <ActivityIndicator size="small" color={Colors.light.primary} />
+                <ActivityIndicator size="small" color={isDark ? Colors.dark.primary : Colors.light.primary} />
               ) : (
                 <View style={styles.pendingDot} />
               )}
@@ -240,7 +242,7 @@ export default function ResultsScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#000' : 'transparent' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0f1419' : 'transparent' }]}>
       <ScreenTopBar showNotif={false} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
@@ -248,14 +250,14 @@ export default function ResultsScreen() {
             source={require('../../assets/images/illustrations/plan.jpg')}
             style={styles.heroImage}
           />
-          <CheckCircle size={48} color={Colors.light.primary} style={{ marginTop: 12 }} />
+          <CheckCircle size={48} color={isDark ? Colors.dark.primary : Colors.light.primary} style={{ marginTop: 12 }} />
           <Text style={[styles.title, { color: isDark ? '#fff' : Colors.light.gray[800] }]}>{t.yourPlan}</Text>
           <Text style={[styles.subtitle, { color: isDark ? '#9BA1A6' : Colors.light.gray[500] }]}>{t.planSubtitle}</Text>
         </View>
 
         <View style={[styles.card, { backgroundColor: isDark ? Colors.dark.card : '#fff' }]}>
           <View style={[styles.caloriesRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-            <Flame size={32} color={Colors.light.primary} />
+            <Flame size={32} color={isDark ? Colors.dark.primary : Colors.light.primary} />
             <View>
               <Text style={[styles.label, { color: isDark ? '#9BA1A6' : Colors.light.gray[500], textAlign: isRTL ? 'right' : 'left' }]}>{t.dailyCalories}</Text>
               <Text style={[styles.value, { color: isDark ? '#fff' : Colors.light.gray[800], textAlign: isRTL ? 'right' : 'left' }]}>{plan?.dailyCalories} kcal</Text>
@@ -292,7 +294,7 @@ export default function ResultsScreen() {
           <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : Colors.light.gray[800], textAlign: isRTL ? 'right' : 'left' }]}>{t.aiAdvice}</Text>
           {plan?.advice.map((item, index) => (
             <View key={index} style={[styles.adviceItem, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: isDark ? Colors.dark.card : '#fff' }]}>
-              <Zap size={20} color={Colors.light.secondary} />
+              <Zap size={20} color={isDark ? Colors.dark.secondary : Colors.light.secondary} />
               <Text style={[styles.adviceText, { color: isDark ? '#9BA1A6' : Colors.light.gray[700], textAlign: isRTL ? 'right' : 'left' }]}>{item}</Text>
             </View>
           ))}
@@ -315,7 +317,9 @@ export default function ResultsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -338,11 +342,11 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: 'rgba(255,255,255,0.7)',
     borderWidth: 1,
-    borderColor: Colors.light.gray[200],
+    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
   },
   langPillActive: {
     backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primary,
+    borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
   },
   langPillText: {
     fontSize: 14,
@@ -355,13 +359,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     padding: 24,
   },
   loadingTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: Colors.light.gray[800],
+    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
     marginBottom: 32,
   },
   stepsList: {
@@ -374,20 +378,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
     padding: 16,
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     borderRadius: 16,
   },
   stepLabel: {
     fontSize: 16,
-    color: Colors.light.gray[500],
+    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
     fontWeight: '500',
   },
   stepLabelActive: {
-    color: Colors.light.gray[800],
+    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
     fontWeight: '700',
   },
   stepLabelCompleted: {
-    color: Colors.light.primary,
+    color: isDark ? Colors.dark.primary : Colors.light.primary,
     fontWeight: '600',
   },
   pendingDot: {
@@ -395,7 +399,7 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: Colors.light.gray[200],
+    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
   },
   aiIcon: {
     marginBottom: 20,
@@ -416,18 +420,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: Colors.light.gray[800],
+    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
     marginTop: 16,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.light.gray[500],
+    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
     marginTop: 8,
     textAlign: 'center',
   },
   card: {
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     borderRadius: 24,
     padding: 24,
     shadowColor: '#000',
@@ -444,12 +448,12 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.gray[500],
+    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
   },
   value: {
     fontSize: 24,
     fontWeight: '800',
-    color: Colors.light.gray[800],
+    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
   },
   macrosRow: {
     flexDirection: 'row',
@@ -457,7 +461,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingTop: 24,
     borderTopWidth: 1,
-    borderTopColor: Colors.light.gray[100],
+    borderTopColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
   },
   macroItem: {
     alignItems: 'center',
@@ -465,14 +469,14 @@ const styles = StyleSheet.create({
   macroLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     marginBottom: 4,
     textTransform: 'uppercase',
   },
   macroValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.primary,
+    color: isDark ? Colors.dark.primary : Colors.light.primary,
   },
   adviceSection: {
     marginTop: 32,
@@ -480,14 +484,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.light.gray[800],
+    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
     marginBottom: 16,
   },
   adviceItem: {
     flexDirection: 'row',
     gap: 12,
     marginBottom: 12,
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     padding: 16,
     borderRadius: 16,
     alignItems: 'center',
@@ -495,14 +499,14 @@ const styles = StyleSheet.create({
   adviceText: {
     flex: 1,
     fontSize: 14,
-    color: Colors.light.gray[700],
+    color: isDark ? Colors.dark.gray[700] : Colors.light.gray[700],
     lineHeight: 20,
   },
   bottomBar: {
     paddingHorizontal: 24,
     paddingBottom: 24,
     paddingTop: 12,
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
   },
   finishButton: {
     backgroundColor: Colors.light.primary,
@@ -512,7 +516,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
-    shadowColor: Colors.light.primary,
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.2,
     shadowRadius: 10,

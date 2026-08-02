@@ -1,11 +1,11 @@
 // Vision ON-DEVICE partagée (tier 1 de la cascade scan : ON-DEVICE → LOCAL DB → GEMINI).
 // Classifieur on-device partagé (utilisé par scan-analysis, tier 1 de la cascade).
-// Classification TFLite MobileNet (food_v1, 2024 classes) + lookup macros hors-ligne
-// dans assets/data/local-foods.json (502 aliments FR/AR + k/p/c/f).
+// Classification TFLite (food_salorie, 70 classes marocaines/MENA, fine-tune MFOOD-70 ~86%)
+// + lookup macros hors-ligne dans assets/data/local-foods.json (FR/AR + k/p/c/f).
 import * as ImageManipulator from 'expo-image-manipulator';
 import { decode as jpegDecode } from 'jpeg-js';
 import { Buffer } from 'buffer';
-import { FOOD_LABELS } from './foodLabels';
+import { FOOD_SALORIE_LABELS as FOOD_LABELS } from './foodSalorieLabels';
 
 export type Pred = { label: string; score: number };
 
@@ -13,7 +13,7 @@ let modelPromise: Promise<any> | null = null;
 async function getModel() {
   if (!modelPromise) {
     const { loadTensorflowModel } = await import('react-native-fast-tflite');
-    modelPromise = loadTensorflowModel(require('../assets/models/food_v1.tflite'));
+    modelPromise = loadTensorflowModel(require('../assets/models/food_salorie.tflite'));
   }
   return modelPromise;
 }
@@ -38,14 +38,15 @@ export async function classifyOnDevice(uri: string): Promise<Pred[]> {
     input = new Uint8Array(px * 3);
     for (let i = 0, j = 0; i < px; i++) { input[j++] = data[i * 4]; input[j++] = data[i * 4 + 1]; input[j++] = data[i * 4 + 2]; }
   } else {
+    // food_salorie intègre déjà le preprocessing MobileNetV2 → il attend des pixels BRUTS 0..255 (pas de /255)
     input = new Float32Array(px * 3);
-    for (let i = 0, j = 0; i < px; i++) { input[j++] = data[i * 4] / 255; input[j++] = data[i * 4 + 1] / 255; input[j++] = data[i * 4 + 2] / 255; }
+    for (let i = 0, j = 0; i < px; i++) { input[j++] = data[i * 4]; input[j++] = data[i * 4 + 1]; input[j++] = data[i * 4 + 2]; }
   }
 
   const out = await model.run([input]);
   const probs: ArrayLike<number> = out[0];
   const idx: number[] = [];
-  for (let i = 1; i < probs.length; i++) idx.push(i); // ignore index 0 (__background__)
+  for (let i = 0; i < probs.length; i++) idx.push(i); // food_salorie : pas de classe __background__, on part de 0
   idx.sort((a, b) => (probs[b] as number) - (probs[a] as number));
   const max = probs[idx[0]] as number;
   const norm = (v: number) => (max > 1 ? v / 255 : v);

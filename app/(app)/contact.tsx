@@ -62,7 +62,10 @@ export default function Contact() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#f3f6f4';
+  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // dark officiel (contraste correct sur fond sombre).
+  const accent = isDark ? '#4ade80' : GREEN;
+  const bg = isDark ? '#0f1419' : '#f3f6f4';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#1B2A33';
   const sub = isDark ? '#94a3b8' : '#667085';
@@ -96,7 +99,7 @@ export default function Contact() {
   if (sent) {
     return (
       <SafeAreaView style={[s.safe, { backgroundColor: bg }]}><ScreenTopBar />
-        <View style={s.done}><Check size={48} color={GREEN} /><Text style={[s.doneTxt, { color: text }]}>{t.doneTxt}</Text>
+        <View style={s.done}><Check size={48} color={accent} /><Text style={[s.doneTxt, { color: text }]}>{t.doneTxt}</Text>
           <Text style={[s.doneSub, { color: sub }]}>{t.doneSub}</Text>
           <TouchableOpacity style={s.btn} onPress={() => { setSent(false); setSubject(''); setMessage(''); }}><Text style={s.btnTxt}>{t.newMessage}</Text></TouchableOpacity>
         </View>
@@ -107,7 +110,7 @@ export default function Contact() {
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: bg }]}><ScreenTopBar />
       <ScrollView contentContainerStyle={s.body}>
-        <View style={s.head}><MessagesSquare size={26} color={GREEN} /><Text style={[s.title, { color: text }]}>{t.title}</Text></View>
+        <View style={s.head}><MessagesSquare size={26} color={accent} /><Text style={[s.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[s.sub, { color: sub }, align]}>{t.sub}</Text>
         <FormCard style={{ marginTop: 18 }}>
           <FormInput label={t.subjectLabel} value={subject} onChangeText={setSubject} placeholder={t.subjectPh} />
@@ -117,7 +120,7 @@ export default function Contact() {
           <SubmitBar label={t.send} onPress={send} disabled={!message.trim()} loading={busy} />
         </View>
         <TouchableOpacity style={s.mail} onPress={() => Linking.openURL('mailto:admin@salistar.com')}>
-          <Mail size={15} color={GREEN} /><Text style={s.mailTxt}>{t.orMail}</Text>
+          <Mail size={15} color={accent} /><Text style={s.mailTxt}>{t.orMail}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

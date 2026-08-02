@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,10 @@ import {
   SafeAreaView,
   TextInput,
   Image,
+  KeyboardAvoidingView,
+  Platform,
+  Animated,
+  Easing,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -90,21 +94,22 @@ const TXT: Record<string, {
 export default function OnboardingScreen() {
   const router = useRouter();
   const { user } = useUser();
-  const { t, language } = useTranslation() as any;
+  const { t, language, isRTL } = useTranslation() as any;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const tx = TXT[language as string] || TXT.en;
   const [currentStep, setCurrentStep] = useState(0);
 
   // Palette theme-aware (accent toujours = Colors.light.primary).
   const C = {
-    bg: isDark ? '#000' : '#F8FAFC',
+    bg: isDark ? '#0f1419' : '#F8FAFC',
     card: isDark ? Colors.dark.card : Colors.light.white,
     border: isDark ? '#2d3543' : Colors.light.gray[200],
     title: isDark ? '#fff' : Colors.light.gray[800],
     sub: isDark ? '#9BA1A6' : Colors.light.gray[500],
     text: isDark ? '#fff' : Colors.light.gray[800],
-    accent: Colors.light.primary,
+    accent: isDark ? Colors.dark.primary : Colors.light.primary,
     backBtn: isDark ? Colors.dark.gray[100] : Colors.light.gray[200],
     backIcon: isDark ? '#9BA1A6' : Colors.light.gray[600],
   };
@@ -154,8 +159,36 @@ export default function OnboardingScreen() {
   };
   const canProceed = isStepValid(currentStep);
 
+  // ── TRANSITIONS ENTRE ÉTAPES ──────────────────────────────────────
+  // `stepAnim` va de 0 (hors écran) à 1 (en place). On l'anime à chaque changement
+  // d'étape ; `dirRef` mémorise le sens pour glisser dans la bonne direction.
+  // useNativeDriver: true → l'animation tourne sur le thread UI, elle reste fluide
+  // même pendant le calcul du plan.
+  const stepAnim = useRef(new Animated.Value(1)).current;
+  const dirRef = useRef(1); // 1 = on avance, -1 = on recule
+  useEffect(() => {
+    stepAnim.setValue(0);
+    Animated.timing(stepAnim, {
+      toValue: 1,
+      duration: 260,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [currentStep, stepAnim]);
+
+  const stepStyle = {
+    opacity: stepAnim,
+    transform: [{
+      translateX: stepAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [28 * dirRef.current * (isRTL ? -1 : 1), 0],
+      }),
+    }],
+  };
+
   const nextStep = () => {
     if (!canProceed) return;
+    dirRef.current = 1;
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -164,6 +197,7 @@ export default function OnboardingScreen() {
   };
 
   const prevStep = () => {
+    dirRef.current = -1;
     if (currentStep > 0) setCurrentStep(currentStep - 1);
   };
 
@@ -369,9 +403,13 @@ export default function OnboardingScreen() {
 
       {renderProgressBar()}
 
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {renderStep()}
+        <Animated.View style={stepStyle}>
+          {renderStep()}
+        </Animated.View>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <View style={styles.footer}>
         {currentStep > 0 && (
@@ -395,7 +433,9 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -536,7 +576,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
-    shadowColor: Colors.light.primary,
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
     shadowRadius: 10,

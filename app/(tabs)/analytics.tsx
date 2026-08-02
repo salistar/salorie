@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Image, TouchableOpacity, Modal, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, Image, TouchableOpacity, Modal, Dimensions } from 'react-native';
 import { TrendingUp, TrendingDown, Minus, Scale, Check, Circle, ChevronRight, X } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { useAnalyticsData } from '../../hooks/useAnalyticsData';
+import { computeWeightTrend } from '../../lib/analyticsCompute';
 import { router, useFocusEffect } from 'expo-router';
 import { BentoInsight } from '../../lib/AiModel';
 import { useTranslation } from '../../lib/i18n';
@@ -11,10 +12,12 @@ import { getInsights, pickLang, StoredInsight, InsightScope } from '../../lib/In
 import { emailToDocId, fetchAllUserData } from '../../lib/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenTopBar from '../../components/ScreenTopBar';
-import BrandBanner from '../../components/BrandBanner';
 import MlInsightsCard from '../../components/MlInsightsCard';
 import MacroTargets from '../../components/MacroTargets';
 import CollapsibleSection from '../../components/CollapsibleSection';
+import { ScreenTitle, Skeleton, SkeletonCard, HeroImage } from '../../components/ui';
+import { HERO } from '../../constants/heroImages';
+import { spacing, radius } from '../../constants/theme';
 import { useTheme } from '../../lib/ThemeContext';
 import { useUser } from '@clerk/clerk-expo';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
@@ -26,14 +29,26 @@ import { BarChart, LineChart } from 'react-native-chart-kit';
 
 export default function AnalyticsScreen() {
   const { user } = useUser();
-  const { t, language } = useTranslation();
+  const { t, language, isRTL } = useTranslation() as any;
 
   // Local FR/EN/AR strings for the score explanation (D3) + empty-state CTA (D4).
   // Inline to avoid touching the shared i18n file.
   const ASTR: Record<string, Record<string, string>> = {
-    en: { banner_title: 'Your Progress', banner_sub: 'Trends, streaks and AI insights from your week.', score_hint: 'What is this?', score_info_title: 'Your Health Score', score_info_body: 'A 0–100 score based on your consistency, nutrition balance, hydration and activity this week. Log meals, water and workouts to raise it.', log_workout: 'Log a workout', close: 'Got it', detailed_charts: 'Detailed charts' },
-    fr: { banner_title: 'Ta progression', banner_sub: 'Tendances, séries et insights IA de ta semaine.', score_hint: "C'est quoi ?", score_info_title: 'Ton Score Santé', score_info_body: "Un score de 0 à 100 basé sur ta régularité, l'équilibre nutritionnel, l'hydratation et l'activité cette semaine. Logge tes repas, ton eau et tes séances pour le faire monter.", log_workout: 'Logger une séance', close: 'Compris', detailed_charts: 'Graphes détaillés' },
-    ar: { banner_title: 'تقدّمك', banner_sub: 'الاتجاهات والسلاسل ورؤى الذكاء لأسبوعك.', score_hint: 'ما هذا؟', score_info_title: 'نقاط صحتك', score_info_body: 'نتيجة من 0 إلى 100 تعتمد على انتظامك وتوازن تغذيتك وترطيبك ونشاطك هذا الأسبوع. سجّل وجباتك ومياهك وتمارينك لرفعها.', log_workout: 'سجّل تمرينًا', close: 'حسنًا', detailed_charts: 'الرسوم البيانية المفصلة' },
+    en: { banner_title: 'Your Progress', banner_sub: 'Trends, streaks and AI insights from your week.', score_hint: 'What is this?', score_info_title: 'Your Health Score', score_info_body: 'A 0–100 score based on your consistency, nutrition balance, hydration and activity this week. Log meals, water and workouts to raise it.', log_workout: 'Log a workout', close: 'Got it', detailed_charts: 'Detailed charts',
+      src_computed: 'Computed · your data', src_ai: 'AI · Gemini', src_local: 'On-device',
+      expl_calories: 'Calories you ate each day this week, computed from your logged meals.',
+      expl_energy: 'Calories eaten vs burned per day. Net = eaten − burned (from your meals & workouts).',
+      expl_water: 'Your daily water intake (ml), computed from your hydration logs.' },
+    fr: { banner_title: 'Ta progression', banner_sub: 'Tendances, séries et insights IA de ta semaine.', score_hint: "C'est quoi ?", score_info_title: 'Ton Score Santé', score_info_body: "Un score de 0 à 100 basé sur ta régularité, l'équilibre nutritionnel, l'hydratation et l'activité cette semaine. Logge tes repas, ton eau et tes séances pour le faire monter.", log_workout: 'Logger une séance', close: 'Compris', detailed_charts: 'Graphes détaillés',
+      src_computed: 'Calculé · tes données', src_ai: 'IA · Gemini', src_local: "Sur l'appareil",
+      expl_calories: 'Les calories que tu as mangées chaque jour cette semaine, calculées depuis tes repas loggés.',
+      expl_energy: 'Calories consommées vs brûlées par jour. Net = consommé − brûlé (depuis tes repas & séances).',
+      expl_water: 'Ton hydratation quotidienne (ml), calculée depuis tes logs d\'eau.' },
+    ar: { banner_title: 'تقدّمك', banner_sub: 'الاتجاهات والسلاسل ورؤى الذكاء لأسبوعك.', score_hint: 'ما هذا؟', score_info_title: 'نقاط صحتك', score_info_body: 'نتيجة من 0 إلى 100 تعتمد على انتظامك وتوازن تغذيتك وترطيبك ونشاطك هذا الأسبوع. سجّل وجباتك ومياهك وتمارينك لرفعها.', log_workout: 'سجّل تمرينًا', close: 'حسنًا', detailed_charts: 'الرسوم البيانية المفصلة',
+      src_computed: 'محسوب · بياناتك', src_ai: 'ذكاء · Gemini', src_local: 'على الجهاز',
+      expl_calories: 'السعرات التي تناولتها كل يوم هذا الأسبوع، محسوبة من وجباتك المسجّلة.',
+      expl_energy: 'السعرات المتناولة مقابل المحروقة يوميًا. الصافي = المتناول − المحروق.',
+      expl_water: 'ترطيبك اليومي (مل)، محسوب من سجلات الماء.' },
   };
   const A_ = (k: string) => (ASTR[String(language)] || ASTR.en)[k] || ASTR.en[k] || k;
 
@@ -46,7 +61,8 @@ export default function AnalyticsScreen() {
   };
   const { resolved, colors } = useTheme();
   const isDark = resolved === 'dark';
-  const bgColor = isDark ? '#0B0E12' : 'transparent';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const bgColor = isDark ? '#0f1419' : 'transparent';
   // Premium + dark-aware palette (P2/P4): one accent (green) + neutral surfaces,
   // instead of the loud pink/blue/amber cards. All surfaces/text adapt to theme.
   const surface = isDark ? colors.card : '#fff';
@@ -54,6 +70,11 @@ export default function AnalyticsScreen() {
   const tPrimary = isDark ? '#fff' : Colors.light.gray[900];
   const tMuted = isDark ? '#9BA1A6' : Colors.light.gray[500];
   const greenSoft = isDark ? 'rgba(74,222,128,0.12)' : Colors.light.primaryLight;
+  // Palette graphes premium : accent primary (consommé) + neutre gris (brûlé),
+  // au lieu du violet/orange criards. rgb() extrait pour les fns chart-kit.
+  const primaryRgb = isDark ? '74,222,128' : '46,139,87';
+  const burnedRgb = isDark ? '148,163,184' : '100,116,139';
+  const burnedHex = isDark ? '#94A3B8' : '#64748B';
   const { loading, streakData, weight, weeklyLogs, refresh } = useAnalyticsData();
   const [isStreakModalVisible, setIsStreakModalVisible] = useState(false);
   const [scoreInfoVisible, setScoreInfoVisible] = useState(false);
@@ -122,31 +143,8 @@ export default function AnalyticsScreen() {
   // newest-first (fetchAllUserData uses orderBy timestamp desc). We compare the
   // average of the recent half vs the older half so a single noisy weigh-in
   // doesn't flip the badge.
-  const weightTrend = useMemo(() => {
-    const series = weightHistory
-      .map(w => (typeof w?.weight === 'number' ? w.weight : null))
-      .filter((w): w is number => w != null);
-    if (series.length < 2) return null; // not enough data to judge a direction
-
-    const recentFirst = series; // newest → oldest
-    const half = Math.max(1, Math.floor(recentFirst.length / 2));
-    const recentAvg = recentFirst.slice(0, half).reduce((a, b) => a + b, 0) / half;
-    const olderSlice = recentFirst.slice(recentFirst.length - half);
-    const olderAvg = olderSlice.reduce((a, b) => a + b, 0) / olderSlice.length;
-    const delta = recentAvg - olderAvg; // >0 rising, <0 falling
-
-    // Treat tiny changes as flat (< ~0.3 kg of net movement).
-    const direction: 'rising' | 'falling' | 'stable' =
-      Math.abs(delta) < 0.3 ? 'stable' : delta > 0 ? 'rising' : 'falling';
-
-    // Is this direction good given the user's goal?
-    let good: boolean;
-    if (goal === 'lose') good = direction === 'falling';
-    else if (goal === 'gain') good = direction === 'rising';
-    else good = direction === 'stable'; // maintain
-
-    return { direction, good, delta };
-  }, [weightHistory, goal]);
+  // logique extraite (fix audit god-component) → lib/analyticsCompute (testée unitairement)
+  const weightTrend = useMemo(() => computeWeightTrend(weightHistory, goal), [weightHistory, goal]);
 
   // Kept for compatibility with the existing Bento grid below: read the week
   // doc in the user's language.
@@ -184,7 +182,7 @@ export default function AnalyticsScreen() {
   useEffect(() => {
     const email = user?.primaryEmailAddress?.emailAddress || '';
     if (!email) return;
-    const profile = { goal: 'maintain' as const, weight: weight || 70 };
+    const profile = { goal, weight: weight || 70 }; // fix audit : objectif REEL (etait code en dur 'maintain')
 
     // Kick off all 3 scopes in parallel. Each call renders cache instantly
     // then upgrades with server/Gemini in the background. The month+all_time
@@ -205,7 +203,7 @@ export default function AnalyticsScreen() {
     )).catch(e => console.warn('[Analytics] insights load failed:', e))
       .finally(() => { if (!cancelled) setIsAiLoading(false); });
     return () => { cancelled = true; };
-  }, [user, weeklyLogs, weight]);
+  }, [user, weeklyLogs, weight, goal]);
 
   const currentStreak = streakData.filter(d => d.hasActivity).length;
 
@@ -214,11 +212,11 @@ export default function AnalyticsScreen() {
     datasets: [
       {
         data: streakData.map(d => d.consumedCalories),
-        color: (opacity = 1) => `rgba(132, 94, 194, ${opacity})`, // Consumed - Purple
+        color: (opacity = 1) => `rgba(${primaryRgb}, ${opacity})`, // Consumed - accent
       },
       {
         data: streakData.map(d => d.burnedCalories),
-        color: (opacity = 1) => `rgba(255, 153, 102, ${opacity})`, // Burned - Orange
+        color: (opacity = 1) => `rgba(${burnedRgb}, ${opacity})`, // Burned - neutral
       }
     ],
     legend: [t('analytics.consumed'), t('analytics.burned')]
@@ -233,12 +231,32 @@ export default function AnalyticsScreen() {
     backgroundGradientFrom: surface,
     backgroundGradientTo: surface,
     decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(132, 94, 194, ${opacity})`,
+    color: (opacity = 1) => `rgba(${primaryRgb}, ${opacity})`,
     labelColor: (opacity = 1) => isDark ? `rgba(155,161,166,${opacity})` : `rgba(107, 114, 128, ${opacity})`,
     style: {
       borderRadius: 16
     },
     barPercentage: 0.6,
+  };
+
+  // Bandeau source + explication sous chaque graphe (premium, sans débordement).
+  // kind 'computed' = calculé depuis les données du user (on-device) ; 'ai' = Gemini.
+  const ChartMeta = ({ kind, explainKey }: { kind: 'computed' | 'ai'; explainKey: string }) => {
+    const ai = kind === 'ai';
+    return (
+      <View style={{ marginTop: 8 }}>
+        <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row' }}>
+          <View style={{ backgroundColor: ai ? 'rgba(14,165,233,0.12)' : greenSoft, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 8 }}>
+            <Text style={{ fontSize: 9.5, fontWeight: '800', color: ai ? '#0EA5E9' : Colors.light.primary, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+              {A_(ai ? 'src_ai' : 'src_computed')}
+            </Text>
+          </View>
+        </View>
+        <Text style={{ fontSize: 12, lineHeight: 17, color: tMuted, marginTop: 6, textAlign: isRTL ? 'right' : 'left' }}>
+          {A_(explainKey)}
+        </Text>
+      </View>
+    );
   };
 
   return (
@@ -249,11 +267,10 @@ export default function AnalyticsScreen() {
       >
         <ScreenTopBar />
         <View style={styles.header}>
-          <Text style={[styles.title, { color: resolved === 'dark' ? '#fff' : Colors.light.gray[900] }]}>
-            {t('analytics.progress')}
-          </Text>
+          <ScreenTitle title={t('analytics.progress')} />
         </View>
-        <BrandBanner title={A_('banner_title')} subtitle={A_('banner_sub')} height={120} style={{ marginBottom: 16 }} />
+        <HeroImage source={HERO['analytics']} height={140} eyebrow={A_('banner_title')} title={A_('banner_sub')} />
+        <View style={{ height: spacing.lg }} />
 
         {/* Insights IA — cascade LOCAL (on-device) → BACKEND (/ml) → GEMINI.
             On passe l'historique de poids + l'objectif déjà chargés pour que le
@@ -270,7 +287,10 @@ export default function AnalyticsScreen() {
             <Animated.View entering={FadeInDown.duration(800)} style={styles.bentoSummaryCard}>
               <Text style={styles.bentoLabel}>{t('analytics.weekly_outlook')}</Text>
               {isAiLoading ? (
-                <ActivityIndicator size="small" color={Colors.light.primary} style={{ marginTop: 10 }} />
+                <View style={{ marginTop: 10, gap: 8 }}>
+                  <Skeleton width="90%" height={14} round={6} />
+                  <Skeleton width="70%" height={14} round={6} />
+                </View>
               ) : (
                 <Text style={styles.bentoValue}>{ai('summary') || t('analytics.log_more')}</Text>
               )}
@@ -329,8 +349,9 @@ export default function AnalyticsScreen() {
         </View>
 
         {loading ? (
-          <View style={styles.loadingWrapper}>
-            <ActivityIndicator size="large" color={Colors.light.primary} />
+          <View style={{ marginTop: spacing.lg }}>
+            <SkeletonCard height={220} />
+            <SkeletonCard height={220} />
           </View>
         ) : (
           <>
@@ -341,7 +362,8 @@ export default function AnalyticsScreen() {
                 <Text style={[styles.chartTitle, { color: tPrimary }]}>{t('analytics.weekly_calories')}</Text>
                 <Text style={[styles.chartSubtitle, { color: tMuted }]}>{t('analytics.daily_consumption')}</Text>
               </View>
-              
+              <ChartMeta kind="computed" explainKey="expl_calories" />
+
               <View style={styles.chartContainer}>
                 <BarChart
                   data={{
@@ -367,18 +389,19 @@ export default function AnalyticsScreen() {
                 <Text style={[styles.chartTitle, { color: tPrimary }]}>{t('analytics.weekly_energy')}</Text>
                 <Text style={[styles.chartSubtitle, { color: tMuted }]}>{t('analytics.calorie_balance')}</Text>
               </View>
+              <ChartMeta kind="computed" explainKey="expl_energy" />
 
-              <View style={styles.energySummaryRow}>
+              <View style={[styles.energySummaryRow, { backgroundColor: isDark ? '#161C23' : Colors.light.gray[50] }]}>
                 <View style={styles.energyStat}>
                   <Text style={styles.energyStatLabel}>{t('analytics.consumed')}</Text>
-                  <Text style={[styles.energyStatValue, { color: '#845EC2' }]}>{totalWeekConsumed.toLocaleString()}</Text>
+                  <Text style={[styles.energyStatValue, { color: colors.primary }]}>{totalWeekConsumed.toLocaleString()}</Text>
                 </View>
-                <View style={styles.energyStatDivider} />
+                <View style={[styles.energyStatDivider, { backgroundColor: isDark ? '#283241' : Colors.light.gray[200] }]} />
                 <View style={styles.energyStat}>
                   <Text style={styles.energyStatLabel}>{t('analytics.burned')}</Text>
-                  <Text style={[styles.energyStatValue, { color: '#FF9966' }]}>{totalWeekBurned.toLocaleString()}</Text>
+                  <Text style={[styles.energyStatValue, { color: burnedHex }]}>{totalWeekBurned.toLocaleString()}</Text>
                 </View>
-                <View style={styles.energyStatDivider} />
+                <View style={[styles.energyStatDivider, { backgroundColor: isDark ? '#283241' : Colors.light.gray[200] }]} />
                 <View style={styles.energyStat}>
                   <Text style={styles.energyStatLabel}>{t('analytics.net')}</Text>
                   <Text style={[styles.energyStatValue, { color: tPrimary }]}>{netEnergy.toLocaleString()}</Text>
@@ -407,11 +430,11 @@ export default function AnalyticsScreen() {
 
               <View style={styles.legendRow}>
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#845EC2' }]} />
+                  <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
                   <Text style={styles.legendText}>{t('analytics.consumed')}</Text>
                 </View>
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#FF9966' }]} />
+                  <View style={[styles.legendDot, { backgroundColor: burnedHex }]} />
                   <Text style={styles.legendText}>{t('analytics.burned')}</Text>
                 </View>
               </View>
@@ -423,6 +446,7 @@ export default function AnalyticsScreen() {
                 <Text style={[styles.chartTitle, { color: tPrimary }]}>{t('analytics.water_intake')}</Text>
                 <Text style={[styles.chartSubtitle, { color: tMuted }]}>{t('analytics.hydration_levels')}</Text>
               </View>
+              <ChartMeta kind="computed" explainKey="expl_water" />
 
               <View style={styles.waterSummaryRow}>
                 <View style={styles.waterStat}>
@@ -498,7 +522,7 @@ export default function AnalyticsScreen() {
                           {day.hasActivity ? (
                             <Check size={10} color={Colors.light.white} strokeWidth={4} />
                           ) : (
-                            <Circle size={10} color={Colors.light.gray[200]} />
+                            <Circle size={10} color={isDark ? Colors.dark.gray[200] : Colors.light.gray[200]} />
                           )}
                         </View>
                         <Text style={styles.dayName}>{translateDayShort(day.dayName)}</Text>
@@ -519,7 +543,7 @@ export default function AnalyticsScreen() {
               >
                 <Animated.View entering={FadeInDown.delay(200).duration(600)} style={[styles.statCard, styles.weightCard, { backgroundColor: surface, borderColor: isDark ? colors.gray[200] : Colors.light.gray[50] }]}>
                 <View style={[styles.weightIconContainer, isDark && { backgroundColor: 'rgba(74,222,128,0.12)' }]}>
-                  <Scale size={24} color={Colors.light.primary} />
+                  <Scale size={24} color={isDark ? Colors.dark.primary : Colors.light.primary} />
                 </View>
                 <View style={styles.weightValueRow}>
                   <Text style={[styles.weightValue, { color: tPrimary }]}>{weight || '--'}</Text>
@@ -543,7 +567,7 @@ export default function AnalyticsScreen() {
                 })()}
 
                 <View style={styles.nextIconContainer}>
-                  <ChevronRight size={18} color={Colors.light.gray[300]} strokeWidth={3} />
+                  <ChevronRight size={18} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} strokeWidth={3} />
                 </View>
               </Animated.View>
             </TouchableOpacity>
@@ -575,7 +599,7 @@ export default function AnalyticsScreen() {
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: tPrimary }]}>{t('analytics.daily_streak')}</Text>
               <TouchableOpacity onPress={() => setIsStreakModalVisible(false)}>
-                <X size={24} color={Colors.light.gray[400]} />
+                <X size={24} color={isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} />
               </TouchableOpacity>
             </View>
 
@@ -606,7 +630,7 @@ export default function AnalyticsScreen() {
                       {day.hasActivity ? (
                         <Check size={16} color={Colors.light.white} strokeWidth={4} />
                       ) : (
-                        <Circle size={16} color={Colors.light.gray[200]} />
+                        <Circle size={16} color={isDark ? Colors.dark.gray[200] : Colors.light.gray[200]} />
                       )}
                     </View>
                     <Text style={styles.largeDayName}>{translateDayShort(day.dayName)}</Text>
@@ -631,7 +655,7 @@ export default function AnalyticsScreen() {
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: tPrimary }]}>{A_('score_info_title')}</Text>
               <TouchableOpacity onPress={() => setScoreInfoVisible(false)}>
-                <X size={24} color={Colors.light.gray[400]} />
+                <X size={24} color={isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} />
               </TouchableOpacity>
             </View>
             <View style={styles.scoreInfoBig}>
@@ -649,7 +673,9 @@ export default function AnalyticsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -663,13 +689,10 @@ const styles = StyleSheet.create({
     paddingBottom: 140,
   },
   header: {
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 40,
-    fontWeight: '900',
-    color: Colors.light.gray[900],
-    letterSpacing: -1.5,
+    // ScreenTitle porte son propre paddingHorizontal (spacing.xl) ; on l'annule
+    // pour aligner le titre sur le padding de contenu (24).
+    marginHorizontal: -spacing.xl,
+    marginBottom: spacing.md,
   },
   loadingWrapper: {
     marginTop: 100,
@@ -685,9 +708,11 @@ const styles = StyleSheet.create({
   },
   bentoSummaryCard: {
     flex: 2,
-    backgroundColor: Colors.light.gray[900],
-    borderRadius: 24,
-    padding: 20,
+    // Fond sombre FIXE (indépendant du thème) pour garder le texte blanc lisible
+    // en clair ET en sombre (le token gray[900] s'inverse en dark → illisible).
+    backgroundColor: '#0F172A',
+    borderRadius: radius.xl,
+    padding: spacing.xl,
     minHeight: 120,
   },
   bentoScoreCard: {
@@ -700,24 +725,25 @@ const styles = StyleSheet.create({
   },
   bentoCommonCard: {
     flex: 1,
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     borderRadius: 24,
     padding: 16,
     borderWidth: 1,
-    borderColor: Colors.light.gray[100],
+    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
     minHeight: 100,
   },
   bentoFullCard: {
-    backgroundColor: '#FDF2F8',
-    borderRadius: 24,
-    padding: 20,
+    // Défaut neutre : surchargé à l'usage par greenSoft + colors.primary (theme-aware).
+    backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight,
+    borderRadius: radius.xl,
+    padding: spacing.xl,
     borderWidth: 1,
-    borderColor: '#FCE7F3',
+    borderColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight,
   },
   bentoLabel: {
     fontSize: 10,
     fontWeight: '800',
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 8,
@@ -731,7 +757,7 @@ const styles = StyleSheet.create({
   bentoSmallValue: {
     fontSize: 16,
     fontWeight: '800',
-    color: Colors.light.gray[800],
+    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
   },
   bentoScoreValue: {
     fontSize: 32,
@@ -747,7 +773,7 @@ const styles = StyleSheet.create({
   },
   scoreFill: {
     height: '100%',
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     borderRadius: 2,
   },
   scoreHint: {
@@ -760,10 +786,10 @@ const styles = StyleSheet.create({
   exerciseCta: {
     marginTop: 12,
     alignSelf: 'flex-start',
-    backgroundColor: '#065F46',
+    backgroundColor: Colors.light.primaryDark,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: radius.sm,
   },
   exerciseCtaTxt: {
     color: '#fff',
@@ -780,17 +806,17 @@ const styles = StyleSheet.create({
   scoreInfoBigValue: {
     fontSize: 56,
     fontWeight: '900',
-    color: Colors.light.primary,
+    color: isDark ? Colors.dark.primary : Colors.light.primary,
   },
   scoreInfoBigMax: {
     fontSize: 18,
     fontWeight: '800',
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
   },
   scoreInfoBody: {
     fontSize: 15,
     fontWeight: '600',
-    color: Colors.light.gray[600],
+    color: isDark ? Colors.dark.gray[600] : Colors.light.gray[600],
     lineHeight: 22,
     textAlign: 'center',
     marginBottom: 20,
@@ -807,8 +833,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   aiBadge: {
+    // Défaut neutre : surchargé à l'usage par colors.primary (theme-aware).
     alignSelf: 'flex-start',
-    backgroundColor: '#BE185D',
+    backgroundColor: Colors.light.primary,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -820,12 +847,13 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   bentoRecommendation: {
+    // Défaut neutre : surchargé à l'usage par tPrimary (theme-aware).
     fontSize: 16,
     fontWeight: '700',
-    color: '#9D174D',
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
   },
   chartCard: {
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     borderRadius: 32,
     padding: 24,
     marginBottom: 24,
@@ -835,19 +863,20 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 8,
     borderWidth: 1.5,
-    borderColor: Colors.light.gray[50],
+    borderColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    overflow: 'hidden', // zéro débordement : le graphe est clippé proprement au bord arrondi
   },
   chartHeader: {
-    marginBottom: 20,
+    marginBottom: 6,
   },
   chartTitle: {
     fontSize: 20,
     fontWeight: '900',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
   },
   chartSubtitle: {
     fontSize: 14,
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     fontWeight: '600',
     marginTop: 2,
   },
@@ -866,7 +895,7 @@ const styles = StyleSheet.create({
   waterStatLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     marginBottom: 4,
   },
   waterStatValue: {
@@ -878,7 +907,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     padding: 16,
     borderRadius: 20,
     marginBottom: 20,
@@ -890,19 +919,19 @@ const styles = StyleSheet.create({
   energyStatDivider: {
     width: 1,
     height: 24,
-    backgroundColor: Colors.light.gray[200],
+    backgroundColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
   },
   energyStatLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     textTransform: 'uppercase',
     marginBottom: 4,
   },
   energyStatValue: {
     fontSize: 16,
     fontWeight: '900',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
   },
   legendRow: {
     flexDirection: 'row',
@@ -910,7 +939,7 @@ const styles = StyleSheet.create({
     gap: 24,
     marginTop: 16,
     borderTopWidth: 1,
-    borderTopColor: Colors.light.gray[50],
+    borderTopColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     paddingTop: 16,
   },
   legendItem: {
@@ -926,7 +955,7 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: 12,
     fontWeight: '700',
-    color: Colors.light.gray[500],
+    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
   },
   statsRow: {
     flexDirection: 'row',
@@ -934,16 +963,16 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     borderRadius: 32,
     padding: 20,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: Colors.light.gray[100],
+    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
   },
   weightCard: {
-    backgroundColor: Colors.light.white,
-    borderColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    borderColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.05,
@@ -954,7 +983,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 20,
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -967,12 +996,12 @@ const styles = StyleSheet.create({
   streakValue: {
     fontSize: 28,
     fontWeight: '900',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
   },
   streakLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     marginTop: -2,
     marginBottom: 16,
   },
@@ -990,20 +1019,20 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: Colors.light.gray[100],
+    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
   },
   activeIndicator: {
     backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primary,
+    borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
   },
   dayName: {
     fontSize: 8,
     fontWeight: '700',
-    color: Colors.light.gray[300],
+    color: isDark ? Colors.dark.gray[300] : Colors.light.gray[300],
     textTransform: 'uppercase',
   },
   weightIconContainer: {
@@ -1023,17 +1052,17 @@ const styles = StyleSheet.create({
   weightValue: {
     fontSize: 32,
     fontWeight: '900',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
   },
   weightUnit: {
     fontSize: 16,
     fontWeight: '800',
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
   },
   weightLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     marginBottom: 16,
   },
   trendBadge: {
@@ -1057,22 +1086,22 @@ const styles = StyleSheet.create({
   comingSoonCard: {
     marginTop: 24,
     padding: 32,
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     borderRadius: 32,
     borderWidth: 2,
-    borderColor: Colors.light.gray[100],
+    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
     borderStyle: 'dashed',
     alignItems: 'center',
   },
   comingSoonTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     marginBottom: 8,
   },
   comingSoonDesc: {
     fontSize: 14,
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -1087,7 +1116,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: width - 40,
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     borderRadius: 36,
     padding: 24,
     shadowColor: '#000',
@@ -1105,21 +1134,21 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
   },
   largeStreakCard: {
     alignItems: 'center',
-    backgroundColor: Colors.light.gray[50],
+    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
     borderRadius: 32,
     padding: 32,
     borderWidth: 2,
-    borderColor: Colors.light.gray[100],
+    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
   },
   largeIconBox: {
     width: 80,
     height: 80,
     borderRadius: 28,
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
@@ -1137,15 +1166,15 @@ const styles = StyleSheet.create({
   largeStreakValue: {
     fontSize: 48,
     fontWeight: '900',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
   },
   streakChip: {
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 100,
     borderWidth: 1,
-    borderColor: Colors.light.gray[100],
+    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -1154,12 +1183,12 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 12,
     fontWeight: '800',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
   },
   largeStreakLabel: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     marginBottom: 32,
   },
   largeWeekGrid: {
@@ -1176,20 +1205,20 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: Colors.light.gray[100],
+    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
   },
   largeActiveIndicator: {
     backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primary,
+    borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
   },
   largeDayName: {
     fontSize: 10,
     fontWeight: '800',
-    color: Colors.light.gray[400],
+    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
     textTransform: 'uppercase',
   },
 });

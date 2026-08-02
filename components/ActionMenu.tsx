@@ -1,9 +1,12 @@
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Dimensions, Alert } from 'react-native';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Zap, Droplets, Database, Scan, Crown, Mic, ScanBarcode, Scale, Camera, Image as ImageIcon, X } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { useLogging } from '../lib/LoggingContext';
 import { useTranslation } from '../lib/i18n';
+import { useFlagsCtx } from '../lib/FlagsContext';
+import { isEnabled } from '../lib/featureFlags';
+import { useTheme } from '../lib/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
@@ -20,7 +23,13 @@ const PENDING_SCAN_KEY = 'pending_scan_v1';
 
 export default function ActionMenu() {
   const { isActionMenuVisible, hideActionMenu, showLogModal, setScanImageBase64 } = useLogging();
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const { t, language } = useTranslation() as any;
+  // Feature-flags : on masque les tuiles dont le flag est OFF (évite les culs-de-sac).
+  // Lecture unique du contexte (pas de hook dans .map, rules-of-hooks OK).
+  const { flags, userKey } = useFlagsCtx();
   // Libellés des 3 nouvelles actions (pas de clés centrales) — trilingue local.
   const L: any = {
     en: { voice: 'Voice log', barcode: 'Barcode', weight: 'Weight', scan: 'Scan (food / barcode)', camHint: 'Dish or barcode' },
@@ -185,6 +194,7 @@ export default function ActionMenu() {
       icon: <Scan size={24} color="#FF5C5C" />,
       bg: '#FFEEED',
       premium: true,
+      flag: 'food-recognition',
       onPress: handleScanFood,
     },
     {
@@ -192,6 +202,7 @@ export default function ActionMenu() {
       title: lx.voice,
       icon: <Mic size={24} color="#8B5CF6" />,
       bg: '#F3EEFF',
+      flag: 'voice-log',
       onPress: () => { hideActionMenu(); router.push('/voice-log' as any); },
     },
     {
@@ -203,6 +214,12 @@ export default function ActionMenu() {
     },
   ];
 
+  // On garde chaque tuile SAUF si elle porte un `flag` désactivé. Les tuiles sans
+  // flag (exercice, eau, base alimentaire, poids…) restent toujours visibles.
+  const visibleActions = actions.filter((a) =>
+    !(a as any).flag || isEnabled(flags, (a as any).flag, { userKey })
+  );
+
   if (!isActionMenuVisible) return null;
 
   return (
@@ -213,7 +230,7 @@ export default function ActionMenu() {
       onRequestClose={closeMenu}
     >
       <TouchableOpacity
-        style={styles.overlay}
+        style={[styles.overlay, isDark && { backgroundColor: 'rgba(0,0,0,0.5)' }]}
         activeOpacity={1}
         onPress={closeMenu}
       >
@@ -221,32 +238,32 @@ export default function ActionMenu() {
           {scanChoice ? (
             /* Étape 2 du Scan Food : choix Caméra / Galerie en cartes (même design que le menu) */
             <View style={styles.grid}>
-              <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={goCamera}>
+              <TouchableOpacity style={[styles.card, isDark && { backgroundColor: '#161C23' }]} activeOpacity={0.7} onPress={goCamera}>
                 <View style={[styles.iconBox, { backgroundColor: '#FFEEED' }]}>
                   <Camera size={24} color="#FF5C5C" />
                 </View>
-                <Text style={styles.actionTitle}>{t('menu.take_photo')}</Text>
-                <Text style={styles.cardHint}>{lx.camHint}</Text>
+                <Text style={[styles.actionTitle, isDark && { color: '#f1f5f9' }]}>{t('menu.take_photo')}</Text>
+                <Text style={[styles.cardHint, isDark && { color: '#94a3b8' }]}>{lx.camHint}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => { setScanChoice(false); handleGalleryAction(); }}>
+              <TouchableOpacity style={[styles.card, isDark && { backgroundColor: '#161C23' }]} activeOpacity={0.7} onPress={() => { setScanChoice(false); handleGalleryAction(); }}>
                 <View style={[styles.iconBox, { backgroundColor: '#E0F2FE' }]}>
                   <ImageIcon size={24} color="#0EA5E9" />
                 </View>
-                <Text style={styles.actionTitle}>{t('menu.gallery')}</Text>
+                <Text style={[styles.actionTitle, isDark && { color: '#f1f5f9' }]}>{t('menu.gallery')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => setScanChoice(false)}>
+              <TouchableOpacity style={[styles.card, isDark && { backgroundColor: '#161C23' }]} activeOpacity={0.7} onPress={() => setScanChoice(false)}>
                 <View style={[styles.iconBox, { backgroundColor: '#F1F5F9' }]}>
                   <X size={24} color="#64748B" />
                 </View>
-                <Text style={styles.actionTitle}>{t('menu.cancel')}</Text>
+                <Text style={[styles.actionTitle, isDark && { color: '#f1f5f9' }]}>{t('menu.cancel')}</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.grid}>
-              {actions.map((action) => (
+              {visibleActions.map((action) => (
                 <TouchableOpacity
                   key={action.id}
-                  style={styles.card}
+                  style={[styles.card, isDark && { backgroundColor: '#161C23' }]}
                   activeOpacity={0.7}
                   onPress={action.onPress}
                 >
@@ -258,7 +275,7 @@ export default function ActionMenu() {
                       </View>
                     )}
                   </View>
-                  <Text style={styles.actionTitle}>{action.title}</Text>
+                  <Text style={[styles.actionTitle, isDark && { color: '#f1f5f9' }]}>{action.title}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -269,7 +286,9 @@ export default function ActionMenu() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
+// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
+const makeStyles = (isDark: boolean) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.15)', // Lighter overlay for better transparency feel
@@ -291,12 +310,12 @@ const styles = StyleSheet.create({
   card: {
     width: (width - 40 - 16 - 16) / 2, // Adjusted for gap and container padding
     aspectRatio: 1.1,
-    backgroundColor: Colors.light.white,
+    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 12,
-    shadowColor: Colors.light.primary,
+    shadowColor: isDark ? 'transparent' : Colors.light.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
     shadowRadius: 16,
@@ -319,18 +338,18 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: Colors.light.white,
+    borderColor: isDark ? Colors.dark.white : Colors.light.white,
   },
   actionTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: Colors.light.gray[900],
+    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
     textAlign: 'center',
   },
   cardHint: {
     fontSize: 11,
     fontWeight: '600',
-    color: Colors.light.gray[500],
+    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
     textAlign: 'center',
     marginTop: 2,
   },

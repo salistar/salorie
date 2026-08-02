@@ -11,6 +11,7 @@ export default function RacesPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [actMsg, setActMsg] = useState<string | null>(null);
+  const [pendingId, setPendingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setErr(null);
@@ -26,14 +27,24 @@ export default function RacesPage() {
 
   const del = async (id: string) => {
     if (!confirm('Supprimer cette course ?')) return;
-    await fetch(`/api/races/${id}`, { method: 'DELETE' });
-    load();
+    if (pendingId) return;
+    setPendingId(id);
+    try {
+      const r = await fetch(`/api/races/${id}`, { method: 'DELETE' });
+      if (!r.ok) { setActMsg('❌ échec de la suppression'); return; }
+      load();
+    } catch { setActMsg('❌ backend injoignable'); }
+    finally { setPendingId(null); }
   };
   const genMedals = async (id: string) => {
-    setActMsg('Génération…');
-    const r = await fetch(`/api/races/${id}`, { method: 'POST' });
-    const j = await r.json();
-    setActMsg(j.count != null ? `✅ ${j.count} médaille(s) générée(s) avec classement.` : `❌ ${j.message || j.error || 'erreur'}`);
+    if (pendingId) return;
+    setPendingId(id); setActMsg('Génération…');
+    try {
+      const r = await fetch(`/api/races/${id}`, { method: 'POST' });
+      const j = await r.json();
+      setActMsg(j.count != null ? `✅ ${j.count} médaille(s) générée(s) avec classement.` : `❌ ${j.message || j.error || 'erreur'}`);
+    } catch { setActMsg('❌ backend injoignable'); }
+    finally { setPendingId(null); }
   };
 
   return (
@@ -55,8 +66,8 @@ export default function RacesPage() {
                 <div style={{ fontWeight: 700 }}>{r.name}</div>
                 <div className="foot">{r.totalKm} km · {r.waypoints?.length || 0} points · cadre « {r.medalFrame} » · {r.active ? 'active' : 'inactive'}</div>
               </div>
-              <button onClick={() => genMedals(r._id)} style={btnSm}>🏅 Médailles</button>
-              <button onClick={() => del(r._id)} style={{ ...btnSm, color: '#e11d48', borderColor: '#fecaca' }}>Supprimer</button>
+              <button disabled={pendingId === r._id} onClick={() => genMedals(r._id)} style={{ ...btnSm, opacity: pendingId === r._id ? 0.55 : 1, cursor: pendingId === r._id ? 'not-allowed' : 'pointer' }}>{pendingId === r._id ? '…' : '🏅 Médailles'}</button>
+              <button disabled={pendingId === r._id} onClick={() => del(r._id)} style={{ ...btnSm, color: '#e11d48', borderColor: '#fecaca', opacity: pendingId === r._id ? 0.55 : 1, cursor: pendingId === r._id ? 'not-allowed' : 'pointer' }}>Supprimer</button>
             </div>
           ))}
           {!loading && !races.length && <div className="card empty">Aucune course. Crée la première ci-dessus.</div>}

@@ -1,16 +1,19 @@
 // Meal-builder / recettes — compose un repas en cherchant des ingrédients
 // (searchFood / OpenFoodFacts) → total des macros en direct. Réutilise la recherche existante.
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, FlatList, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, FlatList, Alert } from 'react-native';
 import { Search, Plus, Minus, Trash2, ChefHat, Check } from 'lucide-react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { Input, EmptyState } from '../../components/ui';
 import { searchFood } from '../../lib/fatsecret';
 import { addNutritionLog } from '../../lib/firebase';
 import { todayStr } from '../../lib/tracking';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
+import { rowDir, txtAlign } from '../../lib/rtl';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const GREEN = '#2E8B57';
 
@@ -32,14 +35,18 @@ function parseDescription(desc: string) {
 type Item = { id: string; name: string; qty: number; calories: number; protein: number; carbs: number; fat: number };
 
 export default function MealBuilderScreen() {
+  const __gate = useScreenGate('meal-builder');
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f172a' : '#F8FAFC';
+  const bg = isDark ? '#0f1419' : '#F8FAFC';
   const card = isDark ? '#1e293b' : '#ffffff';
   const text = isDark ? '#f1f5f9' : '#0F172A';
   const sub = isDark ? '#94a3b8' : '#64748B';
+  const accent = isDark ? '#4ade80' : GREEN;
+  const align: any = { textAlign: txtAlign(isRTL) };
+  const row: any = { flexDirection: rowDir(isRTL) };
 
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || '';
@@ -86,16 +93,21 @@ export default function MealBuilderScreen() {
     finally { setBusy(false); }
   };
 
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
-      <View style={styles.head}><ChefHat size={22} color={GREEN} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+      <View style={[styles.head, row]}><ChefHat size={22} color={accent} /><Text style={[styles.title, { color: text }, align]}>{t.title}</Text></View>
 
-      <View style={[styles.searchRow, { backgroundColor: card, borderColor: isDark ? '#283241' : '#E2E8F0' }]}>
-        <Search size={18} color={sub} />
-        <TextInput style={[styles.search, { color: text }]} placeholder={t.searchPh} placeholderTextColor={sub} value={q} onChangeText={doSearch} />
-        {loading && <ActivityIndicator color={GREEN} />}
-      </View>
+      <Input
+        containerStyle={{ marginHorizontal: 16, marginBottom: 0 }}
+        icon={<Search size={18} color={sub} />}
+        right={loading ? <ActivityIndicator color={accent} /> : undefined}
+        placeholder={t.searchPh}
+        value={q}
+        onChangeText={doSearch}
+      />
 
       {results.length > 0 && (
         <View style={[styles.resultsBox, { backgroundColor: card }, isDark && { borderColor: '#334155' }]}>
@@ -103,10 +115,10 @@ export default function MealBuilderScreen() {
             renderItem={({ item: r }) => {
               const m = parseDescription(r.food_description);
               return (
-                <TouchableOpacity style={[styles.resRow, isDark && { borderBottomColor: '#334155' }]} onPress={() => add(r)}>
-                  <Text style={[styles.resName, { color: isDark ? '#e2e8f0' : '#1F2937' }]} numberOfLines={1}>{r.food_name}</Text>
-                  <Text style={[styles.resMacro, { color: sub }]}>{m.calories} kcal</Text>
-                  <Plus size={18} color={GREEN} />
+                <TouchableOpacity style={[styles.resRow, row, isDark && { borderBottomColor: '#334155' }]} onPress={() => add(r)}>
+                  <Text style={[styles.resName, { color: isDark ? '#e2e8f0' : '#1F2937' }, align]} numberOfLines={1}>{r.food_name}</Text>
+                  <Text style={[styles.resMacro, { color: sub }, align]}>{m.calories} kcal</Text>
+                  <Plus size={18} color={accent} />
                 </TouchableOpacity>
               );
             }} />
@@ -115,29 +127,31 @@ export default function MealBuilderScreen() {
 
       <ScrollView contentContainerStyle={styles.body}>
         {items.length === 0 && results.length === 0 && (
-          <Text style={[styles.empty, { color: sub }]}>{t.empty}</Text>
+          <View style={styles.emptyWrap}>
+            <EmptyState icon={<ChefHat size={26} color={accent} />} title={t.title} subtitle={t.empty} />
+          </View>
         )}
         {items.map((x) => (
-          <View key={x.id} style={[styles.item, { backgroundColor: card }]}>
+          <View key={x.id} style={[styles.item, row, { backgroundColor: card }]}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.itemName, { color: text }]} numberOfLines={1}>{x.name}</Text>
-              <Text style={[styles.itemMacro, { color: sub }]}>{Math.round(x.calories * x.qty)} kcal · {Math.round(x.protein * x.qty)}g {t.p} · {Math.round(x.carbs * x.qty)}g {t.c} · {Math.round(x.fat * x.qty)}g {t.f}</Text>
+              <Text style={[styles.itemName, { color: text }, align]} numberOfLines={1}>{x.name}</Text>
+              <Text style={[styles.itemMacro, { color: sub }, align]}>{Math.round(x.calories * x.qty)} kcal · {Math.round(x.protein * x.qty)}g {t.p} · {Math.round(x.carbs * x.qty)}g {t.c} · {Math.round(x.fat * x.qty)}g {t.f}</Text>
             </View>
             <TouchableOpacity onPress={() => setQty(x.id, -1)} style={[styles.qtyBtn, isDark && { backgroundColor: '#334155' }]}><Minus size={16} color={isDark ? '#cbd5e1' : '#475569'} /></TouchableOpacity>
             <Text style={[styles.qty, { color: text }]}>{x.qty}</Text>
             <TouchableOpacity onPress={() => setQty(x.id, 1)} style={[styles.qtyBtn, isDark && { backgroundColor: '#334155' }]}><Plus size={16} color={isDark ? '#cbd5e1' : '#475569'} /></TouchableOpacity>
-            <TouchableOpacity onPress={() => remove(x.id)} style={{ marginLeft: 8 }}><Trash2 size={18} color="#E11D48" /></TouchableOpacity>
+            <TouchableOpacity onPress={() => remove(x.id)} style={{ marginHorizontal: 8 }}><Trash2 size={18} color="#E11D48" /></TouchableOpacity>
           </View>
         ))}
       </ScrollView>
 
       {items.length > 0 && (
-        <View style={styles.totalBar}>
+        <View style={[styles.totalBar, row]}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.totalKcal}>{Math.round(total.calories)} kcal</Text>
-            <Text style={styles.totalMacro}>{Math.round(total.protein)}g {t.p} · {Math.round(total.carbs)}g {t.c} · {Math.round(total.fat)}g {t.f}</Text>
+            <Text style={[styles.totalKcal, align]}>{Math.round(total.calories)} kcal</Text>
+            <Text style={[styles.totalMacro, align]}>{Math.round(total.protein)}g {t.p} · {Math.round(total.carbs)}g {t.c} · {Math.round(total.fat)}g {t.f}</Text>
           </View>
-          <TouchableOpacity style={styles.logBtn} onPress={logMeal} disabled={busy} activeOpacity={0.85}>
+          <TouchableOpacity style={[styles.logBtn, row]} onPress={logMeal} disabled={busy} activeOpacity={0.85}>
             {busy ? <ActivityIndicator color={GREEN} /> : (<><Check size={18} color={GREEN} /><Text style={styles.logBtnTxt}>{t.logMeal}</Text></>)}
           </TouchableOpacity>
         </View>
@@ -150,14 +164,12 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F8FAFC' },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 8 },
   title: { fontSize: 22, fontWeight: '800', color: '#0F172A' },
-  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 4, borderWidth: 1.5, borderColor: '#E2E8F0' },
-  search: { flex: 1, paddingVertical: 11, fontSize: 14 },
   resultsBox: { maxHeight: 260, backgroundColor: '#fff', marginHorizontal: 16, marginTop: 6, borderRadius: 14, borderWidth: 1, borderColor: '#EEF2F6' },
   resRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderBottomWidth: 1, borderBottomColor: '#F5F7FA' },
   resName: { flex: 1, fontSize: 14, color: '#1F2937' },
   resMacro: { fontSize: 12, color: '#64748B' },
   body: { padding: 16, gap: 10 },
-  empty: { fontSize: 14, color: '#94A3B8', textAlign: 'center', marginTop: 30, lineHeight: 20 },
+  emptyWrap: { marginTop: 30, alignItems: 'stretch', justifyContent: 'center' },
   item: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, padding: 12, gap: 8 },
   itemName: { fontSize: 14, fontWeight: '600', color: '#0F172A' },
   itemMacro: { fontSize: 11, color: '#64748B', marginTop: 2 },

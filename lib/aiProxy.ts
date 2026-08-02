@@ -10,14 +10,34 @@ async function headers(): Promise<Record<string, string>> {
   return { 'Content-Type': 'application/json', ...(tok ? { Authorization: `Bearer ${tok}` } : {}) };
 }
 
+/**
+ * fetch avec TIMEOUT dur (AbortController). Sans lui, un tier vision lent/bloqué côté
+ * serveur (ex. Ollama /ml/vision qui hang sur une image ambiguë comme un café noir) fige
+ * le scan à l'infini sur « Analyse de l'image… ». Sur timeout, on lève une erreur : la
+ * cascade (scan-analysis) escalade alors au tier suivant (backend → Gemini) ou affiche
+ * une vraie erreur, au lieu de tourner indéfiniment.
+ */
+async function fetchWithTimeout(url: string, opts: RequestInit, ms: number): Promise<Response> {
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { ...opts, signal: ctrl.signal });
+  } catch (e: any) {
+    if (e?.name === 'AbortError') throw new Error(`timeout ${ms}ms`);
+    throw e;
+  } finally {
+    clearTimeout(to);
+  }
+}
+
 /** Text generation via backend Gemini. Returns the model's text. */
 export async function aiGenerate(prompt: string, model?: string): Promise<string> {
   if (!API_URL) throw new Error('EXPO_PUBLIC_API_URL not configured');
-  const res = await fetch(`${API_URL}/ai/generate`, {
+  const res = await fetchWithTimeout(`${API_URL}/ai/generate`, {
     method: 'POST',
     headers: await headers(),
     body: JSON.stringify({ prompt, model }),
-  });
+  }, 30000);
   if (!res.ok) throw new Error(`/ai/generate ${res.status}`);
   const j = await res.json();
   return String(j?.text ?? '');
@@ -26,11 +46,11 @@ export async function aiGenerate(prompt: string, model?: string): Promise<string
 /** Vocal → texte via faster-whisper backend (fallback Gemini côté serveur). */
 export async function aiTranscribe(audioBase64: string, mimeType = 'audio/mp4', language?: string): Promise<string> {
   if (!API_URL) throw new Error('EXPO_PUBLIC_API_URL not configured');
-  const res = await fetch(`${API_URL}/ai/transcribe`, {
+  const res = await fetchWithTimeout(`${API_URL}/ai/transcribe`, {
     method: 'POST',
     headers: await headers(),
     body: JSON.stringify({ audioBase64, mimeType, language }),
-  });
+  }, 45000);
   if (!res.ok) throw new Error(`/ai/transcribe ${res.status}`);
   const j = await res.json();
   return String(j?.text ?? '');
@@ -39,11 +59,11 @@ export async function aiTranscribe(audioBase64: string, mimeType = 'audio/mp4', 
 /** Multimodal (image) generation via backend Gemini. */
 export async function aiVision(prompt: string, imageBase64: string, mimeType = 'image/jpeg', model?: string): Promise<string> {
   if (!API_URL) throw new Error('EXPO_PUBLIC_API_URL not configured');
-  const res = await fetch(`${API_URL}/ai/vision`, {
+  const res = await fetchWithTimeout(`${API_URL}/ai/vision`, {
     method: 'POST',
     headers: await headers(),
     body: JSON.stringify({ prompt, imageBase64, mimeType, model }),
-  });
+  }, 30000);
   if (!res.ok) throw new Error(`/ai/vision ${res.status}`);
   const j = await res.json();
   return String(j?.text ?? '');
@@ -56,11 +76,13 @@ export async function aiVision(prompt: string, imageBase64: string, mimeType = '
  */
 export async function aiVisionLocal(prompt: string, imageBase64: string, mimeType = 'image/jpeg'): Promise<string> {
   if (!API_URL) throw new Error('EXPO_PUBLIC_API_URL not configured');
-  const res = await fetch(`${API_URL}/ml/vision`, {
+  // Timeout court (22s) : le tier backend Ollama peut hang sur une image ambiguë (café
+  // noir) → on abandonne vite pour escalader vers Gemini plutôt que figer le scan.
+  const res = await fetchWithTimeout(`${API_URL}/ml/vision`, {
     method: 'POST',
     headers: await headers(),
     body: JSON.stringify({ prompt, imageBase64, mimeType }),
-  });
+  }, 22000);
   if (!res.ok) throw new Error(`/ml/vision ${res.status}`);
   const j = await res.json();
   return String(j?.text ?? '');
