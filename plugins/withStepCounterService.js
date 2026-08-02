@@ -147,6 +147,41 @@ class StepBootReceiver : BroadcastReceiver() {
 }
 `;
 
+// Demarrage du service, GARDE par ACTIVITY_RECOGNITION.
+//
+// Ce garde n'est pas cosmetique : sur Android 14+, un foreground service de type
+// "health" demarre sans cette permission fait echouer `startForeground()` DANS le
+// service — hors de portee du try/catch de l'activite — et le processus tombe.
+//
+// Le rappel dans onResume sert a un cas precis : l'utilisateur accorde la permission
+// via le prompt JS, la boite de dialogue se ferme, onResume se declenche, le service
+// demarre. Sans lui il faudrait relancer l'application.
+//
+// Ce code existait a la main dans android/app/.../MainActivity.kt sans que le plugin
+// sache le reproduire. `prebuild --clean` (donc la CI, donc l'AAB publie) regenerait
+// un demarrage inconditionnel : compilation impeccable, plantage a l'execution.
+// Tout ce qui doit survivre a un prebuild doit vivre ICI, jamais dans android/.
+//
+// Les types sont pleinement qualifies pour n'avoir aucun import a injecter.
+const HELPER = `
+  private fun maybeStartStepService() {
+    try {
+      val needsPerm = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
+      val granted = !needsPerm || checkSelfPermission(android.Manifest.permission.ACTIVITY_RECOGNITION) ==
+        android.content.pm.PackageManager.PERMISSION_GRANTED
+      if (granted) {
+        val svc = Intent(this, StepCounterService::class.java)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) startForegroundService(svc) else startService(svc)
+      }
+    } catch (_: Exception) {}
+  }
+
+  override fun onResume() {
+    super.onResume()
+    maybeStartStepService()
+  }
+`;
+
 module.exports = function withStepCounterService(config) {
   // 1) Kotlin sources
   config = withDangerousMod(config, ['android', (cfg) => {
@@ -181,12 +216,14 @@ module.exports = function withStepCounterService(config) {
     if (!src.includes('import android.content.Intent')) {
       src = src.replace(/(^package .*$)/m, `$1\nimport android.content.Intent`);
     }
-    if (!src.includes('StepCounterService::class.java')) {
-      const call = `\n    try { val svc = Intent(this, StepCounterService::class.java); if (android.os.Build.VERSION.SDK_INT >= 26) startForegroundService(svc) else startService(svc) } catch (_: Exception) {}`;
+    if (!src.includes('maybeStartStepService')) {
       // Voir la note dans withHealthConnectPermissionDelegate.js : pas de `\s*` avant la
       // fin du groupe, sinon la capture avale le saut de ligne et cet appel se retrouve
       // colle a celui de l'autre plugin sur une seule ligne (Kotlin refuse).
-      src = src.replace(/(super\.onCreate\([^)]*\);?)/, `$1${call}`);
+      src = src.replace(/(super\.onCreate\([^)]*\);?)/, `$1\n    maybeStartStepService()`);
+      // Le helper est insere avant getMainComponentName(), presente dans le gabarit
+      // MainActivity de tout projet Expo.
+      src = src.replace(/(\n\s*override fun getMainComponentName)/, `\n${HELPER}$1`);
     }
     cfg.modResults.contents = src;
     return cfg;
