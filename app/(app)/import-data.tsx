@@ -4,7 +4,7 @@
 // à jour), on affiche un message clair au lieu de planter.
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { router } from 'expo-router';
 import { Upload, FileText, CheckCircle2, AlertTriangle } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';

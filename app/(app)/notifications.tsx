@@ -405,15 +405,14 @@ export default function NotificationsScreen() {
         </View>
       ) : (
         // FlashList : l'historique de notifications n'est borné par rien côté client et
-        // grossit indéfiniment. estimatedItemSize = hauteur moyenne d'une carte ; sans
-        // elle FlashList doit mesurer et perd une bonne part de son intérêt.
+        // grossit indéfiniment. Depuis la version 2, la mesure des cartes est automatique
+        // et `estimatedItemSize`, qu'il fallait renseigner auparavant, a disparu.
         <FlashList
           data={notifications}
           renderItem={({ item, index }) => (
             <NotificationCard item={item} index={index} />
           )}
           keyExtractor={(item) => item.id}
-          estimatedItemSize={112}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
         />

@@ -239,13 +239,15 @@ describe('localWeightForecast', () => {
 
   test('poids fournis sous forme de chaînes → Number() les convertit', () => {
     const hist = [
-      // @ts-expect-error : robustesse aux poids en chaîne
       { weight: '80', timestamp: T0 },
-      // @ts-expect-error
       { weight: '79', timestamp: T0 + WEEK },
-      // @ts-expect-error
       { weight: '78', timestamp: T0 + 2 * WEEK },
     ];
+    // La suppression porte sur l'APPEL, pas sur chaque littéral : le tableau se type tout
+    // seul en { weight: string }, et c'est seulement en le passant à la fonction que
+    // TypeScript proteste. C'est précisément ce que ce test vérifie — la tolérance aux
+    // poids arrivant en chaîne depuis le stockage.
+    // @ts-expect-error : entrée volontairement mal typée
     const r = localWeightForecast(hist);
     expect(r.ok).toBe(true);
     if (!r.ok) return;

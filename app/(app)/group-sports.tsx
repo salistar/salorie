@@ -183,7 +183,6 @@ export default function GroupSportsScreen() {
       <FlashList
         data={loading ? [] : matches}
         keyExtractor={(m: SportMatch) => m.id}
-        estimatedItemSize={220}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={

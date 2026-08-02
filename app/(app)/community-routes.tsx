@@ -233,7 +233,6 @@ export default function CommunityRoutesScreen() {
       <FlashList
         data={loading ? [] : approved}
         keyExtractor={(r: CommunityRoute, i: number) => r.id ?? `route-${i}`}
-        estimatedItemSize={110}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

@@ -9,7 +9,7 @@
 // Two modes (persisted): 'real' (Health Connect + activity) and 'sim'
 // (a simulated pedometer + activity) for testing without a physical device.
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { emailToDocId } from './firebase';
 
 // Files shared with the native foreground step service (same app filesDir):

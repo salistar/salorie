@@ -1,7 +1,7 @@
 // Pont JS → widget écran d'accueil. Écrit les données du jour (calories, eau) dans
 // filesDir/widget_data.json, que SalorieWidget (natif) lit. Les pas, eux, viennent
 // déjà des SharedPreferences écrites par StepCounterService. 100% additif.
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 const WIDGET_FILE = (FileSystem.documentDirectory || '') + 'widget_data.json';
 

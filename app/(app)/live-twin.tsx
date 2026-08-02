@@ -7,7 +7,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, SafeAreaView, ScrollView, Alert, Share, Animated, Easing } from 'react-native';
 import { Audio } from 'expo-av';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { useUser } from '@clerk/clerk-expo';
 import { Radio, Mic, Share2, LogOut, Wifi, WifiOff, User as UserIcon, Footprints } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';

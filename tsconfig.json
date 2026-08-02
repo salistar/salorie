@@ -6,7 +6,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "target": "ESNext",
@@ -22,5 +22,11 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "backend",
+    "web",
+    "server"
   ]
 }

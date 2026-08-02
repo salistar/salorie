@@ -325,14 +325,13 @@ export default function FoodDatabaseScreen() {
 
       {/* FlashList : recyclage réel des vues (contre le simple masquage de FlatList).
           La liste se re-rend à CHAQUE frappe dans la recherche sur 653+ aliments, c'est
-          l'écran où la virtualisation compte le plus. `estimatedItemSize` est la hauteur
-          moyenne d'une ligne — c'est elle qui permet à FlashList de dimensionner sans
-          mesurer, ne pas la fournir annule une bonne part du gain. */}
+          l'écran où la virtualisation compte le plus. La version 2 mesure les éléments
+          elle-même : `estimatedItemSize`, qu'il fallait fournir auparavant sous peine de
+          perdre l'essentiel du gain, n'existe plus. */}
       <FlashList
         data={results}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
-        estimatedItemSize={72}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={() => (
           query.length >= 1 ? null : (
