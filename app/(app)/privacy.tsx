@@ -16,11 +16,31 @@ const TXT = {
   en: {
     title: 'Privacy Policy',
     hero: 'Your Privacy Matters',
-    updated: 'Last Updated: April 15, 2026',
+    updated: 'Last Updated: August 3, 2026',
     intro: 'At Salorie, your privacy is our top priority. We implement industry-leading security measures to ensure your health journey remains private and secure.',
     infoBox: 'Your logs and profile data are transmitted over encrypted connections (HTTPS) and protected by access controls.',
     collect_t: 'What We Collect',
-    collect_p: "We only collect information necessary for the app's functionality: profile details (handled by Clerk), nutritional targets, and daily meal/activity logs.",
+    collect_p:
+      'We only collect what the app needs to work:\n\n' +
+      '• Account and profile — name and email (handled by Clerk), age, height, weight, activity level and your goals.\n' +
+      '• Food and activity — meals you log with their calories and macros, water intake, workouts, fasting periods.\n' +
+      '• Body measurements — weight history and progress measurements.\n' +
+      '• Health readings you choose to enter — blood glucose (mg/dL), blood pressure (mmHg) and heart rate (bpm). These are optional: the app works fully without them.\n' +
+      '• Usage — which features you open, so we can fix what breaks and improve what matters.',
+    health_t: 'Health Data and Health Connect',
+    health_p:
+      'With your explicit permission, Salorie reads from Android Health Connect: your step count, active and total calories burned, and your weight. We read this data only to show your activity and adjust your calorie target. We never write to Health Connect, and you can revoke this access at any time in Android settings.\n\n' +
+      'Health data — including anything you read from Health Connect and the readings you enter yourself — is NEVER used for advertising, never sold, and never shared with advertisers or data brokers. It is used solely to provide the features you asked for.\n\n' +
+      'Deleting your account erases this data from our servers, as described under Control below.',
+    sensors_t: 'Location, Microphone and Camera',
+    sensors_p:
+      '• Location (GPS) — used only while you are recording a run or following a route, and only while the app is open. We never track your location in the background. If you choose to share a route with the community, it is simplified to a few points and published without your identity.\n' +
+      '• Microphone — used only when you start a voice log, to turn what you say into a meal entry. Nothing is recorded outside that action.\n' +
+      '• Camera and photos — used to scan a dish, a label or a barcode, and to take progress photos. Progress photos stay on your device and are never uploaded. Scanned dish photos leave your device only if you explicitly enable the option described above.\n' +
+      '• Step counter — a notification-visible service counts your steps continuously, and only if you grant physical activity permission.',
+    medical_t: 'Not Medical Advice',
+    medical_p:
+      'Salorie is a nutrition and fitness app, not a medical device. Its estimates, scores and suggestions — including any comment relating to a condition such as diabetes, hypertension, kidney disease or gout — are general guidance, not a diagnosis or a treatment plan. Food recognition and nutrition values are estimates and can be wrong. Always consult a qualified healthcare professional before making decisions about your health, and never disregard medical advice because of something you read in this app.',
     improve_t: 'Improving Food Recognition (optional)',
     improve_p: 'If — and only if — you turn on "Help improve recognition" in Settings → Preferences (off by default), the photo of a meal you scan and the food name you keep are sent to our server to help train and improve the on-device recognition model. Your identifier is pseudonymized (irreversibly hashed) before storage, the images are used solely to improve recognition, and you can turn this off at any time or request deletion through our support channel.',
     security_t: 'Security',
@@ -40,11 +60,31 @@ const TXT = {
   fr: {
     title: 'Confidentialité',
     hero: 'Votre vie privée compte',
-    updated: 'Dernière mise à jour : 15 avril 2026',
+    updated: 'Dernière mise à jour : 3 août 2026',
     intro: 'Chez Salorie, votre vie privée est notre priorité absolue. Nous appliquons des mesures de sécurité de pointe pour que votre parcours santé reste privé et protégé.',
     infoBox: 'Vos journaux et données de profil sont transmis via des connexions chiffrées (HTTPS) et protégés par des contrôles d’accès.',
     collect_t: 'Ce que nous collectons',
-    collect_p: "Nous ne collectons que les informations nécessaires au fonctionnement de l’application : détails du profil (gérés par Clerk), objectifs nutritionnels et journaux quotidiens de repas/activité.",
+    collect_p:
+      'Nous ne collectons que ce dont l’application a besoin pour fonctionner :\n\n' +
+      '• Compte et profil — nom et adresse e-mail (gérés par Clerk), âge, taille, poids, niveau d’activité et vos objectifs.\n' +
+      '• Alimentation et activité — les repas que vous enregistrez avec leurs calories et macronutriments, votre consommation d’eau, vos séances, vos périodes de jeûne.\n' +
+      '• Mesures corporelles — historique de poids et mesures de progression.\n' +
+      '• Constantes que vous choisissez de saisir — glycémie (mg/dL), tension artérielle (mmHg) et fréquence cardiaque (bpm). Elles sont facultatives : l’application fonctionne entièrement sans elles.\n' +
+      '• Utilisation — les écrans que vous ouvrez, pour corriger ce qui casse et améliorer ce qui compte.',
+    health_t: 'Données de santé et Health Connect',
+    health_p:
+      'Avec votre autorisation explicite, Salorie lit dans Android Health Connect : votre nombre de pas, les calories actives et totales dépensées, et votre poids. Ces données servent uniquement à afficher votre activité et à ajuster votre objectif calorique. Nous n’écrivons jamais dans Health Connect, et vous pouvez révoquer cet accès à tout moment dans les réglages Android.\n\n' +
+      'Les données de santé — celles lues depuis Health Connect comme les constantes que vous saisissez — ne sont JAMAIS utilisées à des fins publicitaires, jamais vendues, jamais transmises à des annonceurs ou à des courtiers en données. Elles servent uniquement à fournir les fonctionnalités que vous avez demandées.\n\n' +
+      'La suppression de votre compte efface ces données de nos serveurs, comme décrit à la section Contrôle ci-dessous.',
+    sensors_t: 'Localisation, microphone et caméra',
+    sensors_p:
+      '• Localisation (GPS) — utilisée uniquement pendant l’enregistrement d’une course ou le suivi d’un parcours, et seulement lorsque l’application est ouverte. Nous ne suivons jamais votre position en arrière-plan. Si vous choisissez de partager un parcours avec la communauté, il est simplifié en quelques points et publié sans votre identité.\n' +
+      '• Microphone — utilisé uniquement lorsque vous lancez une saisie vocale, pour transformer ce que vous dites en repas enregistré. Rien n’est enregistré en dehors de cette action.\n' +
+      '• Caméra et photos — pour scanner un plat, une étiquette ou un code-barres, et prendre des photos de progression. Les photos de progression restent sur votre appareil et ne sont jamais téléversées. Les photos de plats ne quittent votre appareil que si vous activez explicitement l’option décrite plus haut.\n' +
+      '• Compteur de pas — un service visible par notification compte vos pas en continu, et uniquement si vous accordez la permission d’activité physique.',
+    medical_t: 'Ne remplace pas un avis médical',
+    medical_p:
+      'Salorie est une application de nutrition et de forme physique, pas un dispositif médical. Ses estimations, scores et suggestions — y compris tout commentaire relatif à une pathologie telle que le diabète, l’hypertension, une insuffisance rénale ou la goutte — sont des indications générales, non un diagnostic ni un traitement. La reconnaissance des aliments et les valeurs nutritionnelles sont des estimations et peuvent être erronées. Consultez toujours un professionnel de santé qualifié avant toute décision concernant votre santé, et ne négligez jamais un avis médical à cause de ce que vous lisez dans cette application.',
     improve_t: 'Améliorer la reconnaissance des aliments (optionnel)',
     improve_p: 'Si — et seulement si — vous activez « Aider à améliorer la reconnaissance » dans Réglages → Préférences (désactivé par défaut), la photo du repas que vous scannez et le nom de l’aliment que vous conservez sont envoyés à notre serveur pour entraîner et améliorer le modèle de reconnaissance embarqué. Votre identifiant est pseudonymisé (haché de manière irréversible) avant stockage, les images servent uniquement à améliorer la reconnaissance, et vous pouvez désactiver cette option à tout moment ou demander la suppression via notre support.',
     security_t: 'Sécurité',
@@ -64,11 +104,31 @@ const TXT = {
   ar: {
     title: 'الخصوصية',
     hero: 'خصوصيتك تهمنا',
-    updated: 'آخر تحديث: 15 أبريل 2026',
+    updated: 'آخر تحديث: 3 أغسطس 2026',
     intro: 'في سالوري، خصوصيتك هي أولويتنا القصوى. نطبّق إجراءات أمنية رائدة لضمان بقاء رحلتك الصحية خاصة وآمنة.',
     infoBox: 'تُنقل سجلاتك وبيانات ملفك الشخصي عبر اتصالات مشفّرة (HTTPS) ومحمية بضوابط الوصول.',
     collect_t: 'ما الذي نجمعه',
-    collect_p: 'نجمع فقط المعلومات الضرورية لعمل التطبيق: تفاصيل الملف الشخصي (يديرها Clerk)، الأهداف الغذائية، وسجلات الوجبات/النشاط اليومية.',
+    collect_p:
+      'نجمع فقط ما يحتاجه التطبيق ليعمل:\n\n' +
+      '• الحساب والملف الشخصي — الاسم والبريد الإلكتروني (يديرهما Clerk)، العمر، الطول، الوزن، مستوى النشاط وأهدافك.\n' +
+      '• الطعام والنشاط — الوجبات التي تسجّلها بسعراتها وعناصرها الغذائية، شرب الماء، التمارين، فترات الصيام.\n' +
+      '• قياسات الجسم — سجل الوزن وقياسات التقدّم.\n' +
+      '• القراءات الصحية التي تختار إدخالها — سكر الدم (mg/dL)، ضغط الدم (mmHg) ونبض القلب (bpm). هذه اختيارية: التطبيق يعمل بالكامل بدونها.\n' +
+      '• الاستخدام — الشاشات التي تفتحها، لإصلاح ما يتعطّل وتحسين ما يهم.',
+    health_t: 'البيانات الصحية وHealth Connect',
+    health_p:
+      'بإذنك الصريح، يقرأ سالوري من Android Health Connect: عدد خطواتك، السعرات النشطة والإجمالية المحروقة، ووزنك. تُستخدم هذه البيانات فقط لعرض نشاطك وضبط هدفك من السعرات. لا نكتب أبدًا في Health Connect، ويمكنك سحب هذا الإذن في أي وقت من إعدادات أندرويد.\n\n' +
+      'البيانات الصحية — سواء المقروءة من Health Connect أو القراءات التي تُدخلها بنفسك — لا تُستخدم أبدًا للإعلانات، ولا تُباع، ولا تُشارك مع المعلنين أو وسطاء البيانات. تُستخدم حصريًا لتوفير الميزات التي طلبتها.\n\n' +
+      'حذف حسابك يمحو هذه البيانات من خوادمنا، كما هو موضّح في قسم التحكّم أدناه.',
+    sensors_t: 'الموقع والميكروفون والكاميرا',
+    sensors_p:
+      '• الموقع (GPS) — يُستخدم فقط أثناء تسجيل جري أو متابعة مسار، وفقط عندما يكون التطبيق مفتوحًا. لا نتتبّع موقعك في الخلفية أبدًا. إذا اخترت مشاركة مسار مع المجتمع، يُبسّط إلى بضع نقاط ويُنشر دون هويتك.\n' +
+      '• الميكروفون — يُستخدم فقط عند بدء تسجيل صوتي، لتحويل ما تقوله إلى وجبة مسجّلة. لا يُسجَّل شيء خارج هذا الإجراء.\n' +
+      '• الكاميرا والصور — لمسح طبق أو ملصق أو باركود، ولالتقاط صور التقدّم. تبقى صور التقدّم على جهازك ولا تُرفع أبدًا. ولا تغادر صور الأطباق جهازك إلا إذا فعّلت صراحةً الخيار الموضّح أعلاه.\n' +
+      '• عدّاد الخطوات — خدمة ظاهرة عبر إشعار تعدّ خطواتك باستمرار، وفقط إذا منحت إذن النشاط البدني.',
+    medical_t: 'ليس استشارة طبية',
+    medical_p:
+      'سالوري تطبيق للتغذية واللياقة، وليس جهازًا طبيًا. تقديراته ودرجاته واقتراحاته — بما فيها أي ملاحظة تتعلق بحالة مثل السكري أو ارتفاع ضغط الدم أو قصور الكلى أو النقرس — هي إرشادات عامة، وليست تشخيصًا ولا خطة علاج. التعرّف على الأطعمة والقيم الغذائية تقديرات وقد تكون خاطئة. استشر دائمًا مختصًا صحيًا مؤهلًا قبل اتخاذ أي قرار يخص صحتك، ولا تتجاهل نصيحة طبية بسبب ما تقرأه في هذا التطبيق.',
     improve_t: 'تحسين التعرّف على الطعام (اختياري)',
     improve_p: 'إذا — وفقط إذا — فعّلت «المساعدة في تحسين التعرّف» في الإعدادات ← التفضيلات (متوقفة افتراضيًا)، تُرسل صورة الوجبة التي تمسحها واسم الطعام الذي تحتفظ به إلى خادمنا للمساعدة في تدريب نموذج التعرّف على الجهاز وتحسينه. يُجعل معرّفك مجهولًا (مُجزّأ بشكل لا رجعة فيه) قبل التخزين، وتُستخدم الصور حصريًا لتحسين التعرّف، ويمكنك إيقاف ذلك في أي وقت أو طلب الحذف عبر قناة الدعم.',
     security_t: 'الأمان',
@@ -155,9 +215,27 @@ export default function PrivacyScreen() {
             {tx.collect_p}
           </Text>
 
+          {/* Sante et Health Connect AVANT la reconnaissance d'aliments : c'est la
+              categorie de donnees la plus sensible que traite l'app, et la politique
+              Health Connect impose qu'elle soit explicitement decrite. */}
+          <Text style={[styles.subTitle, { color: tPrimary, textAlign: txtAlign(isRTL) }]}>{tx.health_t}</Text>
+          <Text style={[styles.paragraph, { color: tMuted, textAlign: txtAlign(isRTL), writingDirection: writingDir(isRTL) }]}>
+            {tx.health_p}
+          </Text>
+
+          <Text style={[styles.subTitle, { color: tPrimary, textAlign: txtAlign(isRTL) }]}>{tx.sensors_t}</Text>
+          <Text style={[styles.paragraph, { color: tMuted, textAlign: txtAlign(isRTL), writingDirection: writingDir(isRTL) }]}>
+            {tx.sensors_p}
+          </Text>
+
           <Text style={[styles.subTitle, { color: tPrimary, textAlign: txtAlign(isRTL) }]}>{tx.improve_t}</Text>
           <Text style={[styles.paragraph, { color: tMuted, textAlign: txtAlign(isRTL), writingDirection: writingDir(isRTL) }]}>
             {tx.improve_p}
+          </Text>
+
+          <Text style={[styles.subTitle, { color: tPrimary, textAlign: txtAlign(isRTL) }]}>{tx.medical_t}</Text>
+          <Text style={[styles.paragraph, { color: tMuted, textAlign: txtAlign(isRTL), writingDirection: writingDir(isRTL) }]}>
+            {tx.medical_p}
           </Text>
 
           <Text style={[styles.subTitle, { color: tPrimary, textAlign: txtAlign(isRTL) }]}>{tx.security_t}</Text>
