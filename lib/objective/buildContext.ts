@@ -1,9 +1,10 @@
 // Assemble un ObjectiveContext (état nutritionnel du jour + contraintes user)
 // à partir des sources existantes de l'app. AUCUNE logique de scoring ici —
 // on ne fait que collecter et normaliser les données pour scoreFood / le backend.
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getUserFromFirestore } from '../firebase';
 import { getDietPrefs } from '../dietPrefs';
-import type { ObjectiveContext } from './scoring';
+import type { ObjectiveContext, ScoreLang } from './scoring';
 
 /** goals/consumed tels que fournis par le hook useNutritionData(date). */
 export interface NutritionDataSlice {
@@ -39,6 +40,25 @@ function normGoal(goal: unknown): 'lose' | 'maintain' | 'gain' {
  *
  * remainingKcal/remainingMacros = max(0, cible - consommé).
  */
+/**
+ * Langue de l'application, lue a la meme cle que lib/i18n.tsx.
+ *
+ * C'est ici que la langue entre dans le scoring, et nulle part ailleurs : les huit
+ * ecrans qui appellent scoreFood passent tous par ce constructeur de contexte. Les
+ * traduire un par un aurait garanti d'en oublier — et un oubli ne se voit pas, il rend
+ * simplement un conseil de sante en francais a quelqu'un qui ne le lit pas.
+ *
+ * Lecture best-effort : un echec retombe sur le francais, comportement historique.
+ */
+async function readLang(): Promise<ScoreLang> {
+  try {
+    const v = await AsyncStorage.getItem('app_language');
+    return v === 'en' || v === 'ar' || v === 'fr' ? v : 'fr';
+  } catch {
+    return 'fr';
+  }
+}
+
 export async function buildObjectiveContext(
   email: string,
   clerkId?: string,
@@ -112,8 +132,11 @@ export async function buildObjectiveContext(
     fat: Math.max(0, targetFat - consumedFat),
   };
 
+  const lang = await readLang();
+
   return {
     uid,
+    lang,
     goal,
     // TDEE non requis ici ; le budget du jour est porté par dailyKcalTarget.
     tdee: dailyKcalTarget,

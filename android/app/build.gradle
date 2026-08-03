@@ -104,6 +104,17 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            // Les valeurs viennent des proprietes Gradle, jamais du depot :
+            //   • en local : ~/.gradle/gradle.properties
+            //   • en CI    : -PMYAPP_RELEASE_* alimentes par les secrets GitHub
+            if (project.hasProperty('MYAPP_RELEASE_STORE_FILE')) {
+                storeFile file(MYAPP_RELEASE_STORE_FILE)
+                storePassword MYAPP_RELEASE_STORE_PASSWORD
+                keyAlias MYAPP_RELEASE_KEY_ALIAS
+                keyPassword MYAPP_RELEASE_KEY_PASSWORD
+            }
+        }
     }
     buildTypes {
         debug {
@@ -112,7 +123,7 @@ android {
         release {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
             shrinkResources enableShrinkResources.toBoolean()
             minifyEnabled enableMinifyInReleaseBuilds
@@ -178,5 +189,22 @@ dependencies {
         implementation("com.facebook.react:hermes-android")
     } else {
         implementation jscFlavor
+    }
+}
+
+// Refus explicite de produire un release signe en debug. Sans ce garde, l'erreur ne se
+// voit qu'au rejet de Google Play, des semaines plus tard.
+gradle.taskGraph.whenReady { graph ->
+    def wantsRelease = graph.allTasks.any { t ->
+        (t.name.startsWith('assemble') || t.name.startsWith('bundle')) && t.name.contains('Release')
+    }
+    if (wantsRelease && !project.hasProperty('MYAPP_RELEASE_STORE_FILE')) {
+        throw new GradleException(
+            "Build de release sans keystore de production.\n" +
+            "Definis MYAPP_RELEASE_STORE_FILE, MYAPP_RELEASE_STORE_PASSWORD, " +
+            "MYAPP_RELEASE_KEY_ALIAS et MYAPP_RELEASE_KEY_PASSWORD " +
+            "(~/.gradle/gradle.properties en local, secrets GitHub en CI).\n" +
+            "Sans eux le gabarit Expo retombe sur la cle de DEBUG, et Play refuse le binaire."
+        )
     }
 }
