@@ -17,6 +17,154 @@ import {
  *
  * Tout contexte manquant retombe sur des défauts sûrs (jamais d'exception).
  */
+/** Langues prises en charge par les libelles de scoring. */
+export type ScoreLang = 'fr' | 'en' | 'ar';
+
+/**
+ * Libelles des `reasons`.
+ *
+ * Ces phrases etaient en dur en francais et renvoyees telles quelles a l'application,
+ * quelle que soit la langue de l'utilisateur. Onze sont des conseils nommement lies a une
+ * pathologie. Le mobile les affiche directement (ecrans mode restaurant, ticket de caisse,
+ * code-barres) : un utilisateur anglophone recevait donc un avis de sante en francais.
+ *
+ * Le contrat d'API n'a pas bouge : l'application envoyait deja son ObjectiveContext
+ * complet, qui porte desormais `lang`. Le backend l'ignorait simplement.
+ *
+ * Table identique a celle de lib/objective/scoring.ts cote mobile : le meme aliment doit
+ * produire la meme phrase, que le score soit calcule sur l'appareil ou ici.
+ */
+const MSG: Record<string, Record<ScoreLang, string>> = {
+  medicNote: {
+    fr: ' — a confirmer avec ton medecin',
+    en: ' — confirm with your doctor',
+    ar: ' — يُرجى التأكيد مع طبيبك',
+  },
+  allergen: {
+    fr: 'Contient un allergene declare : {a}',
+    en: 'Contains a declared allergen: {a}',
+    ar: 'يحتوي على مُسبّب حساسية مُصرّح به: {a}',
+  },
+  halal: {
+    fr: 'Non halal (porc) — bloque par le regime',
+    en: 'Not halal (pork) — blocked by your diet',
+    ar: 'غير حلال (لحم خنزير) — مرفوض حسب نظامك',
+  },
+  vegetarian: {
+    fr: 'Contient de la viande/du poisson — bloque par le regime vegetarien/vegan',
+    en: 'Contains meat or fish — blocked by your vegetarian/vegan diet',
+    ar: 'يحتوي على لحم أو سمك — مرفوض حسب النظام النباتي',
+  },
+  gluten: {
+    fr: 'Contient du gluten — a eviter (maladie coeliaque)',
+    en: 'Contains gluten — avoid (coeliac disease)',
+    ar: 'يحتوي على الغلوتين — يُتجنّب (الداء البطني)',
+  },
+  sugarDiabetes: {
+    fr: 'Riche en sucre — a limiter (diabete)',
+    en: 'High in sugar — limit (diabetes)',
+    ar: 'غني بالسكر — يُحدّ منه (السكري)',
+  },
+  refinedCarbs: {
+    fr: 'Glucides raffines (index glycemique eleve) — a moderer (diabete)',
+    en: 'Refined carbs (high glycaemic index) — moderate (diabetes)',
+    ar: 'كربوهيدرات مكرّرة (مؤشر جلايسيمي مرتفع) — يُعتدل فيها (السكري)',
+  },
+  highGL: {
+    fr: 'Charge glycemique elevee, peu de fibres — a moderer (diabete)',
+    en: 'High glycaemic load, low fibre — moderate (diabetes)',
+    ar: 'حمل جلايسيمي مرتفع وألياف قليلة — يُعتدل فيه (السكري)',
+  },
+  modGL: {
+    fr: 'Charge glycemique moderee — a surveiller (diabete)',
+    en: 'Moderate glycaemic load — keep an eye on it (diabetes)',
+    ar: 'حمل جلايسيمي معتدل — يُراقَب (السكري)',
+  },
+  lowGL: {
+    fr: 'Charge glycemique faible — bien tolere (diabete)',
+    en: 'Low glycaemic load — well tolerated (diabetes)',
+    ar: 'حمل جلايسيمي منخفض — جيّد التحمّل (السكري)',
+  },
+  sodium: {
+    fr: 'Riche en sel/sodium — a limiter (hypertension)',
+    en: 'High in salt/sodium — limit (high blood pressure)',
+    ar: 'غني بالملح/الصوديوم — يُحدّ منه (ارتفاع ضغط الدم)',
+  },
+  satFat: {
+    fr: 'Riche en graisses saturees — a limiter (cholesterol)',
+    en: 'High in saturated fat — limit (cholesterol)',
+    ar: 'غني بالدهون المشبعة — يُحدّ منه (الكوليسترول)',
+  },
+  proteinKidney: {
+    fr: 'Charge proteique elevee — a limiter (insuffisance renale)',
+    en: 'High protein load — limit (kidney failure)',
+    ar: 'حمل بروتيني مرتفع — يُحدّ منه (القصور الكلوي)',
+  },
+  minerals: {
+    fr: 'Riche en potassium/phosphore/sodium — a surveiller (rein)',
+    en: 'High in potassium/phosphorus/sodium — keep an eye on it (kidneys)',
+    ar: 'غني بالبوتاسيوم/الفوسفور/الصوديوم — يُراقَب (الكلى)',
+  },
+  fodmap: {
+    fr: 'Riche en FODMAP — peut declencher des symptomes (SII)',
+    en: 'High in FODMAPs — may trigger symptoms (IBS)',
+    ar: 'غني بالفودماب — قد يُثير الأعراض (القولون العصبي)',
+  },
+  purines: {
+    fr: 'Riche en purines / viande rouge / alcool — a limiter (goutte)',
+    en: 'High in purines / red meat / alcohol — limit (gout)',
+    ar: 'غني بالبيورينات / اللحم الأحمر / الكحول — يُحدّ منه (النقرس)',
+  },
+  wellSized: {
+    fr: 'Portion bien calibree (~{a} kcal visees)',
+    en: 'Well-sized portion (~{a} kcal target)',
+    ar: 'حصة مضبوطة (~{a} سعرة مستهدفة)',
+  },
+  light: {
+    fr: 'Leger pour le budget restant',
+    en: 'Light for your remaining budget',
+    ar: 'خفيف بالنسبة لما تبقّى لك',
+  },
+  budgetReached: {
+    fr: 'Budget calorique du jour atteint',
+    en: "Today's calorie budget is used up",
+    ar: 'استُنفدت سعرات اليوم',
+  },
+  highProtein: {
+    fr: 'Riche en proteines (rassasiant)',
+    en: 'High in protein (filling)',
+    ar: 'غني بالبروتين (مُشبع)',
+  },
+  calorieDense: {
+    fr: 'Dense en calories — a limiter en perte de poids',
+    en: 'Calorie-dense — limit when losing weight',
+    ar: 'كثيف السعرات — يُحدّ منه عند إنقاص الوزن',
+  },
+  disliked: {
+    fr: 'Aliment non aime : {a}',
+    en: 'Food you dislike: {a}',
+    ar: 'طعام لا تحبّه: {a}',
+  },
+  compatible: {
+    fr: 'Compatible avec votre objectif',
+    en: 'Fits your goal',
+    ar: 'يتوافق مع هدفك',
+  },
+  defaultScore: {
+    fr: 'Score par defaut (donnees insuffisantes)',
+    en: 'Default score (not enough data)',
+    ar: 'تقييم افتراضي (بيانات غير كافية)',
+  },
+};
+
+/** Libelle traduit ; retombe sur le francais si la langue est inconnue. */
+function m(lang: ScoreLang, key: keyof typeof MSG, a?: string | number): string {
+  const row = MSG[key];
+  let out = (row && (row[lang] || row.fr)) || '';
+  if (a !== undefined) out = out.replace('{a}', String(a));
+  return out;
+}
+
 @Injectable()
 export class ScoringService {
   /** Normalise une chaîne pour comparaison (minuscule, sans accents, trim). */
@@ -91,8 +239,14 @@ export class ScoringService {
       : 'maintain';
     const mt = c.macroTargets ?? ({} as any);
     const rm = c.remainingMacros ?? ({} as any);
+    // Langue validee ici : une valeur inattendue retombe sur le francais plutot que
+    // de produire des libelles vides.
+    const lang: ScoreLang = (['fr', 'en', 'ar'] as const).includes(c.lang as any)
+      ? (c.lang as ScoreLang)
+      : 'fr';
     return {
       uid: c.uid,
+      lang,
       goal,
       tdee: ScoringService.num(c.tdee, 0),
       dailyKcalTarget: ScoringService.num(c.dailyKcalTarget, 0),
@@ -131,6 +285,12 @@ export class ScoringService {
    * Score un aliment vs le contexte d'objectif. Pur & robuste.
    */
   scoreFood(f: FoodCandidate, ctx: ObjectiveContext): FoodScore {
+    // Langue lue AVANT le try : le bloc catch renvoie lui aussi un libelle, et il doit
+    // rester increvable. D'ou une lecture defensive directe plutot qu'un passage par
+    // safeCtx, qui est appele a l'interieur du try.
+    const lang: ScoreLang = (['fr', 'en', 'ar'] as const).includes((ctx as any)?.lang)
+      ? ((ctx as any).lang as ScoreLang)
+      : 'fr';
     try {
       const food = ScoringService.safeFood(f);
       const c = ScoringService.safeCtx(ctx);
@@ -154,7 +314,7 @@ export class ScoringService {
           return {
             fit: 0,
             verdict: 'avoid',
-            reasons: [`Contient un allergène déclaré : ${a}`],
+            reasons: [m(lang, 'allergen', a)],
             blocked: true,
           };
         }
@@ -166,7 +326,7 @@ export class ScoringService {
         return {
           fit: 0,
           verdict: 'avoid',
-          reasons: ['Non halal (porc) — bloqué par le régime'],
+          reasons: [m(lang, 'halal')],
           blocked: true,
         };
       }
@@ -186,7 +346,7 @@ export class ScoringService {
         return {
           fit: 0,
           verdict: 'avoid',
-          reasons: ['Contient de la viande/du poisson — bloqué par le régime végétarien/végan'],
+          reasons: [m(lang, 'vegetarian')],
           blocked: true,
         };
       }
@@ -206,7 +366,7 @@ export class ScoringService {
       const proteinDensityMed = (food.protein / Math.max(food.kcal, 1)) * 100;
       // Densité glucides (g/100 kcal) : proxy d'aliment glucidique.
       const carbDensityMed = (food.carbs / Math.max(food.kcal, 1)) * 100;
-      const medicNote = ' — à confirmer avec ton médecin';
+      const medicNote = m(lang, 'medicNote');
 
       if (conditions.length) {
         // --- CŒLIAQUE : gluten = blocage dur (comme une allergie). ---
@@ -220,7 +380,7 @@ export class ScoringService {
             return {
               fit: 0,
               verdict: 'avoid',
-              reasons: [`Contient du gluten — à éviter (maladie cœliaque)${medicNote}`],
+              reasons: [m(lang, 'gluten') + medicNote],
               blocked: true,
             };
           }
@@ -250,14 +410,14 @@ export class ScoringService {
 
           if (has('high_sugar') || has('sugar') || nameHas(/\b(sucre|soda|bonbon|confiserie|sirop|jus|miel|nutella|candy|dessert|patisser|pâtisser|gateau|gâteau)/)) {
             medicalPenalties.push(20);
-            reasons.push(`Riche en sucre — à limiter (diabète)${medicNote}`);
+            reasons.push(m(lang, 'sugarDiabetes') + medicNote);
           } else if (has('refined_carb') || has('white_carb') || nameHas(/\b(pain blanc|riz blanc|frite|puree|purée|corn ?flakes)/)) {
             medicalPenalties.push(12);
-            reasons.push(`Glucides raffinés (index glycémique élevé) — à modérer (diabète)${medicNote}`);
+            reasons.push(m(lang, 'refinedCarbs') + medicNote);
           } else if (carbDensityMed >= 12 && !hasFiber) {
             // Heuristique macro : dense en glucides & pauvre en fibres.
             medicalPenalties.push(10);
-            reasons.push(`Charge glycémique élevée, peu de fibres — à modérer (diabète)${medicNote}`);
+            reasons.push(m(lang, 'highGL') + medicNote);
           } else {
             // Aucune reason forte n'a été déclenchée : on affine avec le proxy
             // de charge glycémique via un ajustement BORNÉ (±3), qui ne renverse
@@ -266,10 +426,10 @@ export class ScoringService {
             //  petit bonus.)
             if (glProxy >= 8) {
               medicalPenalties.push(3);
-              reasons.push(`Charge glycémique modérée — à surveiller (diabète)${medicNote}`);
+              reasons.push(m(lang, 'modGL') + medicNote);
             } else if (glProxy <= 3 && food.carbs > 0) {
               medicalPenalties.push(-3);
-              reasons.push(`Charge glycémique faible — bien toléré (diabète)${medicNote}`);
+              reasons.push(m(lang, 'lowGL') + medicNote);
             }
           }
         }
@@ -283,7 +443,7 @@ export class ScoringService {
             nameHas(/\b(chips|charcuterie|saucisson|jambon|bacon|lardon|sel|salaison|olive|cornichon|sauce soja|soja|bouillon|conserve|fast ?food|nugget|pizza|frite)/)
           ) {
             medicalPenalties.push(18);
-            reasons.push(`Riche en sel/sodium — à limiter (hypertension)${medicNote}`);
+            reasons.push(m(lang, 'sodium') + medicNote);
           }
         }
 
@@ -296,7 +456,7 @@ export class ScoringService {
             nameHas(/\b(beurre|creme|crème|fromage|charcuterie|friture|frit|frite|bacon|lardon|viennoiser|palme|saindoux|pate|pâté|abats)/)
           ) {
             medicalPenalties.push(15);
-            reasons.push(`Riche en graisses saturées — à limiter (cholestérol)${medicNote}`);
+            reasons.push(m(lang, 'satFat') + medicNote);
           }
         }
 
@@ -304,7 +464,7 @@ export class ScoringService {
         if (conditions.includes('kidney')) {
           if (proteinDensityMed >= 12 || has('high_protein') || has('highp') || has('highprotein')) {
             medicalPenalties.push(15);
-            reasons.push(`Charge protéique élevée — à limiter (insuffisance rénale)${medicNote}`);
+            reasons.push(m(lang, 'proteinKidney') + medicNote);
           }
           if (
             has('high_potassium') ||
@@ -313,7 +473,7 @@ export class ScoringService {
             nameHas(/\b(banane|abricot sec|fruit sec|noix|chocolat|fromage|abats|conserve|charcuterie|cola)/)
           ) {
             medicalPenalties.push(12);
-            reasons.push(`Riche en potassium/phosphore/sodium — à surveiller (rein)${medicNote}`);
+            reasons.push(m(lang, 'minerals') + medicNote);
           }
         }
 
@@ -325,7 +485,7 @@ export class ScoringService {
             nameHas(/\b(oignon|ail|chou|haricot|lentille|pois chiche|legumineuse|légumineuse|lait|creme|crème|fromage frais|ble|blé|wheat|miel|pomme|poire|mangue|pasteque|pastèque|champignon)/)
           ) {
             medicalPenalties.push(12);
-            reasons.push(`Riche en FODMAP — peut déclencher des symptômes (SII)${medicNote}`);
+            reasons.push(m(lang, 'fodmap') + medicNote);
           }
         }
 
@@ -338,7 +498,7 @@ export class ScoringService {
             nameHas(/\b(viande rouge|boeuf|bœuf|agneau|abats|foie|rognon|gibier|charcuterie|sardine|anchois|hareng|maquereau|crustace|crustacé|fruit de mer|biere|bière|alcool|vin)/)
           ) {
             medicalPenalties.push(15);
-            reasons.push(`Riche en purines / viande rouge / alcool — à limiter (goutte)${medicNote}`);
+            reasons.push(m(lang, 'purines') + medicNote);
           }
         }
       }
@@ -366,16 +526,16 @@ export class ScoringService {
           const prox = Math.max(0, 1 - rel); // 1 = pile la cible
           fit += prox * 30; // jusqu'à +30
           if (prox > 0.66) {
-            reasons.push(`Portion bien calibrée (~${Math.round(idealKcal)} kcal visées)`);
+            reasons.push(m(lang, 'wellSized', Math.round(idealKcal)));
           } else if (food.kcal < idealKcal * 0.5) {
-            reasons.push('Léger pour le budget restant');
+            reasons.push(m(lang, 'light'));
           }
         }
       } else {
         // Plus de budget : tout ce qui apporte des kcal est pénalisé.
         if (food.kcal > 0) {
           fit -= 30;
-          reasons.push('Budget calorique du jour atteint');
+          reasons.push(m(lang, 'budgetReached'));
         }
       }
 
@@ -387,7 +547,7 @@ export class ScoringService {
         if (proteinDensity >= 10 || food.tags.includes('highp') || food.tags.includes('highprotein')) {
           const bonus = Math.min(15, proteinDensity * 0.8);
           fit += bonus;
-          reasons.push('Riche en protéines (rassasiant)');
+          reasons.push(m(lang, 'highProtein'));
         }
         // Bonus supplémentaire si on manque encore de protéines aujourd'hui.
         if (c.remainingMacros.protein > 0 && food.protein > 0) {
@@ -410,7 +570,7 @@ export class ScoringService {
           food.tags.includes('sugar');
         if (calorieDense) {
           fit -= 15;
-          reasons.push('Dense en calories — à limiter en perte de poids');
+          reasons.push(m(lang, 'calorieDense'));
         }
       }
 
@@ -420,7 +580,7 @@ export class ScoringService {
       for (const d of c.dislikes) {
         if (d && (food.tags.includes(d) || hay.includes(d))) {
           fit -= 8;
-          reasons.push(`Aliment non aimé : ${d}`);
+          reasons.push(m(lang, 'disliked', d));
           break;
         }
       }
@@ -435,7 +595,7 @@ export class ScoringService {
       // -----------------------------------------------------------------------
       fit = Math.max(0, Math.min(100, Math.round(fit)));
       const verdict: FoodScore['verdict'] = fit >= 70 ? 'great' : fit >= 45 ? 'ok' : 'avoid';
-      if (!reasons.length) reasons.push('Compatible avec votre objectif');
+      if (!reasons.length) reasons.push(m(lang, 'compatible'));
 
       return { fit, verdict, reasons, blocked: false };
     } catch {
@@ -443,7 +603,7 @@ export class ScoringService {
       return {
         fit: 50,
         verdict: 'ok',
-        reasons: ['Score par défaut (données insuffisantes)'],
+        reasons: [m(lang, 'defaultScore')],
         blocked: false,
       };
     }

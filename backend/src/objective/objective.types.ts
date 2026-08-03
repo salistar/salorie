@@ -16,6 +16,8 @@ export interface ObjectiveContext {
   uid?: string;
   /** Objectif global : perte / maintien / prise. */
   goal: 'lose' | 'maintain' | 'gain';
+  /** Langue des libelles renvoyes. Absente = francais, comportement historique. */
+  lang?: 'fr' | 'en' | 'ar';
   /** Dépense énergétique totale estimée (kcal/jour). */
   tdee: number;
   /** Cible calorique du jour (kcal). */
