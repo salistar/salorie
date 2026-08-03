@@ -154,15 +154,19 @@ export class NutritionService {
     const totals: Record<string, number> = {};
     let matched = 0;
     const names: string[] = [];
-    for (const f of foods) {
-      const data = await this.foodMicros(f);
+    // fix N+1 (audit) : resoudre les micros de tous les aliments EN PARALLELE (etait sequentiel).
+    // Boucle for classique ensuite -> `data` est bien narrow apres `if (!data) continue`.
+    const datas = await Promise.all(foods.map((f) => this.foodMicros(f).catch(() => null)));
+    for (let i = 0; i < foods.length; i++) {
+      const f = foods[i];
+      const data = datas[i];
       if (!data) continue;
       matched++;
       if (f.name) names.push(f.name);
       // Estimate grams eaten from logged calories vs the food's kcal/100g.
       const grams = data.kcal100 > 0 && f.calories ? (f.calories / data.kcal100) * 100 : 100;
       for (const [label, amt100] of Object.entries(data.micros100)) {
-        totals[label] = (totals[label] || 0) + amt100 * (grams / 100);
+        totals[label] = (totals[label] || 0) + (amt100 as number) * (grams / 100);
       }
     }
 

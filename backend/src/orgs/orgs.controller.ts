@@ -41,8 +41,7 @@ export class OrgsController {
   @Get(':id/members')
   @UseGuards(FirebaseAuthGuard)
   async members(@Param('id') id: string, @Req() req: any) {
-    const me = await this.svc.getMembership(id, req.user.uid);
-    if (!me || me.status !== 'active') throw new ForbiddenException('Réservé aux membres de l\'organisation');
+    if (!(await this.svc.isActiveMember(id, req.user.uid))) throw new ForbiddenException('Réservé aux membres de l\'organisation');
     return this.svc.listMembers(id);
   }
 
@@ -52,10 +51,10 @@ export class OrgsController {
   @Post(':id/invite')
   @UseGuards(FirebaseAuthGuard)
   async invite(@Param('id') id: string, @Req() req: any, @Body() b: any) {
-    const me = await this.svc.getMembership(id, req.user.uid);
-    if (!me || me.status !== 'active' || !['owner', 'coach'].includes(me.role)) {
-      throw new ForbiddenException('Réservé aux coachs/propriétaires de l\'organisation');
-    }
+    // canManageOrg = membre ACTIF de rôle owner ou coach — équivalent au contrôle en ligne
+    // qu'il remplace. Le rôle de l'invitation reste codé en dur : `b?.role` permettrait à un
+    // coach d'émettre une invitation « owner » et de prendre l'organisation.
+    if (!(await this.svc.canManageOrg(id, req.user.uid))) throw new ForbiddenException('Réservé aux coachs/propriétaires de l\'organisation');
     return this.svc.createInvite(id, 'client', b?.email || '', req.user.uid);
   }
 

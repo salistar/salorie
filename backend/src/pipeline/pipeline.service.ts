@@ -29,31 +29,39 @@ export class PipelineService {
     const db = this.fb.db();
     // 1) Miroir users
     const usersSnap = await db.collection('users').limit(1000).get();
-    let mUsers = 0;
-    for (const u of usersSnap.docs) {
+    // fix N+1 (audit) : upserts INDEPENDANTS (par userId) -> un seul bulkWrite non ordonne
+    // au lieu de 1000 updateOne sequentiels (ordre sans importance, idempotent).
+    const userOps = usersSnap.docs.map((u) => {
       const d = u.data() as any;
-      await this.users.updateOne(
-        { userId: u.id },
-        { $set: { tenantId: this.TENANT, userId: u.id, email: d.email, goal: d.goal, weight: d.weight, profile: d } },
-        { upsert: true },
-      );
-      mUsers++;
-    }
+      return {
+        updateOne: {
+          filter: { userId: u.id },
+          update: { $set: { tenantId: this.TENANT, userId: u.id, email: d.email, goal: d.goal, weight: d.weight, profile: d } },
+          upsert: true,
+        },
+      };
+    });
+    if (userOps.length) await this.users.bulkWrite(userOps, { ordered: false });
+    const mUsers = userOps.length;
     // 2) Miroir events (Event Bus) — sous-collections users/{id}/events lues via
     // collectionGroup (sans orderBy → pas d'index requis) ; dédup par chemin Firestore.
     const evSnap = await db.collectionGroup('events').limit(2000).get().catch(() => null);
     let mEvents = 0;
-    if (evSnap) {
-      for (const e of evSnap.docs) {
+    if (evSnap && evSnap.docs.length) {
+      // fix N+1 (audit) : bulkWrite non ordonne (upserts independants dedupes par chemin Firestore).
+      const evOps = evSnap.docs.map((e) => {
         const d = e.data() as any;
         const ts = d.timestamp?._seconds ? d.timestamp._seconds * 1000 : (d.timestamp?.toMillis?.() ?? Date.now());
-        const r = await this.events.updateOne(
-          { firestoreId: e.ref.path },
-          { $set: { tenantId: this.TENANT, userId: d.userId, type: d.type, data: d.data || {}, firestoreId: e.ref.path, eventTs: ts } },
-          { upsert: true },
-        );
-        if ((r as any).upsertedCount) mEvents++;
-      }
+        return {
+          updateOne: {
+            filter: { firestoreId: e.ref.path },
+            update: { $set: { tenantId: this.TENANT, userId: d.userId, type: d.type, data: d.data || {}, firestoreId: e.ref.path, eventTs: ts } },
+            upsert: true,
+          },
+        };
+      });
+      const r = await this.events.bulkWrite(evOps, { ordered: false });
+      mEvents = (r as any).upsertedCount || 0;
     }
     // 3) ML feature store + 4) outbox
     await this.recomputeFeatures();

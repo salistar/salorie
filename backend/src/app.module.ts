@@ -29,9 +29,15 @@ import { OrgsController } from './orgs/orgs.controller';
 import { OrgsService } from './orgs/orgs.service';
 import { Organization, OrganizationSchema, Membership, MembershipSchema, Invite, InviteSchema } from './orgs/orgs.schemas';
 import { FastingGateway } from './fasting/fasting.gateway';
+import { TwinModule } from './twin/twin.module';
 import { NewsController } from './news/news.controller';
 import { NewsService } from './news/news.service';
 import { NewsItem, NewsItemSchema } from './news/news.schemas';
+import { ReceiptModule } from './receipt/receipt.module';
+import { FridgeModule } from './fridge/fridge.module';
+import { ObjectiveModule } from './objective/objective.module';
+import { MenuModule } from './menu/menu.module';
+import { BarcodeModule } from './barcode/barcode.module';
 
 // Pipeline analytics (CDC Firestore→Mongo + feature store + outbox + multi-tenant)
 // — activé uniquement si Mongo est configuré (sinon DI échoue au boot standalone).
@@ -70,9 +76,26 @@ import { AccountService } from './account/account.service';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
+    TwinModule,
+    ObjectiveModule,
+    MenuModule,
+    ReceiptModule,
+    FridgeModule,
+    BarcodeModule,
     // Mongo is optional — only connect when MONGO_URI is set (docker-compose),
     // so the API boots standalone for Firestore/OFF/Redis-only endpoints.
-    ...(HAS_MONGO ? [MongooseModule.forRoot(process.env.MONGO_URI!)] : []),
+    // Pool de connexions dimensionné pour la charge (100k users) : réutilise les
+    // sockets Mongo au lieu d'en ouvrir/fermer par requête. serverSelectionTimeoutMS
+    // borne l'attente si le primary est injoignable (évite les requêtes pendues).
+    ...(HAS_MONGO
+      ? [
+          MongooseModule.forRoot(process.env.MONGO_URI!, {
+            maxPoolSize: 50,
+            minPoolSize: 5,
+            serverSelectionTimeoutMS: 5000,
+          }),
+        ]
+      : []),
     ...PIPELINE_FEATURES,
   ],
   controllers: [HealthController, UsersController, ReferralController, AccountController, FilesController, NutritionController, InsightsController, AiController, MlController, ...(HAS_MONGO ? [PipelineController, RacesController, OrgsController, NewsController] : [])],

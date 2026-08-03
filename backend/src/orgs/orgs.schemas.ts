@@ -27,21 +27,30 @@ export const OrganizationSchema = SchemaFactory.createForClass(Organization);
 
 @Schema({ timestamps: true, collection: 'org_memberships' })
 export class Membership {
-  @Prop({ index: true, required: true }) orgId: string;
-  @Prop({ index: true, required: true }) userId: string;    // uid Firebase
+  // orgId/userId : couverts par l'index composé { orgId, userId } (voir bas de fichier).
+  @Prop({ required: true }) orgId: string;
+  @Prop({ required: true }) userId: string;    // uid Firebase
   @Prop() email: string;
   @Prop() userName: string;
   // owner | admin | coach | member | client (selon le type d'org)
-  @Prop({ default: 'member', index: true }) role: string;
+  @Prop({ default: 'member' }) role: string;
   @Prop({ default: 'active' }) status: string;              // active | invited | removed
-  @Prop({ index: true }) coachUserId: string;               // pour un client rattaché à un coach
+  @Prop() coachUserId: string;               // pour un client rattaché à un coach
 }
 export const MembershipSchema = SchemaFactory.createForClass(Membership);
+// isActiveMember/canManageOrg/join : findOne({ orgId, userId[, status] }).
+MembershipSchema.index({ orgId: 1, userId: 1 });
+// listMembers : find({ orgId, status }).sort({ createdAt: -1 }).
+MembershipSchema.index({ orgId: 1, status: 1 });
+// myOrgs : find({ userId, status: 'active' }).
+MembershipSchema.index({ userId: 1, status: 1 });
+// clientsOfCoach : find({ coachUserId, status: 'active' }).sort({ createdAt: -1 }).
+MembershipSchema.index({ coachUserId: 1, status: 1 });
 
 @Schema({ timestamps: true, collection: 'org_invites' })
 export class Invite {
-  @Prop({ index: true, required: true }) orgId: string;
-  @Prop({ unique: true, required: true }) code: string;     // code/lien d'invitation
+  @Prop({ required: true }) orgId: string;
+  @Prop({ unique: true, required: true }) code: string;     // code/lien d'invitation (index unique → lookup joinByCode)
   @Prop({ default: 'member' }) role: string;
   @Prop({ default: '' }) email: string;                     // optionnel : invite ciblée
   @Prop() coachUserId: string;
@@ -49,3 +58,5 @@ export class Invite {
   @Prop() expiresAt: number;
 }
 export const InviteSchema = SchemaFactory.createForClass(Invite);
+// listInvites : find({ orgId, usedBy: { $exists: false } }).sort({ createdAt: -1 }).
+InviteSchema.index({ orgId: 1, createdAt: -1 });
