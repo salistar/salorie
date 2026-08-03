@@ -1,7 +1,8 @@
 package com.idriss.kriouile.salorie
 import expo.modules.splashscreen.SplashScreenManager
-
+import dev.matinzd.healthconnect.permissions.HealthConnectPermissionDelegate
 import android.content.Intent
+
 import android.os.Build
 import android.os.Bundle
 
@@ -11,7 +12,6 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnable
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 
 import expo.modules.ReactActivityDelegateWrapper
-import dev.matinzd.healthconnect.permissions.HealthConnectPermissionDelegate
 
 class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,30 +23,23 @@ class MainActivity : ReactActivity() {
     SplashScreenManager.registerOnActivity(this)
     // @generated end expo-splashscreen
     super.onCreate(null)
-    // Register the Health Connect permission launcher — required by
-    // react-native-health-connect, else requestPermission() crashes with
-    // "lateinit property requestPermission has not been initialized".
     HealthConnectPermissionDelegate.setPermissionDelegate(this)
-    // Start the foreground step-counter service so steps are counted continuously,
-    // even after the app is closed, with a persistent notification.
-    // N'on demarre le service "health" QUE si ACTIVITY_RECOGNITION est accordee
-    // (Android 10+/14+ : sinon le foreground service health est refuse et crashe).
     maybeStartStepService()
   }
 
   /**
-   * Démarre le StepCounterService SI ACTIVITY_RECOGNITION est accordée. Appelé en
-   * onCreate ET onResume : ainsi, dès que l'utilisateur accorde la permission via
-   * le prompt JS (la dialog ferme → onResume), le service démarre sans relancer l'app.
+   * Returns the name of the main component registered from JavaScript. This is used to schedule
+   * rendering of the component.
    */
+
   private fun maybeStartStepService() {
     try {
-      val needsPerm = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+      val needsPerm = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
       val granted = !needsPerm || checkSelfPermission(android.Manifest.permission.ACTIVITY_RECOGNITION) ==
         android.content.pm.PackageManager.PERMISSION_GRANTED
       if (granted) {
         val svc = Intent(this, StepCounterService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(svc) else startService(svc)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) startForegroundService(svc) else startService(svc)
       }
     } catch (_: Exception) {}
   }
@@ -56,10 +49,6 @@ class MainActivity : ReactActivity() {
     maybeStartStepService()
   }
 
-  /**
-   * Returns the name of the main component registered from JavaScript. This is used to schedule
-   * rendering of the component.
-   */
   override fun getMainComponentName(): String = "main"
 
   /**

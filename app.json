@@ -27,7 +27,9 @@
       },
       "package": "com.idriss.kriouile.salorie",
       "versionCode": 1,
-      "blockedPermissions": ["android.permission.SYSTEM_ALERT_WINDOW"],
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ],
       "permissions": [
         "android.permission.health.READ_STEPS",
         "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
@@ -65,6 +67,7 @@
       "react-native-health-connect",
       "./plugins/withHealthConnectPermissionDelegate",
       "./plugins/withStepCounterService",
+      "./plugins/withNdkVersion",
       [
         "expo-location",
         {
