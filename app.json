@@ -70,6 +70,7 @@
       "./plugins/withNdkVersion",
       "./plugins/withReleaseSigning",
       "./plugins/withGradleMemory",
+      "./plugins/withAbiFilters",
       [
         "expo-location",
         {
