@@ -7,7 +7,7 @@ import {
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, MapPin, Plus, Trash2, Send, Clock, ChevronDown, ChevronRight, Route as RouteIcon } from 'lucide-react-native';
-import { FlashList } from '@shopify/flash-list';
+import PerfList from '../../components/PerfList';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -226,11 +226,11 @@ export default function CommunityRoutesScreen() {
         <View style={styles.backBtn} />
       </View>
 
-      {/* FlashList sur les parcours APPROUVÉS — la seule liste non bornée ici (100 max
+      {/* PerfList sur les parcours APPROUVÉS — la seule liste non bornée ici (100 max
           côté Firestore), et chaque carte se déplie avec ses waypoints. Le formulaire de
           proposition et « mes soumissions » (bornée à mes propres parcours) restent en
           ListHeaderComponent : un seul conteneur défilant, pas d'imbrication. */}
-      <FlashList
+      <PerfList
         data={loading ? [] : approved}
         keyExtractor={(r: CommunityRoute, i: number) => r.id ?? `route-${i}`}
         contentContainerStyle={styles.content}

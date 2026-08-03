@@ -14,7 +14,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Search, Plus, Utensils, ScanBarcode, Star, History, RotateCcw, Flame } from 'lucide-react-native';
-import { FlashList } from '@shopify/flash-list';
+import PerfList from '../../components/PerfList';
 import { Colors } from '../../constants/Colors';
 import { searchFood } from '../../lib/fatsecret';
 import { useLogging } from '../../lib/LoggingContext';
@@ -323,12 +323,10 @@ export default function FoodDatabaseScreen() {
         {loading && <ActivityIndicator size="small" color={isDark ? Colors.dark.primary : Colors.light.primary} style={[styles.loader, isRTL ? { right: undefined, left: 36 } : undefined]} />}
       </View>
 
-      {/* FlashList : recyclage réel des vues (contre le simple masquage de FlatList).
-          La liste se re-rend à CHAQUE frappe dans la recherche sur 653+ aliments, c'est
-          l'écran où la virtualisation compte le plus. La version 2 mesure les éléments
-          elle-même : `estimatedItemSize`, qu'il fallait fournir auparavant sous peine de
-          perdre l'essentiel du gain, n'existe plus. */}
-      <FlashList
+      {/* La liste se re-rend à CHAQUE frappe dans la recherche sur 653+ aliments : c'est
+          l'écran où la virtualisation compte le plus. Voir components/PerfList.tsx pour
+          la raison du passage de FlashList à FlatList. */}
+      <PerfList
         data={results}
         renderItem={renderItem}
         keyExtractor={keyExtractor}

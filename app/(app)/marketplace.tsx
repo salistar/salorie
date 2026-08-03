@@ -12,7 +12,7 @@ import { Skeleton } from '../../components/ui';
 import { router, useFocusEffect } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, Plus, Store, Tag, User as UserIcon, MapPin, MoreVertical } from 'lucide-react-native';
-import { FlashList } from '@shopify/flash-list';
+import PerfList from '../../components/PerfList';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -115,11 +115,11 @@ export default function MarketplaceScreen() {
         <View style={styles.backBtn} />
       </View>
 
-      {/* FlashList : la grille montait les 100 annonces d'un coup dans un ScrollView —
+      {/* PerfList : la grille montait les 100 annonces d'un coup dans un ScrollView —
           aucune virtualisation, et chaque carte porte une image distante. `numColumns`
           reproduit la grille 2 colonnes ; l'ancien en-tête (sous-titre, actions, chips
           de catégorie) devient ListHeaderComponent pour rester dans le même défilement. */}
-      <FlashList
+      <PerfList
         data={loading ? [] : listings}
         numColumns={2}
         keyExtractor={(l: MarketplaceListing) => l.id}

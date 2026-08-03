@@ -5,7 +5,7 @@ import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, Trophy, UserPlus, Flame, MoreVertical } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useFormTheme } from '../../components/FormKit';
-import { FlashList } from '@shopify/flash-list';
+import PerfList from '../../components/PerfList';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -156,12 +156,12 @@ export default function SocialScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
-      {/* FlashList : le fil était rendu par `.map()` dans un ScrollView — aucune
+      {/* PerfList : le fil était rendu par `.map()` dans un ScrollView — aucune
           virtualisation, et chaque ligne porte un avatar distant. Le CLASSEMENT (liste
           courte, bornée aux amis) passe en ListHeaderComponent : on garde ainsi un seul
           conteneur défilant au lieu d'imbriquer deux listes, ce que React Native
           déconseille explicitement. */}
-      <FlashList
+      <PerfList
         data={feedLoading ? [] : feed}
         keyExtractor={(it: FeedItem) => `${it.ownerDocId}_${it.id}`}
         contentContainerStyle={styles.content}

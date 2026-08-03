@@ -22,7 +22,7 @@ import {
   Circle,
   X,
 } from 'lucide-react-native';
-import { FlashList } from '@shopify/flash-list';
+import PerfList from '../../components/PerfList';
 import { Colors } from '../../constants/Colors';
 import {
   collection,
@@ -404,10 +404,10 @@ export default function NotificationsScreen() {
           </Text>
         </View>
       ) : (
-        // FlashList : l'historique de notifications n'est borné par rien côté client et
+        // PerfList : l'historique de notifications n'est borné par rien côté client et
         // grossit indéfiniment. Depuis la version 2, la mesure des cartes est automatique
         // et `estimatedItemSize`, qu'il fallait renseigner auparavant, a disparu.
-        <FlashList
+        <PerfList
           data={notifications}
           renderItem={({ item, index }) => (
             <NotificationCard item={item} index={index} />
