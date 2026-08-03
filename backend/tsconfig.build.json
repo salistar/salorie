@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Sans rootDir explicite, TypeScript deduit la racine du plus petit ancetre commun
+    // des fichiers compiles. Le jour ou un fichier apparait HORS de src/ — un test, par
+    // exemple — la racine remonte d'un cran et toute la sortie glisse dans dist/src/.
+    // Le conteneur lance `node dist/main.js` : le point d'entree disparait, le processus
+    // sort en code 1 et Docker le relance en boucle. L'API a ete coupee ainsi le
+    // 4 aout 2026, sans que rien n'echoue a la compilation ni au deploiement.
+    "rootDir": "src"
+  },
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts", "**/*.e2e-spec.ts"]
+}
