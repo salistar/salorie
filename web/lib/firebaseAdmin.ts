@@ -459,3 +459,58 @@ export async function setLLMKeys(patch: Record<string, string>, actor: string): 
   clean.lastActor = actor;
   await db().collection('secrets').doc('llm_keys').set(clean, { merge: true });
 }
+
+// ── Signalements UGC (moderation) ────────────────────────────────────────────
+//
+// Ces deux fonctions existaient sur srv3 mais n'ont jamais ete versionnees. Le
+// deploiement du 3 aout 2026 a remplace ce fichier par la version du depot, qui ne les
+// contenait pas : la compilation de l'admin echouait sur
+//   Type error: Module '"../../../lib/firebaseAdmin"' has no exported member 'getReports'
+// alors que app/api/reports/route.ts, app/reports/page.tsx et leurs 800 lignes voisines
+// etaient toujours la. Reconstruites d'apres leur unique point d'appel plutot que
+// supprimees avec la fonctionnalite.
+//
+// Les regles Firestore interdisent toute lecture cliente de `reports` : cette collection
+// n'est lisible que par le SDK Admin, donc ici.
+
+export interface AdminReport {
+  id: string;
+  status?: 'pending' | 'resolved' | 'dismissed';
+  reporterId?: string;
+  [k: string]: any;
+}
+
+/** Signalements, du plus recent au plus ancien. `pending` = non traites. */
+export async function getReports(status: 'pending' | 'all' = 'pending'): Promise<AdminReport[]> {
+  try {
+    let q: FirebaseFirestore.Query = db().collection('reports');
+    if (status === 'pending') q = q.where('status', '==', 'pending');
+    // Tri en memoire : un orderBy combine au where exigerait un index composite, dont
+    // l'absence ferait echouer la requete en production plutot que la ralentir.
+    const snap = await q.limit(300).get();
+    const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as AdminReport[];
+    return rows.sort((a, b) => {
+      const ta = a.createdAt?.seconds ?? a.createdAt?._seconds ?? 0;
+      const tb = b.createdAt?.seconds ?? b.createdAt?._seconds ?? 0;
+      return tb - ta;
+    });
+  } catch {
+    return [];
+  }
+}
+
+/** Cloture un signalement. Trace QUI a decide : une moderation doit etre imputable. */
+export async function setReportStatus(
+  id: string,
+  status: 'resolved' | 'dismissed',
+  adminEmail?: string,
+): Promise<void> {
+  await db().collection('reports').doc(id).set(
+    {
+      status,
+      resolvedAt: new Date().toISOString(),
+      resolvedBy: adminEmail || 'admin',
+    },
+    { merge: true },
+  );
+}

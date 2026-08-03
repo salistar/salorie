@@ -155,7 +155,8 @@ export class RacesService {
     return p;
   }
   leaderboard(raceId: string) {
-    return this.parts.find({ raceId }).sort({ finishedAt: 1, cumulativeKm: -1 }).limit(500).lean();
+    // fix PII : ne pas exposer les emails des participants dans le classement
+    return this.parts.find({ raceId }).select('userId userName imageUrl cumulativeKm rank finishedAt startedAt').sort({ finishedAt: 1, cumulativeKm: -1 }).limit(500).lean();
   }
 
   // ── Médailles ──
