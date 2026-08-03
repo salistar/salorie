@@ -90,6 +90,9 @@ android {
     namespace 'com.idriss.kriouile.salorie'
     defaultConfig {
         applicationId 'com.idriss.kriouile.salorie'
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        }
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 3
