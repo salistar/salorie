@@ -17,6 +17,7 @@ export default function NewsAdmin() {
   const [kind, setKind] = useState('news');
   const [imageUrl, setImageUrl] = useState('');
   const [busy, setBusy] = useState(false);
+  const [rowBusy, setRowBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setErr(null);
@@ -33,8 +34,19 @@ export default function NewsAdmin() {
     await fetch('/api/news', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, body, kind, imageUrl: imageUrl.trim() }) });
     setTitle(''); setBody(''); setImageUrl(''); setBusy(false); load();
   };
-  const toggle = async (n: any) => { await fetch('/api/news', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: n._id, active: !n.active }) }); load(); };
-  const del = async (id: string) => { if (!confirm('Supprimer cette actu ?')) return; await fetch('/api/news', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }); load(); };
+  const toggle = async (n: any) => {
+    if (rowBusy) return;
+    setRowBusy(n._id);
+    try { await fetch('/api/news', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: n._id, active: !n.active }) }); load(); }
+    finally { setRowBusy(null); }
+  };
+  const del = async (id: string) => {
+    if (!confirm('Supprimer cette actu ?')) return;
+    if (rowBusy) return;
+    setRowBusy(id);
+    try { await fetch('/api/news', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }); load(); }
+    finally { setRowBusy(null); }
+  };
 
   return (
     <main className="container">
@@ -43,7 +55,7 @@ export default function NewsAdmin() {
       <p className="foot">Publie des actualités visibles dans l'écran « Journal » de l'app : annonces de courses, défis, nouveautés.</p>
 
       <div className="card" style={{ padding: 16, marginTop: 10 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
+        <div className="grid-2col">
           <div><label style={lbl}>Titre</label><input style={inp} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Nouvelle course : Route de l'Atlas !" /></div>
           <div><label style={lbl}>Type</label>
             <select style={inp} value={kind} onChange={(e) => setKind(e.target.value)}>{KINDS.map((k) => <option key={k.v} value={k.v}>{k.label}</option>)}</select>
@@ -69,8 +81,8 @@ export default function NewsAdmin() {
                 <div style={{ fontWeight: 700 }}>{n.title}</div>
                 {n.body ? <div className="foot">{n.body}</div> : null}
               </div>
-              <button onClick={() => toggle(n)} style={btnSm}>{n.active ? 'Masquer' : 'Réactiver'}</button>
-              <button onClick={() => del(n._id)} style={{ ...btnSm, color: '#e11d48', borderColor: '#fecaca' }}>Supprimer</button>
+              <button disabled={rowBusy === n._id} onClick={() => toggle(n)} style={btnSm}>{n.active ? 'Masquer' : 'Réactiver'}</button>
+              <button disabled={rowBusy === n._id} onClick={() => del(n._id)} style={{ ...btnSm, color: '#e11d48', borderColor: '#fecaca' }}>Supprimer</button>
             </div>
           ))}
           {!loading && !items.length && <div className="card empty">Aucune publication. Publie la première ci-dessus.</div>}

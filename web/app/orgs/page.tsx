@@ -25,6 +25,7 @@ export default function OrgsPage() {
   const [open, setOpen] = useState<string | null>(null);
   const [members, setMembers] = useState<Record<string, any[]>>({});
   const [invite, setInvite] = useState<Record<string, string>>({});
+  const [rowBusy, setRowBusy] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
     setLoading(true); setErr(null);
@@ -51,15 +52,29 @@ export default function OrgsPage() {
     if (open === id) { setOpen(null); return; }
     setOpen(id);
     if (!members[id]) {
-      const j = await (await fetch(`/api/orgs/${id}`, { cache: 'no-store' })).json();
-      setMembers((m) => ({ ...m, [id]: Array.isArray(j) ? j : [] }));
+      setRowBusy((b) => ({ ...b, [id]: true }));
+      try {
+        const j = await (await fetch(`/api/orgs/${id}`, { cache: 'no-store' })).json();
+        setMembers((m) => ({ ...m, [id]: Array.isArray(j) ? j : [] }));
+      } finally { setRowBusy((b) => ({ ...b, [id]: false })); }
     }
   };
   const mkInvite = async (id: string, role: string) => {
-    const j = await (await fetch(`/api/orgs/${id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role }) })).json();
-    if (j.code) setInvite((i) => ({ ...i, [id]: j.code }));
+    if (rowBusy[id]) return;
+    setRowBusy((b) => ({ ...b, [id]: true }));
+    try {
+      const j = await (await fetch(`/api/orgs/${id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role }) })).json();
+      if (j.code) setInvite((i) => ({ ...i, [id]: j.code }));
+    } finally { setRowBusy((b) => ({ ...b, [id]: false })); }
   };
-  const del = async (id: string) => { if (confirm('Supprimer cette organisation ?')) { await fetch(`/api/orgs/${id}`, { method: 'DELETE' }); load(); } };
+  const del = async (id: string) => {
+    if (rowBusy[id]) return;
+    if (confirm('Supprimer cette organisation ?')) {
+      setRowBusy((b) => ({ ...b, [id]: true }));
+      try { await fetch(`/api/orgs/${id}`, { method: 'DELETE' }); load(); }
+      finally { setRowBusy((b) => ({ ...b, [id]: false })); }
+    }
+  };
 
   return (
     <main className="container">
@@ -73,7 +88,7 @@ export default function OrgsPage() {
             <button key={t.v} onClick={() => setType(t.v)} style={chip(type === t.v)}>{t.icon} {t.label}</button>
           ))}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="grid-2col">
           <Field label="Nom"><input style={inp} value={name} onChange={(e) => setName(e.target.value)} placeholder="Coach Karim / FC Atlas…" /></Field>
           <Field label="Couleur (branding)"><input style={{ ...inp, padding: 4, height: 42 }} type="color" value={color} onChange={(e) => setColor(e.target.value)} /></Field>
           <Field label="Logo URL"><input style={inp} value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://…" /></Field>
@@ -91,15 +106,15 @@ export default function OrgsPage() {
             const tdef = TYPES.find((t) => t.v === o.type) || TYPES[0];
             return (
               <div key={o._id} className="card" style={{ padding: 14 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 22 }}>{tdef.icon}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700 }}>{o.name} <span style={{ fontSize: 11, color: '#fff', background: o.branding?.primaryColor || '#2E8B57', padding: '2px 8px', borderRadius: 999, marginLeft: 6 }}>{tdef.label}</span></div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{o.name} <span style={{ fontSize: 11, color: '#fff', background: o.branding?.primaryColor || '#2E8B57', padding: '2px 8px', borderRadius: 999, marginLeft: 6 }}>{tdef.label}</span></div>
                     <div className="foot">{o.plan} · {o.slug || '—'}</div>
                   </div>
-                  <button onClick={() => toggle(o._id)} style={btnSm}>{open === o._id ? 'Masquer' : 'Membres'}</button>
-                  <button onClick={() => mkInvite(o._id, tdef.invite)} style={btnSm}>+ Invitation</button>
-                  <button onClick={() => del(o._id)} style={{ ...btnSm, color: '#e11d48' }}>Suppr.</button>
+                  <button disabled={rowBusy[o._id]} onClick={() => toggle(o._id)} style={btnSm}>{open === o._id ? 'Masquer' : (rowBusy[o._id] ? '…' : 'Membres')}</button>
+                  <button disabled={rowBusy[o._id]} onClick={() => mkInvite(o._id, tdef.invite)} style={btnSm}>+ Invitation</button>
+                  <button disabled={rowBusy[o._id]} onClick={() => del(o._id)} style={{ ...btnSm, color: '#e11d48' }}>Suppr.</button>
                 </div>
                 {invite[o._id] && <p style={{ marginTop: 8, fontWeight: 700, color: '#2E8B57' }}>Code d'invitation : <code style={{ background: '#eef7f1', padding: '3px 8px', borderRadius: 6 }}>{invite[o._id]}</code> (rôle {tdef.invite})</p>}
                 {open === o._id && (

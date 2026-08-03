@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin, unauthorized } from '../../../../lib/adminGuard';
 
 export const runtime = 'nodejs';
-const API = process.env.BACKEND_URL || 'https://api.salorie.salistar.com';
+const API = process.env.BACKEND_URL || 'https://api.salorie.com';
 function headers() {
   const h: Record<string, string> = { 'Content-Type': 'application/json' };
   if (process.env.ADMIN_API_KEY) h['x-admin-key'] = process.env.ADMIN_API_KEY;
@@ -10,6 +11,7 @@ function headers() {
 
 // GET = membres de l'org.
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+  const _admin = await requireAdmin(); if (!_admin) return unauthorized();
   try {
     const r = await fetch(`${API}/orgs/admin/${params.id}/members`, { headers: headers(), cache: 'no-store' });
     return NextResponse.json(await r.json(), { status: r.status });
@@ -18,6 +20,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 
 // POST = créer une invitation (role/email/coachUserId dans le body).
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+  const _admin = await requireAdmin(); if (!_admin) return unauthorized();
   try {
     const body = await req.json().catch(() => ({}));
     const r = await fetch(`${API}/orgs/admin/${params.id}/invite`, { method: 'POST', headers: headers(), body: JSON.stringify(body) });
@@ -26,6 +29,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  const _admin = await requireAdmin(); if (!_admin) return unauthorized();
   try {
     const r = await fetch(`${API}/orgs/admin/${params.id}`, { method: 'DELETE', headers: headers() });
     return NextResponse.json(await r.json(), { status: r.status });

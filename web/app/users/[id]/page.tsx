@@ -63,6 +63,7 @@ export default async function UserDetail({ params }: { params: { id: string } })
       <h2>Repas récents</h2>
       <div className="card">
         {meals.length === 0 ? <div className="empty">Aucun repas.</div> : (
+          <div className="table-wrap">
           <table>
             <thead><tr><th>Aliment</th><th>Type</th><th>Calories</th><th>P/G/L</th><th>Date</th></tr></thead>
             <tbody>
@@ -77,12 +78,14 @@ export default async function UserDetail({ params }: { params: { id: string } })
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
       <h2>Activité — pas du jour</h2>
       <div className="card">
         {steps.length === 0 ? <div className="empty">Aucune activité pas.</div> : (
+          <div className="table-wrap">
           <table>
             <thead><tr><th>Jour</th><th>Détail</th><th>Calories</th></tr></thead>
             <tbody>
@@ -95,12 +98,14 @@ export default async function UserDetail({ params }: { params: { id: string } })
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
       <h2>Événements (Event Bus)</h2>
       <div className="card">
         {events.length === 0 ? <div className="empty">Aucun événement.</div> : (
+          <div className="table-wrap">
           <table>
             <thead><tr><th>Type</th><th>Détail</th><th>Date</th></tr></thead>
             <tbody>
@@ -113,12 +118,14 @@ export default async function UserDetail({ params }: { params: { id: string } })
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
       <h2>Historique de poids</h2>
       <div className="card">
         {weights.length === 0 ? <div className="empty">Aucune pesée.</div> : (
+          <div className="table-wrap">
           <table>
             <thead><tr><th>Poids</th><th>Date</th></tr></thead>
             <tbody>
@@ -130,6 +137,7 @@ export default async function UserDetail({ params }: { params: { id: string } })
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
