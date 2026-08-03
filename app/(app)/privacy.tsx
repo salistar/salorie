@@ -35,7 +35,7 @@ const TXT = {
     sensors_t: 'Location, Microphone and Camera',
     sensors_p:
       '• Location (GPS) — used only while you are recording a run or following a route, and only while the app is open. We never track your location in the background. If you choose to share a route with the community, it is simplified to a few points and published without your identity.\n' +
-      '• Microphone — used only when you start a voice log, to turn what you say into a meal entry. Nothing is recorded outside that action.\n' +
+      '• Microphone — used only when you start a voice log. The recording is sent to our AI providers to be transcribed and turned into a meal entry. Nothing is recorded outside that action.\n' +
       '• Camera and photos — used to scan a dish, a label or a barcode, and to take progress photos. Progress photos stay on your device and are never uploaded. Scanned dish photos leave your device only if you explicitly enable the option described above.\n' +
       '• Step counter — a notification-visible service counts your steps continuously, and only if you grant physical activity permission.',
     medical_t: 'Not Medical Advice',
@@ -79,7 +79,7 @@ const TXT = {
     sensors_t: 'Localisation, microphone et caméra',
     sensors_p:
       '• Localisation (GPS) — utilisée uniquement pendant l’enregistrement d’une course ou le suivi d’un parcours, et seulement lorsque l’application est ouverte. Nous ne suivons jamais votre position en arrière-plan. Si vous choisissez de partager un parcours avec la communauté, il est simplifié en quelques points et publié sans votre identité.\n' +
-      '• Microphone — utilisé uniquement lorsque vous lancez une saisie vocale, pour transformer ce que vous dites en repas enregistré. Rien n’est enregistré en dehors de cette action.\n' +
+      '• Microphone — utilisé uniquement lorsque vous lancez une saisie vocale. L’enregistrement est envoyé à nos prestataires d’IA pour être transcrit et transformé en repas enregistré. Rien n’est enregistré en dehors de cette action.\n' +
       '• Caméra et photos — pour scanner un plat, une étiquette ou un code-barres, et prendre des photos de progression. Les photos de progression restent sur votre appareil et ne sont jamais téléversées. Les photos de plats ne quittent votre appareil que si vous activez explicitement l’option décrite plus haut.\n' +
       '• Compteur de pas — un service visible par notification compte vos pas en continu, et uniquement si vous accordez la permission d’activité physique.',
     medical_t: 'Ne remplace pas un avis médical',
@@ -123,7 +123,7 @@ const TXT = {
     sensors_t: 'الموقع والميكروفون والكاميرا',
     sensors_p:
       '• الموقع (GPS) — يُستخدم فقط أثناء تسجيل جري أو متابعة مسار، وفقط عندما يكون التطبيق مفتوحًا. لا نتتبّع موقعك في الخلفية أبدًا. إذا اخترت مشاركة مسار مع المجتمع، يُبسّط إلى بضع نقاط ويُنشر دون هويتك.\n' +
-      '• الميكروفون — يُستخدم فقط عند بدء تسجيل صوتي، لتحويل ما تقوله إلى وجبة مسجّلة. لا يُسجَّل شيء خارج هذا الإجراء.\n' +
+      '• الميكروفون — يُستخدم فقط عند بدء تسجيل صوتي. يُرسل التسجيل إلى مزوّدي الذكاء الاصطناعي لدينا لتفريغه نصًا وتحويله إلى وجبة مسجّلة. لا يُسجَّل شيء خارج هذا الإجراء.\n' +
       '• الكاميرا والصور — لمسح طبق أو ملصق أو باركود، ولالتقاط صور التقدّم. تبقى صور التقدّم على جهازك ولا تُرفع أبدًا. ولا تغادر صور الأطباق جهازك إلا إذا فعّلت صراحةً الخيار الموضّح أعلاه.\n' +
       '• عدّاد الخطوات — خدمة ظاهرة عبر إشعار تعدّ خطواتك باستمرار، وفقط إذا منحت إذن النشاط البدني.',
     medical_t: 'ليس استشارة طبية',
