@@ -63,6 +63,11 @@ services:
     networks: [default, edge]
 
   web:
+    # Caddy relaie vers `salorie-web:3000` sur le reseau externe `edge`. Sans nom
+    # fixe ni rattachement, Compose cree `salorie-stack-web-1` et l'admin devient
+    # injoignable — constate en production le 3 aout 2026.
+    container_name: salorie-web
+    networks: [default, edge]
     build: ./web
     restart: unless-stopped
     depends_on: [backend, mongo]
