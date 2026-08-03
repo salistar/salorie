@@ -11,7 +11,7 @@ import { useUser } from '@clerk/clerk-expo';
 import {
   ArrowLeft, Plus, Users, MapPin, CalendarClock, Check, X, CalendarRange,
 } from 'lucide-react-native';
-import { FlashList } from '@shopify/flash-list';
+import PerfList from '../../components/PerfList';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -176,11 +176,11 @@ export default function GroupSportsScreen() {
         <View style={styles.backBtn} />
       </View>
 
-      {/* FlashList : la grille de matchs était rendue par `.map()` DANS un ScrollView,
+      {/* PerfList : la grille de matchs était rendue par `.map()` DANS un ScrollView,
           donc sans aucune virtualisation — les 100 matchs (limite Firestore) étaient
           montés d'un coup. Tout ce qui précédait la liste devient ListHeaderComponent :
           on garde un seul conteneur défilant, sans imbriquer de liste virtualisée. */}
-      <FlashList
+      <PerfList
         data={loading ? [] : matches}
         keyExtractor={(m: SportMatch) => m.id}
         contentContainerStyle={styles.content}
