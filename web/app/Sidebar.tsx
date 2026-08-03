@@ -8,10 +8,15 @@ const NAV = [
   { href: '/races', label: 'Courses virtuelles', icon: '🏁' },
   { href: '/orgs', label: 'Organisations B2B', icon: '🏢' },
   { href: '/feedback', label: 'Feedback users', icon: '💬' },
+  { href: '/moderation', label: 'Modération', icon: '🧪' },
+  { href: '/sport-fields', label: 'Terrains & matchs', icon: '⚽' },
+  { href: '/marketplace', label: 'Marketplace', icon: '🛒' },
   { href: '/medals-history', label: 'Médailles gagnées', icon: '🥇' },
   { href: '/achievements', label: 'Achievements', icon: '🏅' },
   { href: '/medal-builder', label: 'Builder médailles', icon: '🥇' },
   { href: '/flags', label: 'Feature Flags', icon: '🎛️' },
+  { href: '/premium', label: 'Premium', icon: '⭐' },
+  { href: '/ai-keys', label: 'Clés IA', icon: '🔑' },
 ];
 
 export default function Sidebar() {

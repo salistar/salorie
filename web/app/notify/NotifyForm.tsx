@@ -26,7 +26,14 @@ export default function NotifyForm({ users }: { users: U[] }) {
       });
       const j = await res.json();
       if (j.error) setResult('❌ ' + j.error);
-      else setResult(`✅ Envoyé à ${j.sent}/${j.total} appareil(s).${j.note ? ' ' + j.note : ''}`);
+      else {
+        const errs = ([] as string[]).concat(j.fcmErrors || [], j.errors || []);
+        setResult(
+          `✅ ${j.inApp ?? 0} in-app · ${j.fcmSent ?? 0}/${j.fcmTargets ?? 0} push (FCM)` +
+          `${j.pushSent ? ` · ${j.pushSent} Expo` : ''} · ${j.total ?? 0} cible(s).` +
+          (errs.length ? ` ⚠️ ${errs.slice(0, 3).join(', ')}` : '')
+        );
+      }
     } catch (e: any) { setResult('❌ ' + (e?.message || 'erreur')); }
     finally { setBusy(false); }
   };

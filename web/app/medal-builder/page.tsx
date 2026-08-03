@@ -26,8 +26,8 @@ export default function MedalBuilder() {
       <h2>Builder de médailles</h2>
       <p className="foot">Choisis une FORME, une COULEUR (toutes possibles), le métal, et le centre (photo ou motif géométrique). Aperçu en direct.</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 20, alignItems: 'start' }}>
-        <div className="card" style={{ padding: 16, textAlign: 'center', position: 'sticky', top: 16 }}>
+      <div className="builder-grid">
+        <div className="card builder-preview" style={{ padding: 16, textAlign: 'center' }}>
           <div dangerouslySetInnerHTML={{ __html: svg({ ...base, shape }, 230) }} />
           <div style={{ marginTop: 10, fontSize: 11, color: '#94a3b8', wordBreak: 'break-all' }}>spec : <code>{spec}</code></div>
         </div>

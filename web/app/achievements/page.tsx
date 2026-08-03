@@ -60,7 +60,7 @@ export default function AchievementsPage() {
           <div style={{ display: 'grid', gap: 10 }}>
             {list.map((a, i) => (
               <div key={i} className="card" style={{ padding: 12, opacity: a.enabled === false ? 0.55 : 1 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '50px 1fr 1fr 80px 28px', gap: 8, alignItems: 'center' }}>
+                <div className="ach-row">
                   <input style={inp} value={a.icon} onChange={(e) => set(i, 'icon', e.target.value)} title="emoji" />
                   <input style={inp} value={a.key} onChange={(e) => set(i, 'key', e.target.value)} placeholder="clé unique" />
                   <select style={inp} value={a.metric} onChange={(e) => set(i, 'metric', e.target.value)}>
@@ -69,7 +69,7 @@ export default function AchievementsPage() {
                   <input style={inp} type="number" value={a.threshold} onChange={(e) => set(i, 'threshold', Number(e.target.value))} title="seuil ≥" />
                   <input type="checkbox" checked={a.enabled !== false} onChange={(e) => set(i, 'enabled', e.target.checked)} title="activé" />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
+                <div className="ach-i18n">
                   <input style={inp} value={a.titleFr || ''} onChange={(e) => set(i, 'titleFr', e.target.value)} placeholder="Titre (FR)" />
                   <input style={inp} value={a.descFr || ''} onChange={(e) => set(i, 'descFr', e.target.value)} placeholder="Description (FR)" />
                   <input style={inp} value={a.titleEn || ''} onChange={(e) => set(i, 'titleEn', e.target.value)} placeholder="Title (EN)" />

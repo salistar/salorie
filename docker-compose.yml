@@ -56,7 +56,11 @@ services:
       # Outbox webhook : défaut = sink interne public ; override par ${OUTBOX_WEBHOOK_URL}.
       OUTBOX_WEBHOOK_URL: ${OUTBOX_WEBHOOK_URL:-https://api.salorie.salistar.com/pipeline/webhook-sink}
     volumes: [salorie_uploads:/data/uploads]
-    ports: ["4000:4000"]
+    # Port 4000 NON publie sur l'hote : le proxy Caddy le tient deja et relaie en
+    # interne. Le publier ici provoque `Bind for 0.0.0.0:4000 failed: port is already
+    # allocated` et coupe l'API — constate en production le 3 aout 2026.
+    container_name: salorie-backend
+    networks: [default, edge]
 
   web:
     build: ./web
@@ -78,3 +82,10 @@ volumes:
   salorie_minio:
   salorie_uploads:
   salorie_ollama:
+
+networks:
+  # Reseau partage avec le proxy Caddy, cree hors de cette stack.
+  # Caddy relaie vers `salorie-backend:4000` : sans nom de conteneur fixe NI
+  # rattachement a ce reseau, le backend est injoignable et l'API renvoie 502.
+  edge:
+    external: true

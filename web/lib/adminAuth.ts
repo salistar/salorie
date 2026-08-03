@@ -14,7 +14,10 @@ export const AdminUser: any =
   mongoose.models.AdminUser || mongoose.model('AdminUser', AdminUserSchema);
 
 export async function createUser(email: string, password: string): Promise<void> {
-  if (!email || !password || password.length < 6) throw new Error('Email + mot de passe (6+ caractères) requis');
+  // Defense-in-depth : refuser tout ce qui n'est pas une chaîne (empêche l'injection
+  // d'opérateurs Mongo type { $ne: null } même si un appelant oublie de caster).
+  if (typeof email !== 'string' || typeof password !== 'string') throw new Error('Email + mot de passe (12+ caractères) requis');
+  if (!email || !password || password.length < 12) throw new Error('Email + mot de passe (12+ caractères) requis');
   await db();
   const e = email.toLowerCase().trim();
   if (await AdminUser.findOne({ email: e })) throw new Error('Cet email est déjà enregistré');
@@ -23,6 +26,9 @@ export async function createUser(email: string, password: string): Promise<void>
 }
 
 export async function verifyUser(email: string, password: string): Promise<boolean> {
+  // Defense-in-depth : ne pas dépendre uniquement du cast dans la route ; refuser
+  // toute valeur non-string pour bloquer une injection d'opérateur Mongo.
+  if (typeof email !== 'string' || typeof password !== 'string') return false;
   await db();
   const u = await AdminUser.findOne({ email: email.toLowerCase().trim() });
   if (!u) return false;

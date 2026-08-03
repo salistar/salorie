@@ -28,8 +28,16 @@ export default async function Home() {
   let users: AdminUser[] = [];
   let events: any[] = [];
   let error: string | null = null;
-  try { users = await listUsers(); } catch (e: any) { error = e?.message || String(e); }
-  try { events = await getRecentEvents(40); } catch {}
+  // Résilience : Firestore peut être lent (cold-start gRPC / latence conteneur) -> on plafonne
+  // l'attente à 8s et on lit les deux sources EN PARALLÈLE, pour ne plus bloquer la page >90s.
+  const withTimeout = <T,>(p: Promise<T>, ms: number, fb: T): Promise<T> =>
+    Promise.race([p, new Promise<T>((r) => setTimeout(() => r(fb), ms))]);
+  const [uRes, eRes] = await Promise.allSettled([
+    withTimeout(listUsers(), 8000, [] as AdminUser[]),
+    withTimeout(getRecentEvents(40), 8000, [] as any[]),
+  ]);
+  if (uRes.status === 'fulfilled') users = uRes.value; else error = String(uRes.reason);
+  if (eRes.status === 'fulfilled') events = eRes.value;
 
   const withGoal = users.filter((u) => u.goal).length;
   const withWeight = users.filter((u) => u.weight).length;
@@ -56,6 +64,7 @@ export default async function Home() {
             {users.length === 0 ? (
               <div className="empty">Aucun utilisateur trouvé.</div>
             ) : (
+              <div className="table-wrap">
               <table>
                 <thead>
                   <tr><th>Utilisateur</th><th>Email</th><th>Objectif</th><th>Poids</th></tr>
@@ -79,6 +88,7 @@ export default async function Home() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
           <h2>Flux d'événements (Event Bus)</h2>
@@ -86,6 +96,7 @@ export default async function Home() {
             {events.length === 0 ? (
               <div className="empty">Aucun événement encore (l'app en émet à chaque repas / activité / poids).</div>
             ) : (
+              <div className="table-wrap">
               <table>
                 <thead><tr><th>Événement</th><th>Détail</th><th>Utilisateur</th><th>Quand</th></tr></thead>
                 <tbody>
@@ -99,6 +110,7 @@ export default async function Home() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
 
