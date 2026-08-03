@@ -40,19 +40,53 @@ class StepCounterService : Service(), SensorEventListener {
     const val CHANNEL = "steps"; const val NOTIF_ID = 4242; const val GOAL = 10000; const val PREFS = "salorie_steps"
   }
 
+  /**
+   * A partir d'Android 10, demarrer un service de premier plan de type "health"
+   * exige ACTIVITY_RECOGNITION : sans elle, startForeground() leve SecurityException
+   * DANS onCreate et tue le processus entier.
+   *
+   * MainActivity verifie deja avant de demarrer, mais elle n'est pas le seul chemin :
+   * le redemarrage du telephone (StepBootReceiver), la relance automatique du service
+   * apres un kill memoire (START_STICKY) et la revocation par Android d'une permission
+   * inutilisee depuis plusieurs mois arrivent tous sans qu'aucune Activity ne tourne.
+   * Constate sur appareil le 3 aout 2026 : chaque relance replantait, et le systeme
+   * relancait a l'infini — boucle de crash visible dans les statistiques Play.
+   */
+  private fun canCountSteps(): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return true
+    return checkSelfPermission(android.Manifest.permission.ACTIVITY_RECOGNITION) ==
+      android.content.pm.PackageManager.PERMISSION_GRANTED
+  }
+
+  private var running = false
+
   override fun onCreate() {
     super.onCreate()
+    if (!canCountSteps()) { stopSelf(); return }
     createChannel()
     val notif = buildNotification(currentTotal())
-    if (Build.VERSION.SDK_INT >= 34) startForeground(NOTIF_ID, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH)
-    else startForeground(NOTIF_ID, notif)
+    try {
+      if (Build.VERSION.SDK_INT >= 34) startForeground(NOTIF_ID, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH)
+      else startForeground(NOTIF_ID, notif)
+    } catch (_: Exception) {
+      // La liste exacte des permissions exigees pour le type "health" varie selon les
+      // versions d'Android. Aucune evolution future ne doit pouvoir tuer l'application :
+      // au pire on renonce au comptage des pas.
+      stopSelf(); return
+    }
+    running = true
     sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
     stepSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
     stepSensor?.let { sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL) }
     handler.postDelayed(ticker, 30000)
   }
 
-  override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int { repost(); return START_STICKY }
+  // START_NOT_STICKY quand le service n'a pas pu demarrer : sans cela le systeme le
+  // relance en boucle alors que la permission manque toujours.
+  override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    if (!running) { stopSelf(); return START_NOT_STICKY }
+    repost(); return START_STICKY
+  }
   override fun onBind(intent: Intent?): IBinder? = null
   override fun onDestroy() { sensorManager?.unregisterListener(this); handler.removeCallbacks(ticker); super.onDestroy() }
 
