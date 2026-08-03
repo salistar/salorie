@@ -100,12 +100,17 @@ jobs:
 
       # arm-only : x86/x86_64 ne servent qu'aux émulateurs et pèsent ~89 Mo pour zéro
       # utilisateur réel.
+      # Le préfixe ORG_GRADLE_PROJECT_ n'est pas décoratif : c'est le SEUL moyen pour une
+      # variable d'environnement de devenir une propriété de projet Gradle. Sans lui,
+      # `project.hasProperty('MYAPP_RELEASE_STORE_FILE')` est faux et la configuration de
+      # signature reste vide — vérifié le 3 août 2026 par un projet Gradle témoin.
+      # Le garde de withReleaseSigning.js fait alors échouer le build, ce qui est voulu.
       - name: Gradle bundleRelease (AAB signé)
         env:
-          MYAPP_RELEASE_STORE_FILE: salorie-upload.jks
-          MYAPP_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          MYAPP_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          MYAPP_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ORG_GRADLE_PROJECT_MYAPP_RELEASE_STORE_FILE: salorie-upload.jks
+          ORG_GRADLE_PROJECT_MYAPP_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ORG_GRADLE_PROJECT_MYAPP_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ORG_GRADLE_PROJECT_MYAPP_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           cd android
           chmod +x gradlew
@@ -114,10 +119,10 @@ jobs:
       - name: Gradle assembleRelease (APK installable)
         if: github.event_name == 'push' || inputs.build_apk
         env:
-          MYAPP_RELEASE_STORE_FILE: salorie-upload.jks
-          MYAPP_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          MYAPP_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          MYAPP_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ORG_GRADLE_PROJECT_MYAPP_RELEASE_STORE_FILE: salorie-upload.jks
+          ORG_GRADLE_PROJECT_MYAPP_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ORG_GRADLE_PROJECT_MYAPP_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ORG_GRADLE_PROJECT_MYAPP_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           cd android
           ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a
