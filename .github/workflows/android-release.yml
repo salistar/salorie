@@ -127,15 +127,58 @@ jobs:
         if: always()
         run: rm -f android/app/salorie-upload.jks
 
-      # Contrôle explicite : un AAB non signé passerait sinon inaperçu jusqu'au refus
-      # de Play Console.
+      # Contrôle de l'IDENTITÉ du signataire, pas de l'existence d'une signature.
+      #
+      # La version précédente cherchait un bloc de signature dans META-INF. Une signature
+      # de DEBUG satisfait ce test : c'est exactement pourquoi elle a validé les AAB de
+      # v1.0.0-rc1, rc2 et rc3, tous signés `CN=Android Debug` et donc refusables par
+      # Play. Le gabarit Expo écrit `signingConfig signingConfigs.debug` dans le bloc
+      # release, et `prebuild --clean` effaçait la configuration de production.
+      #
+      # Le vrai contrôle compare l'empreinte du certificat à celle attendue. Une empreinte
+      # de certificat n'est pas un secret : Play l'affiche publiquement.
       - name: Verify signature
+        env:
+          # Empreinte du keystore d'upload de Salorie. Si elle change, c'est que la clé a
+          # change — et une clé differente signifie qu'aucune mise a jour ne pourra plus
+          # etre publiee. Ce test doit alors echouer bruyamment.
+          EXPECTED_SHA256: '8F:97:78:6D:56:97:48:0D:96:FB:18:8E:23:14:94:3B:7B:58:67:C2:8D:6E:7E:FF:E2:7D:6F:B8:A0:65:38:E3'
         run: |
           AAB=android/app/build/outputs/bundle/release/app-release.aab
           test -f "$AAB" || { echo "AAB introuvable"; exit 1; }
-          unzip -l "$AAB" | grep -qE "META-INF/.*\.(RSA|EC|DSA)" \
-            || { echo "AAB NON SIGNÉ — vérifier les secrets"; exit 1; }
-          echo "AAB signé — $(du -h "$AAB" | cut -f1)"
+
+          # Langue forcée : keytool traduit ses étiquettes. Sur une machine française il
+          # écrit « Propriétaire: », et un grep sur "Owner:" ne trouve rien — le contrôle
+          # passerait alors sans rien contrôler. Constaté en écrivant cette étape.
+          CERT=$(keytool -J-Duser.language=en -J-Duser.country=US -printcert -jarfile "$AAB" 2>/dev/null)
+          if [ -z "$CERT" ]; then
+            echo "AAB NON SIGNÉ — aucun certificat lisible. Vérifier les secrets."
+            exit 1
+          fi
+
+          OWNER=$(echo "$CERT" | grep -m1 'Owner:')
+          SHA=$(echo "$CERT" | grep -m1 'SHA256:' | sed 's/.*SHA256: *//' | tr -d ' \r')
+          echo "$OWNER"
+          echo "SHA-256: $SHA"
+
+          case "$OWNER" in
+            *'Android Debug'*)
+              echo "ÉCHEC : AAB signé avec la clé de DEBUG. Google Play le refusera."
+              echo "Cause probable : la configuration de signature release a disparu du"
+              echo "build.gradle régénéré. Vérifier le plugin plugins/withReleaseSigning.js."
+              exit 1
+              ;;
+          esac
+
+          if [ "$SHA" != "$EXPECTED_SHA256" ]; then
+            echo "ÉCHEC : empreinte inattendue."
+            echo "  attendue : $EXPECTED_SHA256"
+            echo "  obtenue  : $SHA"
+            echo "Si le changement est voulu, mettre à jour EXPECTED_SHA256 ci-dessus."
+            exit 1
+          fi
+
+          echo "AAB signé avec la clé de production — $(du -h "$AAB" | cut -f1)"
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
