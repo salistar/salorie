@@ -1,4 +1,5 @@
 import { listUsers, getRecentEvents, AdminUser } from '../lib/firebaseAdmin';
+import { withTimeout } from '../lib/withTimeout';
 import AutoRefresh from './AutoRefresh';
 
 export const dynamic = 'force-dynamic'; // always read fresh from Firestore
@@ -29,12 +30,13 @@ export default async function Home() {
   let events: any[] = [];
   let error: string | null = null;
   // Résilience : Firestore peut être lent (cold-start gRPC / latence conteneur) -> on plafonne
-  // l'attente à 8s et on lit les deux sources EN PARALLÈLE, pour ne plus bloquer la page >90s.
-  const withTimeout = <T,>(p: Promise<T>, ms: number, fb: T): Promise<T> =>
-    Promise.race([p, new Promise<T>((r) => setTimeout(() => r(fb), ms))]);
+  // l'attente et on lit les deux sources EN PARALLÈLE, pour ne plus bloquer la page >90s.
+  // L'aide partagée REJETTE au bout du délai, là où la version locale qu'elle remplace
+  // renvoyait une liste vide : un Firestore injoignable affiche désormais un message au
+  // lieu d'un tableau de bord vide et muet.
   const [uRes, eRes] = await Promise.allSettled([
-    withTimeout(listUsers(), 8000, [] as AdminUser[]),
-    withTimeout(getRecentEvents(40), 8000, [] as any[]),
+    withTimeout(listUsers(), 8000, 'Utilisateurs'),
+    withTimeout(getRecentEvents(40), 8000, 'Événements'),
   ]);
   if (uRes.status === 'fulfilled') users = uRes.value; else error = String(uRes.reason);
   if (eRes.status === 'fulfilled') events = eRes.value;

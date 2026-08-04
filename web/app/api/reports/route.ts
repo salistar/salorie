@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, unauthorized } from '../../../lib/adminGuard';
 import { getReports, setReportStatus } from '../../../lib/firebaseAdmin';
-
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-
 // Le SDK Firestore admin peut rester bloqué indéfiniment sur un cold-start gRPC
 // (déjà observé sur le dashboard). Sans borne, l'appel ne répond jamais et l'UI
 // reste en skeleton pour toujours. On borne donc CHAQUE accès Firestore.
-function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
-  return Promise.race([
-    p,
-    new Promise<T>((_, rej) => setTimeout(() => rej(new Error(`${label} : délai dépassé (${ms / 1000}s)`)), ms)),
-  ]);
-}
+import { withTimeout } from '../../../lib/withTimeout';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // GET ?status=pending|all → signalements UGC (lisibles UNIQUEMENT ici : les
 // règles Firestore interdisent toute lecture côté client).
