@@ -74,6 +74,30 @@ const OFF_UA = 'Salorie/1.0 (salistarcompany@gmail.com)';
 
 const round100 = (v: any) => (v == null || isNaN(Number(v)) ? 0 : Math.round(Number(v) * 100) / 100);
 
+/**
+ * Libellé d'un produit Open Food Facts : « nom du produit » suivi de la marque.
+ *
+ * Sur les fiches génériques — celles saisies par les contributeurs pour un aliment
+ * courant plutôt que pour un article de marque — les deux champs portent la MÊME
+ * valeur. La simple concaténation donnait alors « Poulet Poulet » ou
+ * « Poulet Rôti Poulet Rôti », constaté sur appareil le 4 août 2026 dans la
+ * recherche d'aliments. On n'ajoute donc la marque que si elle apporte une
+ * information que le nom ne contient pas déjà.
+ *
+ * La comparaison ignore la casse, les accents et les espaces multiples : sur OFF,
+ * « Poulet rôti » et « POULET ROTI » désignent la même chose.
+ */
+export function productLabel(productName: any, brands: any, fallback = ''): string {
+  const produit = String(productName ?? '').trim() || String(fallback ?? '').trim();
+  const raw = Array.isArray(brands) ? brands[0] : String(brands ?? '').split(',')[0];
+  const marque = String(raw ?? '').trim();
+  if (!marque) return produit;
+  if (!produit) return marque;
+  const norm = (s: string) =>
+    s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+  return norm(produit).includes(norm(marque)) ? produit : `${produit} ${marque}`;
+}
+
 // One OpenFoodFacts attempt. Returns null on ANY failure (network, HTTP error,
 // HTML "temporarily unavailable" page, bad JSON) so the caller can retry.
 async function offSearchOnce(query: string): Promise<any[] | null> {
@@ -102,7 +126,7 @@ async function offSearchOnce(query: string): Promise<any[] | null> {
       .map((p: any) => {
         const n = p.nutriments || {};
         const kcal = round100(n['energy-kcal_100g']);
-        const name = [p.product_name, (p.brands || '').split(',')[0]].filter(Boolean).join(' ').trim();
+        const name = productLabel(p.product_name, p.brands);
         return {
           food_id: p.code || name,
           food_name: name,
@@ -133,10 +157,9 @@ async function salSearch(query: string): Promise<{ code: string; name: string }[
     const body = await res.text();
     if (!body || body.trimStart().startsWith('<')) return [];
     const data = JSON.parse(body);
-    const brand = (b: any) => (Array.isArray(b) ? b[0] : typeof b === 'string' ? b.split(',')[0] : '');
     return (Array.isArray(data.hits) ? data.hits : [])
       .filter((h: any) => h && h.code)
-      .map((h: any) => ({ code: String(h.code), name: [h.product_name, brand(h.brands)].filter(Boolean).join(' ').trim() }));
+      .map((h: any) => ({ code: String(h.code), name: productLabel(h.product_name, h.brands) }));
   } catch {
     return [];
   } finally {
@@ -164,7 +187,7 @@ async function fetchProductItem(code: string, fallbackName: string): Promise<any
     // Reject implausible energy: nothing exceeds ~900 kcal/100g (pure fat). OFF
     // sometimes stores per-serving values mislabeled as per-100g (e.g. 1900).
     if (!(kcal > 0) || kcal > 900) return null;
-    const name = [p.product_name || fallbackName, (p.brands || '').split(',')[0]].filter(Boolean).join(' ').trim();
+    const name = productLabel(p.product_name, p.brands, fallbackName);
     const item = {
       food_id: code,
       food_name: name || fallbackName,

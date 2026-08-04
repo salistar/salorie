@@ -4,8 +4,12 @@
 // sans la moindre erreur dans les logs. Toute lecture Firestore d'une page ou d'une
 // route API doit donc être bornée.
 //
-//   const flags = await withTimeout(getRichFlags(), 8000, 'Flags');       // throw
-//   const rows  = await softTimeout(getUsers(), 8000, [] as User[]);      // valeur de repli
+//   const flags = await withTimeout(getRichFlags(), 8000, 'Flags');
+//
+// Une seule sémantique, volontairement : le dépassement REJETTE. Une variante qui
+// renvoyait silencieusement une valeur de repli a existé ici et n'était utilisée nulle
+// part, pendant que deux réimplémentations locales divergeaient dans les pages. Un
+// Firestore injoignable doit se voir, pas se traduire par un écran vide et muet.
 
 export const FIRESTORE_TIMEOUT_MS = 8000;
 
@@ -16,13 +20,5 @@ export function withTimeout<T>(p: Promise<T>, ms = FIRESTORE_TIMEOUT_MS, label =
     new Promise<T>((_, reject) =>
       setTimeout(() => reject(new Error(`${label} : délai dépassé (${Math.round(ms / 1000)} s). Réessaie.`)), ms),
     ),
-  ]);
-}
-
-/** Ne rejette jamais : renvoie `fallback` au bout de `ms` (pages qui doivent s'afficher). */
-export function softTimeout<T>(p: Promise<T>, ms = FIRESTORE_TIMEOUT_MS, fallback: T): Promise<T> {
-  return Promise.race([
-    p.catch(() => fallback),
-    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
   ]);
 }

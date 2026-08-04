@@ -76,3 +76,8 @@ android/app/src/main/assets/index.android.bundle
 # Keystore encodé pour les secrets CI — équivaut au .jks lui-même, ne JAMAIS committer.
 *.jks.base64
 *.keystore.base64
+
+# Artefacts de Playwright — resultats de la derniere execution, jamais a versionner.
+test-results/
+web/test-results/
+playwright-report/
