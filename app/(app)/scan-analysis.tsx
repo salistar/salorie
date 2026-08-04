@@ -44,6 +44,7 @@ import { useNutritionData } from '../../hooks/useNutritionData';
 import { scoreFood, FoodScore } from '../../lib/objective/scoring';
 import { buildObjectiveContext } from '../../lib/objective/buildContext';
 import { useScreenGate } from '../../components/FeatureGate';
+import { macroTexte } from '../../lib/macroFormat';
 
 const PENDING_SCAN_KEY = 'pending_scan_v1';
 
@@ -1078,7 +1079,7 @@ ${langInstr}`;
                 <MacroTile
                   icon={<Flame size={18} color={isDark ? Colors.dark.primary : Colors.light.primary} />}
                   label={t('scan.calories_short')}
-                  value={`${aiResult.calories}`}
+                  value={macroTexte(aiResult.calories)}
                   unit="kcal"
                   tileBg={isDark ? '#1F2833' : Colors.light.white}
                   border={cardBorder}
@@ -1088,7 +1089,7 @@ ${langInstr}`;
                 <MacroTile
                   icon={<Beef size={18} color="#FF5C5C" />}
                   label={t('scan.protein_short')}
-                  value={`${aiResult.protein}`}
+                  value={macroTexte(aiResult.protein)}
                   unit="g"
                   tileBg={isDark ? '#1F2833' : Colors.light.white}
                   border={cardBorder}
@@ -1098,7 +1099,7 @@ ${langInstr}`;
                 <MacroTile
                   icon={<Wheat size={18} color="#F59E0B" />}
                   label={t('scan.carbs_short')}
-                  value={`${aiResult.carbs}`}
+                  value={macroTexte(aiResult.carbs)}
                   unit="g"
                   tileBg={isDark ? '#1F2833' : Colors.light.white}
                   border={cardBorder}
@@ -1108,7 +1109,7 @@ ${langInstr}`;
                 <MacroTile
                   icon={<Droplets size={18} color="#0EA5E9" />}
                   label={t('scan.fat_short')}
-                  value={`${aiResult.fat}`}
+                  value={macroTexte(aiResult.fat)}
                   unit="g"
                   tileBg={isDark ? '#1F2833' : Colors.light.white}
                   border={cardBorder}
