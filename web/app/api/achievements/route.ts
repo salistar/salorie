@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, unauthorized } from '../../../lib/adminGuard';
+import { requireAdmin, unauthorized, requireWriter } from '../../../lib/adminGuard';
 import { getAchievements, setAchievements } from '../../../lib/firebaseAdmin';
 
 export const runtime = 'nodejs';
@@ -13,7 +13,7 @@ export async function GET() {
 
 // POST { list } → écrit toute la liste dans Firestore config/achievements.
 export async function POST(req: NextRequest) {
-  const _admin = await requireAdmin(); if (!_admin) return unauthorized();
+  const { user: _admin, refus } = await requireWriter(); if (refus) return refus;
   try {
     const { list } = await req.json();
     if (!Array.isArray(list)) return NextResponse.json({ error: 'list requise' }, { status: 400 });

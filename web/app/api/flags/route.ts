@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, unauthorized } from '../../../lib/adminGuard';
+import { requireAdmin, unauthorized, requireWriter } from '../../../lib/adminGuard';
 import { setFlag, setFlagRich } from '../../../lib/firebaseAdmin';
 
 export const runtime = 'nodejs';
@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 //   - riche  : { key, patch:{ enabled?, premium?, rollout?, minVersion?, config? } } → setFlagRich
 // Protégé par le middleware (cookie JWT admin) + re-check requireAdmin.
 export async function POST(req: NextRequest) {
-  const _admin = await requireAdmin(); if (!_admin) return unauthorized();
+  const { user: _admin, refus } = await requireWriter(); if (refus) return refus;
   // actor : header explicite sinon email de l'admin authentifié sinon 'admin'.
   const actor = req.headers.get('x-admin-actor') || _admin.email || 'admin';
   try {

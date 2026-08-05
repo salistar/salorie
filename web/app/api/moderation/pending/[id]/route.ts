@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, unauthorized } from '../../../../../lib/adminGuard';
+import { requireAdmin, unauthorized, requireWriter } from '../../../../../lib/adminGuard';
 
 export const runtime = 'nodejs';
 const API = process.env.BACKEND_URL || 'https://api.salorie.com';
@@ -12,7 +12,7 @@ function headers() {
 // POST /api/moderation/pending/:id?action=validate|reject
 // Valide ou rejette un produit inconnu (barcode) en attente.
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const _admin = await requireAdmin(); if (!_admin) return unauthorized();
+  const { user: _admin, refus } = await requireWriter(); if (refus) return refus;
   const action = req.nextUrl.searchParams.get('action') === 'reject' ? 'reject' : 'validate';
   let body: any = {};
   try { body = await req.json(); } catch { /* corps optionnel */ }

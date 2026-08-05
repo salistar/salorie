@@ -19,8 +19,9 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: false, error: 'Inscription désactivée' }, { status: 403 });
       }
     }
-    await createUser(email, password);
-    const token = await signToken(String(email).toLowerCase().trim());
+    // Le tout premier compte — ou celui cree avec la cle d'installation — est owner.
+    await createUser(email, password, 'owner');
+    const token = await signToken(String(email).toLowerCase().trim(), 'owner');
     const res = NextResponse.json({ ok: true });
     res.cookies.set(AUTH_COOKIE, token, {
       httpOnly: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 7, secure: true,

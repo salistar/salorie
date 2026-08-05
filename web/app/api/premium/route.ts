@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, unauthorized } from '../../../lib/adminGuard';
+import { requireAdmin, unauthorized, requireWriter } from '../../../lib/adminGuard';
 import { listPremiumUsers, setPremiumOverride } from '../../../lib/firebaseAdmin';
 
 export const runtime = 'nodejs';
@@ -14,7 +14,7 @@ export async function GET() {
 
 // POST { userId, value:boolean } → écrit users/{userId}.premiumOverride + audit.
 export async function POST(req: NextRequest) {
-  const _admin = await requireAdmin(); if (!_admin) return unauthorized();
+  const { user: _admin, refus } = await requireWriter(); if (refus) return refus;
   const actor = req.headers.get('x-admin-actor') || _admin.email || 'admin';
   try {
     const { userId, value } = await req.json();
