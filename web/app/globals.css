@@ -113,6 +113,11 @@ a { color: inherit; }
   color: #fff; padding: 24px 16px;
   display: flex; flex-direction: column; gap: 8px;
   position: sticky; top: 0; height: 100vh;
+  /* La navigation compte 14 entrees : sans defilement propre, le pied de la barre —
+     selecteur de theme ET bouton Deconnexion — est coupe hors de l'ecran sur un
+     portable. Constate le 5 aout 2026 : le bouton de deconnexion etait deja
+     inatteignable, personne ne l'avait vu. */
+  overflow-y: auto;
 }
 .sb-brand { display: flex; align-items: center; gap: 12px; padding: 6px 10px 20px; }
 .sb-logo { width: 42px; height: 42px; border-radius: 13px; background: rgba(255,255,255,.18); display: grid; place-items: center; font-size: 22px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
