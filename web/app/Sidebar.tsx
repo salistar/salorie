@@ -1,5 +1,6 @@
 'use client';
 import { usePathname } from 'next/navigation';
+import ThemeToggle from './ThemeToggle';
 
 const NAV = [
   { href: '/', label: 'Vue d\'ensemble', icon: '📊' },
@@ -40,9 +41,12 @@ export default function Sidebar() {
           </a>
         ))}
       </nav>
-      <form action="/api/auth/logout" method="post" className="sb-foot">
-        <button type="submit" className="sb-logout">⎋ Déconnexion</button>
-      </form>
+      <div className="sb-foot">
+        <ThemeToggle />
+        <form action="/api/auth/logout" method="post">
+          <button type="submit" className="sb-logout">⎋ Déconnexion</button>
+        </form>
+      </div>
     </aside>
   );
 }
