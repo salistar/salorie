@@ -201,7 +201,15 @@ export default function RacesScreen() {
 
   useEffect(() => { loadProgress(); }, [loadProgress]);
   // Courses créées depuis l'admin (Mongo) — jouables via le MÊME écran défi.
-  useEffect(() => { getActiveRaces().then((r: any) => { if (Array.isArray(r)) setActiveRaces(r); }).catch(() => {}); }, []);
+  // Le `.catch(() => {})` d'origine avalait TOUT : quand EXPO_PUBLIC_API_URL manquait dans
+  // les APK de la CI, `authFetch` jetait et l'écran affichait « aucun défi disponible » sans
+  // le moindre indice. Une liste vide et une panne réseau se ressemblent trop pour rester
+  // indiscernables — on trace la cause, sans changer le comportement visible.
+  useEffect(() => {
+    getActiveRaces()
+      .then((r: any) => { if (Array.isArray(r)) setActiveRaces(r); })
+      .catch((e) => console.warn('[races] chargement des courses admin impossible', e?.message || e));
+  }, []);
 
   const onJoinRace = async (race: Race) => {
     try {
