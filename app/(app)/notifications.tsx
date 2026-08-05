@@ -384,7 +384,9 @@ export default function NotificationsScreen() {
         <TouchableOpacity style={styles.clearButton} onPress={clearAll}>
           <Trash2
             size={20}
-            color={notifications.length > 0 ? '#EF4444' : Colors.light.gray[200]}
+            // Gris clair fixe : sur le fond noir du thème sombre, cet état "désactivé"
+            // devenait l'élément le plus lumineux de l'en-tête.
+            color={notifications.length > 0 ? '#EF4444' : (isDark ? Colors.dark.gray[200] : Colors.light.gray[200])}
           />
         </TouchableOpacity>
       </View>
