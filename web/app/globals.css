@@ -1,3 +1,20 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Système de design de l'admin.
+
+   Le thème se joue ENTIÈREMENT sur les jetons ci-dessous : aucune règle plus bas
+   ne connaît le mode courant. Un thème sombre se résume donc à redéfinir des
+   variables — pas à dupliquer des sélecteurs, qui divergeraient à la première
+   modification.
+
+   Sélection : `data-theme="dark"|"light"` posé sur <html> par le sélecteur de la
+   barre latérale (ThemeToggle.tsx). Sans choix explicite, on suit le système via
+   `prefers-color-scheme`.
+
+   ⚠ Cette feuille a déjà été perdue une fois : écrite à la main sur le serveur le
+   1er août 2026, elle n'était dans aucun commit. La réparation du déploiement, le
+   3 août, l'a écrasée par la version du dépôt. Tout ce qui doit survivre passe par
+   git — le serveur est reconstruit à chaque déploiement.
+   ───────────────────────────────────────────────────────────────────────────── */
 :root {
   --green: #2e8b57;
   --green-dark: #1f6e3d;
@@ -10,18 +27,80 @@
   --radius: 20px;
   --shadow: 0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06);
   --shadow-lg: 0 12px 40px rgba(16,24,40,.12);
+
+  /* Sémantique : un état a une couleur de fond ET une couleur de texte associée,
+     choisies pour rester au-dessus de 4,5:1 (AA). Les badges affichaient avant du
+     blanc sur #cbd5e1, soit ≈ 1,6:1 — illisible. */
+  --danger: #dc2626;   --danger-bg: #fef2f2;   --danger-ink: #991b1b;
+  --warning: #d97706;  --warning-bg: #fffbeb;  --warning-ink: #92400e;
+  --info: #2563eb;     --info-bg: #eff6ff;     --info-ink: #1e40af;
+  --success: #16a34a;  --success-bg: #f0fdf4;  --success-ink: #166534;
+  --neutral: #94a3b8;  --neutral-bg: #f1f5f9;  --neutral-ink: #475569;
+
+  /* Échelles : espacements et rayons nommés, pour cesser de semer des px au hasard. */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-8: 32px;
+  --r-sm: 10px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px; --r-full: 999px;
+
+  --ring: 0 0 0 3px rgba(46, 139, 87, .35);
+  color-scheme: light;
 }
+
+/* Thème sombre — SEULS les jetons changent. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --green: #4ade80;
+    --green-dark: #22c55e;
+    --green-light: #14301f;
+    --ink: #e6edf3;
+    --muted: #94a3b8;
+    --line: #1e293b;
+    --bg: #0f1419;
+    --card: #161b22;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,.5);
+    --danger-bg: #2a1416;  --danger-ink: #fca5a5;
+    --warning-bg: #2a2113; --warning-ink: #fcd34d;
+    --info-bg: #13203a;    --info-ink: #93c5fd;
+    --success-bg: #10241a; --success-ink: #86efac;
+    --neutral-bg: #1b2430; --neutral-ink: #cbd5e1;
+    --ring: 0 0 0 3px rgba(74, 222, 128, .35);
+    color-scheme: dark;
+  }
+}
+
+/* Choix explicite de l'utilisateur — il prime sur le réglage du système. */
+:root[data-theme='dark'] {
+  --green: #4ade80;
+  --green-dark: #22c55e;
+  --green-light: #14301f;
+  --ink: #e6edf3;
+  --muted: #94a3b8;
+  --line: #1e293b;
+  --bg: #0f1419;
+  --card: #161b22;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,.5);
+  --danger-bg: #2a1416;  --danger-ink: #fca5a5;
+  --warning-bg: #2a2113; --warning-ink: #fcd34d;
+  --info-bg: #13203a;    --info-ink: #93c5fd;
+  --success-bg: #10241a; --success-ink: #86efac;
+  --neutral-bg: #1b2430; --neutral-ink: #cbd5e1;
+  --ring: 0 0 0 3px rgba(74, 222, 128, .35);
+  color-scheme: dark;
+}
+:root[data-theme='light'] { color-scheme: light; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   background: var(--bg);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   line-height: 1.5;
-  /* Lock the admin UI to its designed light palette so the OS dark mode does not
-     auto-darken form controls (inputs, selects, date pickers) and break contrast. */
-  color-scheme: light;
+  /* `color-scheme` est porté par :root, où il suit le thème. Le figer ici à `light`
+     rendait les contrôles natifs (champs, listes, sélecteurs de date) clairs même en
+     sombre — c'est ce verrou qui avait remplacé le thème sombre. */
 }
 a { color: inherit; }
 
@@ -81,11 +160,11 @@ h2 { font-size: 16px; font-weight: 800; letter-spacing: -.2px; margin: 30px 0 14
 .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .table-wrap table { min-width: 640px; }
 table { width: 100%; border-collapse: collapse; }
-thead th { position: sticky; top: 0; background: #fafcfe; }
+thead th { position: sticky; top: 0; background: var(--bg); }
 th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); font-weight: 700; padding: 14px 20px; border-bottom: 1px solid var(--line); }
 td { padding: 15px 20px; border-bottom: 1px solid var(--line); font-size: 14px; vertical-align: middle; }
 tbody tr { transition: background .12s ease; }
-tbody tr:hover { background: #f9fbfd; }
+tbody tr:hover { background: var(--bg); }
 tr:last-child td { border-bottom: none; }
 
 .avatar { width: 40px; height: 40px; border-radius: 13px; background: linear-gradient(135deg, var(--green), var(--green-dark)); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 15px; box-shadow: var(--shadow); }
@@ -149,16 +228,16 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   text-decoration: none; white-space: nowrap;
   transition: background .12s, border-color .12s, transform .12s;
 }
-.btn:hover:not(:disabled) { border-color: #dbe3ee; transform: translateY(-1px); }
+.btn:hover:not(:disabled) { border-color: var(--muted); transform: translateY(-1px); }
 .btn:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
 .btn-sm { padding: 7px 12px; border-radius: 10px; font-size: 13px; }
 .btn-primary { background: var(--green); color: #fff; border-color: transparent; }
 .btn-primary:hover:not(:disabled) { background: var(--green-dark); }
 .btn-ghost { background: transparent; }
-.btn-danger { background: #dc2626; color: #fff; border-color: transparent; }
+.btn-danger { background: var(--danger); color: #fff; border-color: transparent; }
 .btn-danger:hover:not(:disabled) { background: #b91c1c; }
 
-.badge-off { background: #f1f5f9; color: var(--muted); }
+.badge-off { background: var(--neutral-bg); color: var(--neutral-ink); }
 
 .input, .textarea {
   width: 100%; padding: 10px 13px; border-radius: 12px;
@@ -169,12 +248,12 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .textarea { min-height: 84px; resize: vertical; }
 
 .msg { padding: 12px 16px; border-radius: 14px; font-size: 14px; border: 1px solid var(--line); margin-bottom: 16px; }
-.msg-err { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+.msg-err { background: var(--danger-bg); color: var(--danger-ink); border-color: transparent; }
 
 /* Squelettes de chargement : sans ces règles, les trois <div> de la page de
    modération étaient de hauteur nulle — l'écran paraissait vide pendant le
    chargement au lieu de paraître occupé. */
-.skeleton { background: linear-gradient(90deg, #eef2f7 25%, #f7fafc 50%, #eef2f7 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.3s infinite; border-radius: var(--radius); }
+.skeleton { background: linear-gradient(90deg, var(--line) 25%, var(--bg) 50%, var(--line) 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.3s infinite; border-radius: var(--radius); }
 .skeleton-row { height: 76px; margin-bottom: 12px; }
 @keyframes skeleton-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
@@ -182,11 +261,59 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .toast-wrap { position: fixed; right: 20px; bottom: 20px; z-index: 60; display: flex; flex-direction: column; gap: 10px; max-width: min(380px, calc(100vw - 40px)); }
 .toast { display: flex; align-items: center; gap: 10px; padding: 13px 15px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--muted); box-shadow: var(--shadow-lg); font-size: 14px; color: var(--ink); }
 .toast-ok { border-left-color: var(--green); }
-.toast-err { border-left-color: #dc2626; }
-.toast-info { border-left-color: #2563eb; }
+.toast-err { border-left-color: var(--danger); }
+.toast-info { border-left-color: var(--info); }
 .toast-x { margin-left: auto; background: none; border: 0; cursor: pointer; color: var(--muted); font-size: 15px; line-height: 1; padding: 4px; border-radius: 8px; }
 .toast-x:hover { color: var(--ink); }
 
 .modal-backdrop { position: fixed; inset: 0; z-index: 70; background: rgba(15, 23, 42, .45); display: flex; align-items: center; justify-content: center; padding: 20px; }
 .modal { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow-lg); padding: 24px; width: 100%; max-width: 420px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+/* ── Primitives de formulaire ─────────────────────────────────────────────────
+   `.field` regroupe label + contrôle + aide. Deux définitions locales de `Field`
+   existaient jadis, dupliquées à l'octet près dans races/ et orgs/ ; le composant
+   partagé app/Field.tsx s'appuie sur ces classes. */
+.field { display: flex; flex-direction: column; gap: var(--sp-1); margin-bottom: var(--sp-4); }
+.label { font-size: 12.5px; font-weight: 800; color: var(--muted); letter-spacing: .2px; }
+.hint { font-size: 12px; color: var(--muted); }
+.select {
+  width: 100%; padding: 10px 13px; border-radius: var(--r-md);
+  border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  font-size: 14px; font-family: inherit;
+}
+.select:focus { outline: none; box-shadow: var(--ring); border-color: transparent; }
+.btn-lg { padding: 13px 22px; border-radius: var(--r-lg); font-size: 15px; }
+
+/* ── Badges d'état ────────────────────────────────────────────────────────────
+   Chaque variante porte SA couleur de texte : le blanc sur fond clair donnait
+   ≈ 1,6:1, très en dessous du minimum lisible. */
+.badge-on     { background: var(--success-bg); color: var(--success-ink); }
+.badge-warn   { background: var(--warning-bg); color: var(--warning-ink); }
+.badge-info   { background: var(--info-bg);    color: var(--info-ink); }
+.badge-danger { background: var(--danger-bg);  color: var(--danger-ink); }
+
+/* ── Messages ── */
+.msg-ok   { background: var(--success-bg); color: var(--success-ink); border-color: transparent; }
+.msg-warn { background: var(--warning-bg); color: var(--warning-ink); border-color: transparent; }
+.msg-info { background: var(--info-bg);    color: var(--info-ink);    border-color: transparent; }
+
+/* ── Sélecteur de thème (barre latérale) ──────────────────────────────────────
+   Vit sur le vert de la barre, pas sur le fond de page : ses couleurs sont donc
+   volontairement exprimées en blanc translucide et NON en jetons de thème. */
+.theme-toggle { display: flex; gap: 4px; background: rgba(255,255,255,.12); padding: 4px; border-radius: var(--r-full); margin-bottom: var(--sp-2); }
+.theme-toggle button {
+  flex: 1; border: 0; background: transparent; color: rgba(255,255,255,.85);
+  font-size: 12.5px; font-weight: 700; padding: 7px 4px; border-radius: var(--r-full);
+  cursor: pointer; font-family: inherit; transition: background .15s, color .15s;
+}
+.theme-toggle button:hover { color: #fff; }
+.theme-toggle button[aria-pressed='true'] { background: #fff; color: var(--green-dark); }
+.theme-toggle button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+
+/* Texte réservé aux lecteurs d'écran : le sélecteur de thème n'affiche que des
+   pictogrammes, qui ne disent rien à une synthèse vocale. */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
