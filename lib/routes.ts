@@ -65,38 +65,18 @@ export async function fetchRoutePolyline(
       }),
     });
     const j = await res.json();
-    const enc = j?.routes?.[0]?.polyline?.encodedPolyline;
-    if (enc) return enc;
-  } catch { /* on tente le repli */ }
-  return fetchLegacyPolyline(origin, destination, etapes, mode, cle);
-}
-
-/**
- * Repli sur l'ancienne Directions API.
- *
- * Nécessaire tant que la clé en service n'autorise pas Routes API : sans ce repli, migrer le
- * code AVANT d'avoir ouvert Routes API sur la clé ferait disparaître silencieusement le
- * tracé suivant les routes (les deux écrans traitent `null` comme « pas d'itinéraire »).
- * Ce chemin mourra de lui-même le jour où Google coupera la legacy — d'où l'ordre : Routes
- * d'abord, celui-ci seulement en secours.
- */
-async function fetchLegacyPolyline(
-  origin: LatLng,
-  destination: LatLng,
-  etapes: LatLng[],
-  mode: ModeItineraire,
-  cle: string,
-): Promise<string | null> {
-  try {
-    const c = (p: LatLng) => `${p.lat},${p.lng}`;
-    const wp = etapes.map(c).join('|');
-    const url =
-      `https://maps.googleapis.com/maps/api/directions/json?origin=${c(origin)}` +
-      `&destination=${c(destination)}${wp ? `&waypoints=${wp}` : ''}` +
-      `&mode=${mode === 'DRIVE' ? 'driving' : 'walking'}&key=${cle}`;
-    const j = await (await fetch(url)).json();
-    return j?.status === 'OK' ? (j.routes?.[0]?.overview_polyline?.points ?? null) : null;
+    return j?.routes?.[0]?.polyline?.encodedPolyline ?? null;
   } catch {
     return null;
   }
 }
+
+/*
+ * Le repli sur l'ancienne Directions API a été retiré le 5 août 2026, après vérification
+ * qu'il était devenu PROVABLEMENT mort : la clé en service (projet salistar-salorie)
+ * n'autorise que Maps JavaScript API et Routes API, et un appel legacy avec elle répond
+ * `REQUEST_DENIED`. Le garder ne protégeait de rien — il ajoutait un aller-retour réseau
+ * inutile à chaque échec, et surtout la fausse impression d'avoir un filet.
+ * Il n'avait de sens que pendant la fenêtre où le code était migré mais la clé pas encore
+ * autorisée sur Routes API.
+ */

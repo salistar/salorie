@@ -79,7 +79,10 @@ services:
     depends_on: [backend, mongo]
     environment:
       FIREBASE_SERVICE_ACCOUNT: ${FIREBASE_SERVICE_ACCOUNT}
-      NEXT_PUBLIC_API_URL: http://backend:4000
+      # NEXT_PUBLIC_API_URL retirée le 5 août 2026 : déclarée ici mais lue NULLE PART dans
+      # web/. Elle était de surcroît inopérante par construction — un `NEXT_PUBLIC_*` fourni
+      # au runtime n'atteint jamais le navigateur (Next.js les fige au build, cf. le bloc
+      # `build.args` ci-dessus). L'admin joint le backend par ses routes serveur.
       # Auth admin (mongoose + JWT) — DOIT être présent sinon login/register cassent.
       MONGO_URI: mongodb://mongo:27017/salorie
       AUTH_SECRET: ${AUTH_SECRET}
