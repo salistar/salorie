@@ -12,6 +12,7 @@ import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ArrowLeft, Flag, Play, Square, Camera, MapPin, X, Navigation2 } from 'lucide-react-native';
 import { addNutritionLog, emailToDocId } from '../../lib/firebase';
+import { fetchRoutePolyline } from '../../lib/routes';
 import { addActivitySteps } from '../../lib/steps';
 import { refreshStepsNotification } from '../../lib/stepsNotif';
 import { Colors } from '../../constants/Colors';
@@ -376,16 +377,13 @@ export default function ChallengeScreen() {
       try {
         const r = challenge.route as LatLng[];
         if (r.length < 2) return;
-        const origin = `${r[0].lat},${r[0].lng}`;
-        const dest = `${r[r.length - 1].lat},${r[r.length - 1].lng}`;
-        const wp = r.slice(1, -1).map((p) => `${p.lat},${p.lng}`).join('|');
-        // driving = suit les routes même sur longue distance (walking échoue > ~100 km).
-        const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${dest}${wp ? `&waypoints=${wp}` : ''}&mode=driving&key=${GOOGLE_MAPS_KEY}`;
-        const res = await fetch(url);
-        const j = await res.json();
-        if (alive && j.status === 'OK' && j.routes?.[0]?.overview_polyline?.points) {
-          setRoadPath(decodePolyline(j.routes[0].overview_polyline.points));
-        }
+        // DRIVE = suit les routes même sur longue distance (la marche échoue > ~100 km).
+        const enc = await fetchRoutePolyline(r[0], r[r.length - 1], {
+          mode: 'DRIVE',
+          etapes: r.slice(1, -1),
+          cle: GOOGLE_MAPS_KEY,
+        });
+        if (alive && enc) setRoadPath(decodePolyline(enc));
       } catch (e) { console.warn('[challenge] directions failed', e); }
     })();
     return () => { alive = false; };

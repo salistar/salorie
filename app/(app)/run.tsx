@@ -10,6 +10,7 @@ import { ArrowLeft, Play, Pause, Square, MapPin, Zap, Navigation, History } from
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
+import { fetchRoutePolyline } from '../../lib/routes';
 import { addNutritionLog, emailToDocId, logEvent } from '../../lib/firebase';
 import { creditKm } from '../../lib/progressHooks';
 import { publishActivity } from '../../lib/socialFeed';
@@ -98,10 +99,9 @@ async function fetchRoadLoop(origin: LatLng): Promise<LatLng[] | null> {
       lng: origin.lng + (3000 / (111111 * Math.cos((origin.lat * Math.PI) / 180))) * Math.sin(b),
     };
     try {
-      const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.lat},${origin.lng}&destination=${dest.lat},${dest.lng}&mode=walking&key=${GOOGLE_MAPS_KEY}`;
-      const j = await (await fetch(url)).json();
-      if (j.status === 'OK' && j.routes?.[0]?.overview_polyline?.points) {
-        const p = decodePolyline(j.routes[0].overview_polyline.points);
+      const enc = await fetchRoutePolyline(origin, dest, { mode: 'WALK', cle: GOOGLE_MAPS_KEY });
+      if (enc) {
+        const p = decodePolyline(enc);
         if (p.length > 1) return p;
       }
     } catch { /* try next bearing */ }
