@@ -40,37 +40,37 @@ const RUN_ACTIVITIES = [
   {
     id: 'running',
     labelKey: 'act.running',
-    image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800&q=70',
+    image: require('../../assets/images/exercises/running.jpg'),
     mets: [7, 9.8, 12.5], // low/med/high
   },
   {
     id: 'walking',
     labelKey: 'act.walking',
-    image: 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=800&q=70',
+    image: require('../../assets/images/exercises/walking.jpg'),
     mets: [2.5, 3.5, 5.0],
   },
   {
     id: 'cycling',
     labelKey: 'act.cycling',
-    image: 'https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=800&q=70',
+    image: require('../../assets/images/exercises/cycling.jpg'),
     mets: [4, 8, 12],
   },
   {
     id: 'swimming',
     labelKey: 'act.swimming',
-    image: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=800&q=70',
+    image: require('../../assets/images/exercises/swimming.jpg'),
     mets: [5.8, 8.3, 10],
   },
   {
     id: 'hiking',
     labelKey: 'act.hiking',
-    image: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=70',
+    image: require('../../assets/images/exercises/hiking.jpg'),
     mets: [5, 6, 7.3],
   },
   {
     id: 'rowing',
     labelKey: 'act.rowing',
-    image: 'https://images.pexels.com/photos/3721281/pexels-photo-3721281.jpeg?auto=compress&cs=tinysrgb&w=800',
+    image: require('../../assets/images/exercises/rowing.jpg'),
     mets: [4.8, 7, 8.5],
   },
 ];
@@ -84,37 +84,37 @@ const RUN_ACTIVITIES = [
 const LIFT_EXERCISES = [
   // Images Pexels verifiees par recherche specifique a chaque mouvement
   // (recherche "<exercice>" sur pexels.com et ID du premier resultat pertinent).
-  { id: 'bench_press', labelKey: 'lift.bench_press', image: 'https://images.pexels.com/photos/3837781/pexels-photo-3837781.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3, 5, 6], muscles: ['muscle.chest', 'muscle.triceps', 'muscle.shoulders'] },
-  { id: 'squat', labelKey: 'lift.squat', image: 'https://images.pexels.com/photos/1552106/pexels-photo-1552106.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3.5, 5.5, 8], muscles: ['muscle.quads', 'muscle.glutes', 'muscle.hamstrings', 'muscle.core'] },
-  { id: 'deadlift', labelKey: 'lift.deadlift', image: 'https://images.pexels.com/photos/13822300/pexels-photo-13822300.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3.5, 6, 8], muscles: ['muscle.back', 'muscle.hamstrings', 'muscle.glutes', 'muscle.forearms'] },
-  { id: 'shoulder_press', labelKey: 'lift.shoulder_press', image: 'https://images.pexels.com/photos/14099787/pexels-photo-14099787.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3, 4.5, 6], muscles: ['muscle.shoulders', 'muscle.triceps', 'muscle.core'] },
-  { id: 'pullup', labelKey: 'lift.pullup', image: 'https://images.pexels.com/photos/7187872/pexels-photo-7187872.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3, 5, 8], muscles: ['muscle.back', 'muscle.biceps', 'muscle.forearms'] },
-  { id: 'bicep_curl', labelKey: 'lift.bicep_curl', image: 'https://images.pexels.com/photos/5327466/pexels-photo-5327466.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [2.5, 3.5, 5], muscles: ['muscle.biceps', 'muscle.forearms'] },
-  { id: 'incline_bench', labelKey: 'lift.incline_bench', image: 'https://images.pexels.com/photos/18060077/pexels-photo-18060077.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3, 5, 6], muscles: ['muscle.chest', 'muscle.shoulders', 'muscle.triceps'] },
-  { id: 'dumbbell_row', labelKey: 'lift.dumbbell_row', image: 'https://images.pexels.com/photos/14604676/pexels-photo-14604676.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3, 5, 6.5], muscles: ['muscle.back', 'muscle.biceps'] },
-  { id: 'barbell_row', labelKey: 'lift.barbell_row', image: 'https://images.pexels.com/photos/4720790/pexels-photo-4720790.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3.5, 5.5, 7], muscles: ['muscle.back', 'muscle.biceps', 'muscle.rear_delts'] },
-  { id: 'lat_pulldown', labelKey: 'lift.lat_pulldown', image: 'https://images.pexels.com/photos/18060085/pexels-photo-18060085.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3, 4.5, 6], muscles: ['muscle.back', 'muscle.biceps'] },
-  { id: 'leg_press', labelKey: 'lift.leg_press', image: 'https://images.pexels.com/photos/30789702/pexels-photo-30789702.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3.5, 5.5, 7.5], muscles: ['muscle.quads', 'muscle.glutes', 'muscle.hamstrings'] },
-  { id: 'lunges', labelKey: 'lift.lunges', image: 'https://images.pexels.com/photos/5037402/pexels-photo-5037402.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3, 5, 7], muscles: ['muscle.quads', 'muscle.glutes', 'muscle.hamstrings'] },
-  { id: 'romanian_dl', labelKey: 'lift.romanian_dl', image: 'https://images.pexels.com/photos/5837307/pexels-photo-5837307.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3.5, 6, 8], muscles: ['muscle.hamstrings', 'muscle.glutes', 'muscle.back'] },
-  { id: 'tricep_dips', labelKey: 'lift.tricep_dips', image: 'https://images.pexels.com/photos/5496589/pexels-photo-5496589.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3, 5, 8], muscles: ['muscle.triceps', 'muscle.chest', 'muscle.shoulders'] },
-  { id: 'tricep_pushdown', labelKey: 'lift.tricep_pushdown', image: 'https://images.pexels.com/photos/20594796/pexels-photo-20594796.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [2.5, 3.5, 5], muscles: ['muscle.triceps'] },
-  { id: 'hammer_curl', labelKey: 'lift.hammer_curl', image: 'https://images.pexels.com/photos/14793884/pexels-photo-14793884.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [2.5, 3.5, 5], muscles: ['muscle.biceps', 'muscle.forearms'] },
-  { id: 'preacher_curl', labelKey: 'lift.preacher_curl', image: 'https://images.pexels.com/photos/5837270/pexels-photo-5837270.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [2.5, 3.5, 5], muscles: ['muscle.biceps'] },
-  { id: 'lateral_raise', labelKey: 'lift.lateral_raise', image: 'https://images.pexels.com/photos/6339688/pexels-photo-6339688.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [2.5, 3.5, 5], muscles: ['muscle.shoulders'] },
-  { id: 'front_raise', labelKey: 'lift.front_raise', image: 'https://images.pexels.com/photos/3926636/pexels-photo-3926636.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [2.5, 3.5, 5], muscles: ['muscle.shoulders'] },
-  { id: 'face_pull', labelKey: 'lift.face_pull', image: 'https://images.pexels.com/photos/5327494/pexels-photo-5327494.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [2.5, 3.5, 5], muscles: ['muscle.rear_delts', 'muscle.back'] },
-  { id: 'chest_fly', labelKey: 'lift.chest_fly', image: 'https://images.pexels.com/photos/14616295/pexels-photo-14616295.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [2.5, 3.5, 5], muscles: ['muscle.chest'] },
-  { id: 'cable_crossover', labelKey: 'lift.cable_crossover', image: 'https://images.pexels.com/photos/10754972/pexels-photo-10754972.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [2.5, 3.5, 5], muscles: ['muscle.chest'] },
-  { id: 'calf_raise', labelKey: 'lift.calf_raise', image: 'https://images.pexels.com/photos/13965339/pexels-photo-13965339.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [2.5, 3.5, 5], muscles: ['muscle.calves'] },
-  { id: 'leg_curl', labelKey: 'lift.leg_curl', image: 'https://images.pexels.com/photos/28731788/pexels-photo-28731788.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3, 4.5, 6], muscles: ['muscle.hamstrings'] },
-  { id: 'leg_extension', labelKey: 'lift.leg_extension', image: 'https://images.pexels.com/photos/19722966/pexels-photo-19722966.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3, 4.5, 6], muscles: ['muscle.quads'] },
-  { id: 'hip_thrust', labelKey: 'lift.hip_thrust', image: 'https://images.pexels.com/photos/4662331/pexels-photo-4662331.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3, 5, 7], muscles: ['muscle.glutes', 'muscle.hamstrings'] },
-  { id: 'bulgarian_split', labelKey: 'lift.bulgarian_split', image: 'https://images.pexels.com/photos/13106607/pexels-photo-13106607.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3.5, 5.5, 8], muscles: ['muscle.quads', 'muscle.glutes', 'muscle.core'] },
-  { id: 'plank', labelKey: 'lift.plank', kind: 'time', image: 'https://images.pexels.com/photos/6339462/pexels-photo-6339462.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [2.8, 4, 5], muscles: ['muscle.core', 'muscle.shoulders', 'muscle.full_body'] },
-  { id: 'crunches', labelKey: 'lift.crunches', image: 'https://images.pexels.com/photos/4971061/pexels-photo-4971061.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [2.8, 4, 5.5], muscles: ['muscle.core'] },
-  { id: 'russian_twist', labelKey: 'lift.russian_twist', image: 'https://images.pexels.com/photos/5128466/pexels-photo-5128466.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [2.8, 4, 5.5], muscles: ['muscle.core', 'muscle.obliques'] },
-  { id: 'hanging_knee', labelKey: 'lift.hanging_knee', image: 'https://images.pexels.com/photos/8038687/pexels-photo-8038687.jpeg?auto=compress&cs=tinysrgb&w=800', mets: [3, 4.5, 6], muscles: ['muscle.core', 'muscle.forearms'] },
+  { id: 'bench_press', labelKey: 'lift.bench_press', image: require('../../assets/images/exercises/bench_press.jpg'), mets: [3, 5, 6], muscles: ['muscle.chest', 'muscle.triceps', 'muscle.shoulders'] },
+  { id: 'squat', labelKey: 'lift.squat', image: require('../../assets/images/exercises/squat.jpg'), mets: [3.5, 5.5, 8], muscles: ['muscle.quads', 'muscle.glutes', 'muscle.hamstrings', 'muscle.core'] },
+  { id: 'deadlift', labelKey: 'lift.deadlift', image: require('../../assets/images/exercises/deadlift.jpg'), mets: [3.5, 6, 8], muscles: ['muscle.back', 'muscle.hamstrings', 'muscle.glutes', 'muscle.forearms'] },
+  { id: 'shoulder_press', labelKey: 'lift.shoulder_press', image: require('../../assets/images/exercises/shoulder_press.jpg'), mets: [3, 4.5, 6], muscles: ['muscle.shoulders', 'muscle.triceps', 'muscle.core'] },
+  { id: 'pullup', labelKey: 'lift.pullup', image: require('../../assets/images/exercises/pullup.jpg'), mets: [3, 5, 8], muscles: ['muscle.back', 'muscle.biceps', 'muscle.forearms'] },
+  { id: 'bicep_curl', labelKey: 'lift.bicep_curl', image: require('../../assets/images/exercises/bicep_curl.jpg'), mets: [2.5, 3.5, 5], muscles: ['muscle.biceps', 'muscle.forearms'] },
+  { id: 'incline_bench', labelKey: 'lift.incline_bench', image: require('../../assets/images/exercises/incline_bench.jpg'), mets: [3, 5, 6], muscles: ['muscle.chest', 'muscle.shoulders', 'muscle.triceps'] },
+  { id: 'dumbbell_row', labelKey: 'lift.dumbbell_row', image: require('../../assets/images/exercises/dumbbell_row.jpg'), mets: [3, 5, 6.5], muscles: ['muscle.back', 'muscle.biceps'] },
+  { id: 'barbell_row', labelKey: 'lift.barbell_row', image: require('../../assets/images/exercises/barbell_row.jpg'), mets: [3.5, 5.5, 7], muscles: ['muscle.back', 'muscle.biceps', 'muscle.rear_delts'] },
+  { id: 'lat_pulldown', labelKey: 'lift.lat_pulldown', image: require('../../assets/images/exercises/lat_pulldown.jpg'), mets: [3, 4.5, 6], muscles: ['muscle.back', 'muscle.biceps'] },
+  { id: 'leg_press', labelKey: 'lift.leg_press', image: require('../../assets/images/exercises/leg_press.jpg'), mets: [3.5, 5.5, 7.5], muscles: ['muscle.quads', 'muscle.glutes', 'muscle.hamstrings'] },
+  { id: 'lunges', labelKey: 'lift.lunges', image: require('../../assets/images/exercises/lunges.jpg'), mets: [3, 5, 7], muscles: ['muscle.quads', 'muscle.glutes', 'muscle.hamstrings'] },
+  { id: 'romanian_dl', labelKey: 'lift.romanian_dl', image: require('../../assets/images/exercises/romanian_dl.jpg'), mets: [3.5, 6, 8], muscles: ['muscle.hamstrings', 'muscle.glutes', 'muscle.back'] },
+  { id: 'tricep_dips', labelKey: 'lift.tricep_dips', image: require('../../assets/images/exercises/tricep_dips.jpg'), mets: [3, 5, 8], muscles: ['muscle.triceps', 'muscle.chest', 'muscle.shoulders'] },
+  { id: 'tricep_pushdown', labelKey: 'lift.tricep_pushdown', image: require('../../assets/images/exercises/tricep_pushdown.jpg'), mets: [2.5, 3.5, 5], muscles: ['muscle.triceps'] },
+  { id: 'hammer_curl', labelKey: 'lift.hammer_curl', image: require('../../assets/images/exercises/hammer_curl.jpg'), mets: [2.5, 3.5, 5], muscles: ['muscle.biceps', 'muscle.forearms'] },
+  { id: 'preacher_curl', labelKey: 'lift.preacher_curl', image: require('../../assets/images/exercises/preacher_curl.jpg'), mets: [2.5, 3.5, 5], muscles: ['muscle.biceps'] },
+  { id: 'lateral_raise', labelKey: 'lift.lateral_raise', image: require('../../assets/images/exercises/lateral_raise.jpg'), mets: [2.5, 3.5, 5], muscles: ['muscle.shoulders'] },
+  { id: 'front_raise', labelKey: 'lift.front_raise', image: require('../../assets/images/exercises/front_raise.jpg'), mets: [2.5, 3.5, 5], muscles: ['muscle.shoulders'] },
+  { id: 'face_pull', labelKey: 'lift.face_pull', image: require('../../assets/images/exercises/face_pull.jpg'), mets: [2.5, 3.5, 5], muscles: ['muscle.rear_delts', 'muscle.back'] },
+  { id: 'chest_fly', labelKey: 'lift.chest_fly', image: require('../../assets/images/exercises/chest_fly.jpg'), mets: [2.5, 3.5, 5], muscles: ['muscle.chest'] },
+  { id: 'cable_crossover', labelKey: 'lift.cable_crossover', image: require('../../assets/images/exercises/cable_crossover.jpg'), mets: [2.5, 3.5, 5], muscles: ['muscle.chest'] },
+  { id: 'calf_raise', labelKey: 'lift.calf_raise', image: require('../../assets/images/exercises/calf_raise.jpg'), mets: [2.5, 3.5, 5], muscles: ['muscle.calves'] },
+  { id: 'leg_curl', labelKey: 'lift.leg_curl', image: require('../../assets/images/exercises/leg_curl.jpg'), mets: [3, 4.5, 6], muscles: ['muscle.hamstrings'] },
+  { id: 'leg_extension', labelKey: 'lift.leg_extension', image: require('../../assets/images/exercises/leg_extension.jpg'), mets: [3, 4.5, 6], muscles: ['muscle.quads'] },
+  { id: 'hip_thrust', labelKey: 'lift.hip_thrust', image: require('../../assets/images/exercises/hip_thrust.jpg'), mets: [3, 5, 7], muscles: ['muscle.glutes', 'muscle.hamstrings'] },
+  { id: 'bulgarian_split', labelKey: 'lift.bulgarian_split', image: require('../../assets/images/exercises/bulgarian_split.jpg'), mets: [3.5, 5.5, 8], muscles: ['muscle.quads', 'muscle.glutes', 'muscle.core'] },
+  { id: 'plank', labelKey: 'lift.plank', kind: 'time', image: require('../../assets/images/exercises/plank.jpg'), mets: [2.8, 4, 5], muscles: ['muscle.core', 'muscle.shoulders', 'muscle.full_body'] },
+  { id: 'crunches', labelKey: 'lift.crunches', image: require('../../assets/images/exercises/crunches.jpg'), mets: [2.8, 4, 5.5], muscles: ['muscle.core'] },
+  { id: 'russian_twist', labelKey: 'lift.russian_twist', image: require('../../assets/images/exercises/russian_twist.jpg'), mets: [2.8, 4, 5.5], muscles: ['muscle.core', 'muscle.obliques'] },
+  { id: 'hanging_knee', labelKey: 'lift.hanging_knee', image: require('../../assets/images/exercises/hanging_knee.jpg'), mets: [3, 4.5, 6], muscles: ['muscle.core', 'muscle.forearms'] },
 
   // ---- Nouveaux exercices : videos demo wger.de (CC). Labels + how-to inline (en/fr/ar). ----
   { id: 'front_squat', mets: [3.5, 5.5, 8], muscles: ['muscle.quads', 'muscle.glutes', 'muscle.core'],
@@ -403,7 +403,7 @@ Output a single integer (e.g. 247). No explanation.`;
                   activeOpacity={0.8}
                 >
                   <Image
-                    source={{ uri: item.image }}
+                    source={item.image}
                     style={styles.activityImg}
                     resizeMode="cover"
                     onError={(e) =>
@@ -472,7 +472,7 @@ Output a single integer (e.g. 247). No explanation.`;
               />
             ) : (selected as any).image && !erroredImgs.has(selected.id) ? (
               <Image
-                source={{ uri: (selected as any).image }}
+                source={(selected as any).image}
                 style={styles.heroImg}
                 resizeMode="cover"
                 onError={() => setErroredImgs((s) => new Set(s).add(selected.id))}

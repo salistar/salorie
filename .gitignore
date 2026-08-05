@@ -81,3 +81,12 @@ android/app/src/main/assets/index.android.bundle
 test-results/
 web/test-results/
 playwright-report/
+
+# Projet natif Android — GENERE par `expo prebuild`, jamais ecrit a la main.
+# Le versionner avait deux consequences : la cle API Firebase/Maps injectee par
+# app.config.js se retrouvait commitee dans AndroidManifest.xml (depot PUBLIC), et
+# chaque `prebuild --clean` produisait un diff enorme ou se cachaient de vraies
+# regressions — c'est ainsi qu'un intent-filter Health Connect s'etait duplique 7 fois.
+# La CI fait `expo prebuild --platform android --clean` : rien n'est perdu.
+# En local, apres un clone : `npx expo prebuild --platform android`.
+/android/
