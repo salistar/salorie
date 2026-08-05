@@ -31,15 +31,22 @@ export default async function Home() {
   let error: string | null = null;
   // Résilience : Firestore peut être lent (cold-start gRPC / latence conteneur) -> on plafonne
   // l'attente et on lit les deux sources EN PARALLÈLE, pour ne plus bloquer la page >90s.
-  // L'aide partagée REJETTE au bout du délai, là où la version locale qu'elle remplace
-  // renvoyait une liste vide : un Firestore injoignable affiche désormais un message au
-  // lieu d'un tableau de bord vide et muet.
+  //
+  // L'échec d'une source ne doit JAMAIS effacer la page. Une version antérieure
+  // remplaçait tout le tableau de bord par une carte d'erreur : au moindre démarrage à
+  // froid, statistiques, tableau des utilisateurs et flux d'événements disparaissaient —
+  // et AutoRefresh relançant la lecture toutes les 15 s, le tableau de bord clignotait
+  // entre contenu et page vide. Signalé le 5 août 2026.
+  //
+  // On garde donc le meilleur des deux : la page se rend toujours, et l'échec se DIT,
+  // dans un bandeau au lieu d'un silence.
   const [uRes, eRes] = await Promise.allSettled([
     withTimeout(listUsers(), 8000, 'Utilisateurs'),
     withTimeout(getRecentEvents(40), 8000, 'Événements'),
   ]);
   if (uRes.status === 'fulfilled') users = uRes.value; else error = String(uRes.reason);
   if (eRes.status === 'fulfilled') events = eRes.value;
+  else if (!error) error = String(eRes.reason);
 
   const withGoal = users.filter((u) => u.goal).length;
   const withWeight = users.filter((u) => u.weight).length;
@@ -47,12 +54,16 @@ export default async function Home() {
   return (
     <main className="container">
       <AutoRefresh seconds={15} />
-      {error ? (
-        <div className="card empty">
-          ⚠️ Impossible de lire Firestore : {error}
-          <div style={{ marginTop: 8, fontSize: 12 }}>Vérifie <code>web/.env.local</code> (FIREBASE_SERVICE_ACCOUNT).</div>
+      {error && (
+        <div className="msg msg-err" role="alert">
+          ⚠️ Lecture Firestore incomplète : {error}
+          <div style={{ marginTop: 6, fontSize: 12 }}>
+            Les chiffres ci-dessous peuvent être partiels. Si cela persiste, vérifie{' '}
+            <code>FIREBASE_SERVICE_ACCOUNT</code> dans l&apos;environnement du conteneur web.
+          </div>
         </div>
-      ) : (
+      )}
+      {(
         <>
           <h1>Vue d'ensemble</h1>
           <div className="stats">
