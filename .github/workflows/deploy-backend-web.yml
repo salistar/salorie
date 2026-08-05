@@ -58,8 +58,6 @@ jobs:
             printf '%s\n' 'FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > .env
             printf '%s\n' 'GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}' >> .env
             printf '%s\n' 'USDA_API_KEY=${{ secrets.USDA_API_KEY }}' >> .env
-            printf '%s\n' 'ADMIN_USER=${{ secrets.ADMIN_USER }}' >> .env
-            printf '%s\n' 'ADMIN_PASS=${{ secrets.ADMIN_PASS }}' >> .env
             printf '%s\n' 'AUTH_SECRET=${{ secrets.AUTH_SECRET }}' >> .env
             # Lue comme ARG de build par le service web (cf. docker-compose.yml) : sans
             # elle la carte de l'ecran Courses reste inerte, sans message d'erreur.
