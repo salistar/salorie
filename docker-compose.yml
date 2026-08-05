@@ -68,7 +68,13 @@ services:
     # injoignable — constate en production le 3 aout 2026.
     container_name: salorie-web
     networks: [default, edge]
-    build: ./web
+    build:
+      context: ./web
+      args:
+        # Doit être un ARG de BUILD : Next.js fige les `NEXT_PUBLIC_*` dans le bundle.
+        # Fournie en `environment:` elle n'atteindrait jamais le navigateur, et la carte
+        # de l'écran Courses resterait inerte sans le moindre message d'erreur.
+        NEXT_PUBLIC_GMAP_KEY: ${NEXT_PUBLIC_GMAP_KEY:-}
     restart: unless-stopped
     depends_on: [backend, mongo]
     environment:
