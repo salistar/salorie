@@ -76,8 +76,39 @@ jobs:
           GMAPS_ANDROID_KEY: ${{ secrets.GMAPS_ANDROID_KEY }}
         run: npx expo prebuild --platform android --clean
 
+      # `expo export:embed` FIGE la valeur de chaque `process.env.EXPO_PUBLIC_*` dans le
+      # bundle. `.env` étant gitignoré, il n'existe pas sur le runner : sans ce bloc, les
+      # douze variables valent '' et l'AAB part sans clé Clerk (connexion impossible),
+      # sans Firebase (ni Firestore ni auth) et sans RevenueCat. Le build réussissait
+      # quand même — c'est exactement le piège déjà rencontré avec la clé Maps.
       - name: Bundle JS (embedded, no Metro)
+        env:
+          EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          EXPO_PUBLIC_GEMINI_API_KEY: ${{ secrets.EXPO_PUBLIC_GEMINI_API_KEY }}
+          EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
+          EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+          EXPO_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_PROJECT_ID }}
+          EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+          EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+          EXPO_PUBLIC_FIREBASE_APP_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_APP_ID }}
+          EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID }}
+          EXPO_PUBLIC_FIREBASE_TOKEN_URL: ${{ secrets.EXPO_PUBLIC_FIREBASE_TOKEN_URL }}
+          EXPO_PUBLIC_REVENUE_CAT_API_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_REVENUE_CAT_API_KEY_ANDROID }}
+          EXPO_PUBLIC_REVENUE_CAT_API_KEY_IOS: ${{ secrets.EXPO_PUBLIC_REVENUE_CAT_API_KEY_IOS }}
         run: |
+          # Un secret absent ne casse rien à l'exécution du build : il produit une app
+          # muette, découverte seulement après publication. On échoue ici, pas sur Play.
+          manquants=""
+          for v in EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY EXPO_PUBLIC_FIREBASE_API_KEY \
+                   EXPO_PUBLIC_FIREBASE_PROJECT_ID EXPO_PUBLIC_FIREBASE_APP_ID; do
+            eval "val=\${$v}"
+            [ -n "$val" ] || manquants="$manquants $v"
+          done
+          if [ -n "$manquants" ]; then
+            echo "Secrets GitHub absents :$manquants"
+            echo "L'AAB serait construit sans ces clés — connexion et base de données inertes."
+            exit 1
+          fi
           npx expo export:embed \
             --platform android \
             --dev false \
@@ -85,6 +116,16 @@ jobs:
             --bundle-output android/app/src/main/assets/index.android.bundle \
             --assets-dest android/app/src/main/res \
             --reset-cache
+
+      # Contrôle de sortie : la clé doit être RÉELLEMENT présente dans le bundle produit.
+      # Le bloc `env` au-dessus ne prouve rien si un jour l'inlining change de mécanisme.
+      - name: Vérifier que les clés sont dans le bundle
+        env:
+          CLE: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
+        run: |
+          B=android/app/src/main/assets/index.android.bundle
+          grep -qF "$CLE" "$B" || { echo "Clé Firebase ABSENTE du bundle — AAB inutilisable."; exit 1; }
+          echo "Clé Firebase présente dans le bundle."
 
       # Le keystore n'existe que le temps du build. `base64 -d` lit depuis un fichier
       # temporaire plutôt qu'un echo, pour ne jamais faire transiter le secret par une
