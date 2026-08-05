@@ -61,6 +61,9 @@ jobs:
             printf '%s\n' 'ADMIN_USER=${{ secrets.ADMIN_USER }}' >> .env
             printf '%s\n' 'ADMIN_PASS=${{ secrets.ADMIN_PASS }}' >> .env
             printf '%s\n' 'AUTH_SECRET=${{ secrets.AUTH_SECRET }}' >> .env
+            # Lue comme ARG de build par le service web (cf. docker-compose.yml) : sans
+            # elle la carte de l'ecran Courses reste inerte, sans message d'erreur.
+            printf '%s\n' 'NEXT_PUBLIC_GMAP_KEY=${{ secrets.NEXT_PUBLIC_GMAP_KEY }}' >> .env
             docker compose up -d --build --remove-orphans
             docker compose ps
 
