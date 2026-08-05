@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import AuthShell from '../AuthShell';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -26,28 +27,50 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={S.wrap}>
-      <form onSubmit={submit} style={S.card}>
-        <div style={S.brand}>🔥 Salorie <span style={{ color: '#64748b', fontWeight: 400 }}>Admin</span></div>
-        <h1 style={S.h1}>Connexion</h1>
-        <input style={S.input} type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input style={S.input} type="password" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        {err && <div style={S.err}>{err}</div>}
-        <button style={{ ...S.btn, opacity: loading ? 0.6 : 1 }} disabled={loading}>{loading ? '…' : 'Se connecter'}</button>
-        <div style={S.foot}>Pas de compte ? <Link href="/register" style={S.link}>Créer un compte</Link></div>
+    <AuthShell
+      image="/auth/login.jpg"
+      accroche="Ce que vos utilisateurs mangent, vous le voyez ici."
+      sousTitre="Le back-office de Salorie : comptes, contenus signalés, activation des fonctionnalités et courses virtuelles."
+    >
+      {/* Les champs portent un <label> lié par htmlFor, un name et un autoComplete :
+          sans eux, un gestionnaire de mots de passe ne sait NI reconnaître le
+          formulaire NI le remplir — et un lecteur d'écran annonce « champ de saisie »
+          sans dire lequel. */}
+      <h1 className="auth-title">Connexion</h1>
+      <p className="auth-sub">Accès réservé aux administrateurs.</p>
+
+      <form onSubmit={submit} noValidate>
+        <div className="field">
+          <label className="label" htmlFor="email">Adresse e-mail</label>
+          <input
+            className="input" id="email" name="email" type="email"
+            autoComplete="username" required autoFocus
+            aria-invalid={!!err} aria-describedby={err ? 'auth-err' : undefined}
+            value={email} onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+
+        <div className="field">
+          <label className="label" htmlFor="password">Mot de passe</label>
+          <input
+            className="input" id="password" name="password" type="password"
+            autoComplete="current-password" required
+            aria-invalid={!!err} aria-describedby={err ? 'auth-err' : undefined}
+            value={password} onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+
+        {/* role=alert : l'erreur est annoncée dès son apparition, sans déplacer le focus. */}
+        {err && <div className="msg msg-err" id="auth-err" role="alert">{err}</div>}
+
+        <button className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={loading}>
+          {loading ? 'Connexion…' : 'Se connecter'}
+        </button>
       </form>
-    </div>
+
+      <div className="auth-foot">
+        Pas encore de compte ? <Link href="/register">Créer un compte</Link>
+      </div>
+    </AuthShell>
   );
 }
-
-const S: Record<string, React.CSSProperties> = {
-  wrap: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#EAF4EE,#fff)', fontFamily: 'system-ui, sans-serif' },
-  card: { width: 360, background: '#fff', borderRadius: 20, padding: 32, boxShadow: '0 10px 40px rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column', gap: 14 },
-  brand: { fontSize: 20, fontWeight: 800, color: '#2E8B57', marginBottom: 4 },
-  h1: { fontSize: 24, fontWeight: 800, color: '#0F172A', margin: '0 0 8px' },
-  input: { padding: '13px 14px', borderRadius: 12, border: '1px solid #E2E8F0', fontSize: 15, outline: 'none' },
-  btn: { padding: '14px', borderRadius: 12, border: 'none', background: '#2E8B57', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', marginTop: 4 },
-  err: { color: '#B42318', background: '#FEF3F2', borderRadius: 10, padding: 10, fontSize: 13 },
-  foot: { fontSize: 14, color: '#64748b', textAlign: 'center', marginTop: 4 },
-  link: { color: '#2E8B57', fontWeight: 700, textDecoration: 'none' },
-};
