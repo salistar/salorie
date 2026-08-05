@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, unauthorized } from '../../../../lib/adminGuard';
+import { requireAdmin, unauthorized, requireWriter } from '../../../../lib/adminGuard';
 
 export const runtime = 'nodejs';
 const API = process.env.BACKEND_URL || 'https://api.salorie.com';
@@ -10,7 +10,7 @@ function headers() {
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
-  const _admin = await requireAdmin(); if (!_admin) return unauthorized();
+  const { user: _admin, refus } = await requireWriter(); if (refus) return refus;
   try {
     const r = await fetch(`${API}/races/admin/${params.id}`, { method: 'DELETE', headers: headers() });
     return NextResponse.json(await r.json(), { status: r.status });
@@ -19,7 +19,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
 
 // POST = déclenche la génération des médailles (classement) pour la course.
 export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
-  const _admin = await requireAdmin(); if (!_admin) return unauthorized();
+  const { user: _admin, refus } = await requireWriter(); if (refus) return refus;
   try {
     const r = await fetch(`${API}/races/admin/${params.id}/generate-medals`, { method: 'POST', headers: headers() });
     return NextResponse.json(await r.json(), { status: r.status });

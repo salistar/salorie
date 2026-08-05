@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, unauthorized } from '../../../lib/adminGuard';
+import { requireAdmin, unauthorized, requireWriter } from '../../../lib/adminGuard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,7 +20,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const _admin = await requireAdmin(); if (!_admin) return unauthorized();
+  const { user: _admin, refus } = await requireWriter(); if (refus) return refus;
   try {
     const body = await req.json();
     const r = await fetch(`${API}/orgs/admin`, { method: 'POST', headers: headers(), body: JSON.stringify(body) });

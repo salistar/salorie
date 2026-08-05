@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, unauthorized } from '../../../lib/adminGuard';
+import { requireAdmin, unauthorized, requireWriter } from '../../../lib/adminGuard';
 import admin from 'firebase-admin';
 import { db, getPushTargets, getFcmTargets, listUsers } from '../../../lib/firebaseAdmin';
 
@@ -11,7 +11,7 @@ export const runtime = 'nodejs';
 //   2) Push Expo (best-effort) pour les users ayant un token — nécessite FCM configuré.
 // Protégé par le middleware (cookie JWT admin).
 export async function POST(req: NextRequest) {
-  const _admin = await requireAdmin(); if (!_admin) return unauthorized();
+  const { user: _admin, refus } = await requireWriter(); if (refus) return refus;
   try {
     const { title, message, userIds } = await req.json();
     if (!message || typeof message !== 'string') {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, unauthorized } from '../../../../lib/adminGuard';
+import { requireAdmin, unauthorized, requireWriter } from '../../../../lib/adminGuard';
 import { db } from '../../../../lib/mongo';
 
 export const runtime = 'nodejs';
@@ -15,7 +15,7 @@ function headers() {
 // on persiste un flag/record que l'opérateur consulte, et on notifie le backend au
 // mieux (best-effort). La réponse confirme « demande enregistrée ».
 export async function POST(req: NextRequest) {
-  const admin = await requireAdmin(); if (!admin) return unauthorized();
+  const { user: admin, refus } = await requireWriter(); if (refus) return refus;
 
   let body: any = {};
   try { body = await req.json(); } catch { /* corps optionnel */ }

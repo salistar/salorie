@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, unauthorized } from '../../../lib/adminGuard';
+import { requireAdmin, unauthorized, requireWriter } from '../../../lib/adminGuard';
 import { LLM_PROVIDERS, getLLMKeysStatus, setLLMKeys } from '../../../lib/firebaseAdmin';
 
 export const runtime = 'nodejs';
@@ -15,7 +15,7 @@ export async function GET() {
 
 // POST { keys: { ANTHROPIC_API_KEY: '…', … } } → enregistre dans secrets/llm_keys.
 export async function POST(req: NextRequest) {
-  const a = await requireAdmin(); if (!a) return unauthorized();
+  const { user: a, refus } = await requireWriter(); if (refus) return refus;
   const actor = req.headers.get('x-admin-actor') || a.email || 'admin';
   try {
     const body = await req.json();

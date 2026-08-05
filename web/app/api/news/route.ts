@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin, unauthorized } from '../../../lib/adminGuard';
+import { requireAdmin, unauthorized, requireWriter } from '../../../lib/adminGuard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,14 +18,14 @@ export async function GET() {
   } catch (e: any) { return NextResponse.json({ error: e?.message || 'backend injoignable' }, { status: 502 }); }
 }
 export async function POST(req: Request) {
-  const _admin = await requireAdmin(); if (!_admin) return unauthorized();
+  const { user: _admin, refus } = await requireWriter(); if (refus) return refus;
   try {
     const r = await fetch(`${API}/news/admin`, { method: 'POST', headers: headers(), body: JSON.stringify(await req.json()) });
     return NextResponse.json(await r.json());
   } catch (e: any) { return NextResponse.json({ error: e?.message }, { status: 502 }); }
 }
 export async function PUT(req: Request) {
-  const _admin = await requireAdmin(); if (!_admin) return unauthorized();
+  const { user: _admin, refus } = await requireWriter(); if (refus) return refus;
   try {
     const { id, ...dto } = await req.json();
     const r = await fetch(`${API}/news/admin/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify(dto) });
@@ -33,7 +33,7 @@ export async function PUT(req: Request) {
   } catch (e: any) { return NextResponse.json({ error: e?.message }, { status: 502 }); }
 }
 export async function DELETE(req: Request) {
-  const _admin = await requireAdmin(); if (!_admin) return unauthorized();
+  const { user: _admin, refus } = await requireWriter(); if (refus) return refus;
   try {
     const { id } = await req.json();
     const r = await fetch(`${API}/news/admin/${id}`, { method: 'DELETE', headers: headers() });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, unauthorized } from '../../../lib/adminGuard';
+import { requireAdmin, unauthorized, requireWriter } from '../../../lib/adminGuard';
 import { getReports, setReportStatus } from '../../../lib/firebaseAdmin';
 // Le SDK Firestore admin peut rester bloqué indéfiniment sur un cold-start gRPC
 // (déjà observé sur le dashboard). Sans borne, l'appel ne répond jamais et l'UI
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
 // POST { id, action: 'resolve' | 'dismiss' } → clôt un signalement.
 export async function POST(req: NextRequest) {
-  const admin = await requireAdmin(); if (!admin) return unauthorized();
+  const { user: admin, refus } = await requireWriter(); if (refus) return refus;
   try {
     const { id, action } = await req.json();
     if (typeof id !== 'string' || !id) return NextResponse.json({ error: 'id requis' }, { status: 400 });

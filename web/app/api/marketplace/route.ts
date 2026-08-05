@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, unauthorized } from '../../../lib/adminGuard';
+import { requireAdmin, unauthorized, requireWriter } from '../../../lib/adminGuard';
 import {
   getPendingListings,
   approveListing,
@@ -23,7 +23,7 @@ export async function GET() {
 // POST { id, action: 'approve' | 'reject' } → écrit directement dans Firestore admin.
 // approve → approved:true ; reject → status:'removed' (on ne supprime pas).
 export async function POST(req: NextRequest) {
-  const _admin = await requireAdmin(); if (!_admin) return unauthorized();
+  const { user: _admin, refus } = await requireWriter(); if (refus) return refus;
   try {
     const { id, action } = await req.json();
     if (typeof id !== 'string' || !id) return NextResponse.json({ error: 'id requis' }, { status: 400 });
