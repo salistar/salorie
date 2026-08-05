@@ -52,6 +52,11 @@ jobs:
       EXPO_PUBLIC_FIREBASE_TOKEN_URL: ${{ secrets.EXPO_PUBLIC_FIREBASE_TOKEN_URL }}
       EXPO_PUBLIC_REVENUE_CAT_API_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_REVENUE_CAT_API_KEY_ANDROID }}
       EXPO_PUBLIC_REVENUE_CAT_API_KEY_IOS: ${{ secrets.EXPO_PUBLIC_REVENUE_CAT_API_KEY_IOS }}
+      # Distincte de GMAPS_ANDROID_KEY : celle-ci alimente le MANIFESTE (SDK natif), celle-là
+      # est lue par le JS des WebViews de run/challenge/race-live. Oubliée le 5 août parce que
+      # la liste avait été tirée de constants/config.ts, où elle ne figure pas : l'APK sortait
+      # avec des cartes de course vides, sans erreur.
+      EXPO_PUBLIC_GOOGLE_MAPS_KEY: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -108,7 +113,8 @@ jobs:
           # muette, découverte seulement après publication. On échoue ici, pas sur Play.
           manquants=""
           for v in EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY EXPO_PUBLIC_FIREBASE_API_KEY \
-                   EXPO_PUBLIC_FIREBASE_PROJECT_ID EXPO_PUBLIC_FIREBASE_APP_ID; do
+                   EXPO_PUBLIC_FIREBASE_PROJECT_ID EXPO_PUBLIC_FIREBASE_APP_ID \
+                   EXPO_PUBLIC_GOOGLE_MAPS_KEY; do
             eval "val=\${$v}"
             [ -n "$val" ] || manquants="$manquants $v"
           done
@@ -178,7 +184,8 @@ jobs:
       # de `AIzaSy`), lui-même confirmé par un `auth/invalid-api-key` sur appareil.
       - name: Vérifier les clés dans l'AAB livré
         env:
-          CLE: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
+          CLE_FIREBASE: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
+          CLE_MAPS: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_KEY }}
         run: |
           AAB=$(find android/app/build/outputs/bundle -name '*.aab' | head -1)
           test -n "$AAB" || { echo "Aucun AAB produit."; exit 1; }
@@ -186,13 +193,18 @@ jobs:
           unzip -o -q "$AAB" -d /tmp/aabx
           B=$(find /tmp/aabx -name 'index.android.bundle' | head -1)
           test -n "$B" || { echo "Bundle introuvable dans l'AAB."; exit 1; }
-          if grep -aqF "$CLE" "$B"; then
-            echo "Clé Firebase présente dans l'AAB livré."
-          else
-            echo "Clé Firebase ABSENTE de l'AAB : l'app planterait au démarrage"
-            echo "(auth/invalid-api-key). Gradle a probablement rebundlé sans l'environnement."
+          # Une seule clé vérifiée laissait passer l'absence des autres : l'AAB du run
+          # 31046292219 contenait la clé Firebase et AUCUNE clé Maps — cartes de course
+          # vides, sans erreur. On contrôle donc chaque clé attendue.
+          manque=""
+          grep -aqF "$CLE_FIREBASE" "$B" || manque="$manque Firebase"
+          grep -aqF "$CLE_MAPS"     "$B" || manque="$manque Maps"
+          if [ -n "$manque" ]; then
+            echo "::error::Clés ABSENTES de l'AAB livré :$manque"
+            echo "Gradle a probablement rebundlé sans l'environnement du job."
             exit 1
           fi
+          echo "Clés Firebase et Maps présentes dans l'AAB livré."
 
       # `if: always()` : le keystore doit disparaître du runner même si Gradle a échoué.
       - name: Wipe keystore

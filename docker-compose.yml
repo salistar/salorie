@@ -83,9 +83,10 @@ services:
       # Auth admin (mongoose + JWT) — DOIT être présent sinon login/register cassent.
       MONGO_URI: mongodb://mongo:27017/salorie
       AUTH_SECRET: ${AUTH_SECRET}
-      # Conservés (compat / fallback) :
-      ADMIN_USER: ${ADMIN_USER:-admin}
-      ADMIN_PASS: ${ADMIN_PASS:-}
+      # ADMIN_USER / ADMIN_PASS retirés le 5 août 2026 : plus AUCUNE lecture dans le code
+      # (l'auth admin passe par Mongo + bcrypt via lib/adminAuth.ts, cf. AUTH_SECRET).
+      # Les garder revenait à réécrire un mot de passe en clair dans le .env du serveur
+      # à chaque déploiement, sans qu'il serve à quoi que ce soit.
     ports: ["3000:3000"]
 
 volumes:
