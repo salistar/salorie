@@ -295,9 +295,34 @@ function InitialLayout() {
           clerkId: user.id,
         });
 
+        // La session Firebase s'obtient via un jeton personnalisé récupéré sur le réseau
+        // (cf. lib/firebaseAuth) : c'est ASYNCHRONE. Lire Firestore avant qu'elle existe
+        // part avec `request.auth == null` → permission-denied → on tombait dans le catch,
+        // qui concluait `not-onboarded`. Constaté le 6 août 2026 : un compte EXISTANT au
+        // profil complet était renvoyé à l'onboarding après reconnexion — et le valider
+        // aurait écrasé son vrai profil. On attend donc la session avant de lire.
+        // (l'effet ligne ~81 la déclenche aussi, mais sans être attendu — d'où la course.
+        //  signInToFirebase coalesce les appels concurrents, donc ce second appel est sûr.)
+        await signInToFirebase(() => getToken()).catch(() => false);
+
         // Read par TOUS les emails + Clerk id en fallback. Va trouver le doc existant
         // meme si signup precedent etait avec un autre email/provider.
-        const data = await getUserFromFirestore(email, user.id, allEmails);
+        // Une lecture qui ÉCHOUE n'est pas une lecture qui dit « pas de profil » : on
+        // réessaie avant de laisser le catch trancher, sinon un simple hoquet réseau
+        // renvoie un habitué à l'onboarding.
+        let data = null;
+        let lastErr: unknown = null;
+        for (let essai = 0; essai < 3; essai++) {
+          try {
+            data = await getUserFromFirestore(email, user.id, allEmails);
+            lastErr = null;
+            break;
+          } catch (e) {
+            lastErr = e;
+            if (essai < 2) await new Promise((r) => setTimeout(r, 800 * (essai + 1)));
+          }
+        }
+        if (lastErr) throw lastErr;
 
         // IMPORTANT : on ne crée/sync le doc QUE si l'utilisateur existe DÉJÀ
         // (migration par email + préservation de `onboarded`). Pour un NOUVEL
@@ -375,7 +400,20 @@ function InitialLayout() {
         // MAIS: un NOUVEL utilisateur (sans session precedente onboardee) ne doit
         // PAS etre envoye au Home vide — il doit voir l'onboarding. On ne force
         // 'onboarded' que si une session precedente l'avait deja confirme.
-        setStatus(optimisticOnboarded === true ? 'onboarded' : 'not-onboarded');
+        //
+        // Second indice, ajouté le 6 août 2026 : un profil DÉJÀ EN CACHE pour cet email
+        // prouve que l'utilisateur existait. `last_session_onboarded` est effacé à la
+        // déconnexion, donc il ne dit rien après un changement de compte — c'est ce qui
+        // renvoyait un habitué à l'onboarding, au risque d'écraser son vrai profil s'il
+        // le validait. Le cache, lui, est indexé par email et survit.
+        let profilConnu = false;
+        try {
+          const email = user.primaryEmailAddress?.emailAddress || '';
+          if (email) {
+            profilConnu = !!(await AsyncStorage.getItem(`profile_${emailToDocId(email)}`));
+          }
+        } catch {}
+        setStatus(optimisticOnboarded === true || profilConnu ? 'onboarded' : 'not-onboarded');
       }
     };
 
