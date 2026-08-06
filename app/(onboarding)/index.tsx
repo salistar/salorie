@@ -294,7 +294,11 @@ export default function OnboardingScreen() {
             {[
               { id: '2-3', label: '2-3 / 7', img: require('../../assets/images/illustrations/running.jpg') },
               { id: '3-4', label: '3-4 / 7', img: require('../../assets/images/illustrations/workout.jpg') },
-              { id: '5-6', label: '5-6 / 7', img: require('../../assets/images/illustrations/weightlifting.jpg') },
+              // `weightlifting.jpg` contient en réalité une VAGUE OCÉANIQUE (le fichier porte
+              // le bon nom, pas le bon contenu) : l'option la plus sportive du questionnaire
+              // s'illustrait d'une photo de mer. On pointe vers une vraie image d'entraînement
+              // en attendant de remplacer le fichier lui-même.
+              { id: '5-6', label: '5-6 / 7', img: require('../../assets/images/illustrations/scale.jpg') },
             ].map((item) => (
               <TouchableOpacity
                 key={item.id}

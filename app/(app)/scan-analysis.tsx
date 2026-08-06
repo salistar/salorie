@@ -325,8 +325,13 @@ export default function ScanAnalysisScreen() {
         colorLog('RED', '[API→AsyncStorage] pending_scan CLEAR');
       } catch {}
 
+      // GEMINI_API_KEY vaut la constante 'proxied' (cf. ligne ~121) : le mobile n'embarque
+      // AUCUNE clé — les appels passent par le backend, qui détient la vraie. Cette garde
+      // ne peut donc jamais se déclencher ; son message parlait d'une variable
+      // EXPO_PUBLIC_GEMINI_API_KEY qui n'existe plus, ce qui a failli me faire embarquer
+      // une clé dans l'APK (extractible) pour « réparer » un problème inexistant.
       if (!GEMINI_API_KEY) {
-        colorLog('RED', '[ScanAnalysis] ABORT — EXPO_PUBLIC_GEMINI_API_KEY est vide');
+        colorLog('RED', '[ScanAnalysis] ABORT — proxy IA non configuré');
         setError(t('scan.error_no_key'));
         return;
       }
