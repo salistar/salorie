@@ -6,8 +6,9 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
-import { ArrowLeft, MapPin, Plus, Trash2, Send, Clock, ChevronDown, ChevronRight, Route as RouteIcon } from 'lucide-react-native';
+import { ArrowLeft, MapPin, Plus, Trash2, Send, Clock, ChevronDown, ChevronRight, Route as RouteIcon, Flag } from 'lucide-react-native';
 import PerfList from '../../components/PerfList';
+import ModerationSheet from '../../components/ModerationSheet';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -16,6 +17,7 @@ import {
   submitRoute, getApprovedRoutes, getMySubmissions,
   CommunityRoute, RouteWaypoint,
 } from '../../lib/communityRoutes';
+import { emailToDocId } from '../../lib/firebase';
 
 const PRIMARY = Colors.light.primary;
 
@@ -49,6 +51,7 @@ const TXT: Record<string, any> = {
     statusRejected: 'Rejected',
     km: 'km',
     stopsCount: 'stops',
+    report: 'Report this route',
   },
   fr: {
     title: 'Parcours communautaires',
@@ -78,6 +81,7 @@ const TXT: Record<string, any> = {
     statusRejected: 'Rejeté',
     km: 'km',
     stopsCount: 'étapes',
+    report: 'Signaler ce parcours',
   },
   ar: {
     title: 'مسارات المجتمع',
@@ -107,6 +111,7 @@ const TXT: Record<string, any> = {
     statusRejected: 'مرفوض',
     km: 'كم',
     stopsCount: 'محطات',
+    report: 'الإبلاغ عن هذا المسار',
   },
 };
 
@@ -138,6 +143,11 @@ export default function CommunityRoutesScreen() {
   const [mine, setMine] = useState<CommunityRoute[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null); // détail inline (pas d'écran séparé dans ce lot)
+  // SIGNALEMENT (exigence Play sur le contenu généré par les utilisateurs). `ModerationSheet`
+  // existait et `ReportTargetType` prévoyait déjà 'route', mais la feuille n'était montée que
+  // dans marketplace et social : les parcours communautaires — le seul UGC vraiment public
+  // ici — n'étaient PAS signalables. Constaté à l'audit du 6 août 2026.
+  const [modTarget, setModTarget] = useState<CommunityRoute | null>(null);
 
   const align = txtAlign(isRTL);
   const dir = rowDir(isRTL);
@@ -394,11 +404,35 @@ export default function CommunityRoutesScreen() {
                         </Text>
                       </View>
                     ))}
+                    {/* On ne propose pas de se signaler soi-même : l'auteur voit déjà son
+                        parcours dans « mes soumissions ». */}
+                    {!!email && r.authorId !== emailToDocId(email) && (
+                      <TouchableOpacity
+                        style={[styles.reportBtn, { flexDirection: dir }]}
+                        onPress={() => setModTarget(r)}
+                        activeOpacity={0.7}
+                      >
+                        <Flag size={14} color={sub} />
+                        <Text style={[styles.reportTxt, { color: sub }]}>{t.report}</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 )}
               </View>
             );
         }}
+      />
+
+      <ModerationSheet
+        visible={!!modTarget}
+        onClose={() => setModTarget(null)}
+        targetType="route"
+        targetId={modTarget?.id || ''}
+        targetOwnerDocId={modTarget?.authorId}
+        targetName={modTarget?.name}
+        reporterEmail={email}
+        // Bloquer un auteur retire ses parcours de la liste sans attendre un rechargement.
+        onBlocked={(owner) => setApproved((list) => list.filter((x) => x.authorId !== owner))}
       />
     </SafeAreaView>
   );
@@ -446,6 +480,10 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   wpRow: { alignItems: 'center', gap: 10, marginBottom: 8 },
   wpDot: { width: 26, height: 26, borderRadius: 13, backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center' },
   wpName: { flex: 1, fontSize: 14, fontWeight: '700' },
+  // Signalement : volontairement discret (gris, petit) — il doit être TROUVABLE sans
+  // concurrencer le contenu. Zone tactile portée à 44 px de haut malgré la petite typo.
+  reportBtn: { alignItems: 'center', gap: 6, marginTop: 10, paddingVertical: 12, alignSelf: 'flex-start' },
+  reportTxt: { fontSize: 12, fontWeight: '700' },
   subRow: { alignItems: 'center', gap: 12, borderRadius: 16, padding: 14, marginBottom: 10 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
   statusTxt: { fontSize: 11, fontWeight: '800' },
