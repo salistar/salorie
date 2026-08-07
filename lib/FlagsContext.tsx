@@ -10,7 +10,8 @@
 //  - JAMAIS de throw : toutes les I/O sont gardées. Une erreur = on garde le
 //    défaut (activé / non-premium selon le dernier cache).
 //  - userKey STABLE (docId email-dérivé) pour un rollout déterministe.
-import React, { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState, ReactNode } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getDoc } from 'firebase/firestore';
 import { useUser } from '@clerk/clerk-expo';
@@ -70,6 +71,9 @@ export function FlagsProvider({ children }: { children: ReactNode }) {
   const [flags, setFlags] = useState<FlagMap>({});
   const [isPremium, setIsPremium] = useState<boolean>(false);
   const [ready, setReady] = useState<boolean>(false);
+  // Horodatage du dernier fetch réussi — sert la garde anti-rafale du retour au premier plan.
+  // Une ref, pas un state : le modifier ne doit JAMAIS provoquer de rendu.
+  const dernierFetch = useRef<number>(0);
 
   // Garde d'égalité (audit anti-boucle) : hydratation cache puis fetch renvoient souvent
   // le MÊME contenu — sans garde, chaque set créait un nouvel objet → value du contexte
@@ -107,6 +111,7 @@ export function FlagsProvider({ children }: { children: ReactNode }) {
       try {
         const fresh = await fetchFlags();
         if (alive && fresh && typeof fresh === 'object') setFlagsIfChanged(fresh);
+        dernierFetch.current = Date.now();
       } catch { /* garde le cache : jamais de throw */ }
       finally {
         // 1re résolution atteinte : `ready` passe true (l'app n'attendait pas).
@@ -114,6 +119,31 @@ export function FlagsProvider({ children }: { children: ReactNode }) {
       }
     })();
     return () => { alive = false; };
+  }, []);
+
+  // 2bis) RAFRAÎCHISSEMENT AU RETOUR AU PREMIER PLAN.
+  //
+  // L'effet ci-dessus ne tourne QU'UNE FOIS (tableau de dépendances vide). Constaté à
+  // l'audit du 6 août 2026 : couper une feature dans l'admin ne la coupait pour un
+  // utilisateur qu'au prochain démarrage complet de l'app. Or on coupe une feature
+  // justement quand elle dérape — abus, bug, coût qui s'emballe — et c'est ce moment-là
+  // qu'il faut couvrir, pas le suivant.
+  //
+  // Garde anti-rafale : alterner entre deux apps déclenche `active` à chaque bascule.
+  // Sans intervalle minimum, un aller-retour toutes les 5 s ferait autant de requêtes.
+  const INTERVALLE_MIN_MS = 60_000;
+  useEffect(() => {
+    const onChange = async (etat: AppStateStatus) => {
+      if (etat !== 'active') return;
+      if (Date.now() - dernierFetch.current < INTERVALLE_MIN_MS) return;
+      try {
+        const fresh = await fetchFlags();
+        if (fresh && typeof fresh === 'object') setFlagsIfChanged(fresh);
+        dernierFetch.current = Date.now();
+      } catch { /* hors ligne : le cache reste en place, jamais de throw */ }
+    };
+    const sub = AppState.addEventListener('change', onChange);
+    return () => sub.remove();
   }, []);
 
   // 3) STATUT PREMIUM : RevenueCat OU override Firestore (users/{docId}.premiumOverride).
