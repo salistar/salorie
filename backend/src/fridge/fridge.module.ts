@@ -6,6 +6,7 @@ import { MlService } from '../ml/ml.service';
 import { AiService } from '../ai/ai.service';
 import { FirebaseService } from '../firebase.service';
 import { RedisService } from '../redis.service';
+import { SecretsService } from '../secrets.service';
 
 /**
  * Module "fridge" — analyse STATELESS d'une photo de frigo.
@@ -21,6 +22,8 @@ import { RedisService } from '../redis.service';
 @Module({
   imports: [ObjectiveModule],
   controllers: [FridgeController],
-  providers: [FridgeService, MlService, AiService, FirebaseService, RedisService],
+  // Cf. menu.module.ts : MlService est redeclare ici, donc toute nouvelle dependance de
+  // son constructeur doit etre ajoutee dans les quatre modules (app, menu, fridge, receipt).
+  providers: [FridgeService, MlService, AiService, FirebaseService, RedisService, SecretsService],
 })
 export class FridgeModule {}

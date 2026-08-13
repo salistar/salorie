@@ -6,6 +6,7 @@ import { MlService } from '../ml/ml.service';
 import { FirebaseService } from '../firebase.service';
 import { AiService } from '../ai/ai.service';
 import { RedisService } from '../redis.service';
+import { SecretsService } from '../secrets.service';
 
 /**
  * ReceiptModule — analyse STATELESS de ticket de caisse.
@@ -21,6 +22,8 @@ import { RedisService } from '../redis.service';
 @Module({
   imports: [ObjectiveModule],
   controllers: [ReceiptController],
-  providers: [ReceiptService, MlService, FirebaseService, AiService, RedisService],
+  // Cf. menu.module.ts : MlService est redeclare ici, donc toute nouvelle dependance de
+  // son constructeur doit etre ajoutee dans les quatre modules (app, menu, fridge, receipt).
+  providers: [ReceiptService, MlService, FirebaseService, AiService, RedisService, SecretsService],
 })
 export class ReceiptModule {}
