@@ -420,6 +420,55 @@ export class MlService {
       return null;
     };
 
+    // Zhipu GLM-4.5V — place APRES les tiers gratuits (food4k, Cloudflare, Groq, Ollama)
+    // et AVANT Gemini. Ajoute le 13 aout 2026 parce que c'etait, ce jour-la, le SEUL VLM
+    // cloud joignable : Cloudflare sans identifiants, Groq sans cle, Gemini sans credits
+    // (429). Teste sur une photo de plat : HTTP 200, reponse juste.
+    //
+    // Le nom du modele compte : `glm-4v-flash`, `glm-4v` et `glm-4.1v-thinking-flash`
+    // renvoient tous « modele inexistant » sur ce compte. Seul `glm-4.5v` repond.
+    //
+    // La cle vient de l'admin (Firestore) ou de l'env — elle y est deja, saisie par
+    // l'utilisateur, ce qui rend ce tier actif sans aucune manipulation supplementaire.
+    const tryZhipu = async (): Promise<{ text: string; engine: string } | null> => {
+      const zhipuKey = await this.secrets.get('ZHIPU_API_KEY');
+      if (!zhipuKey) return null;
+      const zhipuModel = process.env.ZHIPU_VISION_MODEL || 'glm-4.5v';
+      try {
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 45000); // GLM-4.5V raisonne avant de repondre
+        const r = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${zhipuKey}` },
+          body: JSON.stringify({
+            model: zhipuModel,
+            max_tokens: 512,
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  // L'API accepte le base64 BRUT dans `url` (sans prefixe `data:`) — verifie.
+                  { type: 'image_url', image_url: { url: imageBase64 } },
+                  { type: 'text', text: prompt },
+                ],
+              },
+            ],
+          }),
+          signal: ctrl.signal,
+        });
+        clearTimeout(to);
+        if (r.ok) {
+          const j: any = await r.json();
+          const text = j?.choices?.[0]?.message?.content || '';
+          if (text && String(text).trim()) return { text: String(text), engine: `zhipu:${zhipuModel}` };
+          this.log(`zhipu réponse vide: ${JSON.stringify(j).slice(0, 200)}`);
+        } else {
+          this.log(`zhipu ${r.status}: ${(await r.text()).slice(0, 200)}`);
+        }
+      } catch (e: any) { this.log(`zhipu KO: ${e?.message}`); }
+      return null;
+    };
+
     // API de reconnaissance d'aliments gratuite (option 3) — configurable.
     // FOOD_VISION_API_URL doit renvoyer { text } ou { name }. Sinon on saute.
     const tryFoodApi = async (): Promise<{ text: string; engine: string } | null> => {
@@ -496,8 +545,11 @@ export class MlService {
     // tryFood4k EN TÊTE : fast-path gratuit sur les plats Food-101 confiants.
     const tiers =
       primary === 'ollama'
-        ? [tryFood4k, tryOllama, tryGroq, tryCloudflare, tryFoodApi]
-        : [tryFood4k, tryCloudflare, tryGroq, tryOllama, tryFoodApi];
+        // tryZhipu en avant-derniere position : PAYANT, donc apres tous les tiers
+        // gratuits (food4k, Cloudflare, Groq, Ollama), conformement a la priorite
+        // « toujours le gratuit d'abord » — mais avant Gemini, gere plus loin.
+        ? [tryFood4k, tryOllama, tryGroq, tryCloudflare, tryZhipu, tryFoodApi]
+        : [tryFood4k, tryCloudflare, tryGroq, tryOllama, tryZhipu, tryFoodApi];
 
     for (const tier of tiers) {
       const tierName = (tier as any).name || 'tier';
