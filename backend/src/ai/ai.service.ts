@@ -52,13 +52,113 @@ export class AiService {
     }
   }
 
+  /**
+   * Cascade TEXTE, ajoutee le 13 aout 2026. Jusque-la, tout ce qui n'etait pas du scan
+   * — coach IA, plan de repas, insights nocturnes, substitutions — passait par Gemini
+   * SEUL. Or le compte Gemini n'a plus de credits (429 RESOURCE_EXHAUSTED) : ces quatre
+   * fonctionnalites etaient donc mortes, et les insights basculaient en mode hors-ligne
+   * chaque nuit sans que rien ne le signale.
+   *
+   * Ordre : GRATUITS d'abord (Cloudflare Workers AI, Groq), puis du moins cher au plus
+   * cher. Chaque provider se saute proprement si sa cle est absente — les cles viennent
+   * de l'admin (Firestore) ou de l'environnement, via SecretsService.
+   */
+  private async textCascade(prompt: string): Promise<{ text: string; engine: string } | null> {
+    const ask = async (
+      label: string, url: string, keyName: string, model: string,
+      hdr?: (k: string) => Record<string, string>, body?: any,
+    ): Promise<{ text: string; engine: string } | null> => {
+      const key = await this.secrets.get(keyName);
+      if (!key) return null;
+      try {
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 30000);
+        const r = await fetch(url, {
+          method: 'POST',
+          headers: hdr ? hdr(key) : { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+          body: JSON.stringify(body || {
+            model, max_tokens: 1024, messages: [{ role: 'user', content: prompt }],
+          }),
+          signal: ctrl.signal,
+        });
+        clearTimeout(to);
+        if (!r.ok) { this.logger.warn(`${label} ${r.status}: ${(await r.text()).slice(0, 160)}`); return null; }
+        const j: any = await r.json();
+        // Trois formes de reponse coexistent : OpenAI (choices[].message.content),
+        // Cloudflare (result.response) et Anthropic (content[].text).
+        const text = j?.choices?.[0]?.message?.content
+          || j?.result?.response
+          || (Array.isArray(j?.content) ? j.content.map((c: any) => c?.text || '').join('') : '');
+        const s = String(text || '').trim();
+        if (s) return { text: s, engine: `${label}:${model}` };
+        this.logger.warn(`${label} réponse vide`);
+      } catch (e: any) { this.logger.warn(`${label} KO: ${e?.message}`); }
+      return null;
+    };
+
+    const cfAccount = await this.secrets.get('CF_ACCOUNT_ID');
+    const cfModel = process.env.CF_TEXT_MODEL || '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+    const dashBase = process.env.DASHSCOPE_BASE_URL;
+
+    const tiers: Array<() => Promise<{ text: string; engine: string } | null>> = [
+      // GRATUIT — Cloudflare Workers AI, meme quota que la vision (10 000 neurones/jour,
+      // mais un appel texte coute une fraction de ce que coute une image).
+      () => cfAccount
+        ? ask('cloudflare', `https://api.cloudflare.com/client/v4/accounts/${cfAccount}/ai/run/${cfModel}`,
+            'CF_API_TOKEN', cfModel, undefined, { prompt, max_tokens: 1024 })
+        : Promise.resolve(null),
+      // GRATUIT — Groq, tres rapide.
+      () => ask('groq', 'https://api.groq.com/openai/v1/chat/completions', 'GROQ_API_KEY',
+        process.env.GROQ_TEXT_MODEL || 'llama-3.3-70b-versatile'),
+      // Payants, du moins cher au plus cher.
+      () => ask('deepseek', 'https://api.deepseek.com/chat/completions', 'DEEPSEEK_API_KEY',
+        process.env.DEEPSEEK_TEXT_MODEL || 'deepseek-chat'),
+      () => ask('mistral', 'https://api.mistral.ai/v1/chat/completions', 'MISTRAL_API_KEY',
+        process.env.MISTRAL_TEXT_MODEL || 'mistral-small-latest'),
+      () => ask('zhipu', 'https://open.bigmodel.cn/api/paas/v4/chat/completions', 'ZHIPU_API_KEY',
+        process.env.ZHIPU_TEXT_MODEL || 'glm-4.5v'),
+      // MiniMax : endpoint non standard, verifie en POST le 13 aout 2026 (HTTP 200).
+      () => ask('minimax', 'https://api.minimaxi.chat/v1/text/chatcompletion_v2', 'MINIMAX_API_KEY',
+        process.env.MINIMAX_TEXT_MODEL || 'MiniMax-M2'),
+      // DashScope/Qwen : espace de travail Alibaba MaaS prive, d'ou la base URL en env.
+      () => dashBase
+        ? ask('dashscope', `${dashBase.replace(/\/+$/, '')}/chat/completions`, 'DASHSCOPE_API_KEY',
+            process.env.DASHSCOPE_TEXT_MODEL || 'qwen-plus')
+        : Promise.resolve(null),
+      // Moonshot : endpoint INTERNATIONAL .ai — le .cn refuse cette cle en 401.
+      () => ask('moonshot', 'https://api.moonshot.ai/v1/chat/completions', 'MOONSHOT_API_KEY',
+        process.env.MOONSHOT_TEXT_MODEL || 'moonshot-v1-8k'),
+      () => ask('xai', 'https://api.x.ai/v1/chat/completions', 'XAI_API_KEY',
+        process.env.XAI_TEXT_MODEL || 'grok-2-latest'),
+      () => ask('openai', 'https://api.openai.com/v1/chat/completions', 'OPENAI_API_KEY',
+        process.env.OPENAI_TEXT_MODEL || 'gpt-4o-mini'),
+      () => ask('anthropic', 'https://api.anthropic.com/v1/messages', 'ANTHROPIC_API_KEY',
+        process.env.ANTHROPIC_TEXT_MODEL || 'claude-3-5-haiku-latest',
+        (k) => ({ 'Content-Type': 'application/json', 'x-api-key': k, 'anthropic-version': '2023-06-01' }),
+        { model: process.env.ANTHROPIC_TEXT_MODEL || 'claude-3-5-haiku-latest', max_tokens: 1024,
+          messages: [{ role: 'user', content: prompt }] }),
+    ];
+
+    for (const tier of tiers) {
+      const res = await tier();
+      if (res) { this.logger.log(`texte servi par ${res.engine}`); return res; }
+    }
+    return null;
+  }
+
   async generate(prompt: string, model?: string): Promise<string> {
-    const genAI = await this.client();
-    if (!genAI) throw new Error('GEMINI_API_KEY not configured');
     const m = model || this.defaultModel;
     const key = `ai:gen:${createHash('sha1').update(m + '|' + prompt).digest('hex')}`;
     const cached = await this.redis.getJSON<string>(key);
     if (cached != null) { this.logger.log('cache HIT /ai/generate'); return cached; }
+
+    // Cascade AVANT Gemini : ses deux premiers tiers sont gratuits, et le compte Gemini
+    // est sans credits. L'ordre inverse ferait echouer un appel sur deux inutilement.
+    const alt = await this.textCascade(prompt);
+    if (alt) { await this.redis.setJSON(key, alt.text, 21600); return alt.text; }
+
+    const genAI = await this.client();
+    if (!genAI) throw new Error('aucun provider IA disponible (ni cascade, ni Gemini)');
     await this.guardGeminiBudget();
     // Timeout dur (30 s) : un appel Gemini bloqué ne fige pas la requête indéfiniment.
     const gm = genAI.getGenerativeModel({ model: m }, { timeout: 30000 });
