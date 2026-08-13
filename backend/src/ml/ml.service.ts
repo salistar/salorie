@@ -420,6 +420,94 @@ export class MlService {
       return null;
     };
 
+    // Fabrique de tiers OpenAI-compatibles. OpenAI, xAI et Moonshot parlent EXACTEMENT
+    // le meme dialecte (/chat/completions, image_url en objet {url}) — trois blocs
+    // identiques auraient triple la surface a maintenir pour zero difference.
+    // Zhipu et Mistral restent a part : leur format d'image differe (base64 nu pour l'un,
+    // chaine data: pour l'autre), et Cloudflare veut un tableau d'octets. Les fondre
+    // ensemble aurait produit des echecs silencieux.
+    // Cles et modeles verifies le 13 aout 2026 par appel reel depuis la production.
+    const openAiCompat = (
+      label: string, url: string, keyName: string, defaultModel: string, modelEnv: string,
+    ) => async (): Promise<{ text: string; engine: string } | null> => {
+      const key = await this.secrets.get(keyName);
+      if (!key) return null;
+      const model = process.env[modelEnv] || defaultModel;
+      try {
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 30000);
+        const r = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+          body: JSON.stringify({
+            model, max_tokens: 512,
+            messages: [{ role: 'user', content: [
+              { type: 'text', text: prompt },
+              { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}` } },
+            ] }],
+          }),
+          signal: ctrl.signal,
+        });
+        clearTimeout(to);
+        if (r.ok) {
+          const j: any = await r.json();
+          const text = j?.choices?.[0]?.message?.content || '';
+          if (text && String(text).trim()) return { text: String(text), engine: `${label}:${model}` };
+          this.log(`${label} réponse vide: ${JSON.stringify(j).slice(0, 200)}`);
+        } else {
+          this.log(`${label} ${r.status}: ${(await r.text()).slice(0, 200)}`);
+        }
+      } catch (e: any) { this.log(`${label} KO: ${e?.message}`); }
+      return null;
+    };
+
+    // Moonshot/Kimi — endpoint INTERNATIONAL `.ai`. Le `.cn` renvoie 401 sur cette cle :
+    // elle vient de platform.kimi.ai, pas de la plateforme chinoise. Verifie ce jour.
+    const tryMoonshot = openAiCompat(
+      'moonshot', 'https://api.moonshot.ai/v1/chat/completions',
+      'MOONSHOT_API_KEY', 'moonshot-v1-128k-vision-preview', 'MOONSHOT_VISION_MODEL');
+    const tryXai = openAiCompat(
+      'xai', 'https://api.x.ai/v1/chat/completions',
+      'XAI_API_KEY', 'grok-2-vision-1212', 'XAI_VISION_MODEL');
+    const tryOpenAi = openAiCompat(
+      'openai', 'https://api.openai.com/v1/chat/completions',
+      'OPENAI_API_KEY', 'gpt-4o-mini', 'OPENAI_VISION_MODEL');
+
+    // Anthropic — API distincte : l'image passe en `source: {type:'base64'}`, pas en
+    // image_url, et l'authentification est `x-api-key` + `anthropic-version`.
+    // Place en DERNIER des tiers payants : c'est le plus cher de la liste.
+    const tryAnthropic = async (): Promise<{ text: string; engine: string } | null> => {
+      const key = await this.secrets.get('ANTHROPIC_API_KEY');
+      if (!key) return null;
+      const model = process.env.ANTHROPIC_VISION_MODEL || 'claude-3-5-haiku-latest';
+      try {
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 30000);
+        const r = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+          body: JSON.stringify({
+            model, max_tokens: 512,
+            messages: [{ role: 'user', content: [
+              { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imageBase64 } },
+              { type: 'text', text: prompt },
+            ] }],
+          }),
+          signal: ctrl.signal,
+        });
+        clearTimeout(to);
+        if (r.ok) {
+          const j: any = await r.json();
+          const text = (j?.content || []).map((c: any) => c?.text || '').join('').trim();
+          if (text) return { text, engine: `anthropic:${model}` };
+          this.log(`anthropic réponse vide: ${JSON.stringify(j).slice(0, 200)}`);
+        } else {
+          this.log(`anthropic ${r.status}: ${(await r.text()).slice(0, 200)}`);
+        }
+      } catch (e: any) { this.log(`anthropic KO: ${e?.message}`); }
+      return null;
+    };
+
     // Mistral (small/medium, multimodaux) — identifie le 13 aout 2026. Sa cle trainait
     // dans le .env de l'utilisateur sous le commentaire « provider non identifie (a
     // confirmer) » : rejetee par Pixabay, Groq, USDA, ElevenLabs et Spoonacular, elle a
@@ -594,8 +682,8 @@ export class MlService {
         // tryZhipu en avant-derniere position : PAYANT, donc apres tous les tiers
         // gratuits (food4k, Cloudflare, Groq, Ollama), conformement a la priorite
         // « toujours le gratuit d'abord » — mais avant Gemini, gere plus loin.
-        ? [tryFood4k, tryOllama, tryGroq, tryCloudflare, tryMistral, tryZhipu, tryFoodApi]
-        : [tryFood4k, tryCloudflare, tryGroq, tryOllama, tryMistral, tryZhipu, tryFoodApi];
+        ? [tryFood4k, tryOllama, tryGroq, tryCloudflare, tryMistral, tryZhipu, tryMoonshot, tryXai, tryOpenAi, tryAnthropic, tryFoodApi]
+        : [tryFood4k, tryCloudflare, tryGroq, tryOllama, tryMistral, tryZhipu, tryMoonshot, tryXai, tryOpenAi, tryAnthropic, tryFoodApi];
 
     for (const tier of tiers) {
       const tierName = (tier as any).name || 'tier';
