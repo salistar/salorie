@@ -1,8 +1,10 @@
-# Variantes non servies : app.py charge food4k.onnx (fp32). L'int8 a ete mesure le
-# 13 aout 2026 sur 50 plats reels — au seuil 0,60 il repond directement pour 32% des
-# images contre 48% au fp32, donc un tiers d'appels VLM PAYANTS en plus. Ecarte.
+# Les modeles ONNX ne sont plus servis depuis le 13 aout 2026 : le service tourne sur
+# food_salorie.tflite (172 classes). Les exclure retire 212 Mo de l'image.
+# Mesure sur 50 plats marocains, seuil 0,50 : ONNX 9/50 reponses directes, TFLite 41/50.
+food4k.onnx
 food4k.int8.onnx
 food4k.int8.runnable.onnx
 *.bak-*
+eval_maroc.py
 compare_onnx.py
 __pycache__/

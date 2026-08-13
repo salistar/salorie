@@ -1,6 +1,11 @@
 fastapi==0.115.5
 uvicorn==0.32.1
-onnxruntime==1.20.1
+# onnxruntime retire le 13 aout 2026 : le service ne sert plus food4k.onnx (101 classes
+# Food-101) mais food_salorie.tflite (172 classes, cuisine marocaine comprise).
+# 2.2.0 et pas 1.2.0 : la 1.2.0 s'installe sans broncher puis echoue a l'IMPORT sur ce
+# noyau — « cannot enable executable stack as shared object requires ». Version verifiee
+# en construisant l'image et en demarrant le service, pas seulement en l'installant.
+ai-edge-litert==2.2.0
 pillow==11.0.0
 numpy==2.1.3
 pydantic==2.10.3
