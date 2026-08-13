@@ -43,7 +43,11 @@ services:
       FIREBASE_SERVICE_ACCOUNT: ${FIREBASE_SERVICE_ACCOUNT}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       USDA_API_KEY: ${USDA_API_KEY:-DEMO_KEY}
-      GEMINI_LITE_MODEL: gemini-2.0-flash-lite
+      # `gemini-2.0-flash-lite` a ete RETIRE par Google : l'API repond
+      # « 404 this model is no longer available » meme avec une cle valide. Verifie le
+      # 13 aout 2026. On passe a l'alias `-latest`, qui suit les versions et ne perime pas.
+      # (Le compte Gemini est par ailleurs sans credits — 429 RESOURCE_EXHAUSTED.)
+      GEMINI_LITE_MODEL: ${GEMINI_LITE_MODEL:-gemini-flash-lite-latest}
       INSIGHTS_CRON: 0 3 * * *
       # Vision backend local (Ollama) — tier "Backend" du scan, distinct de Gemini.
       OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}

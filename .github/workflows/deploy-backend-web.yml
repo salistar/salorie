@@ -66,6 +66,13 @@ jobs:
             printf '%s\n' 'GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}' >> .env
             printf '%s\n' 'USDA_API_KEY=${{ secrets.USDA_API_KEY }}' >> .env
             printf '%s\n' 'AUTH_SECRET=${{ secrets.AUTH_SECRET }}' >> .env
+            # Cloudflare Workers AI — tier 2 de la cascade de vision, juste apres food4k.
+            # Ajoute le 13 aout 2026 : les deux variables etaient VIDES en production, donc
+            # `tryCloudflare` sortait immediatement et Ollama (CPU, lent) restait le seul
+            # repli reel. Mesure du jour : @cf/meta/llama-3.2-11b-vision-instruct repond en
+            # HTTP 200 pour ~1 neurone par appel, sur 10 000 neurones/jour gratuits.
+            printf '%s\n' 'CF_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }}' >> .env
+            printf '%s\n' 'CF_API_TOKEN=${{ secrets.CF_API_TOKEN }}' >> .env
             # Lue comme ARG de build par le service web (cf. docker-compose.yml) : sans
             # elle la carte de l'ecran Courses reste inerte, sans message d'erreur.
             printf '%s\n' 'NEXT_PUBLIC_GMAP_KEY=${{ secrets.NEXT_PUBLIC_GMAP_KEY }}' >> .env
