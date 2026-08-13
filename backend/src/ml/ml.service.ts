@@ -420,6 +420,52 @@ export class MlService {
       return null;
     };
 
+    // Mistral (small/medium, multimodaux) — identifie le 13 aout 2026. Sa cle trainait
+    // dans le .env de l'utilisateur sous le commentaire « provider non identifie (a
+    // confirmer) » : rejetee par Pixabay, Groq, USDA, ElevenLabs et Spoonacular, elle a
+    // ete retrouvee dans la console Mistral (cle `idriss01`, terminaison lPhh) puis
+    // validee par un appel reel — HTTP 200, 55 modeles accessibles.
+    // Place juste avant Zhipu : meme rang (payant, apres tous les tiers gratuits), mais
+    // sensiblement moins cher au million de jetons.
+    const tryMistral = async (): Promise<{ text: string; engine: string } | null> => {
+      const key = await this.secrets.get('MISTRAL_API_KEY');
+      if (!key) return null;
+      const model = process.env.MISTRAL_VISION_MODEL || 'mistral-small-latest';
+      try {
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 30000);
+        const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+          body: JSON.stringify({
+            model,
+            max_tokens: 512,
+            messages: [{
+              role: 'user',
+              content: [
+                { type: 'text', text: prompt },
+                // Mistral attend une URL de donnees complete, pas du base64 nu —
+                // contrairement a Zhipu (base64 brut) et a Cloudflare (tableau d'octets).
+                // Les trois formats different : ne pas copier l'un depuis l'autre.
+                { type: 'image_url', image_url: `data:image/jpeg;base64,${imageBase64}` },
+              ],
+            }],
+          }),
+          signal: ctrl.signal,
+        });
+        clearTimeout(to);
+        if (r.ok) {
+          const j: any = await r.json();
+          const text = j?.choices?.[0]?.message?.content || '';
+          if (text && String(text).trim()) return { text: String(text), engine: `mistral:${model}` };
+          this.log(`mistral réponse vide: ${JSON.stringify(j).slice(0, 200)}`);
+        } else {
+          this.log(`mistral ${r.status}: ${(await r.text()).slice(0, 200)}`);
+        }
+      } catch (e: any) { this.log(`mistral KO: ${e?.message}`); }
+      return null;
+    };
+
     // Zhipu GLM-4.5V — place APRES les tiers gratuits (food4k, Cloudflare, Groq, Ollama)
     // et AVANT Gemini. Ajoute le 13 aout 2026 parce que c'etait, ce jour-la, le SEUL VLM
     // cloud joignable : Cloudflare sans identifiants, Groq sans cle, Gemini sans credits
@@ -548,8 +594,8 @@ export class MlService {
         // tryZhipu en avant-derniere position : PAYANT, donc apres tous les tiers
         // gratuits (food4k, Cloudflare, Groq, Ollama), conformement a la priorite
         // « toujours le gratuit d'abord » — mais avant Gemini, gere plus loin.
-        ? [tryFood4k, tryOllama, tryGroq, tryCloudflare, tryZhipu, tryFoodApi]
-        : [tryFood4k, tryCloudflare, tryGroq, tryOllama, tryZhipu, tryFoodApi];
+        ? [tryFood4k, tryOllama, tryGroq, tryCloudflare, tryMistral, tryZhipu, tryFoodApi]
+        : [tryFood4k, tryCloudflare, tryGroq, tryOllama, tryMistral, tryZhipu, tryFoodApi];
 
     for (const tier of tiers) {
       const tierName = (tier as any).name || 'tier';

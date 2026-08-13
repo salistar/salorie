@@ -438,6 +438,9 @@ export const LLM_PROVIDERS: { key: string; label: string; hint: string }[] = [
   { key: 'CF_ACCOUNT_ID', label: 'Cloudflare — identifiant de compte', hint: '32 caractères hexadécimaux' },
   { key: 'CF_API_TOKEN', label: 'Cloudflare Workers AI — jeton', hint: 'jeton avec accès Workers AI' },
   { key: 'GROQ_API_KEY', label: 'Groq — vision (gratuit)', hint: 'gsk_…' },
+  // Mistral ajoute le 13 aout 2026 : sa cle etait dans le .env sous « provider non
+  // identifie », retrouvee dans la console Mistral puis validee (HTTP 200, 55 modeles).
+  { key: 'MISTRAL_API_KEY', label: 'Mistral — vision (small/medium)', hint: '32 caracteres' },
 ];
 
 /** Statut des clés — JAMAIS la valeur en clair : seulement présence + 4 derniers car. */
