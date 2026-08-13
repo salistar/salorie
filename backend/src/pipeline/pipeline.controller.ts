@@ -42,7 +42,19 @@ export class PipelineController {
   private authWebhook(rawBody: string, adminKey?: string, signature?: string) {
     const expectedAdmin = process.env.ADMIN_API_KEY;
     const secret = process.env.WEBHOOK_SIGNING_SECRET;
-    if (!expectedAdmin && !secret) return; // dev : aucun secret → ouvert (comportement historique)
+    // Ce repli ouvrait la porte EN PRODUCTION : ni ADMIN_API_KEY ni
+    // WEBHOOK_SIGNING_SECRET n'etaient definis sur le serveur, donc
+    // POST /pipeline/webhook-sink acceptait n'importe quel appel depuis Internet.
+    // Constate le 13 aout 2026 ; ADMIN_API_KEY etait reclamee depuis le 29 juillet.
+    // Le confort du dev local reste intact, la production echoue desormais fermee.
+    // Echoue FERME, y compris en dev : `pipeline.auth.spec` exige qu'aucune route ne
+    // reponde sans identifiant, dans tous les environnements, et inscrit les exceptions
+    // dans une liste PUBLIQUES explicite. Ce test etait rouge depuis sa creation — il
+    // decrivait exactement ce trou. Pour developper en local : definir ADMIN_API_KEY
+    // dans backend/.env (cf. .env.example).
+    if (!expectedAdmin && !secret) {
+      throw new ForbiddenException('webhook non autorise (aucun secret configure)');
+    }
     if (expectedAdmin && adminKey === expectedAdmin) return; // livraison interne (admin)
     if (secret && signature) {
       const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
