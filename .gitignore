@@ -90,3 +90,9 @@ playwright-report/
 # La CI fait `expo prebuild --platform android --clean` : rien n'est perdu.
 # En local, apres un clone : `npx expo prebuild --platform android`.
 /android/
+
+# food4k : modeles ONNX hors git (212 Mo > limite GitHub de 100 Mo).
+# Publies en asset de Release, recuperes au build (cf. food4k/Dockerfile).
+food4k/*.onnx
+food4k/*.bak-*
+food4k/compare_onnx.py

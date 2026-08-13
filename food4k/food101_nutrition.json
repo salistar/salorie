@@ -1,0 +1,709 @@
+{
+ "apple_pie": {
+  "name": "Apple pie",
+  "kcal": 265,
+  "p": 2.4,
+  "c": 37,
+  "f": 12
+ },
+ "baby_back_ribs": {
+  "name": "Baby back ribs",
+  "kcal": 290,
+  "p": 23,
+  "c": 3,
+  "f": 20
+ },
+ "baklava": {
+  "name": "Baklava",
+  "kcal": 430,
+  "p": 6,
+  "c": 50,
+  "f": 24
+ },
+ "beef_carpaccio": {
+  "name": "Beef carpaccio",
+  "kcal": 190,
+  "p": 20,
+  "c": 1,
+  "f": 12
+ },
+ "beef_tartare": {
+  "name": "Beef tartare",
+  "kcal": 190,
+  "p": 19,
+  "c": 2,
+  "f": 11
+ },
+ "beet_salad": {
+  "name": "Beet salad",
+  "kcal": 90,
+  "p": 2,
+  "c": 12,
+  "f": 4
+ },
+ "beignets": {
+  "name": "Beignets",
+  "kcal": 360,
+  "p": 6,
+  "c": 45,
+  "f": 18
+ },
+ "bibimbap": {
+  "name": "Bibimbap",
+  "kcal": 130,
+  "p": 7,
+  "c": 18,
+  "f": 3
+ },
+ "bread_pudding": {
+  "name": "Bread pudding",
+  "kcal": 230,
+  "p": 5,
+  "c": 35,
+  "f": 8
+ },
+ "breakfast_burrito": {
+  "name": "Breakfast burrito",
+  "kcal": 210,
+  "p": 9,
+  "c": 20,
+  "f": 10
+ },
+ "bruschetta": {
+  "name": "Bruschetta",
+  "kcal": 200,
+  "p": 6,
+  "c": 28,
+  "f": 7
+ },
+ "caesar_salad": {
+  "name": "Caesar salad",
+  "kcal": 180,
+  "p": 6,
+  "c": 7,
+  "f": 15
+ },
+ "cannoli": {
+  "name": "Cannoli",
+  "kcal": 370,
+  "p": 7,
+  "c": 42,
+  "f": 20
+ },
+ "caprese_salad": {
+  "name": "Caprese salad",
+  "kcal": 150,
+  "p": 8,
+  "c": 5,
+  "f": 11
+ },
+ "carrot_cake": {
+  "name": "Carrot cake",
+  "kcal": 360,
+  "p": 4,
+  "c": 50,
+  "f": 17
+ },
+ "ceviche": {
+  "name": "Ceviche",
+  "kcal": 100,
+  "p": 16,
+  "c": 4,
+  "f": 2
+ },
+ "cheesecake": {
+  "name": "Cheesecake",
+  "kcal": 320,
+  "p": 6,
+  "c": 26,
+  "f": 22
+ },
+ "cheese_plate": {
+  "name": "Cheese plate",
+  "kcal": 370,
+  "p": 23,
+  "c": 3,
+  "f": 30
+ },
+ "chicken_curry": {
+  "name": "Chicken curry",
+  "kcal": 150,
+  "p": 13,
+  "c": 7,
+  "f": 8
+ },
+ "chicken_quesadilla": {
+  "name": "Chicken quesadilla",
+  "kcal": 260,
+  "p": 14,
+  "c": 20,
+  "f": 14
+ },
+ "chicken_wings": {
+  "name": "Chicken wings",
+  "kcal": 250,
+  "p": 25,
+  "c": 1,
+  "f": 16
+ },
+ "chocolate_cake": {
+  "name": "Chocolate cake",
+  "kcal": 370,
+  "p": 5,
+  "c": 52,
+  "f": 16
+ },
+ "chocolate_mousse": {
+  "name": "Chocolate mousse",
+  "kcal": 250,
+  "p": 5,
+  "c": 25,
+  "f": 15
+ },
+ "churros": {
+  "name": "Churros",
+  "kcal": 360,
+  "p": 5,
+  "c": 45,
+  "f": 18
+ },
+ "clam_chowder": {
+  "name": "Clam chowder",
+  "kcal": 90,
+  "p": 5,
+  "c": 9,
+  "f": 4
+ },
+ "club_sandwich": {
+  "name": "Club sandwich",
+  "kcal": 230,
+  "p": 14,
+  "c": 20,
+  "f": 11
+ },
+ "crab_cakes": {
+  "name": "Crab cakes",
+  "kcal": 200,
+  "p": 13,
+  "c": 12,
+  "f": 11
+ },
+ "creme_brulee": {
+  "name": "Creme brulee",
+  "kcal": 320,
+  "p": 4,
+  "c": 28,
+  "f": 21
+ },
+ "croque_madame": {
+  "name": "Croque madame",
+  "kcal": 260,
+  "p": 15,
+  "c": 18,
+  "f": 14
+ },
+ "cup_cakes": {
+  "name": "Cup cakes",
+  "kcal": 370,
+  "p": 4,
+  "c": 53,
+  "f": 16
+ },
+ "deviled_eggs": {
+  "name": "Deviled eggs",
+  "kcal": 190,
+  "p": 7,
+  "c": 1,
+  "f": 17
+ },
+ "donuts": {
+  "name": "Donuts",
+  "kcal": 400,
+  "p": 5,
+  "c": 50,
+  "f": 20
+ },
+ "dumplings": {
+  "name": "Dumplings",
+  "kcal": 190,
+  "p": 8,
+  "c": 25,
+  "f": 6
+ },
+ "edamame": {
+  "name": "Edamame",
+  "kcal": 120,
+  "p": 11,
+  "c": 10,
+  "f": 5
+ },
+ "eggs_benedict": {
+  "name": "Eggs benedict",
+  "kcal": 230,
+  "p": 12,
+  "c": 12,
+  "f": 15
+ },
+ "escargots": {
+  "name": "Escargots",
+  "kcal": 130,
+  "p": 16,
+  "c": 3,
+  "f": 6
+ },
+ "falafel": {
+  "name": "Falafel",
+  "kcal": 330,
+  "p": 13,
+  "c": 32,
+  "f": 18
+ },
+ "filet_mignon": {
+  "name": "Filet mignon",
+  "kcal": 270,
+  "p": 25,
+  "c": 0,
+  "f": 19
+ },
+ "fish_and_chips": {
+  "name": "Fish and chips",
+  "kcal": 230,
+  "p": 12,
+  "c": 22,
+  "f": 11
+ },
+ "foie_gras": {
+  "name": "Foie gras",
+  "kcal": 460,
+  "p": 11,
+  "c": 5,
+  "f": 44
+ },
+ "french_fries": {
+  "name": "French fries",
+  "kcal": 310,
+  "p": 3,
+  "c": 41,
+  "f": 15
+ },
+ "french_onion_soup": {
+  "name": "French onion soup",
+  "kcal": 70,
+  "p": 3,
+  "c": 7,
+  "f": 3
+ },
+ "french_toast": {
+  "name": "French toast",
+  "kcal": 220,
+  "p": 7,
+  "c": 25,
+  "f": 10
+ },
+ "fried_calamari": {
+  "name": "Fried calamari",
+  "kcal": 175,
+  "p": 15,
+  "c": 8,
+  "f": 9
+ },
+ "fried_rice": {
+  "name": "Fried rice",
+  "kcal": 170,
+  "p": 5,
+  "c": 25,
+  "f": 5
+ },
+ "frozen_yogurt": {
+  "name": "Frozen yogurt",
+  "kcal": 130,
+  "p": 4,
+  "c": 22,
+  "f": 3
+ },
+ "garlic_bread": {
+  "name": "Garlic bread",
+  "kcal": 330,
+  "p": 8,
+  "c": 40,
+  "f": 15
+ },
+ "gnocchi": {
+  "name": "Gnocchi",
+  "kcal": 140,
+  "p": 4,
+  "c": 27,
+  "f": 2
+ },
+ "greek_salad": {
+  "name": "Greek salad",
+  "kcal": 120,
+  "p": 3,
+  "c": 6,
+  "f": 9
+ },
+ "grilled_cheese_sandwich": {
+  "name": "Grilled cheese sandwich",
+  "kcal": 330,
+  "p": 13,
+  "c": 28,
+  "f": 18
+ },
+ "grilled_salmon": {
+  "name": "Grilled salmon",
+  "kcal": 210,
+  "p": 22,
+  "c": 0,
+  "f": 13
+ },
+ "guacamole": {
+  "name": "Guacamole",
+  "kcal": 160,
+  "p": 2,
+  "c": 9,
+  "f": 15
+ },
+ "gyoza": {
+  "name": "Gyoza",
+  "kcal": 200,
+  "p": 9,
+  "c": 22,
+  "f": 8
+ },
+ "hamburger": {
+  "name": "Hamburger",
+  "kcal": 250,
+  "p": 15,
+  "c": 20,
+  "f": 12
+ },
+ "hot_and_sour_soup": {
+  "name": "Hot and sour soup",
+  "kcal": 45,
+  "p": 3,
+  "c": 5,
+  "f": 1
+ },
+ "hot_dog": {
+  "name": "Hot dog",
+  "kcal": 290,
+  "p": 10,
+  "c": 24,
+  "f": 17
+ },
+ "huevos_rancheros": {
+  "name": "Huevos rancheros",
+  "kcal": 150,
+  "p": 8,
+  "c": 12,
+  "f": 8
+ },
+ "hummus": {
+  "name": "Hummus",
+  "kcal": 240,
+  "p": 8,
+  "c": 20,
+  "f": 15
+ },
+ "ice_cream": {
+  "name": "Ice cream",
+  "kcal": 210,
+  "p": 4,
+  "c": 24,
+  "f": 11
+ },
+ "lasagna": {
+  "name": "Lasagna",
+  "kcal": 135,
+  "p": 8,
+  "c": 12,
+  "f": 6
+ },
+ "lobster_bisque": {
+  "name": "Lobster bisque",
+  "kcal": 100,
+  "p": 5,
+  "c": 7,
+  "f": 6
+ },
+ "lobster_roll_sandwich": {
+  "name": "Lobster roll sandwich",
+  "kcal": 210,
+  "p": 12,
+  "c": 18,
+  "f": 10
+ },
+ "macaroni_and_cheese": {
+  "name": "Macaroni and cheese",
+  "kcal": 200,
+  "p": 8,
+  "c": 20,
+  "f": 10
+ },
+ "macarons": {
+  "name": "Macarons",
+  "kcal": 400,
+  "p": 7,
+  "c": 55,
+  "f": 17
+ },
+ "miso_soup": {
+  "name": "Miso soup",
+  "kcal": 40,
+  "p": 3,
+  "c": 4,
+  "f": 1
+ },
+ "mussels": {
+  "name": "Mussels",
+  "kcal": 90,
+  "p": 12,
+  "c": 4,
+  "f": 2
+ },
+ "nachos": {
+  "name": "Nachos",
+  "kcal": 310,
+  "p": 8,
+  "c": 32,
+  "f": 17
+ },
+ "omelette": {
+  "name": "Omelette",
+  "kcal": 155,
+  "p": 11,
+  "c": 1,
+  "f": 12
+ },
+ "onion_rings": {
+  "name": "Onion rings",
+  "kcal": 330,
+  "p": 4,
+  "c": 40,
+  "f": 17
+ },
+ "oysters": {
+  "name": "Oysters",
+  "kcal": 70,
+  "p": 7,
+  "c": 4,
+  "f": 2
+ },
+ "pad_thai": {
+  "name": "Pad thai",
+  "kcal": 150,
+  "p": 7,
+  "c": 20,
+  "f": 5
+ },
+ "paella": {
+  "name": "Paella",
+  "kcal": 160,
+  "p": 9,
+  "c": 18,
+  "f": 5
+ },
+ "pancakes": {
+  "name": "Pancakes",
+  "kcal": 230,
+  "p": 6,
+  "c": 28,
+  "f": 10
+ },
+ "panna_cotta": {
+  "name": "Panna cotta",
+  "kcal": 280,
+  "p": 4,
+  "c": 24,
+  "f": 19
+ },
+ "peking_duck": {
+  "name": "Peking duck",
+  "kcal": 340,
+  "p": 19,
+  "c": 3,
+  "f": 28
+ },
+ "pho": {
+  "name": "Pho",
+  "kcal": 70,
+  "p": 5,
+  "c": 9,
+  "f": 1
+ },
+ "pizza": {
+  "name": "Pizza",
+  "kcal": 266,
+  "p": 11,
+  "c": 33,
+  "f": 10
+ },
+ "pork_chop": {
+  "name": "Pork chop",
+  "kcal": 230,
+  "p": 25,
+  "c": 0,
+  "f": 14
+ },
+ "poutine": {
+  "name": "Poutine",
+  "kcal": 230,
+  "p": 6,
+  "c": 25,
+  "f": 12
+ },
+ "prime_rib": {
+  "name": "Prime rib",
+  "kcal": 300,
+  "p": 23,
+  "c": 0,
+  "f": 23
+ },
+ "pulled_pork_sandwich": {
+  "name": "Pulled pork sandwich",
+  "kcal": 230,
+  "p": 15,
+  "c": 22,
+  "f": 9
+ },
+ "ramen": {
+  "name": "Ramen",
+  "kcal": 90,
+  "p": 4,
+  "c": 12,
+  "f": 2
+ },
+ "ravioli": {
+  "name": "Ravioli",
+  "kcal": 160,
+  "p": 7,
+  "c": 22,
+  "f": 5
+ },
+ "red_velvet_cake": {
+  "name": "Red velvet cake",
+  "kcal": 370,
+  "p": 4,
+  "c": 52,
+  "f": 17
+ },
+ "risotto": {
+  "name": "Risotto",
+  "kcal": 150,
+  "p": 4,
+  "c": 24,
+  "f": 4
+ },
+ "samosa": {
+  "name": "Samosa",
+  "kcal": 260,
+  "p": 5,
+  "c": 30,
+  "f": 13
+ },
+ "sashimi": {
+  "name": "Sashimi",
+  "kcal": 130,
+  "p": 22,
+  "c": 1,
+  "f": 4
+ },
+ "scallops": {
+  "name": "Scallops",
+  "kcal": 110,
+  "p": 20,
+  "c": 3,
+  "f": 1
+ },
+ "seaweed_salad": {
+  "name": "Seaweed salad",
+  "kcal": 70,
+  "p": 2,
+  "c": 8,
+  "f": 3
+ },
+ "shrimp_and_grits": {
+  "name": "Shrimp and grits",
+  "kcal": 150,
+  "p": 10,
+  "c": 14,
+  "f": 6
+ },
+ "spaghetti_bolognese": {
+  "name": "Spaghetti bolognese",
+  "kcal": 150,
+  "p": 8,
+  "c": 18,
+  "f": 5
+ },
+ "spaghetti_carbonara": {
+  "name": "Spaghetti carbonara",
+  "kcal": 210,
+  "p": 9,
+  "c": 22,
+  "f": 10
+ },
+ "spring_rolls": {
+  "name": "Spring rolls",
+  "kcal": 180,
+  "p": 5,
+  "c": 22,
+  "f": 8
+ },
+ "steak": {
+  "name": "Steak",
+  "kcal": 270,
+  "p": 25,
+  "c": 0,
+  "f": 19
+ },
+ "strawberry_shortcake": {
+  "name": "Strawberry shortcake",
+  "kcal": 300,
+  "p": 4,
+  "c": 42,
+  "f": 13
+ },
+ "sushi": {
+  "name": "Sushi",
+  "kcal": 150,
+  "p": 6,
+  "c": 30,
+  "f": 1
+ },
+ "tacos": {
+  "name": "Tacos",
+  "kcal": 210,
+  "p": 9,
+  "c": 20,
+  "f": 11
+ },
+ "takoyaki": {
+  "name": "Takoyaki",
+  "kcal": 180,
+  "p": 7,
+  "c": 20,
+  "f": 8
+ },
+ "tiramisu": {
+  "name": "Tiramisu",
+  "kcal": 290,
+  "p": 5,
+  "c": 30,
+  "f": 17
+ },
+ "tuna_tartare": {
+  "name": "Tuna tartare",
+  "kcal": 160,
+  "p": 20,
+  "c": 2,
+  "f": 8
+ },
+ "waffles": {
+  "name": "Waffles",
+  "kcal": 290,
+  "p": 7,
+  "c": 33,
+  "f": 15
+ }
+}

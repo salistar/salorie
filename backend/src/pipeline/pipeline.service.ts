@@ -21,8 +21,17 @@ export class PipelineService {
     @InjectModel(OutboxItem.name) private outbox: Model<any>,
   ) {}
 
-  // CDC : Firestore → Mongo toutes les 5 min (+ feature store + outbox).
-  @Cron('*/5 * * * *')
+  // CDC : Firestore → Mongo (+ feature store + outbox).
+  // Reglable par PIPELINE_CRON, comme INSIGHTS_CRON et MILESTONE_CRON — la valeur etait
+  // figee a */5 dans le code, seule des trois a ne pas l'etre.
+  //
+  // Defaut passe de 5 a 30 min le 13 aout 2026 : `runCdc` relit la collection `users`
+  // ENTIERE de Firestore a chaque passage (limit 1000). A */5 c'est 288 balayages
+  // complets par jour — 1 440 lectures de documents aujourd'hui a 5 utilisateurs, mais
+  // 2,88 millions par jour a 10 000. Le cout Firestore croit avec la frequence ET avec
+  // le nombre d'utilisateurs. Les journaux de production montraient `newEvents: 0` a
+  // chaque passage, 24 h sur 24.
+  @Cron(process.env.PIPELINE_CRON || '*/30 * * * *')
   async cron() { try { await this.runCdc(); } catch (e: any) { this.logger.warn('CDC: ' + e.message); } }
 
   async runCdc() {

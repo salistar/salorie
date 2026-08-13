@@ -5,7 +5,7 @@ name: Deploy backend + admin web to VPS
 on:
   push:
     branches: [main]
-    paths: ['backend/**', 'web/**', 'docker-compose.yml', '.github/workflows/deploy-backend-web.yml']
+    paths: ['backend/**', 'web/**', 'food4k/**', 'docker-compose.yml', 'docker-compose.override.yml', '.github/workflows/deploy-backend-web.yml']
   workflow_dispatch: {}
 
 jobs:
@@ -37,7 +37,14 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "backend/,web/,docker-compose.yml"
+          # docker-compose.override.yml et food4k/ ajoutes le 13 aout 2026. Ils n'existaient
+          # QUE sur le serveur : l'override porte la topologie reelle de prod (container_name,
+          # reseau `edge`, sidecar food4k) et food4k/ est le classifieur tier-0 du scan.
+          # Sans eux, une reconstruction du serveur depuis ce depot repartait sans le tier
+          # gratuit et avec un backend injoignable par Caddy.
+          # Le modele .onnx (212 Mo) reste hors git — trop gros pour GitHub. Il est publie
+          # en asset de Release et telecharge au build (cf. food4k/Dockerfile).
+          source: "backend/,web/,food4k/,docker-compose.yml,docker-compose.override.yml"
           target: ${{ secrets.VPS_APP_DIR }}
           rm: false
           overwrite: true

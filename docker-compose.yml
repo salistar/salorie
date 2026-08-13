@@ -1,4 +1,4 @@
-# Salorie full stack: MongoDB + Redis + MinIO (file storage) + NestJS API + Next.js admin.
+# Salorie full stack: MongoDB + Redis + Ollama + NestJS API + Next.js admin.
 # Usage:  FIREBASE_SERVICE_ACCOUNT='<json>' docker compose up -d --build
 services:
   # Datastores are NOT published to the host — only the backend reaches them over
@@ -15,15 +15,13 @@ services:
     restart: unless-stopped
     expose: ["6379"]
 
-  minio:
-    image: minio/minio:latest
-    restart: unless-stopped
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-salorie}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-salorie-secret}
-    volumes: [salorie_minio:/data]
-    expose: ["9000", "9001"]
+  # MinIO retire le 13 aout 2026. Il tournait depuis l'origine sans jamais servir :
+  # AUCUNE reference a minio, a un bucket ou a un client S3 dans backend/src. Le stockage
+  # de fichiers passe par le disque local (`UPLOAD_DIR`, cf. files.controller.ts:10-24),
+  # et son commentaire ligne 16 le dit deja : « swap for MinIO/S3 in prod ». Ce basculement
+  # n'a jamais eu lieu. Son volume ne contenait que ses propres metadonnees (136 Ko).
+  # Cout du maintien : 241 Mo d'image + 144 Mo de RAM + une surface d'attaque.
+  # Pour le remettre : restaurer ce service ET brancher files.controller.ts dessus.
 
   # Modèle de vision LOCAL auto-hébergé (tier "Backend" du scan aliment) — CPU.
   # Le modèle est tiré après le démarrage : docker compose exec ollama ollama pull moondream
@@ -36,7 +34,7 @@ services:
   backend:
     build: ./backend
     restart: unless-stopped
-    depends_on: [mongo, redis, minio, ollama]
+    depends_on: [mongo, redis, ollama]
     environment:
       PORT: 4000
       MONGO_URI: mongodb://mongo:27017/salorie
@@ -94,7 +92,6 @@ services:
 
 volumes:
   salorie_mongo:
-  salorie_minio:
   salorie_uploads:
   salorie_ollama:
 
