@@ -140,9 +140,16 @@ export class AiService {
     ];
 
     for (const tier of tiers) {
+      const t0 = Date.now();
       const res = await tier();
-      if (res) { this.logger.log(`texte servi par ${res.engine}`); return res; }
+      const ms = Date.now() - t0;
+      if (res) {
+        this.logger.log(`texte servi par ${res.engine} (${ms}ms)`);
+        void this.redis.recordAiCall('text', res.engine, ms);
+        return res;
+      }
     }
+    void this.redis.recordAiCall('text', 'aucun_tier', 0);
     return null;
   }
 

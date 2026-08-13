@@ -707,6 +707,9 @@ export class MlService {
       }
       const tMs = Date.now() - tStart;
       this.log(`tier ${tierName} ${tMs}ms -> ${res ? res.engine : 'miss'}`);
+      // Telemetrie : sans elle, on ne savait meme pas quel provider repondait. `void` car
+      // un echec d'ecriture ne doit jamais retarder ni casser un scan.
+      void this.redis.recordAiCall('vision', res ? res.engine : `${tierName}:miss`, tMs);
       if (res && res.text && String(res.text).trim()) {
         // #47 succès -> ferme le circuit de ce tier.
         this.cbRecordSuccess(tierName);
@@ -735,7 +738,18 @@ export class MlService {
   // ---------------------------------------------------------------------------
 
   /** Familles de tiers connues (ordre stable pour l'affichage). */
-  private static readonly TIER_FAMILIES = ['cache', 'tier0', 'cloudflare', 'ollama', 'groq', 'food-api', 'gemini'];
+  // Familles GRATUITES : cache local, food4k on-server, Cloudflare Workers AI (quota
+  // gratuit), Groq, l'API food optionnelle, et Ollama — conserve bien que le service ait
+  // ete supprime le 13 aout 2026, pour que les compteurs historiques restent lisibles.
+  private static readonly TIER_FREE = ['cache', 'tier0', 'cloudflare', 'groq', 'food-api', 'ollama'];
+
+  // Familles PAYANTES. Cette liste s'est allongee le 13 aout 2026 : jusque-la Gemini etait
+  // le seul tier payant, et `cloudPaidRate` le codait en dur. Avec l'ajout de Mistral,
+  // Zhipu, Moonshot, xAI, OpenAI et Anthropic, la metrique aurait affiche ~0 % de payant
+  // pendant que l'application payait reellement — un indicateur faux est pire qu'absent.
+  private static readonly TIER_PAID = ['mistral', 'zhipu', 'moonshot', 'xai', 'openai', 'anthropic', 'gemini'];
+
+  private static readonly TIER_FAMILIES = [...MlService.TIER_FREE, ...MlService.TIER_PAID];
 
   /** Extrait la famille (préfixe avant ':') d'un identifiant d'engine. */
   private static tierFamily(engine: string): string {
@@ -775,16 +789,72 @@ export class MlService {
       byTier[f] = { count, pct: total ? +((count / total) * 100).toFixed(2) : 0 };
     }
 
-    const paid = byTier['gemini'].count; // seul tier cloud payant
-    const free = total - paid;           // tout le reste est gratuit
+    // Somme explicite des familles payantes — plus de tier code en dur : ajouter un
+    // provider a la cascade sans l'inscrire dans TIER_PAID le rendrait invisible ici.
+    const paid = MlService.TIER_PAID.reduce((s, f) => s + (byTier[f]?.count || 0), 0);
+    const free = MlService.TIER_FREE.reduce((s, f) => s + (byTier[f]?.count || 0), 0);
+    // Ce qui n'est ni l'un ni l'autre : une famille apparue dans les compteurs mais absente
+    // des deux listes. On la montre au lieu de la noyer dans « gratuit » par soustraction.
+    const unknown = Math.max(0, total - paid - free);
     const rate = (n: number) => (total ? +((n / total) * 100).toFixed(2) : 0);
 
     return {
       total,
       byTier,
-      cloudPaidRate: rate(paid),                 // % Gemini (objectif ≤ 10 %)
-      freeRate: rate(free),                       // % servi gratuitement
-      cacheHitRate: rate(byTier['cache'].count),  // % servi par le cache
+      cloudPaidRate: rate(paid),                   // % servi par un tier PAYANT (objectif ≤ 10 %)
+      freeRate: rate(free),                        // % servi gratuitement
+      unknownRate: rate(unknown),                  // % dans une famille non classee — a investiguer
+      cacheHitRate: rate(byTier['cache']?.count || 0),
+      paidFamilies: MlService.TIER_PAID,
+      freeFamilies: MlService.TIER_FREE,
+    };
+  }
+
+  /**
+   * Serie temporelle des appels IA, par JOUR / genre / moteur — la matiere des graphes.
+   *
+   * `getCascadeStats` ne donne que des totaux cumules depuis toujours, sans dimension
+   * temporelle ni latence : impossible d'en tirer une courbe ou de voir une derive.
+   * Ces compteurs-la sont ecrits par RedisService.recordAiCall depuis le 13 aout 2026,
+   * avec 40 jours de retention.
+   */
+  async getAiTimeline(days = 14) {
+    const cles = await this.redis.listAiKeys();
+    if (!cles.length) {
+      return { days, jours: [], moteurs: [], series: [], note: 'aucune mesure — la telemetrie demarre au premier appel IA' };
+    }
+    const valeurs = await this.redis.mgetNumbers(cles);
+
+    // ai:m:<jour>:<genre>:<moteur>:<n|ms>  — le moteur peut contenir des « _ », pas des « : ».
+    const agg = new Map<string, { jour: string; genre: string; moteur: string; n: number; ms: number }>();
+    for (const cle of cles) {
+      const p = cle.split(':');
+      if (p.length < 6) continue;
+      const [, , jour, genre, moteur, suffixe] = p;
+      const id = `${jour}|${genre}|${moteur}`;
+      const e = agg.get(id) || { jour, genre, moteur, n: 0, ms: 0 };
+      if (suffixe === 'n') e.n = valeurs[cle] || 0;
+      else if (suffixe === 'ms') e.ms = valeurs[cle] || 0;
+      agg.set(id, e);
+    }
+
+    const limite = new Date(Date.now() - days * 86400_000).toISOString().slice(0, 10);
+    const series = [...agg.values()]
+      .filter((e) => e.jour >= limite)
+      .map((e) => ({
+        jour: e.jour, genre: e.genre, moteur: e.moteur, appels: e.n,
+        // Moyenne calculee ici et pas stockee : deux compteurs suffisent, et la moyenne
+        // d'une somme divisee reste juste quel que soit le nombre d'appels.
+        latenceMoyenneMs: e.n ? Math.round(e.ms / e.n) : 0,
+      }))
+      .sort((a, b) => (a.jour === b.jour ? b.appels - a.appels : a.jour < b.jour ? -1 : 1));
+
+    return {
+      days,
+      jours: [...new Set(series.map((s) => s.jour))],
+      moteurs: [...new Set(series.map((s) => s.moteur))],
+      totalAppels: series.reduce((s, x) => s + x.appels, 0),
+      series,
     };
   }
 
