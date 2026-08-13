@@ -26,7 +26,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "package": "com.idriss.kriouile.salorie",
-      "versionCode": 3,
+      "versionCode": 108,
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
         "com.anddoes.launcher.permission.UPDATE_COUNT",
