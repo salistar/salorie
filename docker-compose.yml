@@ -1,4 +1,4 @@
-# Salorie full stack: MongoDB + Redis + Ollama + NestJS API + Next.js admin.
+# Salorie full stack: MongoDB + Redis + NestJS API + Next.js admin (+ sidecar food4k via override).
 # Usage:  FIREBASE_SERVICE_ACCOUNT='<json>' docker compose up -d --build
 services:
   # Datastores are NOT published to the host — only the backend reaches them over
@@ -23,18 +23,21 @@ services:
   # Cout du maintien : 241 Mo d'image + 144 Mo de RAM + une surface d'attaque.
   # Pour le remettre : restaurer ce service ET brancher files.controller.ts dessus.
 
-  # Modèle de vision LOCAL auto-hébergé (tier "Backend" du scan aliment) — CPU.
-  # Le modèle est tiré après le démarrage : docker compose exec ollama ollama pull moondream
-  ollama:
-    image: ollama/ollama:latest
-    restart: unless-stopped
-    volumes: [salorie_ollama:/root/.ollama]
-    expose: ["11434"]
+  # Ollama retire le 13 aout 2026. Il servait de repli de vision auto-heberge (moondream,
+  # CPU) et n'a recu AUCUNE requete d'inference en huit semaines — verifie sur la totalite
+  # de ses journaux. Il n'etait pourtant pas du poids mort : Cloudflare, Groq et Gemini
+  # etant tous inoperants, il etait le SEUL repli reel derriere food4k. C'est pourquoi il
+  # a ete conserve tant que Cloudflare n'etait pas actif.
+  # Cloudflare Workers AI l'est desormais, verifie depuis le conteneur de production :
+  # @cf/meta/llama-3.2-11b-vision-instruct repond HTTP 200 et identifie un tagine.
+  # Il le precede dans la cascade, sur GPU au lieu du CPU. Ollama liberait 8,27 Go
+  # d'image + 1,7 Go de modele.
+  # Pour le remettre : restaurer ce service, le volume salorie_ollama, et OLLAMA_URL.
 
   backend:
     build: ./backend
     restart: unless-stopped
-    depends_on: [mongo, redis, ollama]
+    depends_on: [mongo, redis]
     environment:
       PORT: 4000
       MONGO_URI: mongodb://mongo:27017/salorie
@@ -54,9 +57,6 @@ services:
       # (Le compte Gemini est par ailleurs sans credits — 429 RESOURCE_EXHAUSTED.)
       GEMINI_LITE_MODEL: ${GEMINI_LITE_MODEL:-gemini-flash-lite-latest}
       INSIGHTS_CRON: 0 3 * * *
-      # Vision backend local (Ollama) — tier "Backend" du scan, distinct de Gemini.
-      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
-      OLLAMA_VISION_MODEL: ${OLLAMA_VISION_MODEL:-moondream}
       # Repli optionnel : API food gratuite (option 3). Vide = désactivé.
       FOOD_VISION_API_URL: ${FOOD_VISION_API_URL:-}
       FOOD_VISION_API_KEY: ${FOOD_VISION_API_KEY:-}
@@ -102,7 +102,6 @@ services:
 volumes:
   salorie_mongo:
   salorie_uploads:
-  salorie_ollama:
 
 networks:
   # Reseau partage avec le proxy Caddy, cree hors de cette stack.
