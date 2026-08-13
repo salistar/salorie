@@ -2,14 +2,6 @@
 # distincte du provider Gemini. Fusionné automatiquement par `docker compose` PAR-DESSUS
 # le docker-compose.yml (patché serveur : whisper, edge, container_names) sans l'altérer.
 services:
-  ollama:
-    image: ollama/ollama:latest
-    container_name: salorie-ollama
-    restart: unless-stopped
-    volumes: [salorie_ollama:/root/.ollama]
-    expose: ["11434"]
-    networks: [default]
-
   # Tier-0 food4k — classifieur d'aliments ONNX (Food-101, 91% top-1), CPU int8.
   # Rapide + gratuit, placé AVANT la cascade VLM : si confiance >= seuil, réponse
   # directe (nom + nutrition per-100g) sans appel Cloudflare/Ollama/Groq/Gemini.
@@ -32,14 +24,20 @@ services:
     # defaut de la stack est injoignable depuis le proxy.
     container_name: salorie-backend
     networks: [default, edge]
-    depends_on: [mongo, redis, ollama, food4k]
+    depends_on: [mongo, redis, food4k]
     environment:
-      # Tier Backend = Cloudflare Workers AI (edge GPU) PRIORITAIRE, repli Ollama.
+      # Tier Backend = Cloudflare Workers AI (edge GPU). Ollama, l ancien repli, est retire.
       CF_ACCOUNT_ID: ${CF_ACCOUNT_ID:-}
       CF_API_TOKEN: ${CF_API_TOKEN:-}
-      CF_VISION_MODEL: ${CF_VISION_MODEL:-@cf/llava-hf/llava-1.5-7b-hf}
-      OLLAMA_URL: http://ollama:11434
-      OLLAMA_VISION_MODEL: moondream
+      # llava-1.5-7b retire le 13 aout 2026 : teste depuis le conteneur de production,
+      # il renvoie HTTP 400 la ou @cf/meta/llama-3.2-11b-vision-instruct renvoie 200 et
+      # identifie correctement un tagine (« It is a red tagine. »). Cet override ecrasait
+      # le defaut de ml.service.ts, que le code decrit lui-meme comme « bien meilleur sur
+      # les plats MENA ». On laisse desormais le code choisir ; la variable reste
+      # surchargeable par l'environnement si besoin.
+      CF_VISION_MODEL: ${CF_VISION_MODEL:-}
+      # OLLAMA_URL retiree : le service ollama est supprime (cf. docker-compose.yml).
+      # `tryOllama` se saute proprement quand la variable est absente.
       FOOD_VISION_API_URL: ${FOOD_VISION_API_URL:-}
       FOOD_VISION_API_KEY: ${FOOD_VISION_API_KEY:-}
       # Tier-0 ONNX : URL du sidecar + seuil de confiance (>= -> réponse directe).
@@ -58,5 +56,3 @@ networks:
   edge:
     external: true
 
-volumes:
-  salorie_ollama:
