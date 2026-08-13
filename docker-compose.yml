@@ -41,6 +41,11 @@ services:
       REDIS_URL: redis://redis:6379
       UPLOAD_DIR: /data/uploads
       FIREBASE_SERVICE_ACCOUNT: ${FIREBASE_SERVICE_ACCOUNT}
+      # Ecrire une variable dans le .env du serveur ne suffit PAS : Compose n'injecte que
+      # ce qui est liste ici. Constate le 13 aout 2026 — ADMIN_API_KEY etait bien dans le
+      # .env (64 caracteres) et absente du conteneur. Consequence : le webhook du pipeline
+      # refusait tout le monde, y compris l'outbox interne qui livre sur ce meme endpoint.
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       USDA_API_KEY: ${USDA_API_KEY:-DEMO_KEY}
       # `gemini-2.0-flash-lite` a ete RETIRE par Google : l'API repond
