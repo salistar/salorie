@@ -6,6 +6,7 @@ import { MlService } from '../ml/ml.service';
 import { AiService } from '../ai/ai.service';
 import { FirebaseService } from '../firebase.service';
 import { RedisService } from '../redis.service';
+import { SecretsService } from '../secrets.service';
 
 /**
  * MenuModule — analyse STATELESS d'une photo de menu de restaurant.
@@ -21,6 +22,11 @@ import { RedisService } from '../redis.service';
 @Module({
   imports: [ObjectiveModule],
   controllers: [MenuController],
-  providers: [MenuService, MlService, AiService, FirebaseService, RedisService],
+  // SecretsService suit MlService/AiService : ces trois modules redeclarent la chaine de
+  // dependances de MlService faute de MlModule exportable. Ajouter un parametre au
+  // constructeur de MlService oblige donc a le declarer ICI AUSSI — omission qui a fait
+  // tomber l'API en boucle de redemarrage le 13 aout 2026. Les quatre modules concernes :
+  // app, menu, fridge, receipt.
+  providers: [MenuService, MlService, AiService, FirebaseService, RedisService, SecretsService],
 })
 export class MenuModule {}
