@@ -132,4 +132,17 @@ export class MlController {
   cascadeStats() {
     return this.ml.getCascadeStats();
   }
+
+  /**
+   * Serie temporelle des appels IA — par jour, genre (vision/texte) et moteur, avec la
+   * latence moyenne. C'est ce que `cascade-stats` ne pouvait pas donner : il ne renvoie
+   * que des totaux cumules depuis toujours, donc aucune courbe possible.
+   * Retention 40 jours ; `days` borne a 40.
+   */
+  @UseGuards(AdminKeyGuard)
+  @Get('ai-timeline')
+  aiTimeline(@Query('days') days?: string) {
+    const d = Math.min(40, Math.max(1, parseInt(days || '14', 10) || 14));
+    return this.ml.getAiTimeline(d);
+  }
 }
