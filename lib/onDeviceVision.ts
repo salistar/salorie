@@ -1,6 +1,9 @@
 // Vision ON-DEVICE partagée (tier 1 de la cascade scan : ON-DEVICE → LOCAL DB → GEMINI).
 // Classifieur on-device partagé (utilisé par scan-analysis, tier 1 de la cascade).
-// Classification TFLite (food_salorie, 70 classes marocaines/MENA, fine-tune MFOOD-70 ~86%)
+// Classification TFLite (food_salorie : EfficientNetB0, entree 224x224 float32, SORTIE 172
+// CLASSES — verifie le 13 aout 2026 en chargeant le .tflite, pas d'apres un commentaire.
+// L'ancien commentaire annoncait « 70 classes MobileNetV2 » et contredisait
+// foodSalorieLabels.ts ; c'est bien FOOD_SALORIE_LABELS (172 entrees) qui correspond.)
 // + lookup macros hors-ligne dans assets/data/local-foods.json (FR/AR + k/p/c/f).
 import * as ImageManipulator from 'expo-image-manipulator';
 import { decode as jpegDecode } from 'jpeg-js';
