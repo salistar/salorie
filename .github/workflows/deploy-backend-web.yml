@@ -78,6 +78,10 @@ jobs:
             # `tryCloudflare` sortait immediatement et Ollama (CPU, lent) restait le seul
             # repli reel. Mesure du jour : @cf/meta/llama-3.2-11b-vision-instruct repond en
             # HTTP 200 pour ~1 neurone par appel, sur 10 000 neurones/jour gratuits.
+            # ADMIN_API_KEY protege les routes admin ET le webhook du pipeline. Absente du
+            # serveur jusqu'au 13 aout 2026 — reclamee depuis le 29 juillet — elle laissait
+            # POST /pipeline/webhook-sink ouvert a tout Internet.
+            printf '%s\n' 'ADMIN_API_KEY=${{ secrets.ADMIN_API_KEY }}' >> .env.next
             printf '%s\n' 'CF_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }}' >> .env.next
             printf '%s\n' 'CF_API_TOKEN=${{ secrets.CF_API_TOKEN }}' >> .env.next
             # Lue comme ARG de build par le service web (cf. docker-compose.yml) : sans
