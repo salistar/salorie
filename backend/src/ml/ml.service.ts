@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { FirebaseService } from '../firebase.service';
 import { AiService } from '../ai/ai.service';
 import { RedisService } from '../redis.service';
+import { SecretsService } from '../secrets.service';
 import * as fs from 'fs';
 import { join } from 'path';
 import { randomUUID, createHmac, createHash } from 'crypto';
@@ -20,6 +21,7 @@ export class MlService {
     private firebase: FirebaseService,
     private ai: AiService,
     private redis: RedisService,
+    private secrets: SecretsService,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -317,8 +319,12 @@ export class MlService {
 
     // Cloudflare Workers AI (edge GPU) — rapide + précis + gratuit, NON-Gemini.
     const tryCloudflare = async (): Promise<{ text: string; engine: string } | null> => {
-      const cfAccount = process.env.CF_ACCOUNT_ID;
-      const cfToken = process.env.CF_API_TOKEN;
+      // Cles lues d'abord dans l'admin (Firestore secrets/llm_keys), sinon dans l'env.
+      // Cela permet d'activer ce tier depuis l'interface, sans secret CI ni redeploiement
+      // — voie qui a fait defaut le 13 aout 2026, quand `gh secret set` a enregistre deux
+      // chaines VIDES et laisse le tier inerte sans que rien ne le signale.
+      const cfAccount = await this.secrets.get('CF_ACCOUNT_ID');
+      const cfToken = await this.secrets.get('CF_API_TOKEN');
       // VLM fort (vocabulaire ouvert, bien meilleur sur les plats MENA) ; overridable par env.
       const cfModel = process.env.CF_VISION_MODEL || '@cf/meta/llama-3.2-11b-vision-instruct';
       if (!cfAccount || !cfToken) return null;
@@ -377,7 +383,7 @@ export class MlService {
 
     // Groq vision (OpenAI-compatible) — repli GRATUIT rapide, APRÈS Ollama+Cloudflare, AVANT Gemini.
     const tryGroq = async (): Promise<{ text: string; engine: string } | null> => {
-      const groqKey = process.env.GROQ_API_KEY;
+      const groqKey = await this.secrets.get('GROQ_API_KEY');
       if (!groqKey) return null; // skip proprement si non configuré
       const groqModel = process.env.GROQ_VISION_MODEL || 'llama-3.2-90b-vision-preview';
       try {
