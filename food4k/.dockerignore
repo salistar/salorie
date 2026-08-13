@@ -1,0 +1,8 @@
+# Variantes non servies : app.py charge food4k.onnx (fp32). L'int8 a ete mesure le
+# 13 aout 2026 sur 50 plats reels — au seuil 0,60 il repond directement pour 32% des
+# images contre 48% au fp32, donc un tiers d'appels VLM PAYANTS en plus. Ecarte.
+food4k.int8.onnx
+food4k.int8.runnable.onnx
+*.bak-*
+compare_onnx.py
+__pycache__/

@@ -10,8 +10,29 @@ services:
     expose: ["11434"]
     networks: [default]
 
+  # Tier-0 food4k — classifieur d'aliments ONNX (Food-101, 91% top-1), CPU int8.
+  # Rapide + gratuit, placé AVANT la cascade VLM : si confiance >= seuil, réponse
+  # directe (nom + nutrition per-100g) sans appel Cloudflare/Ollama/Groq/Gemini.
+  food4k:
+    build: ./food4k
+    container_name: salorie-food4k
+    restart: unless-stopped
+    expose: ["8000"]
+    networks: [default]
+
   backend:
-    depends_on: [mongo, redis, minio, ollama]
+    # Specificites de srv3, volontairement ICI et pas dans docker-compose.yml : ce dernier
+    # est ecrase a chaque deploiement par la version du depot, qui ignore la topologie
+    # reelle de ce serveur. Le 3 aout 2026, un deploiement l'a remplace et a coupe l'API
+    # (502) pendant plusieurs minutes, pour ces deux raisons exactement.
+    #
+    # container_name : Caddy relaie vers `salorie-backend:4000`. Sans nom fixe, Compose
+    # nomme le conteneur `salorie-stack-backend-1` et Caddy ne le trouve plus.
+    # networks : Caddy vit sur le reseau `edge`. Un backend seulement sur le reseau par
+    # defaut de la stack est injoignable depuis le proxy.
+    container_name: salorie-backend
+    networks: [default, edge]
+    depends_on: [mongo, redis, ollama, food4k]
     environment:
       # Tier Backend = Cloudflare Workers AI (edge GPU) PRIORITAIRE, repli Ollama.
       CF_ACCOUNT_ID: ${CF_ACCOUNT_ID:-}
@@ -21,6 +42,21 @@ services:
       OLLAMA_VISION_MODEL: moondream
       FOOD_VISION_API_URL: ${FOOD_VISION_API_URL:-}
       FOOD_VISION_API_KEY: ${FOOD_VISION_API_KEY:-}
+      # Tier-0 ONNX : URL du sidecar + seuil de confiance (>= -> réponse directe).
+      FOOD4K_URL: ${FOOD4K_URL:-http://food4k:8000}
+      FOOD4K_MIN_CONF: ${FOOD4K_MIN_CONF:-0.60}
+
+  web:
+    # Meme raison que pour backend : Caddy relaie vers `salorie-web:3000` sur le reseau
+    # `edge`. Sans ces deux lignes, Compose nomme le conteneur `salorie-stack-web-1`,
+    # l'admin devient injoignable — constate le 3 aout 2026.
+    container_name: salorie-web
+    networks: [default, edge]
+
+networks:
+  # Reseau partage avec le proxy Caddy, cree hors de cette stack.
+  edge:
+    external: true
 
 volumes:
   salorie_ollama:
