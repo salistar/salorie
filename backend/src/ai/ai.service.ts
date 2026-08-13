@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createHash } from 'crypto';
 import { RedisService } from '../redis.service';
+import { SecretsService } from '../secrets.service';
 
 /**
  * Server-side Gemini. The API key stays in the backend env (GEMINI_API_KEY) and
@@ -14,10 +15,22 @@ import { RedisService } from '../redis.service';
 @Injectable()
 export class AiService {
   private readonly logger = new Logger('AiService');
-  private genAI = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
   private defaultModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  // Client reconstruit quand la cle change. Il etait auparavant fige a la construction
+  // du service : une cle corrigee dans l'admin — ou meme dans l'env — n'etait prise en
+  // compte qu'apres redemarrage du conteneur.
+  private genAI: GoogleGenerativeAI | null = null;
+  private genAIKey = '';
 
-  constructor(private redis: RedisService) {}
+  constructor(private redis: RedisService, private secrets: SecretsService) {}
+
+  /** Client Gemini courant, ou null si aucune cle n'est configuree (admin ou env). */
+  private async client(): Promise<GoogleGenerativeAI | null> {
+    const key = await this.secrets.get('GEMINI_API_KEY');
+    if (!key) { this.genAI = null; this.genAIKey = ''; return null; }
+    if (key !== this.genAIKey) { this.genAI = new GoogleGenerativeAI(key); this.genAIKey = key; }
+    return this.genAI;
+  }
 
   /**
    * Plafond MENSUEL d'appels Gemini (protection coût, exigence B5). Incrémente
@@ -40,14 +53,15 @@ export class AiService {
   }
 
   async generate(prompt: string, model?: string): Promise<string> {
-    if (!this.genAI) throw new Error('GEMINI_API_KEY not configured');
+    const genAI = await this.client();
+    if (!genAI) throw new Error('GEMINI_API_KEY not configured');
     const m = model || this.defaultModel;
     const key = `ai:gen:${createHash('sha1').update(m + '|' + prompt).digest('hex')}`;
     const cached = await this.redis.getJSON<string>(key);
     if (cached != null) { this.logger.log('cache HIT /ai/generate'); return cached; }
     await this.guardGeminiBudget();
     // Timeout dur (30 s) : un appel Gemini bloqué ne fige pas la requête indéfiniment.
-    const gm = this.genAI.getGenerativeModel({ model: m }, { timeout: 30000 });
+    const gm = genAI.getGenerativeModel({ model: m }, { timeout: 30000 });
     const r = await gm.generateContent(prompt);
     const text = (await r.response).text();
     if (text) await this.redis.setJSON(key, text, 21600); // cache 6 h
@@ -75,7 +89,8 @@ export class AiService {
     prompt: string,
     model?: string,
   ): Promise<string> {
-    if (!this.genAI) throw new Error('GEMINI_API_KEY not configured');
+    const genAI = await this.client();
+    if (!genAI) throw new Error('GEMINI_API_KEY not configured');
     const m = model || this.defaultModel;
     // Sérialisation stable des entrées : clés triées → même hash quel que soit
     // l'ordre des propriétés fourni par l'appelant.
@@ -120,9 +135,10 @@ export class AiService {
     return { text, engine: 'gemini' };
   }
   async vision(prompt: string, imageBase64: string, mimeType = 'image/jpeg', model?: string): Promise<string> {
-    if (!this.genAI) throw new Error('GEMINI_API_KEY not configured');
+    const genAI = await this.client();
+    if (!genAI) throw new Error('GEMINI_API_KEY not configured');
     await this.guardGeminiBudget();
-    const m = this.genAI.getGenerativeModel({ model: model || this.visionModel }, { timeout: 30000 });
+    const m = genAI.getGenerativeModel({ model: model || this.visionModel }, { timeout: 30000 });
     const r = await m.generateContent([
       { text: prompt },
       { inlineData: { data: imageBase64, mimeType } },

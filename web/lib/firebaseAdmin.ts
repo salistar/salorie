@@ -429,6 +429,15 @@ export const LLM_PROVIDERS: { key: string; label: string; hint: string }[] = [
   { key: 'ZHIPU_API_KEY', label: 'ZhipuAI — GLM', hint: 'xxx.xxx' },
   { key: 'MINIMAX_API_KEY', label: 'MiniMax', hint: 'sk-…' },
   { key: 'GEMINI_API_KEY', label: 'Google Gemini', hint: 'AIza… (format ancien SDK)' },
+  // Ajoutés le 13 août 2026. Ce sont les deux seules clés qui activent le tier de vision
+  // GRATUIT (Cloudflare Workers AI, ~10 000 appels/jour) — de loin le meilleur rapport
+  // pour la reconnaissance d'aliments. Les saisir ici évite le détour par les secrets
+  // GitHub, où deux tentatives de `gh secret set` ont enregistré des chaînes vides sans
+  // que rien ne le signale, laissant le tier inerte pendant que le déploiement passait
+  // au vert.
+  { key: 'CF_ACCOUNT_ID', label: 'Cloudflare — identifiant de compte', hint: '32 caractères hexadécimaux' },
+  { key: 'CF_API_TOKEN', label: 'Cloudflare Workers AI — jeton', hint: 'jeton avec accès Workers AI' },
+  { key: 'GROQ_API_KEY', label: 'Groq — vision (gratuit)', hint: 'gsk_…' },
 ];
 
 /** Statut des clés — JAMAIS la valeur en clair : seulement présence + 4 derniers car. */

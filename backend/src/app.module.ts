@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MongooseModule } from '@nestjs/mongoose';
 import { FirebaseService } from './firebase.service';
+import { SecretsService } from './secrets.service';
 import { RedisService } from './redis.service';
 import { UsersController } from './users/users.controller';
 import { UsersService } from './users/users.service';
@@ -99,6 +100,6 @@ import { AccountService } from './account/account.service';
     ...PIPELINE_FEATURES,
   ],
   controllers: [HealthController, UsersController, ReferralController, AccountController, FilesController, NutritionController, InsightsController, AiController, MlController, ...(HAS_MONGO ? [PipelineController, RacesController, OrgsController, NewsController] : [])],
-  providers: [FirebaseService, RedisService, UsersService, ReferralService, AccountService, NutritionService, InsightsService, AiService, MlService, FastingGateway, ...(HAS_MONGO ? [PipelineService, PipelineResolver, RacesService, OrgsService, NewsService] : [])],
+  providers: [FirebaseService, SecretsService, RedisService, UsersService, ReferralService, AccountService, NutritionService, InsightsService, AiService, MlService, FastingGateway, ...(HAS_MONGO ? [PipelineService, PipelineResolver, RacesService, OrgsService, NewsService] : [])],
 })
 export class AppModule {}
