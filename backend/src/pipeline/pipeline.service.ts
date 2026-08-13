@@ -141,8 +141,15 @@ export class PipelineService {
         continue;
       }
       try {
+        // L'outbox livre par defaut sur NOTRE PROPRE endpoint /pipeline/webhook-sink,
+        // dont `authWebhook` exige ADMIN_API_KEY des que cette variable existe. Sans cet
+        // en-tete, poser ADMIN_API_KEY en production ferait echouer TOUTES les livraisons
+        // en 403 — c'est ce qui bloquait la fermeture du webhook, laisse ouvert depuis
+        // le 29 juillet 2026. Absente, la variable ne change rien : en-tete non envoye.
+        const adminKey = process.env.ADMIN_API_KEY;
         const res = await fetch(this.WEBHOOK_URL, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(adminKey ? { 'x-admin-key': adminKey } : {}) },
           body: JSON.stringify({ topic: item.topic, userId: item.userId, payload: item.payload, tenantId: item.tenantId }),
         });
         item.status = (res as any).ok ? 'delivered' : 'failed';
