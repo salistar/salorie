@@ -28,7 +28,6 @@
       "package": "com.idriss.kriouile.salorie",
       "versionCode": 108,
       "blockedPermissions": [
-        "android.permission.DUMP",
         "android.permission.SYSTEM_ALERT_WINDOW",
         "com.anddoes.launcher.permission.UPDATE_COUNT",
         "com.htc.launcher.permission.READ_SETTINGS",
