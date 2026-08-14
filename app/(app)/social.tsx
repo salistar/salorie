@@ -1,4 +1,5 @@
-import React, { useCallback, useState, useMemo } from 'react';
+import React, { useCallback, useState, useMemo, useEffect } from 'react';
+import { connecterSocial, socketSocial, type Presence } from '../../lib/socialSocket';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, TextInput, ActivityIndicator, Image } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
@@ -82,6 +83,25 @@ export default function SocialScreen() {
   const [kudos, setKudos] = useState<Record<string, { count: number; mine: boolean }>>({});
   const [kudosBusy, setKudosBusy] = useState<Record<string, boolean>>({});
   const [modTarget, setModTarget] = useState<FeedItem | null>(null); // item en cours de signalement/blocage
+
+  // Presence temps reel (S4). Le fil montrait qui avait bouge HIER ; il montre
+  // desormais qui est la MAINTENANT. C'est la difference entre un journal et une
+  // place de village — et c'est ce qui donne envie de revenir.
+  const [enLigne, setEnLigne] = useState<Presence[]>([]);
+  useEffect(() => {
+    let vivant = true;
+    (async () => {
+      const sock = await connecterSocial();
+      if (!sock || !vivant) return;
+      sock.on('presence:maj', (d: { enLigne: Presence[] }) => {
+        if (vivant) setEnLigne(d?.enLigne || []);
+      });
+    })();
+    return () => {
+      vivant = false;
+      socketSocial()?.off('presence:maj');
+    };
+  }, []);
 
   const email = user?.primaryEmailAddress?.emailAddress || '';
 
