@@ -36,15 +36,15 @@ const TXT: Record<string, any> = {
   en: { loading: 'Loading camera...', accessTitle: 'Camera Access Needed', accessText: 'We need camera access to scan.', grant: 'Grant Access', cancel: 'Cancel', processing: 'Processing…',
     dish: 'Dish', barcode: 'Barcode', gallery: 'Gallery', tapDish: 'Tap to capture the dish', aimBarcode: 'Point at a barcode', noBarcode: 'No barcode found in this image.',
     mCascade: 'Auto', mDevice: 'Mobile', mBackend: 'Backend', mGemini: 'Gemini', model: 'Model',
-    demoTitle: 'Snap your plate', demoBody: 'Take a photo of your meal to analyze it instantly.', demoGot: 'Got it' },
+    demoTitle: 'Snap your plate', demoBody: 'Take a photo of your meal to analyze it instantly.', demoGot: 'Got it', a11yClose: 'Close the camera', a11yFlip: 'Switch camera', a11yShutter: 'Take the photo', a11yDemoClose: 'Dismiss this tip' },
   fr: { loading: 'Chargement de la caméra...', accessTitle: 'Accès à la caméra requis', accessText: 'Nous avons besoin de la caméra pour scanner.', grant: "Autoriser l'accès", cancel: 'Annuler', processing: 'Traitement…',
     dish: 'Plat', barcode: 'Code-barres', gallery: 'Galerie', tapDish: 'Touchez pour capturer le plat', aimBarcode: 'Visez un code-barres', noBarcode: 'Aucun code-barres trouvé dans cette image.',
     mCascade: 'Auto', mDevice: 'Mobile', mBackend: 'Backend', mGemini: 'Gemini', model: 'Modèle',
-    demoTitle: 'Prends ton assiette en photo', demoBody: 'Prends ton assiette en photo pour l\'analyser instantanément.', demoGot: 'Compris' },
+    demoTitle: 'Prends ton assiette en photo', demoBody: 'Prends ton assiette en photo pour l\'analyser instantanément.', demoGot: 'Compris', a11yClose: 'Fermer la caméra', a11yFlip: 'Changer de caméra', a11yShutter: 'Prendre la photo', a11yDemoClose: 'Masquer ce conseil' },
   ar: { loading: 'جارٍ تحميل الكاميرا...', accessTitle: 'الوصول إلى الكاميرا مطلوب', accessText: 'نحتاج إلى الكاميرا للمسح.', grant: 'منح الإذن', cancel: 'إلغاء', processing: 'جارٍ المعالجة…',
     dish: 'طبق', barcode: 'باركود', gallery: 'المعرض', tapDish: 'اضغط لالتقاط الطبق', aimBarcode: 'وجّه نحو الباركود', noBarcode: 'لا يوجد باركود في هذه الصورة.',
     mCascade: 'تلقائي', mDevice: 'الجهاز', mBackend: 'الخادم', mGemini: 'Gemini', model: 'النموذج',
-    demoTitle: 'صوّر طبقك', demoBody: 'التقط صورة لوجبتك لتحليلها على الفور.', demoGot: 'فهمت' },
+    demoTitle: 'صوّر طبقك', demoBody: 'التقط صورة لوجبتك لتحليلها على الفور.', demoGot: 'فهمت', a11yClose: 'إغلاق الكاميرا', a11yFlip: 'تبديل الكاميرا', a11yShutter: 'التقاط الصورة', a11yDemoClose: 'إخفاء هذه النصيحة' },
 };
 
 export default function ScanCameraScreen() {
@@ -107,8 +107,8 @@ export default function ScanCameraScreen() {
       <View style={styles.permissionWrap}>
         <Text style={styles.permissionTitle}>{t.accessTitle}</Text>
         <Text style={styles.permissionText}>{t.accessText}</Text>
-        <TouchableOpacity style={styles.permissionBtn} onPress={requestPermission}><Text style={styles.permissionBtnText}>{t.grant}</Text></TouchableOpacity>
-        <TouchableOpacity style={[styles.permissionBtn, { backgroundColor: '#334155' }]} onPress={() => router.back()}><Text style={styles.permissionBtnText}>{t.cancel}</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.permissionBtn} onPress={requestPermission} accessibilityRole="button" accessibilityLabel={t.grant}><Text style={styles.permissionBtnText}>{t.grant}</Text></TouchableOpacity>
+        <TouchableOpacity style={[styles.permissionBtn, { backgroundColor: '#334155' }]} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel={t.cancel}><Text style={styles.permissionBtnText}>{t.cancel}</Text></TouchableOpacity>
       </View>
     );
   }
@@ -208,8 +208,8 @@ export default function ScanCameraScreen() {
         <View style={styles.overlay}>
           {/* Top bar */}
           <View style={[styles.topBar, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()} disabled={capturing}><X size={26} color="#fff" /></TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))} disabled={capturing}>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()} disabled={capturing} accessibilityRole="button" accessibilityLabel={t.a11yClose}><X size={26} color="#fff" /></TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))} disabled={capturing} accessibilityRole="button" accessibilityLabel={t.a11yFlip}>
               <RotateCw size={22} color="#fff" />
             </TouchableOpacity>
           </View>
@@ -221,7 +221,7 @@ export default function ScanCameraScreen() {
                 const active = mode === m;
                 const Icon = m === 'dish' ? UtensilsCrossed : ScanBarcode;
                 return (
-                  <TouchableOpacity key={m} style={[styles.segBtn, active && styles.segBtnActive]} onPress={() => { barcodeLock.current = false; setMode(m); }} activeOpacity={0.85}>
+                  <TouchableOpacity key={m} style={[styles.segBtn, active && styles.segBtnActive]} onPress={() => { barcodeLock.current = false; setMode(m); }} activeOpacity={0.85} accessibilityRole="tab" accessibilityState={{ selected: active }} accessibilityLabel={m === 'dish' ? t.dish : t.barcode}>
                     <Icon size={16} color={active ? '#fff' : '#cbd5e1'} />
                     <Text style={[styles.segTxt, { color: active ? '#fff' : '#cbd5e1' }]}>{m === 'dish' ? t.dish : t.barcode}</Text>
                   </TouchableOpacity>
@@ -255,14 +255,14 @@ export default function ScanCameraScreen() {
 
             <View style={[styles.controls, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
               {/* Galerie */}
-              <TouchableOpacity style={styles.galleryBtn} onPress={pickGallery} disabled={capturing}>
+              <TouchableOpacity style={styles.galleryBtn} onPress={pickGallery} disabled={capturing} accessibilityRole="button" accessibilityLabel={t.gallery}>
                 <ImageIcon size={24} color="#fff" />
                 <Text style={styles.galleryTxt}>{t.gallery}</Text>
               </TouchableOpacity>
 
               {/* Shutter (plat uniquement) */}
               {mode === 'dish' ? (
-                <TouchableOpacity style={[styles.shutter, capturing && styles.shutterDisabled]} onPress={handleCapture} disabled={capturing} activeOpacity={0.7}>
+                <TouchableOpacity style={[styles.shutter, capturing && styles.shutterDisabled]} onPress={handleCapture} disabled={capturing} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={t.a11yShutter} accessibilityState={{ disabled: capturing }}>
                   {capturing ? <ActivityIndicator color={accent} size="large" /> : <View style={styles.shutterInner} />}
                 </TouchableOpacity>
               ) : (
@@ -287,7 +287,7 @@ export default function ScanCameraScreen() {
                     <Text style={styles.demoBtnTxt}>{t.demoGot}</Text>
                   </TouchableOpacity>
                 </View>
-                <TouchableOpacity style={styles.demoClose} onPress={dismissDemo} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <TouchableOpacity style={styles.demoClose} onPress={dismissDemo} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t.a11yDemoClose}>
                   <X size={18} color="#cbd5e1" />
                 </TouchableOpacity>
               </View>

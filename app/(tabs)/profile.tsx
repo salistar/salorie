@@ -233,6 +233,8 @@ export default function ProfileScreen() {
       style={[styles.gridTile, isDark && { backgroundColor: tok.surfaceSunken, borderColor: tok.hairline }]}
       activeOpacity={0.85}
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
     >
       <View style={[styles.gridIcon, { backgroundColor: color + (isDark ? '26' : '15') }]}>
         <Icon size={22} color={color} />
