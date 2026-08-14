@@ -139,6 +139,33 @@ export class MlController {
    * que des totaux cumules depuis toujours, donc aucune courbe possible.
    * Retention 40 jours ; `days` borne a 40.
    */
+  /**
+   * Itineraire (Routes API) cote SERVEUR. L'app appelait Google directement avec une cle
+   * embarquee dans l'APK, impossible a restreindre : un fetch React Native n'envoie ni
+   * referent ni signature Android. Depuis ici, l'appel part d'une IP fixe et la cle peut
+   * enfin etre restreinte par adresse IP.
+   * Limite de debit reutilisee : 30/min/utilisateur, comme les autres endpoints couteux.
+   */
+  @Post('route')
+  async route(
+    @Req() req: any,
+    @Body() body: { origin?: any; destination?: any; mode?: 'WALK' | 'DRIVE'; etapes?: any[] },
+  ) {
+    await this.limit(req, 'route');
+    const pt = (p: any) =>
+      p && Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng))
+        ? { lat: Number(p.lat), lng: Number(p.lng) }
+        : null;
+    const o = pt(body?.origin);
+    const d = pt(body?.destination);
+    if (!o || !d) throw new BadRequestException('origin et destination requis ({lat,lng})');
+    const etapes = Array.isArray(body?.etapes)
+      ? body.etapes.map(pt).filter((x): x is { lat: number; lng: number } => !!x)
+      : [];
+    const mode = body?.mode === 'DRIVE' ? 'DRIVE' : 'WALK';
+    return this.ml.computeRoute(o, d, mode, etapes);
+  }
+
   @UseGuards(AdminKeyGuard)
   @Get('ai-timeline')
   aiTimeline(@Query('days') days?: string) {

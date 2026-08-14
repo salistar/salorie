@@ -50,6 +50,10 @@ services:
       # refusait tout le monde, y compris l'outbox interne qui livre sur ce meme endpoint.
       ADMIN_API_KEY: ${ADMIN_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      # Cle Maps SERVEUR pour Routes API, deplacee du telephone vers le backend le
+      # 14 aout 2026. Repli seulement : la valeur prioritaire vient de l'admin /ai-keys
+      # via SecretsService, donc modifiable sans redeploiement.
+      GOOGLE_MAPS_SERVER_KEY: ${GOOGLE_MAPS_SERVER_KEY:-}
       USDA_API_KEY: ${USDA_API_KEY:-DEMO_KEY}
       # `gemini-2.0-flash-lite` a ete RETIRE par Google : l'API repond
       # « 404 this model is no longer available » meme avec une cle valide. Verifie le

@@ -378,10 +378,11 @@ export default function ChallengeScreen() {
         const r = challenge.route as LatLng[];
         if (r.length < 2) return;
         // DRIVE = suit les routes même sur longue distance (la marche échoue > ~100 km).
+        // `cle` retiree le 14 aout 2026 : l'appel Routes API part desormais du backend,
+        // qui detient la cle serveur. GOOGLE_MAPS_KEY ne sert plus qu'a la WebView Maps JS.
         const enc = await fetchRoutePolyline(r[0], r[r.length - 1], {
           mode: 'DRIVE',
           etapes: r.slice(1, -1),
-          cle: GOOGLE_MAPS_KEY,
         });
         if (alive && enc) setRoadPath(decodePolyline(enc));
       } catch (e) { console.warn('[challenge] directions failed', e); }

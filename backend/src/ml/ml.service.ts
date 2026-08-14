@@ -858,6 +858,93 @@ export class MlService {
     };
   }
 
+  // ---------------------------------------------------------------------------
+  // ITINERAIRES (Routes API) — deplaces cote serveur le 14 aout 2026
+  //
+  // POURQUOI
+  //
+  // lib/routes.ts appelait routes.googleapis.com directement depuis React Native, avec
+  // la cle EXPO_PUBLIC_GOOGLE_MAPS_KEY embarquee dans l'APK. Deux consequences :
+  //
+  //  1. La cle est extractible de l'APK par n'importe qui, et facturee a Salorie.
+  //  2. Elle ne pouvait etre protegee par AUCUNE restriction. Mesure du 13 aout 2026 :
+  //     poser une restriction par referent l'a fait tomber en « 403 Requests from referer
+  //     <empty> are blocked » — un fetch React Native n'envoie pas de referent ; et la
+  //     restriction Android ne s'applique pas non plus, faute de signature transmise.
+  //     La cle etait donc condamnee a rester ouverte a tout Internet.
+  //
+  // Depuis le serveur, l'appel part d'une IP fixe : la cle peut enfin etre restreinte
+  // par adresse IP, la seule restriction qui protege reellement ce type d'usage.
+  //
+  // La cle est lue par SecretsService (admin d'abord, env ensuite) : elle se change
+  // depuis /ai-keys sans redeploiement.
+  // ---------------------------------------------------------------------------
+
+  /** Routes API refuse au-dela de 25 points intermediaires — meme borne que cote app. */
+  private static readonly MAX_ETAPES_ROUTE = 25;
+
+  async computeRoute(
+    origin: { lat: number; lng: number },
+    destination: { lat: number; lng: number },
+    mode: 'WALK' | 'DRIVE' = 'WALK',
+    etapes: { lat: number; lng: number }[] = [],
+  ): Promise<{ polyline: string | null; engine: string }> {
+    const cle = await this.secrets.get('GOOGLE_MAPS_SERVER_KEY');
+    if (!cle) {
+      this.log('routes: GOOGLE_MAPS_SERVER_KEY absente (admin /ai-keys ou env)');
+      return { polyline: null, engine: 'non-configure' };
+    }
+    const pt = (p: { lat: number; lng: number }) => ({
+      location: { latLng: { latitude: p.lat, longitude: p.lng } },
+    });
+    // Meme echantillonnage que lib/routes.ts cote app : intervalle regulier en conservant
+    // TOUJOURS les deux extremites. Un `slice(0, 25)` couperait la fin du parcours et
+    // l'itineraire s'arreterait au milieu. Les deux implementations doivent coincider,
+    // sinon un meme parcours donnerait deux traces selon la version de l'app.
+    const max = MlService.MAX_ETAPES_ROUTE;
+    let pas = etapes;
+    if (etapes.length > max) {
+      const ecart = (etapes.length - 1) / (max - 1);
+      pas = [];
+      for (let i = 0; i < max; i++) pas.push(etapes[Math.round(i * ecart)]);
+    }
+    const t0 = Date.now();
+    try {
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 20000);
+      const r = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': cle,
+          // Sans FieldMask, Routes API repond 400 : le champ est OBLIGATOIRE.
+          'X-Goog-FieldMask': 'routes.polyline.encodedPolyline',
+        },
+        body: JSON.stringify({
+          origin: pt(origin),
+          destination: pt(destination),
+          ...(pas.length ? { intermediates: pas.map(pt) } : {}),
+          travelMode: mode,
+        }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(to);
+      const ms = Date.now() - t0;
+      if (!r.ok) {
+        this.log(`routes ${r.status}: ${(await r.text()).slice(0, 200)}`);
+        void this.redis.recordAiCall('text', `routes:erreur-${r.status}`, ms);
+        return { polyline: null, engine: `erreur-${r.status}` };
+      }
+      const j: any = await r.json();
+      void this.redis.recordAiCall('text', 'routes:google', ms);
+      // Format identique a l'ancien appel direct : les decodeurs des ecrans restent valables.
+      return { polyline: j?.routes?.[0]?.polyline?.encodedPolyline ?? null, engine: 'google-routes' };
+    } catch (e: any) {
+      this.log(`routes KO: ${e?.message}`);
+      return { polyline: null, engine: 'erreur' };
+    }
+  }
+
   private log(m: string) { try { (this as any).logger?.warn?.(m); } catch {} console.warn('[ml.visionLocal]', m); }
 
   // ---------------------------------------------------------------------------

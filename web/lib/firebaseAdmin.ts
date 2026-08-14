@@ -440,6 +440,10 @@ export const LLM_PROVIDERS: { key: string; label: string; hint: string }[] = [
   { key: 'GROQ_API_KEY', label: 'Groq — vision (gratuit)', hint: 'gsk_…' },
   // Mistral ajoute le 13 aout 2026 : sa cle etait dans le .env sous « provider non
   // identifie », retrouvee dans la console Mistral puis validee (HTTP 200, 55 modeles).
+  // Cle Maps SERVEUR, ajoutee le 14 aout 2026 avec le deplacement de l'appel Routes API
+  // vers le backend. Distincte de la cle mobile : celle-ci part d'une IP fixe et peut
+  // donc etre restreinte par adresse IP — la seule protection efficace pour cet usage.
+  { key: 'GOOGLE_MAPS_SERVER_KEY', label: 'Google Maps — clé serveur (Routes API)', hint: 'AIza…' },
   { key: 'MISTRAL_API_KEY', label: 'Mistral — vision (small/medium)', hint: '32 caracteres' },
 ];
 
