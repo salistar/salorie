@@ -2,6 +2,7 @@
 // contexte réel de l'utilisateur (objectif, calories/macros du jour, tendance poids).
 // Conseils auto au chargement + question libre. 100% via backend (clé Gemini serveur).
 import React, { useEffect, useRef, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, TextInput } from 'react-native';
 import { Sparkles, Send, RefreshCw, Volume2, VolumeX, Mic, Square } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
@@ -126,10 +127,11 @@ export default function AiCoachScreen() {
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
   const GREEN = colors.primary;
-  const bg = isDark ? '#0f1419' : '#F8FAFC';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#94A3B8';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 
   const [msgs, setMsgs] = useState<Msg[]>([

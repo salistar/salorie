@@ -1,6 +1,7 @@
 // Jeûne intermittent — minuteur on-device. Protocoles 16:8 / 18:6 / 20:4 / OMAD.
 // Persiste l'heure de début (AsyncStorage) → survit au redémarrage de l'app.
 import React, { useEffect, useRef, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { Image, View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Play, Square, Timer, Utensils, Users, Moon, Sunrise, Droplets } from 'lucide-react-native';
@@ -92,10 +93,11 @@ export default function FastingScreen() {
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
   const GREEN = colors.primary;
-  const bg = isDark ? '#0f1419' : '#F8FAFC';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const border = isDark ? '#283241' : 'transparent';
 
   const [proto, setProto] = useState(PROTOCOLS[0]);

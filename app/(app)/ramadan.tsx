@@ -11,6 +11,7 @@
 //
 // Trilingue en/fr/ar (libellés arabes existants), dark, RTL, flèche retour.
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, Switch } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { Moon, Sunrise, MapPin, Droplets, Flame, CheckCircle2 } from 'lucide-react-native';
@@ -122,11 +123,12 @@ export default function RamadanScreen() {
   const slotT = SLOT_LABELS[language] || SLOT_LABELS.en;
   const isDark = resolved === 'dark';
   const GREEN = colors.primary;
-  const bg = isDark ? '#0f1419' : '#F8FAFC';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
-  const border = isDark ? '#283241' : '#E2E8F0';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
+  const border = tok.border;
 
   const today = useMemo(() => ymdToday(), []);
   const { goals } = useNutritionData(today);

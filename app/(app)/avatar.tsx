@@ -1,6 +1,7 @@
 // Avatar RPG évolutif — niveau, titre, barre d'XP vers le niveau suivant,
 // et paliers/équipement débloqués. XP 100% locale (lib/avatar.ts).
 import React, { useEffect, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { Sparkles, Lock, Check } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -60,10 +61,11 @@ export default function AvatarScreen() {
   // dark officiel (contraste correct sur fond sombre).
   const accent = isDark ? '#4ade80' : GREEN;
 
-  const bg = isDark ? '#0f1419' : '#F4F7F9';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const track = isDark ? '#334155' : '#E2E8F0';
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
   const rowDir: any = { flexDirection: isRTL ? 'row-reverse' : 'row' };

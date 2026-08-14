@@ -1,5 +1,6 @@
 // Liste de courses — ajoute, coche, persiste (local).
 import React, { useEffect, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ShoppingCart, Plus, Check, Trash2 } from 'lucide-react-native';
@@ -28,10 +29,11 @@ export default function ShoppingListScreen() {
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
   const accent = isDark ? '#4ade80' : GREEN;
-  const bg = isDark ? '#0f1419' : '#F4F7F9';
-  const card = isDark ? '#1e293b' : '#ffffff';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
   const textCol = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
+  const sub = tok.textMuted;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 
   const [items, setItems] = useState<Item[]>([]);

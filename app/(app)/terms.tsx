@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { ChevronLeft, Scale, ShieldCheck, ScrollText } from 'lucide-react-native';
@@ -55,7 +56,8 @@ export default function TermsScreen() {
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const tx = TXT[language as keyof typeof TXT] ?? TXT.en;
-  const bg = isDark ? '#0f1419' : '#fff';
+  const tok = useTokens();
+  const bg = tok.bg;
   const tPrimary = isDark ? '#fff' : Colors.light.gray[900];
   const tMuted = isDark ? '#9BA1A6' : Colors.light.gray[500];
   return (

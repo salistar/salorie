@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
@@ -33,9 +34,10 @@ export default function Medals() {
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
   const GREEN = colors.primary;
-  const bg = isDark ? '#0f1419' : '#f3f6f4';
-  const text = isDark ? '#f1f5f9' : '#1B2A33';
-  const sub = isDark ? '#94a3b8' : '#667085';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const hint = isDark ? '#64748b' : '#94a3b8';
   const align: any = { textAlign: txtAlign(isRTL) };
   const __gate = useScreenGate('medals');

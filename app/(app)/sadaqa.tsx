@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, Linking, ActivityIndicator } from 'react-native';
 import { HandHeart, Utensils, Trees, ExternalLink } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -65,9 +66,10 @@ export default function Sadaqa() {
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
   const GREEN = colors.primary;
-  const bg = isDark ? '#0f1419' : '#f3f6f4';
-  const text = isDark ? '#f1f5f9' : '#1B2A33';
-  const sub = isDark ? '#94a3b8' : '#667085';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const track = isDark ? '#334155' : '#e2e8f0';
   const align: any = { textAlign: txtAlign(isRTL) };
 

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { ShieldCheck, Fingerprint, Trash2 } from 'lucide-react-native';
@@ -183,7 +184,8 @@ export default function PrivacyScreen() {
     ]);
   };
 
-  const bg = isDark ? '#0f1419' : '#fff';
+  const tok = useTokens();
+  const bg = tok.bg;
   const tPrimary = isDark ? '#fff' : Colors.light.gray[900];
   const tMuted = isDark ? '#9BA1A6' : Colors.light.gray[500];
   const infoBoxBg = isDark ? Colors.dark.primaryLight : '#ECFDF5';

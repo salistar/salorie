@@ -1,5 +1,6 @@
 // Microbiote — questionnaire santé intestinale → recommandations IA. Analyse labo = à venir.
 import React, { useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Activity, Sparkles } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -35,10 +36,11 @@ export default function MicrobiomeScreen() {
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
   const accent = isDark ? '#4ade80' : GREEN;
-  const bg = isDark ? '#0f1419' : '#F4F7F9';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const align: any = { textAlign: txtAlign(isRTL) };
 
   const [ans, setAns] = useState<Record<string, string>>({});

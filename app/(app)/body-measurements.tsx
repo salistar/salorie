@@ -1,5 +1,6 @@
 // Mesures corporelles — tour de taille/hanches/bras/poitrine + historique.
 import React, { useEffect, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { Ruler } from 'lucide-react-native';
@@ -52,9 +53,10 @@ export default function BodyMeasurementsScreen() {
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
   const accent = isDark ? '#4ade80' : GREEN;
-  const bg = isDark ? '#0f1419' : '#F4F7F9';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 
   const email = user?.primaryEmailAddress?.emailAddress || '';

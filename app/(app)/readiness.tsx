@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { Activity, Moon, HeartPulse, Minus, Plus } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -96,7 +97,8 @@ export default function ReadinessScreen() {
   const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
   const card = isDark ? Colors.dark.card : '#fff';
   const bg = isDark ? '#0f1419' : 'transparent';
-  const border = isDark ? '#283241' : '#e2e8f0';
+  const tok = useTokens();
+  const border = tok.border;
 
   const [sleep, setSleep] = useState(7.5);
   const [hr, setHr] = useState('');

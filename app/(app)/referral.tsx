@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -122,10 +123,11 @@ export default function Referral() {
   const email = user?.primaryEmailAddress?.emailAddress || '';
 
   const GREEN = colors.primary;
-  const bg = isDark ? '#0f1419' : '#f3f6f4';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#1B2A33';
-  const sub = isDark ? '#94a3b8' : '#667085';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const lockTint = isDark ? '#334155' : '#94a3b8';
   const codeBg = isDark ? '#14331f' : '#EAF4EE';
   const inputBg = isDark ? '#0f1419' : '#f1f5f9';

@@ -3,6 +3,7 @@
 // qui renvoie des plats SCORÉS (verdict + raisons). Gemini Vision reste en FALLBACK
 // uniquement si l'endpoint backend échoue ou ne lit aucun plat.
 import React, { useEffect, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import * as ImagePicker from 'expo-image-picker';
@@ -40,10 +41,11 @@ export default function RestaurantModeScreen() {
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
   const accent = isDark ? '#4ade80' : GREEN;
-  const bg = isDark ? '#0f1419' : '#F4F7F9';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const cardTxtColor = isDark ? '#e2e8f0' : '#1F2937';
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 

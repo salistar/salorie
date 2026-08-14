@@ -5,6 +5,7 @@
 // on relâche → l'audio est envoyé à la room et joué chez le jumeau.
 // Trilingue (en/fr/ar), dark-aware, RTL, ScreenTopBar.
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, SafeAreaView, ScrollView, Alert, Share, Animated, Easing } from 'react-native';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -83,7 +84,8 @@ export default function LiveTwinScreen() {
   const isDark = resolved === 'dark';
 
   const GREEN = colors.primary;
-  const bg = isDark ? '#0f1419' : '#fff';
+  const tok = useTokens();
+  const bg = tok.bg;
   const card = isDark ? colors.card : '#fff';
   const text = isDark ? '#fff' : Colors.gray900;
   const sub = isDark ? '#9BA1A6' : Colors.gray500;

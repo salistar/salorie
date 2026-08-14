@@ -2,6 +2,7 @@
 // Photo (caméra/galerie) → reconnaissance de texte locale → parsing kcal/macros.
 // 100% on-device, hors-ligne. Gestion d'erreur robuste (jamais de crash).
 import React, { useState, useRef, useEffect } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Image, Animated, Easing } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
@@ -82,10 +83,11 @@ export default function LabelScanScreen() {
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
   const accent = colors.primary;
-  const bg = isDark ? '#0f1419' : '#F8FAFC';
-  const card = isDark ? '#1e293b' : '#ffffff';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
   const fg = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
+  const sub = tok.textMuted;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 
   const { user } = useUser();

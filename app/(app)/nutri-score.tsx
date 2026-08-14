@@ -1,5 +1,6 @@
 // Nutri-Score — note nutritionnelle A→E d'un aliment (pour 100 g).
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, Animated, Easing, Share } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Award, Share2 } from 'lucide-react-native';
@@ -63,10 +64,11 @@ export default function NutriScoreScreen() {
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
   const accent = isDark ? '#4ade80' : GREEN;
-  const bg = isDark ? '#0f1419' : '#F4F7F9';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 
   const __gate = useScreenGate('nutri-score');
