@@ -10,7 +10,9 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.61.9",
     "bcryptjs": "^3.0.3",
+    "firebase": "^12.17.1",
     "firebase-admin": "12.5.0",
     "jose": "^6.2.3",
     "mongoose": "^9.7.0",
