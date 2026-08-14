@@ -91,13 +91,27 @@ jobs:
             # Lue comme ARG de build par le service web (cf. docker-compose.yml) : sans
             # elle la carte de l'ecran Courses reste inerte, sans message d'erreur.
             printf '%s\n' 'NEXT_PUBLIC_GMAP_KEY=${{ secrets.NEXT_PUBLIC_GMAP_KEY }}' >> .env.next
+            # Espace personnel /me (14 aout 2026). AUCUN nouveau secret : on reutilise
+            # les EXPO_PUBLIC_* deja en place pour l'app mobile, simplement renommes au
+            # prefixe que Next.js exige. C'est volontaire et c'est le coeur du chantier :
+            # une seule instance Clerk et un seul projet Firebase pour les deux clients,
+            # donc le meme compte, le meme uid, le meme document Firestore.
+            printf '%s\n' 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}' >> .env.next
+            printf '%s\n' 'NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}' >> .env.next
+            printf '%s\n' 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN }}' >> .env.next
+            printf '%s\n' 'NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.EXPO_PUBLIC_FIREBASE_PROJECT_ID }}' >> .env.next
+            printf '%s\n' 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET }}' >> .env.next
+            printf '%s\n' 'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}' >> .env.next
+            printf '%s\n' 'NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.EXPO_PUBLIC_FIREBASE_APP_ID }}' >> .env.next
+            printf '%s\n' 'NEXT_PUBLIC_FIREBASE_TOKEN_URL=${{ secrets.EXPO_PUBLIC_FIREBASE_TOKEN_URL }}' >> .env.next
+            printf '%s\n' 'NEXT_PUBLIC_API_URL=${{ secrets.EXPO_PUBLIC_API_URL }}' >> .env.next
             mv .env.next .env
 
             # Un secret vide s'ecrit sans bruit et ne se voit qu'a l'usage : le 13 aout 2026,
             # CF_ACCOUNT_ID et CF_API_TOKEN sont arrives VIDES (collage avale par le prompt
             # masque de `gh secret set`) et le deploiement s'est affiche en vert. On refuse
             # desormais de continuer sans le dire. Aucune VALEUR n'est journalisee.
-            for v in FIREBASE_SERVICE_ACCOUNT AUTH_SECRET CF_ACCOUNT_ID CF_API_TOKEN; do
+            for v in FIREBASE_SERVICE_ACCOUNT AUTH_SECRET CF_ACCOUNT_ID CF_API_TOKEN NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY NEXT_PUBLIC_FIREBASE_API_KEY NEXT_PUBLIC_FIREBASE_TOKEN_URL; do
               n=$(grep -m1 "^$v=" .env | cut -d= -f2- | wc -c)
               if [ "$n" -le 1 ]; then echo "::warning::$v est VIDE dans .env — la fonctionnalite associee restera inactive"; else echo "$v: ok ($((n-1)) caracteres)"; fi
             done

@@ -24,6 +24,9 @@ const NAV = [
 export default function Sidebar() {
   const path = usePathname() || '/';
   if (path === '/login' || path === '/register') return null; // pages plein écran
+  // /me est l'espace des UTILISATEURS, pas du back-office : il porte sa propre
+  // navigation (cf. app/me/MeNav.tsx) et ne doit rien laisser filtrer de l'admin.
+  if (path === '/me' || path.startsWith('/me/')) return null;
   const isActive = (href: string) => (href === '/' ? path === '/' || path.startsWith('/users') : path.startsWith(href));
 
   return (

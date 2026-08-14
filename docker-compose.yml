@@ -92,6 +92,18 @@ services:
         # Fournie en `environment:` elle n'atteindrait jamais le navigateur, et la carte
         # de l'écran Courses resterait inerte sans le moindre message d'erreur.
         NEXT_PUBLIC_GMAP_KEY: ${NEXT_PUBLIC_GMAP_KEY:-}
+        # Espace personnel /me (14 aout 2026). Meme instance Clerk et meme projet
+        # Firebase que l'app mobile : c'est ce qui fait que le compte web EST le
+        # compte telephone, sans aucun mecanisme de synchronisation a ecrire.
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}
+        NEXT_PUBLIC_FIREBASE_API_KEY: ${NEXT_PUBLIC_FIREBASE_API_KEY:-}
+        NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:-}
+        NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${NEXT_PUBLIC_FIREBASE_PROJECT_ID:-}
+        NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET:-}
+        NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID:-}
+        NEXT_PUBLIC_FIREBASE_APP_ID: ${NEXT_PUBLIC_FIREBASE_APP_ID:-}
+        NEXT_PUBLIC_FIREBASE_TOKEN_URL: ${NEXT_PUBLIC_FIREBASE_TOKEN_URL:-}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.salorie.com}
     restart: unless-stopped
     depends_on: [backend, mongo]
     environment:
