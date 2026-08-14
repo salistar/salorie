@@ -10,6 +10,8 @@ const SECTIONS = [
   { href: '/me/scan', label: 'Scanner', icone: '📷' },
   { href: '/me/analytics', label: 'Analyses', icone: '📈' },
   { href: '/me/races', label: 'Courses', icone: '🏁' },
+  { href: '/me/coach', label: 'Coach', icone: '💬' },
+  { href: '/me/profile', label: 'Profil', icone: '⚙️' },
 ];
 
 export default function MeNav() {

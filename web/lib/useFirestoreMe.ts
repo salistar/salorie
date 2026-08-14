@@ -115,3 +115,91 @@ export function totaux(lignes: LigneJournal[]) {
     nbActivites: activites.length,
   };
 }
+
+/** Point de `users/{uid}/weight_history`. */
+export type PointPoids = { id: string; weight?: number; date?: string };
+
+/** Historique de poids, du plus ancien au plus recent. */
+export function useHistoriquePoids(uid: string) {
+  const [points, setPoints] = useState<PointPoids[]>([]);
+  useEffect(() => {
+    if (!uid) return;
+    return onSnapshot(
+      collection(firestore(), 'users', uid, 'weight_history'),
+      (snap) => {
+        const l = snap.docs.map((d) => ({ id: d.id, ...(d.data() as object) })) as PointPoids[];
+        // Tri en memoire plutot qu'avec orderBy : evite d'exiger un index composite
+        // Firestore pour une collection qui compte au plus quelques centaines de points.
+        setPoints(l.filter((p) => p.date).sort((a, b) => String(a.date).localeCompare(String(b.date))));
+      },
+      () => setPoints([]),
+    );
+  }, [uid]);
+  return points;
+}
+
+/** Toutes les lignes depuis une date `YYYY-MM-DD` incluse. */
+export function useLogsDepuis(uid: string, depuis: string) {
+  const [lignes, setLignes] = useState<LigneJournal[]>([]);
+  const [charge, setCharge] = useState(false);
+  useEffect(() => {
+    if (!uid || !depuis) return;
+    setCharge(false);
+    const q = query(collection(firestore(), 'users', uid, 'logs'), where('date', '>=', depuis));
+    return onSnapshot(
+      q,
+      (snap) => {
+        setLignes(snap.docs.map((d) => ({ id: d.id, ...(d.data() as object) })) as LigneJournal[]);
+        setCharge(true);
+      },
+      () => setCharge(true),
+    );
+  }, [uid, depuis]);
+  return { lignes, charge };
+}
+
+/** Cle de periode, STRICTEMENT identique a celle du backend (insights.service.ts). */
+export function clePeriode(portee: 'week' | 'month', ref = new Date()): string {
+  if (portee === 'month') {
+    return `month_${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, '0')}`;
+  }
+  const d = new Date(Date.UTC(ref.getFullYear(), ref.getMonth(), ref.getDate()));
+  const jour = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - jour);
+  const debutAnnee = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const semaine = Math.ceil(((d.getTime() - debutAnnee.getTime()) / 86400000 + 1) / 7);
+  return `week_${d.getUTCFullYear()}-W${String(semaine).padStart(2, '0')}`;
+}
+
+export type Insight = {
+  healthScore?: number;
+  source?: 'ai' | 'computed';
+  updatedAt?: number;
+  en?: Record<string, string>;
+  fr?: Record<string, string>;
+  ar?: Record<string, string>;
+};
+
+/**
+ * Analyse precalculee par le cron de 3 h (backend). Le web la LIT, il ne la calcule
+ * jamais : c'est le meme document que celui affiche par le mobile, donc les deux
+ * clients disent exactement la meme chose — et aucun appel d'IA n'est declenche par
+ * l'ouverture de la page.
+ */
+export function useInsight(uid: string, periodKey: string) {
+  const [insight, setInsight] = useState<Insight | null>(null);
+  const [charge, setCharge] = useState(false);
+  useEffect(() => {
+    if (!uid || !periodKey) return;
+    setCharge(false);
+    return onSnapshot(
+      doc(firestore(), 'users', uid, 'ai_insights', periodKey),
+      (snap) => {
+        setInsight((snap.data() as Insight) || null);
+        setCharge(true);
+      },
+      () => setCharge(true),
+    );
+  }, [uid, periodKey]);
+  return { insight, charge };
+}
