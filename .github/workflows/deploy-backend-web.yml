@@ -68,7 +68,7 @@ jobs:
             # deploiement suivant, sans trace et sans message. On ne remplace desormais que
             # les cles gerees par ce workflow et on preserve tout le reste.
             touch .env
-            grep -vE '^(FIREBASE_SERVICE_ACCOUNT|GEMINI_API_KEY|USDA_API_KEY|AUTH_SECRET|CF_ACCOUNT_ID|CF_API_TOKEN|NEXT_PUBLIC_GMAP_KEY)=' .env > .env.next || true
+            grep -vE '^(FIREBASE_SERVICE_ACCOUNT|GEMINI_API_KEY|USDA_API_KEY|AUTH_SECRET|CF_ACCOUNT_ID|CF_API_TOKEN|NEXT_PUBLIC_GMAP_KEY|MAIL_INGEST_KEY)=' .env > .env.next || true
             printf '%s\n' 'FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' >> .env.next
             printf '%s\n' 'GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}' >> .env.next
             printf '%s\n' 'USDA_API_KEY=${{ secrets.USDA_API_KEY }}' >> .env.next
@@ -82,6 +82,10 @@ jobs:
             # serveur jusqu'au 13 aout 2026 — reclamee depuis le 29 juillet — elle laissait
             # POST /pipeline/webhook-sink ouvert a tout Internet.
             printf '%s\n' 'ADMIN_API_KEY=${{ secrets.ADMIN_API_KEY }}' >> .env.next
+            # MAIL_INGEST_KEY : cle partagee avec l'Email Worker Cloudflare qui poste les
+            # mails de support@salorie.com sur POST /support-mail/ingest. Sans elle,
+            # l'endpoint est ferme et les mails n'arrivent que sur le Gmail (forward).
+            printf '%s\n' 'MAIL_INGEST_KEY=${{ secrets.MAIL_INGEST_KEY }}' >> .env.next
             printf '%s\n' 'CF_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }}' >> .env.next
             printf '%s\n' 'CF_API_TOKEN=${{ secrets.CF_API_TOKEN }}' >> .env.next
             # Lue comme ARG de build par le service web (cf. docker-compose.yml) : sans

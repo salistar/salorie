@@ -39,6 +39,9 @@ import { FridgeModule } from './fridge/fridge.module';
 import { ObjectiveModule } from './objective/objective.module';
 import { MenuModule } from './menu/menu.module';
 import { BarcodeModule } from './barcode/barcode.module';
+import { SupportMailController } from './support-mail/support-mail.controller';
+import { SupportMailService } from './support-mail/support-mail.service';
+import { SupportEmail, SupportEmailSchema } from './support-mail/support-mail.schemas';
 
 // Pipeline analytics (CDC Firestore→Mongo + feature store + outbox + multi-tenant)
 // — activé uniquement si Mongo est configuré (sinon DI échoue au boot standalone).
@@ -57,6 +60,7 @@ const PIPELINE_FEATURES = HAS_MONGO
         { name: Membership.name, schema: MembershipSchema },
         { name: Invite.name, schema: InviteSchema },
         { name: NewsItem.name, schema: NewsItemSchema },
+        { name: SupportEmail.name, schema: SupportEmailSchema },
       ]),
       // Gateway GraphQL (code-first, /graphql) sur le pipeline.
       GraphQLModule.forRoot<ApolloDriverConfig>({
@@ -99,7 +103,7 @@ import { AccountService } from './account/account.service';
       : []),
     ...PIPELINE_FEATURES,
   ],
-  controllers: [HealthController, UsersController, ReferralController, AccountController, FilesController, NutritionController, InsightsController, AiController, MlController, ...(HAS_MONGO ? [PipelineController, RacesController, OrgsController, NewsController] : [])],
-  providers: [FirebaseService, SecretsService, RedisService, UsersService, ReferralService, AccountService, NutritionService, InsightsService, AiService, MlService, FastingGateway, ...(HAS_MONGO ? [PipelineService, PipelineResolver, RacesService, OrgsService, NewsService] : [])],
+  controllers: [HealthController, UsersController, ReferralController, AccountController, FilesController, NutritionController, InsightsController, AiController, MlController, ...(HAS_MONGO ? [PipelineController, RacesController, OrgsController, NewsController, SupportMailController] : [])],
+  providers: [FirebaseService, SecretsService, RedisService, UsersService, ReferralService, AccountService, NutritionService, InsightsService, AiService, MlService, FastingGateway, ...(HAS_MONGO ? [PipelineService, PipelineResolver, RacesService, OrgsService, NewsService, SupportMailService] : [])],
 })
 export class AppModule {}
