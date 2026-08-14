@@ -52,6 +52,14 @@ services:
       # Cle partagee avec l'Email Worker Cloudflare (support@salorie.com →
       # POST /support-mail/ingest). Vide = endpoint ferme (403).
       MAIL_INGEST_KEY: ${MAIL_INGEST_KEY:-}
+      # Sentry — surveillance des erreurs serveur. Le DSN n'est PAS un secret
+      # (ecriture seule, concu pour etre embarque cote client) : sa valeur par
+      # defaut vit dans src/instrument.ts. Ces deux lignes ne servent qu'a la
+      # surcharger, ou a la VIDER (chaine vide = Sentry desactive). Sans elles,
+      # meme presentes dans le .env du serveur, les variables n'atteindraient
+      # jamais le conteneur — exactement le piege paye avec ADMIN_API_KEY.
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       # Cle Maps SERVEUR pour Routes API, deplacee du telephone vers le backend le
       # 14 aout 2026. Repli seulement : la valeur prioritaire vient de l'admin /ai-keys
