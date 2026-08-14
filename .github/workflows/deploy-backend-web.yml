@@ -144,8 +144,15 @@ jobs:
             echo "$etats"
             if echo "$etats" | grep -qiE 'restarting|exited|dead'; then
               echo "::error::Un service n'est pas reste debout apres le deploiement."
-              docker compose logs --tail=80 backend
-              docker compose logs --tail=40 web
+              # Le 14 aout 2026, coturn est reste en « Restarting (255) » et ce bloc
+              # n'a dumpe que backend et web : le diagnostic a demande un aller-retour
+              # de plus. On journalise desormais TOUT service qui n'est pas debout,
+              # quel qu'il soit — c'est justement celui-la qu'on a besoin de lire.
+              for svc in $(echo "$etats" | grep -iE 'restarting|exited|dead' | awk '{print $1}'); do
+                echo "----- journaux de $svc -----"
+                docker compose logs --tail=60 "$svc" || true
+              done
+              docker compose logs --tail=40 backend
               exit 1
             fi
 
