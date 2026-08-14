@@ -107,6 +107,20 @@ jobs:
             printf '%s\n' 'NEXT_PUBLIC_API_URL=${{ secrets.EXPO_PUBLIC_API_URL }}' >> .env.next
             mv .env.next .env
 
+            # TURN_SECRET (15 aout 2026) — secret PARTAGE entre coturn et le backend.
+            # Il est genere ICI, sur le serveur, et jamais ailleurs : ni dans le depot
+            # (public), ni dans les secrets GitHub, ni dans un presse-papier. Personne
+            # n'a besoin de le connaitre, pas meme pour l'installer. Il est ADDITIF —
+            # une fois pose, les deploiements suivants le conservent, sinon toutes les
+            # sessions vocales en cours seraient invalidees a chaque livraison.
+            if ! grep -q '^TURN_SECRET=' .env; then
+              printf 'TURN_SECRET=%s\n' "$(openssl rand -hex 32)" >> .env
+              echo "TURN_SECRET genere (premiere installation)"
+            else
+              echo "TURN_SECRET deja present — conserve"
+            fi
+            grep -q '^TURN_HOST=' .env || printf 'TURN_HOST=%s\n' 'turn.salorie.com' >> .env
+
             # Un secret vide s'ecrit sans bruit et ne se voit qu'a l'usage : le 13 aout 2026,
             # CF_ACCOUNT_ID et CF_API_TOKEN sont arrives VIDES (collage avale par le prompt
             # masque de `gh secret set`) et le deploiement s'est affiche en vert. On refuse
