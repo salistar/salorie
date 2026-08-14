@@ -2,6 +2,8 @@
 // infos nutritionnelles via OpenFoodFacts (API publique, gratuite, sans cle),
 // puis pre-remplit l'ecran log-food-details. Logging produit ultra-rapide.
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { verdictHalal, libelleStatut, libelleRaison, avertissementHalal, type VerdictHalal } from '../../lib/halal';
+import { getDietPrefs } from '../../lib/dietPrefs';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image, ScrollView } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -80,6 +82,8 @@ type Found = {
   food?: { name: string; kcal: number; protein: number; carbs: number; fat: number; tags?: string[] };
   // Allergènes déclarés (OFF allergens_tags / allergens) — libellés nettoyés.
   allergens?: string[];
+  // Verdict halal (F1). Calcule au scan a partir de la liste d'ingredients OFF.
+  halal?: VerdictHalal | null;
 };
 
 // Extrait les libellés d'allergènes d'un produit OFF (allergens_tags prioritaire,
@@ -192,6 +196,13 @@ export default function ScanBarcodeScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [status, setStatus] = useState<'scanning' | 'loading' | 'found' | 'notedible' | 'notfound'>('scanning');
   const [found, setFound] = useState<Found | null>(null);
+  // Le verdict halal ne s'affiche QUE si la personne a active la preference.
+  // Imposer un jugement religieux a qui ne l'a pas demande serait deplace — et
+  // rendrait l'app moins utilisable pour tous les autres.
+  const [halalActif, setHalalActif] = useState(false);
+  useEffect(() => {
+    getDietPrefs().then((d) => setHalalActif(Boolean(d?.halal))).catch(() => {});
+  }, []);
   const [code, setCode] = useState('');
   const lock = useRef(false);
   // Contexte objectif construit dans lookup() (1 getDoc Firestore + 1 lecture
@@ -298,6 +309,13 @@ export default function ScanBarcodeScreen() {
         health,
         desc: qualRiskDesc(n, language),
         objective,
+        // Deux champs de langue plutot qu'un : OFF renseigne tantot l'un tantot
+        // l'autre, et un produit marocain a souvent SEULEMENT `ingredients_text`.
+        halal: verdictHalal(
+          `${p.ingredients_text || ''} ${(p as any).ingredients_text_fr || ''}`,
+          (p as any).labels_tags || [],
+          foundName,
+        ),
         nutriments: n,
         food,
         allergens: extractAllergens(p),
@@ -644,6 +662,44 @@ export default function ScanBarcodeScreen() {
             </View>
           )}
 
+          {/* Verdict halal (F1) — seulement si la preference est active. */}
+          {halalActif && found.halal && (
+            <View
+              style={[
+                styles.halalBanner,
+                {
+                  borderColor:
+                    found.halal.statut === 'incompatible' ? tok.danger
+                      : found.halal.statut === 'doute' ? tok.warning
+                      : tok.success,
+                  backgroundColor:
+                    found.halal.statut === 'incompatible' ? tok.dangerSoft
+                      : found.halal.statut === 'doute' ? tok.warningSoft
+                      : tok.successSoft,
+                },
+              ]}
+              accessibilityRole="text"
+              accessibilityLabel={`${libelleStatut(found.halal.statut, String(language))}. ${libelleRaison(found.halal, String(language))}`}
+            >
+              <Text
+                style={[
+                  styles.halalTitre,
+                  {
+                    color:
+                      found.halal.statut === 'incompatible' ? tok.dangerInk
+                        : found.halal.statut === 'doute' ? tok.warningInk
+                        : tok.successInk,
+                  },
+                ]}
+              >
+                {found.halal.statut === 'incompatible' ? '✕' : found.halal.statut === 'doute' ? '?' : '✓'}{'  '}
+                {libelleStatut(found.halal.statut, String(language))}
+              </Text>
+              <Text style={[styles.halalTxt, { color: tok.text }]}>{libelleRaison(found.halal, String(language))}</Text>
+              <Text style={[styles.halalNote, { color: tok.textMuted }]}>{avertissementHalal(String(language))}</Text>
+            </View>
+          )}
+
           {/* Alerte allergènes (OFF allergens_tags / allergens) */}
           {found.allergens && found.allergens.length > 0 && (
             <View style={styles.allergenBanner}>
@@ -797,6 +853,11 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   // Alerte allergènes (couleur warning, alignée sur warnBanner)
   allergenBanner: { flexDirection: 'row', gap: 8, alignItems: 'center', borderRadius: 12, borderWidth: 1.5, borderColor: '#B45309', backgroundColor: '#FEF3C7', padding: 12 },
   allergenTxt: { fontSize: 13, fontWeight: '800', color: '#92400E', flex: 1 },
+  // Verdict halal — le titre porte la couleur, le corps reste lisible.
+  halalBanner: { borderRadius: 14, borderWidth: 1.5, padding: 14, gap: 5 },
+  halalTitre: { fontSize: 15, fontWeight: '900' },
+  halalTxt: { fontSize: 13.5, fontWeight: '600', lineHeight: 19 },
+  halalNote: { fontSize: 11.5, lineHeight: 16 },
   // Non comestible
   notEdibleBanner: { flexDirection: 'row', gap: 10, alignItems: 'center', borderRadius: 14, borderWidth: 1.5, padding: 14 },
   notEdibleTxt: { fontSize: 15, fontWeight: '800', flex: 1 },
