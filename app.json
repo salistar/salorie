@@ -105,8 +105,8 @@
         {
           "android": {
             "minSdkVersion": 26,
-            "enableMinifyInReleaseBuilds": false,
-            "enableShrinkResourcesInReleaseBuilds": false,
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
             "extraProguardRules": "# TensorFlow Lite — delegue GPU absent du classpath.\n# react-native-fast-tflite reference GpuDelegateFactory, mais l'artefact GPU n'est pas\n# embarque : la reconnaissance d'aliments tourne sur CPU. R8 refuse de compiler sur ces\n# references non resolues, alors qu'elles ne sont jamais atteintes a l'execution.\n# Regles produites par R8 lui-meme (build/outputs/mapping/release/missing_rules.txt).\n-dontwarn org.tensorflow.lite.gpu.GpuDelegateFactory$Options$GpuBackend\n-dontwarn org.tensorflow.lite.gpu.GpuDelegateFactory$Options\n\n# Le modele embarque est appele via JSI depuis JavaScript : R8 ne voit aucun appelant\n# Java et supprimerait ces classes.\n-keep class org.tensorflow.lite.** { *; }"
           }
         }
