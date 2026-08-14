@@ -96,3 +96,14 @@ playwright-report/
 food4k/*.onnx
 food4k/*.bak-*
 food4k/compare_onnx.py
+
+# Artefacts d audit/tests : images et rapports generes, jamais du code (121 Mo suivis par erreur)
+captures-audit/
+captures-test-onboarding/
+coverage/
+rapports/
+firestore-debug.log
+web/tsconfig.tsbuildinfo
+# Videos d exercices : servies par api.salorie.com/videos, plus embarquees depuis registry.ts.
+# Les .mp4 locaux ne sont que la source d envoi vers srv3 (76 Mo hors de git).
+assets/videos/*.mp4
