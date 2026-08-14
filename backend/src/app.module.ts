@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
+import { SentryModule, SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -84,6 +86,10 @@ import { AccountService } from './account/account.service';
 
 @Module({
   imports: [
+    // Sentry en PREMIER module : il enveloppe les autres pour capturer ce qui
+    // échoue à leur initialisation. L'init du SDK, elle, vit dans `instrument.ts`
+    // (importé tout en haut de main.ts) — ce module ne fait que le brancher à Nest.
+    SentryModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
     TwinModule,
@@ -109,6 +115,11 @@ import { AccountService } from './account/account.service';
     ...PIPELINE_FEATURES,
   ],
   controllers: [HealthController, SocialController, UsersController, ReferralController, AccountController, FilesController, NutritionController, InsightsController, AiController, MlController, ...(HAS_MONGO ? [PipelineController, RacesController, OrgsController, NewsController, SupportMailController] : [])],
-  providers: [FirebaseService, SecretsService, RedisService, UsersService, ReferralService, AccountService, NutritionService, InsightsService, AiService, MlService, FastingGateway, ...(HAS_MONGO ? [PipelineService, PipelineResolver, RacesService, OrgsService, NewsService, SupportMailService, SocialGateway] : [])],
+  providers: [
+    // Capture les exceptions non gérées des contrôleurs AVANT que Nest ne les
+    // transforme en 500 anonymes. Placé en tête : les filtres déclarés ensuite
+    // gardent la main sur ce qu'ils traitent déjà (HttpException, etc.).
+    { provide: APP_FILTER, useClass: SentryGlobalFilter },
+    FirebaseService, SecretsService, RedisService, UsersService, ReferralService, AccountService, NutritionService, InsightsService, AiService, MlService, FastingGateway, ...(HAS_MONGO ? [PipelineService, PipelineResolver, RacesService, OrgsService, NewsService, SupportMailService, SocialGateway] : [])],
 })
 export class AppModule {}

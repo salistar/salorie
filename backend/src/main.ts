@@ -1,3 +1,7 @@
+// ⚠️ PREMIER import du fichier, avant NestFactory : Sentry instrumente Express et
+// Mongoose au moment du require. Un import placé plus bas ne patcherait plus rien.
+import './instrument';
+
 import { NestFactory } from '@nestjs/core';
 import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
