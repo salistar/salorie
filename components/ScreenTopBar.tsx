@@ -143,6 +143,8 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
                   { flexDirection: rowDir(isRTL) },
                   language === lang && { backgroundColor: menuActiveBg },
                 ]}
+                accessibilityRole="menuitem"
+                accessibilityState={{ selected: language === lang }}
                 onPress={() => {
                   setLanguage(lang);
                   setLangMenuOpen(false);
@@ -174,6 +176,8 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
                     { flexDirection: rowDir(isRTL) },
                     mode === m && { backgroundColor: menuActiveBg },
                   ]}
+                  accessibilityRole="menuitem"
+                  accessibilityState={{ selected: mode === m }}
                   onPress={() => {
                     setMode(m);
                     setThemeMenuOpen(false);
