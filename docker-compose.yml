@@ -65,7 +65,10 @@ services:
       FOOD_VISION_API_URL: ${FOOD_VISION_API_URL:-}
       FOOD_VISION_API_KEY: ${FOOD_VISION_API_KEY:-}
       # Outbox webhook : défaut = sink interne public ; override par ${OUTBOX_WEBHOOK_URL}.
-      OUTBOX_WEBHOOK_URL: ${OUTBOX_WEBHOOK_URL:-https://api.salorie.salistar.com/pipeline/webhook-sink}
+      # Bascule sur le domaine PROPRE le 14 aout 2026 — l'ancien api.salorie.salistar.com
+      # repond encore, mais dependre d'un domaine herite pour une boucle interne n'a
+      # aucun interet.
+      OUTBOX_WEBHOOK_URL: ${OUTBOX_WEBHOOK_URL:-https://api.salorie.com/pipeline/webhook-sink}
     volumes: [salorie_uploads:/data/uploads]
     # Port 4000 NON publie sur l'hote : le proxy Caddy le tient deja et relaie en
     # interne. Le publier ici provoque `Bind for 0.0.0.0:4000 failed: port is already
