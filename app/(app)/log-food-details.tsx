@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { haptique } from '../../lib/haptique';
 import {
   View,
   Text,
@@ -161,6 +162,9 @@ export default function LogFoodDetailsScreen() {
         };
       }
       await addNutritionLog(payload);
+      // L'ecran de scan confirmait deja par une vibration ; l'enregistrement d'un
+      // repas, lui, ne disait rien. C'est pourtant le geste le plus repete de l'app.
+      haptique.succes();
       colorLog('BLUE', '[API←Firestore] addNutritionLog OK', { ms: Date.now() - t0 });
       // ACTIVE LEARNING : on capture le label FINAL (édité par l'utilisateur = vraie correction)
       // + l'image + ce que le on-device avait prédit -> dataset "or" pour ré-entraîner.

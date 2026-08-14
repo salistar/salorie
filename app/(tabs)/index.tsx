@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { UtensilsCrossed, Activity as ActivityIcon, ChevronRight, Flame } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Card, SkeletonCard } from '../../components/ui';
+import { Card, SkeletonCard , PressableScale, Apparition } from '../../components/ui';
 import { spacing, radius, type } from '../../constants/theme';
 import HomeHeader from '../../components/HomeHeader';
 import BrandBanner from '../../components/BrandBanner';
@@ -282,18 +282,30 @@ export default function HomeScreen() {
           const sx = SHORT[String(language)] || SHORT.en;
           return (
             <View style={styles.shortcutRow}>
-              <TouchableOpacity style={styles.shortcut} activeOpacity={0.85} onPress={() => router.push('/diary' as any)}>
-                <Card variant="raised" padded={false} style={styles.shortcutCard}>
-                  <View style={[styles.shortcutIcon, { backgroundColor: colors.primaryLight }]}><UtensilsCrossed size={20} color={colors.primary} /></View>
-                  <Text style={[styles.shortcutTxt, { color: txt }]} numberOfLines={2}>{sx.diary}</Text>
-                </Card>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.shortcut} activeOpacity={0.85} onPress={() => router.push('/activity' as any)}>
-                <Card variant="raised" padded={false} style={styles.shortcutCard}>
-                  <View style={[styles.shortcutIcon, { backgroundColor: colors.primaryLight }]}><ActivityIcon size={20} color={colors.primary} /></View>
-                  <Text style={[styles.shortcutTxt, { color: txt }]} numberOfLines={2}>{sx.activity}</Text>
-                </Card>
-              </TouchableOpacity>
+              <Apparition index={0} style={styles.shortcut}>
+                <PressableScale
+                  onPress={() => router.push('/diary' as any)}
+                  accessibilityRole="button"
+                  accessibilityLabel={sx.diary}
+                >
+                  <Card variant="raised" padded={false} style={styles.shortcutCard}>
+                    <View style={[styles.shortcutIcon, { backgroundColor: colors.primaryLight }]}><UtensilsCrossed size={20} color={colors.primary} /></View>
+                    <Text style={[styles.shortcutTxt, { color: txt }]} numberOfLines={2}>{sx.diary}</Text>
+                  </Card>
+                </PressableScale>
+              </Apparition>
+              <Apparition index={1} style={styles.shortcut}>
+                <PressableScale
+                  onPress={() => router.push('/activity' as any)}
+                  accessibilityRole="button"
+                  accessibilityLabel={sx.activity}
+                >
+                  <Card variant="raised" padded={false} style={styles.shortcutCard}>
+                    <View style={[styles.shortcutIcon, { backgroundColor: colors.primaryLight }]}><ActivityIcon size={20} color={colors.primary} /></View>
+                    <Text style={[styles.shortcutTxt, { color: txt }]} numberOfLines={2}>{sx.activity}</Text>
+                  </Card>
+                </PressableScale>
+              </Apparition>
             </View>
           );
         })()}
