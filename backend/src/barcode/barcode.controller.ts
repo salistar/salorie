@@ -91,6 +91,14 @@ export class BarcodeController {
 
   // ── App (stateless) ──
 
+  // Garde Firebase ajoutee le 14 aout 2026 (audit). Ces deux routes IA etaient les
+  // SEULES du module accessibles sans authentification : un anonyme pouvait declencher
+  // la cascade a 60 appels/min par IP — et sans limite du tout si Redis tombait, le
+  // rate-limit degradant OUVERT. L'app envoie deja le jeton (lib/objective/api.ts,
+  // headers() identique a aiProxy) : aucun appelant legitime n'est casse.
+  // L'uid du throttle vient desormais de req.user (identite verifiee), plus du body
+  // que le client pouvait faire varier pour multiplier les buckets.
+  @UseGuards(FirebaseAuthGuard)
   @Post('analyze')
   async analyze(
     @Req() req: any,
@@ -99,10 +107,9 @@ export class BarcodeController {
       barcode?: string;
       product?: any;
       objective?: Partial<ObjectiveContext> | null;
-      uid?: string;
     },
   ) {
-    await this.throttle('analyze', body?.uid, req);
+    await this.throttle('analyze', req?.user?.uid, req);
     return this.svc.analyze({
       barcode: body?.barcode,
       product: body?.product,
@@ -110,6 +117,7 @@ export class BarcodeController {
     });
   }
 
+  @UseGuards(FirebaseAuthGuard)
   @Post('alternatives')
   async alternatives(
     @Req() req: any,
@@ -118,10 +126,9 @@ export class BarcodeController {
       barcode?: string;
       category?: string;
       objective?: Partial<ObjectiveContext> | null;
-      uid?: string;
     },
   ) {
-    await this.throttle('alternatives', body?.uid, req);
+    await this.throttle('alternatives', req?.user?.uid, req);
     return this.svc.alternatives({
       barcode: body?.barcode,
       category: body?.category,
