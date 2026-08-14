@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
 import { Newspaper, Flag, Trophy, Sparkles, ChevronRight } from 'lucide-react-native';
@@ -26,10 +27,11 @@ export default function Journal() {
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
   const accent = isDark ? '#4ade80' : GREEN;
-  const bg = isDark ? '#0f1419' : '#f7faf8';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0f172a';
-  const sub = isDark ? '#94a3b8' : '#64748b';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
   const rowDir: any = { flexDirection: isRTL ? 'row-reverse' : 'row' };
 

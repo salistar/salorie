@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { Audio } from 'expo-av';
@@ -54,10 +55,11 @@ export default function VoiceLog() {
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
   const accent = isDark ? '#4ade80' : GREEN;
-  const bg = isDark ? '#0f1419' : '#f3f6f4';
+  const tok = useTokens();
+  const bg = tok.bg;
   const cardBg = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#1B2A33';
-  const sub = isDark ? '#94a3b8' : '#667085';
+  const text = tok.text;
+  const sub = tok.textMuted;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 
   const email = user?.primaryEmailAddress?.emailAddress || '';

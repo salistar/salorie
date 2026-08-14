@@ -18,6 +18,7 @@ import {
   ArrowRight
 } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
+import { useTokens, CATEGORIES, type Tokens } from '../../constants/tokens';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { PurchasesService } from '../../lib/PurchasesService';
 import { seedDemoData } from '../../scripts/seed-data';
@@ -40,8 +41,9 @@ export default function ProfileScreen() {
   const { t, language } = useTranslation() as any;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
-  const bgColor = isDark ? '#0f1419' : 'transparent';
+  const tok = useTokens();
+  const styles = useMemo(() => makeStyles(isDark, tok), [isDark, tok]);
+  const bgColor = isDark ? tok.bg : 'transparent';
   // Inline trilingual labels for items not yet in the shared i18n file.
   const PSTR: any = {
     en: { sport_medals: 'Sport & medals', my_medals: 'My medals', achievements: 'Achievements', send_logs: 'Send logs', nutrients: 'Daily nutrients', streaks: 'My streaks', avatar: 'My avatar', family: 'My family', vitals: 'Glucose & blood pressure', referral: 'Referral', doctor_report: 'Doctor report (PDF)' },
@@ -228,14 +230,14 @@ export default function ProfileScreen() {
   // Tuile compacte (allègement : grille 2 colonnes au lieu de lignes empilées).
   const GridTile = ({ icon: Icon, label, color, onPress }: any) => (
     <TouchableOpacity
-      style={[styles.gridTile, isDark && { backgroundColor: '#161C23', borderColor: 'rgba(255,255,255,0.08)' }]}
+      style={[styles.gridTile, isDark && { backgroundColor: tok.surfaceSunken, borderColor: tok.hairline }]}
       activeOpacity={0.85}
       onPress={onPress}
     >
       <View style={[styles.gridIcon, { backgroundColor: color + (isDark ? '26' : '15') }]}>
         <Icon size={22} color={color} />
       </View>
-      <Text style={[styles.gridLabel, isDark && { color: '#f1f5f9' }]} numberOfLines={2}>{label}</Text>
+      <Text style={[styles.gridLabel, isDark && { color: tok.text }]} numberOfLines={2}>{label}</Text>
     </TouchableOpacity>
   );
 
@@ -248,7 +250,7 @@ export default function ProfileScreen() {
         {/* Header */}
         <ScreenTopBar />
         <View style={styles.header}>
-          <Text style={[styles.title, { color: resolved === 'dark' ? '#fff' : Colors.light.gray[900] }]}>
+          <Text style={[styles.title, { color: tok.onAccent }]}>
             {t('profile.title')}
           </Text>
         </View>
@@ -264,8 +266,8 @@ export default function ProfileScreen() {
               source={{ uri: user?.imageUrl }}
               style={styles.avatar}
             />
-            <View style={{ position: 'absolute', bottom: -2, right: -2, backgroundColor: Colors.light.primary, borderRadius: 12, padding: 5, borderWidth: 2, borderColor: '#fff' }}>
-              <Camera size={12} color="#fff" />
+            <View style={{ position: 'absolute', bottom: -2, right: -2, backgroundColor: Colors.light.primary, borderRadius: 12, padding: 5, borderWidth: 2, borderColor: tok.onAccent }}>
+              <Camera size={12} color={tok.onAccent} />
             </View>
           </TouchableOpacity>
           <View style={styles.userInfo}>
@@ -288,11 +290,11 @@ export default function ProfileScreen() {
             <View style={styles.trialContent}>
               <View style={styles.trialTextWrapper}>
                 <View style={[styles.trialBadge, resolved === 'dark' && { backgroundColor: 'rgba(245,158,11,0.18)' }]}>
-                  <Crown size={12} color="#F59E0B" fill="#F59E0B" />
-                  <Text style={[styles.trialBadgeText, resolved === 'dark' && { color: '#FCD34D' }]}>{t('profile.premium_plan')}</Text>
+                  <Crown size={12} color={CATEGORIES.medailles} fill={CATEGORIES.medailles} />
+                  <Text style={[styles.trialBadgeText]}>{t('profile.premium_plan')}</Text>
                 </View>
-                <Text style={[styles.trialTitle, resolved === 'dark' && { color: '#FCD34D' }]}>{t('profile.start_trial')}</Text>
-                <Text style={[styles.trialSubtitle, resolved === 'dark' && { color: '#E5B769' }]}>{t('profile.trial_desc')}</Text>
+                <Text style={[styles.trialTitle]}>{t('profile.start_trial')}</Text>
+                <Text style={[styles.trialSubtitle]}>{t('profile.trial_desc')}</Text>
               </View>
               <View style={styles.trialButton}>
                 <Text style={styles.trialButtonText}>{t('profile.start')}</Text>
@@ -304,40 +306,40 @@ export default function ProfileScreen() {
 
         {/* Sport & médailles — d'abord (pattern « You » des leaders : trophées avant réglages) */}
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: resolved === 'dark' ? '#fff' : undefined }]}>{P_('sport_medals')}</Text>
+          <Text style={[styles.sectionTitle, { color: tok.text }]}>{P_('sport_medals')}</Text>
         </View>
         <Animated.View entering={FadeInDown.delay(200).duration(600)} style={styles.grid}>
           {/* Courses + agenda vivent dans l'onglet Défis (pas de doublon ici) */}
-          <GridTile icon={Award} label={P_('my_medals')} color="#F59E0B" onPress={() => router.push('/medals' as any)} />
-          <GridTile icon={Trophy} label={P_('achievements')} color="#8B5CF6" onPress={() => router.push('/social' as any)} />
-          <GridTile icon={Flame} label={P_('streaks')} color="#EF4444" onPress={() => router.push('/streaks' as any)} />
+          <GridTile icon={Award} label={P_('my_medals')} color={CATEGORIES.medailles} onPress={() => router.push('/medals' as any)} />
+          <GridTile icon={Trophy} label={P_('achievements')} color={CATEGORIES.succes} onPress={() => router.push('/social' as any)} />
+          <GridTile icon={Flame} label={P_('streaks')} color={CATEGORIES.series} onPress={() => router.push('/streaks' as any)} />
           <GridTile icon={Sparkles} label={P_('avatar')} color={isDark ? Colors.dark.primary : Colors.light.primary} onPress={() => router.push('/avatar' as any)} />
         </Animated.View>
 
         {/* Account Section */}
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: resolved === 'dark' ? '#fff' : undefined }]}>{t('profile.account')}</Text>
+          <Text style={[styles.sectionTitle, { color: tok.text }]}>{t('profile.account')}</Text>
         </View>
         <Animated.View entering={FadeInDown.delay(250).duration(600)} style={styles.grid}>
           <GridTile icon={User} label={t('profile.personal_details')} color={isDark ? Colors.dark.primary : Colors.light.primary} onPress={() => router.push('/personal-details' as any)} />
-          <GridTile icon={Users} label={P_('family')} color="#0EA5E9" onPress={() => router.push('/family' as any)} />
-          <GridTile icon={Users} label={P_('referral')} color="#14B8A6" onPress={() => router.push('/referral' as any)} />
-          <GridTile icon={Heart} label={P_('nutrients')} color="#10B981" onPress={() => router.push('/nutrients' as any)} />
-          <GridTile icon={Activity} label={P_('vitals')} color="#F43F5E" onPress={() => router.push('/vitals' as any)} />
-          <GridTile icon={HeartPulse} label={P_('doctor_report')} color="#0891B2" onPress={() => router.push('/health-export' as any)} />
+          <GridTile icon={Users} label={P_('family')} color={CATEGORIES.famille} onPress={() => router.push('/family' as any)} />
+          <GridTile icon={Users} label={P_('referral')} color={CATEGORIES.parrainage} onPress={() => router.push('/referral' as any)} />
+          <GridTile icon={Heart} label={P_('nutrients')} color={CATEGORIES.nutriments} onPress={() => router.push('/nutrients' as any)} />
+          <GridTile icon={Activity} label={P_('vitals')} color={CATEGORIES.constantes} onPress={() => router.push('/vitals' as any)} />
+          <GridTile icon={HeartPulse} label={P_('doctor_report')} color={CATEGORIES.medical} onPress={() => router.push('/health-export' as any)} />
           <GridTile icon={Bell} label={t('prefs.notifications')} color={isDark ? Colors.dark.primary : Colors.light.primary} onPress={() => router.push('/notifications' as any)} />
-          <GridTile icon={Settings} label={t('profile.preferences')} color="#6366F1" onPress={() => router.push('/preferences' as any)} />
-          <GridTile icon={CreditCard} label={t('profile.upgrade')} color="#EC4899" onPress={handleUpgrade} />
+          <GridTile icon={Settings} label={t('profile.preferences')} color={CATEGORIES.reglages} onPress={() => router.push('/preferences' as any)} />
+          <GridTile icon={CreditCard} label={t('profile.upgrade')} color={CATEGORIES.abonnement} onPress={handleUpgrade} />
         </Animated.View>
 
         {/* Support Section */}
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: resolved === 'dark' ? '#fff' : undefined }]}>{t('profile.support')}</Text>
+          <Text style={[styles.sectionTitle, { color: tok.text }]}>{t('profile.support')}</Text>
         </View>
         <Animated.View entering={FadeInDown.delay(300).duration(600)} style={styles.grid}>
-          <GridTile icon={Lightbulb} label={t('profile.feature_requests')} color="#10B981" onPress={() => router.push('/feature-requests' as any)} />
-          <GridTile icon={MessagesSquare} label={t('profile.contact_us')} color="#3B82F6" onPress={() => router.push('/contact' as any)} />
-          <GridTile icon={FileText} label={P_('send_logs')} color="#64748B" onPress={sendLogs} />
+          <GridTile icon={Lightbulb} label={t('profile.feature_requests')} color={CATEGORIES.nutriments} onPress={() => router.push('/feature-requests' as any)} />
+          <GridTile icon={MessagesSquare} label={t('profile.contact_us')} color={CATEGORIES.contact} onPress={() => router.push('/contact' as any)} />
+          <GridTile icon={FileText} label={P_('send_logs')} color={CATEGORIES.journaux} onPress={sendLogs} />
           <GridTile icon={FileText} label={t('profile.terms')} color={isDark ? Colors.dark.gray[500] : Colors.light.gray[500]} onPress={() => router.push('/terms' as any)} />
           <GridTile icon={Shield} label={t('profile.privacy')} color={isDark ? Colors.dark.gray[500] : Colors.light.gray[500]} onPress={() => router.push('/privacy' as any)} />
         </Animated.View>
@@ -346,11 +348,11 @@ export default function ProfileScreen() {
         {__DEV__ && (
           <>
             <TouchableOpacity
-              style={[styles.logoutBtn, { backgroundColor: '#EEF2FF', borderColor: '#C7D2FE', marginBottom: 12 }]}
+              style={[styles.logoutBtn, { backgroundColor: tok.infoSoft, borderColor: tok.info, marginBottom: 12 }]}
               onPress={handleTriggerNotifications}
             >
-              <BellRing size={20} color="#4338CA" />
-              <Text style={[styles.logoutText, { color: '#4338CA' }]}>
+              <BellRing size={20} color={tok.infoInk} />
+              <Text style={[styles.logoutText, { color: tok.infoInk }]}>
                 🔔 Trigger 10 Notifications
               </Text>
             </TouchableOpacity>
@@ -360,11 +362,11 @@ export default function ProfileScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.logoutBtn, { backgroundColor: '#FEF3C7', borderColor: '#FCD34D', marginBottom: 12 }]}
+              style={[styles.logoutBtn, { backgroundColor: tok.warningSoft, borderColor: tok.warning, marginBottom: 12 }]}
               onPress={handleClearCache}
             >
-              <Trash2 size={20} color="#92400E" />
-              <Text style={[styles.logoutText, { color: '#92400E' }]}>🗑️ Clear Cache</Text>
+              <Trash2 size={20} color={tok.warningInk} />
+              <Text style={[styles.logoutText, { color: tok.warningInk }]}>🗑️ Clear Cache</Text>
             </TouchableOpacity>
           </>
         )}
@@ -381,7 +383,7 @@ export default function ProfileScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (isDark: boolean, tok: Tokens) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -436,11 +438,11 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     marginTop: 2,
   },
   trialCard: {
-    backgroundColor: '#FFFBEB',
+    backgroundColor: tok.warningSoft,
     padding: 20,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#FEF3C7',
+    borderColor: tok.warning,
     marginBottom: 32,
   },
   trialContent: {
@@ -454,7 +456,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   trialBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF3C7',
+    backgroundColor: tok.warning + '33',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -465,23 +467,23 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   trialBadgeText: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#92400E',
+    color: tok.warningInk,
     textTransform: 'uppercase',
   },
   trialTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#92400E',
+    color: tok.warningInk,
     marginBottom: 2,
   },
   trialSubtitle: {
     fontSize: 13,
-    color: '#B45309',
+    color: tok.warningInk,
     fontWeight: '600',
     opacity: 0.8,
   },
   trialButton: {
-    backgroundColor: '#D97706',
+    backgroundColor: tok.warning,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -568,14 +570,14 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     gap: 10,
     paddingVertical: 18,
     marginTop: 16,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: tok.dangerSoft,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#FCA5A5',
+    borderColor: tok.danger,
   },
   logoutText: {
     fontSize: 16,
     fontWeight: '800',
-    color: isDark ? Colors.dark.error : Colors.light.error,
+    color: tok.dangerInk,
   },
 });

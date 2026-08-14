@@ -2,6 +2,7 @@
 // Saisie rapide (glycémie + tension), historique, mini-graphe, alertes colorées
 // + conseil ("parle à ton médecin"). i18n/dark/RTL/retour. Best-effort (Firestore).
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { Droplet, Heart, Check, AlertTriangle, TrendingUp, TrendingDown, Minus, Trash2 } from 'lucide-react-native';
@@ -91,10 +92,11 @@ export default function VitalsScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f1419' : '#F4F7F9';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const accent = isDark ? '#4ade80' : GREEN;
   const track = isDark ? '#283241' : '#E8EDF2';
   const align: any = { textAlign: isRTL ? 'right' : 'left' };

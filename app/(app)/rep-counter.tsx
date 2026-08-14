@@ -2,6 +2,7 @@
 // Modèle = détection de pics sur la magnitude d'accélération (machine à états
 // haut/bas + anti-rebond temporel). 100% local, hors-ligne, aucune caméra.
 import React, { useEffect, useRef, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import { Accelerometer } from 'expo-sensors';
 import { Play, Pause, RotateCcw, Activity } from 'lucide-react-native';
@@ -77,9 +78,10 @@ export default function RepCounterScreen() {
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
   const accent = isDark ? '#4ade80' : GREEN;
-  const bg = isDark ? '#0f1419' : '#F8FAFC';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const text = tok.text;
+  const sub = tok.textMuted;
 
   const [running, setRunning] = useState(false);
   const [reps, setReps] = useState(0);

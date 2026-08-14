@@ -1,5 +1,6 @@
 // Battle nutrition 1v1 — compare ton score d'assiduité hebdo avec un ami.
 import React, { useEffect, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { ymd } from '../../lib/format';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
@@ -91,10 +92,11 @@ export default function BattleScreen() {
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
   const GREEN = colors.primary;
-  const bg = isDark ? '#0f1419' : '#F4F7F9';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
   const __gate = useScreenGate('battle');
 

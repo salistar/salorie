@@ -1,6 +1,7 @@
 // Feuille de modération UGC réutilisable — Signaler (motifs) + Bloquer + Annuler.
 // Exigence Google Play (contenu utilisateur). Utilisée sur le fil social + le marketplace.
 import React, { useState } from 'react';
+import { useTokens } from '../constants/tokens';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
 import { Flag, Ban, X, ChevronLeft } from 'lucide-react-native';
 import { useTheme } from '../lib/ThemeContext';
@@ -49,8 +50,9 @@ export default function ModerationSheet({
   const [done, setDone] = useState<string>('');
 
   const sheetBg = isDark ? '#161C23' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
+  const tok = useTokens();
+  const text = tok.text;
+  const sub = tok.textMuted;
   const line = isDark ? '#283241' : '#EEF2F6';
 
   const reset = () => { setStep('menu'); setBusy(false); setDone(''); };

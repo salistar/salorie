@@ -1,5 +1,6 @@
 // Streaks multi-dimensions — séries de jours consécutifs par catégorie.
 import React, { useEffect, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -33,10 +34,11 @@ export default function StreaksScreen() {
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
   const accent = isDark ? '#4ade80' : GREEN;
-  const bg = isDark ? '#0f1419' : '#F4F7F9';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 
   type Cat = { streak: number; freezes: number };

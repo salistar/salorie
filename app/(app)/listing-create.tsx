@@ -3,6 +3,7 @@
 // (expo-image-picker → base64 data URI, léger, resize via ImageManipulator).
 // Trilingue (en/fr/ar) + dark + RTL + flèche retour. Firestore best-effort.
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { useTokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity,
@@ -123,7 +124,8 @@ export default function ListingCreateScreen() {
   const text = isDark ? '#fff' : Colors.light.gray[900];
   const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
   const card = isDark ? Colors.dark.card : '#fff';
-  const bg = isDark ? '#0f1419' : '#fff';
+  const tok = useTokens();
+  const bg = tok.bg;
   const field = isDark ? Colors.dark.gray[100] : Colors.light.gray[100];
 
   const loadMine = useCallback(async () => {

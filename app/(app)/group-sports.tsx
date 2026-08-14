@@ -1,6 +1,7 @@
 // Sports de groupe — liste des matchs par sport, filtre par discipline, bouton Créer,
 // et Rejoindre/Quitter. Renvoie aussi vers la réservation de terrain. Firestore best-effort.
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { useTokens } from '../../constants/tokens';
 import React, { useCallback, useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator,
@@ -102,7 +103,8 @@ export default function GroupSportsScreen() {
   const text = isDark ? '#fff' : Colors.light.gray[900];
   const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
   const card = isDark ? Colors.dark.card : '#fff';
-  const bg = isDark ? '#0f1419' : '#fff';
+  const tok = useTokens();
+  const bg = tok.bg;
   const chipBg = isDark ? Colors.dark.gray[100] : Colors.light.gray[100];
 
   const load = useCallback(async () => {

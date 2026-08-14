@@ -3,6 +3,7 @@
 // DocumentPicker est requis de façon DÉFENSIVE (module natif) → si non linké (build pas
 // à jour), on affiche un message clair au lieu de planter.
 import React, { useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { router } from 'expo-router';
@@ -46,10 +47,11 @@ export default function ImportDataScreen() {
   const t = T[language] || T.en;
   const isDark = resolved === 'dark';
 
-  const bg = isDark ? '#0B0F14' : '#F4F7F9';
-  const card = isDark ? '#161C23' : '#ffffff';
-  const text = isDark ? '#F1F5F9' : '#0F172A';
-  const sub = isDark ? '#94A3B8' : '#64748B';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
   // Accent thémé : vert clair en mode clair, token dark officiel en sombre.
   const accent = isDark ? '#4ade80' : '#2E8B57';
 

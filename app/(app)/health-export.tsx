@@ -3,6 +3,7 @@
 // nutrition, poids, glycémie/tension). PDF via expo-print si dispo, sinon
 // fallback texte via Share. i18n en/fr/ar, dark, RTL, retour.
 import React, { useEffect, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import {
   Image,
   View,
@@ -186,10 +187,11 @@ export default function HealthExportScreen() {
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
   const accent = isDark ? '#4ade80' : GREEN;
-  const bg = isDark ? '#0f1419' : '#F4F7F9';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
   const rowDir: any = { flexDirection: isRTL ? 'row-reverse' : 'row' };
 

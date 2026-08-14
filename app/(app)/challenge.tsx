@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import {
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView,
   Image, Modal, Dimensions, Alert,
@@ -734,7 +735,8 @@ export default function ChallengeScreen() {
   const text = isDark ? '#fff' : Colors.light.gray[900];
   const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
   const card = isDark ? Colors.dark.card : '#fff';
-  const bg = isDark ? '#0f1419' : '#fff';
+  const tok = useTokens();
+  const bg = tok.bg;
   // Accent thémé : vert clair en sombre (#4ade80) pour le contraste, vert marque en clair.
   const primary = isDark ? Colors.dark.primary : Colors.light.primary;
   const trackBg = isDark ? '#2a2a2a' : Colors.light.gray[200];

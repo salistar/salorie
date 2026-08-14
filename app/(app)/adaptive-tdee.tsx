@@ -10,6 +10,7 @@ import { getUserFromFirestore, updateDailyCalories } from '../../lib/firebase';
 import { getEntries } from '../../lib/tracking';
 import { computeAdaptiveTDEE, AdaptiveResult } from '../../lib/adaptiveTDEE';
 import { useTheme } from '../../lib/ThemeContext';
+import { useTokens } from '../../constants/tokens';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign } from '../../lib/rtl';
 
@@ -120,12 +121,15 @@ export default function AdaptiveTDEE() {
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
   const GREEN = colors.primary;
-  const bg = isDark ? '#0f1419' : '#f3f6f4';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#1B2A33';
-  const sub = isDark ? '#94a3b8' : '#667085';
-  const muted = isDark ? '#64748b' : '#94a3b8';
-  const border = isDark ? '#334155' : '#e6ece8';
+  // Six ternaires ecrits a la main ont laisse place aux tokens : la definition de
+  // « une carte en mode sombre » n'appartient plus a cet ecran (cf. constants/tokens.ts).
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
+  const muted = tok.textFaint;
+  const border = tok.border;
   const align: any = { textAlign: txtAlign(isRTL) };
   const rowAlign: any = { flexDirection: rowDir(isRTL) };
 
@@ -163,7 +167,7 @@ export default function AdaptiveTDEE() {
 
   const conf = res?.confidence;
   const confLabel = conf === 'high' ? t.confHigh : conf === 'medium' ? t.confMed : t.confLow;
-  const confColor = conf === 'high' ? GREEN : conf === 'medium' ? '#B45309' : '#94a3b8';
+  const confColor = conf === 'high' ? GREEN : conf === 'medium' ? tok.warningInk : tok.textFaint;
   const losing = (res?.trendKgPerWeek || 0) < 0;
 
   // Feature #141 — badge de confiance dérivé du nombre de jours de données déjà
@@ -172,7 +176,7 @@ export default function AdaptiveTDEE() {
   const dataDays = res?.intakeDays ?? 0;
   const dayConf: 'high' | 'medium' | 'low' = dataDays >= 14 ? 'high' : dataDays >= 7 ? 'medium' : 'low';
   const dayConfLabel = dayConf === 'high' ? t.confHigh : dayConf === 'medium' ? t.confMed : t.confLow;
-  const dayConfColor = dayConf === 'high' ? GREEN : dayConf === 'medium' ? '#B45309' : '#94a3b8';
+  const dayConfColor = dayConf === 'high' ? GREEN : dayConf === 'medium' ? tok.warningInk : tok.textFaint;
 
   if (!__gate.ok) return __gate.node;
 
@@ -217,10 +221,10 @@ export default function AdaptiveTDEE() {
               </View>
               <View style={[s.statCard, { backgroundColor: card, borderColor: border }]}>
                 <View style={{ flexDirection: rowDir(isRTL), alignItems: 'center', gap: 4 }}>
-                  {losing ? <TrendingDown size={14} color={GREEN} /> : <TrendingUp size={14} color="#B45309" />}
+                  {losing ? <TrendingDown size={14} color={GREEN} /> : <TrendingUp size={14} color={tok.warningInk} />}
                   <Text style={[s.statLabel, { color: muted }]}>{t.weightTrend}</Text>
                 </View>
-                <Text style={[s.statValue, { color: losing ? GREEN : '#B45309' }, align]}>
+                <Text style={[s.statValue, { color: losing ? GREEN : tok.warningInk }, align]}>
                   {res.trendKgPerWeek > 0 ? '+' : ''}{res.trendKgPerWeek}
                 </Text>
                 <Text style={[s.statUnit, { color: muted }, align]}>{t.kgWeek} · {res.weighIns} {t.weighIns}</Text>
@@ -238,7 +242,7 @@ export default function AdaptiveTDEE() {
                 onPress={apply}
                 disabled={applied || currentTarget === res.recommendedTarget}
               >
-                <Check size={18} color="#fff" />
+                <Check size={18} color={tok.onAccent} />
                 <Text style={s.applyTxt}>
                   {applied || currentTarget === res.recommendedTarget ? t.applied : t.apply}
                 </Text>
@@ -266,7 +270,7 @@ export default function AdaptiveTDEE() {
             <Text style={[s.dataTitle, { color: text }, align]}>{t.addData}</Text>
             <View style={[s.dataRow, rowAlign]}>
               <TouchableOpacity style={[s.dataBtn, { backgroundColor: GREEN, flexDirection: rowDir(isRTL) }]} onPress={() => router.push('/update-weight' as any)}>
-                <Scale size={18} color="#fff" />
+                <Scale size={18} color={tok.onAccent} />
                 <Text style={s.dataBtnTxt}>{t.addWeight}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[s.dataBtn, s.dataBtnAlt, { borderColor: GREEN, flexDirection: rowDir(isRTL) }]} onPress={() => router.push('/log-manual' as any)}>

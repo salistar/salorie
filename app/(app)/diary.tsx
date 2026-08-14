@@ -2,6 +2,7 @@
 // leaders MFP/Yazio) : 4 slots (petit-déj/déjeuner/snack/dîner) avec totaux par
 // slot, suppression, « copier hier », navigation par date. Trilingue + dark + RTL.
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { numLocaleFor } from '../../lib/format';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
@@ -47,10 +48,11 @@ export default function Diary() {
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
   const accent = isDark ? '#4ade80' : GREEN;
-  const bg = isDark ? '#0f1419' : '#f7faf8';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0f172a';
-  const sub = isDark ? '#94a3b8' : '#64748b';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
   const rowDir: any = { flexDirection: isRTL ? 'row-reverse' : 'row' };
   // i18n #90 : formatage localisé des nombres affichés (totaux/macros) — additif,

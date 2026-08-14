@@ -1,6 +1,7 @@
 // Section "Lance-toi" en haut du Home : LES 5 actions clés à 1 tap (pattern leaders :
 // le logging atteignable depuis la home), trilingue + theme-aware. Composant autonome.
 import React from 'react';
+import { useTokens } from '../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Bell, UtensilsCrossed, Dumbbell, Trophy, Newspaper, Sparkles } from 'lucide-react-native';
@@ -23,8 +24,9 @@ export default function HomeQuickActions({ onLog }: { onLog?: () => void }) {
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
   const accent = isDark ? '#4ade80' : GREEN;
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
+  const tok = useTokens();
+  const card = tok.surface;
+  const text = tok.text;
   const chipBg = isDark ? '#243b2f' : '#EAF4EE';
 
   const ACTIONS = [

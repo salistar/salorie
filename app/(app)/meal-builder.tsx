@@ -1,6 +1,7 @@
 // Meal-builder / recettes — compose un repas en cherchant des ingrédients
 // (searchFood / OpenFoodFacts) → total des macros en direct. Réutilise la recherche existante.
 import React, { useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, FlatList, Alert } from 'react-native';
 import { Search, Plus, Minus, Trash2, ChefHat, Check } from 'lucide-react-native';
 import { useUser } from '@clerk/clerk-expo';
@@ -40,10 +41,11 @@ export default function MealBuilderScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const bg = isDark ? '#0f1419' : '#F8FAFC';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const accent = isDark ? '#4ade80' : GREEN;
   const align: any = { textAlign: txtAlign(isRTL) };
   const row: any = { flexDirection: rowDir(isRTL) };

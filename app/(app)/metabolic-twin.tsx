@@ -1,5 +1,6 @@
 // Jumeau métabolique — projette ton poids selon ce que tu manges (+ ETA objectif).
 import React, { useEffect, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { Image, View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { Minus, Plus, TrendingDown, Flag } from 'lucide-react-native';
@@ -74,10 +75,11 @@ export default function MetabolicTwinScreen() {
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
   const GREEN = colors.primary;
-  const bg = isDark ? '#0f1419' : '#F4F7F9';
-  const card = isDark ? '#1e293b' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const align: any = { textAlign: txtAlign(isRTL) };
   const cardBorder = isDark ? { borderWidth: 1, borderColor: '#283241' } : null;
   const shadow = isDark ? { shadowColor: 'transparent', elevation: 0 } : null;

@@ -2,6 +2,7 @@
 // infos nutritionnelles via OpenFoodFacts (API publique, gratuite, sans cle),
 // puis pre-remplit l'ecran log-food-details. Logging produit ultra-rapide.
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image, ScrollView } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -184,7 +185,8 @@ export default function ScanBarcodeScreen() {
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(isDark), [isDark]);
-  const card = isDark ? '#1e293b' : '#ffffff';
+  const tok = useTokens();
+  const card = tok.surface;
   const textCol = isDark ? '#f1f5f9' : Colors.light.gray[900];
   const subCol = isDark ? '#94a3b8' : Colors.light.gray[500];
   const [permission, requestPermission] = useCameraPermissions();

@@ -2,6 +2,7 @@
 // virtuelles/groupe, séances, pas du jour). Lecture 100% ON-DEVICE depuis le
 // cache local `logs_<docId>` (type 'activity'). Groupé par jour + stats en tête.
 import React, { useCallback, useState } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
@@ -42,10 +43,11 @@ export default function ActivityScreen() {
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
   const accent = isDark ? '#4ade80' : GREEN;
-  const bg = isDark ? '#0f1419' : '#F4F7F9';
-  const card = isDark ? '#161C23' : '#ffffff';
-  const text = isDark ? '#f1f5f9' : '#0F172A';
-  const sub = isDark ? '#94a3b8' : '#64748B';
+  const tok = useTokens();
+  const bg = tok.bg;
+  const card = tok.surface;
+  const text = tok.text;
+  const sub = tok.textMuted;
   const border = isDark ? 'rgba(255,255,255,0.08)' : '#EEF2F6';
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
   const rowDir: any = { flexDirection: isRTL ? 'row-reverse' : 'row' };
