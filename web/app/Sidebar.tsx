@@ -9,6 +9,7 @@ const NAV = [
   { href: '/races', label: 'Courses virtuelles', icon: '🏁' },
   { href: '/orgs', label: 'Organisations B2B', icon: '🏢' },
   { href: '/feedback', label: 'Feedback users', icon: '💬' },
+  { href: '/emails', label: 'Emails support', icon: '📬' },
   { href: '/moderation', label: 'Modération', icon: '🧪' },
   { href: '/sport-fields', label: 'Terrains & matchs', icon: '⚽' },
   { href: '/marketplace', label: 'Marketplace', icon: '🛒' },

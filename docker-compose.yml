@@ -49,6 +49,9 @@ services:
       # .env (64 caracteres) et absente du conteneur. Consequence : le webhook du pipeline
       # refusait tout le monde, y compris l'outbox interne qui livre sur ce meme endpoint.
       ADMIN_API_KEY: ${ADMIN_API_KEY:-}
+      # Cle partagee avec l'Email Worker Cloudflare (support@salorie.com →
+      # POST /support-mail/ingest). Vide = endpoint ferme (403).
+      MAIL_INGEST_KEY: ${MAIL_INGEST_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       # Cle Maps SERVEUR pour Routes API, deplacee du telephone vers le backend le
       # 14 aout 2026. Repli seulement : la valeur prioritaire vient de l'admin /ai-keys
