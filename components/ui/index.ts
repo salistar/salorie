@@ -7,3 +7,6 @@ export { Skeleton, SkeletonCard } from './Skeleton';
 export { default as HeroImage } from './HeroImage';
 export { default as ScreenTitle } from './ScreenTitle';
 export { Input } from './Input';
+// Micro-interactions (D2) : appui qui s'enfonce, entrée en cascade.
+export { PressableScale } from './PressableScale';
+export { Apparition } from './Apparition';
