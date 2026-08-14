@@ -33,7 +33,11 @@ export type LigneJournal = {
   intensity?: string;
   protein?: number;
   carbs?: number;
-  fats?: number;
+  // Le mobile ecrit `fat` (cf. NutritionLog dans lib/firebase.ts) — on garde le
+  // meme nom pour que les deux clients lisent et ecrivent le meme champ.
+  fat?: number;
+  /** breakfast|lunch|snack|dinner — le creneau du Diary mobile. */
+  slot?: string;
   timestamp?: number;
 };
 
@@ -104,7 +108,7 @@ export function totaux(lignes: LigneJournal[]) {
     kcal: repas.reduce((a, l) => a + (Number(l.calories) || 0), 0),
     proteines: Math.round(repas.reduce((a, l) => a + (Number(l.protein) || 0), 0)),
     glucides: Math.round(repas.reduce((a, l) => a + (Number(l.carbs) || 0), 0)),
-    lipides: Math.round(repas.reduce((a, l) => a + (Number(l.fats) || 0), 0)),
+    lipides: Math.round(repas.reduce((a, l) => a + (Number(l.fat) || 0), 0)),
     kcalBrulees: activites.reduce((a, l) => a + (Number(l.calories) || 0), 0),
     eauMl: eaux.reduce((a, l) => a + (Number(l.calories) || 0), 0),
     nbRepas: repas.length,
