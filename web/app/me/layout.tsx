@@ -15,8 +15,10 @@ export default function MeLayout({ children }: { children: ReactNode }) {
   return (
     <MeProvider>
       <div className="me-shell">
+        {/* Premiere tabulation : sauter la navigation plutot que la retraverser. */}
+        <a href="#contenu" className="saut-nav">Aller au contenu</a>
         <MeNav />
-        <main className="me-contenu">{children}</main>
+        <main className="me-contenu" id="contenu">{children}</main>
       </div>
     </MeProvider>
   );
