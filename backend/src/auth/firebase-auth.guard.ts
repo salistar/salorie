@@ -10,6 +10,26 @@ import * as admin from 'firebase-admin';
 export class FirebaseAuthGuard implements CanActivate {
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const req = ctx.switchToHttp().getRequest();
+
+    // Identite ADMIN par cle de service, ajoutee le 13 aout 2026.
+    //
+    // L'admin web appelle le backend avec `x-admin-key` et SANS jeton Firebase — il
+    // n'agit pour aucun utilisateur, il n'en a donc aucun a presenter. Cette garde
+    // exigeait pourtant un jeton : /ml/feedback/stats et /ml/feedback/train-request
+    // (page Moderation) renvoyaient 401, tout comme /ml/cascade-stats, jamais utilisable
+    // depuis sa creation. Le controleur portait deja un helper `isAdmin()` commente
+    // « bypass la verification d'identite si valide » : l'intention existait, la garde ne
+    // la mettait pas en oeuvre.
+    //
+    // Sur : ADMIN_API_KEY est un secret de 64 caracteres aleatoires, et son absence fait
+    // desormais echouer FERME (cf. pipeline.controller). Une cle vide n'ouvre donc rien.
+    const cleAdmin = String(process.env.ADMIN_API_KEY || '').trim();
+    const cleFournie = String((req.headers && req.headers['x-admin-key']) || '').trim();
+    if (cleAdmin && cleFournie && cleFournie === cleAdmin) {
+      req.user = { uid: 'admin', admin: true };
+      return true;
+    }
+
     const header: string = (req.headers && req.headers.authorization) || '';
     const token = header.replace(/^Bearer\s+/i, '').trim();
     if (!token) throw new UnauthorizedException('Missing bearer token');
