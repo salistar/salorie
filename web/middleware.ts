@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, AUTH_COOKIE } from './lib/jwt';
+import { sectionDuChemin, peutVoir, sectionsVisibles, peutAppelerApi } from './lib/scopes';
 
 // Auth gate basée sur un JWT cookie (login/register custom + MongoDB).
 // Remplace l'ancien HTTP Basic Auth. Edge-safe (jose uniquement, pas de mongoose).
@@ -27,6 +28,28 @@ export async function middleware(req: NextRequest) {
   if (!payload) {
     const url = req.nextUrl.clone();
     url.pathname = '/login';
+    return NextResponse.redirect(url);
+  }
+
+  // Routes d'API : on REFUSE en JSON. Une redirection renverrait du HTML a du code
+  // qui attend des donnees, et l'interface afficherait une erreur incomprehensible.
+  if (pathname.startsWith('/api/') && !peutAppelerApi(payload.role, payload.scopes, pathname)) {
+    return NextResponse.json(
+      { ok: false, error: 'Hors de tes périmètres' },
+      { status: 403 },
+    );
+  }
+
+  // Perimetres : un admin qui tape une URL hors de ses sections n'atterrit pas sur
+  // une page vide ni sur une erreur, mais sur la premiere section qu'il a le droit
+  // de voir. Le menu ne lui proposait deja pas ce lien (cf. Sidebar) — ceci ferme
+  // l'acces direct par l'URL, qui restait ouvert.
+  const section = sectionDuChemin(pathname);
+  if (section && !peutVoir(payload.role, payload.scopes, section)) {
+    const url = req.nextUrl.clone();
+    const permises = sectionsVisibles(payload.role, payload.scopes);
+    url.pathname = permises[0]?.href || '/login';
+    url.searchParams.set('refus', section.href);
     return NextResponse.redirect(url);
   }
   return NextResponse.next();

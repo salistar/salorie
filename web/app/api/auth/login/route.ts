@@ -32,10 +32,10 @@ export async function POST(req: NextRequest) {
     if (tooMany(key)) {
       return NextResponse.json({ ok: false, error: 'Trop de tentatives — réessaie dans 15 min.' }, { status: 429 });
     }
-    const role = await verifyUserRole(String(email || ''), String(password || ''));
-    if (!role) return NextResponse.json({ ok: false, error: 'Identifiants invalides' }, { status: 401 });
+    const compte = await verifyUserRole(String(email || ''), String(password || ''));
+    if (!compte) return NextResponse.json({ ok: false, error: 'Identifiants invalides' }, { status: 401 });
     ATTEMPTS.delete(key); // succès -> compteur remis à zéro
-    const token = await signToken(String(email).toLowerCase().trim(), role);
+    const token = await signToken(String(email).toLowerCase().trim(), compte.role, compte.scopes);
     const res = NextResponse.json({ ok: true });
     res.cookies.set(AUTH_COOKIE, token, {
       httpOnly: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 7, secure: true,
