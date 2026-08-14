@@ -1,0 +1,53 @@
+import { Controller, Get, UseGuards, Req } from '@nestjs/common';
+import { createHmac } from 'crypto';
+import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
+
+// Serveurs ICE pour la voix de la marche à deux.
+// ---------------------------------------------------------------------------
+// Deux étages, et il faut les deux :
+//   · STUN découvre l'adresse publique de chaque téléphone. Gratuit, suffisant dans
+//     la majorité des cas, mais impuissant derrière certains NAT.
+//   · TURN RELAIE le flux quand la connexion directe est impossible. C'est le cas
+//     de beaucoup d'abonnés mobiles marocains, qui sont derrière un NAT de
+//     l'opérateur (CGNAT) : sans TURN, l'appel échoue purement et simplement.
+//
+// Les identifiants sont ÉPHÉMÈRES (mécanisme REST de coturn, `use-auth-secret`) :
+// le serveur ne stocke aucun compte, il signe un couple valable une heure. Le
+// secret ne quitte jamais le backend — un identifiant fuité expire tout seul.
+@Controller('social')
+export class SocialController {
+  @Get('turn-credentials')
+  @UseGuards(FirebaseAuthGuard)
+  turnCredentials(@Req() req: any) {
+    const secret = String(process.env.TURN_SECRET || '').trim();
+    const hote = String(process.env.TURN_HOST || 'turn.salorie.com').trim();
+
+    // STUN public de Google en repli : il ne relaie rien et ne voit aucune donnée,
+    // il répond seulement « voici l'adresse d'où tu m'écris ». Toujours utile, même
+    // sans TURN configuré.
+    const iceServers: any[] = [{ urls: ['stun:stun.l.google.com:19302', `stun:${hote}:3478`] }];
+
+    if (secret) {
+      // Nom d'utilisateur = <expiration UNIX>:<identifiant>, mot de passe = HMAC-SHA1
+      // signé avec le secret partagé avec coturn. C'est le format que coturn attend ;
+      // il recalcule le HMAC et n'a donc aucune base d'utilisateurs à tenir.
+      const expiration = Math.floor(Date.now() / 1000) + 3600;
+      const uid = String(req?.user?.uid || 'anon');
+      const username = `${expiration}:${uid}`;
+      const credential = createHmac('sha1', secret).update(username).digest('base64');
+      iceServers.push({
+        urls: [`turn:${hote}:3478?transport=udp`, `turn:${hote}:3478?transport=tcp`],
+        username,
+        credential,
+      });
+    }
+
+    return {
+      iceServers,
+      // Le client saura qu'il n'a que du STUN et pourra prévenir honnêtement que
+      // l'appel peut échouer, au lieu de tourner dans le vide.
+      relaisDisponible: Boolean(secret),
+      expireDansSec: 3600,
+    };
+  }
+}

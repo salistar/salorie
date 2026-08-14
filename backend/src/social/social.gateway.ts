@@ -1,0 +1,230 @@
+// Gateway sociale temps réel — présence, chat de course, signalisation WebRTC.
+// ---------------------------------------------------------------------------
+// Elle vit sur le namespace `/social` de la MÊME instance socket.io que les défis
+// de jeûne : un seul serveur, un seul port, une seule montée en charge à surveiller.
+//
+// Authentification au handshake, jamais après : un socket non authentifié est
+// déconnecté avant d'avoir pu émettre quoi que ce soit. L'uid vient du jeton
+// Firebase vérifié — jamais du client, qui pourrait se déclarer n'importe qui.
+//
+// Trois familles d'événements :
+//   · présence  — qui est en ligne, pour la pastille verte du feed ;
+//   · course    — salon de discussion d'une course virtuelle (filtré, limité, persisté) ;
+//   · duo       — position partagée et signalisation WebRTC pour la marche à deux.
+import {
+  WebSocketGateway, WebSocketServer, SubscribeMessage,
+  OnGatewayConnection, OnGatewayDisconnect, MessageBody, ConnectedSocket,
+} from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
+import { Logger } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import * as admin from 'firebase-admin';
+import { createHash } from 'crypto';
+import { RaceChatMessage, RaceChatMute } from './social.schemas';
+import { RedisService } from '../redis.service';
+import { filtrerMessage, expliquerRefus } from './moderation-chat';
+
+/** Hash court pour les journaux : l'uid EST l'email, il ne doit jamais s'y écrire. */
+const h = (uid: string) => createHash('sha1').update(String(uid || '')).digest('hex').slice(0, 8);
+
+type Presence = { uid: string; name: string; depuis: number };
+
+@WebSocketGateway({
+  namespace: '/social',
+  // Même politique que l'API HTTP (cf. main.ts) : les clients natifs n'envoient
+  // pas d'Origin et passent ; seuls les navigateurs sont contraints, et l'espace
+  // /me est servi depuis un sous-domaine de salorie.com.
+  cors: { origin: [/\.salorie\.com$/, /\.salistar\.com$/, 'http://localhost:3000', 'http://localhost:8081'] },
+})
+export class SocialGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  @WebSocketServer() server: Server;
+  private readonly log = new Logger('SocialGateway');
+
+  /** uid -> présence. Un même compte peut avoir plusieurs onglets ou appareils. */
+  private enLigne = new Map<string, Presence>();
+  /** socketId -> uid, pour retrouver qui part à la déconnexion. */
+  private parSocket = new Map<string, string>();
+
+  constructor(
+    @InjectModel(RaceChatMessage.name) private messages: Model<RaceChatMessage>,
+    @InjectModel(RaceChatMute.name) private mutes: Model<RaceChatMute>,
+    private redis: RedisService,
+  ) {}
+
+  // ── Connexion ─────────────────────────────────────────────────────────────
+  async handleConnection(socket: Socket) {
+    try {
+      const jeton = (socket.handshake.auth as any)?.token || (socket.handshake.query as any)?.token;
+      const decode = await admin.auth().verifyIdToken(String(jeton));
+      const uid = String(decode.uid || decode.email || '').toLowerCase();
+      if (!uid) throw new Error('uid absent');
+      (socket.data as any).uid = uid;
+      (socket.data as any).name = String((decode as any).name || '').slice(0, 40);
+      (socket.data as any).langue = 'fr';
+      this.parSocket.set(socket.id, uid);
+      this.enLigne.set(uid, { uid, name: (socket.data as any).name, depuis: Date.now() });
+      // On ne diffuse que des uid HACHÉS : le feed a besoin de savoir QUI est en
+      // ligne parmi ses amis, pas de recevoir la liste des emails de l'app.
+      this.server.emit('presence:maj', { enLigne: this.presencePublique() });
+    } catch {
+      socket.emit('social:erreur', { motif: 'auth' });
+      socket.disconnect(true);
+    }
+  }
+
+  handleDisconnect(socket: Socket) {
+    const uid = this.parSocket.get(socket.id);
+    this.parSocket.delete(socket.id);
+    if (!uid) return;
+    // Ne retirer la présence que si PLUS AUCUN socket de ce compte n'est ouvert :
+    // fermer un onglet ne doit pas faire disparaître quelqu'un qui a l'app ouverte
+    // sur son téléphone.
+    const encore = [...this.parSocket.values()].includes(uid);
+    if (!encore) {
+      this.enLigne.delete(uid);
+      this.server.emit('presence:maj', { enLigne: this.presencePublique() });
+    }
+  }
+
+  private presencePublique() {
+    return [...this.enLigne.values()].map((p) => ({ id: h(p.uid), name: p.name, depuis: p.depuis }));
+  }
+
+  // ── Chat de course ────────────────────────────────────────────────────────
+  @SubscribeMessage('race:join')
+  async rejoindreCourse(@ConnectedSocket() socket: Socket, @MessageBody() body: { raceId?: string; langue?: string }) {
+    const raceId = String(body?.raceId || '').trim();
+    if (!raceId) return;
+    if (body?.langue) (socket.data as any).langue = String(body.langue).slice(0, 2);
+    socket.join(`race:${raceId}`);
+    // Arriver dans un salon vide de tout historique donne l'impression que personne
+    // n'y parle. On sert les 50 derniers messages, du plus ancien au plus récent.
+    const recents = await this.messages
+      .find({ raceId, masque: false })
+      .sort({ ts: -1 })
+      .limit(50)
+      .lean();
+    socket.emit('race:historique', { raceId, messages: recents.reverse() });
+  }
+
+  @SubscribeMessage('race:leave')
+  quitterCourse(@ConnectedSocket() socket: Socket, @MessageBody() body: { raceId?: string }) {
+    const raceId = String(body?.raceId || '').trim();
+    if (raceId) socket.leave(`race:${raceId}`);
+  }
+
+  @SubscribeMessage('race:msg')
+  async messageCourse(@ConnectedSocket() socket: Socket, @MessageBody() body: { raceId?: string; text?: string }) {
+    const uid = (socket.data as any).uid as string;
+    const langue = (socket.data as any).langue || 'fr';
+    const raceId = String(body?.raceId || '').trim();
+    if (!uid || !raceId) return;
+
+    const refuser = (motif: string) => socket.emit('race:refus', { raceId, motif, message: expliquerRefus(motif, langue) });
+
+    // 1. Débit : 10 messages par minute. Redis, donc partagé entre instances.
+    const passe = await this.redis.rateLimit(`chat:${raceId}:${uid}`, 10, 60);
+    if (!passe) return refuser('debit');
+
+    // 2. Sanction en cours sur CETTE course.
+    const mute = await this.mutes.findOne({ raceId, uid }).lean();
+    if (mute && Number((mute as any).jusqua) > Date.now()) return refuser('muet');
+
+    // 3. Contenu.
+    const verdict = filtrerMessage(body?.text);
+    if (!verdict.ok) return refuser(verdict.motif || 'insulte');
+
+    const doc = await this.messages.create({
+      raceId,
+      uid,
+      name: (socket.data as any).name || '',
+      text: verdict.texte || '',
+      ts: Date.now(),
+    });
+
+    // On diffuse l'uid HACHÉ : le chat d'une course est public entre participants,
+    // les adresses e-mail ne le sont pas.
+    this.server.to(`race:${raceId}`).emit('race:msg', {
+      id: String(doc._id),
+      raceId,
+      auteur: h(uid),
+      name: doc.name,
+      text: doc.text,
+      ts: doc.ts,
+    });
+  }
+
+  @SubscribeMessage('race:signaler')
+  async signalerMessage(@ConnectedSocket() socket: Socket, @MessageBody() body: { messageId?: string }) {
+    const uid = (socket.data as any).uid as string;
+    const id = String(body?.messageId || '');
+    if (!uid || !id) return;
+    // Un signalement par personne et par message : sans cette borne, un seul
+    // utilisateur pourrait faire taire n'importe qui en signalant trois fois.
+    const unique = await this.redis.rateLimit(`signal:${id}:${uid}`, 1, 24 * 3600);
+    if (!unique) return;
+
+    const doc = await this.messages.findByIdAndUpdate(id, { $inc: { signalements: 1 } }, { new: true });
+    if (!doc) return;
+    if (doc.signalements >= 3 && !doc.masque) {
+      doc.masque = true;
+      await doc.save();
+      await this.mutes.updateOne(
+        { raceId: doc.raceId, uid: doc.uid },
+        { $set: { jusqua: Date.now() + 24 * 3600 * 1000, motif: 'trois signalements' } },
+        { upsert: true },
+      );
+      this.server.to(`race:${doc.raceId}`).emit('race:retire', { id });
+      this.log.warn(`message masqué course=${doc.raceId} auteur=${h(doc.uid)}`);
+    }
+  }
+
+  // ── Marche à deux : position et signalisation WebRTC ──────────────────────
+  @SubscribeMessage('duo:join')
+  rejoindreDuo(@ConnectedSocket() socket: Socket, @MessageBody() body: { duoId?: string }) {
+    const duoId = String(body?.duoId || '').trim();
+    if (!duoId) return;
+    socket.join(`duo:${duoId}`);
+    socket.to(`duo:${duoId}`).emit('duo:arrivee', { auteur: h((socket.data as any).uid) });
+  }
+
+  @SubscribeMessage('duo:pos')
+  positionDuo(@ConnectedSocket() socket: Socket, @MessageBody() body: { duoId?: string; lat?: number; lng?: number; km?: number }) {
+    const duoId = String(body?.duoId || '').trim();
+    const lat = Number(body?.lat);
+    const lng = Number(body?.lng);
+    if (!duoId || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    // Diffusion aux AUTRES seulement : renvoyer sa position à l'émetteur doublerait
+    // le trafic sans rien apporter.
+    socket.to(`duo:${duoId}`).emit('duo:pos', {
+      auteur: h((socket.data as any).uid),
+      lat, lng,
+      km: Number(body?.km) || 0,
+      ts: Date.now(),
+    });
+  }
+
+  // Signalisation WebRTC : le serveur ne fait que RELAYER offres, réponses et
+  // candidats ICE. Il ne voit jamais l'audio — celui-ci va de pair à pair, ou passe
+  // par le relais TURN, qui est chiffré et ne sait pas ce qu'il transporte.
+  @SubscribeMessage('webrtc:signal')
+  signalWebrtc(@ConnectedSocket() socket: Socket, @MessageBody() body: { duoId?: string; type?: string; data?: unknown }) {
+    const duoId = String(body?.duoId || '').trim();
+    const type = String(body?.type || '');
+    if (!duoId || !['offer', 'answer', 'ice'].includes(type)) return;
+    socket.to(`duo:${duoId}`).emit('webrtc:signal', {
+      auteur: h((socket.data as any).uid),
+      type,
+      data: body?.data,
+    });
+  }
+
+  @SubscribeMessage('duo:leave')
+  quitterDuo(@ConnectedSocket() socket: Socket, @MessageBody() body: { duoId?: string }) {
+    const duoId = String(body?.duoId || '').trim();
+    if (!duoId) return;
+    socket.to(`duo:${duoId}`).emit('duo:depart', { auteur: h((socket.data as any).uid) });
+    socket.leave(`duo:${duoId}`);
+  }
+}
