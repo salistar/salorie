@@ -11,6 +11,7 @@ import { Colors } from '../constants/Colors';
 import { useLogging } from '../lib/LoggingContext';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
+import { rowDir } from '../lib/rtl';
 import { useUser } from '@clerk/clerk-expo';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db, emailToDocId } from '../lib/firebase';
@@ -207,10 +208,11 @@ interface WeekRowProps {
 
 const WeekRow = React.memo(({ week, today, selectedDate, caloriesByDate, dailyGoal, onPress }: WeekRowProps) => {
   const { resolved } = useTheme();
+  const { isRTL } = useTranslation();
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(isDark), [isDark]);
   return (
-  <View style={styles.weekRow}>
+  <View style={[styles.weekRow, { flexDirection: rowDir(isRTL) }]}>
     {week.map((date) => {
       const key = toLocalDateString(date);
       return (

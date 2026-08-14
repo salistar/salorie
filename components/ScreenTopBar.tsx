@@ -5,6 +5,7 @@ import { Bell, Sun, Moon, Smartphone, Globe, ArrowLeft } from 'lucide-react-nati
 import { Colors } from '../constants/Colors';
 import { useTheme, ThemeMode } from '../lib/ThemeContext';
 import { useTranslation, Language } from '../lib/i18n';
+import { rowDir, txtAlign } from '../lib/rtl';
 import AppBrand from './AppBrand';
 
 // Libellés du menu de thème, traduits (sinon "Light/Dark/System" en anglais partout).
@@ -137,7 +138,11 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
             {(['en', 'fr', 'ar'] as Language[]).map((lang) => (
               <TouchableOpacity
                 key={lang}
-                style={[styles.menuItem, language === lang && { backgroundColor: menuActiveBg }]}
+                style={[
+                  styles.menuItem,
+                  { flexDirection: rowDir(isRTL) },
+                  language === lang && { backgroundColor: menuActiveBg },
+                ]}
                 onPress={() => {
                   setLanguage(lang);
                   setLangMenuOpen(false);
@@ -146,7 +151,7 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
                 <Text style={styles.menuItemFlag}>
                   {lang === 'en' ? '🇬🇧' : lang === 'fr' ? '🇫🇷' : '🇸🇦'}
                 </Text>
-                <Text style={[styles.menuItemText, { color: menuItemText }, language === lang && styles.menuItemTextActive]}>
+                <Text style={[styles.menuItemText, { color: menuItemText, textAlign: txtAlign(isRTL) }, language === lang && styles.menuItemTextActive]}>
                   {lang === 'en' ? 'English' : lang === 'fr' ? 'Français' : 'العربية'}
                 </Text>
               </TouchableOpacity>
@@ -164,14 +169,18 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
               return (
                 <TouchableOpacity
                   key={m}
-                  style={[styles.menuItem, mode === m && { backgroundColor: menuActiveBg }]}
+                  style={[
+                    styles.menuItem,
+                    { flexDirection: rowDir(isRTL) },
+                    mode === m && { backgroundColor: menuActiveBg },
+                  ]}
                   onPress={() => {
                     setMode(m);
                     setThemeMenuOpen(false);
                   }}
                 >
                   <Icon size={18} color={mode === m ? Colors.light.primary : (isDark ? colors.gray[600] : Colors.light.gray[700])} />
-                  <Text style={[styles.menuItemText, { color: menuItemText }, mode === m && styles.menuItemTextActive]}>
+                  <Text style={[styles.menuItemText, { color: menuItemText, textAlign: txtAlign(isRTL) }, mode === m && styles.menuItemTextActive]}>
                     {(THEME_LABELS[language] || THEME_LABELS.en)[m]}
                   </Text>
                 </TouchableOpacity>
