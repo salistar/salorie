@@ -99,7 +99,9 @@ async function fetchRoadLoop(origin: LatLng): Promise<LatLng[] | null> {
       lng: origin.lng + (3000 / (111111 * Math.cos((origin.lat * Math.PI) / 180))) * Math.sin(b),
     };
     try {
-      const enc = await fetchRoutePolyline(origin, dest, { mode: 'WALK', cle: GOOGLE_MAPS_KEY });
+      // `cle` retiree le 14 aout 2026 : l'appel Routes API part du backend, qui detient
+      // la cle serveur. GOOGLE_MAPS_KEY ne sert plus qu'a la WebView Maps JS ci-dessous.
+      const enc = await fetchRoutePolyline(origin, dest, { mode: 'WALK' });
       if (enc) {
         const p = decodePolyline(enc);
         if (p.length > 1) return p;

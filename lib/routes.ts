@@ -13,6 +13,8 @@
  * (`overview_polyline.points` → `polyline.encodedPolyline`), donc les décodeurs existants
  * des écrans restent valables tels quels.
  */
+import { auth } from './firebaseAuth';
+
 export type LatLng = { lat: number; lng: number };
 
 export type ModeItineraire = 'WALK' | 'DRIVE';
@@ -33,43 +35,65 @@ export function limiterEtapes(points: LatLng[], max = MAX_ETAPES): LatLng[] {
   return out;
 }
 
-const pt = (p: LatLng) => ({ location: { latLng: { latitude: p.lat, longitude: p.lng } } });
-
 /**
  * Renvoie la polyline ENCODÉE de l'itinéraire, ou `null` si aucun trajet n'est trouvé.
  *
- * Ne jette jamais : les deux appelants traitent l'absence d'itinéraire comme un cas normal
- * (repli sur le tracé à vol d'oiseau), pas comme une erreur.
+ * DEPUIS LE 14 AOÛT 2026, L'APPEL PART DU BACKEND, PLUS DU TÉLÉPHONE.
+ *
+ * L'app appelait `routes.googleapis.com` en direct avec `EXPO_PUBLIC_GOOGLE_MAPS_KEY`,
+ * donc avec une clé embarquée dans l'APK — extractible par quiconque, et facturée à
+ * Salorie. Surtout, cette clé ne pouvait être protégée par AUCUNE restriction :
+ *
+ *  - restriction par référent → mesurée le 13 août 2026, elle a fait tomber l'API en
+ *    « 403 Requests from referer <empty> are blocked » : un `fetch` React Native
+ *    n'envoie pas de référent ;
+ *  - restriction par application Android → inapplicable, la signature n'est pas
+ *    transmise sur un appel HTTP ordinaire.
+ *
+ * La clé était donc condamnée à rester ouverte à tout Internet. Depuis le serveur,
+ * l'appel part d'une IP fixe : la clé peut enfin être restreinte par adresse IP.
+ *
+ * Ne jette jamais : les deux appelants traitent l'absence d'itinéraire comme un cas
+ * normal (repli sur le tracé à vol d'oiseau), pas comme une erreur.
  */
 export async function fetchRoutePolyline(
   origin: LatLng,
   destination: LatLng,
-  opts: { mode?: ModeItineraire; etapes?: LatLng[]; cle: string } ,
+  opts: { mode?: ModeItineraire; etapes?: LatLng[] } = {},
 ): Promise<string | null> {
-  const { mode = 'WALK', etapes = [], cle } = opts;
-  if (!cle) return null;
+  const { mode = 'WALK', etapes = [] } = opts;
+  const API_URL = (process.env.EXPO_PUBLIC_API_URL || '').trim();
+  if (!API_URL) return null;
   try {
-    const res = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
+    const tok = await auth.currentUser?.getIdToken().catch(() => null);
+    // Timeout dur : sans lui, un backend lent figerait l'écran sur le tracé manquant.
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 20000);
+    const res = await fetch(`${API_URL}/ml/route`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Goog-Api-Key': cle,
-        // Sans FieldMask, Routes API répond 400 : le champ est OBLIGATOIRE.
-        'X-Goog-FieldMask': 'routes.polyline.encodedPolyline',
+        ...(tok ? { Authorization: `Bearer ${tok}` } : {}),
       },
       body: JSON.stringify({
-        origin: pt(origin),
-        destination: pt(destination),
-        ...(etapes.length ? { intermediates: limiterEtapes(etapes).map(pt) } : {}),
-        travelMode: mode,
+        origin,
+        destination,
+        mode,
+        // On échantillonne AVANT l'envoi : inutile de faire transiter mille points que le
+        // serveur réduirait à 25. Il applique le même algorithme en garde-fou.
+        ...(etapes.length ? { etapes: limiterEtapes(etapes) } : {}),
       }),
+      signal: ctrl.signal,
     });
+    clearTimeout(to);
+    if (!res.ok) return null;
     const j = await res.json();
-    return j?.routes?.[0]?.polyline?.encodedPolyline ?? null;
+    return j?.polyline ?? null;
   } catch {
     return null;
   }
 }
+
 
 /*
  * Le repli sur l'ancienne Directions API a été retiré le 5 août 2026, après vérification
