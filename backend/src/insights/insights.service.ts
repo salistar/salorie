@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createHash } from 'crypto';
 import { FirebaseService } from '../firebase.service';
 import { SecretsService } from '../secrets.service';
+import { AiService } from '../ai/ai.service';
 
 // Le docId user = email sanitisé (emailToDocId) : ne JAMAIS le journaliser en clair.
 // Hash court non réversible, suffisant pour corréler des lignes de log.
@@ -14,21 +14,9 @@ const uidHash = (id: string) => createHash('sha1').update(String(id || '')).dige
 @Injectable()
 export class InsightsService {
   private readonly logger = new Logger('Insights');
-  // `gemini-2.0-flash-lite` a ete RETIRE par Google (404 « no longer available »,
-  // verifie le 13 aout 2026). L'alias `-latest` suit les versions et ne perimera plus.
-  private model = process.env.GEMINI_LITE_MODEL || 'gemini-flash-lite-latest';
-  private genAI: GoogleGenerativeAI | null = null;
-  private genAIKey = '';
 
-  constructor(private fb: FirebaseService, private secrets: SecretsService) {}
+  constructor(private fb: FirebaseService, private secrets: SecretsService, private ai: AiService) {}
 
-  /** Client Gemini courant : cle de l'admin en priorite, sinon env. Null si absente. */
-  private async client(): Promise<GoogleGenerativeAI | null> {
-    const key = await this.secrets.get('GEMINI_API_KEY');
-    if (!key) { this.genAI = null; this.genAIKey = ''; return null; }
-    if (key !== this.genAIKey) { this.genAI = new GoogleGenerativeAI(key); this.genAIKey = key; }
-    return this.genAI;
-  }
 
   // Petit délai réparti (jitter) pour étaler le traitement par utilisateur et
   // éviter le thundering herd (rafale d'appels Gemini/Firestore au tick du cron).
@@ -76,8 +64,7 @@ export class InsightsService {
   }
 
   async generate(profile: any, logs: any[], periodLabel: string) {
-    const genAI = await this.client();
-    if (!genAI || logs.length === 0) return this.offline(logs, periodLabel);
+    if (logs.length === 0) return this.offline(logs, periodLabel);
     // RGPD/anonymisation : on n'envoie à Gemini AUCUN identifiant (ni nom, ni email,
     // ni uid) — uniquement l'objectif et un poids ARRONDI, plus les aliments loggés.
     const goal = String(profile?.goal || 'general health').slice(0, 40);
@@ -92,9 +79,15 @@ Return ONLY strict JSON, no backticks, with this exact shape:
 {"healthScore": number, "en": {"summary":"...","topFood":"...","hydrationStatus":"...","recommendation":"...","exerciseAnalysis":"..."}, "fr": {...}, "ar": {...}}
 Rules: summary=1 sentence; topFood=most frequent food or "—"; hydrationStatus=one word; recommendation<15 words; exerciseAnalysis=1-2 sentences. fr in French, ar in Arabic, en in English.`;
     try {
-      const model = genAI.getGenerativeModel({ model: this.model });
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
+      // Depuis le 14 aout 2026, les insights passent par la CASCADE TEXTE d'AiService
+      // (Cloudflare et Groq gratuits d'abord, puis 9 payants, Gemini en dernier) au lieu
+      // d'un client Gemini prive. Jusque-la ils ne connaissaient QUE Gemini : compte sans
+      // credits -> repli hors-ligne toutes les nuits, silencieusement, alors que deux
+      // tiers GRATUITS etaient operationnels a cote. ai.generate apporte aussi son cache
+      // Redis 6 h — memes logs, meme analyse, zero appel.
+      const text = await this.ai.generate(prompt);
+      // Les modeles de la cascade emballent parfois le JSON dans des clotures ```json
+      // malgre la consigne — on extrait le premier objet plutot que d'echouer.
       const m = text.match(/\{[\s\S]*\}/);
       if (!m) throw new Error('no json');
       const parsed = JSON.parse(m[0]);
