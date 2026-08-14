@@ -10,8 +10,13 @@ async function bootstrap() {
   app.use(urlencoded({ limit: '25mb', extended: true }));
   // S3/CORS: restrict to known origins. Native mobile requests send no Origin
   // header and are allowed by the cors lib; only browsers are constrained.
+  // salorie.com ajoute le 14 aout 2026 : le domaine PROPRE de l'application manquait a
+  // sa propre liste CORS, alors que tout y passe (app.salorie.com, api.salorie.com).
+  // Rien ne cassait parce que l'admin appelle via ses routes serveur — mais le premier
+  // appel navigateur direct aurait echoue sans un mot. gowithsally.com retire : reste de
+  // copier-coller d'un autre projet, aucun front de ce domaine n'appelle ce backend.
   app.enableCors({
-    origin: [/\.salistar\.com$/, /\.gowithsally\.com$/, 'http://localhost:3000', 'http://localhost:8081'],
+    origin: [/\.salorie\.com$/, /\.salistar\.com$/, 'http://localhost:3000', 'http://localhost:8081'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
