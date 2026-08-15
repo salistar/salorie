@@ -1,3 +1,5 @@
+import { withSentryConfig } from '@sentry/nextjs';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -20,4 +22,20 @@ const nextConfig = {
     ];
   },
 };
-export default nextConfig;
+// `withSentryConfig` branche le plugin de build : il enveloppe les routes API et
+// le rendu serveur, et peut televerser les source maps.
+//
+// Le televersement des source maps exige un SENTRY_AUTH_TOKEN, qui n'est PAS
+// configure ici. Sans lui, le build fonctionne normalement — les traces seront
+// simplement minifiees dans Sentry. `silent` evite un avertissement a chaque
+// build de production pour une fonctionnalite qu'on n'utilise pas encore.
+export default withSentryConfig(nextConfig, {
+  org: 'salistarcompany',
+  project: 'salorie-admin',
+  silent: !process.env.CI,
+  // Masque le DSN et les requetes Sentry derriere une route du site : les
+  // bloqueurs de publicite coupent les appels vers *.sentry.io, ce qui ferait
+  // disparaitre une partie des erreurs navigateur sans qu'on le sache.
+  tunnelRoute: '/monitoring',
+  disableLogger: true,
+});
