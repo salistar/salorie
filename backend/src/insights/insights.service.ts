@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import * as Sentry from '@sentry/nestjs';
 import { createHash } from 'crypto';
 import { FirebaseService } from '../firebase.service';
 import { SecretsService } from '../secrets.service';
@@ -121,7 +122,16 @@ Rules: summary=1 sentence; topFood=most frequent food or "—"; hydrationStatus=
   @Cron(process.env.INSIGHTS_CRON || '0 3 * * *')
   async nightly() {
     this.logger.log('Nightly insights precompute starting…');
-    await this.precomputeAll();
+    // `SentryGlobalFilter` ne couvre QUE le cycle HTTP : une tache planifiee qui
+    // jette (Firestore injoignable, cle absente au demarrage…) mourrait ici sans
+    // que rien ne quitte le serveur. On capture, puis on relance pour ne pas
+    // changer le comportement du planificateur.
+    try {
+      await this.precomputeAll();
+    } catch (e) {
+      Sentry.captureException(e, { tags: { job: 'insights-nightly' } });
+      throw e;
+    }
   }
 
   async precomputeAll(max = 1000) {
@@ -130,7 +140,11 @@ Rules: summary=1 sentence; topFood=most frequent food or "—"; hydrationStatus=
     const wKey = this.weekKey();
     const mKey = this.monthKey();
     const since = new Date(Date.now() - 35 * 24 * 3600 * 1000).toISOString().slice(0, 10); // YYYY-MM-DD
-    let done = 0, skipped = 0, reused = 0, calls = 0;
+    let done = 0, skipped = 0, reused = 0, calls = 0, failed = 0;
+    // Une cause distincte = un evenement Sentry, pas un par utilisateur : une cle
+    // d'API invalide fait echouer les 1000 identiquement, et 1000 evenements
+    // identiques videraient le quota sans rien apprendre de plus.
+    const causesVues = new Set<string>();
     let idx = 0;
     for (const u of users.docs) {
       // Stagger : petit délai réparti entre utilisateurs pour lisser la charge
@@ -158,10 +172,36 @@ Rules: summary=1 sentence; topFood=most frequent food or "—"; hydrationStatus=
           );
         }
         done++;
-      } catch (e: any) { this.logger.warn(`user ${uidHash(u.id)}: ${e.message}`); }
+      } catch (e: any) {
+        // Ce catch a longtemps ete un cul-de-sac : le cron se terminait « avec
+        // succes » meme quand TOUS les utilisateurs echouaient, et l'unique trace
+        // etait un `warn` dans les logs d'un conteneur que personne ne lit. C'est
+        // exactement la panne muette qui a motive l'installation de Sentry.
+        failed++;
+        this.logger.warn(`user ${uidHash(u.id)}: ${e.message}`);
+        const cause = String(e?.message || 'erreur inconnue').slice(0, 200);
+        if (!causesVues.has(cause)) {
+          causesVues.add(cause);
+          // Jamais l'identifiant en clair : c'est l'email sanitise (cf. uidHash).
+          Sentry.captureException(e, {
+            tags: { job: 'insights-nightly' },
+            extra: { utilisateur: uidHash(u.id) },
+          });
+        }
+      }
     }
-    const res = { weekKey: wKey, monthKey: mKey, users: users.size, precomputed: done, skipped, reused, geminiCalls: calls };
+    const res = { weekKey: wKey, monthKey: mKey, users: users.size, precomputed: done, skipped, reused, geminiCalls: calls, failed };
     this.logger.log(`Insights precompute done: ${JSON.stringify(res)}`);
+    // Un lot entierement en echec n'est pas la somme de N incidents isoles, c'est
+    // une panne unique (cle invalide, quota epuise, Firestore injoignable). On la
+    // signale comme telle, sinon elle se lit comme du bruit dans la liste.
+    const tentes = done + failed;
+    if (failed > 0 && tentes > 0 && failed === tentes) {
+      Sentry.captureMessage(
+        `Insights : les ${failed} utilisateurs traites ont echoue — ${[...causesVues][0]}`,
+        { level: 'error', tags: { job: 'insights-nightly' } },
+      );
+    }
     return res;
   }
 }

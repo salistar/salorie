@@ -1,11 +1,15 @@
 import { InsightsService } from './insights.service';
 
-// Tests UNITAIRES de la logique PURE (aucune DB / réseau). FirebaseService est un stub
-// (les méthodes testées ne l'utilisent pas). Pas d'appel Gemini (genAI null sans clé).
+// Tests UNITAIRES de la logique PURE (aucune DB / réseau). Les trois dépendances sont
+// des stubs : les méthodes testées ne s'en servent pas. Pas d'appel Gemini.
+//
+// Le service a gagné `SecretsService` et `AiService` sans que ce fichier suive : `tsc`
+// échouait donc ici (TS2554), alors que Jest passait — ts-jest transpile sans vérifier
+// les types. Un typecheck rouge que les tests verts masquent finit par être ignoré.
 describe('InsightsService — logique pure', () => {
   let svc: InsightsService;
   beforeEach(() => {
-    svc = new InsightsService({ db: () => ({}) } as any);
+    svc = new InsightsService({ db: () => ({}) } as any, {} as any, {} as any);
   });
 
   describe('weekKey / monthKey', () => {

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import * as Sentry from '@sentry/nestjs';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { FirebaseService } from '../firebase.service';
@@ -32,7 +33,17 @@ export class PipelineService {
   // le nombre d'utilisateurs. Les journaux de production montraient `newEvents: 0` a
   // chaque passage, 24 h sur 24.
   @Cron(process.env.PIPELINE_CRON || '*/30 * * * *')
-  async cron() { try { await this.runCdc(); } catch (e: any) { this.logger.warn('CDC: ' + e.message); } }
+  // Le `warn` seul ne quittait pas le serveur : ce cron peut echouer toutes les
+  // 30 minutes sans que personne ne le sache. `SentryGlobalFilter` ne couvre que
+  // le cycle HTTP, une tache planifiee doit se signaler elle-meme.
+  async cron() {
+    try {
+      await this.runCdc();
+    } catch (e: any) {
+      this.logger.warn('CDC: ' + e.message);
+      Sentry.captureException(e, { tags: { job: 'pipeline-cdc' } });
+    }
+  }
 
   async runCdc() {
     const db = this.fb.db();

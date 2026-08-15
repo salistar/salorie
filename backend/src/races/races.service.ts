@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron } from '@nestjs/schedule';
+import * as Sentry from '@sentry/nestjs';
 import { Model } from 'mongoose';
 import { VirtualRace } from './races.schemas';
 import { RaceParticipant } from './races.schemas';
@@ -50,7 +51,11 @@ export class RacesService {
       if (ops.length) await this.parts.bulkWrite(ops);
       if (sent) this.logger.log(`jalons: ${sent} push envoyés (${ops.length} maj)`);
     } catch (e: any) {
+      // Meme raison que les deux autres crons : hors du cycle HTTP, rien ne
+      // remonte tout seul. Un envoi de notifications casse est invisible cote
+      // serveur ET cote utilisateur — personne ne signale un push jamais recu.
       this.logger.warn(`milestone cron: ${e?.message}`);
+      Sentry.captureException(e, { tags: { job: 'races-milestones' } });
     }
   }
 
