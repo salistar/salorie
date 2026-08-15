@@ -98,17 +98,51 @@ function PontFirebase({ children }: { children: ReactNode }) {
   );
 }
 
+// L'ancienne accroche DECRIVAIT le produit — « ton compte sur grand ecran », « le
+// meme compte que sur telephone ». C'est vrai, et ca ne donne envie a personne.
+// Celle-ci vend ce que Salorie fait de mieux et que ses concurrents ne font pas :
+// reconnaitre la cuisine d'ici. Yazio et MyFitnessPal ne savent pas ce qu'est une
+// rfissa ; c'est LA raison de choisir Salorie, elle doit etre la premiere chose
+// qu'on lit.
+const ACCROCHE: Record<string, { titre: string; sous: string; preuves: string[] }> = {
+  fr: {
+    titre: 'Enfin une app qui connaît ta cuisine.',
+    sous: 'Photographie ton assiette. On reconnaît le plat, on compte pour toi.',
+    preuves: ['653 plats marocains', 'Halal vérifié au scan', 'Mode Ramadan'],
+  },
+  en: {
+    titre: 'At last, an app that knows your kitchen.',
+    sous: 'Snap your plate. We recognise the dish and do the counting.',
+    preuves: ['653 Moroccan dishes', 'Halal checked on scan', 'Ramadan mode'],
+  },
+  ar: {
+    titre: 'أخيرًا تطبيق يعرف مطبخك.',
+    sous: 'صوّر طبقك. نتعرّف على الأكلة ونحسب بدلًا عنك.',
+    preuves: ['653 طبقًا مغربيًا', 'التحقق من الحلال عند المسح', 'وضع رمضان'],
+  },
+};
+
 /** Ecran de connexion : les memes fournisseurs que sur telephone (Google inclus). */
 function Connexion() {
+  const langue =
+    typeof navigator !== 'undefined'
+      ? String(navigator.language || '').slice(0, 2).toLowerCase()
+      : 'fr';
+  const a = ACCROCHE[langue] || ACCROCHE.fr;
+  const rtl = langue === 'ar';
   return (
     <div className="me-auth">
-      <div className="me-auth-mot">
+      <div className="me-auth-mot" dir={rtl ? 'rtl' : 'ltr'}>
         <div className="me-auth-marque">Salorie</div>
-        <h1>Ton compte, sur grand écran.</h1>
-        <p>
-          Le même compte que sur téléphone. Ton journal, tes analyses et tes courses te
-          suivent d’un appareil à l’autre, en direct.
-        </p>
+        <h1>{a.titre}</h1>
+        <p>{a.sous}</p>
+        {/* Trois preuves courtes plutot qu'un paragraphe : sur un ecran de
+            connexion, personne ne lit une phrase de plus. */}
+        <ul className="me-auth-preuves">
+          {a.preuves.map((t) => (
+            <li key={t}>{t}</li>
+          ))}
+        </ul>
       </div>
       <div className="me-auth-form">
         {/* routing="hash" : la navigation interne de Clerk reste dans l'URL, sans
