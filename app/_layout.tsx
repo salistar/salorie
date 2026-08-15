@@ -17,6 +17,29 @@ import {
 import { syncAllUserData, printLogLegend } from '../lib/LocalDataStore';
 import { signInToFirebase } from '../lib/firebaseAuth';
 import { initLogCapture } from '../lib/logBuffer';
+import * as Sentry from '@sentry/react-native';
+
+// Sentry — crashs et erreurs REELS des utilisateurs. Jusqu'ici on ne voyait rien
+// de ce qui casse sur leurs telephones : `initLogCapture` ci-dessous ne sert que
+// si l'utilisateur pense a appuyer sur « Envoyer les logs », ce que personne ne
+// fait. Init au chargement du module, avant que React ne monte, pour attraper
+// aussi les erreurs de demarrage.
+//
+// Le DSN n'est pas un secret (ecriture seule, prevu pour du code client) — il est
+// de toute facon embarque dans le bundle, le cacher n'aurait aucun sens.
+Sentry.init({
+  dsn:
+    process.env.EXPO_PUBLIC_SENTRY_DSN ||
+    'https://46b44f790eea7763f7535c3af306a472@o4509622074081280.ingest.de.sentry.io/4511911730806864',
+  environment: __DEV__ ? 'development' : 'production',
+  // Rien en developpement : Metro affiche deja tout, et ca polluerait le quota.
+  enabled: !__DEV__,
+  // Erreurs toujours envoyees ; traces echantillonnees pour tenir dans le palier gratuit.
+  tracesSampleRate: 0.1,
+  // Aucune donnee personnelle : l'app manipule des donnees de sante et des photos
+  // de repas. On veut la pile d'appel, pas le contenu.
+  sendDefaultPii: false,
+});
 
 // Capture les 50 dernières erreurs/warnings → "Envoyer les logs" (Profil → support web).
 initLogCapture();
@@ -720,7 +743,7 @@ class ErrorBoundary extends Component<{ children: any }, { error: Error | null }
   }
 }
 
-export default function RootLayout() {
+function RootLayout() {
   // Cache le splash natif TOT (avant que Clerk ne charge). Sinon le splash natif
   // (blanc) reste au-dessus de tout tant que <ClerkLoaded> n'a pas fire -> ecran
   // blanc. Avec ce hideAsync, on voit le fallback <ClerkLoading> (vert) pendant
@@ -757,3 +780,9 @@ export default function RootLayout() {
     </ErrorBoundary>
   );
 }
+
+// `Sentry.wrap` enveloppe le composant racine : il attache le suivi de navigation
+// d'Expo Router et remonte les erreurs de rendu que l'`ErrorBoundary` maison
+// intercepte pour l'affichage — celle-ci evite l'ecran blanc, mais n'envoie rien
+// nulle part. Les deux sont complementaires.
+export default Sentry.wrap(RootLayout);
