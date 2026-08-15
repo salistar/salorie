@@ -74,15 +74,37 @@ services:
     image: coturn/coturn:4.6-alpine
     container_name: salorie-coturn
     restart: unless-stopped
-    network_mode: host
+    # PORTS PUBLIES plutot que `network_mode: host` (15 aout 2026).
+    #
+    # Le mode host etait le choix « propre » sur le papier : coturn voit la vraie
+    # adresse publique et ouvre sa plage de relais sans intermediaire. Il avait un
+    # defaut fatal ici — Docker ne pose AUCUNE regle reseau pour un conteneur en
+    # mode host. Le port 3478 restait donc derriere le pare-feu de la machine, et
+    # l'ouvrir demandait un sudo dont personne n'a le mot de passe.
+    #
+    # En publiant les ports, Docker insere lui-meme ses regles, qui passent AVANT
+    # celles d'ufw. Le relais devient joignable sans toucher au pare-feu.
+    #
+    # Contrepartie : coturn est desormais derriere une traduction d'adresse et ne
+    # connait plus l'adresse publique. Sans `--external-ip`, il annoncerait son IP
+    # de conteneur (172.x) dans ses candidats ICE — inutilisable depuis Internet.
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+      # Plage de relais VOLONTAIREMENT COURTE : Docker cree une regle par port, et
+      # publier les 16 000 ports par defaut rendrait le demarrage interminable.
+      # 21 ports = 21 sessions relayees simultanees, tres au-dela du trafic actuel.
+      - "49160-49180:49160-49180/udp"
     command: >-
       -n
+      --listening-ip=0.0.0.0
       --listening-port=3478
+      --external-ip=${TURN_PUBLIC_IP:-}
       --realm=${TURN_HOST:-turn.salorie.com}
       --use-auth-secret
       --static-auth-secret=${TURN_SECRET:-changez-moi}
       --min-port=49160
-      --max-port=49200
+      --max-port=49180
       --no-tls
       --no-dtls
       --no-cli

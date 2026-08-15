@@ -120,6 +120,15 @@ jobs:
               echo "TURN_SECRET deja present — conserve"
             fi
             grep -q '^TURN_HOST=' .env || printf 'TURN_HOST=%s\n' 'turn.salorie.com' >> .env
+            # coturn est passe derriere la traduction d'adresse de Docker (ports
+            # publies au lieu du mode host, 15 aout 2026). Il doit donc annoncer
+            # l'adresse PUBLIQUE dans ses candidats ICE : sans elle il proposerait
+            # son IP de conteneur, que personne ne peut joindre. Reecrite a chaque
+            # deploiement — c'est l'IP du serveur, elle ne se devine pas mais elle
+            # est connue d'ici.
+            grep -vE '^TURN_PUBLIC_IP=' .env > .env.ip || true
+            printf 'TURN_PUBLIC_IP=%s\n' '${{ secrets.VPS_HOST }}' >> .env.ip
+            mv .env.ip .env
 
             # Un secret vide s'ecrit sans bruit et ne se voit qu'a l'usage : le 13 aout 2026,
             # CF_ACCOUNT_ID et CF_API_TOKEN sont arrives VIDES (collage avale par le prompt
