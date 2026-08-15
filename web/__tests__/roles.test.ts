@@ -28,6 +28,13 @@ function routes(dir: string): string[] {
 // clé d'installation).
 const HORS_PERIMETRE = (p: string) => p.replace(/\\/g, '/').includes('/api/auth/');
 
+// Gardes acceptes pour une route mutante. `requireWriter` refuse les `viewer` ;
+// `requireSuperadmin` n'accepte QUE les `owner` — il est donc strictement plus
+// strict. Ne chercher que `requireWriter` faisait echouer /api/admins, pourtant
+// mieux protegee que ce que le test exige : la regle porte sur le niveau de
+// droit, pas sur le nom de la fonction.
+const GARDES = ['requireWriter', 'requireSuperadmin'];
+
 describe('back-office — aucune route mutante sans contrôle du rôle', () => {
   const fichiers = routes(RACINE).filter((p) => !HORS_PERIMETRE(p));
 
@@ -35,14 +42,14 @@ describe('back-office — aucune route mutante sans contrôle du rôle', () => {
     expect(fichiers.length).toBeGreaterThan(5);
   });
 
-  it('chaque POST/PUT/PATCH/DELETE passe par requireWriter', () => {
+  it('chaque POST/PUT/PATCH/DELETE passe par un garde de role', () => {
     const fautifs: string[] = [];
     for (const f of fichiers) {
       const src = fs.readFileSync(f, 'utf8');
       const re = /export async function (POST|PUT|PATCH|DELETE)\([^)]*\)\s*\{([\s\S]*?)\n\}/g;
       let m: RegExpExecArray | null;
       while ((m = re.exec(src))) {
-        if (!m[2].includes('requireWriter')) {
+        if (!GARDES.some((garde) => m![2].includes(garde))) {
           fautifs.push(`${path.relative(RACINE, f).replace(/\\/g, '/')} ${m[1]}`);
         }
       }

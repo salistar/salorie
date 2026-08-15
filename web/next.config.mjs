@@ -37,5 +37,9 @@ export default withSentryConfig(nextConfig, {
   // bloqueurs de publicite coupent les appels vers *.sentry.io, ce qui ferait
   // disparaitre une partie des erreurs navigateur sans qu'on le sache.
   tunnelRoute: '/monitoring',
-  disableLogger: true,
+  // Retire les traces de debogage du SDK du bundle. Remplace `disableLogger`,
+  // deprecie et supprime dans une version a venir.
+  webpack: {
+    treeshake: { removeDebugLogging: true },
+  },
 });
