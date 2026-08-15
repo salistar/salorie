@@ -96,6 +96,11 @@ services:
     # un saut de la. Les plages privees, le loopback et le lien-local sont donc
     # refuses comme destinations, le relais TCP est coupe, et des quotas bornent ce
     # qu'un seul compte peut consommer.
+    #
+    # `--no-multicast-peers` et `--no-loopback-peers` ont ete RETIRES de cette liste :
+    # coturn 4.6 les rejette (il repond par son aide et sort en 255), ces protections
+    # etant devenues son comportement par defaut. Les y remettre recasserait le
+    # service — c'est ce qui vient d'arriver le 15 aout 2026.
     ports:
       - "3478:3478/udp"
       - "3478:3478/tcp"
@@ -118,8 +123,6 @@ services:
       --no-cli
       --log-file=stdout
       --fingerprint
-      --no-multicast-peers
-      --no-loopback-peers
       --no-tcp-relay
       --denied-peer-ip=10.0.0.0-10.255.255.255
       --denied-peer-ip=172.16.0.0-172.31.255.255
