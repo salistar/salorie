@@ -101,6 +101,13 @@
       ],
       "expo-notifications",
       [
+        "@sentry/react-native",
+        {
+          "organization": "salistarcompany",
+          "project": "salorie-mobile"
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "android": {
