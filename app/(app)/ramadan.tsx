@@ -11,6 +11,8 @@
 //
 // Trilingue en/fr/ar (libellés arabes existants), dark, RTL, flèche retour.
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { suggererSuhoor, suggererIftar, nomAliment, type Aliment } from '../../lib/ramadanAssiettes';
+import BASE_LOCALE from '../../assets/data/local-foods.json';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, Switch } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
@@ -39,6 +41,7 @@ const TXT: any = {
     nextIftar: 'Next Iftar in', nextSuhoor: 'Suhoor ends in', canEat: 'Iftar 🌙 — you can eat',
     suhoorAt: 'Suhoor', iftarAt: 'Iftar', timesUnavailable: 'Times unavailable — check the city or your connection.',
     suhoor: 'Suhoor', iftar: 'Iftar', kcal: 'kcal', protein: 'Protein', carbs: 'Carbs', fat: 'Fat', water: 'water',
+    assiettes: 'Tonight’s plates', assiettesSub: 'Suggested from 653 Moroccan dishes — swap anything you like.',
     glasses: 'glasses', budgetNote: 'Based on your daily goal — protein is balanced across both meals.',
     macroSplit: 'Macro split', macroSplitSub: 'Indicative share of each macro per meal.',
     ofDay: 'of day',
@@ -59,6 +62,7 @@ const TXT: any = {
     nextIftar: 'Prochain Iftar dans', nextSuhoor: 'Le Suhoor se termine dans', canEat: 'Iftar 🌙 — tu peux manger',
     suhoorAt: 'Suhoor', iftarAt: 'Iftar', timesUnavailable: 'Horaires indisponibles — vérifie la ville ou ta connexion.',
     suhoor: 'Suhoor', iftar: 'Iftar', kcal: 'kcal', protein: 'Protéines', carbs: 'Glucides', fat: 'Lipides', water: 'eau',
+    assiettes: 'Les assiettes du soir', assiettesSub: 'Suggérées parmi 653 plats marocains — remplace ce que tu veux.',
     glasses: 'verres', budgetNote: 'Basé sur ton objectif du jour — les protéines sont équilibrées entre les deux repas.',
     macroSplit: 'Répartition des macros', macroSplitSub: 'Part indicative de chaque macro par repas.',
     ofDay: 'du jour',
@@ -79,6 +83,7 @@ const TXT: any = {
     nextIftar: 'الإفطار القادم خلال', nextSuhoor: 'ينتهي السحور خلال', canEat: 'الإفطار 🌙 — يمكنك الأكل',
     suhoorAt: 'السحور', iftarAt: 'الإفطار', timesUnavailable: 'المواقيت غير متوفرة — تحقق من المدينة أو اتصالك.',
     suhoor: 'السحور', iftar: 'الإفطار', kcal: 'سعرة', protein: 'بروتين', carbs: 'كربوهيدرات', fat: 'دهون', water: 'ماء',
+    assiettes: 'أطباق الليلة', assiettesSub: 'مقترحة من 653 طبقًا مغربيًا — بدّل ما شئت.',
     glasses: 'أكواب', budgetNote: 'حسب هدفك اليومي — البروتين موزّع بالتساوي بين الوجبتين.',
     hydration: 'الترطيب', hydrationSub: 'الأكواب المشروبة / الهدف بين الإفطار والسحور.', glass: 'كوب',
     addGlass: '+كوب', resetGlasses: 'إعادة ضبط', slots: 'أوقات التذكير',
@@ -207,6 +212,25 @@ export default function RamadanScreen() {
   const split: SplitBudget = useMemo(
     () => splitBudget(goals.calories, { protein: goals.protein, carbs: goals.carbs, fat: goals.fat }),
     [goals.calories, goals.protein, goals.carbs, goals.fat],
+  );
+
+  // ── Les assiettes du soir (F3) ────────────────────────────────────────────
+  // Memorisees sur la DATE et le budget : sans cela, la suggestion changerait a
+  // chaque rendu de l'ecran, et une proposition qui bouge sans cesse n'inspire
+  // aucune confiance. La base locale est embarquee — le Ramadan se vit souvent en
+  // famille, loin du wifi.
+  const jourCourant = useMemo(() => {
+    const d = new Date();
+    const p2 = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+  }, []);
+  const assietteSuhoor = useMemo(
+    () => suggererSuhoor(BASE_LOCALE as Aliment[], split.suhoor.kcal, jourCourant),
+    [split.suhoor.kcal, jourCourant],
+  );
+  const assietteIftar = useMemo(
+    () => suggererIftar(BASE_LOCALE as Aliment[], split.iftar.kcal, jourCourant),
+    [split.iftar.kcal, jourCourant],
   );
 
   // ── Répartition indicative des macros par repas (dérivée du split, présentation seule) ──
@@ -361,6 +385,32 @@ export default function RamadanScreen() {
         <MealCard icon={Sunrise} name={t.suhoor} meal={split.suhoor} />
         <MealCard icon={Moon} name={t.iftar} meal={split.iftar} />
         <Text style={[styles.footNote, { color: sub, textAlign: txtAlign(isRTL) }]}>{t.budgetNote}</Text>
+
+        {/* (c-ter) LES ASSIETTES — le budget disait combien manger, jamais quoi.
+            Suggestions deterministes tirees de la base locale : memes plats toute
+            la journee, et disponibles hors connexion. */}
+        <Card variant="raised" style={styles.cardBox}>
+          <Text style={[styles.secTitle, { color: text, marginBottom: 2, textAlign: txtAlign(isRTL) }]}>{t.assiettes}</Text>
+          <Text style={[styles.footNote, { color: sub, marginBottom: 10, textAlign: txtAlign(isRTL) }]}>{t.assiettesSub}</Text>
+          {([['suhoor', assietteSuhoor], ['iftar', assietteIftar]] as const).map(([cle, assiette]) => (
+            <View key={cle} style={{ marginBottom: 10 }}>
+              <Text style={[styles.legendTxt, { color: text, fontWeight: '800', textAlign: txtAlign(isRTL) }]}>
+                {cle === 'suhoor' ? t.suhoor : t.iftar} · {assiette.kcal} {t.kcal}
+              </Text>
+              {assiette.portions.map((portion) => (
+                <View
+                  key={portion.aliment.n}
+                  style={[styles.legendItem, { flexDirection: rowDir(isRTL), justifyContent: 'space-between' }]}
+                >
+                  <Text style={[styles.legendTxt, { color: sub, flex: 1, textAlign: txtAlign(isRTL) }]} numberOfLines={1}>
+                    {nomAliment(portion.aliment, String(language))}
+                  </Text>
+                  <Text style={[styles.legendTxt, { color: sub }]}>{portion.grammes} g · {portion.kcal} {t.kcal}</Text>
+                </View>
+              ))}
+            </View>
+          ))}
+        </Card>
 
         {/* (c-bis) Répartition indicative des macros Suhoor/Iftar — présentation dérivée du split */}
         <Card variant="raised" style={styles.cardBox}>
