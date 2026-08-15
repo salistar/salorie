@@ -18,6 +18,7 @@ import {
   useAuth,
   useUser,
 } from '@clerk/clerk-react';
+import { frFR, arSA } from '@clerk/localizations';
 import { PUBLIC_CONFIG, espaceMePret, variablesManquantes, emailToDocId } from '../../lib/publicConfig';
 import { connecterFirebase } from '../../lib/firebaseBridge';
 
@@ -103,10 +104,10 @@ function Connexion() {
     <div className="me-auth">
       <div className="me-auth-mot">
         <div className="me-auth-marque">Salorie</div>
-        <h1>Ton compte, sur grand ecran.</h1>
+        <h1>Ton compte, sur grand écran.</h1>
         <p>
-          Le meme compte que sur telephone. Ton journal, tes analyses et tes courses te
-          suivent d'un appareil a l'autre, en direct.
+          Le même compte que sur téléphone. Ton journal, tes analyses et tes courses te
+          suivent d’un appareil à l’autre, en direct.
         </p>
       </div>
       <div className="me-auth-form">
@@ -116,6 +117,24 @@ function Connexion() {
       </div>
     </div>
   );
+}
+
+/**
+ * Langue de l'écran de connexion.
+ *
+ * Avant la connexion, `users/{uid}.language` n'est pas lisible — on ne sait pas
+ * encore qui arrive. La langue du navigateur est la seule information disponible,
+ * et c'est aussi la plus probable : quelqu'un dont le système est en arabe ne
+ * s'attend pas à un formulaire en anglais.
+ */
+function localisationClerk() {
+  if (typeof navigator === 'undefined') return frFR;
+  const l = String(navigator.language || '').slice(0, 2).toLowerCase();
+  // `undefined` = anglais, la langue NATIVE du composant. Importer `enUS` pour
+  // l'obtenir aurait ajouté une quarantaine de kilo-octets au chargement d'une
+  // page de connexion, pour redire à Clerk ce qu'il sait déjà.
+  if (l === 'en') return undefined;
+  return l === 'ar' ? arSA : frFR;
 }
 
 export default function MeProvider({ children }: { children: ReactNode }) {
@@ -133,7 +152,16 @@ export default function MeProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ClerkProvider publishableKey={PUBLIC_CONFIG.clerkPublishableKey} afterSignOutUrl="/me">
+    <ClerkProvider
+      publishableKey={PUBLIC_CONFIG.clerkPublishableKey}
+      afterSignOutUrl="/me"
+      localization={localisationClerk()}
+      // Le formulaire portait sa propre apparence, claire, au milieu d'une page
+      // qui suit le thème du système : sur un écran en sombre, la carte blanche
+      // tranchait comme un corps étranger. On lui passe la couleur de marque et on
+      // le laisse s'accorder au reste.
+      appearance={{ variables: { colorPrimary: '#2e8b57', borderRadius: '12px' } }}
+    >
       <SignedOut>
         <Connexion />
       </SignedOut>
