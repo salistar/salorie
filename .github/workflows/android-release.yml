@@ -64,6 +64,16 @@ jobs:
       # affichaient « aucun défi disponible » et ne pouvaient ni rejoindre une course, ni lire
       # un classement, ni remonter une progression. Sans message, sans log, sans crash.
       EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
+      # Sentry : le plugin ajoute au build release une tache Gradle qui televerse les
+      # source maps via `sentry-cli`. Elle exige un SENTRY_AUTH_TOKEN, qui n'existe pas
+      # ici — et `sentry.gradle` n'a AUCUN `ignoreExitValue` : l'echec du televersement
+      # ferait echouer tout le build, apres 90 minutes, alors que l'AAB est deja bon.
+      #
+      # On le desactive donc explicitement. Contrepartie assumee, la meme que sur les
+      # deux Next.js : les piles d'appel arrivent MINIFIEES dans Sentry. Pour retrouver
+      # des noms lisibles, creer un token Sentry (scope project:releases), le poser en
+      # secret GitHub SENTRY_AUTH_TOKEN, et passer cette variable a 'false'.
+      SENTRY_DISABLE_AUTO_UPLOAD: 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -206,12 +216,17 @@ jobs:
           manque=""
           grep -aqF "$CLE_FIREBASE" "$B" || manque="$manque Firebase"
           grep -aqF "$CLE_MAPS"     "$B" || manque="$manque Maps"
+          # Cle publique du DSN Sentry mobile. Ce n'est PAS un secret (ecriture seule,
+          # prevue pour du code client) et elle est ecrite en dur dans app/_layout.tsx,
+          # donc son absence ici signifierait que l'init Sentry a disparu du bundle —
+          # et l'app repartirait aveugle sans que rien ne le signale.
+          grep -aqF "46b44f790eea7763f7535c3af306a472" "$B" || manque="$manque Sentry"
           if [ -n "$manque" ]; then
             echo "::error::Clés ABSENTES de l'AAB livré :$manque"
             echo "Gradle a probablement rebundlé sans l'environnement du job."
             exit 1
           fi
-          echo "Clés Firebase et Maps présentes dans l'AAB livré."
+          echo "Clés Firebase, Maps et DSN Sentry présents dans l'AAB livré."
 
       # `if: always()` : le keystore doit disparaître du runner même si Gradle a échoué.
       - name: Wipe keystore
