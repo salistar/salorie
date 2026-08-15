@@ -1,0 +1,70 @@
+{
+  "devise": "MAD",
+  "note": "Prix moyens INDICATIFS d'un souk marocain, hors saison exceptionnelle. Ils varient selon la ville, l'etal et le moment de l'annee : ils servent a CADRER un budget, pas a annoncer une addition. Modifiables depuis l'admin.",
+  "maj": "2026-08",
+  "produits": [
+    { "id": "tomate", "n": "Tomates", "ar": "طماطم", "etal": "legumes", "unite": "kg", "prix": 7, "k": 18, "p": 0.9, "c": 3.9, "f": 0.2, "base": true },
+    { "id": "oignon", "n": "Oignons", "ar": "بصل", "etal": "legumes", "unite": "kg", "prix": 6, "k": 40, "p": 1.1, "c": 9.3, "f": 0.1, "base": true },
+    { "id": "pomme-terre", "n": "Pommes de terre", "ar": "بطاطس", "etal": "legumes", "unite": "kg", "prix": 6, "k": 77, "p": 2, "c": 17, "f": 0.1, "base": true },
+    { "id": "carotte", "n": "Carottes", "ar": "جزر", "etal": "legumes", "unite": "kg", "prix": 6, "k": 41, "p": 0.9, "c": 9.6, "f": 0.2, "base": true },
+    { "id": "courgette", "n": "Courgettes", "ar": "كوسة", "etal": "legumes", "unite": "kg", "prix": 7, "k": 17, "p": 1.2, "c": 3.1, "f": 0.3 },
+    { "id": "navet", "n": "Navets", "ar": "لفت", "etal": "legumes", "unite": "kg", "prix": 5, "k": 28, "p": 0.9, "c": 6.4, "f": 0.1 },
+    { "id": "poivron", "n": "Poivrons", "ar": "فلفل", "etal": "legumes", "unite": "kg", "prix": 10, "k": 26, "p": 1, "c": 6, "f": 0.3 },
+    { "id": "aubergine", "n": "Aubergines", "ar": "باذنجان", "etal": "legumes", "unite": "kg", "prix": 8, "k": 25, "p": 1, "c": 6, "f": 0.2 },
+    { "id": "haricot-vert", "n": "Haricots verts", "ar": "لوبيا خضراء", "etal": "legumes", "unite": "kg", "prix": 13, "k": 31, "p": 1.8, "c": 7, "f": 0.1 },
+    { "id": "petit-pois", "n": "Petits pois", "ar": "جلبانة", "etal": "legumes", "unite": "kg", "prix": 12, "k": 81, "p": 5.4, "c": 14, "f": 0.4 },
+    { "id": "chou", "n": "Chou", "ar": "كرنب", "etal": "legumes", "unite": "kg", "prix": 5, "k": 25, "p": 1.3, "c": 6, "f": 0.1 },
+    { "id": "concombre", "n": "Concombre", "ar": "خيار", "etal": "legumes", "unite": "kg", "prix": 6, "k": 15, "p": 0.7, "c": 3.6, "f": 0.1 },
+    { "id": "courge", "n": "Courge rouge", "ar": "قرع أحمر", "etal": "legumes", "unite": "kg", "prix": 5, "k": 26, "p": 1, "c": 6.5, "f": 0.1 },
+    { "id": "coriandre", "n": "Coriandre et persil", "ar": "قزبر ومعدنوس", "etal": "legumes", "unite": "botte", "prix": 2, "k": 23, "p": 2.1, "c": 3.7, "f": 0.5, "base": true },
+    { "id": "ail", "n": "Ail", "ar": "ثوم", "etal": "legumes", "unite": "kg", "prix": 25, "k": 149, "p": 6.4, "c": 33, "f": 0.5, "base": true },
+    { "id": "citron", "n": "Citrons", "ar": "حامض", "etal": "legumes", "unite": "kg", "prix": 10, "k": 29, "p": 1.1, "c": 9, "f": 0.3 },
+
+    { "id": "orange", "n": "Oranges", "ar": "برتقال", "etal": "fruits", "unite": "kg", "prix": 6, "k": 47, "p": 0.9, "c": 12, "f": 0.1, "base": true },
+    { "id": "pomme", "n": "Pommes", "ar": "تفاح", "etal": "fruits", "unite": "kg", "prix": 15, "k": 52, "p": 0.3, "c": 14, "f": 0.2 },
+    { "id": "banane", "n": "Bananes", "ar": "موز", "etal": "fruits", "unite": "kg", "prix": 12, "k": 89, "p": 1.1, "c": 23, "f": 0.3 },
+    { "id": "pasteque", "n": "Pastèque", "ar": "دلاح", "etal": "fruits", "unite": "kg", "prix": 4, "k": 30, "p": 0.6, "c": 7.6, "f": 0.2 },
+    { "id": "datte", "n": "Dattes", "ar": "تمر", "etal": "fruits", "unite": "kg", "prix": 45, "k": 282, "p": 2.5, "c": 75, "f": 0.4 },
+
+    { "id": "poulet", "n": "Poulet", "ar": "دجاج", "etal": "boucher", "unite": "kg", "prix": 22, "k": 165, "p": 31, "c": 0, "f": 3.6, "base": true },
+    { "id": "viande-hachee", "n": "Viande hachée", "ar": "كفتة", "etal": "boucher", "unite": "kg", "prix": 80, "k": 250, "p": 26, "c": 0, "f": 16 },
+    { "id": "boeuf", "n": "Bœuf", "ar": "لحم البقر", "etal": "boucher", "unite": "kg", "prix": 95, "k": 217, "p": 26, "c": 0, "f": 12 },
+    { "id": "agneau", "n": "Agneau", "ar": "لحم الغنم", "etal": "boucher", "unite": "kg", "prix": 115, "k": 294, "p": 25, "c": 0, "f": 21 },
+    { "id": "foie", "n": "Foie", "ar": "كبدة", "etal": "boucher", "unite": "kg", "prix": 60, "k": 135, "p": 20, "c": 3.9, "f": 3.6 },
+
+    { "id": "sardine", "n": "Sardines", "ar": "سردين", "etal": "poissonnier", "unite": "kg", "prix": 12, "k": 208, "p": 25, "c": 0, "f": 11, "base": true },
+    { "id": "merlan", "n": "Merlan", "ar": "مرلة", "etal": "poissonnier", "unite": "kg", "prix": 50, "k": 90, "p": 18, "c": 0, "f": 1.3 },
+    { "id": "maquereau", "n": "Maquereau", "ar": "الماكرو", "etal": "poissonnier", "unite": "kg", "prix": 25, "k": 205, "p": 19, "c": 0, "f": 14 },
+
+    { "id": "oeuf", "n": "Œufs", "ar": "بيض", "etal": "epicier", "unite": "douzaine", "prix": 17, "k": 143, "p": 13, "c": 0.7, "f": 9.5, "base": true },
+    { "id": "lait", "n": "Lait", "ar": "حليب", "etal": "epicier", "unite": "L", "prix": 8, "k": 61, "p": 3.2, "c": 4.8, "f": 3.3, "base": true },
+    { "id": "yaourt", "n": "Yaourt nature", "ar": "زبادي", "etal": "epicier", "unite": "pot", "prix": 3, "k": 61, "p": 3.5, "c": 4.7, "f": 3.3 },
+    { "id": "beurre", "n": "Beurre", "ar": "زبدة", "etal": "epicier", "unite": "250g", "prix": 18, "k": 717, "p": 0.9, "c": 0.1, "f": 81 },
+    { "id": "fromage", "n": "Fromage", "ar": "جبن", "etal": "epicier", "unite": "250g", "prix": 22, "k": 350, "p": 22, "c": 2, "f": 28 },
+
+    { "id": "farine", "n": "Farine", "ar": "دقيق", "etal": "epicier", "unite": "kg", "prix": 6, "k": 364, "p": 10, "c": 76, "f": 1, "base": true },
+    { "id": "semoule", "n": "Semoule", "ar": "سميدة", "etal": "epicier", "unite": "kg", "prix": 8, "k": 360, "p": 12, "c": 73, "f": 1, "base": true },
+    { "id": "riz", "n": "Riz", "ar": "أرز", "etal": "epicier", "unite": "kg", "prix": 15, "k": 360, "p": 7, "c": 79, "f": 0.7 },
+    { "id": "pates", "n": "Pâtes", "ar": "معكرونة", "etal": "epicier", "unite": "kg", "prix": 10, "k": 371, "p": 13, "c": 75, "f": 1.5 },
+    { "id": "lentille", "n": "Lentilles", "ar": "عدس", "etal": "epicier", "unite": "kg", "prix": 15, "k": 353, "p": 25, "c": 60, "f": 1.1, "base": true },
+    { "id": "pois-chiche", "n": "Pois chiches", "ar": "حمص", "etal": "epicier", "unite": "kg", "prix": 16, "k": 364, "p": 19, "c": 61, "f": 6, "base": true },
+    { "id": "haricot-blanc", "n": "Haricots blancs", "ar": "لوبيا بيضاء", "etal": "epicier", "unite": "kg", "prix": 14, "k": 333, "p": 23, "c": 60, "f": 0.8 },
+    { "id": "feve", "n": "Fèves sèches", "ar": "فول", "etal": "epicier", "unite": "kg", "prix": 12, "k": 341, "p": 26, "c": 58, "f": 1.5 },
+
+    { "id": "huile-table", "n": "Huile de table", "ar": "زيت المائدة", "etal": "epicier", "unite": "L", "prix": 20, "k": 884, "p": 0, "c": 0, "f": 100, "base": true },
+    { "id": "huile-olive", "n": "Huile d'olive", "ar": "زيت الزيتون", "etal": "epicier", "unite": "L", "prix": 75, "k": 884, "p": 0, "c": 0, "f": 100 },
+    { "id": "sucre", "n": "Sucre", "ar": "سكر", "etal": "epicier", "unite": "kg", "prix": 7, "k": 400, "p": 0, "c": 100, "f": 0 },
+    { "id": "sel", "n": "Sel", "ar": "ملح", "etal": "epicier", "unite": "kg", "prix": 3, "k": 0, "p": 0, "c": 0, "f": 0, "base": true },
+    { "id": "epices", "n": "Épices (ras el hanout, cumin…)", "ar": "توابل", "etal": "epicier", "unite": "sachet", "prix": 5, "k": 0, "p": 0, "c": 0, "f": 0, "base": true },
+    { "id": "the", "n": "Thé vert", "ar": "أتاي", "etal": "epicier", "unite": "200g", "prix": 22, "k": 0, "p": 0, "c": 0, "f": 0 },
+    { "id": "olive", "n": "Olives", "ar": "زيتون", "etal": "epicier", "unite": "kg", "prix": 25, "k": 115, "p": 0.8, "c": 6, "f": 11 },
+    { "id": "pain", "n": "Pain", "ar": "خبز", "etal": "epicier", "unite": "unité", "prix": 1.5, "k": 265, "p": 9, "c": 49, "f": 3.2, "base": true }
+  ],
+  "etals": {
+    "legumes": { "n": "Marchand de légumes", "ar": "بائع الخضر" },
+    "fruits": { "n": "Marchand de fruits", "ar": "بائع الفواكه" },
+    "boucher": { "n": "Boucher", "ar": "الجزار" },
+    "poissonnier": { "n": "Poissonnier", "ar": "بائع السمك" },
+    "epicier": { "n": "Épicier", "ar": "البقال" }
+  }
+}
