@@ -51,18 +51,34 @@ jobs:
             (sudo ss -lnu 2>/dev/null || ss -lnu) | grep -E ':3478' || echo "rien n ecoute sur UDP 3478"
 
             echo "--- pare-feu ---"
-            if command -v ufw >/dev/null 2>&1; then
-              sudo ufw status | head -20 || echo "ufw non interrogeable"
+            # `sudo -n` : jamais de demande de mot de passe. Sans cela la commande
+            # attend une saisie qui ne viendra pas et l'etape se termine muette —
+            # c'est ce qui a rendu le premier diagnostic illisible.
+            if ! command -v ufw >/dev/null 2>&1; then
+              echo "ufw absent — le filtrage est celui de l hebergeur, hors de portee d ici"
+            elif sudo -n true 2>/dev/null; then
+              sudo -n ufw status verbose | head -25
             else
-              echo "ufw absent — le filtrage vient peut-etre de l hebergeur, hors de portee d ici"
+              echo "SUDO INDISPONIBLE sans mot de passe pour ce compte."
+              echo "Le pare-feu ne peut donc pas etre lu ni modifie depuis la CI."
+              ufw status 2>&1 | head -3 || true
             fi
 
             echo "--- cle Clerk disponible sur le serveur ? ---"
             # On cherche le .env du pont de jetons sans JAMAIS afficher la valeur.
             CHEMIN_ENV=""
-            for c in /home/deploy/apps/*/firebase-token/.env /home/deploy/*/firebase-token/.env /opt/*/firebase-token/.env; do
+            for c in $(find /home /opt /srv -maxdepth 5 -name '.env' -path '*firebase-token*' 2>/dev/null); do
               [ -f "$c" ] && CHEMIN_ENV="$c" && break
             done
+            # Le service tourne peut-etre en conteneur : on regarde alors s'il porte
+            # la variable, sans jamais en afficher la valeur.
+            CONTENEUR_PONT="$(docker ps --format '{{.Names}}' | grep -iE 'firebase|token|auth' | head -1)"
+            if [ -n "$CONTENEUR_PONT" ]; then
+              echo "conteneur candidat : $CONTENEUR_PONT"
+              docker exec "$CONTENEUR_PONT" printenv CLERK_SECRET_KEY >/dev/null 2>&1                 && echo "CLERK_SECRET_KEY : presente dans le conteneur"                 || echo "CLERK_SECRET_KEY : absente du conteneur"
+            else
+              echo "aucun conteneur de pont de jetons repere"
+            fi
             if [ -n "$CHEMIN_ENV" ]; then
               echo "trouve : $CHEMIN_ENV"
               grep -q '^CLERK_SECRET_KEY=' "$CHEMIN_ENV" && echo "CLERK_SECRET_KEY : presente" || echo "CLERK_SECRET_KEY : ABSENTE"
@@ -78,19 +94,23 @@ jobs:
             echo "=============== APPLICATION ==============="
 
             echo "--- pare-feu : ouverture (additive) ---"
-            if command -v ufw >/dev/null 2>&1 && sudo ufw status | grep -qi '^Status: active'; then
-              sudo ufw allow 3478/udp  comment 'TURN Salorie'
-              sudo ufw allow 3478/tcp  comment 'TURN Salorie'
-              sudo ufw allow 49160:49200/udp comment 'TURN relais Salorie'
-              sudo ufw status | grep -E '3478|49160' || true
+            if command -v ufw >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+              sudo -n ufw allow 3478/udp  comment 'TURN Salorie' || true
+              sudo -n ufw allow 49160:49200/udp comment 'TURN relais Salorie' || true
+              sudo -n ufw status | grep -E '3478|49160' || true
             else
               echo "ufw inactif ou absent : rien a ouvrir ici. Si 3478 reste ferme depuis"
               echo "l exterieur, le filtrage est celui de l hebergeur (panneau du VPS)."
             fi
 
             echo "--- Clerk : ajout des origines du domaine propre ---"
+            CSK=""
             if [ -n "$CHEMIN_ENV" ] && grep -q '^CLERK_SECRET_KEY=' "$CHEMIN_ENV"; then
               CSK="$(grep -m1 '^CLERK_SECRET_KEY=' "$CHEMIN_ENV" | cut -d= -f2-)"
+            elif [ -n "$CONTENEUR_PONT" ]; then
+              CSK="$(docker exec "$CONTENEUR_PONT" printenv CLERK_SECRET_KEY 2>/dev/null || true)"
+            fi
+            if [ -n "$CSK" ]; then
               # `allowed_origins` REMPLACE la liste : on repart donc de l'existante
               # et on y ajoute, sinon on couperait l'acces aux domaines actuels.
               ACTUELLES="$(curl -s -H "Authorization: Bearer $CSK" https://api.clerk.com/v1/instance \
