@@ -86,6 +86,24 @@ jobs:
               echo "aucun .env de pont de jetons trouve"
             fi
 
+            echo "--- proxy Caddy : ou vivent les vhosts ? ---"
+            CADDY="$(docker ps --format '{{.Names}}' | grep -i caddy | head -1)"
+            echo "conteneur : ${CADDY:-aucun}"
+            for f in $(find /home /opt /srv /etc -maxdepth 5 -iname 'Caddyfile' 2>/dev/null | head -5); do
+              echo "fichier : $f"
+              # On liste UNIQUEMENT les noms d'hote (lignes en debut de bloc) et on
+              # masque tout ce qui ressemble a un secret : un Caddyfile qui fait du
+              # defi DNS porte un jeton d'API en clair.
+              grep -oE '^[a-z0-9*.-]+\.(com|net|org|ma)[^{]*\{' "$f" 2>/dev/null | head -20
+              grep -icE 'token|api_key|password|secret' "$f" 2>/dev/null | xargs -I{} echo "  (lignes sensibles masquees : {})"
+            done
+            echo "--- un jeton Cloudflare avec droits DNS existe-t-il deja ici ? ---"
+            # Caddy qui obtient un certificat par defi DNS detient forcement un jeton
+            # ayant Zone:DNS:Edit — exactement celui qui nous manque.
+            if [ -n "$CADDY" ]; then
+              docker exec "$CADDY" printenv 2>/dev/null | grep -oE '^(CF_API_TOKEN|CLOUDFLARE_API_TOKEN|CF_TOKEN)=' | sed 's/=$/ : presente/' || echo "aucune variable Cloudflare dans le conteneur Caddy"
+            fi
+
             if [ "$APPLIQUER" != "true" ]; then
               echo "=== diagnostic seul — rien n a ete modifie ==="
               exit 0
