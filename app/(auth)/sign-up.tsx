@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useSignUp } from '@clerk/clerk-expo';
+import * as Sentry from '@sentry/react-native';
 import { useGoogleSSO, OAUTH_REDIRECT } from '../../lib/googleSSO';
 import { useRouter, Link } from 'expo-router';
 import { Mail, Lock, User, ArrowRight, Globe, ArrowLeft, Hash } from 'lucide-react-native';
@@ -229,7 +230,14 @@ export default function SignUpScreen() {
         console.log('[Google SSO sign-up] état bénin, pas d\'alerte:', code || msg);
         return;
       }
+      // Meme raison que sur sign-in : sans cette ligne, une inscription Google
+      // cassee reste invisible. Un utilisateur qui n'arrive pas a creer son
+      // compte ne remplit pas de formulaire de support — il desinstalle.
       console.error('[API<-Clerk] Google Sign Up FAILED:', JSON.stringify(err, null, 2));
+      Sentry.captureException(err, {
+        tags: { ecran: 'sign-up', flux: 'google-sso' },
+        extra: { codeClerk: code },
+      });
       alert(msg || 'Google sign up failed');
     }
   };

@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useSignIn } from '@clerk/clerk-expo';
+import * as Sentry from '@sentry/react-native';
 import { useGoogleSSO, OAUTH_REDIRECT } from '../../lib/googleSSO';
 import { useRouter, Link } from 'expo-router';
 import { Mail, Lock, ArrowRight, Globe, ArrowLeft } from 'lucide-react-native';
@@ -181,7 +182,17 @@ export default function SignInScreen() {
         console.log('[Google SSO] état bénin (déjà connecté), pas d\'alerte:', code || msg);
         return;
       }
+      // Une connexion Google cassee ne se voyait NULLE PART : `console.error` est
+      // retire du bundle en release, et l'`alert` ne s'affiche que chez celui qui
+      // n'arrive pas a entrer — donc precisement quelqu'un qui ne peut rien
+      // signaler. C'est le pire endroit possible pour une panne muette.
+      // Constate en production le 16/08/2026 :
+      // « Missing external verification redirect URL for SSO flow ».
       console.error('[Google SSO] Error:', JSON.stringify(err, null, 2));
+      Sentry.captureException(err, {
+        tags: { ecran: 'sign-in', flux: 'google-sso' },
+        extra: { codeClerk: code },
+      });
       alert(msg || 'Google sign in failed');
     }
   };
