@@ -152,9 +152,27 @@ export default function ResultsScreen() {
 
   useEffect(() => {
     const processData = async () => {
+      // Le profil arrive en JSON dans un parametre de route. `JSON.parse` etait
+      // appele sans garde : un parametre absent ou tronque (lien profond, reprise
+      // apres kill d'Android, navigation inattendue) jetait, et le catch general
+      // se contentait de couper le chargement. L'ecran affichait alors « Ton plan »
+      // avec une coche verte et des valeurs vides — un faux succes dont on ne peut
+      // pas repartir. On renvoie plutot l'utilisateur saisir son profil.
+      let userProfile: any;
       try {
-        const userProfile = JSON.parse(params.data as string);
-        
+        userProfile = JSON.parse(String(params.data ?? ''));
+        if (!userProfile || typeof userProfile !== 'object') throw new Error('profil vide');
+      } catch (e) {
+        Sentry.captureException(e, {
+          tags: { ecran: 'onboarding-results', cause: 'profil-illisible' },
+          // Jamais le contenu : il porte poids, objectif et donnees de sante.
+          extra: { longueurParametre: String(params.data ?? '').length },
+        });
+        router.replace('/(onboarding)' as any);
+        return;
+      }
+
+      try {
         // 1. Start Analysis (dummy wait) — chargement raccourci (~1,2s total).
         await new Promise(resolve => setTimeout(resolve, 500));
         setSteps(prev => prev.map((s, i) => i === 0 ? { ...s, status: 'completed' } : i === 1 ? { ...s, status: 'loading' } : s));
