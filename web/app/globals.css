@@ -437,7 +437,13 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .me-auth-mot {
   position: relative; isolation: isolate;
   background-image:
-    linear-gradient(155deg, rgba(15,40,25,.92) 0%, rgba(20,60,38,.78) 45%, rgba(46,139,87,.62) 100%),
+    /* Voile NEUTRE et degressif, pas un aplat vert. Le premier essai montait a 92 %
+       d'opacite sur toute la surface : la photo devenait une tache sombre, on perdait
+       l'ambre du the et le vert du persil — autant garder l'aplat de couleur. Ici il
+       est dense la ou le texte se pose (a gauche) et s'efface vers la droite, ou il
+       n'y a rien a lire. Neutre plutot que vert : une teinte par-dessus une photo lui
+       vole ses couleurs. */
+    linear-gradient(100deg, rgba(6,16,11,.90) 0%, rgba(6,16,11,.72) 38%, rgba(6,16,11,.34) 72%, rgba(6,16,11,.18) 100%),
     url('/me/connexion.jpg');
   background-size: cover; background-position: center;
   color: #fff; padding: 8vh var(--sp-8); display: flex; flex-direction: column; justify-content: center; gap: var(--sp-4);
