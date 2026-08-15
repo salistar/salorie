@@ -982,7 +982,13 @@ export default function ChallengeScreen() {
                     style={[styles.poiCard, { backgroundColor: card }]}
                     onPress={() => setViewerPoi(i)}
                   >
-                    <View style={styles.poiImgWrap}>
+                    {/* Le fond d'attente etait un gris clair FIGE (#e5e7eb) : en
+                        mode sombre, un rectangle vif apparaissait le temps que la
+                        vue de rue se charge. C'est un fond d'ATTENTE, donc une
+                        couleur est la bonne reponse — pas une image, qui ferait
+                        croire que le point d'interet en a une. Il lui manquait
+                        seulement de basculer. */}
+                    <View style={[styles.poiImgWrap, { backgroundColor: tok.surfaceSunken }]}>
                       <PoiPhoto challengeId={challengeId} index={i} style={styles.poiImg} photoUrl={isMongo && pois[i] ? streetViewUrl(pois[i].lat, pois[i].lng) : undefined} />
                       {!isReached && (
                         <View style={styles.poiLock}>
