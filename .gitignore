@@ -107,3 +107,7 @@ web/tsconfig.tsbuildinfo
 # Videos d exercices : servies par api.salorie.com/videos, plus embarquees depuis registry.ts.
 # Les .mp4 locaux ne sont que la source d envoi vers srv3 (76 Mo hors de git).
 assets/videos/*.mp4
+
+# Cache Python des scripts utilitaires (scripts/*.py)
+__pycache__/
+*.pyc
