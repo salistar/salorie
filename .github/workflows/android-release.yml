@@ -65,15 +65,22 @@ jobs:
       # un classement, ni remonter une progression. Sans message, sans log, sans crash.
       EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
       # Sentry : le plugin ajoute au build release une tache Gradle qui televerse les
-      # source maps via `sentry-cli`. Elle exige un SENTRY_AUTH_TOKEN, qui n'existe pas
-      # ici — et `sentry.gradle` n'a AUCUN `ignoreExitValue` : l'echec du televersement
-      # ferait echouer tout le build, apres 90 minutes, alors que l'AAB est deja bon.
+      # source maps via `sentry-cli`. Sans elle, les piles d'appel arrivent MINIFIEES —
+      # un `t.a is not a function` sans fichier ni ligne.
       #
-      # On le desactive donc explicitement. Contrepartie assumee, la meme que sur les
-      # deux Next.js : les piles d'appel arrivent MINIFIEES dans Sentry. Pour retrouver
-      # des noms lisibles, creer un token Sentry (scope project:releases), le poser en
-      # secret GitHub SENTRY_AUTH_TOKEN, et passer cette variable a 'false'.
-      SENTRY_DISABLE_AUTO_UPLOAD: 'true'
+      # Les DEUX lignes sont necessaires. Un secret enregistre mais non declare ici
+      # n'atteint jamais `sentry-cli` : meme piege que docker-compose, ou une variable
+      # absente de `environment:` n'atteint pas le conteneur. Et `sentry.gradle` n'a
+      # AUCUN `ignoreExitValue` : un jeton manquant ou invalide fait echouer TOUT le
+      # build, a la derniere etape, alors que l'AAB est deja bon. Le build debug ne le
+      # montrera pas — cette tache n'existe que sur les variantes release.
+      #
+      # Jeton d'ORGANISATION Sentry, de portee fixe `org:ci` (televersement des source
+      # maps, creation de release, correspondances de code) : il n'y a plus de scopes a
+      # choisir. Pour revenir en arriere sans rien toucher d'autre, repasser
+      # SENTRY_DISABLE_AUTO_UPLOAD a 'true'.
+      SENTRY_DISABLE_AUTO_UPLOAD: 'false'
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
