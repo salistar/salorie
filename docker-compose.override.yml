@@ -88,6 +88,14 @@ services:
     # Contrepartie : coturn est desormais derriere une traduction d'adresse et ne
     # connait plus l'adresse publique. Sans `--external-ip`, il annoncerait son IP
     # de conteneur (172.x) dans ses candidats ICE — inutilisable depuis Internet.
+    #
+    # DURCISSEMENT (retabli le 15 aout 2026, apres confirmation que le service
+    # demarre). Un relais TURN acheminE du trafic vers l'adresse que le CLIENT
+    # demande : sans restriction, un compte legitime peut s'en servir pour atteindre
+    # le reseau prive du serveur — les conteneurs Mongo et Redis sont sur 172.x, a
+    # un saut de la. Les plages privees, le loopback et le lien-local sont donc
+    # refuses comme destinations, le relais TCP est coupe, et des quotas bornent ce
+    # qu'un seul compte peut consommer.
     ports:
       - "3478:3478/udp"
       - "3478:3478/tcp"
@@ -109,6 +117,17 @@ services:
       --no-dtls
       --no-cli
       --log-file=stdout
+      --fingerprint
+      --no-multicast-peers
+      --no-loopback-peers
+      --no-tcp-relay
+      --denied-peer-ip=10.0.0.0-10.255.255.255
+      --denied-peer-ip=172.16.0.0-172.31.255.255
+      --denied-peer-ip=192.168.0.0-192.168.255.255
+      --denied-peer-ip=169.254.0.0-169.254.255.255
+      --denied-peer-ip=127.0.0.0-127.255.255.255
+      --user-quota=12
+      --total-quota=200
     logging:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }
