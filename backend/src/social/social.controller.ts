@@ -25,7 +25,15 @@ export class SocialController {
     // STUN public de Google en repli : il ne relaie rien et ne voit aucune donnée,
     // il répond seulement « voici l'adresse d'où tu m'écris ». Toujours utile, même
     // sans TURN configuré.
-    const iceServers: any[] = [{ urls: ['stun:stun.l.google.com:19302', `stun:${hote}:3478`] }];
+    const stun = ['stun:stun.l.google.com:19302', `stun:${hote}:3478`];
+    if (process.env.TURN_PUBLIC_IP) stun.push(`stun:${String(process.env.TURN_PUBLIC_IP).trim()}:3478`);
+    const iceServers: any[] = [{ urls: stun }];
+
+    // Adresse IP publique du relais. On l'annonce EN PLUS du nom de domaine : tant
+    // que `turn.salorie.com` n'existe pas au DNS, un client qui ne connaitrait que
+    // le nom n'aurait aucun relais du tout. Avec les deux, le client essaie l'un
+    // puis l'autre et se debrouille — c'est precisement le role de la liste ICE.
+    const ip = String(process.env.TURN_PUBLIC_IP || '').trim();
 
     if (secret) {
       // Nom d'utilisateur = <expiration UNIX>:<identifiant>, mot de passe = HMAC-SHA1
@@ -35,11 +43,11 @@ export class SocialController {
       const uid = String(req?.user?.uid || 'anon');
       const username = `${expiration}:${uid}`;
       const credential = createHmac('sha1', secret).update(username).digest('base64');
-      iceServers.push({
-        urls: [`turn:${hote}:3478?transport=udp`, `turn:${hote}:3478?transport=tcp`],
-        username,
-        credential,
-      });
+      const urls = [`turn:${hote}:3478?transport=udp`, `turn:${hote}:3478?transport=tcp`];
+      // L'IP passe en TETE : elle marche aujourd'hui, le nom marchera quand le DNS
+      // sera pose. L'ordre compte — un client presse s'arrete au premier qui repond.
+      if (ip) urls.unshift(`turn:${ip}:3478?transport=udp`, `turn:${ip}:3478?transport=tcp`);
+      iceServers.push({ urls, username, credential });
     }
 
     return {
