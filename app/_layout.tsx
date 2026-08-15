@@ -2,7 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 import * as Linking from 'expo-linking';
 import { ClerkProvider, ClerkLoaded, ClerkLoading, useAuth, useUser, useSession } from '@clerk/clerk-expo';
 import { Slot, useRouter, useSegments, useRootNavigationState } from 'expo-router';
-import { useEffect, useMemo, useRef, useState, Component } from 'react';
+import { useEffect, useMemo, useRef, useState, Component, type ErrorInfo } from 'react';
 import { ActivityIndicator, View, Text, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CONFIG } from '../constants/config';
@@ -721,8 +721,18 @@ class ErrorBoundary extends Component<{ children: any }, { error: Error | null }
   state: { error: Error | null } = { error: null };
   private depthRetries = 0;
   static getDerivedStateFromError(error: Error) { return { error }; }
-  componentDidCatch(error: Error) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     try { console.log('[ErrorBoundary]', error?.message, error?.stack); } catch {}
+    // Cette limite est PLUS HAUTE que tout le reste de l'arbre et se trouve DANS
+    // `Sentry.wrap` : sans cette ligne, elle interceptait chaque erreur de rendu
+    // avant Sentry. L'utilisateur voyait l'ecran d'erreur vert, et personne
+    // n'etait prevenu — un `console.log` sur un telephone ne va nulle part.
+    try {
+      Sentry.captureException(error, {
+        tags: { boundary: 'root' },
+        extra: { componentStack: errorInfo?.componentStack ?? undefined },
+      });
+    } catch {}
     const msg = String(error?.message || '');
     if (msg.includes('Maximum update depth') && this.depthRetries < 3) {
       this.depthRetries += 1;

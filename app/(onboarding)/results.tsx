@@ -10,6 +10,7 @@ import {
   Image,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import * as Sentry from '@sentry/react-native';
 import { 
   Sparkles, 
   Flame, 
@@ -199,7 +200,12 @@ export default function ResultsScreen() {
 
         setLoading(false);
       } catch (error) {
+        // Panne SILENCIEUSE au pire endroit possible : l'utilisateur sort du
+        // chargement sur un ecran de resultats sans plan, pendant l'onboarding.
+        // Le `console.error` seul ne quitte pas le telephone — on ne saurait
+        // jamais qu'un nouvel utilisateur s'est arrete la.
         console.error('Error generating plan:', error);
+        Sentry.captureException(error, { tags: { ecran: 'onboarding-results' } });
         setLoading(false);
       }
     };
