@@ -787,3 +787,23 @@ tbody tr:last-child td { border-bottom: none; }
 .apercu-date { font-variant-numeric: tabular-nums; color: var(--encre-pale, #94a3b8); }
 .apercu-nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .apercu-kcal { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* ── Le mur ───────────────────────────────────────────────────────────────── */
+.champ-mur {
+  width: 100%; box-sizing: border-box; resize: vertical; min-height: 76px;
+  padding: 12px 14px; border-radius: 12px;
+  border: 1px solid var(--trait, #e2e8f0); background: var(--fond, #f8fafc);
+  color: inherit; font: inherit; line-height: 1.5;
+}
+.champ-mur:focus-visible { outline: 2px solid var(--accent, #2e8b57); outline-offset: 2px; }
+.liste-mur { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.carte-publication {
+  background: var(--surface, #fff); border: 1px solid var(--trait, #e2e8f0);
+  border-radius: 16px; padding: 15px 17px;
+}
+.pub-entete { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.pub-texte { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+/* `overflow-wrap: anywhere` : sans lui, une suite de caracteres sans espace
+   elargit la carte et fait defiler la page entiere de cote. */
+.pub-image { width: 100%; max-height: 380px; object-fit: cover; border-radius: 12px; margin-bottom: 10px; display: block; }
+.pub-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
