@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Image, Dimensions, Linking } from 'react-native';
+import { flipAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
 import { useUser, useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
@@ -224,7 +225,7 @@ export default function ProfileScreen() {
         <Text style={styles.menuLabel}>{label}</Text>
         {subtext && <Text style={styles.menuSubtext}>{subtext}</Text>}
       </View>
-      <ChevronRight size={18} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} />
+      <ChevronRight size={18} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} style={flipAuto()} />
     </TouchableOpacity>
   );
 
@@ -301,7 +302,7 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.trialButton}>
                 <Text style={styles.trialButtonText}>{t('profile.start')}</Text>
-                <ArrowRight size={16} color={Colors.light.white} />
+                <ArrowRight size={16} color={Colors.light.white} style={flipAuto()} />
               </View>
             </View>
           </TouchableOpacity>

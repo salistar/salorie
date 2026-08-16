@@ -1,4 +1,5 @@
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { directionAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
@@ -428,7 +429,7 @@ export default function NotificationsScreen() {
         animationType="slide"
         onRequestClose={() => setSelected(null)}
       >
-        <View style={styles.modalOverlay}>
+        <View style={[styles.modalOverlay, directionAuto()]}>
           <View style={[styles.modalContent, isDark && { backgroundColor: Colors.dark.card }]}>
             <View style={[styles.modalHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
               <Text style={[styles.modalTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{selected?.title}</Text>

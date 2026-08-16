@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
+import { directionAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, RefreshControl, TouchableOpacity, Modal, Pressable, TextInput, ViewStyle } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -438,7 +439,7 @@ export default function CoachScreen() {
 
         {/* ── Achievement detail modal ── */}
         <Modal visible={!!selAch} transparent animationType="fade" onRequestClose={() => setSelAch(null)}>
-          <Pressable style={styles.modalOverlay} onPress={() => setSelAch(null)}>
+          <Pressable style={[styles.modalOverlay, directionAuto()]} onPress={() => setSelAch(null)}>
             <Pressable style={[styles.modalCard, { backgroundColor: card }]} onPress={() => {}}>
               <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} style={styles.modalClose} onPress={() => setSelAch(null)}><X size={20} color={sub} /></TouchableOpacity>
               <Text style={styles.modalIcon}>{selAch?.icon}</Text>

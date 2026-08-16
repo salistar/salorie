@@ -5,6 +5,7 @@
 // recette = ingrédients, étapes, astuces santé + les raisons du verdict.
 // 100% offline (données statiques), i18n/dark/RTL/retour.
 import React, { useEffect, useMemo, useState } from 'react';
+import { directionAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Modal, Share } from 'react-native';
@@ -280,7 +281,7 @@ export default function HealthyRecipesScreen() {
 
       {/* DÉTAIL recette */}
       <Modal visible={!!selected} transparent animationType="slide" onRequestClose={() => setSelected(null)}>
-        <View style={styles.modalBackdrop}>
+        <View style={[styles.modalBackdrop, directionAuto()]}>
           <View style={[styles.sheet, { backgroundColor: bg }]}>
             {selected && selectedScore && (() => {
               const vm = verdictMeta(selectedScore.verdict);

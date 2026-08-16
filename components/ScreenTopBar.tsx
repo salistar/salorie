@@ -5,7 +5,7 @@ import { Bell, Sun, Moon, Smartphone, Globe, ArrowLeft } from 'lucide-react-nati
 import { Colors } from '../constants/Colors';
 import { useTheme, ThemeMode } from '../lib/ThemeContext';
 import { useTranslation, Language } from '../lib/i18n';
-import { rowDir, txtAlign } from '../lib/rtl';
+import { rowDir, txtAlign, directionAuto } from '../lib/rtl';
 import AppBrand from './AppBrand';
 
 // Libellés du menu de thème, traduits (sinon "Light/Dark/System" en anglais partout).
@@ -133,7 +133,7 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
 
       {/* Language menu */}
       <Modal visible={langMenuOpen} transparent animationType="fade" onRequestClose={() => setLangMenuOpen(false)}>
-        <Pressable style={styles.modalBackdrop} onPress={() => setLangMenuOpen(false)}>
+        <Pressable style={[styles.modalBackdrop, directionAuto()]} onPress={() => setLangMenuOpen(false)}>
           <View style={[styles.menu, { backgroundColor: menuBg }]}>
             {(['en', 'fr', 'ar'] as Language[]).map((lang) => (
               <TouchableOpacity
@@ -164,7 +164,7 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
 
       {/* Theme menu */}
       <Modal visible={themeMenuOpen} transparent animationType="fade" onRequestClose={() => setThemeMenuOpen(false)}>
-        <Pressable style={styles.modalBackdrop} onPress={() => setThemeMenuOpen(false)}>
+        <Pressable style={[styles.modalBackdrop, directionAuto()]} onPress={() => setThemeMenuOpen(false)}>
           <View style={[styles.menu, { backgroundColor: menuBg }]}>
             {(['light', 'dark', 'system'] as ThemeMode[]).map((m) => {
               const Icon = themeIcons[m];

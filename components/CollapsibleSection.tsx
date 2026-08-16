@@ -1,6 +1,7 @@
 // Section repliable (accordéon) — allègement Home/Analytics. En-tête tappable +
 // chevron ; le contenu se déplie/replie. Animation de layout douce. Additif.
 import React, { useState } from 'react';
+import { flipAuto } from '../lib/rtl';
 import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { ChevronDown, ChevronRight } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
@@ -30,7 +31,7 @@ export default function CollapsibleSection({ title, defaultOpen = false, childre
     <View style={styles.wrap}>
       <TouchableOpacity style={styles.header} activeOpacity={0.7} onPress={toggle}>
         <Text style={[styles.title, { color: titleColor }]}>{title}</Text>
-        {open ? <ChevronDown size={20} color={tint} /> : <ChevronRight size={20} color={tint} />}
+        {open ? <ChevronDown size={20} color={tint} /> : <ChevronRight size={20} color={tint} style={flipAuto()} />}
       </TouchableOpacity>
       {open && <View style={styles.body}>{children}</View>}
     </View>

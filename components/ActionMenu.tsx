@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Dimensions, Alert } from 'react-native';
+import { directionAuto } from '../lib/rtl';
 import { useState, useMemo } from 'react';
 import { Zap, Droplets, Database, Scan, Crown, Mic, ScanBarcode, Scale, Camera, Image as ImageIcon, X } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
@@ -230,7 +231,7 @@ export default function ActionMenu() {
       onRequestClose={closeMenu}
     >
       <TouchableOpacity
-        style={[styles.overlay, isDark && { backgroundColor: 'rgba(0,0,0,0.5)' }]}
+        style={[styles.overlay, isDark && { backgroundColor: 'rgba(0,0,0,0.5)' }, directionAuto()]}
         activeOpacity={1}
         onPress={closeMenu}
       >

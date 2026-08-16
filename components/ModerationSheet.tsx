@@ -1,6 +1,7 @@
 // Feuille de modération UGC réutilisable — Signaler (motifs) + Bloquer + Annuler.
 // Exigence Google Play (contenu utilisateur). Utilisée sur le fil social + le marketplace.
 import React, { useState } from 'react';
+import { flipAuto, directionAuto } from '../lib/rtl';
 import { a11y } from '../lib/a11y';
 import { useTokens } from '../constants/tokens';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
@@ -89,11 +90,11 @@ export default function ModerationSheet({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
-      <Pressable style={styles.backdrop} onPress={close}>
+      <Pressable style={[styles.backdrop, directionAuto()]} onPress={close}>
         <Pressable style={[styles.sheet, { backgroundColor: sheetBg }]} onPress={(e) => e.stopPropagation()}>
           <View style={[styles.header, isRTL && { flexDirection: 'row-reverse' }]}>
             {step === 'reasons' ? (
-              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} onPress={() => setStep('menu')} hitSlop={10}><ChevronLeft size={22} color={sub} /></TouchableOpacity>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} onPress={() => setStep('menu')} hitSlop={10}><ChevronLeft size={22} color={sub} style={flipAuto()} /></TouchableOpacity>
             ) : <View style={{ width: 22 }} />}
             <Text style={[styles.title, { color: text }]}>{step === 'reasons' ? t.reason_q : t.title}</Text>
             <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={close} hitSlop={10}><X size={22} color={sub} /></TouchableOpacity>

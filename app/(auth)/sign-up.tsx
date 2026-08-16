@@ -25,7 +25,7 @@ import * as AuthSession from 'expo-auth-session';
 import { saveUserToFirestore } from '../../lib/firebase';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
-import { rowDir, txtAlign } from '../../lib/rtl';
+import { rowDir, txtAlign, flipAuto } from '../../lib/rtl';
 import { Input } from '../../components/ui';
 
 // Verification step strings (kept local — pas de clés dans lib/i18n.tsx)
@@ -390,7 +390,7 @@ export default function SignUpScreen() {
             disabled={loading}
           >
             <Text style={styles.buttonText}>{loading ? '...' : t('auth.get_started')}</Text>
-            {!loading && <ArrowRight size={20} color="#fff" />}
+            {!loading && <ArrowRight size={20} color="#fff" style={flipAuto()} />}
           </TouchableOpacity>
 
           <View style={styles.dividerContainer}>

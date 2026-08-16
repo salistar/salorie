@@ -27,7 +27,7 @@ import ScreenTopBar from '../../components/ScreenTopBar';
 import { FormInput, SubmitBar } from '../../components/FormKit';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
-import { rowDir, txtAlign } from '../../lib/rtl';
+import { rowDir, txtAlign, directionAuto } from '../../lib/rtl';
 import { 
   collection, 
   query, 
@@ -241,7 +241,7 @@ export default function FeatureRequestsScreen() {
         transparent={true}
         onRequestClose={() => setIsModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <View style={[styles.modalOverlay, directionAuto()]}>
           <Animated.View entering={FadeInUp.duration(400)} style={[styles.modalContent, { backgroundColor: isDark ? '#161C23' : Colors.light.white }]}>
             <View style={[styles.modalHeader, { flexDirection: rowDir(isRTL) }]}>
               <Text style={[styles.modalTitle, { color: tPrimary }]}>{FL.newTitle}</Text>

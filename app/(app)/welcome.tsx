@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { flipAuto } from '../../lib/rtl';
 import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowRight, Flame, Droplets, Activity } from 'lucide-react-native';
@@ -90,7 +91,7 @@ export default function WelcomeScreen() {
       <Animated.View entering={FadeInDown.delay(800).duration(600)} style={styles.bottomBar}>
         <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: accent, shadowColor: accent }]} onPress={handleGetStarted} activeOpacity={0.85}>
           <Text style={styles.primaryBtnText}>{t('welcome.get_started')}</Text>
-          <ArrowRight size={22} color="#fff" />
+          <ArrowRight size={22} color="#fff" style={flipAuto()} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.secondaryBtn} onPress={handleSignIn}>

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { flipAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
 import {
   View,
@@ -419,7 +420,7 @@ export default function OnboardingScreen() {
       <View style={styles.footer}>
         {currentStep > 0 && (
           <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backButton, { backgroundColor: C.backBtn }]} onPress={prevStep}>
-            <ArrowLeft size={22} color={C.backIcon} />
+            <ArrowLeft size={22} color={C.backIcon} style={flipAuto()} />
           </TouchableOpacity>
         )}
         {/* Bouton "Suivant" harmonisé sur SubmitBar (h.56, radius 18). */}
@@ -431,7 +432,7 @@ export default function OnboardingScreen() {
           <Text style={styles.nextButtonText}>
             {isLast ? tx.finish : tx.next}
           </Text>
-          <ArrowRight size={22} color="#fff" />
+          <ArrowRight size={22} color="#fff" style={flipAuto()} />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
