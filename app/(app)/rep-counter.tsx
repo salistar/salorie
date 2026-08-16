@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   count: { fontSize: 96, fontWeight: '900', color: GREEN, lineHeight: 100 },
   countLabel: { fontSize: 16, color: '#94A3B8', marginTop: -6 },
   magRow: { flexDirection: 'row', alignItems: 'center', marginTop: 24 },
-  magTxt: { fontSize: 13, color: '#64748B', marginLeft: 6 },
+  magTxt: { fontSize: 13, color: '#64748B', marginStart: 6 },
   actions: { flexDirection: 'row', gap: 14, marginTop: 48 },
   btn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 26, borderRadius: 16, gap: 8 },
   primary: { backgroundColor: GREEN },

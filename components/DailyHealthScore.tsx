@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   scoreNum: { fontSize: 40, fontWeight: '900', color: '#0F172A', lineHeight: 44 },
   label: { fontSize: 13, fontWeight: '700' },
   caption: { fontSize: 10, color: '#94A3B8', marginTop: 2, textAlign: 'center' },
-  right: { flex: 1, justifyContent: 'center', paddingLeft: 16, gap: 8 },
+  right: { flex: 1, justifyContent: 'center', paddingStart: 16, gap: 8 },
   barRow: { },
   barLabel: { fontSize: 11, color: '#64748B', marginBottom: 3 },
   barTrack: { height: 7, borderRadius: 4, backgroundColor: '#F1F5F9', overflow: 'hidden' },

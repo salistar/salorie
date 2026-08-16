@@ -524,6 +524,10 @@ const styles = StyleSheet.create({
   primaryBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
   back: { position: 'absolute', top: 50, left: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
   board: { position: 'absolute', top: 50, left: 12, width: 220, borderRadius: 18, padding: 12, paddingBottom: 8, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 },
+  // `marginLeft` PHYSIQUE et volontaire : ces 50 px degagent le bouton retour, qui
+  // est positionne en absolu a `left: 16` et ne bouge donc pas en arabe. Le passer
+  // en `marginStart` mettrait le retrait a droite pendant que le bouton reste a
+  // gauche — le titre repasserait sous le bouton. Ne pas « corriger ».
   boardTitle: { fontSize: 14, fontWeight: '900', marginBottom: 8, marginLeft: 50 },
   tabRow: { gap: 6, marginBottom: 8 },
   tab: { flex: 1, paddingVertical: 5, borderRadius: 9, alignItems: 'center' },

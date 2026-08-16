@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#fff', borderRadius: 18, padding: 16, marginHorizontal: 16, marginVertical: 8,
     shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  title: { fontSize: 16, fontWeight: '700', color: '#0F172A', marginLeft: 8, flex: 1 },
+  title: { fontSize: 16, fontWeight: '700', color: '#0F172A', marginStart: 8, flex: 1 },
   kcal: { fontSize: 12, color: '#94A3B8', fontWeight: '600' },
   row: { marginBottom: 12 },
   rowTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },

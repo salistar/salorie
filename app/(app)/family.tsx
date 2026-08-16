@@ -446,7 +446,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   progressFill: { height: '100%', borderRadius: 6 },
   reachedTxt: { color: '#22C55E', fontWeight: '800', fontSize: 14, marginTop: 10 },
   memberKmTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  memberKmName: { fontSize: 14, fontWeight: '700', flex: 1, marginRight: 8 },
+  memberKmName: { fontSize: 14, fontWeight: '700', flex: 1, marginEnd: 8 },
   memberKmVal: { fontSize: 13, fontWeight: '800' },
 
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },

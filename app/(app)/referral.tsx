@@ -342,10 +342,13 @@ const s = StyleSheet.create({
   actionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 12, paddingVertical: 13, marginTop: 12 },
   actionTxt: { fontSize: 14.5, fontWeight: '800' },
   statsRow: { flexDirection: 'row', alignItems: 'stretch', gap: 14, marginTop: 4 },
-  statCol: { alignItems: 'center', justifyContent: 'center', paddingRight: 4 },
+  statCol: { alignItems: 'center', justifyContent: 'center', paddingEnd: 4 },
   statVal: { fontSize: 44, fontWeight: '900', letterSpacing: -1 },
   statLabel: { fontSize: 12, fontWeight: '600', marginTop: 2, maxWidth: 96 },
-  rewardCol: { flex: 1, justifyContent: 'center', borderLeftWidth: StyleSheet.hairlineWidth, paddingLeft: 14 },
+  // Separateur vertical entre les stats et la recompense. Bordure ET rembourrage
+  // en logique : en arabe la rangee s'inverse, et une bordure restee a gauche
+  // se retrouverait du cote oppose au voisin qu'elle est censee separer.
+  rewardCol: { flex: 1, justifyContent: 'center', borderStartWidth: StyleSheet.hairlineWidth, paddingStart: 14 },
   rewardTxt: { fontSize: 17, fontWeight: '800', marginTop: 6, lineHeight: 22 },
   nextTxt: { fontSize: 13, fontWeight: '700', marginTop: 14 },
   tierRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },

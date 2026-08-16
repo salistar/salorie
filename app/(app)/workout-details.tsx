@@ -714,7 +714,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   section: { marginBottom: 26 },
   sectionLabel: { fontSize: 16, fontWeight: '800', marginBottom: 12 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  chipsRow: { gap: 10, paddingRight: 12, paddingBottom: 20 },
+  chipsRow: { gap: 10, paddingEnd: 12, paddingBottom: 20 },
   activityCard: {
     width: 120,
     borderRadius: 18,

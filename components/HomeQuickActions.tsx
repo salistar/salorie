@@ -63,12 +63,19 @@ export default function HomeQuickActions({ onLog }: { onLog?: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 18, paddingVertical: 14, paddingLeft: 16, marginHorizontal: 16, marginVertical: 8,
+  // Rembourrages LOGIQUES (start/end) et non physiques (left/right) : sous la
+  // racine `direction: rtl`, un `paddingLeft` reste à gauche et se retrouve donc
+  // du mauvais côté en arabe. Constaté le 16 août 2026 sur R83L20HWJTE : le titre
+  // collait au bord droit de la carte. Le couple start/end suit le sens de lecture
+  // et laisse le carrousel déborder du bon côté dans les deux langues.
+  card: { borderRadius: 18, paddingVertical: 14, paddingStart: 16, marginHorizontal: 16, marginVertical: 8,
     shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, paddingRight: 16 },
-  title: { fontSize: 15, fontWeight: '700', marginLeft: 8, flex: 1 },
+  // `gap` : le titre porte `flex: 1` et son texte se cale sur le bord de fin de sa
+  // boîte — en arabe il venait buter contre le lien, sans un espace entre les deux.
+  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, paddingEnd: 16, gap: 8 },
+  title: { fontSize: 15, fontWeight: '700', marginStart: 8, flex: 1 },
   link: { fontSize: 12, color: GREEN, fontWeight: '700' },
-  row: { gap: 10, paddingRight: 16 },
+  row: { gap: 10, paddingEnd: 16 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14 },
   chipTxt: { fontSize: 13, fontWeight: '600' },
 });

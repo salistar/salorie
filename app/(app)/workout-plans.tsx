@@ -280,7 +280,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   exHeader: { fontSize: 11, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 },
   exItem: { borderTopWidth: 1, paddingVertical: 11 },
   exRow: { alignItems: 'center', gap: 10 },
-  exHow: { fontSize: 12, lineHeight: 17, marginTop: 5, marginLeft: 17 },
+  exHow: { fontSize: 12, lineHeight: 17, marginTop: 5, marginStart: 17 },
   exDot: { width: 7, height: 7, borderRadius: 4 },
   exName: { flex: 1, fontSize: 15, fontWeight: '600' },
   exDetail: { fontSize: 14, fontWeight: '800' },
