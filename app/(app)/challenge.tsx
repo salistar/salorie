@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { directionAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import {
@@ -1048,7 +1049,7 @@ export default function ChallengeScreen() {
 
       {/* Fullscreen landmark viewer (Street View photo) */}
       <Modal visible={viewerPoi !== null} animationType="slide" transparent onRequestClose={() => setViewerPoi(null)}>
-        <View style={styles.viewerWrap}>
+        <View style={[styles.viewerWrap, directionAuto()]}>
           {viewerPoi !== null && pois[viewerPoi] && (
             <>
               <PoiPhoto challengeId={challengeId} index={viewerPoi} style={styles.viewerImg} photoUrl={isMongo ? streetViewUrl(pois[viewerPoi].lat, pois[viewerPoi].lng) : undefined} />
@@ -1066,7 +1067,7 @@ export default function ChallengeScreen() {
 
       {/* Street View de MA position virtuelle sur le parcours */}
       <Modal visible={showMyView} animationType="slide" transparent onRequestClose={() => setShowMyView(false)}>
-        <View style={styles.viewerWrap}>
+        <View style={[styles.viewerWrap, directionAuto()]}>
           <Image source={{ uri: streetViewUrl(mePoint.lat, mePoint.lng, 640, 640) }} style={styles.viewerImg} resizeMode="cover" />
           <View style={styles.viewerInfo}>
             <Text style={styles.viewerName}>📍 {t.youAreHere}</Text>
@@ -1080,7 +1081,7 @@ export default function ChallengeScreen() {
 
       {/* Time Machine : récit historique du lieu courant (IA) */}
       <Modal visible={tmOpen} animationType="fade" transparent onRequestClose={() => setTmOpen(false)}>
-        <View style={styles.tmOverlay}>
+        <View style={[styles.tmOverlay, directionAuto()]}>
           <View style={[styles.tmCard, { backgroundColor: card }]}>
             <View style={[styles.tmHead, rtlRow]}>
               <Text style={styles.tmHeadEmoji}>⏳</Text>

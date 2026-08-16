@@ -2,6 +2,7 @@
 // leaders MFP/Yazio) : 4 slots (petit-déj/déjeuner/snack/dîner) avec totaux par
 // slot, suppression, « copier hier », navigation par date. Trilingue + dark + RTL.
 import React, { useCallback, useEffect, useState } from 'react';
+import { flipAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { numLocaleFor } from '../../lib/format';
@@ -122,13 +123,13 @@ export default function Diary() {
         {/* Navigation par date */}
         <View style={[s.dateRow, rowDir]}>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[s.dateBtn, { backgroundColor: card }]} onPress={() => setDate(shift(date, -1))}>
-            <ChevronLeft size={20} color={text} />
+            <ChevronLeft size={20} color={text} style={flipAuto()} />
           </TouchableOpacity>
           <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => setDate(dstr(new Date()))}>
             <Text style={[s.dateTxt, { color: text }]}>{date === dstr(new Date()) ? t.today : date}</Text>
           </TouchableOpacity>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('suivant')} style={[s.dateBtn, { backgroundColor: card }]} onPress={() => setDate(shift(date, 1))}>
-            <ChevronRight size={20} color={text} />
+            <ChevronRight size={20} color={text} style={flipAuto()} />
           </TouchableOpacity>
         </View>
 

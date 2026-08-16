@@ -14,7 +14,7 @@ import { useTranslation } from '../../lib/i18n';
 import { loadEngagement } from '../../lib/engagement';
 import { publishStats, addFriend, getLeaderboard, LeaderRow } from '../../lib/social';
 import { getFriendsFeed, getKudosStatesBatch, toggleKudos, FeedItem } from '../../lib/socialFeed';
-import { rowDir, txtAlign } from '../../lib/rtl';
+import { rowDir, txtAlign, flipAuto } from '../../lib/rtl';
 import { SkeletonCard, Skeleton } from '../../components/ui';
 import { useScreenGate } from '../../components/FeatureGate';
 import ModerationSheet from '../../components/ModerationSheet';
@@ -192,7 +192,7 @@ export default function SocialScreen() {
           <>
         <View style={styles.topRow}>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={styles.backBtn} onPress={() => router.back()}>
-            <ArrowLeft size={22} color={text} />
+            <ArrowLeft size={22} color={text} style={flipAuto()} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}><ScreenTopBar showBrand={false} showNotif={false} /></View>
         </View>

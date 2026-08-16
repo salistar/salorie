@@ -1,4 +1,5 @@
 import BrandOverlay from '../../components/BrandOverlay';
+import { flipAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
@@ -208,7 +209,7 @@ export default function ChallengeARScreen() {
       {/* top bar */}
       <View style={styles.topBar}>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={styles.iconBtn} onPress={() => router.back()}>
-          <ArrowLeft size={22} color="#fff" />
+          <ArrowLeft size={22} color="#fff" style={flipAuto()} />
         </TouchableOpacity>
         <View style={styles.titlePill}>
           <Text style={styles.titleTxt}>{challenge.emoji} {challenge.name}</Text>

@@ -1,4 +1,5 @@
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { directionAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
@@ -419,7 +420,7 @@ export default function RacesScreen() {
 
       {/* Modal — Génération IA de parcours (aperçu perso, AUCUNE persistance). */}
       <Modal visible={genOpen} animationType="slide" transparent onRequestClose={closeGen}>
-        <View style={styles.modalOverlay}>
+        <View style={[styles.modalOverlay, directionAuto()]}>
           <View style={[styles.modalCard, { backgroundColor: card }]}>
             <View style={[styles.modalHeader, { flexDirection: rowDir }]}>
               <Text style={[styles.modalTitle, { color: text, textAlign: align }]} numberOfLines={1}>{t.genTitle}</Text>

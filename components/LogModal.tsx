@@ -19,7 +19,7 @@ import { addNutritionLog } from '../lib/firebase';
 import { useUser } from '@clerk/clerk-expo';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
-import { rowDir, txtAlign } from '../lib/rtl';
+import { rowDir, txtAlign, directionAuto } from '../lib/rtl';
 
 export default function LogModal() {
   const { user } = useUser();
@@ -107,7 +107,7 @@ export default function LogModal() {
       onRequestClose={hideLogModal}
     >
       <KeyboardAvoidingView
-        style={styles.overlay}
+        style={[styles.overlay, directionAuto()]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={[styles.content, { backgroundColor: sheetBg }]}>

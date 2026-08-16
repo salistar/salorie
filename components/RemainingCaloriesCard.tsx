@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { directionAuto } from '../lib/rtl';
 import { useTokens } from '../constants/tokens';
 import { a11y } from '../lib/a11y';
 import {
@@ -222,7 +223,7 @@ export default function RemainingCaloriesCard({
         onRequestClose={() => setModalVisible(false)}
       >
         <KeyboardAvoidingView
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, directionAuto()]}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <View style={[styles.modalCard, isDark && { backgroundColor: Colors.dark.card }]}>

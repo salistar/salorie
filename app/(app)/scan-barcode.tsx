@@ -2,6 +2,7 @@
 // infos nutritionnelles via OpenFoodFacts (API publique, gratuite, sans cle),
 // puis pre-remplit l'ecran log-food-details. Logging produit ultra-rapide.
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { flipAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
 import { verdictHalal, libelleStatut, libelleRaison, avertissementHalal, type VerdictHalal } from '../../lib/halal';
 import { getDietPrefs } from '../../lib/dietPrefs';
@@ -466,7 +467,7 @@ export default function ScanBarcodeScreen() {
       {/* Top bar : retour à gauche, marque au centre */}
       <View style={styles.topBar}>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={styles.iconBtn} onPress={() => router.back()}>
-          <ArrowLeft size={22} color="#fff" />
+          <ArrowLeft size={22} color="#fff" style={flipAuto()} />
         </TouchableOpacity>
         <View style={{ width: 40 }} />
       </View>

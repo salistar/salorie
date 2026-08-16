@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { flipAuto, directionAuto } from '../../lib/rtl';
 import { useTokens } from '../../constants/tokens';
 import { a11y } from '../../lib/a11y';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, Image, TouchableOpacity, Modal, Dimensions } from 'react-native';
@@ -570,7 +571,7 @@ export default function AnalyticsScreen() {
                 })()}
 
                 <View style={styles.nextIconContainer}>
-                  <ChevronRight size={18} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} strokeWidth={3} />
+                  <ChevronRight size={18} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} strokeWidth={3} style={flipAuto()} />
                 </View>
               </Animated.View>
             </TouchableOpacity>
@@ -587,7 +588,7 @@ export default function AnalyticsScreen() {
         onRequestClose={() => setIsStreakModalVisible(false)}
       >
         <TouchableOpacity 
-          style={styles.modalOverlay} 
+          style={[styles.modalOverlay, directionAuto()]} 
           activeOpacity={1} 
           onPress={() => setIsStreakModalVisible(false)}
         >
@@ -652,7 +653,7 @@ export default function AnalyticsScreen() {
         animationType="none"
         onRequestClose={() => setScoreInfoVisible(false)}
       >
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setScoreInfoVisible(false)}>
+        <TouchableOpacity style={[styles.modalOverlay, directionAuto()]} activeOpacity={1} onPress={() => setScoreInfoVisible(false)}>
           <Animated.View entering={FadeIn.duration(200)} style={styles.modalBg} />
           <Animated.View entering={FadeIn.duration(400)} style={[styles.modalContent, isDark && { backgroundColor: surface }]}>
             <View style={styles.modalHeader}>

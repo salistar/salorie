@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
+import { flipAuto } from '../../lib/rtl';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { UtensilsCrossed, Activity as ActivityIcon, ChevronRight, Flame } from 'lucide-react-native';
@@ -232,7 +233,7 @@ export default function HomeScreen() {
                 {s.d} · {mealStreak.streak} {mealStreak.streak > 1 ? s.days : s.day}
                 {mealStreak.freezes > 0 ? `   🛡️ ${s.prot}${mealStreak.freezes > 1 ? ` ×${mealStreak.freezes}` : ''}` : ''}
               </Text>
-              <ChevronRight size={18} color={colors.gray[400]} />
+              <ChevronRight size={18} color={colors.gray[400]} style={flipAuto()} />
             </TouchableOpacity>
           );
         })()}</FeatureGate>

@@ -23,7 +23,7 @@ import * as AuthSession from 'expo-auth-session';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
-import { rowDir, txtAlign } from '../../lib/rtl';
+import { rowDir, txtAlign, flipAuto } from '../../lib/rtl';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { Input } from '../../components/ui';
 
@@ -287,7 +287,7 @@ export default function SignInScreen() {
             disabled={loading}
           >
             <Text style={styles.buttonText}>{loading ? t('auth.signing_in') : t('auth.sign_in')}</Text>
-            {!loading && <ArrowRight size={20} color="#fff" />}
+            {!loading && <ArrowRight size={20} color="#fff" style={flipAuto()} />}
           </TouchableOpacity>
 
           <View style={styles.dividerContainer}>
