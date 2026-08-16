@@ -1,5 +1,6 @@
 // Streaks multi-dimensions — séries de jours consécutifs par catégorie.
 import React, { useEffect, useState } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
@@ -27,6 +28,7 @@ const TXT: any = {
 export default function StreaksScreen() {
   const __gate = useScreenGate('streaks');
   const { user } = useUser();
+  const espaceBas = useEspaceBasSimple();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
@@ -82,7 +84,7 @@ export default function StreaksScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]}>
         <Image source={require('../../assets/images/illustrations/measure.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <View style={styles.head}><Flame size={24} color="#F59E0B" /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>

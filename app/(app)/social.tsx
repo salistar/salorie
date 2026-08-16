@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useMemo, useEffect } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import { connecterSocial, socketSocial, type Presence } from '../../lib/socialSocket';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, TextInput, ActivityIndicator, Image } from 'react-native';
@@ -65,6 +66,7 @@ function timeAgo(ms: number, lang: 'en' | 'fr' | 'ar'): string {
 
 export default function SocialScreen() {
   const { user } = useUser();
+  const espaceBas = useEspaceBasSimple();
   const { resolved } = useTheme();
   const { t, language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
@@ -185,7 +187,7 @@ export default function SocialScreen() {
       <PerfList
         data={feedLoading ? [] : feed}
         keyExtractor={(it: FeedItem) => `${it.ownerDocId}_${it.id}`}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={

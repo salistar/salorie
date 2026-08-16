@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { numLocaleFor } from '../../lib/format';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
@@ -27,6 +28,7 @@ const DEFAULTS = { calories: 2000, protein: 150, carbs: 220, fat: 65 };
 export default function MealPlanScreen() {
   const __gate = useScreenGate('meal-plan');
   const { user } = useUser();
+  const espaceBas = useEspaceBasSimple();
   const { colors, resolved } = useTheme();
   const { t, language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
@@ -189,7 +191,7 @@ export default function MealPlanScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false}>
         <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
         <View style={[styles.titleRow, { flexDirection: rowDir(isRTL) }]}>

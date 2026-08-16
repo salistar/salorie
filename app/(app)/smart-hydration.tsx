@@ -1,5 +1,6 @@
 // Hydratation intelligente — objectif d'eau calculé selon le poids + l'activité.
 import React, { useEffect, useState } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
@@ -25,6 +26,7 @@ export default function SmartHydrationScreen() {
   // Seuils paramétrables sans redéploiement (admin web → flag « smart-hydration » → params JSON).
   // Défauts = valeurs actuelles → aucun changement de comportement tant que rien n'est réglé.
   const { config: hydrCfg } = useFeature('smart-hydration');
+  const espaceBas = useEspaceBasSimple();
   const mlPerKg = Number(hydrCfg?.mlPerKg) > 0 ? Number(hydrCfg.mlPerKg) : 35;
   const mlPerGlass = Number(hydrCfg?.mlPerGlass) > 0 ? Number(hydrCfg.mlPerGlass) : 250;
   const { user } = useUser();
@@ -73,7 +75,7 @@ export default function SmartHydrationScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]}>
         <Image source={require('../../assets/images/illustrations/weightlifting.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <View style={styles.head}><Droplets size={24} color="#0EA5E9" /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <PhotoStrip category="health" />

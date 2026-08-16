@@ -2,6 +2,7 @@
 // contexte réel de l'utilisateur (objectif, calories/macros du jour, tendance poids).
 // Conseils auto au chargement + question libre. 100% via backend (clé Gemini serveur).
 import React, { useEffect, useRef, useState } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, TextInput } from 'react-native';
@@ -131,6 +132,7 @@ export default function AiCoachScreen() {
   const __gate = useScreenGate('ai-coach');
   const data: any = useNutritionData(new Date().toISOString().split('T')[0]);
   const { colors, resolved } = useTheme();
+  const espaceBas = useEspaceBasSimple();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
@@ -250,7 +252,7 @@ export default function AiCoachScreen() {
           );
         })}
       </View>
-      <ScrollView ref={scroll} contentContainerStyle={styles.body}>
+      <ScrollView ref={scroll} contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]}>
         {msgs.map((m, i) => (
           <View key={i} style={[styles.bubble, m.role === 'user' ? [styles.user, { backgroundColor: GREEN }] : [styles.coach, { backgroundColor: card, borderColor: isDark ? '#334155' : '#EEF2F6' }]]}>
             <Text style={[styles.bubbleTxt, { color: text }, align, m.role === 'user' && { color: '#fff' }]}>{m.text}</Text>

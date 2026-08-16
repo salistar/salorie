@@ -2,6 +2,7 @@
 // PAS de paiement in-app : le contact se fait hors app (mailto vers l'email du vendeur ;
 // l'ownerUid EST l'email sanitizé). Trilingue (en/fr/ar) + dark + RTL + flèche retour.
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
@@ -58,6 +59,7 @@ const TXT: Record<string, any> = {
 
 export default function ListingDetailScreen() {
   const { resolved } = useTheme();
+  const espaceBas = useEspaceBasSimple();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
@@ -121,7 +123,7 @@ export default function ListingDetailScreen() {
           <Text style={[styles.notFound, { color: sub }]}>{t.notFound}</Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false}>
           {/* Image / placeholder */}
           {listing.imageUrl ? (
             <Image source={{ uri: listing.imageUrl }} style={styles.hero} resizeMode="cover" />

@@ -3,6 +3,7 @@
 // bouton "Publier" + bouton "Mes annonces". PAS de paiement : le détail ouvre le contact
 // vendeur. Trilingue (en/fr/ar) + dark + RTL + flèche retour. Firestore best-effort.
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import React, { useCallback, useState, useMemo } from 'react';
@@ -64,6 +65,7 @@ const TXT: Record<string, any> = {
 
 export default function MarketplaceScreen() {
   const { user } = useUser();
+  const espaceBas = useEspaceBasSimple();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -126,7 +128,7 @@ export default function MarketplaceScreen() {
         data={loading ? [] : listings}
         numColumns={2}
         keyExtractor={(l: MarketplaceListing) => l.id}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <>
@@ -153,7 +155,7 @@ export default function MarketplaceScreen() {
         </View>
 
         {/* Filtre catégorie */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.chipsRow, { paddingBottom: espaceBas }]}>
           <TouchableOpacity
             style={[styles.chip, { backgroundColor: !category ? PRIMARY : field }]}
             activeOpacity={0.85}

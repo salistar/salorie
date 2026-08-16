@@ -3,6 +3,7 @@
 // qui renvoie des plats SCORÉS (verdict + raisons). Gemini Vision reste en FALLBACK
 // uniquement si l'endpoint backend échoue ou ne lit aucun plat.
 import React, { useEffect, useState } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
@@ -34,6 +35,7 @@ interface Reco { name: string; kcal: number; protein: number; carbs: number; fat
 
 export default function RestaurantModeScreen() {
   const { user } = useUser();
+  const espaceBas = useEspaceBasSimple();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
@@ -112,7 +114,7 @@ export default function RestaurantModeScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]}>
         <View style={styles.head}><UtensilsCrossed size={24} color={accent} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <PhotoStrip category="food" />
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub} ({goal}).</Text>

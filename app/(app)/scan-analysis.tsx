@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import {
   View,
   Text,
@@ -154,6 +155,8 @@ export default function ScanAnalysisScreen() {
   const forceModel = (params.forceModel as string) || '';
 
   const { scanImageBase64, setScanImageBase64 } = useLogging();
+
+  const espaceBas = useEspaceBasSimple();
   const { colors, resolved } = useTheme();
   const { t, language, isRTL } = useTranslation();
 
@@ -775,7 +778,7 @@ ${langInstr}`;
     <SafeAreaView style={[styles.safeArea, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false}>
         <View style={[styles.titleSection, isRTL && { alignItems: 'flex-end' }]}>
           <Text style={[styles.headerTitle, { color: textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
             {t('scan.title')}

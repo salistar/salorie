@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useMemo } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import {
   View,
@@ -97,6 +98,7 @@ const ROLE_COLOR: Record<FamilyRole, string> = {
 
 export default function FamilyScreen() {
   const { user } = useUser();
+  const espaceBas = useEspaceBasSimple();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const lang: Lang = (['en', 'fr', 'ar'].includes(language) ? language : 'en') as Lang;
@@ -219,7 +221,7 @@ export default function FamilyScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.topRow}>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backBtn, { backgroundColor: isDark ? 'rgba(40,50,60,0.6)' : Colors.light.gray[50] }]} onPress={() => router.back()}>
             <ArrowLeft size={22} color={text} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />

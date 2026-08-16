@@ -2,6 +2,7 @@
 // Photo (caméra/galerie) → reconnaissance de texte locale → parsing kcal/macros.
 // 100% on-device, hors-ligne. Gestion d'erreur robuste (jamais de crash).
 import React, { useState, useRef, useEffect } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Image, Animated, Easing } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -79,6 +80,7 @@ function parseNutrition(text: string): Parsed {
 
 export default function LabelScanScreen() {
   const { colors, resolved } = useTheme();
+  const espaceBas = useEspaceBasSimple();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
@@ -181,7 +183,7 @@ export default function LabelScanScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]}>
         <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}>
           <ScanText size={26} color={accent} />
           <Text style={[styles.title, { color: fg }]}>{t.title}</Text>

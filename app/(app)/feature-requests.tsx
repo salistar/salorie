@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import {
   View,
@@ -57,6 +58,7 @@ interface FeatureRequest {
 
 export default function FeatureRequestsScreen() {
   const { user } = useUser();
+  const espaceBas = useEspaceBasSimple();
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
@@ -208,7 +210,7 @@ export default function FeatureRequestsScreen() {
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false}>
           {requests.map((item, index) => (
             <RequestCard key={item.id} item={item} index={index} />
           ))}

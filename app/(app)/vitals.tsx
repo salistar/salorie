@@ -2,6 +2,7 @@
 // Saisie rapide (glycémie + tension), historique, mini-graphe, alertes colorées
 // + conseil ("parle à ton médecin"). i18n/dark/RTL/retour. Best-effort (Firestore).
 import React, { useEffect, useMemo, useState } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
@@ -90,6 +91,7 @@ function TrendIcon({ dir, color }: { dir: Trend['direction']; color: string }) {
 export default function VitalsScreen() {
   const __gate = useScreenGate('vitals');
   const { resolved, colors } = useTheme();
+  const espaceBas = useEspaceBasSimple();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
@@ -176,7 +178,7 @@ export default function VitalsScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} title={t.title} />
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]} keyboardShouldPersistTaps="handled">
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
         {/* ALERTES colorées + conseil médecin */}

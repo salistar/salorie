@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useEspaceBas } from '../../lib/espaceBas';
 import { flipAuto, directionAuto } from '../../lib/rtl';
 import { useTokens } from '../../constants/tokens';
 import { a11y } from '../../lib/a11y';
@@ -32,6 +33,7 @@ import { BarChart, LineChart } from 'react-native-chart-kit';
 
 export default function AnalyticsScreen() {
   const { user } = useUser();
+  const espaceBas = useEspaceBas();
   const { t, language, isRTL } = useTranslation() as any;
 
   // Local FR/EN/AR strings for the score explanation (D3) + empty-state CTA (D4).
@@ -266,7 +268,7 @@ export default function AnalyticsScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]}>
       <ScrollView 
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]}
         showsVerticalScrollIndicator={false}
       >
         <ScreenTopBar />

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { flipAuto } from '../../lib/rtl';
 import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -13,6 +14,7 @@ import ScreenTopBar from '../../components/ScreenTopBar';
 export default function WelcomeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const espaceBas = useEspaceBasSimple();
   const { resolved, colors } = useTheme();
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(isDark), [isDark]);
@@ -41,7 +43,7 @@ export default function WelcomeScreen() {
       <ScreenTopBar showNotif={false} />
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: espaceBas }]}
         showsVerticalScrollIndicator={false}
       >
         <Animated.View entering={FadeIn.duration(600)} style={[styles.heroWrap, { borderColor: cardBorder, shadowColor: accent }]}>
