@@ -6,11 +6,13 @@ import { LoggingProvider, useLogging } from '../../lib/LoggingContext';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function TabsContent() {
   const { showActionMenu } = useLogging();
   const { colors, resolved } = useTheme();
   const { t, language } = useTranslation() as any;
+  const insets = useSafeAreaInsets();
   const defisLabel = language === 'fr' ? 'Défis' : language === 'ar' ? 'تحديات' : 'Challenges';
   const isDark = resolved === 'dark';
   const tabBg = isDark ? '#161C23' : Colors.light.white; // theme-aware (plus de barre blanche en dark)
@@ -22,21 +24,23 @@ function TabsContent() {
           headerShown: false,
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.gray[400],
-          tabBarStyle: [styles.tabBar, { backgroundColor: tabBg }],
+          // La barre flotte en `position: absolute`, donc React Navigation ne lui
+          // applique PAS son décalage de zone sûre : le `bottom: 24` en dur de la
+          // feuille de style était tout ce qui la séparait du bas de l'écran.
+          // Mesuré le 16 août 2026 sur R83L20HWJTE (uiautomator) : les libellés
+          // occupent y 1473→1514 alors que la barre de navigation du système
+          // commence à y 1492. Leur moitié basse passait donc DERRIÈRE elle. En
+          // latin ça ne se voyait pas — les glyphes sont courts et tiennent en
+          // haut de la boîte ; en arabe, plus haut, les mots étaient tranchés net.
+          // `max` et non une somme : sur un téléphone à navigation gestuelle le
+          // décalage est presque nul, et les 24 px d'origine restent le bon écart.
+          tabBarStyle: [styles.tabBar, { backgroundColor: tabBg, bottom: Math.max(24, insets.bottom + 10) }],
           tabBarShowLabel: true,
           tabBarLabelPosition: 'below-icon',
           tabBarLabelStyle: {
             fontSize: 11,
             fontWeight: '700',
             marginBottom: 6,
-            // L'arabe a besoin de plus de hauteur de ligne que le latin : ses
-            // descendantes et ses diacritiques débordent d'une boîte calibrée pour
-            // l'alphabet latin, et Android les COUPE net. Constaté le 16 août 2026
-            // sur R83L20HWJTE : les cinq libellés rognés par le bas.
-            // Posé UNIQUEMENT en arabe — les mises en page FR/EN sont déjà
-            // validées à l'écran, inutile de les déplacer pour un défaut qui ne
-            // les concerne pas. La barre fait 78 px pour 64 utiles : la place est là.
-            ...(language === 'ar' ? { lineHeight: 18 } : null),
           },
           tabBarIconStyle: { marginTop: 6 },
           sceneStyle: { backgroundColor: 'transparent' },
