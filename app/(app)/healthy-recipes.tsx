@@ -5,6 +5,7 @@
 // recette = ingrédients, étapes, astuces santé + les raisons du verdict.
 // 100% offline (données statiques), i18n/dark/RTL/retour.
 import React, { useEffect, useMemo, useState } from 'react';
+import { partager, lienPartage } from '../../lib/partage';
 import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { directionAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
@@ -118,7 +119,7 @@ export default function HealthyRecipesScreen() {
       `${t.fat} ${selected.fat * portionsN}g\n` +
       `${t.shareVia}`;
     try {
-      await Share.share({ title: selected.name[lang], message: summary });
+      await partager({ texte: summary, lien: lienPartage('recettes', 'recette'), titre: selected.name[lang] });
     } catch {
       /* partage annulé ou indisponible — silencieux */
     }

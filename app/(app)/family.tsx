@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useMemo } from 'react';
+import { partager, lienPartage } from '../../lib/partage';
 import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import {
@@ -212,7 +213,7 @@ export default function FamilyScreen() {
   const onShareInvite = async () => {
     if (!family) return;
     try {
-      await Share.share({ message: S.shareMsg[lang](family.name, family.code) });
+      await partager({ texte: S.shareMsg[lang](family.name, family.code), lien: lienPartage('famille?code=' + encodeURIComponent(family.code), 'famille') });
     } catch {}
   };
 

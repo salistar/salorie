@@ -1,5 +1,6 @@
 // Nutri-Score — note nutritionnelle A→E d'un aliment (pour 100 g).
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { partager, lienPartage } from '../../lib/partage';
 import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, Animated, Easing, Share } from 'react-native';
@@ -115,7 +116,7 @@ export default function NutriScoreScreen() {
   const onShare = async () => {
     try {
       const verd = t.verdict?.[grade] || '';
-      await Share.share({ message: t.shareMsg(grade, score, verd) });
+      await partager({ texte: t.shareMsg(grade, score, verd), lien: lienPartage('nutri-score', 'nutriscore') });
     } catch {}
   };
 

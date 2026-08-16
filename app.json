@@ -86,6 +86,7 @@
       "./plugins/withReleaseSigning",
       "./plugins/withGradleMemory",
       "./plugins/withAbiFilters",
+      "./plugins/withVisibiliteReseaux",
       "./plugins/withStoragePermissionCaps",
       [
         "expo-location",

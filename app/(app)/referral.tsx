@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTokens } from '../../constants/tokens';
+import { partager, lienPartage } from '../../lib/partage';
+import BoutonsPartage from '../../components/BoutonsPartage';
 import {
   View,
   Text,
@@ -165,13 +167,16 @@ export default function Referral() {
     return () => { alive = false; };
   }, [load]);
 
+  // Le parrainage est une boucle de croissance : c'est l'endroit où un partage
+  // raté coûte le plus cher. Le lien vers salorie.com fait deux choses que le
+  // code seul ne faisait pas — il déclenche l'aperçu riche (vignette, titre) dans
+  // WhatsApp, et il porte la source, donc on saura enfin d'où viennent les
+  // installations. Un code recopié à la main n'apprenait rien à personne.
+  const lien = code ? lienPartage(`r?code=${encodeURIComponent(code)}`, 'parrainage') : undefined;
+
   const onShare = async () => {
     if (!code) return;
-    try {
-      await Share.share({ message: t.shareMsg(code) });
-    } catch {
-      // user cancelled / unavailable
-    }
+    await partager({ texte: t.shareMsg(code), lien, titre: t.share });
   };
 
   const onApply = async () => {
@@ -237,6 +242,11 @@ export default function Referral() {
                 <Share2 size={17} color="#fff" />
                 <Text style={[s.actionTxt, { color: '#fff' }]}>{t.share}</Text>
               </TouchableOpacity>
+              {/* Raccourcis, sous le bouton principal : au Maroc l'invitation part
+                  sur WhatsApp neuf fois sur dix, et la feuille du système demande
+                  deux gestes de plus. Le bouton vert reste la voie qui marche
+                  partout ; ceci n'ajoute qu'un chemin plus court. */}
+              <BoutonsPartage texte={t.shareMsg(code)} lien={lien} titre={t.share} compact />
             </View>
 
             {/* Stats filleuls + récompense */}
