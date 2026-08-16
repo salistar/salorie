@@ -26,7 +26,7 @@ export default function PersistentTabBar() {
   const [kbOpen, setKbOpen] = useState(false);
   const { isSignedIn } = useAuth();
   const { resolved } = useTheme();
-  const { language } = useTranslation() as any;
+  const { t, language } = useTranslation() as any;
   const insets = useSafeAreaInsets();
   const isDark = resolved === 'dark';
   const tok = useTokens();
@@ -41,11 +41,19 @@ export default function PersistentTabBar() {
   // Pas connecté (welcome…) → pas de barre d'onglets (elle mènerait à des écrans qui exigent une session).
   if (!isSignedIn) return null;
 
+  // Les traductions viennent des clés `tabs.*`, celles-là même qu'emploie la barre
+  // d'onglets principale. Elles étaient recopiées ici, et les deux copies avaient
+  // divergé : le même onglet s'appelait « Analyses » sur un écran poussé et
+  // « Statistiques » sur l'écran d'accueil — « التحليلات » contre « الإحصائيات »
+  // en arabe. Vu à l'écran le 16 août 2026. Deux noms pour une seule destination.
+  // `defis` n'a pas de clé : il garde son libellé calculé plus haut.
   const labelFor = (key: string, fallback: string) => {
     if (key === 'defis') return defisLabel;
-    if (language === 'fr') return key === 'home' ? 'Accueil' : key === 'coach' ? 'Coach' : key === 'analytics' ? 'Analyses' : key === 'profile' ? 'Profil' : fallback;
-    if (language === 'ar') return key === 'home' ? 'الرئيسية' : key === 'coach' ? 'المدرب' : key === 'analytics' ? 'التحليلات' : key === 'profile' ? 'الملف' : fallback;
-    return fallback;
+    const cle = 'tabs.' + key;
+    const trad = t(cle);
+    // `t` rend LA CLÉ quand la traduction manque, jamais une valeur vide : sans ce
+    // test, un onglet ajouté sans clé afficherait « tabs.machin » à l'écran.
+    return trad === cle ? fallback : trad;
   };
 
   // Le décalage de zone sûre vient du système, pas d'une constante : sur un
