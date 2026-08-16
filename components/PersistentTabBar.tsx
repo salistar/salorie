@@ -9,6 +9,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { Home, Sparkles, BarChart3, User, Trophy } from 'lucide-react-native';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const GREY = '#94A3B8';
 
@@ -26,6 +27,7 @@ export default function PersistentTabBar() {
   const { isSignedIn } = useAuth();
   const { resolved } = useTheme();
   const { language } = useTranslation() as any;
+  const insets = useSafeAreaInsets();
   const isDark = resolved === 'dark';
   const tok = useTokens();
   const barBg = tok.surface;
@@ -46,8 +48,14 @@ export default function PersistentTabBar() {
     return fallback;
   };
 
+  // Le décalage de zone sûre vient du système, pas d'une constante : sur un
+  // téléphone à trois boutons, `paddingBottom: 12` laissait cette barre
+  // entièrement derrière la navigation d'Android. Même faute que la barre
+  // d'onglets, mesurée le 16 août 2026 sur R83L20HWJTE à l'uiautomator.
+  const basSur = Math.max(Platform.OS === 'ios' ? 26 : 12, insets.bottom + 10);
+
   return (
-    <View style={styles.bar} pointerEvents="box-none">
+    <View style={[styles.bar, { paddingBottom: basSur }]} pointerEvents="box-none">
       <View style={[styles.inner, { backgroundColor: barBg }]}>
         {TABS.map((t) => {
           const Icon = t.icon;
