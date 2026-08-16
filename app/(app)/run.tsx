@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { a11y } from '../../lib/a11y';
+import { recitTrajet } from '../../lib/partageTrajet';
+import BoutonsPartage from '../../components/BoutonsPartage';
+import { lienPartage } from '../../lib/partage';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { router } from 'expo-router';
@@ -140,6 +143,9 @@ export default function RunScreen() {
   const [weight, setWeight] = useState(70);
   const [mode, setMode] = useState<'gps' | 'sim'>('gps');
   const [history, setHistory] = useState<{ name: string; date: string; calories: number; duration?: number }[]>([]);
+  // Le recit de la DERNIERE sortie, garde apres la remise a zero des compteurs :
+  // sinon la rangee de partage disparaitrait au moment meme ou elle sert.
+  const [recit, setRecit] = useState('');
 
   const subRef = useRef<Location.LocationSubscription | null>(null);
   const lastPt = useRef<LatLng | null>(null);
@@ -319,6 +325,12 @@ export default function RunScreen() {
         publishActivity(email, { type: 'run_completed', km }).catch(() => {});
       } catch (e) { console.warn('[run] save failed', e); }
     }
+    // PARTAGE SORTANT : le récit de la sortie part vers WhatsApp, un SMS, ou la
+    // feuille du système. Proposé ICI, juste après l'enregistrement, parce que
+    // c'est le seul moment où quelqu'un a envie de le montrer — trente minutes
+    // plus tard, la sortie est déjà rangée.
+    setRecit(recitTrajet({ km, minutes: Math.round(secs / 60), kcal }, String(language)));
+
     // PARCOURS COMMUNAUTAIRE : proposer de publier la sortie AVANT la remise à zéro —
     // c'est le seul instant où le tracé existe encore et où l'utilisateur a le contexte.
     // Uniquement en GPS réel : publier un parcours simulé polluerait la bibliothèque.
@@ -470,6 +482,18 @@ export default function RunScreen() {
             </TouchableOpacity>
           </View>
         )}
+
+        {/* Le récit de la sortie qu'on vient de terminer, avec de quoi le montrer.
+            Il ne s'affiche qu'une fois la course finie, et disparaît au démarrage
+            de la suivante : c'est un moment, pas un élément permanent de l'écran. */}
+        {status === 'idle' && recit ? (
+          <View style={styles.histWrap}>
+            <Text style={[styles.histTitle, { color: text }]} numberOfLines={2}>
+              {recit}
+            </Text>
+            <BoutonsPartage texte={recit} lien={lienPartage('course', 'course')} titre={t.title} />
+          </View>
+        ) : null}
 
         {/* Recent runs history (only when idle) */}
         {status === 'idle' && (
