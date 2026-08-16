@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { a11y } from '../../lib/a11y';
 import {
   View,
   Text,
@@ -417,7 +418,7 @@ export default function OnboardingScreen() {
 
       <View style={styles.footer}>
         {currentStep > 0 && (
-          <TouchableOpacity style={[styles.backButton, { backgroundColor: C.backBtn }]} onPress={prevStep}>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backButton, { backgroundColor: C.backBtn }]} onPress={prevStep}>
             <ArrowLeft size={22} color={C.backIcon} />
           </TouchableOpacity>
         )}

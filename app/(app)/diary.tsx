@@ -2,6 +2,7 @@
 // leaders MFP/Yazio) : 4 slots (petit-déj/déjeuner/snack/dîner) avec totaux par
 // slot, suppression, « copier hier », navigation par date. Trilingue + dark + RTL.
 import React, { useCallback, useEffect, useState } from 'react';
+import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { numLocaleFor } from '../../lib/format';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
@@ -120,13 +121,13 @@ export default function Diary() {
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
         {/* Navigation par date */}
         <View style={[s.dateRow, rowDir]}>
-          <TouchableOpacity style={[s.dateBtn, { backgroundColor: card }]} onPress={() => setDate(shift(date, -1))}>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[s.dateBtn, { backgroundColor: card }]} onPress={() => setDate(shift(date, -1))}>
             <ChevronLeft size={20} color={text} />
           </TouchableOpacity>
           <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => setDate(dstr(new Date()))}>
             <Text style={[s.dateTxt, { color: text }]}>{date === dstr(new Date()) ? t.today : date}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[s.dateBtn, { backgroundColor: card }]} onPress={() => setDate(shift(date, 1))}>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('suivant')} style={[s.dateBtn, { backgroundColor: card }]} onPress={() => setDate(shift(date, 1))}>
             <ChevronRight size={20} color={text} />
           </TouchableOpacity>
         </View>
@@ -156,7 +157,7 @@ export default function Diary() {
                     <Text style={[s.slotTitle, { color: text }]}>{t[key]}</Text>
                     <View style={{ flex: 1 }} />
                     <Text style={[s.slotKcal, { color: slotKcal ? accent : sub }]}>{fmt(slotKcal)} {t.kcal}</Text>
-                    <TouchableOpacity style={s.addBtn} onPress={() => router.push({ pathname: '/food-database', params: { slot: key } } as any)}>
+                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('ajouter')} style={s.addBtn} onPress={() => router.push({ pathname: '/food-database', params: { slot: key } } as any)}>
                       <Plus size={15} color="#fff" />
                     </TouchableOpacity>
                   </View>
@@ -179,7 +180,7 @@ export default function Diary() {
                           <Text style={[{ color: sub, fontSize: 11, marginTop: 3, lineHeight: 15, opacity: 0.9 }, align]} numberOfLines={3}>{(l as any).description}</Text>
                         ) : null}
                       </View>
-                      <TouchableOpacity onPress={() => removeLog(l)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                      <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} onPress={() => removeLog(l)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                         <Trash2 size={16} color="#e11d48" />
                       </TouchableOpacity>
                     </View>
@@ -201,7 +202,7 @@ export default function Diary() {
                       <Text style={[{ color: text, fontWeight: '700', fontSize: 13.5 }, align]} numberOfLines={1}>{l.name}</Text>
                       <Text style={[{ color: sub, fontSize: 11.5 }, align]}>{l.type === 'water' ? `${Math.round(l.calories)} ml` : `-${Math.round(l.calories)} ${t.kcal}`}</Text>
                     </View>
-                    <TouchableOpacity onPress={() => removeLog(l)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} onPress={() => removeLog(l)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                       <Trash2 size={16} color="#e11d48" />
                     </TouchableOpacity>
                   </View>

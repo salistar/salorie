@@ -4,6 +4,7 @@
 // Autonome : récupère le profil, appelle les endpoints, gère loading/erreur/no-data.
 // Theme-aware (light/dark) + trilingue (en/fr/ar).
 import React, { useEffect, useState } from 'react';
+import { a11y } from '../lib/a11y';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { TrendingDown, TrendingUp, Minus, Sparkles, Utensils, AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { auth } from '../lib/firebaseAuth';
@@ -132,7 +133,7 @@ function MlInsightsCard({ weightHistory, remaining: propRemaining, goal: propGoa
             <Text style={styles.srcBadgeTxt}>{source === 'local' ? tx.srcLocal : source === 'server' ? tx.srcServer : tx.srcAi}</Text>
           </View>
         )}
-        <TouchableOpacity onPress={load} style={styles.refresh} hitSlop={10}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('rafraichir')} onPress={load} style={styles.refresh} hitSlop={10}>
           <RefreshCw size={15} color={subColor} />
         </TouchableOpacity>
       </View>

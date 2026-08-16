@@ -1,6 +1,7 @@
 // Feuille de modération UGC réutilisable — Signaler (motifs) + Bloquer + Annuler.
 // Exigence Google Play (contenu utilisateur). Utilisée sur le fil social + le marketplace.
 import React, { useState } from 'react';
+import { a11y } from '../lib/a11y';
 import { useTokens } from '../constants/tokens';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
 import { Flag, Ban, X, ChevronLeft } from 'lucide-react-native';
@@ -92,10 +93,10 @@ export default function ModerationSheet({
         <Pressable style={[styles.sheet, { backgroundColor: sheetBg }]} onPress={(e) => e.stopPropagation()}>
           <View style={[styles.header, isRTL && { flexDirection: 'row-reverse' }]}>
             {step === 'reasons' ? (
-              <TouchableOpacity onPress={() => setStep('menu')} hitSlop={10}><ChevronLeft size={22} color={sub} /></TouchableOpacity>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} onPress={() => setStep('menu')} hitSlop={10}><ChevronLeft size={22} color={sub} /></TouchableOpacity>
             ) : <View style={{ width: 22 }} />}
             <Text style={[styles.title, { color: text }]}>{step === 'reasons' ? t.reason_q : t.title}</Text>
-            <TouchableOpacity onPress={close} hitSlop={10}><X size={22} color={sub} /></TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={close} hitSlop={10}><X size={22} color={sub} /></TouchableOpacity>
           </View>
 
           {done ? (

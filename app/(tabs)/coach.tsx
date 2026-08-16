@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
+import { a11y } from '../../lib/a11y';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, RefreshControl, TouchableOpacity, Modal, Pressable, TextInput, ViewStyle } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, router } from 'expo-router';
@@ -345,7 +346,7 @@ export default function CoachScreen() {
               <View style={[styles.searchBox, { backgroundColor: card }]}>
                 <Search size={17} color={sub} />
                 <TextInput style={[styles.searchInput, { color: text }]} placeholder={st.search} placeholderTextColor={sub} value={toolSearch} onChangeText={setToolSearch} />
-                {!!toolSearch && <TouchableOpacity onPress={() => setToolSearch('')}><X size={16} color={sub} /></TouchableOpacity>}
+                {!!toolSearch && <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={() => setToolSearch('')}><X size={16} color={sub} /></TouchableOpacity>}
               </View>
 
               {/* Récents — l'app s'adapte à l'usage */}
@@ -439,7 +440,7 @@ export default function CoachScreen() {
         <Modal visible={!!selAch} transparent animationType="fade" onRequestClose={() => setSelAch(null)}>
           <Pressable style={styles.modalOverlay} onPress={() => setSelAch(null)}>
             <Pressable style={[styles.modalCard, { backgroundColor: card }]} onPress={() => {}}>
-              <TouchableOpacity style={styles.modalClose} onPress={() => setSelAch(null)}><X size={20} color={sub} /></TouchableOpacity>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} style={styles.modalClose} onPress={() => setSelAch(null)}><X size={20} color={sub} /></TouchableOpacity>
               <Text style={styles.modalIcon}>{selAch?.icon}</Text>
               <Text style={[styles.modalTitle, { color: text }]}>{selAch?.title}</Text>
               <Text style={[styles.modalDesc, { color: sub }]}>{selAch?.desc}</Text>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { a11y } from '../lib/a11y';
 import {
   View,
   Text,
@@ -112,7 +113,7 @@ export default function LogModal() {
         <View style={[styles.content, { backgroundColor: sheetBg }]}>
           <View style={styles.header}>
             <Text style={[styles.title, { color: textPrimary }]}>{t('logmodal.title')}</Text>
-            <TouchableOpacity onPress={hideLogModal} style={styles.closeBtn}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={hideLogModal} style={styles.closeBtn}>
               <X size={24} color={isDark ? Colors.dark.gray[500] : Colors.light.gray[500]} />
             </TouchableOpacity>
           </View>

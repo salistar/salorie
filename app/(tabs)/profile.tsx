@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Image, Dimensions, Linking } from 'react-native';
+import { a11y } from '../../lib/a11y';
 import { useUser, useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
 import { 
@@ -263,7 +264,7 @@ export default function ProfileScreen() {
 
         {/* User Identity Card */}
         <Animated.View entering={FadeInDown.duration(600)} style={styles.userCard}>
-          <TouchableOpacity onPress={changeAvatar} activeOpacity={0.8}>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('photo')} onPress={changeAvatar} activeOpacity={0.8}>
             <Image
               source={{ uri: user?.imageUrl }}
               style={styles.avatar}

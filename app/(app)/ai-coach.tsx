@@ -2,6 +2,7 @@
 // contexte réel de l'utilisateur (objectif, calories/macros du jour, tendance poids).
 // Conseils auto au chargement + question libre. 100% via backend (clé Gemini serveur).
 import React, { useEffect, useRef, useState } from 'react';
+import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, TextInput } from 'react-native';
 import { Sparkles, Send, RefreshCw, Volume2, VolumeX, Mic, Square, Flag } from 'lucide-react-native';
@@ -233,10 +234,10 @@ export default function AiCoachScreen() {
       <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}>
         <Sparkles size={22} color={GREEN} />
         <Text style={[styles.title, { color: text }, align]}>{t.title}</Text>
-        <TouchableOpacity onPress={toggleVoice} style={isRTL ? { marginRight: 'auto' } : { marginLeft: 'auto' }} hitSlop={10}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('lire')} onPress={toggleVoice} style={isRTL ? { marginRight: 'auto' } : { marginLeft: 'auto' }} hitSlop={10}>
           {voice ? <Volume2 size={20} color={GREEN} /> : <VolumeX size={20} color={sub} />}
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => ask('', true)} style={isRTL ? { marginRight: 14 } : { marginLeft: 14 }} hitSlop={10}><RefreshCw size={18} color={sub} /></TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('rafraichir')} onPress={() => ask('', true)} style={isRTL ? { marginRight: 14 } : { marginLeft: 14 }} hitSlop={10}><RefreshCw size={18} color={sub} /></TouchableOpacity>
       </View>
       <View style={[styles.personaRow, { flexDirection: rowDir(isRTL) }]}>
         {PERSONAS.map((p) => {
@@ -282,10 +283,10 @@ export default function AiCoachScreen() {
           onSubmitEditing={send}
           returnKeyType="send"
         />
-        <TouchableOpacity style={[styles.micBtn, recording && { backgroundColor: '#DC2626' }]} onPress={micPress} disabled={loading && !recording}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('arreter')} style={[styles.micBtn, recording && { backgroundColor: '#DC2626' }]} onPress={micPress} disabled={loading && !recording}>
           {recording ? <Square size={18} color="#fff" /> : <Mic size={20} color="#fff" />}
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.sendBtn, { backgroundColor: GREEN }]} onPress={send} disabled={loading}><Send size={20} color="#fff" /></TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('envoyer')} style={[styles.sendBtn, { backgroundColor: GREEN }]} onPress={send} disabled={loading}><Send size={20} color="#fff" /></TouchableOpacity>
       </View>
     {/* Signalement d'une reponse du coach — exigence de la politique Google Play
         sur le contenu genere par IA. Aucun proprietaire n'est passe : on ne

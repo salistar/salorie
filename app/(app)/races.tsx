@@ -1,4 +1,5 @@
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator, Image, Modal, TextInput } from 'react-native';
@@ -255,7 +256,7 @@ export default function RacesScreen() {
       <ScreenTopBar />
       {/* Header */}
       <View style={[styles.header, { flexDirection: rowDir }]}>
-        <TouchableOpacity style={[styles.backBtn, { backgroundColor: card }]} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backBtn, { backgroundColor: card }]} onPress={() => router.back()}>
           <ArrowLeft size={22} color={text} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: text }]}>{t.title}</Text>
@@ -422,7 +423,7 @@ export default function RacesScreen() {
           <View style={[styles.modalCard, { backgroundColor: card }]}>
             <View style={[styles.modalHeader, { flexDirection: rowDir }]}>
               <Text style={[styles.modalTitle, { color: text, textAlign: align }]} numberOfLines={1}>{t.genTitle}</Text>
-              <TouchableOpacity onPress={closeGen} style={styles.modalClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={closeGen} style={styles.modalClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <X size={20} color={sub} />
               </TouchableOpacity>
             </View>

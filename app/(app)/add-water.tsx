@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { a11y } from '../../lib/a11y';
 import {
   View,
   Text,
@@ -125,7 +126,7 @@ export default function AddWaterScreen() {
         <Animated.View entering={FadeInDown.delay(200)} style={styles.controlsContainer}>
           <Text style={[styles.amountLabel, { color: textMuted }]}>{t('water.total')}</Text>
           <View style={[styles.counterRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retirer')}
               style={[
                 styles.controlBtn,
                 { backgroundColor: colors.primaryLight },
@@ -142,7 +143,7 @@ export default function AddWaterScreen() {
               <Text style={[styles.amountUnit, { color: textMuted }]}>ml</Text>
             </View>
 
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('ajouter')}
               style={[
                 styles.controlBtn,
                 { backgroundColor: colors.primaryLight },

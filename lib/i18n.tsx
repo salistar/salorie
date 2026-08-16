@@ -1564,6 +1564,8 @@ function resolveTranslation(language: Language, key: string): string {
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('en');
+  // Tient le miroir hors React a jour (cf. langueActuelle ci-dessus).
+  langueMiroir = language;
 
   useEffect(() => {
     // Keep the NATIVE engine in LTR base so the root `direction` style drives
@@ -1603,6 +1605,20 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     </I18nContext.Provider>
   );
 }
+
+// Miroir HORS React de la langue courante.
+// ---------------------------------------------------------------------------
+// La langue vit dans un contexte, donc seule une fonction-composant peut la lire.
+// Or les libelles d'accessibilite doivent etre poses sur des boutons qui n'ont
+// souvent aucun autre besoin du contexte — exiger un crochet dans quarante-cinq
+// ecrans pour nommer une fleche de retour serait un cout sans contrepartie.
+//
+// Ce miroir est mis a jour par le fournisseur a chaque changement de langue. Il
+// n'est PAS une source de verite : tout ce qui doit se RE-RENDRE au changement de
+// langue continue de passer par `useTranslation`. Il ne sert qu'a repondre « dans
+// quelle langue ecrire cette chaine, maintenant ».
+let langueMiroir: Language = 'en';
+export const langueActuelle = (): Language => langueMiroir;
 
 export function useTranslation() {
   const ctx = useContext(I18nContext);

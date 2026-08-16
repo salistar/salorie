@@ -1,4 +1,5 @@
 import BrandOverlay from '../../components/BrandOverlay';
+import { a11y } from '../../lib/a11y';
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -206,7 +207,7 @@ export default function ChallengeARScreen() {
 
       {/* top bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={styles.iconBtn} onPress={() => router.back()}>
           <ArrowLeft size={22} color="#fff" />
         </TouchableOpacity>
         <View style={styles.titlePill}>

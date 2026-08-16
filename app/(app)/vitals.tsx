@@ -2,6 +2,7 @@
 // Saisie rapide (glycémie + tension), historique, mini-graphe, alertes colorées
 // + conseil ("parle à ton médecin"). i18n/dark/RTL/retour. Best-effort (Firestore).
 import React, { useEffect, useMemo, useState } from 'react';
+import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
@@ -239,7 +240,7 @@ export default function VitalsScreen() {
                 <Text style={[styles.rowSub, { color: sub }, align]}>{t.ctx[h.context]} · {h.date}</Text>
               </View>
               <View style={[styles.badge, { backgroundColor: c + '18' }]}><Text style={[styles.badgeTxt, { color: c }]}>{h.mgdl}</Text></View>
-              <TouchableOpacity onPress={() => del('glucose', h.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ marginHorizontal: 6 }}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} onPress={() => del('glucose', h.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ marginHorizontal: 6 }}>
                 <Trash2 size={16} color={sub} />
               </TouchableOpacity>
             </View>
@@ -293,7 +294,7 @@ export default function VitalsScreen() {
                 <Text style={[styles.rowSub, { color: sub }, align]}>{h.date}</Text>
               </View>
               <View style={[styles.badge, { backgroundColor: c + '18' }]}><Text style={[styles.badgeTxt, { color: c }]}>{h.systolic}/{h.diastolic}</Text></View>
-              <TouchableOpacity onPress={() => del('blood_pressure', h.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ marginHorizontal: 6 }}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} onPress={() => del('blood_pressure', h.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ marginHorizontal: 6 }}>
                 <Trash2 size={16} color={sub} />
               </TouchableOpacity>
             </View>

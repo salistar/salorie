@@ -2,6 +2,7 @@
 // gainage, fentes — chaque exo a un objectif quotidien ; tu incrémentes par séries,
 // l'anneau se remplit. Stocké localement par jour. Trilingue + dark + RTL.
 import React, { useState, useEffect, useCallback } from 'react';
+import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -112,7 +113,7 @@ export default function MoveGoals() {
             <Text style={[s.summaryLabel, { color: text }, align]}>{t.done}</Text>
             <Text style={[s.summaryKcal, { color: sub }, align]}>🔥 ~{kcal} kcal</Text>
           </View>
-          <TouchableOpacity onPress={reset} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}><RotateCcw size={18} color={sub} /></TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('recommencer')} onPress={reset} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}><RotateCcw size={18} color={sub} /></TouchableOpacity>
         </View>
 
         {MOVES.map((m) => {

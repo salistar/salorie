@@ -2,7 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 
 jest.mock('../../lib/ThemeContext', () => ({ useTheme: () => ({ resolved: 'light' }) }));
-jest.mock('../../lib/i18n', () => ({ useTranslation: () => ({ language: 'fr', isRTL: false }) }));
+jest.mock('../../lib/i18n', () => ({ langueActuelle: () => 'fr', useTranslation: () => ({ language: 'fr', isRTL: false }) }));
 jest.mock('lucide-react-native', () => ({ Heart: () => null }));
 
 let mockNutrition: any = {

@@ -1,4 +1,5 @@
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { a11y } from '../../lib/a11y';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
@@ -377,11 +378,11 @@ export default function NotificationsScreen() {
     <SafeAreaView style={[styles.container, isDark && { backgroundColor: '#000' }]}>
       <ScreenTopBar />
       <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-        <TouchableOpacity style={[styles.backButton, isDark && { backgroundColor: Colors.dark.gray[50] }]} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backButton, isDark && { backgroundColor: Colors.dark.gray[50] }]} onPress={() => router.back()}>
           <ChevronLeft size={24} color={isDark ? '#fff' : Colors.light.gray[900]} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{t.notifications}</Text>
-        <TouchableOpacity style={styles.clearButton} onPress={clearAll}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} style={styles.clearButton} onPress={clearAll}>
           <Trash2
             size={20}
             // Gris clair fixe : sur le fond noir du thème sombre, cet état "désactivé"
@@ -431,7 +432,7 @@ export default function NotificationsScreen() {
           <View style={[styles.modalContent, isDark && { backgroundColor: Colors.dark.card }]}>
             <View style={[styles.modalHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
               <Text style={[styles.modalTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{selected?.title}</Text>
-              <TouchableOpacity onPress={() => setSelected(null)}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={() => setSelected(null)}>
                 <X size={24} color={isDark ? '#9BA1A6' : Colors.light.gray[500]} />
               </TouchableOpacity>
             </View>

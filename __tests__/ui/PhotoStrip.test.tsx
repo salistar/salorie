@@ -5,7 +5,7 @@ import { Image } from 'react-native';
 // Hooks de contexte mockés (sinon useTranslation throw hors provider) — on teste le
 // RENDU du composant selon ses props, pas les providers.
 jest.mock('../../lib/ThemeContext', () => ({ useTheme: () => ({ resolved: 'light' }) }));
-jest.mock('../../lib/i18n', () => ({ useTranslation: () => ({ language: 'fr', isRTL: false }) }));
+jest.mock('../../lib/i18n', () => ({ langueActuelle: () => 'fr', useTranslation: () => ({ language: 'fr', isRTL: false }) }));
 
 import PhotoStrip from '../../components/PhotoStrip';
 

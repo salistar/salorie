@@ -1,4 +1,5 @@
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
@@ -231,7 +232,7 @@ export default function CommunityRoutesScreen() {
       <ScreenTopBar />
       {/* Header */}
       <View style={[styles.header, { flexDirection: dir }]}>
-        <TouchableOpacity style={[styles.backBtn, { backgroundColor: card }]} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backBtn, { backgroundColor: card }]} onPress={() => router.back()}>
           <ArrowLeft size={22} color={text} style={flipForRTL(isRTL)} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: text }]} numberOfLines={1}>{t.title}</Text>
@@ -287,7 +288,7 @@ export default function CommunityRoutesScreen() {
                   <Text style={styles.stopBadgeTxt}>{i + 1}</Text>
                 </View>
                 {stops.length > 1 && (
-                  <TouchableOpacity onPress={() => removeStop(i)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} onPress={() => removeStop(i)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                     <Trash2 size={18} color="#ef4444" />
                   </TouchableOpacity>
                 )}

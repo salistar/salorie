@@ -1,6 +1,7 @@
 // Meal-builder / recettes — compose un repas en cherchant des ingrédients
 // (searchFood / OpenFoodFacts) → total des macros en direct. Réutilise la recherche existante.
 import React, { useState } from 'react';
+import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, FlatList, Alert } from 'react-native';
 import { Search, Plus, Minus, Trash2, ChefHat, Check } from 'lucide-react-native';
@@ -139,10 +140,10 @@ export default function MealBuilderScreen() {
               <Text style={[styles.itemName, { color: text }, align]} numberOfLines={1}>{x.name}</Text>
               <Text style={[styles.itemMacro, { color: sub }, align]}>{Math.round(x.calories * x.qty)} kcal · {Math.round(x.protein * x.qty)}g {t.p} · {Math.round(x.carbs * x.qty)}g {t.c} · {Math.round(x.fat * x.qty)}g {t.f}</Text>
             </View>
-            <TouchableOpacity onPress={() => setQty(x.id, -1)} style={[styles.qtyBtn, isDark && { backgroundColor: '#334155' }]}><Minus size={16} color={isDark ? '#cbd5e1' : '#475569'} /></TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retirer')} onPress={() => setQty(x.id, -1)} style={[styles.qtyBtn, isDark && { backgroundColor: '#334155' }]}><Minus size={16} color={isDark ? '#cbd5e1' : '#475569'} /></TouchableOpacity>
             <Text style={[styles.qty, { color: text }]}>{x.qty}</Text>
-            <TouchableOpacity onPress={() => setQty(x.id, 1)} style={[styles.qtyBtn, isDark && { backgroundColor: '#334155' }]}><Plus size={16} color={isDark ? '#cbd5e1' : '#475569'} /></TouchableOpacity>
-            <TouchableOpacity onPress={() => remove(x.id)} style={{ marginHorizontal: 8 }}><Trash2 size={18} color="#E11D48" /></TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('ajouter')} onPress={() => setQty(x.id, 1)} style={[styles.qtyBtn, isDark && { backgroundColor: '#334155' }]}><Plus size={16} color={isDark ? '#cbd5e1' : '#475569'} /></TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} onPress={() => remove(x.id)} style={{ marginHorizontal: 8 }}><Trash2 size={18} color="#E11D48" /></TouchableOpacity>
           </View>
         ))}
       </ScrollView>
