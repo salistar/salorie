@@ -86,7 +86,7 @@ export default function LabelScanScreen() {
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;
-  const fg = isDark ? '#f1f5f9' : '#0F172A';
+  const fg = tok.text;
   const sub = tok.textMuted;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 

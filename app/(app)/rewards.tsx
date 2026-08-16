@@ -61,7 +61,7 @@ export default function Rewards() {
   const text = tok.text;
   const sub = tok.textMuted;
   const lockTint = isDark ? '#334155' : '#94a3b8';
-  const codeBg = isDark ? '#14331f' : '#EAF4EE';
+  const codeBg = tok.accentSoft;
   const align: any = { textAlign: txtAlign(isRTL) };
   const L = (o: { en: string; fr: string; ar: string }) => o[language as 'en' | 'fr' | 'ar'] || o.en;
 

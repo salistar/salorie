@@ -4,6 +4,7 @@
 // Autonome : récupère le profil, appelle les endpoints, gère loading/erreur/no-data.
 // Theme-aware (light/dark) + trilingue (en/fr/ar).
 import React, { useEffect, useState } from 'react';
+import { useTokens } from '../constants/tokens';
 import { a11y } from '../lib/a11y';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { TrendingDown, TrendingUp, Minus, Sparkles, Utensils, AlertTriangle, RefreshCw } from 'lucide-react-native';
@@ -60,10 +61,11 @@ function MlInsightsCard({ weightHistory, remaining: propRemaining, goal: propGoa
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
   const accent = isDark ? '#4ade80' : GREEN;
-  const cardBg = isDark ? '#161C23' : '#fff';
-  const titleColor = isDark ? '#f1f5f9' : '#0F172A';
+  const tok = useTokens();
+  const cardBg = tok.surface;
+  const titleColor = tok.text;
   const blockColor = isDark ? '#cbd5e1' : '#334155';
-  const trendColor = isDark ? '#f1f5f9' : '#0F172A';
+  const trendColor = tok.text;
   const subColor = isDark ? '#94a3b8' : '#94A3B8';
   const mealNameColor = isDark ? '#e2e8f0' : '#0F172A';
 

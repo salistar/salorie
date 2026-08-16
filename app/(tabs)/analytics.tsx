@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTokens } from '../../constants/tokens';
 import { a11y } from '../../lib/a11y';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, Image, TouchableOpacity, Modal, Dimensions } from 'react-native';
 import { TrendingUp, TrendingDown, Minus, Scale, Check, Circle, ChevronRight, X } from 'lucide-react-native';
@@ -75,7 +76,8 @@ export default function AnalyticsScreen() {
   // au lieu du violet/orange criards. rgb() extrait pour les fns chart-kit.
   const primaryRgb = isDark ? '74,222,128' : '46,139,87';
   const burnedRgb = isDark ? '148,163,184' : '100,116,139';
-  const burnedHex = isDark ? '#94A3B8' : '#64748B';
+  const tok = useTokens();
+  const burnedHex = tok.textMuted;
   const { loading, streakData, weight, weeklyLogs, refresh } = useAnalyticsData();
   const [isStreakModalVisible, setIsStreakModalVisible] = useState(false);
   const [scoreInfoVisible, setScoreInfoVisible] = useState(false);

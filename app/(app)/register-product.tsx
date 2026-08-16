@@ -2,6 +2,7 @@
 // nutrition the user enters + a product photo + a barcode photo to the shared
 // custom_products collection, so the next scan of this barcode resolves instantly.
 import React, { useRef, useState, useMemo } from 'react';
+import { useTokens } from '../../constants/tokens';
 import {
   View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity,
   Image, Alert, KeyboardAvoidingView, Platform,
@@ -92,7 +93,8 @@ export default function RegisterProductScreen() {
   const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
   const card = isDark ? Colors.dark.card : '#fff';
   const bg = isDark ? '#0f1419' : 'transparent';
-  const inputBg = isDark ? '#1e293b' : '#f1f5f9';
+  const tok = useTokens();
+  const inputBg = tok.surfaceSunken;
 
   const capture = async () => {
     if (!camRef.current) return;

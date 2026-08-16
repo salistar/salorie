@@ -33,7 +33,7 @@ export default function ShoppingListScreen() {
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;
-  const textCol = isDark ? '#f1f5f9' : '#0F172A';
+  const textCol = tok.text;
   const sub = tok.textMuted;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 

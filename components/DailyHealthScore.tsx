@@ -2,6 +2,7 @@
 // les objectifs vs consommé du jour (calories, protéines, eau). Distinct du score
 // hebdomadaire des insights. Réutilise le hook useNutritionData (mêmes données que Home).
 import React from 'react';
+import { useTokens } from '../constants/tokens';
 import { View, Text, StyleSheet } from 'react-native';
 import { Heart } from 'lucide-react-native';
 import { useNutritionData } from '../hooks/useNutritionData';
@@ -26,10 +27,11 @@ export default function DailyHealthScore() {
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
   const accent = isDark ? '#4ade80' : GREEN;
-  const cardBg = isDark ? '#161C23' : '#fff';
-  const txtColor = isDark ? '#f1f5f9' : '#0f172a';
-  const subColor = isDark ? '#94a3b8' : '#64748b';
-  const trackBg = isDark ? '#334155' : '#e2e8f0';
+  const tok = useTokens();
+  const cardBg = tok.surface;
+  const txtColor = tok.text;
+  const subColor = tok.textMuted;
+  const trackBg = tok.border;
   const data: any = useNutritionData(new Date().toISOString().split('T')[0]);
   const goals = data?.goals || { calories: 2000, protein: 150, water: 2000 };
   const consumed = data?.consumed || { calories: 0, protein: 0, water: 0 };
