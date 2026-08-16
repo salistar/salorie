@@ -162,13 +162,31 @@ function Connexion() {
  * s'attend pas à un formulaire en anglais.
  */
 function localisationClerk() {
-  if (typeof navigator === 'undefined') return frFR;
-  const l = String(navigator.language || '').slice(0, 2).toLowerCase();
+  const l =
+    typeof navigator === 'undefined'
+      ? 'fr'
+      : String(navigator.language || '').slice(0, 2).toLowerCase();
   // `undefined` = anglais, la langue NATIVE du composant. Importer `enUS` pour
   // l'obtenir aurait ajouté une quarantaine de kilo-octets au chargement d'une
   // page de connexion, pour redire à Clerk ce qu'il sait déjà.
-  if (l === 'en') return undefined;
-  return l === 'ar' ? arSA : frFR;
+  const base: any = l === 'en' ? {} : l === 'ar' ? arSA : frFR;
+
+  // Le formulaire affichait « pour continuer vers salorie », en minuscule : Clerk
+  // reprend tel quel le nom de l'application, saisi ainsi dans son tableau de bord.
+  // On le corrige ICI plutôt que là-bas — une chaîne visible par tous les
+  // utilisateurs ne doit pas dépendre d'un champ qu'on ne relit jamais, et cette
+  // surcharge vit avec le code qui l'affiche.
+  const sousTitre: Record<string, string> = {
+    fr: 'pour continuer vers Salorie',
+    en: 'to continue to Salorie',
+    ar: 'للمتابعة إلى Salorie',
+  };
+  const st = sousTitre[l] || sousTitre.fr;
+  return {
+    ...base,
+    signIn: { ...(base.signIn || {}), start: { ...((base.signIn || {}).start || {}), subtitle: st } },
+    signUp: { ...(base.signUp || {}), start: { ...((base.signUp || {}).start || {}), subtitle: st } },
+  };
 }
 
 export default function MeProvider({ children }: { children: ReactNode }) {
@@ -194,7 +212,14 @@ export default function MeProvider({ children }: { children: ReactNode }) {
       // qui suit le thème du système : sur un écran en sombre, la carte blanche
       // tranchait comme un corps étranger. On lui passe la couleur de marque et on
       // le laisse s'accorder au reste.
-      appearance={{ variables: { colorPrimary: '#2e8b57', borderRadius: '12px' } }}
+      appearance={{
+        variables: { colorPrimary: '#2e8b57', borderRadius: '12px' },
+        // Le formulaire n'affichait AUCUN logo — `logo_image_url` est vide côté
+        // Clerk. La marque disparaissait donc au moment précis où l'on demande à
+        // quelqu'un de confier son compte.
+        layout: { logoImageUrl: '/me/logo.png', logoPlacement: 'inside' },
+        elements: { logoImage: { height: '38px' } },
+      }}
     >
       <SignedOut>
         <Connexion />
