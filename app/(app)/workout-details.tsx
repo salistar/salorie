@@ -17,6 +17,7 @@ import { Clock, Dumbbell } from 'lucide-react-native';
 import { Video, ResizeMode } from 'expo-av';
 import { hasVideo, getVideoSource, cacheInBackground, primeCacheIndex } from '../../lib/exerciseVideos';
 import DemoYouTube from '../../components/DemoYouTube';
+import { EXERCICES_PLUS } from '../../lib/exercicesPlus';
 import { Colors } from '../../constants/Colors';
 import { getUserFromFirestore } from '../../lib/firebase';
 import { useUser } from '@clerk/clerk-expo';
@@ -154,6 +155,12 @@ const LIFT_EXERCISES = [
   { id: 'single_preacher', mets: [2.5, 3.5, 5], muscles: ['muscle.biceps'],
     label: { en: 'Single-arm Preacher Curl', fr: 'Curl pupitre unilatéral', ar: 'كرل بريتشر بذراع' },
     howto: { en: 'Arm on the preacher pad, curl the weight up squeezing the biceps, then lower slowly.', fr: 'Bras sur le pupitre, monte la charge en serrant le biceps, puis redescends lentement.', ar: 'الذراع على وسادة البريتشر، ارفع الوزن مع عصر البايسبس ثم أنزل ببطء.' } },
+  // Le reste du catalogue (lib/exercicesPlus.ts). Ces exercices n'ont ni image ni
+  // video tournee : l'ecran retombe sur la demonstration YouTube, puis sur un
+  // visuel neutre. C'est precisement ce qui permet d'en ajouter sans tourner.
+  ...EXERCICES_PLUS.map((e) => ({
+    id: e.id, mets: e.mets, muscles: e.muscles, label: e.label, howto: e.howto,
+  })),
 ];
 
 function languageInstruction(lang: 'en' | 'fr' | 'ar'): string {
