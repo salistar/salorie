@@ -11,9 +11,10 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity,
-  KeyboardAvoidingView, Platform, Alert,
+  KeyboardAvoidingView, Platform, Alert, Image,
 } from 'react-native';
-import { Send, Flag } from 'lucide-react-native';
+import { Send, Flag, ImagePlus, X } from 'lucide-react-native';
+import { choisirPhoto, uriAffichage, type PhotoPrete } from '../lib/photoChat';
 import { useTokens } from '../constants/tokens';
 import { useTranslation } from '../lib/i18n';
 import { rowDir, txtAlign } from '../lib/rtl';
@@ -26,13 +27,16 @@ import {
 const T: Record<string, Record<string, string>> = {
   fr: { vide: 'Personne n’a encore écrit. Lance la conversation !', champ: 'Écris un message…',
         signaler: 'Signaler', signalerQ: 'Signaler ce message aux modérateurs ?', annuler: 'Annuler',
-        signale: 'Signalé. Merci.', envoyer: 'Envoyer' },
+        signale: 'Signalé. Merci.', envoyer: 'Envoyer',
+        photo: 'Joindre une photo', retirer: 'Retirer la photo' },
   en: { vide: 'Nobody has written yet. Start the conversation!', champ: 'Write a message…',
         signaler: 'Report', signalerQ: 'Report this message to the moderators?', annuler: 'Cancel',
-        signale: 'Reported. Thank you.', envoyer: 'Send' },
+        signale: 'Reported. Thank you.', envoyer: 'Send',
+        photo: 'Attach a photo', retirer: 'Remove photo' },
   ar: { vide: 'لم يكتب أحد بعد. ابدأ المحادثة!', champ: 'اكتب رسالة…',
         signaler: 'إبلاغ', signalerQ: 'الإبلاغ عن هذه الرسالة للمشرفين؟', annuler: 'إلغاء',
-        signale: 'تم الإبلاغ. شكرًا.', envoyer: 'إرسال' },
+        signale: 'تم الإبلاغ. شكرًا.', envoyer: 'إرسال',
+        photo: 'إرفاق صورة', retirer: 'إزالة الصورة' },
 };
 
 export default function RaceChat({ raceId }: { raceId: string }) {
@@ -42,6 +46,7 @@ export default function RaceChat({ raceId }: { raceId: string }) {
 
   const [messages, setMessages] = useState<MessageCourse[]>([]);
   const [texte, setTexte] = useState('');
+  const [photo, setPhoto] = useState<PhotoPrete | null>(null);
   const [refus, setRefus] = useState('');
   const liste = useRef<FlatList<MessageCourse>>(null);
 
@@ -86,11 +91,22 @@ export default function RaceChat({ raceId }: { raceId: string }) {
 
   const envoyer = () => {
     const v = texte.trim();
-    if (!v) return;
-    // On vide le champ IMMÉDIATEMENT : attendre l'aller-retour donnerait l'impression
-    // que l'app n'a pas réagi. Si le serveur refuse, il le dira juste au-dessus.
+    // Une photo SANS légende est un message valide : c'est même le cas le plus
+    // courant en fin de course. Seul le message totalement vide est refusé.
+    if (!v && !photo) return;
+    // On vide IMMÉDIATEMENT : attendre l'aller-retour donnerait l'impression que
+    // l'app n'a pas réagi. Si le serveur refuse, il le dira juste au-dessus.
     setTexte('');
-    envoyerMessage(raceId, v);
+    setPhoto(null);
+    envoyerMessage(raceId, v, photo);
+  };
+
+  const joindrePhoto = async () => {
+    const p = await choisirPhoto();
+    // Un résultat vide couvre tout : permission refusée, annulation, photo
+    // illisible. Rien à signaler — la personne a renoncé, ou le fichier ne
+    // convenait pas ; dans les deux cas il n'y a rien à dire.
+    if (p) setPhoto(p);
   };
 
   const signaler = (m: MessageCourse) => {
@@ -125,7 +141,17 @@ export default function RaceChat({ raceId }: { raceId: string }) {
           <View style={[s.ligne, { flexDirection: rowDir(isRTL) }]}>
             <View style={s.bulle}>
               <Text style={[s.auteur, { textAlign: txtAlign(isRTL) }]}>{item.name || '—'}</Text>
-              <Text style={[s.texte, { textAlign: txtAlign(isRTL) }]}>{item.text}</Text>
+              {item.image ? (
+                <Image
+                  source={{ uri: uriAffichage(item.image, item.imageType || 'image/jpeg') }}
+                  style={s.photo}
+                  resizeMode="cover"
+                  accessibilityLabel={item.text || t.photo}
+                />
+              ) : null}
+              {item.text ? (
+                <Text style={[s.texte, { textAlign: txtAlign(isRTL) }]}>{item.text}</Text>
+              ) : null}
             </View>
             <TouchableOpacity
               onPress={() => signaler(item)}
@@ -141,7 +167,29 @@ export default function RaceChat({ raceId }: { raceId: string }) {
 
       {refus ? <Text style={s.refus}>{refus}</Text> : null}
 
+      {photo ? (
+        <View style={[s.apercu, { flexDirection: rowDir(isRTL) }]}>
+          <Image source={{ uri: uriAffichage(photo.base64, photo.type) }} style={s.apercuImg} />
+          <TouchableOpacity
+            onPress={() => setPhoto(null)}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={t.retirer}
+          >
+            <X size={18} color={tok.textMuted} />
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
       <View style={[s.saisie, { flexDirection: rowDir(isRTL) }]}>
+        <TouchableOpacity
+          style={s.trombone}
+          onPress={joindrePhoto}
+          accessibilityRole="button"
+          accessibilityLabel={t.photo}
+        >
+          <ImagePlus size={20} color={tok.textMuted} />
+        </TouchableOpacity>
         <TextInput
           style={[s.champ, { textAlign: txtAlign(isRTL) }]}
           value={texte}
@@ -155,7 +203,7 @@ export default function RaceChat({ raceId }: { raceId: string }) {
         <TouchableOpacity
           style={s.envoi}
           onPress={envoyer}
-          disabled={!texte.trim()}
+          disabled={!texte.trim() && !photo}
           accessibilityRole="button"
           accessibilityLabel={t.envoyer}
         >
@@ -191,4 +239,13 @@ const styles = (tok: any) =>
       width: 42, height: 42, borderRadius: 21, backgroundColor: tok.accent,
       alignItems: 'center', justifyContent: 'center',
     },
+    // Une photo de chat n'a pas à remplir l'écran : elle illustre un message,
+    // elle n'est pas le message. Hauteur fixe et coins arrondis comme la bulle.
+    photo: { width: '100%', height: 160, borderRadius: 12, marginBottom: 6, backgroundColor: tok.surfaceSunken },
+    apercu: {
+      alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 8,
+      backgroundColor: tok.surfaceSunken,
+    },
+    apercuImg: { width: 46, height: 46, borderRadius: 8 },
+    trombone: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
   });
