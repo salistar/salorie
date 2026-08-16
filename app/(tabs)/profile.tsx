@@ -254,7 +254,12 @@ export default function ProfileScreen() {
         {/* Header */}
         <ScreenTopBar />
         <View style={styles.header}>
-          <Text style={[styles.title, { color: tok.onAccent }]}>
+          {/* `text` et NON `onAccent` : ce titre est pose sur le fond de page, pas
+              sur une surface verte. Avec `onAccent` il etait blanc sur #F0F7F2 —
+              1,09:1 mesure a l'ecran, soit invisible (le seuil est 3,0:1 pour un
+              grand texte). Erreur de ma migration vers les jetons : `onAccent` ne
+              se justifie que POSE SUR l'accent. */}
+          <Text style={[styles.title, { color: tok.text }]}>
             {t('profile.title')}
           </Text>
         </View>
