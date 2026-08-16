@@ -10,6 +10,7 @@
 // sante. C'est le meme trajet que sur telephone, et c'est ce qui evite d'avoir a
 // dupliquer la moindre regle de securite cote web.
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { assurerProfilPublic } from '../../lib/profilPublic';
 import {
   ClerkProvider,
   SignedIn,
@@ -64,12 +65,16 @@ function PontFirebase({ children }: { children: ReactNode }) {
       const ok = await connecterFirebase(() => getToken());
       if (!vivant) return;
       setPret(ok);
+      // Rendre ce compte trouvable comme ami. Sans ca, quelqu'un qui n'utilise
+      // que le web reste introuvable et son ami lit « aucun compte Salorie avec
+      // cette adresse » - un message faux et incomprehensible.
+      if (ok) void assurerProfilPublic(uid, user?.fullName || user?.firstName || '');
       if (!ok) setErreur("La session securisee n'a pas pu s'ouvrir. Reessaie dans un instant.");
     })();
     return () => {
       vivant = false;
     };
-  }, [isLoaded, email, getToken]);
+  }, [isLoaded, email, getToken, uid, user?.fullName, user?.firstName]);
 
   if (!isLoaded) return <Chargement texte="Chargement de ton compte…" />;
 
