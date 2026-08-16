@@ -1,6 +1,5 @@
 // Battle nutrition 1v1 — compare ton score d'assiduité hebdo avec un ami.
 import React, { useEffect, useState } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { ymd } from '../../lib/format';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
@@ -88,7 +87,6 @@ const TXT: any = {
 
 export default function BattleScreen() {
   const { user } = useUser();
-  const espaceBas = useEspaceBasSimple();
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -163,7 +161,7 @@ export default function BattleScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <View style={styles.hero}>
           <HeroImage source={require('../../assets/images/illustrations/gain_weight.jpg')} height={140} title={t.title} />
         </View>

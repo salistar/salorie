@@ -11,7 +11,6 @@
 //
 // Trilingue en/fr/ar (libellés arabes existants), dark, RTL, flèche retour.
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { suggererSuhoor, suggererIftar, nomAliment, type Aliment } from '../../lib/ramadanAssiettes';
 import BASE_LOCALE from '../../assets/data/local-foods.json';
 import { useTokens } from '../../constants/tokens';
@@ -122,7 +121,6 @@ function fmtCountdown(ms: number): string {
 
 export default function RamadanScreen() {
   const { user } = useUser();
-  const espaceBas = useEspaceBasSimple();
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
@@ -333,7 +331,7 @@ export default function RamadanScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack title={t.title} showBrand={false} showNotif={false} />
-      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}>
           <Moon size={26} color={GREEN} />
           <Text style={[styles.title, { color: text, textAlign: txtAlign(isRTL) }]}>{t.title}</Text>

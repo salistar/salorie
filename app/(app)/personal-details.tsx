@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import {
   View,
   Text,
@@ -120,7 +119,6 @@ export default function PersonalDetailsScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
-  const espaceBas = useEspaceBasSimple();
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(isDark), [isDark]);
 
@@ -234,7 +232,7 @@ export default function PersonalDetailsScreen() {
           </View>
         ) : (
           <ScrollView 
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: espaceBas }]}
+            contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.introSection}>

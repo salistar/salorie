@@ -3,7 +3,6 @@
 // DocumentPicker est requis de façon DÉFENSIVE (module natif) → si non linké (build pas
 // à jour), on affiche un message clair au lieu de planter.
 import React, { useState } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -42,7 +41,6 @@ type Phase = 'idle' | 'parsing' | 'preview' | 'importing' | 'done' | 'error';
 export default function ImportDataScreen() {
   const __gate = useScreenGate('import-recipe');
   const { user } = useUser();
-  const espaceBas = useEspaceBasSimple();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const { triggerRefresh } = useLogging();
@@ -114,7 +112,7 @@ export default function ImportDataScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]}>
+      <ScrollView contentContainerStyle={styles.content}>
         <Text style={[styles.title, { color: text, textAlign: isRTL ? 'right' : 'left' }]}>{t.title}</Text>
         <Text style={[styles.sub, { color: sub, textAlign: isRTL ? 'right' : 'left' }]}>{t.sub}</Text>
 

@@ -1,6 +1,5 @@
 // Photo du frigo → recettes (Gemini Vision). Identifie les ingrédients + propose des recettes.
 import React, { useState } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -33,7 +32,6 @@ const TXT: any = {
 
 export default function FridgeRecipesScreen() {
   const { resolved } = useTheme();
-  const espaceBas = useEspaceBasSimple();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
@@ -73,7 +71,7 @@ export default function FridgeRecipesScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]}>
+      <ScrollView contentContainerStyle={styles.body}>
         <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}><Refrigerator size={24} color={accent} style={flipForRTL(isRTL)} /><Text style={[styles.title, { color: text }, align]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
         <PhotoStrip category="food" />

@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import {
   View,
   Text,
@@ -20,7 +19,6 @@ console.log('\x1b[35m[log-exercise.tsx] MODULE LOADED\x1b[0m');
 
 export default function LogExerciseScreen() {
   const { colors, resolved } = useTheme();
-  const espaceBas = useEspaceBasSimple();
   const { t, isRTL } = useTranslation();
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(isDark), [isDark]);
@@ -75,7 +73,7 @@ export default function LogExerciseScreen() {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
 
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]}>
+      <ScrollView contentContainerStyle={styles.content}>
         <Text style={[styles.title, { color: textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
           {t('logex.title')}
         </Text>

@@ -2,7 +2,6 @@
 // Saisie texte (pas de carte/date-picker natif) pour rester léger et cohérent avec les
 // autres formulaires de l'app. Firestore best-effort.
 import ScreenTopBar from '../../components/ScreenTopBar';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
@@ -99,7 +98,6 @@ function parseDateTime(dateStr: string, timeStr: string): number | null {
 
 export default function MatchCreateScreen() {
   const { user } = useUser();
-  const espaceBas = useEspaceBasSimple();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -194,10 +192,10 @@ export default function MatchCreateScreen() {
         <View style={styles.backBtn} />
       </View>
 
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Sport */}
         <Text style={[styles.label, { color: sub, textAlign: align }]}>{t.sport}</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.chipsRow, { paddingBottom: espaceBas }]}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
           {SPORTS.map((sp) => {
             const active = sport === sp;
             return (
@@ -227,7 +225,7 @@ export default function MatchCreateScreen() {
         {fields.length > 0 && (
           <>
             <Text style={[styles.label, { color: sub, textAlign: align }]}>{t.fieldOptional}</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.chipsRow, { paddingBottom: espaceBas }]}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
               <TouchableOpacity
                 style={[styles.chip, { backgroundColor: !fieldId ? PRIMARY : field }]}
                 activeOpacity={0.85}

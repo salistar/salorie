@@ -1,5 +1,4 @@
 import ScreenTopBar from '../../components/ScreenTopBar';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
@@ -153,7 +152,6 @@ export default function FoodDatabaseScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
-  const espaceBas = useEspaceBasSimple();
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const { user } = useUser();
@@ -333,7 +331,7 @@ export default function FoodDatabaseScreen() {
         data={results}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
-        contentContainerStyle={[styles.listContent, { paddingBottom: espaceBas }]}
+        contentContainerStyle={styles.listContent}
         ListHeaderComponent={() => (
           query.length >= 1 ? null : (
             <View>

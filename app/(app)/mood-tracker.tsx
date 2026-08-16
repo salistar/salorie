@@ -1,6 +1,5 @@
 // Suivi de l'humeur & énergie — emoji quotidien + historique.
 import React, { useEffect, useState } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
@@ -25,7 +24,6 @@ const TXT: any = {
 export default function MoodTrackerScreen() {
   const __gate = useScreenGate('mood-tracker');
   const { user } = useUser();
-  const espaceBas = useEspaceBasSimple();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
@@ -62,7 +60,7 @@ export default function MoodTrackerScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]}>
+      <ScrollView contentContainerStyle={styles.body}>
         <Image source={require('../../assets/images/illustrations/running.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}><Smile size={24} color={accent} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>

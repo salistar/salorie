@@ -1,7 +1,6 @@
 // Jeûne intermittent — minuteur on-device. Protocoles 16:8 / 18:6 / 20:4 / OMAD.
 // Persiste l'heure de début (AsyncStorage) → survit au redémarrage de l'app.
 import React, { useEffect, useRef, useState } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { Image, View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -89,7 +88,6 @@ function fmt(ms: number) {
 export default function FastingScreen() {
   const __gate = useScreenGate('fasting');
   const { user } = useUser();
-  const espaceBas = useEspaceBasSimple();
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -201,7 +199,7 @@ export default function FastingScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
-      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]}>
+      <ScrollView contentContainerStyle={styles.body}>
         <Image source={require('../../assets/images/illustrations/plan.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}><Timer size={26} color={GREEN} /><Text style={[styles.title, { color: text, textAlign: txtAlign(isRTL) }]}>{t.title}</Text></View>
 

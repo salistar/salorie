@@ -2,7 +2,6 @@
 // clair (3 sections) pour que l'utilisateur ne se perde pas dans 13 tuiles.
 // Aucune feature supprimée : juste mieux organisées + connectées au même endroit.
 import React from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
@@ -37,7 +36,6 @@ const TXT: any = {
 
 export default function KitchenScreen() {
   const { resolved } = useTheme();
-  const espaceBas = useEspaceBasSimple();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
@@ -78,7 +76,7 @@ export default function KitchenScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         <View style={[styles.head, isRTL && { flexDirection: 'row-reverse' }]}>
           <ChefHat size={26} color={accent} />
           <Text style={[styles.title, { color: text }, align]}>{t.title}</Text>
