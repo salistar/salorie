@@ -15,7 +15,17 @@ jest.mock('react-native', () => ({
   Platform: { OS: 'android' },
 }));
 
-import { versWhatsApp, versFacebook, versNatif, partager, reseauxInstalles, lienPartage } from '../lib/partage';
+import {
+  versWhatsApp,
+  versFacebook,
+  versNatif,
+  versTelegram,
+  versSms,
+  partager,
+  reseauxInstalles,
+  lienPartage,
+  texteDefi,
+} from '../lib/partage';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -119,6 +129,54 @@ describe('lienPartage', () => {
 
   it('ne double jamais la barre oblique', () => {
     expect(lienPartage('/defi/42', 'x')).not.toContain('.com//');
+  });
+});
+
+describe('Telegram', () => {
+  it("ouvre l'application, puis retombe sur t.me", async () => {
+    mockLinking.openURL.mockRejectedValueOnce(new Error('pas de gestionnaire'));
+    expect(await versTelegram('Salut')).toBe(true);
+    expect(mockLinking.openURL.mock.calls[0][0]).toMatch(/^tg:\/\/msg/);
+    expect(mockLinking.openURL.mock.calls[1][0]).toMatch(/^https:\/\/t\.me\/share/);
+  });
+});
+
+describe('SMS — le canal qui atteint tout le monde', () => {
+  it('marche sans destinataire', async () => {
+    expect(await versSms('Viens')).toBe(true);
+    expect(mockLinking.openURL.mock.calls[0][0]).toMatch(/^sms:\?body=/);
+  });
+
+  it('pré-remplit le destinataire quand on le connaît', async () => {
+    await versSms('Viens', undefined, '+212600000000');
+    expect(mockLinking.openURL.mock.calls[0][0]).toContain('sms:+212600000000');
+  });
+
+  it("n'exige aucune application installée", async () => {
+    // Tout le point du SMS : aucune sonde, aucune visibilité de paquet. Il doit
+    // partir même quand rien n'est detecté.
+    mockLinking.canOpenURL.mockResolvedValue(false);
+    expect(await versSms('Viens')).toBe(true);
+  });
+});
+
+describe('texteDefi', () => {
+  it("parle de ce qui attend la personne, pas de l'expéditeur", () => {
+    const t = texteDefi({ langue: 'fr', auteur: 'Yassine', quoi: '10 000 pas demain' });
+    expect(t).toContain('Yassine');
+    expect(t).toContain('10 000 pas demain');
+    expect(t).toContain('défi');
+  });
+
+  it('existe dans les trois langues', () => {
+    for (const lg of ['fr', 'en', 'ar']) {
+      expect(texteDefi({ langue: lg, auteur: 'A', quoi: 'B' }).length).toBeGreaterThan(10);
+    }
+    expect(texteDefi({ langue: 'ar', auteur: 'A', quoi: 'B' })).toMatch(/[؀-ۿ]/);
+  });
+
+  it('retombe sur le français pour une langue inconnue', () => {
+    expect(texteDefi({ langue: 'zz', auteur: 'A', quoi: 'B' })).toContain('défi');
   });
 });
 

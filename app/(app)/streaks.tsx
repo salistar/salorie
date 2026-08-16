@@ -6,6 +6,7 @@ import { useUser } from '@clerk/clerk-expo';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Flame, Utensils, Droplets, Activity } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import LancerDefi from '../../components/LancerDefi';
 import { db, emailToDocId } from '../../lib/firebase';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
@@ -19,9 +20,9 @@ const GREEN = '#2E8B57';
 const fmt = ymd;
 
 const TXT: any = {
-  en: { title: 'Your streaks', sub: 'Consecutive days you stayed consistent, by category.', days: 'days', day: 'day', meals: 'Meals logged', hydration: 'Hydration', activity: 'Activity', tip: 'Tip: log every day to keep your flames 🔥 burning.', protected: 'Protected', freezeExplain: '🛡️ Smart streak: 1 freeze a week covers a missed day, so a single slip won\'t reset you.' },
-  fr: { title: 'Tes séries', sub: 'Jours consécutifs où tu as été régulier, par catégorie.', days: 'jours', day: 'jour', meals: 'Repas loggés', hydration: 'Hydratation', activity: 'Activité', tip: 'Astuce : logge chaque jour pour garder tes flammes 🔥 allumées.', protected: 'Protégée', freezeExplain: '🛡️ Série intelligente : 1 gel par semaine couvre un jour manqué — un simple oubli ne remet pas ta série à zéro.' },
-  ar: { title: 'سلاسلك', sub: 'أيام متتالية حافظت فيها على الانتظام، حسب الفئة.', days: 'أيام', day: 'يوم', meals: 'وجبات مسجلة', hydration: 'الترطيب', activity: 'النشاط', tip: 'نصيحة: سجّل كل يوم لتُبقي شعلتك 🔥 مشتعلة.', protected: 'محمية', freezeExplain: '🛡️ سلسلة ذكية: تجميدة واحدة أسبوعيًا تغطّي يومًا فائتًا — نسيان بسيط لن يصفّر سلسلتك.' },
+  en: { title: 'Your streaks', sub: 'Consecutive days you stayed consistent, by category.', days: 'days', day: 'day', meals: 'Meals logged', hydration: 'Hydration', activity: 'Activity', defiQuoi: (n: number) => `hold a ${n}-day streak`, tip: 'Tip: log every day to keep your flames 🔥 burning.', protected: 'Protected', freezeExplain: '🛡️ Smart streak: 1 freeze a week covers a missed day, so a single slip won\'t reset you.' },
+  fr: { title: 'Tes séries', sub: 'Jours consécutifs où tu as été régulier, par catégorie.', days: 'jours', day: 'jour', meals: 'Repas loggés', hydration: 'Hydratation', activity: 'Activité', defiQuoi: (n: number) => `tenir une série de ${n} jours`, tip: 'Astuce : logge chaque jour pour garder tes flammes 🔥 allumées.', protected: 'Protégée', freezeExplain: '🛡️ Série intelligente : 1 gel par semaine couvre un jour manqué — un simple oubli ne remet pas ta série à zéro.' },
+  ar: { title: 'سلاسلك', sub: 'أيام متتالية حافظت فيها على الانتظام، حسب الفئة.', days: 'أيام', day: 'يوم', meals: 'وجبات مسجلة', hydration: 'الترطيب', activity: 'النشاط', defiQuoi: (n: number) => `الحفاظ على سلسلة ${n} أيام`, tip: 'نصيحة: سجّل كل يوم لتُبقي شعلتك 🔥 مشتعلة.', protected: 'محمية', freezeExplain: '🛡️ سلسلة ذكية: تجميدة واحدة أسبوعيًا تغطّي يومًا فائتًا — نسيان بسيط لن يصفّر سلسلتك.' },
 };
 
 export default function StreaksScreen() {
@@ -29,6 +30,10 @@ export default function StreaksScreen() {
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
+  // Le PRENOM seul, jamais l'e-mail : ce texte part dans la conversation de
+  // quelqu'un d'autre. Sans prenom renseigne, on reste anonyme plutot que de
+  // laisser fuir l'identifiant du compte.
+  const prenom = String(user?.firstName || '').trim() || (language === 'ar' ? 'صديقك' : language === 'fr' ? 'Un ami' : 'A friend');
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
@@ -102,6 +107,14 @@ export default function StreaksScreen() {
               <Text style={[styles.freezeTxt, { color: isDark ? '#6ee7b7' : '#047857' }, align]}>{t.freezeExplain}</Text>
             </View>
             <Text style={[styles.tip, { color: sub }]}>{t.tip}</Text>
+            {/* La serie est le declencheur d orgueil le plus fort de l app : c est
+                ici qu on a envie de dire « tiens le meme rythme que moi ». On defie
+                sur la plus longue des trois, celle dont on est le plus fier. */}
+            <LancerDefi
+              auteur={prenom}
+              quoi={t.defiQuoi(Math.max(st.meal.streak, st.water.streak, st.activity.streak))}
+              chemin="defi/serie"
+            />
           </>
         )}
       </ScrollView>
