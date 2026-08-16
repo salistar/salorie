@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
@@ -148,7 +147,6 @@ const EX_HOW: Record<string, Record<string, string>> = {
 export default function WorkoutPlansScreen() {
   const __gate = useScreenGate('workout-plans');
   const { resolved } = useTheme();
-  const espaceBas = useEspaceBasSimple();
   const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(isDark), [isDark]);
@@ -196,7 +194,7 @@ export default function WorkoutPlansScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
         <View style={[styles.titleRow, row()]}>

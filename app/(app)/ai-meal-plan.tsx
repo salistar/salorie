@@ -1,7 +1,6 @@
 // Plan repas IA — génère un plan de 3 jours selon objectif + budget MAD +
 // conditions médicales (diabète/hypertension…) + ingrédients locaux/MENA.
 import React, { useEffect, useRef, useState } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
@@ -140,7 +139,6 @@ const TXT: any = {
 export default function AiMealPlanScreen() {
   const __gate = useScreenGate('ai-meal-plan');
   const { user } = useUser();
-  const espaceBas = useEspaceBasSimple();
   // FEATURE #103 : ingrédients transmis depuis « Frigo → recettes » (param URL).
   const params = useLocalSearchParams<{ ingredients?: string }>();
   const { resolved } = useTheme();
@@ -254,7 +252,7 @@ export default function AiMealPlanScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <ScreenTitle title={t.title} icon={<Sparkles size={24} color={accent} />} />
         <PhotoStrip category="food" />
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub1} {goal} · ~{cals} {t.sub2}</Text>

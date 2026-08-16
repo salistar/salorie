@@ -1,6 +1,5 @@
 // Photos de progression — capture + galerie locale (persistée sur l'appareil).
 import React, { useEffect, useState } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Image, Dimensions, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -30,7 +29,6 @@ export default function ProgressPhotosScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
-  const espaceBas = useEspaceBasSimple();
   const isDark = resolved === 'dark';
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
@@ -91,7 +89,7 @@ export default function ProgressPhotosScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]}>
+      <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.head}><TrendingUp size={24} color={accent} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <PhotoStrip category="health" />
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>

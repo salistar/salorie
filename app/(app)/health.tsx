@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import { numLocaleFor } from '../../lib/format';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
@@ -81,7 +80,6 @@ function todayStr() {
 export default function HealthScreen() {
   const __gate = useScreenGate('health');
   const { user } = useUser();
-  const espaceBas = useEspaceBasSimple();
   const { resolved } = useTheme();
   const { t, language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
@@ -231,7 +229,7 @@ export default function HealthScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
         <View style={[styles.titleRow, { flexDirection: rowDir(isRTL) }]}>

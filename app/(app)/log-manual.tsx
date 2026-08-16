@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import {
   View,
   Text,
@@ -32,7 +31,6 @@ const HERO_IMAGE = require('../../assets/images/illustrations/gain_weight.jpg');
 
 export default function LogManualExerciseScreen() {
   const { user } = useUser();
-  const espaceBas = useEspaceBasSimple();
   const { selectedDate, triggerRefresh } = useLogging();
   const { colors, resolved } = useTheme();
   const { t, isRTL, language } = useTranslation() as any;
@@ -97,7 +95,7 @@ export default function LogManualExerciseScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]}>
+        <ScrollView contentContainerStyle={styles.content}>
           <Image source={HERO_IMAGE} style={styles.hero} resizeMode="cover" />
 
           <Text style={[styles.title, { color: textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>

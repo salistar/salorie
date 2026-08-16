@@ -1,7 +1,6 @@
 // OCR ticket de caisse — photo → lignes structurées (backend llama-3.2, objectif-aware)
 // EN PRIORITÉ ; repli sur MLKit OCR on-device + extraction Gemini si l'endpoint échoue.
 import React, { useState } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -41,7 +40,6 @@ export default function ReceiptOcrScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
-  const espaceBas = useEspaceBasSimple();
   const isDark = resolved === 'dark';
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
@@ -147,7 +145,7 @@ export default function ReceiptOcrScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]}>
+      <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.head}><Receipt size={24} color={accent} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
         <View style={styles.btnRow}>

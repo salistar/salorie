@@ -1,7 +1,6 @@
 // Avatar RPG évolutif — niveau, titre, barre d'XP vers le niveau suivant,
 // et paliers/équipement débloqués. XP 100% locale (lib/avatar.ts).
 import React, { useEffect, useState } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { Sparkles, Lock, Check } from 'lucide-react-native';
@@ -57,7 +56,6 @@ export default function AvatarScreen() {
   const titleMap = TITLES[language] || TITLES.en;
   const gearMap = GEAR[language] || GEAR.en;
   const { resolved } = useTheme();
-  const espaceBas = useEspaceBasSimple();
   const isDark = resolved === 'dark';
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
@@ -88,7 +86,7 @@ export default function AvatarScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} title={t.title} />
-      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         <View style={[styles.head, rowDir]}>
           <Sparkles size={24} color={accent} />
           <Text style={[styles.title, { color: text }]}>{t.title}</Text>

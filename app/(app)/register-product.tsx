@@ -2,7 +2,6 @@
 // nutrition the user enters + a product photo + a barcode photo to the shared
 // custom_products collection, so the next scan of this barcode resolves instantly.
 import React, { useRef, useState, useMemo } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import {
   View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity,
@@ -70,7 +69,6 @@ export default function RegisterProductScreen() {
   const { code } = useLocalSearchParams<{ code: string }>();
   const barcode = String(code || '');
   const { user } = useUser();
-  const espaceBas = useEspaceBasSimple();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
@@ -169,7 +167,7 @@ export default function RegisterProductScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <ScreenTopBar showBack title={newProductTitle} showBrand={false} showNotif={false} />
           <Text style={[styles.codeLine, { color: sub, textAlign: txtAlign(isRTL) }]}><ScanBarcode size={14} color={sub} /> {tx.barcode} : {barcode}</Text>
 

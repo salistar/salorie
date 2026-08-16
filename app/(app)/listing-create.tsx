@@ -3,7 +3,6 @@
 // (expo-image-picker → base64 data URI, léger, resize via ImageManipulator).
 // Trilingue (en/fr/ar) + dark + RTL + flèche retour. Firestore best-effort.
 import ScreenTopBar from '../../components/ScreenTopBar';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
@@ -96,7 +95,6 @@ const TXT: Record<string, any> = {
 
 export default function ListingCreateScreen() {
   const { user } = useUser();
-  const espaceBas = useEspaceBasSimple();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -239,7 +237,7 @@ export default function ListingCreateScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* FORMULAIRE */}
         <View style={[styles.sectionCard, { backgroundColor: card }]}>
           <Text style={[styles.sectionSub, { color: sub, textAlign: align }]}>{t.formSub}</Text>
@@ -261,7 +259,7 @@ export default function ListingCreateScreen() {
 
           {/* Catégorie */}
           <Text style={[styles.label, { color: sub, textAlign: align }]}>{t.category}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.chipsRow, { paddingBottom: espaceBas }]}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
             {LISTING_CATEGORIES.map((c) => {
               const active = category === c;
               return (

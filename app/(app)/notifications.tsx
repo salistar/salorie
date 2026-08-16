@@ -1,5 +1,4 @@
 import ScreenTopBar from '../../components/ScreenTopBar';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { directionAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
 import React, { useState, useEffect, useMemo } from 'react';
@@ -144,7 +143,6 @@ export default function NotificationsScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
-  const espaceBas = useEspaceBasSimple();
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const { user } = useUser();
@@ -419,7 +417,7 @@ export default function NotificationsScreen() {
             <NotificationCard item={item} index={index} />
           )}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={[styles.listContent, { paddingBottom: espaceBas }]}
+          contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
         />
       )}

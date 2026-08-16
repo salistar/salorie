@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import {
   View,
   Text,
@@ -164,7 +163,6 @@ function languageInstruction(lang: 'en' | 'fr' | 'ar'): string {
 
 export default function WorkoutDetailsScreen() {
   const { user } = useUser();
-  const espaceBas = useEspaceBasSimple();
   const params = useLocalSearchParams();
   const type = (params.type as string) || 'run'; // 'run' | 'lifting'
 
@@ -361,7 +359,7 @@ Output a single integer (e.g. 247). No explanation.`;
       >
         <ScreenTopBar showBack showBrand showNotif={false} />
 
-        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <Text
             style={[styles.title, { color: textPrimary, textAlign: isRTL ? 'right' : 'left' }]}
           >
@@ -380,7 +378,7 @@ Output a single integer (e.g. 247). No explanation.`;
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[styles.chipsRow, { paddingBottom: espaceBas }]}
+            contentContainerStyle={styles.chipsRow}
           >
             {items.map((item) => {
               const isSelected = item.id === selectedId;

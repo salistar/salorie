@@ -2,7 +2,6 @@
 // réservation d'un nouveau créneau avec détection de conflit, et proposition d'un terrain
 // (modération admin). Firestore best-effort.
 import ScreenTopBar from '../../components/ScreenTopBar';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
@@ -116,7 +115,6 @@ function parseDateTime(dateStr: string, timeStr: string): number | null {
 
 export default function FieldReserveScreen() {
   const { user } = useUser();
-  const espaceBas = useEspaceBasSimple();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -259,7 +257,7 @@ export default function FieldReserveScreen() {
         <View style={styles.backBtn} />
       </View>
 
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Terrains approuvés */}
         <Text style={[styles.listTitle, { color: text, textAlign: align }]}>{t.fieldsTitle}</Text>
         {loading ? (
@@ -366,7 +364,7 @@ export default function FieldReserveScreen() {
           />
 
           <Text style={[styles.miniLabel, { color: sub, textAlign: align, marginTop: 12 }]}>{t.sports}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.chipsRow, { paddingBottom: espaceBas }]}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
             {SPORTS.map((sp) => {
               const active = pSports.includes(sp);
               return (

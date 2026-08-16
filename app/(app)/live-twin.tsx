@@ -5,7 +5,6 @@
 // on relâche → l'audio est envoyé à la room et joué chez le jumeau.
 // Trilingue (en/fr/ar), dark-aware, RTL, ScreenTopBar.
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, SafeAreaView, ScrollView, Alert, Share, Animated, Easing } from 'react-native';
 import { Audio } from 'expo-av';
@@ -79,7 +78,6 @@ const MAX_REC_MS = 20000; // auto-stop à ~20 s
 
 export default function LiveTwinScreen() {
   const { user } = useUser();
-  const espaceBas = useEspaceBasSimple();
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -368,7 +366,7 @@ export default function LiveTwinScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack title={t.title} />
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: espaceBas }]} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {room ? renderConnected() : renderPairing()}
         {/* Disclaimer discret (type.micro, gris) — additif, trilingue via TXT. */}
         <Text style={[type.micro, styles.disclaimer, { color: sub, textAlign: txtAlign(isRTL) }]}>

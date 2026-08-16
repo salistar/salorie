@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { numLocaleFor } from '../../lib/format';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { router } from 'expo-router';
@@ -24,7 +23,6 @@ function todayStr() {
 export default function NutrientsScreen() {
   const __gate = useScreenGate('nutrients');
   const { user } = useUser();
-  const espaceBas = useEspaceBasSimple();
   const { resolved } = useTheme();
   const { t, language } = useTranslation() as any;
   const isDark = resolved === 'dark';
@@ -116,7 +114,7 @@ export default function NutrientsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
         <View style={styles.titleRow}>

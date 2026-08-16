@@ -2,7 +2,6 @@
 // Modèle = détection de pics sur la magnitude d'accélération (machine à états
 // haut/bas + anti-rebond temporel). 100% local, hors-ligne, aucune caméra.
 import React, { useEffect, useRef, useState } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import { Accelerometer } from 'expo-sensors';
@@ -75,7 +74,6 @@ export default function RepCounterScreen() {
   const { language } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
-  const espaceBas = useEspaceBasSimple();
   const isDark = resolved === 'dark';
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
@@ -129,7 +127,7 @@ export default function RepCounterScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]}>
+      <ScrollView contentContainerStyle={styles.body}>
         <Text style={[styles.title, { color: text }]}>{t.title}</Text>
         <Text style={[styles.sub, { color: sub }]}>{t.sub}</Text>
 

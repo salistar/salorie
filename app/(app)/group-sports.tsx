@@ -1,7 +1,6 @@
 // Sports de groupe — liste des matchs par sport, filtre par discipline, bouton Créer,
 // et Rejoindre/Quitter. Renvoie aussi vers la réservation de terrain. Firestore best-effort.
 import ScreenTopBar from '../../components/ScreenTopBar';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import React, { useCallback, useState, useMemo } from 'react';
@@ -84,7 +83,6 @@ const TXT: Record<string, any> = {
 
 export default function GroupSportsScreen() {
   const { user } = useUser();
-  const espaceBas = useEspaceBasSimple();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -188,7 +186,7 @@ export default function GroupSportsScreen() {
       <PerfList
         data={loading ? [] : matches}
         keyExtractor={(m: SportMatch) => m.id}
-        contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <>
@@ -213,7 +211,7 @@ export default function GroupSportsScreen() {
         </View>
 
         {/* Filtre par sport */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.filtersRow, { paddingBottom: espaceBas }]}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersRow}>
           {filters.map((f) => {
             const active = filter === f;
             const label = f === 'all' ? t.all : `${SPORT_EMOJI[f]} ${t.sports[f]}`;

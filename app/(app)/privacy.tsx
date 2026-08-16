@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
@@ -151,7 +150,6 @@ const TXT = {
 
 export default function PrivacyScreen() {
   const { colors, resolved } = useTheme();
-  const espaceBas = useEspaceBasSimple();
   const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(isDark), [isDark]);
@@ -197,7 +195,7 @@ export default function PrivacyScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
       <ScreenTopBar showBack title={tx.title} showBrand={false} showNotif={false} />
 
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.duration(600)}>
           <View style={styles.iconHero}>
             <ShieldCheck size={64} color={colors.primary} />
