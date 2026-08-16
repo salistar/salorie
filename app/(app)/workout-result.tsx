@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { partager, lienPartage } from '../../lib/partage';
 import { numLocaleFor } from '../../lib/format';
 import {
   View,
@@ -56,7 +57,7 @@ export default function WorkoutResultScreen() {
     try {
       const workoutName = String(name || '').split(' (')[0] || t.great;
       const summary = `${workoutName} — ${fmtNum(duration)} ${t.min} · ${fmtNum(calories)} ${t.kcal}`;
-      await Share.share({ title: t.shareTitle, message: summary });
+      await partager({ texte: summary, lien: lienPartage('seance', 'seance'), titre: t.shareTitle });
     } catch {
       // user cancelled / share unavailable — no-op
     }
