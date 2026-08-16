@@ -189,10 +189,14 @@ export default function SignInScreen() {
       // Constate en production le 16/08/2026 :
       // « Missing external verification redirect URL for SSO flow ».
       console.error('[Google SSO] Error:', JSON.stringify(err, null, 2));
-      Sentry.captureException(err, {
-        tags: { ecran: 'sign-in', flux: 'google-sso' },
-        extra: { codeClerk: code },
-      });
+      // `horsLigne` = l'utilisateur n'a plus de reseau (cf. lib/googleSSO.ts).
+      // Ce n'est pas un defaut de l'app : on affiche le message, on ne remonte rien.
+      if (!err?.horsLigne) {
+        Sentry.captureException(err, {
+          tags: { ecran: 'sign-in', flux: 'google-sso' },
+          extra: { codeClerk: code },
+        });
+      }
       alert(msg || 'Google sign in failed');
     }
   };

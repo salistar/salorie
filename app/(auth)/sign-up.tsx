@@ -234,10 +234,13 @@ export default function SignUpScreen() {
       // cassee reste invisible. Un utilisateur qui n'arrive pas a creer son
       // compte ne remplit pas de formulaire de support — il desinstalle.
       console.error('[API<-Clerk] Google Sign Up FAILED:', JSON.stringify(err, null, 2));
-      Sentry.captureException(err, {
-        tags: { ecran: 'sign-up', flux: 'google-sso' },
-        extra: { codeClerk: code },
-      });
+      // Meme raison que sur sign-in : une 4G coupee n'est pas un bug a remonter.
+      if (!err?.horsLigne) {
+        Sentry.captureException(err, {
+          tags: { ecran: 'sign-up', flux: 'google-sso' },
+          extra: { codeClerk: code },
+        });
+      }
       alert(msg || 'Google sign up failed');
     }
   };
