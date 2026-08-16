@@ -101,7 +101,17 @@ jobs:
             # Caddy qui obtient un certificat par defi DNS detient forcement un jeton
             # ayant Zone:DNS:Edit — exactement celui qui nous manque.
             if [ -n "$CADDY" ]; then
-              docker exec "$CADDY" printenv 2>/dev/null | grep -oE '^(CF_API_TOKEN|CLOUDFLARE_API_TOKEN|CF_TOKEN)=' | sed 's/=$/ : presente/' || echo "aucune variable Cloudflare dans le conteneur Caddy"
+              # Le `|| echo` etait attache au `sed` final, qui reussit toujours sur
+              # une entree vide : la verification ne disait donc RIEN, ni oui ni non.
+              # Un diagnostic muet est pire qu'un diagnostic absent — on croit avoir
+              # regarde. On capture d'abord, on juge ensuite.
+              VARS_CF="$(docker exec "$CADDY" printenv 2>/dev/null | grep -oE '^(CF_API_TOKEN|CLOUDFLARE_API_TOKEN|CF_TOKEN)=' || true)"
+              if [ -n "$VARS_CF" ]; then
+                echo "$VARS_CF" | sed 's/=$/ : presente/'
+              else
+                echo "aucun jeton Cloudflare dans Caddy — il obtient donc ses certificats"
+                echo "par defi HTTP, pas DNS. Le DNS de turn.salorie.com reste a poser a la main."
+              fi
             fi
 
             if [ "$APPLIQUER" != "true" ]; then
