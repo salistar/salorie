@@ -45,6 +45,9 @@ import { SupportMailController } from './support-mail/support-mail.controller';
 import { SupportMailService } from './support-mail/support-mail.service';
 import { SupportEmail, SupportEmailSchema } from './support-mail/support-mail.schemas';
 import { SocialGateway } from './social/social.gateway';
+import { MurService } from './social/mur.service';
+import { MurController } from './social/social.controller';
+import { Publication, PublicationSchema, GroupeAmis, GroupeAmisSchema } from './social/social.schemas';
 import { SocialController } from './social/social.controller';
 import { RaceChatMessage, RaceChatMessageSchema, RaceChatMute, RaceChatMuteSchema } from './social/social.schemas';
 
@@ -67,6 +70,8 @@ const PIPELINE_FEATURES = HAS_MONGO
         { name: NewsItem.name, schema: NewsItemSchema },
         { name: SupportEmail.name, schema: SupportEmailSchema },
         { name: RaceChatMessage.name, schema: RaceChatMessageSchema },
+        { name: Publication.name, schema: PublicationSchema },
+        { name: GroupeAmis.name, schema: GroupeAmisSchema },
         { name: RaceChatMute.name, schema: RaceChatMuteSchema },
       ]),
       // Gateway GraphQL (code-first, /graphql) sur le pipeline.
@@ -114,12 +119,12 @@ import { AccountService } from './account/account.service';
       : []),
     ...PIPELINE_FEATURES,
   ],
-  controllers: [HealthController, SocialController, UsersController, ReferralController, AccountController, FilesController, NutritionController, InsightsController, AiController, MlController, ...(HAS_MONGO ? [PipelineController, RacesController, OrgsController, NewsController, SupportMailController] : [])],
+  controllers: [HealthController, SocialController, UsersController, ReferralController, AccountController, FilesController, NutritionController, InsightsController, AiController, MlController, ...(HAS_MONGO ? [PipelineController, RacesController, OrgsController, NewsController, SupportMailController, MurController] : [])],
   providers: [
     // Capture les exceptions non gérées des contrôleurs AVANT que Nest ne les
     // transforme en 500 anonymes. Placé en tête : les filtres déclarés ensuite
     // gardent la main sur ce qu'ils traitent déjà (HttpException, etc.).
     { provide: APP_FILTER, useClass: SentryGlobalFilter },
-    FirebaseService, SecretsService, RedisService, UsersService, ReferralService, AccountService, NutritionService, InsightsService, AiService, MlService, FastingGateway, ...(HAS_MONGO ? [PipelineService, PipelineResolver, RacesService, OrgsService, NewsService, SupportMailService, SocialGateway] : [])],
+    FirebaseService, SecretsService, RedisService, UsersService, ReferralService, AccountService, NutritionService, InsightsService, AiService, MlService, FastingGateway, ...(HAS_MONGO ? [PipelineService, PipelineResolver, RacesService, OrgsService, NewsService, SupportMailService, SocialGateway, MurService] : [])],
 })
 export class AppModule {}
