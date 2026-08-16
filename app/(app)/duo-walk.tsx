@@ -12,7 +12,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Share } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Mic, MicOff, PhoneOff, Share2, Users } from 'lucide-react-native';
+import { Mic, MicOff, PhoneOff, Share2, Users, Video } from 'lucide-react-native';
 import * as Location from 'expo-location';
 import { useTokens } from '../../constants/tokens';
 import { useTranslation } from '../../lib/i18n';
@@ -29,7 +29,7 @@ const T: Record<string, Record<string, string>> = {
   fr: {
     titre: 'Marche à deux', invite: 'Inviter un proche', enAttente: 'En attente de ton binôme…',
     connecte: 'Vous marchez ensemble', moi: 'Toi', autre: 'Ton binôme',
-    parler: 'Parler', couper: 'Couper le micro', reprendre: 'Reprendre le micro', raccrocher: 'Raccrocher',
+    parler: 'Parler', video: 'Appel vidéo', couper: 'Couper le micro', reprendre: 'Reprendre le micro', raccrocher: 'Raccrocher',
     sansRelais: 'Réseau limité : la voix peut ne pas passer.',
     sansVoix: 'La voix n’est pas disponible sur cette version.',
     permRefusee: 'Sans localisation, impossible de partager ta marche.',
@@ -38,7 +38,7 @@ const T: Record<string, Record<string, string>> = {
   en: {
     titre: 'Walk together', invite: 'Invite someone', enAttente: 'Waiting for your partner…',
     connecte: 'You are walking together', moi: 'You', autre: 'Your partner',
-    parler: 'Talk', couper: 'Mute', reprendre: 'Unmute', raccrocher: 'Hang up',
+    parler: 'Talk', video: 'Video call', couper: 'Mute', reprendre: 'Unmute', raccrocher: 'Hang up',
     sansRelais: 'Limited network: voice may not connect.',
     sansVoix: 'Voice is not available in this version.',
     permRefusee: 'Without location, your walk cannot be shared.',
@@ -47,7 +47,7 @@ const T: Record<string, Record<string, string>> = {
   ar: {
     titre: 'المشي معًا', invite: 'ادعُ شخصًا', enAttente: 'في انتظار شريكك…',
     connecte: 'أنتما تمشيان معًا', moi: 'أنت', autre: 'شريكك',
-    parler: 'تحدّث', couper: 'كتم الصوت', reprendre: 'إلغاء الكتم', raccrocher: 'إنهاء',
+    parler: 'تحدّث', video: 'مكالمة فيديو', couper: 'كتم الصوت', reprendre: 'إلغاء الكتم', raccrocher: 'إنهاء',
     sansRelais: 'شبكة محدودة: قد لا يمر الصوت.',
     sansVoix: 'الصوت غير متاح في هذه النسخة.',
     permRefusee: 'بدون تحديد الموقع، لا يمكن مشاركة مشيك.',
@@ -80,6 +80,7 @@ export default function MarcheADeux() {
   const [monKm, setMonKm] = useState(0);
   const [autre, setAutre] = useState<PositionDuo | null>(null);
   const [voix, setVoix] = useState<SessionVoix | null>(null);
+  const [fluxDistant, setFluxDistant] = useState<any>(null);
   const [micCoupe, setMicCoupe] = useState(false);
   const [erreur, setErreur] = useState('');
   const derniere = useRef<{ lat: number; lng: number } | null>(null);
@@ -129,19 +130,22 @@ export default function MarcheADeux() {
   // micro resterait actif en arrière-plan.
   useEffect(() => () => { voix?.raccrocher(); }, [voix]);
 
-  const basculerVoix = async () => {
+  const basculerVoix = async (avecVideo = false) => {
     if (voix) {
       await voix.raccrocher();
       setVoix(null);
+      setFluxDistant(null);
       return;
     }
     haptique.choix();
-    const s = await ouvrirVoix(duoId, initiateur);
+    const s = await ouvrirVoix(duoId, initiateur, { video: avecVideo });
     if (!s) {
       setErreur(t.sansVoix);
       return;
     }
     setVoix(s);
+    // Le flux de l autre arrive APRES la negociation, pas maintenant.
+    s.surFluxDistant(setFluxDistant);
     if (!s.relaisDisponible) setErreur(t.sansRelais);
   };
 
@@ -190,9 +194,13 @@ export default function MarcheADeux() {
             un micro qui ne fonctionne pas serait pire que ne rien proposer. */}
         {voixDisponible() ? (
           <>
+            {/* `() => basculerVoix(false)` et non `basculerVoix` tout court : React
+                Native passe l'événement tactile en premier argument, qui serait
+                pris pour « avec vidéo ». Le bouton « Parler » aurait ouvert un
+                appel vidéo — attrapé par le typage, invisible à la lecture. */}
             <TouchableOpacity
               style={[s.bouton, { backgroundColor: voix ? tok.dangerSoft : tok.accentSoft, borderColor: voix ? tok.danger : tok.accent }]}
-              onPress={basculerVoix}
+              onPress={() => basculerVoix(false)}
               accessibilityRole="button"
               accessibilityLabel={voix ? t.raccrocher : t.parler}
             >
@@ -201,6 +209,22 @@ export default function MarcheADeux() {
                 {voix ? t.raccrocher : t.parler}
               </Text>
             </TouchableOpacity>
+
+            {/* La video est un bouton SEPARE et non une option de l appel vocal :
+                elle consomme dix a vingt fois plus de donnees, et sur un forfait
+                marocain une heure de video peut le vider. Le choix se fait donc
+                AVANT de decrocher, en connaissance de cause. */}
+            {!voix ? (
+              <TouchableOpacity
+                style={[s.bouton, { backgroundColor: tok.surface, borderColor: tok.border }]}
+                onPress={() => basculerVoix(true)}
+                accessibilityRole="button"
+                accessibilityLabel={t.video}
+              >
+                <Video size={20} color={tok.accent} />
+                <Text style={[s.boutonTxt, { color: tok.text }]}>{t.video}</Text>
+              </TouchableOpacity>
+            ) : null}
 
             {voix ? (
               <TouchableOpacity
