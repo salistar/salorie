@@ -13,10 +13,28 @@ import { useMe } from '../MeProvider';
 import { useProfil } from '../../../lib/useFirestoreMe';
 import { traducteur, sensLecture, type Langue } from '../../../lib/i18nMe';
 import { firestore } from '../../../lib/firebaseClient';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { parseFoodExport, type ImportedLog } from '../../../../lib/importParsers';
 
 type Etat = 'attente' | 'lecture' | 'pret' | 'import' | 'fini' | 'erreur';
+
+/**
+ * Un identifiant DERIVE du contenu de la ligne, et non tire au hasard.
+ *
+ * C'est ce qui rend un import rejouable. Avec un identifiant aleatoire, relancer
+ * le meme fichier apres un import partiel aurait duplique tout ce qui avait deja
+ * reussi — et relancer est precisement le seul recours de l'utilisateur.
+ *
+ * Un hachage simple suffit : on ne cherche pas a resister a une attaque, juste a
+ * ce que la meme ligne donne toujours le meme identifiant. Le prefixe rend ces
+ * documents reconnaissables dans la console Firestore.
+ */
+function idImport(cle: string, rang: number): string {
+  let h = 0;
+  const brut = `${cle}#${rang}`;
+  for (let i = 0; i < brut.length; i++) h = (h * 31 + brut.charCodeAt(i)) | 0;
+  return `imp_${Math.abs(h).toString(36)}_${brut.length.toString(36)}`;
+}
 
 export default function PageImport() {
   const { uid } = useMe();
@@ -29,6 +47,7 @@ export default function PageImport() {
   const [logs, setLogs] = useState<ImportedLog[]>([]);
   const [ignores, setIgnores] = useState(0);
   const [faits, setFaits] = useState(0);
+  const [echecs, setEchecs] = useState(0);
   const [erreur, setErreur] = useState('');
 
   const choisir = async (fichier: File | undefined) => {
@@ -56,11 +75,18 @@ export default function PageImport() {
     if (!uid || !logs.length) return;
     setEtat('import');
     let n = 0;
+    let rates = 0;
+
+    // Combien de fois cette ligne EXACTE est deja apparue dans le fichier. Deux
+    // bananes le meme jour sont deux vrais repas, pas un doublon : le compteur
+    // les distingue, tout en gardant l'identifiant stable d'un import a l'autre.
+    const vus: Record<string, number> = {};
+
     for (const l of logs) {
+      const cle = `${l.date}|${l.name}|${Math.round(l.calories)}|${l.slot || ''}`;
+      const rang = (vus[cle] = (vus[cle] ?? -1) + 1);
       try {
-        // Meme collection que le mobile : l'import apparait dans le journal du
-        // telephone sans aucune synchronisation a ecrire.
-        await addDoc(collection(firestore(), 'users', uid, 'nutrition_logs'), {
+        await setDoc(doc(firestore(), 'users', uid, 'logs', idImport(cle, rang)), {
           name: l.name,
           calories: l.calories,
           protein: l.protein,
@@ -68,6 +94,7 @@ export default function PageImport() {
           fat: l.fat,
           date: l.date,
           type: l.slot || 'meal',
+          importe: true,
           createdAt: serverTimestamp(),
         });
         n += 1;
@@ -75,10 +102,15 @@ export default function PageImport() {
         // se lit comme un blocage.
         setFaits(n);
       } catch {
-        // Une ligne qui echoue n'annule pas les autres. Un import partiel vaut
-        // mieux qu'un import perdu.
+        // Une ligne qui echoue n'annule pas les autres — mais ce n'est defendable
+        // QUE parce que rejouer le fichier est sans danger : l'identifiant est
+        // derive du contenu, donc une seconde passe ECRASE au lieu de dupliquer.
+        // Avec un identifiant aleatoire, le seul recours de l'utilisateur aurait
+        // double tout ce qui avait deja reussi.
+        rates += 1;
       }
     }
+    setEchecs(rates);
     setEtat('fini');
   };
 
@@ -87,6 +119,7 @@ export default function PageImport() {
     setLogs([]);
     setIgnores(0);
     setFaits(0);
+    setEchecs(0);
     setErreur('');
   };
 
@@ -159,6 +192,11 @@ export default function PageImport() {
             <p className="resume-import">
               <strong>{faits}</strong> {t('importFini')}
             </p>
+            {echecs > 0 ? (
+              <p className="me-erreur">
+                {echecs} {t('importEchecs')}
+              </p>
+            ) : null}
             <div className="ligne-champ" style={{ marginTop: 12 }}>
               <a className="btn btn-primary" href="/me/diary">{t('importVoirJournal')}</a>
               <button className="btn btn-ghost" onClick={recommencer}>{t('importAutre')}</button>
