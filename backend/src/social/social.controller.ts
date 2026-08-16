@@ -1,4 +1,5 @@
-import { Controller, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Body, UseGuards, Req } from '@nestjs/common';
+import { MurService } from './mur.service';
 import { createHmac } from 'crypto';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 
@@ -57,5 +58,61 @@ export class SocialController {
       relaisDisponible: Boolean(secret),
       expireDansSec: 3600,
     };
+  }
+}
+
+// ── Le mur ─────────────────────────────────────────────────────────────────
+// Toutes ces routes sont GARDEES : `req.user.uid` vient du jeton Firebase verifie,
+// jamais du corps de la requete. Un client qui se declarerait quelqu'un d'autre
+// n'irait nulle part.
+@Controller('social/mur')
+@UseGuards(FirebaseAuthGuard)
+export class MurController {
+  constructor(private mur: MurService) {}
+
+  @Get()
+  lire(@Req() req: any) {
+    return this.mur.lire(String(req.user?.uid || '').toLowerCase());
+  }
+
+  @Post()
+  publier(@Req() req: any, @Body() b: any) {
+    return this.mur.publier(
+      String(req.user?.uid || '').toLowerCase(),
+      String(req.user?.name || ''),
+      String(b?.texte || ''),
+      String(b?.image || ''),
+      String(b?.imageType || ''),
+      String(b?.groupe || ''),
+    );
+  }
+
+  @Delete(':id')
+  async supprimer(@Req() req: any, @Param('id') id: string) {
+    return { ok: await this.mur.supprimer(String(req.user?.uid || '').toLowerCase(), id) };
+  }
+
+  @Post(':id/signaler')
+  async signaler(@Req() req: any, @Param('id') id: string) {
+    return { ok: await this.mur.signaler(String(req.user?.uid || '').toLowerCase(), id) };
+  }
+
+  @Get('groupes')
+  groupes(@Req() req: any) {
+    return this.mur.listerGroupes(String(req.user?.uid || '').toLowerCase());
+  }
+
+  @Post('groupes')
+  creerGroupe(@Req() req: any, @Body() b: any) {
+    return this.mur.creerGroupe(
+      String(req.user?.uid || '').toLowerCase(),
+      String(b?.nom || ''),
+      Array.isArray(b?.membres) ? b.membres : [],
+    );
+  }
+
+  @Delete('groupes/:id')
+  async supprimerGroupe(@Req() req: any, @Param('id') id: string) {
+    return { ok: await this.mur.supprimerGroupe(String(req.user?.uid || '').toLowerCase(), id) };
   }
 }

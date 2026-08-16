@@ -67,3 +67,62 @@ export class RaceChatMute {
 export const RaceChatMuteSchema = SchemaFactory.createForClass(RaceChatMute);
 RaceChatMuteSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
 RaceChatMuteSchema.index({ raceId: 1, uid: 1 }, { unique: true });
+
+// ── Mur : publications ecrites par les utilisateurs ────────────────────────
+// Le fil existant (public_profiles.recentActivity) est AUTOMATIQUE : courses,
+// medailles, jalons, avec une liste blanche stricte pour la confidentialite.
+// Ceci est different : du TEXTE LIBRE que quelqu'un choisit d'ecrire.
+//
+// D'ou le passage par le BACKEND et non par une ecriture Firestore directe. Un
+// texte libre ecrit depuis le client contournerait le filtre (liens, coordonnees,
+// insultes), la limite de debit et la moderation - et Play exige que tout contenu
+// visible par un autre utilisateur soit signalable.
+//
+// TTL 1 an et non 30 jours comme le chat : un mur est fait pour durer, alors
+// qu'une conversation de course n'a plus d'interet un mois plus tard. Mais une
+// borne existe quand meme - une collection sans expiration croit sans fin, et
+// conserver indefiniment les ecrits de quelqu'un est difficile a defendre.
+
+@Schema({ timestamps: true, collection: 'mur_publications' })
+export class Publication {
+  @Prop({ index: true, default: 'default' }) tenantId: string;
+  /** uid = email en minuscules, comme partout ailleurs. */
+  @Prop({ required: true, index: true }) uid: string;
+  @Prop({ default: '' }) name: string;
+  @Prop({ required: true, maxlength: 500 }) texte: string;
+  /** Photo jointe, base64, meme borne que le chat. */
+  @Prop({ default: '', maxlength: 280000 }) image: string;
+  @Prop({ default: '' }) imageType: string;
+  /**
+   * A qui la publication s'adresse : '' = tous mes amis, sinon un identifiant de
+   * groupe. Un groupe restreint l'audience, il ne l'elargit JAMAIS - un non-ami
+   * ne voit rien, quel que soit le groupe.
+   */
+  @Prop({ default: '', index: true }) groupe: string;
+  @Prop({ default: Date.now, index: true }) ts: number;
+  @Prop({ default: 0 }) signalements: number;
+  @Prop({ default: false }) masque: boolean;
+  @Prop({ default: () => new Date(Date.now() + 365 * 24 * 3600 * 1000) }) expireAt: Date;
+}
+export const PublicationSchema = SchemaFactory.createForClass(Publication);
+PublicationSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
+// Lecture du mur d'un groupe d'amis : l'index couvre exactement la requete.
+PublicationSchema.index({ uid: 1, ts: -1 });
+
+// ── Groupes d'amis ─────────────────────────────────────────────────────────
+// Un groupe sert a RESTREINDRE l'audience d'une publication, pas a creer un
+// espace commun : « mes collegues », « la famille ». Les membres doivent etre
+// amis du proprietaire - sinon un groupe deviendrait un moyen de contourner la
+// liste d'amis.
+
+@Schema({ timestamps: true, collection: 'mur_groupes' })
+export class GroupeAmis {
+  @Prop({ index: true, default: 'default' }) tenantId: string;
+  /** Le proprietaire. Lui seul peut modifier ou supprimer le groupe. */
+  @Prop({ required: true, index: true }) uid: string;
+  @Prop({ required: true, maxlength: 40 }) nom: string;
+  /** uid des membres. Tous doivent etre amis du proprietaire. */
+  @Prop({ type: [String], default: [] }) membres: string[];
+}
+export const GroupeAmisSchema = SchemaFactory.createForClass(GroupeAmis);
+GroupeAmisSchema.index({ uid: 1, nom: 1 }, { unique: true });
