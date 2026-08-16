@@ -27,9 +27,25 @@ les architectures via `plugins/withAbiFilters.js` (arm64 et armeabi uniquement).
 Si le module n'expose pas ces deux-là, l'édition de liens échoue — ça se voit
 dans le journal Gradle, pas au typecheck.
 
-**3. L'APK grossit trop.**
-WebRTC pèse lourd. Comparer avant/après : l'APK était à **62 Mo** après R8.
-Au-delà de ~90 Mo, l'installation en 4G devient un frein réel sur le marché visé.
+**3. L'APK grossit trop — MESURÉ, et mon chiffre de départ était faux.**
+
+J'avais écrit ici « l'APK était à 62 Mo ». C'était le chiffre du 14 août, relevé
+juste après l'activation de R8, et il ne valait plus. Voici la mesure réelle :
+
+| | avant WebRTC | après | écart |
+|---|---|---|---|
+| **AAB** — ce que Play livre | 77 Mo | **86 Mo** | **+9 Mo** |
+| APK universel — sideload | 103,9 Mo | 121,4 Mo | +17,6 Mo |
+
+**Le chiffre qui compte est celui de l'AAB, pas celui de l'APK.** L'APK universel
+embarque les DEUX architectures — `arm64-v8a` 46,8 Mo et `armeabi-v7a` 28,5 Mo —
+parce qu'il doit tourner sur n'importe quel téléphone. Play, lui, livre depuis
+l'AAB une découpe par appareil : personne ne télécharge les 121 Mo.
+
+Le levier si l'AAB devient un frein : **abandonner `armeabi-v7a`** dans
+`plugins/withAbiFilters.js`. Ça retire 28,5 Mo, mais ça exclut du Play Store tous
+les téléphones 32 bits — encore nombreux dans l'entrée de gamme au Maroc, c'est-à-dire
+exactement le public visé. L'arbitrage n'est pas technique, il est commercial.
 
 **4. Une permission apparaît sans qu'on l'ait demandée.**
 `react-native-webrtc` ajoute `CAMERA`, `RECORD_AUDIO`, `MODIFY_AUDIO_SETTINGS`.
