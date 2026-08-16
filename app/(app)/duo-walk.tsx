@@ -24,6 +24,7 @@ import {
   type PositionDuo,
 } from '../../lib/socialSocket';
 import { voixDisponible, ouvrirVoix, type SessionVoix } from '../../lib/duoVoix';
+import VueAppelVideo from '../../components/VueAppelVideo';
 
 const T: Record<string, Record<string, string>> = {
   fr: {
@@ -82,6 +83,7 @@ export default function MarcheADeux() {
   const [voix, setVoix] = useState<SessionVoix | null>(null);
   const [fluxDistant, setFluxDistant] = useState<any>(null);
   const [micCoupe, setMicCoupe] = useState(false);
+  const [camCoupee, setCamCoupee] = useState(false);
   const [erreur, setErreur] = useState('');
   const derniere = useRef<{ lat: number; lng: number } | null>(null);
   const cumul = useRef(0);
@@ -135,6 +137,7 @@ export default function MarcheADeux() {
       await voix.raccrocher();
       setVoix(null);
       setFluxDistant(null);
+      setCamCoupee(false);
       return;
     }
     haptique.choix();
@@ -189,6 +192,21 @@ export default function MarcheADeux() {
           <Share2 size={20} color={tok.accent} />
           <Text style={[s.boutonTxt, { color: tok.text }]}>{t.invite}</Text>
         </TouchableOpacity>
+
+        {/* Les deux images. Ne rend rien en appel audio, ni sans le module natif. */}
+        {voix ? (
+          <VueAppelVideo
+            fluxLocal={voix.fluxLocal}
+            fluxDistant={fluxDistant}
+            cameraCoupee={camCoupee}
+            onCouperCamera={() => {
+              const n = !camCoupee;
+              setCamCoupee(n);
+              voix.couperCamera(n);
+            }}
+            onBasculerCamera={() => voix.basculerCamera()}
+          />
+        ) : null}
 
         {/* Le bouton vocal n'apparaît que si le module natif est présent : proposer
             un micro qui ne fonctionne pas serait pire que ne rien proposer. */}
