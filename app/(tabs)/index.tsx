@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
+import { useEspaceBas } from '../../lib/espaceBas';
 import { flipAuto } from '../../lib/rtl';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'expo-router';
@@ -37,6 +38,7 @@ import FeatureGate from '../../components/FeatureGate';
 
 export default function HomeScreen() {
   const { user } = useUser();
+  const espaceBas = useEspaceBas();
   const router = useRouter();
   const { t, language } = useTranslation() as any;
   const { resolved, colors } = useTheme();
@@ -190,7 +192,7 @@ export default function HomeScreen() {
       <OfflineBanner />
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: espaceBas }]}
         showsVerticalScrollIndicator={false}
       >
         {/* ── Top Header (brand + language + theme + notif) ──── */}

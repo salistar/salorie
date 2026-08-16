@@ -1,5 +1,6 @@
 // Composition corporelle — poids, masse grasse %, muscle (manuel). Balance connectée = à venir.
 import React, { useEffect, useState } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { numLocaleFor } from '../../lib/format';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
@@ -54,6 +55,7 @@ const TXT: any = {
 export default function BodyCompositionScreen() {
   const __gate = useScreenGate('body-composition');
   const { user } = useUser();
+  const espaceBas = useEspaceBasSimple();
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -95,7 +97,7 @@ export default function BodyCompositionScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]} keyboardShouldPersistTaps="handled">
         <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}><PersonStanding size={24} color={GREEN} /><Text style={[styles.title, { color: text }, align]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 

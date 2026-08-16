@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
+import { useEspaceBas } from '../../lib/espaceBas';
 import { directionAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, RefreshControl, TouchableOpacity, Modal, Pressable, TextInput, ViewStyle } from 'react-native';
@@ -129,6 +130,7 @@ import { useExperiment } from '../../lib/experiments';
 
 export default function CoachScreen() {
   const { user } = useUser();
+  const espaceBas = useEspaceBas();
   const { resolved, colors } = useTheme();
   const { t, language } = useTranslation();
   const isDark = resolved === 'dark';
@@ -224,7 +226,7 @@ export default function CoachScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
       >

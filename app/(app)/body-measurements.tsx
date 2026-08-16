@@ -1,5 +1,6 @@
 // Mesures corporelles — tour de taille/hanches/bras/poitrine + historique.
 import React, { useEffect, useState } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
@@ -46,6 +47,7 @@ const TXT: any = {
 export default function BodyMeasurementsScreen() {
   const __gate = useScreenGate('body-measurements');
   const { user } = useUser();
+  const espaceBas = useEspaceBasSimple();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -85,7 +87,7 @@ export default function BodyMeasurementsScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]} keyboardShouldPersistTaps="handled">
         <View style={styles.head}><Ruler size={24} color={accent} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
         <FormCard>

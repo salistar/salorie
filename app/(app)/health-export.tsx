@@ -3,6 +3,7 @@
 // nutrition, poids, glycémie/tension). PDF via expo-print si dispo, sinon
 // fallback texte via Share. i18n en/fr/ar, dark, RTL, retour.
 import React, { useEffect, useState } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import {
   Image,
@@ -180,6 +181,7 @@ const TXT: any = {
 export default function HealthExportScreen() {
   const __gate = useScreenGate('health-export');
   const { user } = useUser();
+  const espaceBas = useEspaceBasSimple();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -257,7 +259,7 @@ export default function HealthExportScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]}>
         <Image
           source={require('../../assets/images/illustrations/analytics_cover.jpg')}
           style={styles.cover}

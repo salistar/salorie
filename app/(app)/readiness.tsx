@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, TextInput } from 'react-native';
@@ -88,6 +89,7 @@ function verdictColor(score: number) {
 
 export default function ReadinessScreen() {
   const { resolved } = useTheme();
+  const espaceBas = useEspaceBasSimple();
   const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(isDark), [isDark]);
@@ -151,7 +153,7 @@ export default function ReadinessScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false}>
         <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
         <View style={[styles.titleRow, { flexDirection: rowDir(isRTL) }]}>

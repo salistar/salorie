@@ -1,5 +1,6 @@
 // Budget calories — tes calories comme un compte en banque.
 import React from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { numLocaleFor } from '../../lib/format';
 import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
@@ -75,6 +76,7 @@ const TXT: any = {
 export default function CalorieBudgetScreen() {
   const __gate = useScreenGate('calorie-budget');
   const { colors, resolved } = useTheme();
+  const espaceBas = useEspaceBasSimple();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
 
@@ -113,7 +115,7 @@ export default function CalorieBudgetScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]}>
         <Image source={require('../../assets/images/illustrations/dashboard_bg.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <ScreenTitle title={t.title} icon={<Wallet size={26} color={GREEN} />} subtitle={t.sub} />
 

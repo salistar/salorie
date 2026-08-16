@@ -1,5 +1,6 @@
 // Jumeau métabolique — projette ton poids selon ce que tu manges (+ ETA objectif).
 import React, { useEffect, useState } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { Image, View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
@@ -72,6 +73,7 @@ const TXT: any = {
 export default function MetabolicTwinScreen() {
   const __gate = useScreenGate('metabolic-twin');
   const { colors, resolved } = useTheme();
+  const espaceBas = useEspaceBasSimple();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
@@ -125,7 +127,7 @@ export default function MetabolicTwinScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]}>
         <Image source={require('../../assets/images/illustrations/scale.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <View style={{ marginHorizontal: -spacing.xl }}>
           <ScreenTitle title={t.title} icon={<TrendingDown size={24} color={GREEN} />} subtitle={`${t.sub1}${tdee}${t.sub2}`} />

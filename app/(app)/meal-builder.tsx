@@ -1,6 +1,7 @@
 // Meal-builder / recettes — compose un repas en cherchant des ingrédients
 // (searchFood / OpenFoodFacts) → total des macros en direct. Réutilise la recherche existante.
 import React, { useState } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, FlatList, Alert } from 'react-native';
@@ -39,6 +40,7 @@ type Item = { id: string; name: string; qty: number; calories: number; protein: 
 export default function MealBuilderScreen() {
   const __gate = useScreenGate('meal-builder');
   const { resolved } = useTheme();
+  const espaceBas = useEspaceBasSimple();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
@@ -128,7 +130,7 @@ export default function MealBuilderScreen() {
         </View>
       )}
 
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]}>
         {items.length === 0 && results.length === 0 && (
           <View style={styles.emptyWrap}>
             <EmptyState icon={<ChefHat size={26} color={accent} />} title={t.title} subtitle={t.empty} />

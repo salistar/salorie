@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
@@ -52,6 +53,7 @@ const TXT = {
 
 export default function TermsScreen() {
   const { colors, resolved } = useTheme();
+  const espaceBas = useEspaceBasSimple();
   const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(isDark), [isDark]);
@@ -64,7 +66,7 @@ export default function TermsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
       <ScreenTopBar showBack title={tx.title} showBrand={false} showNotif={false} />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.duration(600)}>
           <View style={styles.iconHero}>
             <ScrollText size={64} color={colors.primary} />

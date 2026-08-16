@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Image, Dimensions, Linking } from 'react-native';
+import { useEspaceBas } from '../../lib/espaceBas';
 import { flipAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
 import { useUser, useAuth } from '@clerk/clerk-expo';
@@ -39,6 +40,7 @@ const { width } = Dimensions.get('window');
 
 export default function ProfileScreen() {
   const { user } = useUser();
+  const espaceBas = useEspaceBas();
   const { signOut } = useAuth();
   const { t, language } = useTranslation() as any;
   const { resolved } = useTheme();
@@ -248,7 +250,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]}>
       <ScrollView 
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: espaceBas }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}

@@ -1,5 +1,6 @@
 // Liste de courses — ajoute, coche, persiste (local).
 import React, { useEffect, useState } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableOpacity } from 'react-native';
@@ -26,6 +27,7 @@ export default function ShoppingListScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
+  const espaceBas = useEspaceBasSimple();
   const isDark = resolved === 'dark';
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
@@ -55,7 +57,7 @@ export default function ShoppingListScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]} keyboardShouldPersistTaps="handled">
         <Image source={require('../../assets/images/photos/veggies_0.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <View style={styles.head}><ShoppingCart size={24} color={accent} /><Text style={[styles.title, { color: textCol }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{items.length ? `${left} ${t.to_buy}` : t.add_what}</Text>

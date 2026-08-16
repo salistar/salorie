@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import {
   View,
   Text,
@@ -36,6 +37,7 @@ import { Utensils } from 'lucide-react-native';
 
 export default function PreferencesScreen() {
   const { user } = useUser();
+  const espaceBas = useEspaceBasSimple();
   const { mode: theme, setMode: setTheme, colors, resolved } = useTheme();
   const tPrimary = resolved === 'dark' ? '#fff' : Colors.light.gray[900];
   const tMuted = resolved === 'dark' ? '#9BA1A6' : Colors.light.gray[500];
@@ -170,7 +172,7 @@ export default function PreferencesScreen() {
           <ActivityIndicator size="large" color={isDark ? Colors.dark.primary : Colors.light.primary} />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: tPrimary }]}>{t('prefs.appearance')}</Text>
             <Text style={[styles.sectionDesc, { color: tMuted }]}>{t('prefs.appearance_desc')}</Text>

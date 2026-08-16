@@ -5,6 +5,7 @@
 // recette = ingrédients, étapes, astuces santé + les raisons du verdict.
 // 100% offline (données statiques), i18n/dark/RTL/retour.
 import React, { useEffect, useMemo, useState } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { directionAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
@@ -69,6 +70,7 @@ type Verdict = 'great' | 'ok' | 'avoid';
 
 export default function HealthyRecipesScreen() {
   const { user } = useUser();
+  const espaceBas = useEspaceBasSimple();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const lang: 'fr' | 'ar' | 'en' = language === 'fr' ? 'fr' : language === 'ar' ? 'ar' : 'en';
@@ -184,7 +186,7 @@ export default function HealthyRecipesScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false}>
         <View style={[styles.head, { flexDirection: rowDir }]}>
           <Utensils size={26} color={accent} />
           <Text style={[styles.title, { color: text }, align]}>{t.title}</Text>
@@ -195,7 +197,7 @@ export default function HealthyRecipesScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterRow}
+          contentContainerStyle={[styles.filterRow, { paddingBottom: espaceBas }]}
           style={{ marginTop: 8 }}
         >
           {(['all', ...categories] as (RecipeCategory | 'all')[]).map((c) => {

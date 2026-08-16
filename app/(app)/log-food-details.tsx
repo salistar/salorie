@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { haptique } from '../../lib/haptique';
 import {
   View,
@@ -45,6 +46,7 @@ console.log('\x1b[35m[log-food-details.tsx] MODULE LOADED\x1b[0m');
 
 export default function LogFoodDetailsScreen() {
   const { user } = useUser();
+  const espaceBas = useEspaceBasSimple();
   const { selectedDate, triggerRefresh } = useLogging();
   const params = useLocalSearchParams();
   const { colors, resolved } = useTheme();
@@ -228,7 +230,7 @@ export default function LogFoodDetailsScreen() {
       >
         <ScreenTopBar showBack title={t('logfood.title')} showBrand={false} showNotif={false} />
 
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false}>
           {/* Captured image preview */}
           {displayUri ? (
             <Animated.View entering={FadeInDown.duration(600)} style={[styles.imageContainer, isDark && { shadowColor: 'transparent', elevation: 0 }]}>

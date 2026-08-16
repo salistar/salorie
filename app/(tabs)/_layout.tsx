@@ -6,13 +6,14 @@ import { LoggingProvider, useLogging } from '../../lib/LoggingContext';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import * as Haptics from 'expo-haptics';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBasBarre, useBasBouton } from '../../lib/espaceBas';
 
 function TabsContent() {
   const { showActionMenu } = useLogging();
   const { colors, resolved } = useTheme();
   const { t, language } = useTranslation() as any;
-  const insets = useSafeAreaInsets();
+  const basBarre = useBasBarre();
+  const basBouton = useBasBouton();
   const defisLabel = language === 'fr' ? 'Défis' : language === 'ar' ? 'تحديات' : 'Challenges';
   const isDark = resolved === 'dark';
   const tabBg = isDark ? '#161C23' : Colors.light.white; // theme-aware (plus de barre blanche en dark)
@@ -34,7 +35,7 @@ function TabsContent() {
           // haut de la boîte ; en arabe, plus haut, les mots étaient tranchés net.
           // `max` et non une somme : sur un téléphone à navigation gestuelle le
           // décalage est presque nul, et les 24 px d'origine restent le bon écart.
-          tabBarStyle: [styles.tabBar, { backgroundColor: tabBg, bottom: Math.max(24, insets.bottom + 10) }],
+          tabBarStyle: [styles.tabBar, { backgroundColor: tabBg, bottom: basBarre }],
           tabBarShowLabel: true,
           tabBarLabelPosition: 'below-icon',
           tabBarLabelStyle: {
@@ -90,7 +91,7 @@ function TabsContent() {
 
       {/* Floating quick-add button (D6: labelled for accessibility) */}
       <TouchableOpacity
-        style={styles.floatingButton}
+        style={[styles.floatingButton, { bottom: basBouton }]}
         activeOpacity={0.8}
         accessibilityRole="button"
         accessibilityLabel="Quick add"

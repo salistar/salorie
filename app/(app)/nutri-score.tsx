@@ -1,5 +1,6 @@
 // Nutri-Score — note nutritionnelle A→E d'un aliment (pour 100 g).
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { useTokens } from '../../constants/tokens';
 import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, Animated, Easing, Share } from 'react-native';
 import * as Haptics from 'expo-haptics';
@@ -60,6 +61,7 @@ export default function NutriScoreScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
+  const espaceBas = useEspaceBasSimple();
   const isDark = resolved === 'dark';
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
@@ -122,7 +124,7 @@ export default function NutriScoreScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: espaceBas }]} keyboardShouldPersistTaps="handled">
         <Image source={require('../../assets/images/illustrations/healthy_food.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <View style={styles.head}><Award size={24} color={accent} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>

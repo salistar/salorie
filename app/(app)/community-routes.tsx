@@ -1,4 +1,5 @@
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { useEspaceBasSimple } from '../../lib/espaceBas';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
@@ -122,6 +123,7 @@ const emptyStop = (): DraftStop => ({ name: '', lat: '', lng: '', atKm: '' });
 
 export default function CommunityRoutesScreen() {
   const { user } = useUser();
+  const espaceBas = useEspaceBasSimple();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -246,7 +248,7 @@ export default function CommunityRoutesScreen() {
       <PerfList
         data={loading ? [] : approved}
         keyExtractor={(r: CommunityRoute, i: number) => r.id ?? `route-${i}`}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
