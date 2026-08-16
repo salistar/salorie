@@ -129,7 +129,7 @@ export default function Referral() {
   const text = tok.text;
   const sub = tok.textMuted;
   const lockTint = isDark ? '#334155' : '#94a3b8';
-  const codeBg = isDark ? '#14331f' : '#EAF4EE';
+  const codeBg = tok.accentSoft;
   const inputBg = isDark ? '#0f1419' : '#f1f5f9';
   const align: any = { textAlign: txtAlign(isRTL) };
 

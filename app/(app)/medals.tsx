@@ -38,7 +38,7 @@ export default function Medals() {
   const bg = tok.bg;
   const text = tok.text;
   const sub = tok.textMuted;
-  const hint = isDark ? '#64748b' : '#94a3b8';
+  const hint = tok.textFaint;
   const align: any = { textAlign: txtAlign(isRTL) };
   const __gate = useScreenGate('medals');
 

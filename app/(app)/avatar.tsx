@@ -66,7 +66,7 @@ export default function AvatarScreen() {
   const card = tok.surface;
   const text = tok.text;
   const sub = tok.textMuted;
-  const track = isDark ? '#334155' : '#E2E8F0';
+  const track = tok.border;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
   const rowDir: any = { flexDirection: isRTL ? 'row-reverse' : 'row' };
 

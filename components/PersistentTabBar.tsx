@@ -2,6 +2,7 @@
 // Rendue par app/(app)/_layout.tsx. PAS de usePathname (évite la boucle de re-render
 // au niveau routeur) : 4 boutons qui ramènent aux onglets principaux.
 import React, { useEffect, useState } from 'react';
+import { useTokens } from '../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Keyboard } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
@@ -26,7 +27,8 @@ export default function PersistentTabBar() {
   const { resolved } = useTheme();
   const { language } = useTranslation() as any;
   const isDark = resolved === 'dark';
-  const barBg = isDark ? '#161C23' : '#fff';
+  const tok = useTokens();
+  const barBg = tok.surface;
   const defisLabel = language === 'fr' ? 'Défis' : language === 'ar' ? 'تحديات' : 'Challenges';
   useEffect(() => {
     const s = Keyboard.addListener('keyboardDidShow', () => setKbOpen(true));

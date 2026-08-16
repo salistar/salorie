@@ -2,6 +2,7 @@
 // le plan/objectif) vs consommé du jour, avec progression. Réutilise useNutritionData.
 // Theme-aware (light/dark) + trilingue (en/fr/ar).
 import React from 'react';
+import { useTokens } from '../constants/tokens';
 import { View, Text, StyleSheet } from 'react-native';
 import { Target } from 'lucide-react-native';
 import { useNutritionData } from '../hooks/useNutritionData';
@@ -25,11 +26,12 @@ function MacroTargets() {
   const tx = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  const cardBg = isDark ? '#161C23' : '#fff';
-  const titleColor = isDark ? '#f1f5f9' : '#0F172A';
+  const tok = useTokens();
+  const cardBg = tok.surface;
+  const titleColor = tok.text;
   const labelColor = isDark ? '#cbd5e1' : '#334155';
-  const valColor = isDark ? '#94a3b8' : '#64748B';
-  const trackBg = isDark ? '#334155' : '#F1F5F9';
+  const valColor = tok.textMuted;
+  const trackBg = tok.surfaceSunken;
   const footerColor = isDark ? '#475569' : '#CBD5E1';
 
   const data: any = useNutritionData(new Date().toISOString().split('T')[0]);

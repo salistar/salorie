@@ -58,7 +58,7 @@ export default function VoiceLog() {
   const accent = isDark ? '#4ade80' : GREEN;
   const tok = useTokens();
   const bg = tok.bg;
-  const cardBg = isDark ? '#1e293b' : '#ffffff';
+  const cardBg = tok.surface;
   const text = tok.text;
   const sub = tok.textMuted;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };

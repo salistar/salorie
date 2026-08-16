@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTokens } from '../constants/tokens';
 import { a11y } from '../lib/a11y';
 import {
   View,
@@ -94,7 +95,8 @@ export default function RemainingCaloriesCard({
   const valueColor = isDark ? '#f1f5f9' : Colors.light.gray[900];
   const statValueColor = isDark ? '#e2e8f0' : Colors.light.gray[800];
   const macroBg = isDark ? 'rgba(46,139,87,0.15)' : Colors.light.primaryLight;
-  const macroIconBg = isDark ? '#0f1419' : '#fff';
+  const tok = useTokens();
+  const macroIconBg = tok.bg;
   const trackColor = isDark ? '#334155' : Colors.light.gray[200];
   const borderColor = isDark ? 'rgba(255,255,255,0.08)' : Colors.light.gray[50];
   const [modalVisible, setModalVisible] = useState(false);

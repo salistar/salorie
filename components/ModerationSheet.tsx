@@ -53,8 +53,8 @@ export default function ModerationSheet({
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string>('');
 
-  const sheetBg = isDark ? '#161C23' : '#ffffff';
   const tok = useTokens();
+  const sheetBg = tok.surface;
   const text = tok.text;
   const sub = tok.textMuted;
   const line = isDark ? '#283241' : '#EEF2F6';

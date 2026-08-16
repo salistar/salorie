@@ -70,7 +70,7 @@ export default function Sadaqa() {
   const bg = tok.bg;
   const text = tok.text;
   const sub = tok.textMuted;
-  const track = isDark ? '#334155' : '#e2e8f0';
+  const track = tok.border;
   const align: any = { textAlign: txtAlign(isRTL) };
 
   const [loading, setLoading] = useState(true);

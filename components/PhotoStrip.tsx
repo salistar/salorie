@@ -3,6 +3,7 @@
 // lourd, pas de lien cassé). Scroll horizontal → jamais de débordement vertical.
 // Theme-aware. Usage : <PhotoStrip category="food" />
 import React from 'react';
+import { useTokens } from '../constants/tokens';
 import { View, Text, ScrollView, Image, StyleSheet } from 'react-native';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
@@ -55,7 +56,8 @@ function PhotoStrip({ category = 'food', showTitle = true }: { category?: keyof 
   const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
   const imgs = SETS[category] || SETS.food;
-  const titleColor = isDark ? '#f1f5f9' : '#0f172a';
+  const tok = useTokens();
+  const titleColor = tok.text;
   const title = (TITLES[language] || TITLES.en)[category] || '';
 
   return (
