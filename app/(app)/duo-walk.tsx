@@ -25,6 +25,7 @@ import {
 } from '../../lib/socialSocket';
 import { voixDisponible, ouvrirVoix, type SessionVoix } from '../../lib/duoVoix';
 import VueAppelVideo from '../../components/VueAppelVideo';
+import CarteDuo from '../../components/CarteDuo';
 
 const T: Record<string, Record<string, string>> = {
   fr: {
@@ -192,6 +193,13 @@ export default function MarcheADeux() {
           <Share2 size={20} color={tok.accent} />
           <Text style={[s.boutonTxt, { color: tok.text }]}>{t.invite}</Text>
         </TouchableOpacity>
+
+        {/* La carte : voir l autre point avancer est ce qui transforme deux marches
+            solitaires en une marche partagee. Un compteur de kilometres, non. */}
+        <CarteDuo
+          moi={derniere.current}
+          autre={autre ? { lat: autre.lat, lng: autre.lng } : null}
+        />
 
         {/* Les deux images. Ne rend rien en appel audio, ni sans le module natif. */}
         {voix ? (
