@@ -77,6 +77,9 @@ export function expliquerRefus(motif: string, langue = 'fr'): string {
       insulte: 'Ce message ne respecte pas les règles de la communauté.',
       muet: 'Tu ne peux pas écrire dans cette course pour le moment.',
       debit: 'Tu écris trop vite. Attends quelques secondes.',
+      image_type: 'Seules les photos JPEG, PNG et WebP sont acceptées.',
+      image_poids: 'Photo trop lourde. Réessaie, elle sera réduite automatiquement.',
+      image_format: 'Cette photo n’a pas pu être lue. Choisis-en une autre.',
     },
     en: {
       vide: 'Empty message.',
@@ -86,6 +89,9 @@ export function expliquerRefus(motif: string, langue = 'fr'): string {
       insulte: 'This message breaks the community rules.',
       muet: 'You cannot post in this race right now.',
       debit: 'You are posting too fast. Wait a few seconds.',
+      image_type: 'Only JPEG, PNG and WebP photos are accepted.',
+      image_poids: 'Photo too large. Try again — it will be resized automatically.',
+      image_format: 'This photo could not be read. Pick another one.',
     },
     ar: {
       vide: 'رسالة فارغة.',
@@ -95,7 +101,37 @@ export function expliquerRefus(motif: string, langue = 'fr'): string {
       insulte: 'هذه الرسالة تخالف قواعد المجتمع.',
       muet: 'لا يمكنك الكتابة في هذا السباق حاليًا.',
       debit: 'أنت تكتب بسرعة كبيرة. انتظر بضع ثوانٍ.',
+      image_type: 'يُقبل فقط JPEG وPNG وWebP.',
+      image_poids: 'الصورة ثقيلة جدًا. أعد المحاولة، سيتم تصغيرها تلقائيًا.',
+      image_format: 'تعذّرت قراءة هذه الصورة. اختر صورة أخرى.',
     },
   };
   return (M[langue] || M.fr)[motif] || (M[langue] || M.fr).insulte;
+}
+
+// ── Photos jointes ─────────────────────────────────────────────────────────
+// Une photo entre en base et s'affiche chez tous les participants d'une course.
+// Un client modifie n'execute pas notre code de redimensionnement : c'est donc
+// le serveur, et lui seul, qui decide de ce qui passe.
+
+/** Ce que le stockage accepte : 280 000 caracteres base64 ~ 205 Ko de binaire. */
+export const PHOTO_MAX_BASE64 = 280000;
+
+/** Liste FERMEE, pas une liste noire. Un SVG peut porter du script. */
+const TYPES_ACCEPTES = ['image/jpeg', 'image/png', 'image/webp'];
+
+/**
+ * Verifie une photo jointe. Rend le motif de refus, ou `null` si elle passe.
+ *
+ * Une photo absente n'est PAS une erreur : un message purement textuel est le
+ * cas le plus courant.
+ */
+export function verifierPhoto(image: string, type: string): string | null {
+  if (!image) return null;
+  if (!TYPES_ACCEPTES.includes(type)) return 'image_type';
+  if (image.length > PHOTO_MAX_BASE64) return 'image_poids';
+  // Du base64 et rien d'autre : un prefixe `data:` ou du HTML glisse ici
+  // ressortirait tel quel dans le client, qui le pose dans une balise Image.
+  if (!/^[A-Za-z0-9+/=]+$/.test(image)) return 'image_format';
+  return null;
 }

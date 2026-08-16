@@ -20,6 +20,22 @@ export class RaceChatMessage {
   /** Nom d'affichage au moment de l'envoi (il peut changer ensuite). */
   @Prop({ default: '' }) name: string;
   @Prop({ required: true, maxlength: 280 }) text: string;
+  /**
+   * Photo jointe, en base64, ou vide.
+   *
+   * Stockée DANS le message et pas dans un bucket à part, pour une raison
+   * précise : le TTL de 30 jours ci-dessous la purge alors toute seule. Une image
+   * posée sur un disque ou un bucket survivrait à la conversation qu'elle
+   * illustre, et il faudrait un cron pour la rattraper — un cron qu'on
+   * oublierait de surveiller, comme toujours.
+   *
+   * 200 Ko après redimensionnement côté client (1024 px, JPEG). Un document
+   * Mongo tient 16 Mo : on est deux ordres de grandeur en dessous, et la limite
+   * est vérifiée AUSSI côté serveur — un client modifié ne s'en prive pas.
+   */
+  @Prop({ default: '', maxlength: 280000 }) image: string;
+  /** Type de la photo. Fermé à trois valeurs : le reste ne s'affiche pas. */
+  @Prop({ default: '' }) imageType: string;
   /** Horodatage serveur : jamais celui du client, qui peut mentir. */
   @Prop({ default: Date.now, index: true }) ts: number;
   /** Renseigné quand un message a été signalé (cf. S5). */

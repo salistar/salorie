@@ -23,7 +23,7 @@ import * as admin from 'firebase-admin';
 import { createHash } from 'crypto';
 import { RaceChatMessage, RaceChatMute } from './social.schemas';
 import { RedisService } from '../redis.service';
-import { filtrerMessage, expliquerRefus } from './moderation-chat';
+import { filtrerMessage, expliquerRefus, verifierPhoto } from './moderation-chat';
 
 /** Hash court pour les journaux : l'uid EST l'email, il ne doit jamais s'y écrire. */
 const h = (uid: string) => createHash('sha1').update(String(uid || '')).digest('hex').slice(0, 8);
@@ -115,7 +115,10 @@ export class SocialGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('race:msg')
-  async messageCourse(@ConnectedSocket() socket: Socket, @MessageBody() body: { raceId?: string; text?: string }) {
+  async messageCourse(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() body: { raceId?: string; text?: string; image?: string; imageType?: string },
+  ) {
     const uid = (socket.data as any).uid as string;
     const langue = (socket.data as any).langue || 'fr';
     const raceId = String(body?.raceId || '').trim();
@@ -131,15 +134,33 @@ export class SocialGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const mute = await this.mutes.findOne({ raceId, uid }).lean();
     if (mute && Number((mute as any).jusqua) > Date.now()) return refuser('muet');
 
-    // 3. Contenu.
-    const verdict = filtrerMessage(body?.text);
-    if (!verdict.ok) return refuser(verdict.motif || 'insulte');
+    // 3. Photo jointe, s'il y en a une.
+    //
+    // Vérifiée AVANT le texte : un message sans texte mais avec photo est légitime,
+    // et il ne faut pas le refuser pour « message vide ».
+    //
+    // Les trois contrôles sont faits ICI et non côté client. Un client modifié
+    // enverrait une image de 15 Mo, ou un type qui n'est pas une image du tout —
+    // c'est le serveur qui décide de ce qui entre en base.
+    const photo = String(body?.image || '');
+    const type = String(body?.imageType || '');
+    const refusPhoto = verifierPhoto(photo, type);
+    if (refusPhoto) return refuser(refusPhoto);
+
+    // 4. Contenu textuel. Une légende vide est acceptée QUAND une photo
+    //    l'accompagne — sinon un message vide n'a rien à faire dans le fil.
+    const brut = String(body?.text || '');
+    if (!brut.trim() && !photo) return;
+    const verdict = brut.trim() ? filtrerMessage(brut) : { ok: true as const, texte: '' };
+    if (!verdict.ok) return refuser((verdict as any).motif || 'insulte');
 
     const doc = await this.messages.create({
       raceId,
       uid,
       name: (socket.data as any).name || '',
       text: verdict.texte || '',
+      image: photo,
+      imageType: photo ? type : '',
       ts: Date.now(),
     });
 
@@ -151,6 +172,8 @@ export class SocialGateway implements OnGatewayConnection, OnGatewayDisconnect {
       auteur: h(uid),
       name: doc.name,
       text: doc.text,
+      image: doc.image || '',
+      imageType: doc.imageType || '',
       ts: doc.ts,
     });
   }

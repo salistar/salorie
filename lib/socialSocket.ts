@@ -21,6 +21,9 @@ export type MessageCourse = {
   auteur: string;
   name: string;
   text: string;
+  /** Photo jointe, en base64. Vide quand le message est purement textuel. */
+  image?: string;
+  imageType?: string;
   ts: number;
 };
 
@@ -73,8 +76,15 @@ export function rejoindreCourse(raceId: string, langue = 'fr'): void {
 export function quitterCourse(raceId: string): void {
   socket?.emit('race:leave', { raceId });
 }
-export function envoyerMessage(raceId: string, text: string): void {
-  socket?.emit('race:msg', { raceId, text });
+export function envoyerMessage(
+  raceId: string,
+  text: string,
+  photo?: { base64: string; type: string } | null,
+): void {
+  // La photo voyage DANS le message : c'est ce qui la rend signalable et purgée
+  // par le meme TTL de 30 jours que la conversation qu'elle illustre. Posee
+  // ailleurs, elle survivrait au fil et il faudrait un cron pour la rattraper.
+  socket?.emit('race:msg', photo ? { raceId, text, image: photo.base64, imageType: photo.type } : { raceId, text });
 }
 export function signalerMessage(messageId: string): void {
   socket?.emit('race:signaler', { messageId });
