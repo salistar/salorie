@@ -842,7 +842,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   nutriTitle: { fontSize: 14, fontWeight: '800', marginBottom: 8 },
   nutriRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 3 },
   nutriLabel: { fontSize: 13.5, fontWeight: '600' },
-  nutriIndent: { paddingLeft: 14, fontWeight: '500', fontStyle: 'italic' },
+  nutriIndent: { paddingStart: 14, fontWeight: '500', fontStyle: 'italic' },
   nutriVal: { fontSize: 13.5, fontWeight: '800' },
   // Alternatives
   altBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 14, borderWidth: 1.5, borderColor: isDark ? Colors.dark.primary : Colors.light.primary },

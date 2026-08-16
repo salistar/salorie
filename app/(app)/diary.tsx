@@ -231,7 +231,7 @@ const s = StyleSheet.create({
   slotCard: { borderRadius: 18, padding: 14, marginBottom: 12 },
   slotHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   slotTitle: { fontSize: 15, fontWeight: '800' },
-  slotKcal: { fontSize: 12.5, fontWeight: '800', marginRight: 8 },
+  slotKcal: { fontSize: 12.5, fontWeight: '800', marginEnd: 8 },
   addBtn: { backgroundColor: GREEN, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   itemRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(148,163,184,0.25)' },
   gradeBadge: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },

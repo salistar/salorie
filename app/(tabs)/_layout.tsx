@@ -29,6 +29,14 @@ function TabsContent() {
             fontSize: 11,
             fontWeight: '700',
             marginBottom: 6,
+            // L'arabe a besoin de plus de hauteur de ligne que le latin : ses
+            // descendantes et ses diacritiques débordent d'une boîte calibrée pour
+            // l'alphabet latin, et Android les COUPE net. Constaté le 16 août 2026
+            // sur R83L20HWJTE : les cinq libellés rognés par le bas.
+            // Posé UNIQUEMENT en arabe — les mises en page FR/EN sont déjà
+            // validées à l'écran, inutile de les déplacer pour un défaut qui ne
+            // les concerne pas. La barre fait 78 px pour 64 utiles : la place est là.
+            ...(language === 'ar' ? { lineHeight: 18 } : null),
           },
           tabBarIconStyle: { marginTop: 6 },
           sceneStyle: { backgroundColor: 'transparent' },
