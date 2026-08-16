@@ -13,6 +13,7 @@
 // On ne patche PAS node_modules (écrasé au reinstall) — la logique vit ici.
 import { useSignIn, useSignUp } from '@clerk/clerk-expo';
 import * as WebBrowser from 'expo-web-browser';
+import * as Network from 'expo-network';
 
 export type GoogleSSOParams = { redirectUrl?: string; unsafeMetadata?: Record<string, unknown> };
 
@@ -32,6 +33,27 @@ export function useGoogleSSO() {
     await signIn.create({ strategy: 'oauth_google', redirectUrl });
     const { externalVerificationRedirectURL } = signIn.firstFactorVerification;
     if (!externalVerificationRedirectURL) {
+      // SANS RESEAU, on arrive EXACTEMENT ici : `signIn.create` n'aboutit pas et
+      // laisse la verification vide. Le message d'origine — repris du SDK Clerk —
+      // parlait alors de « redirect URL » manquante, ce qui envoie chercher un
+      // probleme de configuration la ou il n'y a qu'une 4G coupee. Constate le
+      // 16/08/2026 : plusieurs heures perdues sur cette fausse piste, avant de
+      // decouvrir que le telephone n'avait plus d'acces internet.
+      let horsLigne = false;
+      try {
+        const etat = await Network.getNetworkStateAsync();
+        horsLigne = !etat.isConnected || etat.isInternetReachable === false;
+      } catch {
+        // L'API elle-meme indisponible : on ne conclut rien, message d'origine.
+      }
+      if (horsLigne) {
+        // Marque pour que les ecrans ne remontent PAS ca dans Sentry : une panne
+        // de reseau chez l'utilisateur n'est pas un defaut de l'application (et
+        // l'evenement ne partirait de toute facon pas).
+        const e: any = new Error('Pas de connexion internet. Verifie ton reseau, puis reessaie.');
+        e.horsLigne = true;
+        throw e;
+      }
       throw new Error('Missing external verification redirect URL for SSO flow');
     }
 
