@@ -33,11 +33,14 @@ const TXT: any = {
 };
 
 export default function ModerationSheet({
-  visible, onClose, targetType, targetId, targetOwnerDocId, targetName, reporterEmail, onBlocked, onReported,
+  visible, onClose, targetType, targetId, targetOwnerDocId, targetName, reporterEmail, note, onBlocked, onReported,
 }: {
   visible: boolean; onClose: () => void;
   targetType: ReportTargetType; targetId: string; targetOwnerDocId?: string; targetName?: string;
   reporterEmail: string;
+  /** Contenu incrimine, joint au signalement. Sans lui, un signalement de reponse
+   *  IA est inexploitable : l'admin n'a rien a relire pour juger. */
+  note?: string;
   onBlocked?: (ownerDocId: string) => void; onReported?: () => void;
 }) {
   const { resolved } = useTheme();
@@ -60,7 +63,7 @@ export default function ModerationSheet({
 
   const doReport = async (reason: ReportReason) => {
     setBusy(true);
-    const ok = await reportContent(reporterEmail, { targetType, targetId, targetOwnerDocId, reason });
+    const ok = await reportContent(reporterEmail, { targetType, targetId, targetOwnerDocId, reason, note });
     setBusy(false);
     setDone(ok ? t.reported : t.failed);
     setTimeout(() => { close(); onReported?.(); }, 1400);

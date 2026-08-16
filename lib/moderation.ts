@@ -8,7 +8,11 @@
 import { collection, addDoc, doc, setDoc, deleteDoc, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db, emailToDocId } from './firebase';
 
-export type ReportTargetType = 'listing' | 'feed' | 'user' | 'comment' | 'route';
+// 'ai' ajoute le 15 aout 2026 : la politique Google Play sur le contenu genere par
+// IA exige un moyen de SIGNALER une reponse produite par un modele. C'est un type a
+// part et non un 'comment' — il n'a pas d'auteur a bloquer, et sa moderation ne
+// consiste pas a sanctionner quelqu'un mais a corriger un systeme.
+export type ReportTargetType = 'listing' | 'feed' | 'user' | 'comment' | 'route' | 'ai';
 
 // Motifs de signalement (clés i18n dans le composant). 'other' autorise une note libre.
 export const REPORT_REASONS = ['spam', 'inappropriate', 'harassment', 'scam', 'false_info', 'other'] as const;
