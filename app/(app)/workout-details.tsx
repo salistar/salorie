@@ -16,6 +16,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Clock, Dumbbell } from 'lucide-react-native';
 import { Video, ResizeMode } from 'expo-av';
 import { hasVideo, getVideoSource, cacheInBackground, primeCacheIndex } from '../../lib/exerciseVideos';
+import DemoYouTube from '../../components/DemoYouTube';
 import { Colors } from '../../constants/Colors';
 import { getUserFromFirestore } from '../../lib/firebase';
 import { useUser } from '@clerk/clerk-expo';
@@ -487,6 +488,16 @@ Output a single integer (e.g. 247). No explanation.`;
               </View>
             )}
           </View>
+
+          {/* Démo YouTube — seulement quand la vidéo maison manque ou a échoué.
+              La vidéo maison reste prioritaire : elle marche hors ligne, sans
+              publicité et sans recommandation, ce qu'un lecteur distant ne fera
+              jamais. Ceci couvre le seul exercice sans démo aujourd'hui, et
+              surtout tous ceux qu'on ajoutera demain — c'est ce qui rendait le
+              catalogue si court : chaque entrée exigeait un tournage. */}
+          {type === 'lifting' && (!hasVideo(selected.id) || videoFailed.has(selected.id)) && (
+            <DemoYouTube exerciceId={selected.id} libelle={exLabel(selected) || selected.id} />
+          )}
 
           {/* Muscles travailles + howto (musculation uniquement) */}
           {type === 'lifting' && 'muscles' in selected && (
