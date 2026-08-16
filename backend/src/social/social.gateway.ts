@@ -23,6 +23,7 @@ import * as admin from 'firebase-admin';
 import { createHash } from 'crypto';
 import { RaceChatMessage, RaceChatMute } from './social.schemas';
 import { RedisService } from '../redis.service';
+import { FirebaseService } from '../firebase.service';
 import { filtrerMessage, expliquerRefus, verifierPhoto } from './moderation-chat';
 
 /** Hash court pour les journaux : l'uid EST l'email, il ne doit jamais s'y écrire. */
@@ -50,6 +51,7 @@ export class SocialGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @InjectModel(RaceChatMessage.name) private messages: Model<RaceChatMessage>,
     @InjectModel(RaceChatMute.name) private mutes: Model<RaceChatMute>,
     private redis: RedisService,
+    private fb: FirebaseService,
   ) {}
 
   // ── Connexion ─────────────────────────────────────────────────────────────
@@ -204,12 +206,60 @@ export class SocialGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   // ── Marche à deux : position et signalisation WebRTC ──────────────────────
+
+  /**
+   * Ces deux comptes sont-ils amis ?
+   *
+   * La liste vit dans Firestore (`users/{docId}.friends`), écrite par l'app. Le
+   * serveur la RELIT lui-même plutôt que de croire le client : une vérification
+   * faite dans l'app protège l'usage normal, pas quelqu'un qui parle au socket
+   * directement — et c'est précisément celui-là qu'il faut arrêter.
+   *
+   * En cas d'erreur de lecture on répond FAUX. Devant une incertitude, on refuse
+   * l'appel : un appel manqué se rejoue, un appel avec un inconnu non.
+   */
+  private async sontAmis(a: string, b: string): Promise<boolean> {
+    if (!a || !b || a === b) return false;
+    try {
+      // Même transformation que `emailToDocId` côté app — VÉRIFIÉE dans
+      // `lib/firebase.ts` : c'est `trim().toLowerCase()`, et RIEN d'autre. Aucun
+      // remplacement de caractère. Une transformation inventée lirait un document
+      // inexistant, donc une liste d'amis vide, donc un refus de TOUS les duos —
+      // une panne totale qui aurait l'air d'une sécurité qui marche.
+      const docId = String(a).trim().toLowerCase();
+      const snap = await this.fb.db().collection('users').doc(docId).get();
+      const amis: string[] = (snap.data()?.friends as string[]) || [];
+      return amis.map((x) => String(x).toLowerCase()).includes(String(b).toLowerCase());
+    } catch (e) {
+      this.log.warn(`lecture des amis impossible pour ${h(a)} : ${(e as any)?.message}`);
+      return false;
+    }
+  }
+
   @SubscribeMessage('duo:join')
-  rejoindreDuo(@ConnectedSocket() socket: Socket, @MessageBody() body: { duoId?: string }) {
+  async rejoindreDuo(@ConnectedSocket() socket: Socket, @MessageBody() body: { duoId?: string }) {
     const duoId = String(body?.duoId || '').trim();
-    if (!duoId) return;
-    socket.join(`duo:${duoId}`);
-    socket.to(`duo:${duoId}`).emit('duo:arrivee', { auteur: h((socket.data as any).uid) });
+    const uid = (socket.data as any).uid as string;
+    if (!duoId || !uid) return;
+
+    const salon = `duo:${duoId}`;
+    const dedans = await this.server.in(salon).fetchSockets();
+
+    // Un duo est un DUO : deux personnes, pas un salon ouvert. Sans cette borne,
+    // un identifiant deviné ouvrirait le micro et la caméra de deux inconnus à un
+    // troisième — et ce sont souvent des mineurs qui utilisent une app de sport.
+    const autres = dedans.filter((s) => (s.data as any)?.uid && (s.data as any).uid !== uid);
+    if (autres.length >= 1) {
+      const hote = (autres[0].data as any).uid as string;
+      if (!(await this.sontAmis(hote, uid))) {
+        socket.emit('duo:refus', { duoId, motif: 'pas_ami' });
+        this.log.warn(`duo refusé : ${h(uid)} n'est pas ami avec ${h(hote)}`);
+        return;
+      }
+    }
+
+    socket.join(salon);
+    socket.to(salon).emit('duo:arrivee', { auteur: h(uid) });
   }
 
   @SubscribeMessage('duo:pos')

@@ -50,9 +50,9 @@ export default function ProfileScreen() {
   const bgColor = isDark ? tok.bg : 'transparent';
   // Inline trilingual labels for items not yet in the shared i18n file.
   const PSTR: any = {
-    en: { sport_medals: 'Sport & medals', my_medals: 'My medals', achievements: 'Achievements', send_logs: 'Send logs', nutrients: 'Daily nutrients', streaks: 'My streaks', avatar: 'My avatar', family: 'My family', vitals: 'Glucose & blood pressure', referral: 'Referral', doctor_report: 'Doctor report (PDF)' },
-    fr: { sport_medals: 'Sport & médailles', my_medals: 'Mes médailles', achievements: 'Succès', send_logs: 'Envoyer les logs', nutrients: 'Nutriments du jour', streaks: 'Mes séries', avatar: 'Mon avatar', family: 'Ma famille', vitals: 'Glycémie & tension', referral: 'Parrainage', doctor_report: 'Rapport médecin (PDF)' },
-    ar: { sport_medals: 'الرياضة والأوسمة', my_medals: 'أوسمتي', achievements: 'الإنجازات', send_logs: 'إرسال السجلات', nutrients: 'عناصر اليوم الغذائية', streaks: 'سلاسلي', avatar: 'بطلي', family: 'عائلتي', vitals: 'سكر الدم والضغط', referral: 'الإحالة', doctor_report: 'تقرير للطبيب (PDF)' },
+    en: { sport_medals: 'Sport & medals', my_medals: 'My medals', achievements: 'Achievements', send_logs: 'Send logs', nutrients: 'Daily nutrients', streaks: 'My streaks', avatar: 'My avatar', amis: 'My friends', family: 'My family', vitals: 'Glucose & blood pressure', referral: 'Referral', doctor_report: 'Doctor report (PDF)' },
+    fr: { sport_medals: 'Sport & médailles', my_medals: 'Mes médailles', achievements: 'Succès', send_logs: 'Envoyer les logs', nutrients: 'Nutriments du jour', streaks: 'Mes séries', avatar: 'Mon avatar', amis: 'Mes amis', family: 'Ma famille', vitals: 'Glycémie & tension', referral: 'Parrainage', doctor_report: 'Rapport médecin (PDF)' },
+    ar: { sport_medals: 'الرياضة والأوسمة', my_medals: 'أوسمتي', achievements: 'الإنجازات', send_logs: 'إرسال السجلات', nutrients: 'عناصر اليوم الغذائية', streaks: 'سلاسلي', avatar: 'بطلي', amis: 'أصدقائي', family: 'عائلتي', vitals: 'سكر الدم والضغط', referral: 'الإحالة', doctor_report: 'تقرير للطبيب (PDF)' },
   };
   const P_ = (k: string) => (PSTR[String(language)] || PSTR.en)[k] || PSTR.en[k] || k;
 
@@ -333,6 +333,7 @@ export default function ProfileScreen() {
         </View>
         <Animated.View entering={FadeInDown.delay(250).duration(600)} style={styles.grid}>
           <GridTile icon={User} label={t('profile.personal_details')} color={isDark ? Colors.dark.primary : Colors.light.primary} onPress={() => router.push('/personal-details' as any)} />
+          <GridTile icon={Users} label={P_('amis')} color={CATEGORIES.famille} onPress={() => router.push('/amis' as any)} />
           <GridTile icon={Users} label={P_('family')} color={CATEGORIES.famille} onPress={() => router.push('/family' as any)} />
           <GridTile icon={Users} label={P_('referral')} color={CATEGORIES.parrainage} onPress={() => router.push('/referral' as any)} />
           <GridTile icon={Heart} label={P_('nutrients')} color={CATEGORIES.nutriments} onPress={() => router.push('/nutrients' as any)} />
