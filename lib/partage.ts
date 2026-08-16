@@ -31,11 +31,12 @@ import { Share, Linking, Platform } from 'react-native';
  * On ne s'y fie jamais tout seul : chaque ouverture a un repli web.
  */
 
-export type Reseau = 'whatsapp' | 'facebook' | 'natif';
+export type Reseau = 'whatsapp' | 'facebook' | 'telegram' | 'sms' | 'copier' | 'natif';
 
 /** Adresses de test, une par réseau, pour savoir ce qui est installé. */
 const SONDE: Record<string, string> = {
   whatsapp: 'whatsapp://send?text=x',
+  telegram: 'tg://msg?text=x',
   facebook: 'fb://facewebmodal',
   instagram: 'instagram://app',
   tiktok: 'snssdk1233://',
@@ -120,17 +121,98 @@ export async function versNatif(texte: string, lien?: string, titre?: string): P
   }
 }
 
+/**
+ * Telegram — second messager du Maroc, et le seul autre à accepter un texte
+ * pré-rempli par simple lien. `t.me/share` marche avec ou sans l'application.
+ */
+export async function versTelegram(texte: string, lien?: string): Promise<boolean> {
+  const message = encodeURIComponent(composer(texte, lien));
+  for (const url of [`tg://msg?text=${message}`, `https://t.me/share/url?url=${message}`]) {
+    try {
+      await Linking.openURL(url);
+      return true;
+    } catch {
+      // On tente le suivant.
+    }
+  }
+  return false;
+}
+
+/**
+ * SMS — le seul canal qui atteint TOUT LE MONDE.
+ *
+ * Pas d'application à installer, pas de compte, pas de visibilité de paquet à
+ * déclarer : `sms:` est un schéma standard qu'Android et iOS gèrent nativement.
+ * Pour inviter un parent ou un voisin qui n'est sur aucun réseau, c'est le seul
+ * chemin — et au Maroc ce n'est pas un cas marginal.
+ *
+ * Le séparateur diffère selon la plateforme : `?` sur Android, `&` sur iOS après
+ * un numéro. Sans numéro, `?body=` marche sur les deux.
+ */
+export async function versSms(texte: string, lien?: string, numero?: string): Promise<boolean> {
+  const corps = encodeURIComponent(composer(texte, lien));
+  const sep = Platform.OS === 'ios' ? '&' : '?';
+  try {
+    await Linking.openURL(`sms:${numero || ''}${sep}body=${corps}`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Copier le message.
+ *
+ * C'est le repli universel : Instagram et TikTok n'acceptent aucun texte
+ * pré-rempli par lien, mais on peut coller. Plutôt que de cacher ces deux
+ * réseaux, on prépare le presse-papiers et on ouvre l'application.
+ *
+ * `expo-clipboard` n'est pas installé — on passe donc par la feuille du système,
+ * qui propose « copier » parmi ses destinations. Un module natif de plus juste
+ * pour ça ne se justifie pas.
+ */
+export async function copier(texte: string, lien?: string): Promise<boolean> {
+  return versNatif(texte, lien);
+}
+
 /** Point d'entrée unique. `reseau` non précisé = feuille de partage du système. */
 export async function partager(opts: {
   texte: string;
   lien?: string;
   titre?: string;
   reseau?: Reseau;
+  /** Uniquement pour le SMS : pré-remplir un destinataire. */
+  numero?: string;
 }): Promise<boolean> {
-  const { texte, lien, titre, reseau } = opts;
+  const { texte, lien, titre, reseau, numero } = opts;
   if (reseau === 'whatsapp') return versWhatsApp(texte, lien);
+  if (reseau === 'telegram') return versTelegram(texte, lien);
+  if (reseau === 'sms') return versSms(texte, lien, numero);
   if (reseau === 'facebook' && lien) return versFacebook(lien);
+  if (reseau === 'copier') return copier(texte, lien);
   return versNatif(texte, lien, titre);
+}
+
+/**
+ * Un défi lancé à quelqu'un.
+ *
+ * Ce n'est pas un partage : c'est une invitation qui CRÉE quelque chose à
+ * l'arrivée — une course, un duo, un objectif commun. D'où un lien porteur de
+ * l'identifiant, et un texte qui dit ce qui attend la personne plutôt que de
+ * raconter ce que l'expéditeur a fait.
+ */
+export function texteDefi(opts: {
+  langue: string;
+  auteur: string;
+  quoi: string;
+}): string {
+  const { langue, auteur, quoi } = opts;
+  const modeles: Record<string, string> = {
+    fr: `${auteur} te lance un défi sur Salorie : ${quoi}. Tu relèves ?`,
+    en: `${auteur} is challenging you on Salorie: ${quoi}. Are you in?`,
+    ar: `${auteur} يتحدّاك على Salorie: ${quoi}. هل أنت مستعد؟`,
+  };
+  return modeles[langue] || modeles.fr;
 }
 
 /**
