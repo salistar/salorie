@@ -12,6 +12,7 @@ const SECTIONS = [
   { href: '/me/races', label: 'Courses', icone: '🏁' },
   { href: '/me/coach', label: 'Coach', icone: '💬' },
   { href: '/me/amis', label: 'Amis', icone: '👥' },
+  { href: '/me/import', label: 'Import', icone: '📥' },
   { href: '/me/profile', label: 'Profil', icone: '⚙️' },
 ];
 
