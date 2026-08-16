@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { a11y } from '../lib/a11y';
 import {
   View,
   Text,
@@ -129,7 +130,7 @@ export default function RemainingCaloriesCard({
         {/* Header: Title + Edit Icon */}
         <View style={styles.header}>
           <Text style={[styles.title, { color: titleColor }]}>{t('home.calories')}</Text>
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('modifier')}
             style={styles.editIconBtn}
             activeOpacity={0.6}
             onPress={() => {
@@ -228,7 +229,7 @@ export default function RemainingCaloriesCard({
                 <Text style={[styles.modalTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{tx.dailyTargets}</Text>
                 <Text style={[styles.modalSubtitle, { color: isDark ? '#9BA1A6' : Colors.light.gray[400], textAlign: isRTL ? 'right' : 'left' }]}>{tx.adjustGoals}</Text>
               </View>
-              <TouchableOpacity onPress={() => setModalVisible(false)} style={[styles.closeBtn, isDark && { backgroundColor: Colors.dark.gray[50] }]}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={() => setModalVisible(false)} style={[styles.closeBtn, isDark && { backgroundColor: Colors.dark.gray[50] }]}>
                 <X size={24} color={isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} />
               </TouchableOpacity>
             </View>

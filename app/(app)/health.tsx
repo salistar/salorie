@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { a11y } from '../../lib/a11y';
 import { numLocaleFor } from '../../lib/format';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { router } from 'expo-router';
@@ -286,7 +287,7 @@ export default function HealthScreen() {
                 <Plus size={16} color="#fff" />
                 <Text style={styles.simBtnTxt}>+1 000</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.simBtnGhost, { borderColor: isDark ? '#283241' : '#cbd5e1' }]} onPress={resetWalk}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('recommencer')} style={[styles.simBtnGhost, { borderColor: isDark ? '#283241' : '#cbd5e1' }]} onPress={resetWalk}>
                 <RotateCcw size={16} color={sub} />
               </TouchableOpacity>
             </View>

@@ -1,4 +1,5 @@
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { a11y } from '../../lib/a11y';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
@@ -300,11 +301,11 @@ export default function FoodDatabaseScreen() {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#0f1419' : Colors.light.white }]}>
       <ScreenTopBar />
       <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-        <TouchableOpacity style={[styles.backBtn, { backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] }]} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backBtn, { backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] }]} onPress={() => router.back()}>
           <ArrowLeft size={28} color={isDark ? '#fff' : Colors.light.gray[900]} strokeWidth={2.5} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
         </TouchableOpacity>
         <Text numberOfLines={1} style={[styles.headerTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{t.title}</Text>
-        <TouchableOpacity style={styles.scanBtn} onPress={() => router.push('/scan-barcode' as any)}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('scanner')} style={styles.scanBtn} onPress={() => router.push('/scan-barcode' as any)}>
           <ScanBarcode size={24} color={isDark ? Colors.dark.primary : Colors.light.primary} strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
@@ -399,7 +400,7 @@ function QuickRow({ f, fav, onLog, onFav, isDark, isRTL, km, language }: any) {
   return (
     <TouchableOpacity activeOpacity={0.7} onPress={() => onLog(f)}
       style={[qrStyles.row, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: isDark ? Colors.dark.card : Colors.light.white, borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[100] }]}>
-      <TouchableOpacity onPress={() => onFav(f)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('favori')} onPress={() => onFav(f)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
         <Star size={20} color="#f59e0b" fill={fav ? '#f59e0b' : 'transparent'} />
       </TouchableOpacity>
       <View style={{ flex: 1 }}>

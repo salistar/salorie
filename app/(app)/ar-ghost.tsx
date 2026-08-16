@@ -14,6 +14,7 @@
 // comme run.tsx. En fin de course on crédite creditKm + publishActivity.
 // ─────────────────────────────────────────────────────────────────────────────
 import BrandOverlay from '../../components/BrandOverlay';
+import { a11y } from '../../lib/a11y';
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { router } from 'expo-router';
@@ -278,7 +279,7 @@ export default function ARGhostScreen() {
       <View style={[styles.fill, { backgroundColor: '#0b1220' }]}>
         <BrandOverlay />
         <View style={styles.setupTop}>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={styles.iconBtn} onPress={() => router.back()}>
             <ArrowLeft size={22} color="#fff" style={flipForRTL(isRTL)} />
           </TouchableOpacity>
           <Text style={styles.setupTitle}>{t.title}</Text>
@@ -441,7 +442,7 @@ export default function ARGhostScreen() {
 
       {/* top bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => { stopSubs(); router.back(); }}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={styles.iconBtn} onPress={() => { stopSubs(); router.back(); }}>
           <ArrowLeft size={22} color="#fff" style={flipForRTL(isRTL)} />
         </TouchableOpacity>
         <View style={styles.titlePill}>

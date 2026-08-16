@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { a11y } from '../../lib/a11y';
 import {
   View,
   Text,
@@ -244,7 +245,7 @@ export default function FeatureRequestsScreen() {
           <Animated.View entering={FadeInUp.duration(400)} style={[styles.modalContent, { backgroundColor: isDark ? '#161C23' : Colors.light.white }]}>
             <View style={[styles.modalHeader, { flexDirection: rowDir(isRTL) }]}>
               <Text style={[styles.modalTitle, { color: tPrimary }]}>{FL.newTitle}</Text>
-              <TouchableOpacity onPress={() => setIsModalVisible(false)}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={() => setIsModalVisible(false)}>
                 <X size={24} color={isDark ? '#9BA1A6' : Colors.light.gray[400]} />
               </TouchableOpacity>
             </View>

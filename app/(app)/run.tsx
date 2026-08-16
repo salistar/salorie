@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { router } from 'expo-router';
@@ -386,7 +387,7 @@ export default function RunScreen() {
         <View style={[StyleSheet.absoluteFill, styles.center]}><ActivityIndicator size="large" color={PRIMARY} /><Text style={{ color: sub, marginTop: 12 }}>{t.waiting}</Text></View>
       )}
 
-      <TouchableOpacity style={[styles.back, { backgroundColor: card }]} onPress={() => router.back()}>
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.back, { backgroundColor: card }]} onPress={() => router.back()}>
         <ArrowLeft size={22} color={text} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
       </TouchableOpacity>
 

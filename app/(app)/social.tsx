@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useMemo, useEffect } from 'react';
+import { a11y } from '../../lib/a11y';
 import { connecterSocial, socketSocial, type Presence } from '../../lib/socialSocket';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, TextInput, ActivityIndicator, Image } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
@@ -190,7 +191,7 @@ export default function SocialScreen() {
         ListHeaderComponent={
           <>
         <View style={styles.topRow}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={styles.backBtn} onPress={() => router.back()}>
             <ArrowLeft size={22} color={text} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}><ScreenTopBar showBrand={false} showNotif={false} /></View>

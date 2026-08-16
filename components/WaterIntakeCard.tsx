@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { a11y } from '../lib/a11y';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Pencil } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
@@ -64,7 +65,7 @@ export default function WaterIntakeCard({
     <View style={[styles.card, { backgroundColor: cardBg }, isDark && { borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: titleColor }]}>{t('home.water')}</Text>
-        <TouchableOpacity style={styles.editBtn} activeOpacity={0.6} onPress={onEditPress}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('modifier')} style={styles.editBtn} activeOpacity={0.6} onPress={onEditPress}>
           <Pencil size={20} color={isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} strokeWidth={2.5} />
         </TouchableOpacity>
       </View>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
@@ -105,7 +106,7 @@ export default function SportAgenda() {
               <Text style={[{ color: text, fontWeight: '700', fontSize: 14 }, align]}>{it.what}</Text>
               <Text style={[{ color: sub, fontSize: 12, marginTop: 2 }, align]}>{it.when}</Text>
             </View>
-            <TouchableOpacity onPress={() => remove(it.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} onPress={() => remove(it.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Trash2 size={17} color="#e11d48" />
             </TouchableOpacity>
           </View>

@@ -1,5 +1,6 @@
 // Liste de courses — ajoute, coche, persiste (local).
 import React, { useEffect, useState } from 'react';
+import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -61,18 +62,18 @@ export default function ShoppingListScreen() {
 
         <View style={styles.addRow}>
           <TextInput style={[styles.input, { backgroundColor: card, color: textCol, borderColor: isDark ? '#283241' : '#E2E8F0' }, align]} placeholder={t.placeholder} placeholderTextColor={isDark ? '#64748b' : '#94A3B8'} value={text} onChangeText={setText} onSubmitEditing={add} returnKeyType="done" />
-          <TouchableOpacity style={styles.addBtn} onPress={add}><Plus size={22} color="#fff" /></TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('ajouter')} style={styles.addBtn} onPress={add}><Plus size={22} color="#fff" /></TouchableOpacity>
         </View>
 
         {items.length === 0 ? (
           <EmptyState icon={<ShoppingCart size={26} color={accent} />} title={t.title} subtitle={t.empty} ctaLabel={t.add_what} />
         ) : items.map((i) => (
           <View key={i.id} style={[styles.item, { backgroundColor: card }]}>
-            <TouchableOpacity style={[styles.check, i.done && styles.checkDone]} onPress={() => toggle(i.id)}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('valider')} style={[styles.check, i.done && styles.checkDone]} onPress={() => toggle(i.id)}>
               {i.done && <Check size={16} color="#fff" />}
             </TouchableOpacity>
             <Text style={[styles.itemName, { color: textCol }, i.done && styles.itemDone]}>{i.name}</Text>
-            <TouchableOpacity onPress={() => remove(i.id)} hitSlop={8}><Trash2 size={18} color={isDark ? '#475569' : '#CBD5E1'} /></TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} onPress={() => remove(i.id)} hitSlop={8}><Trash2 size={18} color={isDark ? '#475569' : '#CBD5E1'} /></TouchableOpacity>
           </View>
         ))}
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import {
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView,
@@ -777,7 +778,7 @@ export default function ChallengeScreen() {
             </View>
           )}
         />
-        <TouchableOpacity style={[styles.back, { backgroundColor: card }]} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.back, { backgroundColor: card }]} onPress={() => router.back()}>
           <ArrowLeft size={22} color={text} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
         </TouchableOpacity>
 
@@ -1055,7 +1056,7 @@ export default function ChallengeScreen() {
                 <Text style={styles.viewerName}>{pois[viewerPoi].name}</Text>
                 <Text style={styles.viewerKm}>{challenge.name} · {pois[viewerPoi].atKm} {t.km}</Text>
               </View>
-              <TouchableOpacity style={styles.viewerClose} onPress={() => setViewerPoi(null)}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} style={styles.viewerClose} onPress={() => setViewerPoi(null)}>
                 <X size={26} color="#fff" />
               </TouchableOpacity>
             </>
@@ -1071,7 +1072,7 @@ export default function ChallengeScreen() {
             <Text style={styles.viewerName}>📍 {t.youAreHere}</Text>
             <Text style={styles.viewerKm}>{challenge?.name} · {myCumulativeKm.toFixed(1)} {t.km}</Text>
           </View>
-          <TouchableOpacity style={styles.viewerClose} onPress={() => setShowMyView(false)}>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} style={styles.viewerClose} onPress={() => setShowMyView(false)}>
             <X size={26} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -1087,7 +1088,7 @@ export default function ChallengeScreen() {
                 <Text style={[styles.tmTitle, { color: text }, align]} numberOfLines={1}>{t.timeMachine}</Text>
                 <Text style={[styles.tmSub, { color: sub }, align]} numberOfLines={1}>{tmPlace || t.timeMachineSub}</Text>
               </View>
-              <TouchableOpacity style={styles.tmClose} onPress={() => setTmOpen(false)}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} style={styles.tmClose} onPress={() => setTmOpen(false)}>
                 <X size={22} color={text} />
               </TouchableOpacity>
             </View>

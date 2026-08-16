@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { a11y } from '../../lib/a11y';
 import {
   View,
   Text,
@@ -217,7 +218,7 @@ export default function SignInScreen() {
       style={styles.container}
     >
       <View style={[styles.topRow, { flexDirection: rowDir(isRTL) }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/welcome' as any)}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={styles.backBtn} onPress={() => router.replace('/welcome' as any)}>
           <ArrowLeft size={20} color={isDark ? Colors.dark.gray[700] : Colors.light.gray[700]} style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>

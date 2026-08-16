@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { a11y } from '../../lib/a11y';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, Image, TouchableOpacity, Modal, Dimensions } from 'react-native';
 import { TrendingUp, TrendingDown, Minus, Scale, Check, Circle, ChevronRight, X } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
@@ -598,7 +599,7 @@ export default function AnalyticsScreen() {
           >
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: tPrimary }]}>{t('analytics.daily_streak')}</Text>
-              <TouchableOpacity onPress={() => setIsStreakModalVisible(false)}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={() => setIsStreakModalVisible(false)}>
                 <X size={24} color={isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} />
               </TouchableOpacity>
             </View>
@@ -654,7 +655,7 @@ export default function AnalyticsScreen() {
           <Animated.View entering={FadeIn.duration(400)} style={[styles.modalContent, isDark && { backgroundColor: surface }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: tPrimary }]}>{A_('score_info_title')}</Text>
-              <TouchableOpacity onPress={() => setScoreInfoVisible(false)}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={() => setScoreInfoVisible(false)}>
                 <X size={24} color={isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} />
               </TouchableOpacity>
             </View>

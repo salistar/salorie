@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useMemo } from 'react';
+import { a11y } from '../../lib/a11y';
 import {
   View,
   Text,
@@ -220,7 +221,7 @@ export default function FamilyScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.topRow}>
-          <TouchableOpacity style={[styles.backBtn, { backgroundColor: isDark ? 'rgba(40,50,60,0.6)' : Colors.light.gray[50] }]} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backBtn, { backgroundColor: isDark ? 'rgba(40,50,60,0.6)' : Colors.light.gray[50] }]} onPress={() => router.back()}>
             <ArrowLeft size={22} color={text} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}><ScreenTopBar showBrand={false} showNotif={false} /></View>

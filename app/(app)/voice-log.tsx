@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
@@ -124,7 +125,7 @@ export default function VoiceLog() {
 
         {(phase === 'idle' || phase === 'recording' || phase === 'analyzing') && (
           <View style={s.micWrap}>
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('arreter')}
               style={[s.micBtn, phase === 'recording' && s.micBtnRec]}
               onPress={phase === 'recording' ? stop : start}
               disabled={phase === 'analyzing'}

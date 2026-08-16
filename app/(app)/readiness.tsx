@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { Activity, Moon, HeartPulse, Minus, Plus } from 'lucide-react-native';
@@ -137,11 +138,11 @@ export default function ReadinessScreen() {
         <Text style={[styles.fieldLabel, { color: text, textAlign: txtAlign(isRTL) }]}>{label}</Text>
       </View>
       <View style={[styles.stepperRow, { flexDirection: rowDir(isRTL) }]}>
-        <TouchableOpacity style={[styles.stepBtn, { borderColor: border }]} onPress={onMinus}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retirer')} style={[styles.stepBtn, { borderColor: border }]} onPress={onMinus}>
           <Minus size={20} color={text} />
         </TouchableOpacity>
         <Text style={[styles.stepValue, { color: text }]}>{value} {unit}</Text>
-        <TouchableOpacity style={[styles.stepBtn, { borderColor: border }]} onPress={onPlus}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('ajouter')} style={[styles.stepBtn, { borderColor: border }]} onPress={onPlus}>
           <Plus size={20} color={text} />
         </TouchableOpacity>
       </View>

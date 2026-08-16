@@ -13,7 +13,7 @@ const mockT = (key: string) => {
   };
   return dict[key] ?? key;
 };
-jest.mock('../../lib/i18n', () => ({ useTranslation: () => ({ t: mockT, language: 'fr', isRTL: false }) }));
+jest.mock('../../lib/i18n', () => ({ langueActuelle: () => 'fr', useTranslation: () => ({ t: mockT, language: 'fr', isRTL: false }) }));
 
 // Icône lucide → composant nul (toute var d'une factory jest.mock doit commencer par 'mock').
 jest.mock('lucide-react-native', () => ({ Pencil: () => null }));

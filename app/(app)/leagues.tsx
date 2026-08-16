@@ -2,6 +2,7 @@
 // de MA ligue cette semaine, mon rang/XP, le temps restant avant clôture et les zones
 // de promotion/relégation colorées. 100% Firestore via lib/leagues.ts. Trilingue + dark + RTL.
 import React, { useCallback, useState, useMemo } from 'react';
+import { a11y } from '../../lib/a11y';
 import {
   View,
   Text,
@@ -148,7 +149,7 @@ export default function LeaguesScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topRow}>
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')}
             style={[styles.backBtn, { backgroundColor: isDark ? 'rgba(40,50,60,0.6)' : Colors.light.gray[50] }]}
             onPress={() => router.back()}
           >
