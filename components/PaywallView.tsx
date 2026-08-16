@@ -332,7 +332,11 @@ export default function PaywallView({ onDone, kcal = '', preview = false, contex
                 </Text>
                 <Text style={[styles.planPer, { color: C.sub }]}>/ {periodLabel(p.period)}</Text>
                 {p.trialDays > 0 && (
-                  <Text style={[styles.planTrial, { color: C.accent }]} numberOfLines={1}>
+                  // Deux lignes, pas une : « 7 jours d'essai gratuit » ne tient pas
+                  // dans une demi-largeur de carte et s'affichait « 7 jours d'ess… ».
+                  // Vu à l'écran le 16 août 2026. Sur la surface qui vend l'abonnement,
+                  // c'est précisément le mot « gratuit » qui disparaissait.
+                  <Text style={[styles.planTrial, { color: C.accent }]} numberOfLines={2}>
                     {t.trial(p.trialDays)}
                   </Text>
                 )}

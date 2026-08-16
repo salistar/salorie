@@ -460,6 +460,10 @@ const makeStyles = (isDark: boolean, tok: Tokens) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    // Le titre porte flex:1 et son texte se cale sur le bord de sa boite : sans
+    // cet ecart il touche le bouton. En arabe le titre tient sur deux lignes, le
+    // bouton se centre entre elles, et l'ensemble se lit comme une collision.
+    gap: 12,
   },
   trialTextWrapper: {
     flex: 1,
