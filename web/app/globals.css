@@ -370,7 +370,9 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   font-weight: 900; font-size: 17px; letter-spacing: -.4px;
   color: var(--ink); text-decoration: none; flex-shrink: 0;
 }
-.me-nav-logo { font-size: 21px; }
+/* Le logo est une IMAGE depuis qu'on a remplace l'emoji : une taille de police
+   n'a plus d'effet dessus, il lui faut des dimensions et un rendu net. */
+.me-nav-logo { width: 26px; height: 26px; display: block; object-fit: contain; }
 .me-nav-liens { display: flex; gap: var(--sp-1); flex: 1; min-width: 0; overflow-x: auto; }
 .me-nav-lien {
   display: inline-flex; align-items: center; gap: 7px;
@@ -726,3 +728,38 @@ tbody tr:last-child td { border-bottom: none; }
     scroll-behavior: auto !important;
   }
 }
+
+/* ── Mes amis ─────────────────────────────────────────────────────────────
+   Reprend les jetons deja definis plus haut : aucune couleur nouvelle, aucune
+   ombre inventee. Une page ajoutee ne doit pas amener son propre style, sinon
+   l'espace web se met a ressembler a plusieurs produits colles ensemble. */
+.carte-amis {
+  background: var(--surface, #fff);
+  border: 1px solid var(--trait, #e2e8f0);
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.ligne-champ { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.champ-amis {
+  flex: 1 1 240px;
+  min-width: 0;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--trait, #e2e8f0);
+  background: var(--fond, #f8fafc);
+  color: inherit;
+  font: inherit;
+}
+.champ-amis:focus-visible { outline: 2px solid var(--accent, #2e8b57); outline-offset: 2px; }
+.liste-amis { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ligne-ami {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 13px;
+  border: 1px solid var(--trait, #e2e8f0);
+  border-radius: 12px;
+}
+/* `min-width: 0` : sans lui, une adresse longue pousse le bouton hors de la carte
+   au lieu d'etre tronquee. */
+.ami-identite { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ami-identite strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

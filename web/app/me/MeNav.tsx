@@ -11,6 +11,7 @@ const SECTIONS = [
   { href: '/me/analytics', label: 'Analyses', icone: '📈' },
   { href: '/me/races', label: 'Courses', icone: '🏁' },
   { href: '/me/coach', label: 'Coach', icone: '💬' },
+  { href: '/me/amis', label: 'Amis', icone: '👥' },
   { href: '/me/profile', label: 'Profil', icone: '⚙️' },
 ];
 
@@ -21,7 +22,11 @@ export default function MeNav() {
   return (
     <header className="me-nav">
       <a className="me-nav-marque" href="/me">
-        <span className="me-nav-logo">🥗</span>
+        {/* Le VRAI logo, pas un emoji. `logo.png` est l'exact fichier que porte
+            l'app mobile (`assets/images/fire.png`, au bit près) : la marque doit
+            être la même des deux côtés, sinon l'espace web a l'air d'un autre
+            produit. Il ne servait jusqu'ici que sur l'écran de connexion. */}
+        <img className="me-nav-logo" src="/me/logo.png" alt="" width={26} height={26} />
         <span>Salorie</span>
       </a>
       <nav className="me-nav-liens">
