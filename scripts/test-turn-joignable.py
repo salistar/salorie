@@ -30,10 +30,17 @@ try:
     s.sendto(requete, (HOTE, PORT))
     data, _ = s.recvfrom(2048)
 except socket.timeout:
-    print('AUCUNE REPONSE en 6 s — UDP 3478 est filtre, ou coturn n ecoute pas sur cette adresse.')
-    print('Avant de conclure, lance le TEMOIN : python scripts/test-turn-joignable.py stun.l.google.com')
-    print('(port 19302). S il ne repond pas non plus, c est TON reseau qui bloque l UDP sortant,')
-    print('et le test ne dit rien sur le serveur.')
+    # Le port vient de HOTE (19302 pour Google, 3478 sinon) : l'afficher en dur
+    # faisait croire qu'on avait interroge 3478 alors qu'on testait le temoin.
+    print('AUCUNE REPONSE en 6 s de %s:%d — le port est filtre, ou rien n ecoute la.'
+          % (HOTE, PORT))
+    if 'google' in HOTE:
+        print('C etait le TEMOIN. Il ne repond pas : c est TON reseau qui bloque l UDP')
+        print('sortant. Aucun test de TURN ne veut rien dire tant que ca dure.')
+    else:
+        print('Avant de conclure, lance le TEMOIN : python scripts/test-turn-joignable.py stun.l.google.com')
+        print('(port 19302). S il ne repond pas non plus, c est TON reseau qui bloque l UDP sortant,')
+        print('et le test ne dit rien sur le serveur.')
     sys.exit(1)
 except Exception as e:
     print('ECHEC :', e)
@@ -58,4 +65,11 @@ while i + 4 <= fin:
         print('Il nous voit depuis %s:%d' % ('.'.join(str(b) for b in ip), port))
     i += 4 + alen + ((4 - alen % 4) % 4)
 
-print('=> STUN operationnel. Le relais TURN est joignable depuis Internet.')
+# Conclure « notre relais marche » quand on vient d'interroger le temoin serait
+# un mensonge : Google qui repond ne dit rien de srv3. Ce script a deja failli
+# faire prendre un reseau PC degrade pour une panne serveur.
+if 'google' in HOTE:
+    print('=> Le TEMOIN repond : ton UDP sortant passe. Teste maintenant le serveur :')
+    print('   python scripts/test-turn-joignable.py turn.salorie.com')
+else:
+    print('=> STUN operationnel sur %s. Le relais TURN est joignable depuis Internet.' % HOTE)
