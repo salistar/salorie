@@ -61,6 +61,7 @@ import LogModal from '../components/LogModal';
 import ScreenBackground from '../components/ScreenBackground';
 import ActionMenu from '../components/ActionMenu';
 import SplashIntro from '../components/SplashIntro';
+import AttenteConnexion from '../components/AttenteConnexion';
 import * as SplashScreen from 'expo-splash-screen';
 
 const tokenCache = {
@@ -761,21 +762,18 @@ function RootLayout() {
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
   }, []);
+  // « Réessayer » remonte le ClerkProvider : c'est la seule façon de relancer son
+  // initialisation, et cela revient au même qu'un démarrage à froid.
+  const [essai, setEssai] = useState(0);
   return (
     <ErrorBoundary>
     <ThemeProvider>
       <I18nProvider>
-        <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
+        <ClerkProvider key={essai} tokenCache={tokenCache} publishableKey={publishableKey}>
           {/* Fallback brandé pendant l'init de Clerk (evite l'ecran BLANC :
               la 1ere init de l'instance prod peut prendre quelques secondes en 4G). */}
           <ClerkLoading>
-            <View style={{ flex: 1, backgroundColor: Colors.light.primary, justifyContent: 'center', alignItems: 'center', gap: 20 }}>
-              <View style={{ width: 120, height: 120, borderRadius: 32, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)' }}>
-                <Image source={require('../assets/images/fire.png')} style={{ width: 80, height: 80 }} resizeMode="contain" />
-              </View>
-              <Text style={{ fontSize: 36, fontWeight: '900', color: '#fff', letterSpacing: -1 }}>Salorie</Text>
-              <ActivityIndicator size="large" color="#ffffff" />
-            </View>
+            <AttenteConnexion onReessayer={() => setEssai((n) => n + 1)} />
           </ClerkLoading>
           <ClerkLoaded>
             <LoggingProvider>
