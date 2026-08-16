@@ -4,11 +4,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, TextInput } from 'react-native';
-import { Sparkles, Send, RefreshCw, Volume2, VolumeX, Mic, Square } from 'lucide-react-native';
+import { Sparkles, Send, RefreshCw, Volume2, VolumeX, Mic, Square, Flag } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import ModerationSheet from '../../components/ModerationSheet';
 import { useScreenGate } from '../../components/FeatureGate';
 import { aiGenerate, aiTranscribe } from '../../lib/aiProxy';
 import { useNutritionData } from '../../hooks/useNutritionData';
@@ -80,6 +81,12 @@ const PERSONAS = [
 
 type Msg = { role: 'coach' | 'user'; text: string };
 
+const T_A11Y: Record<string, { lire: string; signaler: string }> = {
+  fr: { lire: 'Lire la reponse a voix haute', signaler: 'Signaler cette reponse' },
+  en: { lire: 'Read the answer aloud', signaler: 'Report this answer' },
+  ar: { lire: 'قراءة الإجابة بصوت عالٍ', signaler: 'الإبلاغ عن هذه الإجابة' },
+};
+
 // Contexte COMPLET : le coach lit TOUTES les données du user (profil, objectif,
 // historique de poids, historique des repas/macros, tendance) — pas seulement le jour.
 async function buildContext(goals: any, consumed: any): Promise<string> {
@@ -137,6 +144,10 @@ export default function AiCoachScreen() {
   const [msgs, setMsgs] = useState<Msg[]>([
     { role: 'coach', text: t.greeting },
   ]);
+  // Signalement d'une reponse du coach (politique Play sur le contenu genere par IA).
+  // On memorise le TEXTE et non l'index : le fil peut defiler ou se reinitialiser
+  // pendant que la feuille est ouverte, et l'index ne designerait plus rien.
+  const [signale, setSignale] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState('');
   const [personaId, setPersonaId] = useState('motiv');
@@ -243,9 +254,19 @@ export default function AiCoachScreen() {
           <View key={i} style={[styles.bubble, m.role === 'user' ? [styles.user, { backgroundColor: GREEN }] : [styles.coach, { backgroundColor: card, borderColor: isDark ? '#334155' : '#EEF2F6' }]]}>
             <Text style={[styles.bubbleTxt, { color: text }, align, m.role === 'user' && { color: '#fff' }]}>{m.text}</Text>
             {m.role === 'coach' && (
-              <TouchableOpacity onPress={() => speakMsg(m.text)} style={[styles.speakBtn, { alignSelf: isRTL ? 'flex-end' : 'flex-start' }]} hitSlop={8}>
-                <Volume2 size={15} color={GREEN} />
-              </TouchableOpacity>
+              <View style={[styles.msgActions, { flexDirection: rowDir(isRTL), alignSelf: isRTL ? 'flex-end' : 'flex-start' }]}>
+                <TouchableOpacity onPress={() => speakMsg(m.text)} style={styles.speakBtn} hitSlop={8}
+                  accessibilityRole="button" accessibilityLabel={T_A11Y[String(language)]?.lire || T_A11Y.fr.lire}>
+                  <Volume2 size={15} color={GREEN} />
+                </TouchableOpacity>
+                {/* Politique Google Play sur le contenu genere par IA : une reponse
+                    de modele doit pouvoir etre signalee. Discret — c'est un recours,
+                    pas une invitation. */}
+                <TouchableOpacity onPress={() => setSignale(m.text)} style={styles.speakBtn} hitSlop={8}
+                  accessibilityRole="button" accessibilityLabel={T_A11Y[String(language)]?.signaler || T_A11Y.fr.signaler}>
+                  <Flag size={14} color={sub} />
+                </TouchableOpacity>
+              </View>
             )}
           </View>
         ))}
@@ -266,6 +287,20 @@ export default function AiCoachScreen() {
         </TouchableOpacity>
         <TouchableOpacity style={[styles.sendBtn, { backgroundColor: GREEN }]} onPress={send} disabled={loading}><Send size={20} color="#fff" /></TouchableOpacity>
       </View>
+    {/* Signalement d'une reponse du coach — exigence de la politique Google Play
+        sur le contenu genere par IA. Aucun proprietaire n'est passe : on ne
+        bloque pas un modele, et la feuille masque alors l'option d'elle-meme.
+        Le TEXTE incrimine part avec le signalement, sans quoi l'equipe n'aurait
+        rien a relire pour juger. */}
+    <ModerationSheet
+      visible={!!signale}
+      onClose={() => setSignale(null)}
+      targetType="ai"
+      targetId={`coach_${String(signale || '').length}_${String(signale || '').slice(0, 24)}`}
+      reporterEmail={auth.currentUser?.email || ''}
+      note={String(signale || '').slice(0, 1000)}
+      onReported={() => setSignale(null)}
+    />
     </SafeAreaView>
   );
 }
@@ -283,7 +318,8 @@ const styles = StyleSheet.create({
   input: { flex: 1, backgroundColor: '#F1F5F9', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 11, fontSize: 14 },
   sendBtn: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   micBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#0EA5E9', alignItems: 'center', justifyContent: 'center' },
-  speakBtn: { marginTop: 8, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4 },
+  speakBtn: { marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 4 },
+  msgActions: { alignItems: 'center', gap: 14 },
   personaRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 20, paddingBottom: 8, flexWrap: 'wrap' },
   personaChip: { paddingVertical: 7, paddingHorizontal: 14, borderRadius: 11 },
   personaTxt: { fontWeight: '700', fontSize: 13 },
