@@ -1146,3 +1146,25 @@ tbody tr:last-child td { border-bottom: none; }
 .prog-piste { height: 12px; border-radius: 6px; background: var(--creux, #e7e5e0); overflow: hidden; margin: 10px 0 8px; }
 .prog-remplissage { display: block; height: 100%; border-radius: 6px; background: var(--green, #2e8b57); }
 .prog-annee { background: #a2571c; }
+
+/* Eau : la barre reprend la piste de /me/progression, en bleu. */
+.prog-eau { background: #2f6fb0; }
+
+/* Nutri-Score : la pastille porte la couleur officielle du barème. Le texte
+   reste blanc sur les cinq fonds — verifie, le plus clair (C, #FECB02) donne
+   un contraste insuffisant, d'ou l'ombre portee qui le detache. */
+.ns-pastille {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 54px; height: 54px; border-radius: 50%;
+  font-size: 26px; font-weight: 700; color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,.55);
+  flex: 0 0 auto;
+}
+
+/* Liste sans puces, utilisee par les journaux du jour. */
+.liste-nue { list-style: none; padding: 0; margin: 10px 0 0; }
+.liste-nue > li { padding: 7px 0; border-bottom: 1px solid var(--trait, #d6d2ca); }
+.liste-nue > li:last-child { border-bottom: none; }
+
+/* Champ avec son intitule au-dessus, pour les grilles de nombres. */
+.champ-bloc { display: flex; flex-direction: column; gap: 3px; }
