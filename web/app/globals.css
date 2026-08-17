@@ -1140,3 +1140,9 @@ tbody tr:last-child td { border-bottom: none; }
    gris seul ressemble a un texte desactive. */
 .course-faite .course-case span { text-decoration: line-through; color: var(--muted); }
 .course-retirer { padding: 2px 10px; font-size: 18px; line-height: 1; }
+
+/* Progression : deux barres, XP et defi annuel. Le chiffre reste a cote — une
+   barre seule ne dit pas si on est a 8 % ou a 12 %. */
+.prog-piste { height: 12px; border-radius: 6px; background: var(--creux, #e7e5e0); overflow: hidden; margin: 10px 0 8px; }
+.prog-remplissage { display: block; height: 100%; border-radius: 6px; background: var(--green, #2e8b57); }
+.prog-annee { background: #a2571c; }

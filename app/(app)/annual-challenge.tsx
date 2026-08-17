@@ -12,6 +12,11 @@ import { Input } from '../../components/ui';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { getAnnual, setAnnualGoal, annualProgress } from '../../lib/annualChallenge';
+import { useUser } from '@clerk/clerk-expo';
+// La progression (XP, cumul annuel, km totaux) ne vivait qu'en local. Elle part
+// maintenant vers l'espace web, qui n'a aucun autre moyen de la connaitre — et
+// qui peut, lui, reposer l'objectif de l'annee.
+import { pousser, ecrireObjectifLocal, lireLocale } from '../../lib/progression';
 
 const GREEN = '#2E8B57';
 const STEP = 50; // pas du stepper (km)
@@ -100,13 +105,20 @@ export default function AnnualChallenge() {
   const [km, setKm] = useState<number>(0);
   const [draft, setDraft] = useState<string>('');
 
+  const { user } = useUser();
+  const email = user?.primaryEmailAddress?.emailAddress || '';
+
   const refresh = useCallback(async () => {
+    // On pousse D'ABORD : `pousser` redescend au passage un objectif qui aurait
+    // ete change depuis le web, et l'affichage doit montrer celui-la, pas
+    // l'ancien. Sans compte, on lit simplement le local.
+    if (email) await pousser(email);
     const p = await annualProgress();
     setYear(p.year);
     setGoalKm(p.goalKm);
     setKm(p.km);
     setDraft(String(p.goalKm));
-  }, []);
+  }, [email]);
 
   useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
 
@@ -114,6 +126,13 @@ export default function AnnualChallenge() {
     const c = await setAnnualGoal(next);
     setGoalKm(c.goalKm);
     setDraft(String(c.goalKm));
+    // L'objectif est le SEUL champ que les deux cotes peuvent ecrire : il porte
+    // donc son propre horodatage. Sans lui, le telephone — qui se synchronise
+    // bien plus souvent — ramenerait l'objectif a son ancienne valeur a chaque
+    // passage, et un objectif fixe depuis le web ne tiendrait jamais.
+    const l = await lireLocale(c.year);
+    await ecrireObjectifLocal({ ...l, objectifKm: c.goalKm, objectifTs: Date.now() });
+    if (email) await pousser(email);
   };
 
   const onStep = (delta: number) => commitGoal(Math.max(1, goalKm + delta));
