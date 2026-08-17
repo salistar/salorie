@@ -839,3 +839,11 @@ tbody tr:last-child td { border-bottom: none; }
 .tableau-compare { width: 100%; border-collapse: collapse; font-size: 14px; }
 .tableau-compare th, .tableau-compare td { padding: 9px 11px; border-bottom: 1px solid var(--trait, #e2e8f0); text-align: start; }
 .tableau-compare td.n { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* Le code d'invitation se lit a voix haute : espacement des lettres pour eviter
+   de confondre 0/O ou 1/I au telephone. */
+.code-famille { font-family: ui-monospace, monospace; letter-spacing: .18em; font-size: 17px; }
+.puce-role {
+  font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 20px;
+  background: var(--creux, #e2e8f0); white-space: nowrap;
+}
