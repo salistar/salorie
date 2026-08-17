@@ -1226,3 +1226,19 @@ tbody tr:last-child td { border-bottom: none; }
   background: var(--creux, #e7e5e0);
 }
 @media (max-width: 640px) { .photos-duo { grid-template-columns: 1fr; } }
+
+/* Panier du souk : les etals cote a cote, comme on parcourt un marche. */
+.grille-etals {
+  display: grid; gap: 12px; margin-top: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+.carte-etal {
+  border: 1px solid var(--trait, #d6d2ca); border-radius: 6px; padding: 10px 12px;
+  min-width: 0;
+}
+
+/* Titre d'une annonce : plus grand qu'un h2 de carte, sans devenir un h1 de page. */
+.me-h1-annonce { font-size: 22px; font-weight: 700; margin: 0 0 8px; }
+
+/* Lien de detail d'une annonce : discret mais clairement cliquable. */
+.annonce-lien { display: inline-block; margin-top: 6px; font-size: 14px; font-weight: 600; }

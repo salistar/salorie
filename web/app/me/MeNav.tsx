@@ -45,6 +45,8 @@ const SECTIONS = [
   { href: '/me/ticket', label: 'Ticket de caisse', icone: '🧾' },
   { href: '/me/equipement', label: 'Équipement', icone: '🏋️' },
   { href: '/me/photos', label: 'Photos de progression', icone: '📸' },
+  { href: '/me/panier', label: 'Panier du souk', icone: '🧺' },
+  { href: '/me/restaurant', label: 'Mode resto', icone: '🍽️' },
   { href: '/me/poids', label: 'Poids', icone: '⚖️' },
   { href: '/me/forme', label: 'Forme du jour', icone: '🔋' },
   { href: '/me/composition', label: 'Composition', icone: '🧬' },

@@ -8,6 +8,7 @@
 // contenu utilisateur visible par d'autres, ce que Play encadre strictement. La
 // page le dit plutot que de laisser croire a une publication immediate.
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useMe } from '../MeProvider';
 import { useProfil } from '../../../lib/useFirestoreMe';
 import { traducteur, sensLecture, type Langue } from '../../../lib/i18nMe';
@@ -168,6 +169,12 @@ export default function PageAnnonces() {
                 <span className="me-sous">{t(`annoncesCat_${a.category}`) || a.category}{a.placeName ? ` · ${a.placeName}` : ''}</span>
                 <p className="annonce-desc">{a.description}</p>
                 {a.price > 0 ? <span className="annonce-prix">{a.price} MAD</span> : null}
+                {/* Un LIEN, pas un onClick : une annonce se partage, donc son
+                    adresse doit pouvoir se copier, s'ouvrir dans un onglet et
+                    s'envoyer a quelqu'un. */}
+                <Link href={`/me/annonces/${a.id}`} className="annonce-lien">
+                  {t('annoncesVoirDetail')}
+                </Link>
               </div>
             </li>
           ))}
