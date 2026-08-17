@@ -24,7 +24,17 @@ import { join } from 'path';
  * Pour reparer : `npm run sync:partage`.
  */
 
-const PARTAGES = ['importParsers.ts', 'rapportSanteHtml.ts', 'exercicesPlus.ts'];
+const PARTAGES = [
+  'importParsers.ts',
+  'rapportSanteHtml.ts',
+  'exercicesPlus.ts',
+  // L'arborescence est conservee : `localRecipes.ts` garde son import
+  // `./objective/scoring` sans reecriture, donc la copie reste comparable a la
+  // source caractere par caractere.
+  'objective/scoring.ts',
+  'localRecipes.ts',
+  'adaptiveTDEE.ts',
+];
 const racine = join(__dirname, '..');
 
 /**
