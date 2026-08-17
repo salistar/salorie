@@ -168,6 +168,10 @@
   }
   .livre a { color: inherit; font-weight: 700; }
   .livre-partiel { color: var(--gain); }
+
+  /* `code` est deja defini plus haut : le redefinir ici l'ecraserait en silence
+     et changerait toutes les balises de la page, pas seulement celles ajoutees. */
+  .sous-titre { font-size: 15px; font-weight: 700; margin: 22px 0 8px; color: var(--encre); }
 </style>
 
 <div class="page">
@@ -449,6 +453,46 @@
     </ul>
   </section>
 
-  <p class="pied">Salorie · classement mesuré sur les 100 écrans du dépôt, le 16 août 2026</p>
+
+  <section>
+    <h2>Au-delà des vingt : l'inventaire complet</h2>
+    <p class="sous">Les 99 écrans du mobile croisés avec les 37 routes de l'espace web. Quatre écrans utiles restaient
+    hors de la liste des vingt — ils sont livrés. Neuf autres sont <strong>bloqués par leur stockage</strong>, et c'est
+    une décision produit, pas un oubli.</p>
+
+    <h3 class="sous-titre">Livrés en plus des vingt</h3>
+    <ul class="mesure">
+      <li><strong><a href="https://app.salorie.salistar.com/me/mesures">/me/mesures</a></strong> — <code>body-measurements</code> + <code>body-composition</code>.
+      Le tour de taille ne ment pas, mais il bouge si lentement qu'il faut vingt mesures côte à côte pour le voir.
+      C'est l'écran où l'écart compte plus que la valeur.</li>
+      <li><strong><a href="https://app.salorie.salistar.com/me/villes">/me/villes</a></strong> — <code>city-challenges</code>.
+      Un classement ville contre ville est un tableau ; une barre coupée en deux montre l'écart sans le faire calculer.</li>
+      <li><strong><a href="https://app.salorie.salistar.com/me/parcours">/me/parcours</a></strong> — <code>community-routes</code>.
+      Choisir un parcours, c'est comparer — et comparer demande de ne pas fermer la fiche précédente.</li>
+      <li><strong><a href="https://app.salorie.salistar.com/me/micronutriments">/me/micronutriments</a></strong> — <code>nutrients</code>.
+      Le téléphone montre la journée, ce qui ne veut rien dire ; le web empile trente jours et montre ce qui manque
+      <em>tous</em> les jours. Il n'y régénère rien : deux estimations pour la même journée, et on ne sait plus laquelle croire.</li>
+    </ul>
+
+    <h3 class="sous-titre">Bloqués par leur stockage — pas par le navigateur</h3>
+    <p class="sous">Ces neuf écrans gardent tout en <code>AsyncStorage</code> : leurs données ne quittent jamais le
+    téléphone. Sur le web ils afficheraient une page vide, ce qui est pire que leur absence. Les porter demande d'abord
+    de faire synchroniser le mobile vers Firestore — un changement dans l'app, pas une page de plus.</p>
+    <ul class="mesure">
+      <li><code>shopping-list</code> — <strong>le plus regrettable</strong> : une liste de courses se prépare devant un
+      ordinateur et s'utilise au supermarché. C'est le cas d'usage web le plus évident de toute l'app.</li>
+      <li><code>annual-challenge</code>, <code>rewards</code>, <code>progress-photos</code>, <code>health</code>,
+      <code>readiness</code>, <code>sadaqa</code>, <code>ramadan</code>, <code>avatar</code>.</li>
+    </ul>
+
+    <h3 class="sous-titre">Déjà couverts ailleurs</h3>
+    <p class="sous"><code>terms</code> et <code>privacy</code> sont déjà publics sur <code>salorie.com</code> — les
+    dupliquer dans l'espace personnel n'apporterait rien. Et <code>add-water</code>, <code>update-weight</code>,
+    <code>log-manual</code>, <code>log-food-details</code>, <code>log-exercise</code>, <code>streaks</code>,
+    <code>meal-plan-history</code>, <code>listing-detail</code>, <code>feature-requests</code> tombent dans des pages
+    existantes.</p>
+  </section>
+
+  <p class="pied">Salorie · 99 écrans mobiles recensés, 37 routes web livrées · 17 août 2026</p>
 
 </div>
