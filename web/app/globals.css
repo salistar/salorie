@@ -1248,3 +1248,18 @@ tbody tr:last-child td { border-bottom: none; }
 .palier-bloc:last-of-type { margin-bottom: 0; }
 .prog-repas { background: #b8860b; }
 .prog-arbre { background: #2e8b57; }
+
+/* Notification : toute la ligne est cliquable, donc c'est un bouton — pas un
+   div avec un onClick, qui serait invisible au clavier et aux lecteurs d'ecran. */
+.notif-ligne {
+  display: flex; flex-direction: column; gap: 2px; width: 100%;
+  padding: 9px 10px; text-align: start; cursor: pointer;
+  background: none; border: 1px solid transparent; border-radius: 6px;
+  color: inherit; font: inherit;
+}
+.notif-ligne:hover { background: var(--creux, #e7e5e0); }
+.notif-ligne.non-lue { border-color: var(--green, #2e8b57); background: var(--creux, #e7e5e0); }
+.notif-titre { font-weight: 650; }
+
+/* Texte legal : interligne plus aere, la mesure reste bornee par .me-page. */
+.texte-legal { white-space: pre-wrap; line-height: 1.65; margin: 6px 0 0; }
