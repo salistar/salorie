@@ -1094,3 +1094,33 @@ tbody tr:last-child td { border-bottom: none; }
 .duel-gagne { color: #16a34a; }
 .duel-perdu { color: #dc2626; }
 .duel-egalite { color: var(--muted); }
+
+/* L'ecart depuis la premiere mesure : gros, mais SANS couleur de jugement —
+   baisser est un progres pour le tour de taille, pas pour le muscle. */
+.mesure-delta { font-size: 17px; font-variant-numeric: tabular-nums; color: var(--muted); }
+
+/* Defi entre villes : une seule barre coupee en deux. Deux barres separees
+   demanderaient de comparer deux longueurs ; une barre coupee montre l'ecart. */
+.ville-barre { display: flex; height: 14px; border-radius: 7px; overflow: hidden; margin: 10px 0 6px; background: var(--creux, #e7e5e0); }
+.ville-part { height: 100%; }
+.ville-a { background: #2e8b57; }
+.ville-b { background: #a2571c; }
+.ville-scores { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; flex-wrap: wrap; }
+
+/* Micronutriments : un vrai tableau, aligne, parce que c'est le seul format ou
+   trente lignes se comparent. */
+.tableau-micro { display: flex; flex-direction: column; }
+.micro-ligne {
+  display: grid; grid-template-columns: minmax(110px, 1.1fr) minmax(160px, 2fr) minmax(80px, .8fr);
+  gap: 12px; align-items: center; padding: 8px 0;
+  border-bottom: 1px solid var(--trait, #e2e8f0);
+}
+.micro-entete { font-weight: 700; font-size: 13px; color: var(--muted); border-bottom-width: 2px; }
+.micro-barre-cell { display: flex; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; }
+.micro-piste { flex: 1; height: 9px; border-radius: 5px; background: var(--creux, #e7e5e0); overflow: hidden; min-width: 60px; }
+.micro-remplissage { display: block; height: 100%; border-radius: 5px; }
+/* Trois etats, mais le CHIFFRE reste a cote de la barre : la couleur seule ne
+   dirait pas la difference entre 68 % et 30 %. */
+.micro-bas { background: #dc2626; }
+.micro-ok { background: #16a34a; }
+.micro-haut { background: #d97706; }
