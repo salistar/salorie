@@ -1069,3 +1069,22 @@ tbody tr:last-child td { border-bottom: none; }
 .match-places { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 14px; }
 /* Complet : un MOT le dit deja sur le bouton, la couleur ne fait que renforcer. */
 .match-complet { color: #dc2626; font-weight: 700; }
+
+/* Terrains : la journee en bande de creneaux. Chaque etat porte un MOT en plus
+   de sa couleur — « pris » et « libre » ne peuvent pas dependre d'une teinte. */
+.creneaux { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin: 12px 0 4px; }
+.creneau {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 10px 6px; border-radius: 10px; border: 1px solid var(--trait, #e2e8f0);
+  background: var(--surface, #fff); color: inherit; font: inherit; cursor: pointer;
+}
+.creneau:disabled { cursor: not-allowed; }
+.creneau-h { font-weight: 700; font-variant-numeric: tabular-nums; }
+.creneau-etat { font-size: 11px; color: var(--muted); }
+.creneau-libre { border-color: #16a34a; }
+.creneau-libre:hover { background: color-mix(in srgb, #16a34a 10%, transparent); }
+.creneau-pris { background: var(--creux, #e7e5e0); opacity: .75; }
+.creneau-mien { border-color: var(--accent, #0ea5e9); background: color-mix(in srgb, #0ea5e9 12%, transparent); }
+/* Un creneau deja passe n'est ni libre ni pris : il n'est plus rien. */
+.creneau-passe { opacity: .35; }
+.carte-choisie { outline: 2px solid var(--accent, #0ea5e9); outline-offset: -1px; }

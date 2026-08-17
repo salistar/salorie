@@ -24,6 +24,7 @@ const SECTIONS = [
   { href: '/me/activite', label: 'Activité', icone: '🚶' },
   { href: '/me/agenda', label: 'Agenda', icone: '📅' },
   { href: '/me/matchs', label: 'Matchs', icone: '⚽' },
+  { href: '/me/terrains', label: 'Terrains', icone: '📍' },
   { href: '/me/races', label: 'Courses', icone: '🏁' },
   { href: '/me/ligues', label: 'Ligue', icone: '🏆' },
   { href: '/me/journal', label: 'Journal', icone: '📰' },
