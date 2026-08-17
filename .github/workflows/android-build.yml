@@ -77,8 +77,11 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
 
+      # Seules les releases de VERSION consomment encore ce nom : depuis que la
+      # release « latest » ne prend plus que `app-debug.apk`, faire cette copie
+      # de 174 Mo sur chaque poussée dans `main` ne servait plus à rien.
       - name: Rename APK with short sha
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           cp android/app/build/outputs/apk/debug/app-debug.apk \
@@ -98,9 +101,19 @@ jobs:
             https://github.com/${{ github.repository }}/releases/download/latest/app-debug.apk
 
             Built from sha: `${{ github.sha }}` at ${{ github.event.head_commit.timestamp }}
+          # UNIQUEMENT app-debug.apk : ce nom est FIXE, donc chaque poussée
+          # l'écrase et le lien de téléchargement ci-dessus reste valable.
+          #
+          # `salorie-<sha>.apk` a été retiré d'ICI (il reste sur les releases de
+          # version, plus bas). Son nom change à chaque commit : sur une release
+          # nommée « latest », rien ne l'écrasait jamais et les APK s'empilaient
+          # — 154 fichiers pour 24 Go avant ce correctif. Une release « latest »
+          # doit porter la dernière version, pas tout l'historique.
+          #
+          # L'APK d'un commit précis reste accessible : le job le téléverse déjà
+          # comme artefact de workflow (14 jours de rétention, plus haut).
           files: |
             android/app/build/outputs/apk/debug/app-debug.apk
-            android/app/build/outputs/apk/debug/salorie-*.apk
           prerelease: true
           make_latest: false
 
