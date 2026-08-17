@@ -58,12 +58,18 @@ export default function PageConstantes() {
 
   const [glycemie, setGlycemie] = useState<Point[]>([]);
   const [tension, setTension] = useState<Point[]>([]);
+  const [energie, setEnergie] = useState<Point[]>([]);
+  const [sommeil, setSommeil] = useState<Point[]>([]);
   const [charge, setCharge] = useState(false);
 
   const charger = useCallback(async () => {
     if (!uid) return;
     try {
-      const lire = async (col: string) => {
+      // `champs` est explicite par collection : les quatre suivis n'ecrivent pas
+      // le meme nom de valeur (`value`, `systolic`, `energy`, `hours`), et une
+      // liste de replis en cascade aurait fini par lire le mauvais champ le jour
+      // ou deux collections en partagent un.
+      const lire = async (col: string, champs: string[]) => {
         const snap = await getDocs(
           query(collection(firestore(), 'users', uid, col), orderBy('timestamp', 'desc'), limit(120)),
         );
@@ -71,19 +77,29 @@ export default function PageConstantes() {
           .map((d) => {
             const x = d.data() as any;
             const ts = x.timestamp?.seconds ? x.timestamp.seconds * 1000 : Number(x.timestamp) || 0;
-            return { ts, v: Number(x.value ?? x.systolic ?? 0), v2: Number(x.diastolic) || undefined };
+            const brut = champs.map((c) => x[c]).find((v) => v != null);
+            return { ts, v: Number(brut) || 0, v2: Number(x.diastolic) || undefined };
           })
           .filter((p) => p.ts && p.v > 0)
           // La lecture vient du plus recent ; une courbe se lit du plus ancien au
           // plus recent, donc on inverse.
           .reverse();
       };
-      const [g, b] = await Promise.all([lire('glucose'), lire('blood_pressure')]);
+      const [g, b, e, s] = await Promise.all([
+        lire('glucose', ['value']),
+        lire('blood_pressure', ['systolic']),
+        lire('mood', ['energy']),
+        lire('sleep', ['hours']),
+      ]);
       setGlycemie(g);
       setTension(b);
+      setEnergie(e);
+      setSommeil(s);
     } catch {
       setGlycemie([]);
       setTension([]);
+      setEnergie([]);
+      setSommeil([]);
     } finally {
       setCharge(true);
     }
@@ -128,6 +144,11 @@ export default function PageConstantes() {
         <>
           {bloc(t('constantesGlycemie'), glycemie, '#0ea5e9', 'g/L')}
           {bloc(t('constantesTension'), tension, '#a2571c', 'mmHg')}
+          {/* Energie et sommeil suivent le meme raisonnement : le mobile n'en
+              montre que sept releves, et c'est sur trois mois qu'une baisse
+              d'energie devient visible — souvent en meme temps qu'autre chose. */}
+          {bloc(t('constantesEnergie'), energie, '#16a34a', '/5')}
+          {bloc(t('constantesSommeil'), sommeil, '#7c3aed', 'h')}
         </>
       )}
 

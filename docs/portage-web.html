@@ -1,4 +1,4 @@
-<title>Vingt écrans à porter</title>
+<title>Vingt écrans portés</title>
 
 <style>
   :root {
@@ -159,13 +159,22 @@
     font-family: var(--code); font-size: 12px; color: var(--encre-pale);
   }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+  /* Etat de livraison. Le partiel porte une couleur ET un mot : une nuance seule
+     se lit mal, et « partiel » est justement l'information a ne pas rater. */
+  .livre {
+    font-family: var(--code); font-size: 13px; margin-top: 6px;
+    color: var(--web);
+  }
+  .livre a { color: inherit; font-weight: 700; }
+  .livre-partiel { color: var(--gain); }
 </style>
 
 <div class="page">
 
   <header>
     <p class="eyebrow">Plan de portage — 16 août 2026</p>
-    <h1>Vingt écrans à porter</h1>
+    <h1>Vingt écrans portés</h1>
     <p class="chapo mesure">Sur les 100 écrans du téléphone, ceux-là seulement gagnent vraiment à exister sur grand écran — et dans cet ordre.</p>
   </header>
 
@@ -212,13 +221,14 @@
 
   <section>
     <h2>L'ordre</h2>
-    <p class="sous">L'ordre compte : les premiers sont ceux dont le téléphone rend l'usage pénible, pas seulement moins confortable.</p>
+    <p class="sous">L'ordre comptait : les premiers étaient ceux dont le téléphone rend l'usage pénible, pas seulement moins confortable. Les vingt sont en ligne. <strong>Quatorze sont complets ; six étaient des groupes d'écrans dont l'écran principal a été porté</strong> — le reste est nommé sous chaque rang, pour qu'une coche ne laisse pas croire à un groupe entier.</p>
 
     <ol class="rangs">
 
       <li>
         <div>
           <p class="ecran">import-data</p>
+          <p class="livre"><a href="https://app.salorie.salistar.com/me/import">/me/import</a> — livre.</p>
           <p class="gain">Importer un historique alimentaire depuis un export MyFitnessPal.</p>
           <p class="pourquoi">Le plus web-natif de toute l'app, et de loin. Le fichier CSV arrive <strong>par e-mail sur un ordinateur</strong> — l'importer depuis un téléphone demande de le transférer d'abord. On corrige un parcours absurde, pas un inconfort.</p>
           <div class="puces"><span class="puce p-fichier">Fichier</span><span class="puce p-clavier">Saisie</span></div>
@@ -228,6 +238,7 @@
       <li>
         <div>
           <p class="ecran">mur + groupes</p>
+          <p class="livre"><a href="https://app.salorie.salistar.com/me/mur">/me/mur</a> — livre.</p>
           <p class="gain">Publier, lire le mur des amis, gérer les groupes d'audience.</p>
           <p class="pourquoi"><strong>Le backend est déjà écrit et testé</strong> — 14 tests sur la visibilité. Il ne manque que l'interface, des deux côtés. C'est le meilleur rapport valeur/effort de la liste.</p>
           <div class="puces"><span class="puce p-pret">Backend prêt</span><span class="puce p-clavier">Saisie</span></div>
@@ -237,6 +248,7 @@
       <li>
         <div>
           <p class="ecran">health-export</p>
+          <p class="livre"><a href="https://app.salorie.salistar.com/me/rapport">/me/rapport</a> — livre.</p>
           <p class="gain">Le rapport PDF pour le médecin.</p>
           <p class="pourquoi">On le génère pour l'imprimer ou le joindre à un mail. Les deux se font sur un ordinateur. Sur téléphone, le PDF finit dans un dossier qu'on ne retrouve pas.</p>
           <div class="puces"><span class="puce p-fichier">Fichier</span></div>
@@ -246,6 +258,7 @@
       <li>
         <div>
           <p class="ecran">meal-plan + meal-plan-history</p>
+          <p class="livre"><a href="https://app.salorie.salistar.com/me/plans">/me/plans</a> — livre.</p>
           <p class="gain">Planifier la semaine, revoir les plans passés.</p>
           <p class="pourquoi">Planifier sept jours sur un écran de six pouces oblige à faire défiler sans jamais voir l'ensemble — or planifier, c'est précisément voir l'ensemble.</p>
           <div class="puces"><span class="puce p-ecran">Comparer</span></div>
@@ -255,6 +268,7 @@
       <li>
         <div>
           <p class="ecran">food-database</p>
+          <p class="livre"><a href="https://app.salorie.salistar.com/me/aliments">/me/aliments</a> — livre.</p>
           <p class="gain">Chercher un aliment, comparer les valeurs.</p>
           <p class="pourquoi">Chercher, c'est taper. Comparer deux aliments, c'est les voir ensemble. Le téléphone rate les deux.</p>
           <div class="puces"><span class="puce p-clavier">Saisie</span><span class="puce p-ecran">Comparer</span></div>
@@ -264,6 +278,7 @@
       <li>
         <div>
           <p class="ecran">meal-builder + meal-templates</p>
+          <p class="livre livre-partiel"><a href="https://app.salorie.salistar.com/me/modeles">/me/modeles</a> — livre. Non porte : meal-builder.</p>
           <p class="gain">Composer un repas, en faire un modèle réutilisable.</p>
           <p class="pourquoi">Assembler des ingrédients et ajuster des quantités relève du tableur, pas du pouce. Un modèle se crée une fois et sert cent fois : autant le créer confortablement.</p>
           <div class="puces"><span class="puce p-clavier">Saisie</span><span class="puce p-ecran">Comparer</span></div>
@@ -273,6 +288,7 @@
       <li>
         <div>
           <p class="ecran">family</p>
+          <p class="livre"><a href="https://app.salorie.salistar.com/me/famille">/me/famille</a> — livre.</p>
           <p class="gain">Gérer les membres, envoyer les invitations.</p>
           <p class="pourquoi">Saisir plusieurs adresses e-mail au pouce est le genre de tâche qu'on repousse. Repoussée, la famille ne se crée jamais — et c'est une fonction de rétention.</p>
           <div class="puces"><span class="puce p-clavier">Saisie</span></div>
@@ -282,6 +298,7 @@
       <li>
         <div>
           <p class="ecran">workout-plans + workout-details</p>
+          <p class="livre"><a href="https://app.salorie.salistar.com/me/exercices">/me/exercices</a> — livre.</p>
           <p class="gain">Lire un programme, regarder les démonstrations.</p>
           <p class="pourquoi">Le catalogue vient de passer à <strong>95 exercices</strong>, et les démos YouTube arrivent. Une vidéo de technique se regarde mieux en grand — et on prépare sa séance la veille, assis.</p>
           <div class="puces"><span class="puce p-ecran">Comparer</span></div>
@@ -291,6 +308,7 @@
       <li>
         <div>
           <p class="ecran">marketplace + listing-create</p>
+          <p class="livre"><a href="https://app.salorie.salistar.com/me/annonces">/me/annonces</a> — livre.</p>
           <p class="gain">Parcourir les annonces, en rédiger une.</p>
           <p class="pourquoi">Rédiger une annonce, c'est écrire un texte et choisir des photos. Les photos sont souvent déjà sur l'ordinateur, et le texte mérite un vrai clavier.</p>
           <div class="puces"><span class="puce p-clavier">Saisie</span><span class="puce p-fichier">Fichier</span></div>
@@ -300,6 +318,7 @@
       <li>
         <div>
           <p class="ecran">medals + streaks</p>
+          <p class="livre"><a href="https://app.salorie.salistar.com/me/medailles">/me/medailles</a> — livre.</p>
           <p class="gain">Ses médailles et ses séries, en grand.</p>
           <p class="pourquoi">C'est ce qu'on montre. Une médaille sur un écran de téléphone se montre à une personne à la fois ; sur un écran d'ordinateur, à toute une table — et elle se capture pour être partagée.</p>
           <div class="puces"><span class="puce p-ecran">Montrer</span></div>
@@ -309,6 +328,7 @@
       <li>
         <div>
           <p class="ecran">leagues + battle + group-sports</p>
+          <p class="livre livre-partiel"><a href="https://app.salorie.salistar.com/me/ligues">/me/ligues</a> — livre. Non porte : battle, group-sports.</p>
           <p class="gain">Classements, duels, sports collectifs.</p>
           <p class="pourquoi">Un classement est un tableau. Un tableau sur téléphone se lit en trois colonnes tronquées ; sur grand écran il se lit d'un coup d'œil, ce qui est tout son intérêt.</p>
           <div class="puces"><span class="puce p-ecran">Comparer</span></div>
@@ -318,6 +338,7 @@
       <li>
         <div>
           <p class="ecran">personal-details + preferences</p>
+          <p class="livre"><a href="https://app.salorie.salistar.com/me/reglages">/me/reglages</a> — livre.</p>
           <p class="gain">Ses informations, ses réglages.</p>
           <p class="pourquoi">Un formulaire long, rempli une fois. Exactement ce qu'on fait au clavier, et ce qu'on abandonne au pouce.</p>
           <div class="puces"><span class="puce p-clavier">Saisie</span></div>
@@ -327,6 +348,7 @@
       <li>
         <div>
           <p class="ecran">healthy-recipes + import-recipe</p>
+          <p class="livre livre-partiel"><a href="https://app.salorie.salistar.com/me/recettes">/me/recettes</a> — livre. Non porte : import-recipe.</p>
           <p class="gain">Parcourir les recettes, en importer une depuis un lien.</p>
           <p class="pourquoi">Une recette se lit pendant qu'on cuisine — un écran posé bat un téléphone qu'on doit reprendre les mains grasses. Et le lien à importer est déjà ouvert dans un onglet.</p>
           <div class="puces"><span class="puce p-ecran">Lire</span><span class="puce p-fichier">Lien</span></div>
@@ -336,6 +358,7 @@
       <li>
         <div>
           <p class="ecran">adaptive-tdee + calorie-budget + metabolic-twin</p>
+          <p class="livre livre-partiel"><a href="https://app.salorie.salistar.com/me/metabolisme">/me/metabolisme</a> — livre. Non porte : calorie-budget, metabolic-twin.</p>
           <p class="gain">Comprendre d'où viennent ses chiffres.</p>
           <p class="pourquoi">Ces trois-là <em>expliquent</em>. Une explication accompagnée d'un graphique demande de la place ; tronquée, elle n'explique plus rien et le chiffre reste une boîte noire.</p>
           <div class="puces"><span class="puce p-ecran">Comparer</span></div>
@@ -345,6 +368,7 @@
       <li>
         <div>
           <p class="ecran">journal</p>
+          <p class="livre"><a href="https://app.salorie.salistar.com/me/journal">/me/journal</a> — livre.</p>
           <p class="gain">Actualités, courses à venir, défis.</p>
           <p class="pourquoi">Du contenu éditorial. On le parcourt assis, avec du temps — pas debout dans un bus.</p>
           <div class="puces"><span class="puce p-ecran">Lire</span></div>
@@ -354,6 +378,7 @@
       <li>
         <div>
           <p class="ecran">referral</p>
+          <p class="livre"><a href="https://app.salorie.salistar.com/me/parrainage">/me/parrainage</a> — livre.</p>
           <p class="gain">Son code, ses filleuls, le lien à partager.</p>
           <p class="pourquoi">Copier un lien et l'envoyer à vingt personnes se fait au clavier. C'est aussi une boucle de croissance : chaque friction s'y paie en installations perdues.</p>
           <div class="puces"><span class="puce p-clavier">Saisie</span></div>
@@ -363,6 +388,7 @@
       <li>
         <div>
           <p class="ecran">sport-agenda + field-reserve + match-create</p>
+          <p class="livre livre-partiel"><a href="https://app.salorie.salistar.com/me/agenda">/me/agenda</a> — livre. Non porte : field-reserve, match-create.</p>
           <p class="gain">Organiser une séance, réserver un terrain, monter un match.</p>
           <p class="pourquoi">Un calendrier au mois est illisible sur téléphone. Organiser à plusieurs suppose de voir les disponibilités ensemble.</p>
           <div class="puces"><span class="puce p-ecran">Comparer</span><span class="puce p-clavier">Saisie</span></div>
@@ -372,6 +398,7 @@
       <li>
         <div>
           <p class="ecran">mood-tracker + sleep-tracker + vitals</p>
+          <p class="livre livre-partiel"><a href="https://app.salorie.salistar.com/me/constantes">/me/constantes</a> — livre. Non porte : mood-tracker, sleep-tracker.</p>
           <p class="gain">Humeur, sommeil, glycémie et tension dans la durée.</p>
           <p class="pourquoi">Ces données ne veulent rien dire au jour le jour ; elles parlent sur trois mois. Trois mois de points ne tiennent pas sur un écran de téléphone.</p>
           <div class="puces"><span class="puce p-ecran">Comparer</span></div>
@@ -381,6 +408,7 @@
       <li>
         <div>
           <p class="ecran">activity + move-goals</p>
+          <p class="livre"><a href="https://app.salorie.salistar.com/me/activite">/me/activite</a> — livre.</p>
           <p class="gain">Historique d'activité et objectifs de mouvement.</p>
           <p class="pourquoi">Même raison que ci-dessus, un cran moins urgent : l'onglet Analyses du web en couvre déjà une partie.</p>
           <div class="puces"><span class="puce p-ecran">Comparer</span></div>
@@ -390,6 +418,7 @@
       <li>
         <div>
           <p class="ecran">feature-requests + contact</p>
+          <p class="livre"><a href="https://app.salorie.salistar.com/me/contact">/me/contact</a> — livre.</p>
           <p class="gain">Écrire au support, proposer une idée.</p>
           <p class="pourquoi">Personne n'écrit un retour construit au pouce. Le peu de retours reçus vient peut-être d'abord de là.</p>
           <div class="puces"><span class="puce p-clavier">Saisie</span></div>
