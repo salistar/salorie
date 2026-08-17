@@ -43,6 +43,73 @@ export async function genererTexte(consigne: string, signal?: AbortSignal): Prom
 }
 
 /**
+ * Envoie une image au backend. Même contrat que `aiVision` du mobile :
+ * `/ai/vision` attend `{prompt, imageBase64, mimeType}` et renvoie `{text}`.
+ *
+ * `imageBase64` est le contenu SEUL, sans le préfixe `data:image/jpeg;base64,`
+ * que produit un `FileReader` de navigateur. Le laisser ferait échouer le
+ * décodage côté serveur sur une erreur peu parlante.
+ */
+export async function analyserImage(
+  consigne: string,
+  imageBase64: string,
+  mimeType = 'image/jpeg',
+  signal?: AbortSignal,
+): Promise<string> {
+  if (!API_URL) throw new IaIndisponible('NEXT_PUBLIC_API_URL absent');
+  let rep: Response;
+  try {
+    rep = await fetch(`${API_URL}/ai/vision`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: consigne, imageBase64, mimeType }),
+      signal,
+    });
+  } catch (e: any) {
+    if (e?.name === 'AbortError') throw e;
+    throw new IaIndisponible('backend injoignable');
+  }
+  if (!rep.ok) throw new IaIndisponible(`backend ${rep.status}`);
+  const data = await rep.json().catch(() => null);
+  const texte = (data?.text ?? '').toString().trim();
+  if (!texte) throw new IaIndisponible('réponse vide');
+  return texte;
+}
+
+/**
+ * Lit un fichier image et renvoie sa charge base64 SANS le préfixe `data:`.
+ *
+ * Redimensionne à 1000 px de large au passage, comme `lib/imageAI.ts` sur
+ * mobile : une photo de téléphone moderne pèse plusieurs mégaoctets, et
+ * l'envoyer telle quelle allonge la requête sans rien apporter au modèle.
+ */
+export function fichierVersBase64(file: File, largeurMax = 1000): Promise<{ base64: string; mimeType: string }> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const ratio = Math.min(1, largeurMax / (img.width || largeurMax));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.width * ratio));
+      c.height = Math.max(1, Math.round(img.height * ratio));
+      const ctx = c.getContext('2d');
+      if (!ctx) return reject(new Error('canvas indisponible'));
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      // Toujours en JPEG q0.7 : un PNG de capture d'ecran peut peser dix fois
+      // plus lourd pour un resultat identique a l'analyse.
+      const dataUrl = c.toDataURL('image/jpeg', 0.7);
+      resolve({ base64: dataUrl.split(',')[1] || '', mimeType: 'image/jpeg' });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('image illisible'));
+    };
+    img.src = url;
+  });
+}
+
+/**
  * Extrait un tableau JSON d'une réponse de modèle.
  *
  * Les modèles encadrent volontiers leur JSON de ```json … ``` ou d'une phrase
