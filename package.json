@@ -20,7 +20,8 @@
     "deploy:phone:fast": "powershell -ExecutionPolicy Bypass -File ./deploy-to-phone.ps1 -SkipBundle",
     "deploy:phone:clean": "powershell -ExecutionPolicy Bypass -File ./deploy-to-phone.ps1 -Clean",
     "sync:medals": "node scripts/sync-medal-frames.js",
-    "test": "jest"
+    "test": "jest",
+    "sync:partage": "node scripts/sync-partage.mjs"
   },
   "dependencies": {
     "@clerk/clerk-expo": "^2.19.31",
