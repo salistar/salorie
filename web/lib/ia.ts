@@ -129,4 +129,23 @@ export function extraireListe(texte: string): any[] {
   }
 }
 
+/**
+ * Extrait un objet JSON d'une réponse de modèle. Même motif que
+ * `extraireListe`, avec des accolades — et la même raison d'exister : les
+ * modèles encadrent leur JSON de ```json … ``` ou d'une phrase d'introduction,
+ * sur laquelle un `JSON.parse` direct casse.
+ */
+export function extraireObjet(texte: string): Record<string, any> | null {
+  const sansCloture = texte.replace(/```(?:json)?/gi, '').trim();
+  const debut = sansCloture.indexOf('{');
+  const fin = sansCloture.lastIndexOf('}');
+  if (debut === -1 || fin <= debut) return null;
+  try {
+    const v = JSON.parse(sansCloture.slice(debut, fin + 1));
+    return v && typeof v === 'object' && !Array.isArray(v) ? v : null;
+  } catch {
+    return null;
+  }
+}
+
 export const iaConfiguree = () => Boolean(API_URL);
