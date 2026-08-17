@@ -1215,3 +1215,14 @@ tbody tr:last-child td { border-bottom: none; }
 .me-h3 { font-size: 15px; font-weight: 700; margin: 12px 0 4px; }
 .liste-etapes { margin: 0 0 6px; padding-inline-start: 1.3em; }
 .liste-etapes > li { margin-bottom: 5px; }
+
+/* Comparaison de deux photos. Une colonne sous 640 px : cote a cote sur un
+   telephone donnerait deux vignettes trop petites pour servir a quoi que ce
+   soit — l'inverse de ce que cet ecran cherche. */
+.photos-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+.photos-colonne { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.photos-image {
+  width: 100%; height: auto; border-radius: 6px;
+  background: var(--creux, #e7e5e0);
+}
+@media (max-width: 640px) { .photos-duo { grid-template-columns: 1fr; } }
