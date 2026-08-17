@@ -1009,3 +1009,52 @@ tbody tr:last-child td { border-bottom: none; }
   background: var(--surface, #fff); border: 1px solid var(--trait, #e2e8f0);
   border-radius: 16px; padding: 14px 18px;
 }
+
+/* Budget hebdomadaire : chaque jour s'ecarte d'une ligne mediane. Au-dessus il
+   reste du budget, en dessous il est depasse — le signe se lit d'un coup d'oeil,
+   ce qu'une barre partant du bas ne permet pas. */
+.budget-semaine { display: flex; gap: 8px; align-items: stretch; margin: 8px 0 4px; }
+.budget-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.budget-piste { position: relative; width: 100%; height: 110px; }
+.budget-barre { position: absolute; left: 12%; right: 12%; border-radius: 4px; }
+.budget-sous { background: #16a34a; }
+.budget-sur { background: #dc2626; }
+/* Gris et fin : un jour sans donnee n'est pas un jour a zero. */
+.budget-inconnu { background: var(--trait, #cbd5e1); transform: translateY(-50%); }
+.budget-axe { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--trait, #cbd5e1); }
+.budget-val { font-size: 11.5px; font-variant-numeric: tabular-nums; }
+
+.courbe-proj { width: 100%; height: auto; display: block; margin: 10px 0 4px; }
+.curseur { width: 100%; margin-top: 6px; accent-color: var(--green, #2e8b57); }
+
+/* Compositeur : recherche a gauche, repas a droite. C'est toute la raison d'etre
+   de l'ecran — les deux doivent tenir COTE A COTE, sinon on retombe sur les
+   allers-retours du telephone. En dessous de 900 px la grille repasse a une
+   colonne : deux colonnes de 40 caracteres seraient pires qu'une seule. */
+.composer-deux { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+@media (max-width: 900px) { .composer-deux { grid-template-columns: 1fr; } }
+
+.composer-resultats { list-style: none; margin: 10px 0 0; padding: 0; max-height: 420px; overflow-y: auto; }
+.composer-res {
+  width: 100%; text-align: start; display: flex; justify-content: space-between;
+  align-items: baseline; gap: 10px; padding: 9px 10px; border-radius: 9px;
+  border: 0; background: transparent; cursor: pointer; color: inherit; font: inherit;
+}
+.composer-res:hover { background: var(--green-light, #e9f6ef); }
+.composer-res-nom { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+.composer-lignes { list-style: none; margin: 12px 0 0; padding: 0; }
+.composer-lignes li {
+  display: flex; align-items: center; gap: 8px; padding: 6px 0;
+  border-bottom: 1px solid var(--trait, #e2e8f0);
+}
+.composer-nom { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.composer-qte { width: 74px; flex: 0 0 auto; text-align: end; }
+.composer-kcal { font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 72px; text-align: end; }
+
+/* Le total reste visible pendant qu'on ajuste les grammes : c'est exactement le
+   chiffre qu'on surveille. */
+.composer-total {
+  position: sticky; bottom: 0; margin-top: 14px; padding-top: 12px;
+  border-top: 1px solid var(--trait, #e2e8f0); background: var(--surface, #fff);
+}

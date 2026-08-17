@@ -21,6 +21,7 @@ const FICHIERS = [
   'objective/scoring.ts',
   'localRecipes.ts',
   'adaptiveTDEE.ts',
+  'projections.ts',
 ];
 const ENTETE = (f) => `// ⚠️ COPIE GENEREE — NE PAS MODIFIER ICI.
 //

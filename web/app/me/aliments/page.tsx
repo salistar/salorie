@@ -11,39 +11,10 @@ import { useCallback, useState } from 'react';
 import { useMe } from '../MeProvider';
 import { useProfil } from '../../../lib/useFirestoreMe';
 import { traducteur, sensLecture, type Langue } from '../../../lib/i18nMe';
-
-type Aliment = {
-  code: string;
-  nom: string;
-  marque: string;
-  kcal: number;
-  prot: number;
-  gluc: number;
-  lip: number;
-  image?: string;
-};
-
-/** Les champs demandes a OFF. En demander moins, c'est charger moins. */
-const CHAMPS = 'code,product_name,brands,nutriments,image_small_url';
-
-function versAliment(p: any): Aliment | null {
-  const n = p?.nutriments || {};
-  const nom = String(p?.product_name || '').trim();
-  // Un produit sans nom ou sans calories n'aide a rien : on l'ecarte plutot que
-  // d'afficher une ligne vide qui fait douter du reste.
-  const kcal = Number(n['energy-kcal_100g'] ?? n['energy-kcal']);
-  if (!nom || !Number.isFinite(kcal) || kcal <= 0) return null;
-  return {
-    code: String(p?.code || ''),
-    nom,
-    marque: String(p?.brands || '').split(',')[0].trim(),
-    kcal: Math.round(kcal),
-    prot: Math.round(Number(n.proteins_100g) || 0),
-    gluc: Math.round(Number(n.carbohydrates_100g) || 0),
-    lip: Math.round(Number(n.fat_100g) || 0),
-    image: p?.image_small_url,
-  };
-}
+// La recherche vit dans un module a part depuis que le compositeur de repas en a
+// eu besoin. Deux copies du filtrage auraient diverge, et un produit sans
+// calories glisse dans un total sans se voir.
+import { chercherAliments, type Aliment } from '../../../lib/rechercheAliments';
 
 export default function PageAliments() {
   const { uid } = useMe();
@@ -65,14 +36,7 @@ export default function PageAliments() {
     setCherche(true);
     setErreur('');
     try {
-      const url =
-        `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}` +
-        `&search_simple=1&action=process&json=1&page_size=24&fields=${CHAMPS}`;
-      const rep = await fetch(url);
-      const j = await rep.json();
-      const liste = (Array.isArray(j?.products) ? j.products : [])
-        .map(versAliment)
-        .filter(Boolean) as Aliment[];
+      const liste = await chercherAliments(q);
       setResultats(liste);
       if (!liste.length) setErreur(t('alimentsAucun'));
     } catch {
