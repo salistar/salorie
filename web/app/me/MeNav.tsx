@@ -17,6 +17,7 @@ const SECTIONS = [
   { href: '/me/aliments', label: 'Aliments', icone: '🥗' },
   { href: '/me/composer', label: 'Composer', icone: '🥣' },
   { href: '/me/recettes', label: 'Recettes', icone: '🍲' },
+  { href: '/me/recette-url', label: 'Import recette', icone: '🔗' },
   { href: '/me/analytics', label: 'Analyses', icone: '📈' },
   { href: '/me/metabolisme', label: 'Métabolisme', icone: '🔥' },
   { href: '/me/projection', label: 'Projection', icone: '📉' },
