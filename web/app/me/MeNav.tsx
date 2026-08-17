@@ -16,6 +16,8 @@ const SECTIONS = [
   { href: '/me/mur', label: 'Mur', icone: '📝' },
   { href: '/me/amis', label: 'Amis', icone: '👥' },
   { href: '/me/famille', label: 'Famille', icone: '🏡' },
+  { href: '/me/medailles', label: 'Médailles', icone: '🏅' },
+  { href: '/me/parrainage', label: 'Parrainage', icone: '🎁' },
   { href: '/me/import', label: 'Import', icone: '📥' },
   { href: '/me/rapport', label: 'Rapport', icone: '🩺' },
   { href: '/me/profile', label: 'Profil', icone: '⚙️' },
