@@ -41,6 +41,8 @@ const SECTIONS = [
   { href: '/me/nutri-score', label: 'Nutri-Score', icone: '🔤' },
   { href: '/me/substitutions', label: 'Substitutions', icone: '🔁' },
   { href: '/me/frigo', label: 'Frigo', icone: '🧊' },
+  { href: '/me/poids', label: 'Poids', icone: '⚖️' },
+  { href: '/me/forme', label: 'Forme du jour', icone: '🔋' },
   { href: '/me/progression', label: 'Progression', icone: '⭐' },
   { href: '/me/medailles', label: 'Médailles', icone: '🏅' },
   { href: '/me/parrainage', label: 'Parrainage', icone: '🎁' },
