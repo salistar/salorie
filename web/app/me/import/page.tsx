@@ -14,7 +14,7 @@ import { useProfil } from '../../../lib/useFirestoreMe';
 import { traducteur, sensLecture, type Langue } from '../../../lib/i18nMe';
 import { firestore } from '../../../lib/firebaseClient';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { parseFoodExport, type ImportedLog } from '../../../../lib/importParsers';
+import { parseFoodExport, type ImportedLog } from '../../../lib/partage/importParsers';
 
 type Etat = 'attente' | 'lecture' | 'pret' | 'import' | 'fini' | 'erreur';
 

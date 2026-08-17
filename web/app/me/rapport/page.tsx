@@ -21,7 +21,7 @@ import {
   REPORT_DAYS,
   type HealthReport,
   type ReportLabels,
-} from '../../../../lib/rapportSanteHtml';
+} from '../../../lib/partage/rapportSanteHtml';
 
 const jour = (ts: number) => new Date(ts).toISOString().slice(0, 10);
 
