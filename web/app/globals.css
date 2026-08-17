@@ -1206,3 +1206,12 @@ tbody tr:last-child td { border-bottom: none; }
    derniere pour ne pas doubler la bordure de la carte. */
 .micro-question { padding: 9px 0; border-bottom: 1px solid var(--trait, #d6d2ca); }
 .micro-question:last-of-type { border-bottom: none; }
+
+/* Fiche d'equipement : muscles en pastilles, etapes numerotees. */
+.etiquette-muscle {
+  display: inline-block; padding: 3px 9px; border-radius: 11px;
+  background: var(--creux, #e7e5e0); font-size: 13px;
+}
+.me-h3 { font-size: 15px; font-weight: 700; margin: 12px 0 4px; }
+.liste-etapes { margin: 0 0 6px; padding-inline-start: 1.3em; }
+.liste-etapes > li { margin-bottom: 5px; }
