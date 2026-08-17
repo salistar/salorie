@@ -91,6 +91,12 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
 
+      // JEUNE — document unique `encours` : l'heure de debut vit ici et non en
+      // local, pour qu'un jeune lance sur le telephone se voie sur le web.
+      match /jeune/{doc} {
+        allow read, write: if isOwner(userId);
+      }
+
       // Everything private (logs, weight_history, ai_insights, notifications…)
       // is readable/writable ONLY by the owner — friends never see your meals.
       match /{document=**} {
