@@ -7,8 +7,21 @@
 // La copie n'est pas une duplication assumee : `__tests__/partageSync.test.ts`
 // compare les deux fichiers et echoue s'ils different. La source reste `lib/`.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 
-const FICHIERS = ['importParsers.ts', 'rapportSanteHtml.ts', 'exercicesPlus.ts'];
+// Les chemins sont RELATIFS a `lib/` et l'arborescence est conservee telle
+// quelle sous `web/lib/partage/`. C'est ce qui permet a `localRecipes.ts` de
+// garder son `import './objective/scoring'` sans reecriture : un chemin
+// reecrit ferait diverger la copie de sa source, et le test de comparaison ne
+// pourrait plus servir a rien.
+const FICHIERS = [
+  'importParsers.ts',
+  'rapportSanteHtml.ts',
+  'exercicesPlus.ts',
+  'objective/scoring.ts',
+  'localRecipes.ts',
+  'adaptiveTDEE.ts',
+];
 const ENTETE = (f) => `// ⚠️ COPIE GENEREE — NE PAS MODIFIER ICI.
 //
 // La source est \`lib/${f}\` a la racine du depot. Cette copie existe
@@ -22,8 +35,9 @@ const ENTETE = (f) => `// ⚠️ COPIE GENEREE — NE PAS MODIFIER ICI.
 // ───── fin de l'entete generee, la source commence ici ─────
 `;
 
-mkdirSync('web/lib/partage', { recursive: true });
 for (const f of FICHIERS) {
-  writeFileSync(`web/lib/partage/${f}`, ENTETE(f) + readFileSync(`lib/${f}`, 'utf8'));
+  const cible = `web/lib/partage/${f}`;
+  mkdirSync(dirname(cible), { recursive: true });
+  writeFileSync(cible, ENTETE(f) + readFileSync(`lib/${f}`, 'utf8'));
   console.log('sync', f);
 }

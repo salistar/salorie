@@ -1,0 +1,425 @@
+<title>Vingt écrans à porter</title>
+
+<style>
+  :root {
+    --fond:      #f2f1ee;
+    --surface:   #fbfaf8;
+    --creux:     #e7e5e0;
+    --encre:     #1b1916;
+    --encre-doux:#5f5a52;
+    --encre-pale:#948d82;
+    --trait:     #d6d2ca;
+    --web:       #2e8b57;
+    --web-voile: #dfeee6;
+    --tel:       #6f7681;
+    --tel-voile: #e6e8eb;
+    --gain:      #a2571c;
+    --gain-voile:#f7e8d8;
+
+    --titre: "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --texte: "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --code:  ui-monospace, "Cascadia Mono", "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --fond:      #131211;
+      --surface:   #1b1a18;
+      --creux:     #232120;
+      --encre:     #ece9e4;
+      --encre-doux:#a29b91;
+      --encre-pale:#756e65;
+      --trait:     #302d2a;
+      --web:       #56b98a;
+      --web-voile: #15281e;
+      --tel:       #98a0ab;
+      --tel-voile: #21252a;
+      --gain:      #d3934f;
+      --gain-voile:#2c2115;
+    }
+  }
+  :root[data-theme="dark"] {
+    --fond:      #131211;
+    --surface:   #1b1a18;
+    --creux:     #232120;
+    --encre:     #ece9e4;
+    --encre-doux:#a29b91;
+    --encre-pale:#756e65;
+    --trait:     #302d2a;
+    --web:       #56b98a;
+    --web-voile: #15281e;
+    --tel:       #98a0ab;
+    --tel-voile: #21252a;
+    --gain:      #d3934f;
+    --gain-voile:#2c2115;
+  }
+
+  body {
+    background: var(--fond);
+    color: var(--encre);
+    font-family: var(--texte);
+    font-size: 16.5px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 20px 88px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 82ch; margin: 0 auto; }
+  .mesure { max-width: 64ch; }
+
+  header { padding: 68px 0 34px; border-bottom: 1px solid var(--trait); }
+  .eyebrow {
+    font-family: var(--code); font-size: 11.5px; letter-spacing: .15em;
+    text-transform: uppercase; color: var(--encre-pale); margin: 0 0 16px;
+  }
+  h1 {
+    font-family: var(--titre); font-size: clamp(30px, 5.4vw, 48px);
+    font-weight: 700; letter-spacing: -.035em; line-height: 1.05;
+    margin: 0 0 18px; text-wrap: balance;
+  }
+  .chapo { font-size: 18px; color: var(--encre-doux); margin: 0; text-wrap: pretty; }
+
+  section { padding-top: 50px; }
+  h2 {
+    font-family: var(--titre); font-size: 22px; font-weight: 700;
+    letter-spacing: -.02em; margin: 0 0 8px; text-wrap: balance;
+  }
+  .sous { color: var(--encre-doux); font-size: 15px; margin: 0 0 22px; max-width: 62ch; }
+  p { margin: 0 0 15px; }
+  strong { font-weight: 650; }
+  code {
+    font-family: var(--code); font-size: .86em; background: var(--creux);
+    padding: .12em .4em; border-radius: 4px;
+  }
+
+  .socle {
+    background: var(--surface); border: 1px solid var(--trait);
+    border-left: 3px solid var(--gain); border-radius: 3px;
+    padding: 17px 19px; margin: 20px 0;
+  }
+  .socle .label {
+    font-family: var(--code); font-size: 10.5px; letter-spacing: .13em;
+    text-transform: uppercase; color: var(--gain); display: block; margin-bottom: 7px;
+  }
+  .socle p:last-child { margin-bottom: 0; }
+
+  /* Le rang encode l'ORDRE DE CONSTRUCTION, pas un simple decompte : chaque etape
+     rend la suivante moins chere ou mieux informee. */
+  ol.rangs { list-style: none; padding: 0; margin: 14px 0 0; counter-reset: r; }
+  ol.rangs > li {
+    counter-increment: r;
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 18px;
+    padding: 20px 0;
+    border-top: 1px solid var(--trait);
+    margin: 0;
+  }
+  ol.rangs > li::before {
+    content: counter(r, decimal-leading-zero);
+    font-family: var(--code); font-size: 13px; font-weight: 600;
+    color: var(--web); padding-top: 3px; font-variant-numeric: tabular-nums;
+  }
+  .ecran {
+    font-family: var(--code); font-size: 15px; font-weight: 600;
+    letter-spacing: -.01em; margin: 0 0 3px;
+  }
+  .gain { font-size: 15.5px; margin: 0 0 7px; }
+  .pourquoi {
+    font-size: 14px; color: var(--encre-doux); margin: 0;
+    padding-left: 12px; border-left: 2px solid var(--creux);
+  }
+  .puces { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 0; }
+  .puce {
+    font-family: var(--code); font-size: 10px; letter-spacing: .08em;
+    text-transform: uppercase; font-weight: 600;
+    padding: 3px 8px; border-radius: 3px; white-space: nowrap;
+  }
+  .p-clavier { background: var(--web-voile);  color: var(--web); }
+  .p-ecran   { background: var(--gain-voile); color: var(--gain); }
+  .p-fichier { background: var(--tel-voile);  color: var(--tel); }
+  .p-pret    { background: var(--web-voile);  color: var(--web); }
+
+  .cadre { overflow-x: auto; margin: 18px 0; border: 1px solid var(--trait); border-radius: 5px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; background: var(--surface); }
+  th, td { text-align: left; padding: 10px 13px; border-bottom: 1px solid var(--trait); vertical-align: top; }
+  thead th {
+    font-family: var(--code); font-size: 10.5px; letter-spacing: .11em;
+    text-transform: uppercase; color: var(--encre-pale); font-weight: 600; background: var(--creux);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  ul { padding-left: 1.15em; margin: 0 0 15px; }
+  li { margin-bottom: 8px; }
+  li::marker { color: var(--encre-pale); }
+
+  .pied {
+    margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--trait);
+    font-family: var(--code); font-size: 12px; color: var(--encre-pale);
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="page">
+
+  <header>
+    <p class="eyebrow">Plan de portage — 16 août 2026</p>
+    <h1>Vingt écrans à porter</h1>
+    <p class="chapo mesure">Sur les 100 écrans du téléphone, ceux-là seulement gagnent vraiment à exister sur grand écran — et dans cet ordre.</p>
+  </header>
+
+  <section>
+    <h2>Le tri, et sur quoi il repose</h2>
+    <p class="sous">Mesuré dans le dépôt, pas estimé : chaque écran a été classé selon ce qu'il appelle réellement.</p>
+
+    <div class="cadre">
+      <table>
+        <thead>
+          <tr><th>Ce que l'écran fait</th><th class="n">Nombre</th><th>Verdict web</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Appelle le GPS, la caméra ou un capteur</td>
+            <td class="n">19</td>
+            <td><strong>À ne pas porter.</strong> Un navigateur n'a ni podomètre ni Health Connect</td>
+          </tr>
+          <tr>
+            <td>Demande de la saisie</td>
+            <td class="n">32</td>
+            <td>Le clavier change tout</td>
+          </tr>
+          <tr>
+            <td>Sert à lire et comparer</td>
+            <td class="n">44</td>
+            <td>Le grand écran change tout</td>
+          </tr>
+          <tr>
+            <td>Reste</td>
+            <td class="n">4</td>
+            <td>Au cas par cas</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="socle">
+      <span class="label">La règle qui a tranché</span>
+      <p>Un écran mérite le web s'il répond oui à l'une de ces trois questions : <strong>faut-il taper ?</strong> — <strong>faut-il comparer plusieurs choses côte à côte ?</strong> — <strong>le fichier dont on a besoin est-il sur un ordinateur ?</strong></p>
+      <p>« C'est joli sur grand écran » n'est pas une réponse. Sept écrans candidats ont été écartés là-dessus.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>L'ordre</h2>
+    <p class="sous">L'ordre compte : les premiers sont ceux dont le téléphone rend l'usage pénible, pas seulement moins confortable.</p>
+
+    <ol class="rangs">
+
+      <li>
+        <div>
+          <p class="ecran">import-data</p>
+          <p class="gain">Importer un historique alimentaire depuis un export MyFitnessPal.</p>
+          <p class="pourquoi">Le plus web-natif de toute l'app, et de loin. Le fichier CSV arrive <strong>par e-mail sur un ordinateur</strong> — l'importer depuis un téléphone demande de le transférer d'abord. On corrige un parcours absurde, pas un inconfort.</p>
+          <div class="puces"><span class="puce p-fichier">Fichier</span><span class="puce p-clavier">Saisie</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">mur + groupes</p>
+          <p class="gain">Publier, lire le mur des amis, gérer les groupes d'audience.</p>
+          <p class="pourquoi"><strong>Le backend est déjà écrit et testé</strong> — 14 tests sur la visibilité. Il ne manque que l'interface, des deux côtés. C'est le meilleur rapport valeur/effort de la liste.</p>
+          <div class="puces"><span class="puce p-pret">Backend prêt</span><span class="puce p-clavier">Saisie</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">health-export</p>
+          <p class="gain">Le rapport PDF pour le médecin.</p>
+          <p class="pourquoi">On le génère pour l'imprimer ou le joindre à un mail. Les deux se font sur un ordinateur. Sur téléphone, le PDF finit dans un dossier qu'on ne retrouve pas.</p>
+          <div class="puces"><span class="puce p-fichier">Fichier</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">meal-plan + meal-plan-history</p>
+          <p class="gain">Planifier la semaine, revoir les plans passés.</p>
+          <p class="pourquoi">Planifier sept jours sur un écran de six pouces oblige à faire défiler sans jamais voir l'ensemble — or planifier, c'est précisément voir l'ensemble.</p>
+          <div class="puces"><span class="puce p-ecran">Comparer</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">food-database</p>
+          <p class="gain">Chercher un aliment, comparer les valeurs.</p>
+          <p class="pourquoi">Chercher, c'est taper. Comparer deux aliments, c'est les voir ensemble. Le téléphone rate les deux.</p>
+          <div class="puces"><span class="puce p-clavier">Saisie</span><span class="puce p-ecran">Comparer</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">meal-builder + meal-templates</p>
+          <p class="gain">Composer un repas, en faire un modèle réutilisable.</p>
+          <p class="pourquoi">Assembler des ingrédients et ajuster des quantités relève du tableur, pas du pouce. Un modèle se crée une fois et sert cent fois : autant le créer confortablement.</p>
+          <div class="puces"><span class="puce p-clavier">Saisie</span><span class="puce p-ecran">Comparer</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">family</p>
+          <p class="gain">Gérer les membres, envoyer les invitations.</p>
+          <p class="pourquoi">Saisir plusieurs adresses e-mail au pouce est le genre de tâche qu'on repousse. Repoussée, la famille ne se crée jamais — et c'est une fonction de rétention.</p>
+          <div class="puces"><span class="puce p-clavier">Saisie</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">workout-plans + workout-details</p>
+          <p class="gain">Lire un programme, regarder les démonstrations.</p>
+          <p class="pourquoi">Le catalogue vient de passer à <strong>95 exercices</strong>, et les démos YouTube arrivent. Une vidéo de technique se regarde mieux en grand — et on prépare sa séance la veille, assis.</p>
+          <div class="puces"><span class="puce p-ecran">Comparer</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">marketplace + listing-create</p>
+          <p class="gain">Parcourir les annonces, en rédiger une.</p>
+          <p class="pourquoi">Rédiger une annonce, c'est écrire un texte et choisir des photos. Les photos sont souvent déjà sur l'ordinateur, et le texte mérite un vrai clavier.</p>
+          <div class="puces"><span class="puce p-clavier">Saisie</span><span class="puce p-fichier">Fichier</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">medals + streaks</p>
+          <p class="gain">Ses médailles et ses séries, en grand.</p>
+          <p class="pourquoi">C'est ce qu'on montre. Une médaille sur un écran de téléphone se montre à une personne à la fois ; sur un écran d'ordinateur, à toute une table — et elle se capture pour être partagée.</p>
+          <div class="puces"><span class="puce p-ecran">Montrer</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">leagues + battle + group-sports</p>
+          <p class="gain">Classements, duels, sports collectifs.</p>
+          <p class="pourquoi">Un classement est un tableau. Un tableau sur téléphone se lit en trois colonnes tronquées ; sur grand écran il se lit d'un coup d'œil, ce qui est tout son intérêt.</p>
+          <div class="puces"><span class="puce p-ecran">Comparer</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">personal-details + preferences</p>
+          <p class="gain">Ses informations, ses réglages.</p>
+          <p class="pourquoi">Un formulaire long, rempli une fois. Exactement ce qu'on fait au clavier, et ce qu'on abandonne au pouce.</p>
+          <div class="puces"><span class="puce p-clavier">Saisie</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">healthy-recipes + import-recipe</p>
+          <p class="gain">Parcourir les recettes, en importer une depuis un lien.</p>
+          <p class="pourquoi">Une recette se lit pendant qu'on cuisine — un écran posé bat un téléphone qu'on doit reprendre les mains grasses. Et le lien à importer est déjà ouvert dans un onglet.</p>
+          <div class="puces"><span class="puce p-ecran">Lire</span><span class="puce p-fichier">Lien</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">adaptive-tdee + calorie-budget + metabolic-twin</p>
+          <p class="gain">Comprendre d'où viennent ses chiffres.</p>
+          <p class="pourquoi">Ces trois-là <em>expliquent</em>. Une explication accompagnée d'un graphique demande de la place ; tronquée, elle n'explique plus rien et le chiffre reste une boîte noire.</p>
+          <div class="puces"><span class="puce p-ecran">Comparer</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">journal</p>
+          <p class="gain">Actualités, courses à venir, défis.</p>
+          <p class="pourquoi">Du contenu éditorial. On le parcourt assis, avec du temps — pas debout dans un bus.</p>
+          <div class="puces"><span class="puce p-ecran">Lire</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">referral</p>
+          <p class="gain">Son code, ses filleuls, le lien à partager.</p>
+          <p class="pourquoi">Copier un lien et l'envoyer à vingt personnes se fait au clavier. C'est aussi une boucle de croissance : chaque friction s'y paie en installations perdues.</p>
+          <div class="puces"><span class="puce p-clavier">Saisie</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">sport-agenda + field-reserve + match-create</p>
+          <p class="gain">Organiser une séance, réserver un terrain, monter un match.</p>
+          <p class="pourquoi">Un calendrier au mois est illisible sur téléphone. Organiser à plusieurs suppose de voir les disponibilités ensemble.</p>
+          <div class="puces"><span class="puce p-ecran">Comparer</span><span class="puce p-clavier">Saisie</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">mood-tracker + sleep-tracker + vitals</p>
+          <p class="gain">Humeur, sommeil, glycémie et tension dans la durée.</p>
+          <p class="pourquoi">Ces données ne veulent rien dire au jour le jour ; elles parlent sur trois mois. Trois mois de points ne tiennent pas sur un écran de téléphone.</p>
+          <div class="puces"><span class="puce p-ecran">Comparer</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">activity + move-goals</p>
+          <p class="gain">Historique d'activité et objectifs de mouvement.</p>
+          <p class="pourquoi">Même raison que ci-dessus, un cran moins urgent : l'onglet Analyses du web en couvre déjà une partie.</p>
+          <div class="puces"><span class="puce p-ecran">Comparer</span></div>
+        </div>
+      </li>
+
+      <li>
+        <div>
+          <p class="ecran">feature-requests + contact</p>
+          <p class="gain">Écrire au support, proposer une idée.</p>
+          <p class="pourquoi">Personne n'écrit un retour construit au pouce. Le peu de retours reçus vient peut-être d'abord de là.</p>
+          <div class="puces"><span class="puce p-clavier">Saisie</span></div>
+        </div>
+      </li>
+
+    </ol>
+  </section>
+
+  <section>
+    <h2>Les dix-neuf à ne pas porter</h2>
+    <p class="sous">Ce que le web ne peut pas faire, et qu'il ne faut pas faire semblant de faire.</p>
+
+    <p class="mesure">Un navigateur n'a ni podomètre, ni Health Connect, ni suivi GPS en arrière-plan. Une version web dégradée de ces écrans serait pire que leur absence : elle promettrait quelque chose qu'elle ne peut pas tenir.</p>
+
+    <p class="mesure"><code>run</code> · <code>race-live</code> · <code>duo-walk</code> · <code>ar-ghost</code> · <code>challenge-ar</code> · <code>scan-camera</code> · <code>scan-barcode</code> · <code>label-scan</code> · <code>receipt-ocr</code> · <code>equipment-scan</code> · <code>register-product</code> · <code>rep-counter</code> · <code>voice-log</code> · <code>ai-coach</code> (micro) · <code>live-twin</code> · <code>progress-photos</code> · <code>fridge-recipes</code> · <code>restaurant-mode</code> · <code>challenge</code></p>
+
+    <p class="mesure">Trois d'entre eux méritent malgré tout une <strong>vue de suivi</strong> sur le web — pas l'écran, juste le résultat : <code>race-live</code> pour regarder une course en cours, <code>run</code> pour relire une sortie, <code>progress-photos</code> pour comparer deux photos côte à côte. C'est une autre fonctionnalité, à ne pas confondre avec un portage.</p>
+  </section>
+
+  <section>
+    <h2>Ce que ça implique</h2>
+    <ul class="mesure">
+      <li><strong>Le scan photo existe déjà sur le web</strong> et fonctionne : un navigateur accède à la caméra pour une photo unique. C'est le suivi <em>continu</em> — GPS, pas, capteurs — qui lui échappe.</li>
+      <li><strong>Aucune donnée à migrer.</strong> Les deux côtés lisent le même Firestore et la même API. Un écran porté est une interface, pas un système.</li>
+      <li><strong>Le sens de lecture arabe est déjà en place</strong> sur l'espace web : chaque écran ajouté doit s'y conformer, pas le réinventer.</li>
+      <li><strong>Le style ne s'invente pas non plus.</strong> Les jetons existent ; une page qui amène ses propres couleurs fait ressembler l'ensemble à plusieurs produits collés.</li>
+    </ul>
+  </section>
+
+  <p class="pied">Salorie · classement mesuré sur les 100 écrans du dépôt, le 16 août 2026</p>
+
+</div>
