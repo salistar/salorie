@@ -8,7 +8,7 @@
 // compare les deux fichiers et echoue s'ils different. La source reste `lib/`.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
-const FICHIERS = ['importParsers.ts', 'rapportSanteHtml.ts'];
+const FICHIERS = ['importParsers.ts', 'rapportSanteHtml.ts', 'exercicesPlus.ts'];
 const ENTETE = (f) => `// ⚠️ COPIE GENEREE — NE PAS MODIFIER ICI.
 //
 // La source est \`lib/${f}\` a la racine du depot. Cette copie existe
