@@ -881,3 +881,7 @@ tbody tr:last-child td { border-bottom: none; }
 .exo-tete:focus-visible { outline: 2px solid var(--accent, #2e8b57); outline-offset: -2px; }
 .exo-corps { padding: 0 15px 14px; display: flex; flex-direction: column; gap: 7px; align-items: start; }
 .exo-consigne { margin: 0; font-size: 14.5px; line-height: 1.55; }
+
+/* Courbe de tendance : un simple trace SVG, sans bibliotheque. `preserveAspectRatio`
+   par defaut deformerait la courbe sur un ecran etroit. */
+.courbe { width: 100%; height: 110px; display: block; margin: 6px 0 4px; overflow: visible; }
