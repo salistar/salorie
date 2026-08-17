@@ -1058,3 +1058,14 @@ tbody tr:last-child td { border-bottom: none; }
   position: sticky; bottom: 0; margin-top: 14px; padding-top: 12px;
   border-top: 1px solid var(--trait, #e2e8f0); background: var(--surface, #fff);
 }
+
+/* Matchs : des cartes, parce qu'on les compare avant de choisir. */
+.grille-matchs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 12px; }
+.carte-match {
+  background: var(--surface, #fff); border: 1px solid var(--trait, #e2e8f0);
+  border-radius: 16px; padding: 14px 18px; display: flex; flex-direction: column; gap: 3px;
+}
+.match-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.match-places { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 14px; }
+/* Complet : un MOT le dit deja sur le bouton, la couleur ne fait que renforcer. */
+.match-complet { color: #dc2626; font-weight: 700; }
