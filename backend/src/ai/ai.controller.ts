@@ -2,6 +2,7 @@ import { Body, Controller, Post, UseGuards, BadRequestException, Req, HttpExcept
 import { AiService } from './ai.service';
 import { RedisService } from '../redis.service';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
+import { lirePage } from './lecture-page';
 
 @UseGuards(FirebaseAuthGuard)
 @Controller('ai')
@@ -40,5 +41,42 @@ export class AiController {
     if (!body?.audioBase64) throw new BadRequestException('audioBase64 required');
     if (body.audioBase64.length > 10_000_000) throw new BadRequestException('audio too large');
     return this.ai.transcribe(body.audioBase64, body.mimeType || 'audio/mp4', body.language);
+  }
+
+  // Recette depuis une URL. La page est allee chercher PAR LE SERVEUR : un
+  // navigateur ne peut pas lire un site tiers (CORS), et le mobile qui le faisait
+  // depuis le client exposait l'IP de l'utilisateur sans limite de debit.
+  //
+  // Debit reduit a 8/min : chaque appel declenche une requete sortante VERS UN
+  // TIERS, pas seulement vers notre fournisseur d'IA. Trente par minute feraient
+  // de Salorie un outil de martelage.
+  @Post('recipe-from-url')
+  async recipeFromUrl(@Body() body: { url?: string; lang?: string }, @Req() req: any) {
+    const uid = req?.user?.uid || 'anon';
+    const ok = await this.redis.rateLimit(`ai:url:${uid}`, 8, 60);
+    if (!ok) throw new HttpException('Trop de requêtes — réessaie dans une minute.', 429);
+    if (!body?.url || typeof body.url !== 'string' || body.url.length > 2000)
+      throw new BadRequestException('url required');
+
+    let html: string;
+    try {
+      html = await lirePage(body.url);
+    } catch (e: any) {
+      // On rend un code de motif, pas le message brut : « ECONNREFUSED
+      // 10.0.0.5:6379 » confirmerait a l'appelant ce qui tourne sur le reseau
+      // interne, ce que precisement on lui refuse.
+      const motif = String(e?.message || 'erreur');
+      const connus = ['url-invalide', 'adresse-refusee', 'pas-une-page', 'trop-de-redirections'];
+      throw new BadRequestException(connus.includes(motif) ? motif : 'page-illisible');
+    }
+    if (html.trim().length < 200) throw new BadRequestException('page-vide');
+
+    const langue = body.lang === 'ar' ? 'Arabic' : body.lang === 'fr' ? 'French' : 'English';
+    const prompt =
+      `Here is the HTML of a recipe page. Extract and return concisely in ${langue}: ` +
+      `1) the recipe NAME, 2) the INGREDIENTS as a bullet list, 3) the STEPS as a short summary, ` +
+      `4) a NUTRITION ESTIMATE per serving (calories, protein, carbs, fat). ` +
+      `If the page is not a recipe, say so in one line and stop. HTML:\n${html}`;
+    return { text: await this.ai.generate(prompt) };
   }
 }
