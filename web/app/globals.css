@@ -1176,3 +1176,11 @@ tbody tr:last-child td { border-bottom: none; }
 /* Apercu de la photo envoyee : borne en hauteur pour ne pas pousser la reponse
    hors de l'ecran sur une photo en mode portrait. */
 .frigo-apercu { display: block; max-width: 100%; max-height: 320px; border-radius: 6px; margin: 10px 0 0; }
+
+/* Forme du jour : la piste reprend celle de /me/progression, en violet. */
+.prog-forme { background: #6d4aa8; }
+
+/* Courbe de poids. `currentColor` fait suivre le trait au theme sans qu'aucune
+   couleur ne soit ecrite en dur dans le SVG. */
+.poids-cadre { margin: 8px 0 4px; }
+.poids-svg { display: block; width: 100%; height: auto; color: var(--green, #2e8b57); overflow: visible; }

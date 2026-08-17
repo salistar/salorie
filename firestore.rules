@@ -80,6 +80,17 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
 
+      // FORME DU JOUR — un document par DATE (`2026-08-17`), donc une seule
+      // mesure quotidienne : une seconde saisie corrige la premiere.
+      match /readiness/{jour} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // PROGRESSION — XP, defi annuel, kilometres. Document unique `etat`.
+      match /progression/{doc} {
+        allow read, write: if isOwner(userId);
+      }
+
       // Everything private (logs, weight_history, ai_insights, notifications…)
       // is readable/writable ONLY by the owner — friends never see your meals.
       match /{document=**} {
