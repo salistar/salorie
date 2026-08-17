@@ -27,6 +27,7 @@ const SECTIONS = [
   { href: '/me/terrains', label: 'Terrains', icone: '📍' },
   { href: '/me/races', label: 'Courses', icone: '🏁' },
   { href: '/me/ligues', label: 'Ligue', icone: '🏆' },
+  { href: '/me/duel', label: 'Duel', icone: '🤜' },
   { href: '/me/journal', label: 'Journal', icone: '📰' },
   { href: '/me/coach', label: 'Coach', icone: '💬' },
   { href: '/me/mur', label: 'Mur', icone: '📝' },
