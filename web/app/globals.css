@@ -1088,3 +1088,9 @@ tbody tr:last-child td { border-bottom: none; }
 /* Un creneau deja passe n'est ni libre ni pris : il n'est plus rien. */
 .creneau-passe { opacity: .35; }
 .carte-choisie { outline: 2px solid var(--accent, #0ea5e9); outline-offset: -1px; }
+
+/* Duel : le verdict porte un MOT, la couleur ne fait que l'accompagner. */
+.duel-verdict { font-size: 17px; font-weight: 800; margin: 10px 0 4px; }
+.duel-gagne { color: #16a34a; }
+.duel-perdu { color: #dc2626; }
+.duel-egalite { color: var(--muted); }
