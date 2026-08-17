@@ -13,6 +13,7 @@ const SECTIONS = [
   { href: '/me/aliments', label: 'Aliments', icone: '🥗' },
   { href: '/me/analytics', label: 'Analyses', icone: '📈' },
   { href: '/me/races', label: 'Courses', icone: '🏁' },
+  { href: '/me/ligues', label: 'Ligue', icone: '🏆' },
   { href: '/me/coach', label: 'Coach', icone: '💬' },
   { href: '/me/mur', label: 'Mur', icone: '📝' },
   { href: '/me/amis', label: 'Amis', icone: '👥' },
@@ -22,7 +23,9 @@ const SECTIONS = [
   { href: '/me/import', label: 'Import', icone: '📥' },
   { href: '/me/rapport', label: 'Rapport', icone: '🩺' },
   { href: '/me/constantes', label: 'Constantes', icone: '❤️' },
+  { href: '/me/annonces', label: 'Annonces', icone: '🏷️' },
   { href: '/me/contact', label: 'Contact', icone: '✉️' },
+  { href: '/me/reglages', label: 'Mes infos', icone: '📋' },
   { href: '/me/profile', label: 'Profil', icone: '⚙️' },
 ];
 
