@@ -1,0 +1,43 @@
+rules_version = '2';
+
+// Règles Firebase Storage.
+// ---------------------------------------------------------------------------
+// Ce fichier existe pour UNE raison : les photos de progression sont des photos
+// de corps. Elles sont, de loin, la donnée la plus sensible que Salorie stocke.
+//
+// Le principe est donc l'inverse du reste : tout est refusé, et seul le
+// propriétaire d'un dossier peut y accéder. Il n'y a AUCUNE exception admin —
+// un compte d'administration peut lire les journaux alimentaires de quelqu'un,
+// il n'a aucune raison de voir ces photos-là.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Tout ce qui n'est pas explicitement autorisé plus bas est refusé.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // PHOTOS DE PROGRESSION — `progress_photos/{uid}/{fichier}`.
+    //
+    // `uid` est l'identifiant Firebase de la personne, le même que celui des
+    // documents Firestore. Une personne ne peut donc pas même DEVINER le
+    // chemin d'une autre : lire hors de son dossier est refusé, quel que soit
+    // le nom de fichier.
+    match /progress_photos/{uid}/{fichier} {
+
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      allow write: if request.auth != null
+                   && request.auth.uid == uid
+                   // Uniquement des images. Sans cette ligne, le dossier
+                   // deviendrait un hébergement de fichiers arbitraires
+                   // adossé au compte de quelqu'un.
+                   && request.resource.contentType.matches('image/.*')
+                   // 8 Mo : large pour une photo compressée à 1200 px, assez
+                   // bas pour qu'un envoi massif ne passe pas inaperçu.
+                   && request.resource.size < 8 * 1024 * 1024;
+
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
