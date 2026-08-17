@@ -807,3 +807,7 @@ tbody tr:last-child td { border-bottom: none; }
    elargit la carte et fait defiler la page entiere de cote. */
 .pub-image { width: 100%; max-height: 380px; object-fit: cover; border-radius: 12px; margin-bottom: 10px; display: block; }
 .pub-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+
+/* Apercu du rapport : une iframe ISOLE ses styles. Le rapport porte les siens,
+   et les laisser fuiter casserait la mise en page autour. */
+.apercu-rapport { width: 100%; height: 640px; border: 1px solid var(--trait, #e2e8f0); border-radius: 12px; background: #fff; }

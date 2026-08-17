@@ -14,6 +14,7 @@ const SECTIONS = [
   { href: '/me/mur', label: 'Mur', icone: '📝' },
   { href: '/me/amis', label: 'Amis', icone: '👥' },
   { href: '/me/import', label: 'Import', icone: '📥' },
+  { href: '/me/rapport', label: 'Rapport', icone: '🩺' },
   { href: '/me/profile', label: 'Profil', icone: '⚙️' },
 ];
 
