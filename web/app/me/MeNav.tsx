@@ -9,6 +9,7 @@ const SECTIONS = [
   { href: '/me/diary', label: 'Journal', icone: '🍽️' },
   { href: '/me/scan', label: 'Scanner', icone: '📷' },
   { href: '/me/plans', label: 'Plans', icone: '🗓️' },
+  { href: '/me/exercices', label: 'Exercices', icone: '💪' },
   { href: '/me/aliments', label: 'Aliments', icone: '🥗' },
   { href: '/me/analytics', label: 'Analyses', icone: '📈' },
   { href: '/me/races', label: 'Courses', icone: '🏁' },

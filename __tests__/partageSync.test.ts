@@ -24,7 +24,7 @@ import { join } from 'path';
  * Pour reparer : `npm run sync:partage`.
  */
 
-const PARTAGES = ['importParsers.ts', 'rapportSanteHtml.ts'];
+const PARTAGES = ['importParsers.ts', 'rapportSanteHtml.ts', 'exercicesPlus.ts'];
 const racine = join(__dirname, '..');
 
 /**
