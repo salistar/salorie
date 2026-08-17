@@ -1184,3 +1184,20 @@ tbody tr:last-child td { border-bottom: none; }
    couleur ne soit ecrite en dur dans le SVG. */
 .poids-cadre { margin: 8px 0 4px; }
 .poids-svg { display: block; width: 100%; height: auto; color: var(--green, #2e8b57); overflow: visible; }
+
+/* Jeune : piste ambre, et un compteur en chiffres a chasse fixe pour que les
+   secondes ne fassent pas sautiller la ligne a chaque battement. */
+.prog-jeune { background: #b8860b; }
+.jeune-compteur {
+  font-size: 34px; font-weight: 700; margin: 10px 0 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tableau de mesures : defile horizontalement plutot que de pousser la page. */
+.cadre-table { overflow-x: auto; margin-top: 10px; }
+.table-mesures { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+.table-mesures th, .table-mesures td {
+  text-align: start; padding: 7px 10px; border-bottom: 1px solid var(--trait, #d6d2ca);
+  white-space: nowrap;
+}
+.table-mesures tbody tr:last-child td { border-bottom: none; }
