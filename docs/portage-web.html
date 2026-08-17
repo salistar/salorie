@@ -457,8 +457,7 @@
   <section>
     <h2>Au-delà des vingt : l'inventaire complet</h2>
     <p class="sous">Les 99 écrans du mobile croisés avec les 37 routes de l'espace web. Quatre écrans utiles restaient
-    hors de la liste des vingt — ils sont livrés. Neuf autres sont <strong>bloqués par leur stockage</strong>, et c'est
-    une décision produit, pas un oubli.</p>
+    hors de la liste des vingt — ils sont livrés. Neuf autres gardaient tout en local : cinq sont désormais synchronisés, un seul reste écarté délibérément.</p>
 
     <h3 class="sous-titre">Livrés en plus des vingt</h3>
     <ul class="mesure">
@@ -474,15 +473,26 @@
       <em>tous</em> les jours. Il n'y régénère rien : deux estimations pour la même journée, et on ne sait plus laquelle croire.</li>
     </ul>
 
-    <h3 class="sous-titre">Bloqués par leur stockage — pas par le navigateur</h3>
-    <p class="sous">Ces neuf écrans gardent tout en <code>AsyncStorage</code> : leurs données ne quittent jamais le
-    téléphone. Sur le web ils afficheraient une page vide, ce qui est pire que leur absence. Les porter demande d'abord
-    de faire synchroniser le mobile vers Firestore — un changement dans l'app, pas une page de plus.</p>
+    <h3 class="sous-titre">Le stockage local : débloqué pour l'essentiel</h3>
+    <p class="sous">Neuf écrans gardaient tout en <code>AsyncStorage</code>. Cinq sont maintenant synchronisés ; sur les
+    quatre restants, <strong>trois n'ont tout simplement rien à synchroniser</strong> — ce n'est pas la même chose qu'un
+    blocage, et la distinction méritait d'être faite.</p>
     <ul class="mesure">
-      <li><code>shopping-list</code> — <strong>le plus regrettable</strong> : une liste de courses se prépare devant un
-      ordinateur et s'utilise au supermarché. C'est le cas d'usage web le plus évident de toute l'app.</li>
-      <li><code>annual-challenge</code>, <code>rewards</code>, <code>progress-photos</code>, <code>health</code>,
-      <code>readiness</code>, <code>sadaqa</code>, <code>ramadan</code>, <code>avatar</code>.</li>
+      <li><strong><a href="https://app.salorie.salistar.com/me/courses">/me/courses</a></strong> — <code>shopping-list</code>.
+      Le local reste la source : une liste de courses s'utilise dans un magasin, là où le réseau ne passe pas, et le SDK
+      Firestore tourne ici avec un cache en mémoire. Tout basculer l'aurait rendue <em>moins</em> fiable. Firestore ne
+      fait que porter les changements ; un document par article, et des pierres tombales pour qu'un téléphone hors ligne
+      ne ressuscite pas ce qu'on vient d'enlever.</li>
+      <li><strong><a href="https://app.salorie.salistar.com/me/progression">/me/progression</a></strong> —
+      <code>annual-challenge</code>, <code>rewards</code>, <code>avatar</code>. XP, niveau, défi annuel, kilomètres
+      cumulés. Le web les affiche et ne peut pas les faire monter : ils viennent du GPS. Il n'écrit qu'une chose,
+      l'objectif de l'année — le seul champ à deux auteurs, et le seul qui porte son propre horodatage.</li>
+      <li><code>progress-photos</code> — <strong>toujours bloqué, et volontairement.</strong> Ce sont des URI de fichiers
+      locaux, inutilisables depuis un navigateur. Une vraie synchronisation voudrait dire téléverser des photos de corps :
+      coût de stockage, et surtout une question de vie privée qui ne se tranche pas en passant.</li>
+      <li><code>health</code>, <code>ramadan</code>, <code>readiness</code> — <strong>rien à synchroniser.</strong> Les
+      deux premiers ne gardent qu'un cache (déduplication de séances, horaires de prière) ; le troisième n'écrase qu'un
+      seul instantané à chaque saisie, ce n'est pas un historique.</li>
     </ul>
 
     <h3 class="sous-titre">Déjà couverts ailleurs</h3>
@@ -493,6 +503,6 @@
     existantes.</p>
   </section>
 
-  <p class="pied">Salorie · 99 écrans mobiles recensés, 37 routes web livrées · 17 août 2026</p>
+  <p class="pied">Salorie · 99 écrans mobiles recensés, 39 routes web livrées · 17 août 2026</p>
 
 </div>
