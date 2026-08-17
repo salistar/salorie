@@ -6,7 +6,10 @@ import { UserButton } from '@clerk/clerk-react';
 
 const SECTIONS = [
   { href: '/me', label: 'Accueil', icone: '🏠' },
-  { href: '/me/diary', label: 'Journal', icone: '🍽️' },
+  // Deux ecrans distincts portaient le meme libelle « Journal ». Le mobile les
+  // nomme differemment — « Journal alimentaire » et « Journal » — et le web doit
+  // faire pareil : deux entrees identiques dans une barre, on clique au hasard.
+  { href: '/me/diary', label: 'Repas du jour', icone: '🍽️' },
   { href: '/me/scan', label: 'Scanner', icone: '📷' },
   { href: '/me/plans', label: 'Plans', icone: '🗓️' },
   { href: '/me/modeles', label: 'Modèles', icone: '🔖' },

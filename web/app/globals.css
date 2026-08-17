@@ -361,7 +361,11 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 
 .me-nav {
   display: flex; align-items: center; gap: var(--sp-6);
-  padding: 0 var(--sp-6); height: 64px;
+  /* `min-height` et non `height` : depuis que les liens passent a la ligne, une
+     hauteur FIXE les couperait hors du cadre. C'est exactement le defaut qui
+     avait rendu le bouton de deconnexion inatteignable dans la barre laterale
+     de l'admin — meme cause, meme correction. */
+  padding: var(--sp-2) var(--sp-6); min-height: 64px;
   background: var(--card); border-bottom: 1px solid var(--line);
   position: sticky; top: 0; z-index: 20;
 }
@@ -373,7 +377,11 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 /* Le logo est une IMAGE depuis qu'on a remplace l'emoji : une taille de police
    n'a plus d'effet dessus, il lui faut des dimensions et un rendu net. */
 .me-nav-logo { width: 26px; height: 26px; display: block; object-fit: contain; }
-.me-nav-liens { display: flex; gap: var(--sp-1); flex: 1; min-width: 0; overflow-x: auto; }
+/* La barre passe A LA LIGNE au lieu de defiler horizontalement. Elle comptait 14
+   entrees, elle en compte 28 : un defilement horizontal sans affordance visible
+   cachait la moitie des sections, et personne ne va chercher ce qu'il ne voit
+   pas. Sur deux ou trois lignes, tout est atteignable d'un coup d'oeil. */
+.me-nav-liens { display: flex; gap: var(--sp-1); flex: 1; min-width: 0; flex-wrap: wrap; }
 .me-nav-lien {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 8px 14px; border-radius: var(--r-full);
