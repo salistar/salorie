@@ -34,6 +34,7 @@ const PARTAGES = [
   'objective/scoring.ts',
   'localRecipes.ts',
   'adaptiveTDEE.ts',
+  'projections.ts',
 ];
 const racine = join(__dirname, '..');
 
