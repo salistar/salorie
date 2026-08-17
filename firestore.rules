@@ -72,6 +72,14 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
 
+      // LISTE DE COURSES — un document PAR ARTICLE, pour que le téléphone et le
+      // web puissent ajouter en même temps sans s'écraser. Déjà couvert par le
+      // wildcard ci-dessous ; explicité comme glucose et blood_pressure, pour
+      // que la règle survive si le wildcard est durci un jour.
+      match /shopping_list/{itemId} {
+        allow read, write: if isOwner(userId);
+      }
+
       // Everything private (logs, weight_history, ai_insights, notifications…)
       // is readable/writable ONLY by the owner — friends never see your meals.
       match /{document=**} {

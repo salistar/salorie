@@ -1124,3 +1124,19 @@ tbody tr:last-child td { border-bottom: none; }
 .micro-bas { background: #dc2626; }
 .micro-ok { background: #16a34a; }
 .micro-haut { background: #d97706; }
+
+/* Liste de courses : des lignes hautes et espacees. On la lit d'une main, le
+   telephone dans l'autre, en marchant dans un rayon — pas assis. */
+.liste-courses { list-style: none; margin: 10px 0 0; padding: 0; }
+.liste-courses li {
+  display: flex; align-items: center; gap: 10px; padding: 10px 4px;
+  border-bottom: 1px solid var(--trait, #e2e8f0);
+}
+.liste-courses li:last-child { border-bottom: 0; }
+.course-case { display: flex; align-items: center; gap: 12px; flex: 1; cursor: pointer; min-width: 0; }
+.course-case input { width: 19px; height: 19px; accent-color: var(--green, #2e8b57); flex: 0 0 auto; }
+.course-case span { overflow: hidden; text-overflow: ellipsis; }
+/* Barre ET grise : la barre seule passe inapercue sur un ecran lumineux, le
+   gris seul ressemble a un texte desactive. */
+.course-faite .course-case span { text-decoration: line-through; color: var(--muted); }
+.course-retirer { padding: 2px 10px; font-size: 18px; line-height: 1; }
