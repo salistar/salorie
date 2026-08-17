@@ -21,6 +21,8 @@ const SECTIONS = [
   { href: '/me/parrainage', label: 'Parrainage', icone: '🎁' },
   { href: '/me/import', label: 'Import', icone: '📥' },
   { href: '/me/rapport', label: 'Rapport', icone: '🩺' },
+  { href: '/me/constantes', label: 'Constantes', icone: '❤️' },
+  { href: '/me/contact', label: 'Contact', icone: '✉️' },
   { href: '/me/profile', label: 'Profil', icone: '⚙️' },
 ];
 
