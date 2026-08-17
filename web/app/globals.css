@@ -811,3 +811,31 @@ tbody tr:last-child td { border-bottom: none; }
 /* Apercu du rapport : une iframe ISOLE ses styles. Le rapport porte les siens,
    et les laisser fuiter casserait la mise en page autour. */
 .apercu-rapport { width: 100%; height: 640px; border: 1px solid var(--trait, #e2e8f0); border-radius: 12px; background: #fff; }
+
+/* ── Plans de repas ───────────────────────────────────────────────────────── */
+.grille-jours { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+.carte-jour { background: var(--surface, #fff); border: 1px solid var(--trait, #e2e8f0); border-radius: 14px; padding: 14px; }
+.jour-titre { font-size: 14px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .06em; }
+.liste-repas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.liste-repas li { border-top: 1px solid var(--trait, #e2e8f0); padding-top: 8px; }
+.liste-repas li:first-child { border-top: 0; padding-top: 0; }
+.repas-nom { font-weight: 650; font-size: 14px; }
+.repas-kcal { font-size: 12.5px; font-variant-numeric: tabular-nums; opacity: .75; margin-top: 2px; }
+
+/* ── Base d'aliments ──────────────────────────────────────────────────────── */
+.grille-aliments { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.carte-aliment {
+  display: flex; align-items: center; gap: 11px; padding: 10px;
+  background: var(--surface, #fff); border: 1px solid var(--trait, #e2e8f0); border-radius: 13px;
+}
+/* L'etat « epingle » se lit a la BORDURE et pas seulement a la couleur : un
+   daltonien doit pouvoir distinguer ce qui est selectionne. */
+.carte-aliment.choisi { border-color: var(--accent, #2e8b57); border-width: 2px; padding: 9px; }
+.aliment-img { width: 48px; height: 48px; object-fit: cover; border-radius: 9px; background: var(--fond, #f1f5f9); flex: none; }
+.aliment-img.vide { background: var(--creux, #e2e8f0); }
+.aliment-corps { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.aliment-corps strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aliment-kcal { font-size: 12.5px; font-variant-numeric: tabular-nums; opacity: .8; }
+.tableau-compare { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tableau-compare th, .tableau-compare td { padding: 9px 11px; border-bottom: 1px solid var(--trait, #e2e8f0); text-align: start; }
+.tableau-compare td.n { font-variant-numeric: tabular-nums; font-weight: 600; }

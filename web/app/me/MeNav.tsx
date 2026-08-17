@@ -8,6 +8,8 @@ const SECTIONS = [
   { href: '/me', label: 'Accueil', icone: '🏠' },
   { href: '/me/diary', label: 'Journal', icone: '🍽️' },
   { href: '/me/scan', label: 'Scanner', icone: '📷' },
+  { href: '/me/plans', label: 'Plans', icone: '🗓️' },
+  { href: '/me/aliments', label: 'Aliments', icone: '🥗' },
   { href: '/me/analytics', label: 'Analyses', icone: '📈' },
   { href: '/me/races', label: 'Courses', icone: '🏁' },
   { href: '/me/coach', label: 'Coach', icone: '💬' },
