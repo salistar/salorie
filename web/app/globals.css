@@ -1201,3 +1201,8 @@ tbody tr:last-child td { border-bottom: none; }
   white-space: nowrap;
 }
 .table-mesures tbody tr:last-child td { border-bottom: none; }
+
+/* Questionnaire : chaque question separee de la suivante, sans trait sur la
+   derniere pour ne pas doubler la bordure de la carte. */
+.micro-question { padding: 9px 0; border-bottom: 1px solid var(--trait, #d6d2ca); }
+.micro-question:last-of-type { border-bottom: none; }

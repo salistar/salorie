@@ -45,6 +45,7 @@ const SECTIONS = [
   { href: '/me/forme', label: 'Forme du jour', icone: '🔋' },
   { href: '/me/composition', label: 'Composition', icone: '🧬' },
   { href: '/me/jeune', label: 'Jeûne', icone: '⏳' },
+  { href: '/me/microbiote', label: 'Microbiote', icone: '🦠' },
   { href: '/me/progression', label: 'Progression', icone: '⭐' },
   { href: '/me/medailles', label: 'Médailles', icone: '🏅' },
   { href: '/me/parrainage', label: 'Parrainage', icone: '🎁' },
