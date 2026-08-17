@@ -1242,3 +1242,9 @@ tbody tr:last-child td { border-bottom: none; }
 
 /* Lien de detail d'une annonce : discret mais clairement cliquable. */
 .annonce-lien { display: inline-block; margin-top: 6px; font-size: 14px; font-weight: 600; }
+
+/* Paliers de la sadaqa : deux barres, repas et arbres. */
+.palier-bloc { margin-bottom: 12px; }
+.palier-bloc:last-of-type { margin-bottom: 0; }
+.prog-repas { background: #b8860b; }
+.prog-arbre { background: #2e8b57; }
