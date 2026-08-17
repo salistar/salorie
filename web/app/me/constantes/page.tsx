@@ -14,40 +14,12 @@ import { traducteur, sensLecture, type Langue } from '../../../lib/i18nMe';
 import { firestore } from '../../../lib/firebaseClient';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 
+// La courbe vit dans un composant partage depuis que les mensurations ont eu
+// besoin de la meme. Deux copies auraient diverge sur le garde-fou de plage
+// nulle — celui qui evite une courbe invisible au tout debut.
+import { Courbe, statsSerie } from '../Courbe';
+
 type Point = { ts: number; v: number; v2?: number };
-
-/** Une courbe simple en SVG — pas de bibliotheque pour tracer une ligne. */
-function Courbe({ points, couleur, hauteur = 110 }: { points: Point[]; couleur: string; hauteur?: number }) {
-  if (points.length < 2) return null;
-  const L = 600;
-  const vals = points.map((p) => p.v);
-  const min = Math.min(...vals);
-  const max = Math.max(...vals);
-  // Une plage nulle (toutes les valeurs identiques) donnerait une division par
-  // zero et une courbe invisible : on force une hauteur minimale.
-  const plage = Math.max(1, max - min);
-  const pas = L / Math.max(1, points.length - 1);
-  const d = points
-    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${(i * pas).toFixed(1)} ${(hauteur - ((p.v - min) / plage) * (hauteur - 16) - 8).toFixed(1)}`)
-    .join(' ');
-  return (
-    <svg viewBox={`0 0 ${L} ${hauteur}`} className="courbe" role="img" aria-hidden>
-      <path d={d} fill="none" stroke={couleur} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function stats(points: Point[]) {
-  if (!points.length) return null;
-  const v = points.map((p) => p.v);
-  return {
-    n: v.length,
-    moy: Math.round(v.reduce((a, b) => a + b, 0) / v.length),
-    min: Math.min(...v),
-    max: Math.max(...v),
-    dernier: points[points.length - 1].v,
-  };
-}
 
 export default function PageConstantes() {
   const { uid } = useMe();
@@ -110,7 +82,7 @@ export default function PageConstantes() {
   }, [charger]);
 
   const bloc = (titre: string, points: Point[], couleur: string, unite: string) => {
-    const s = stats(points);
+    const s = statsSerie(points);
     return (
       <section className="carte-amis">
         <h2 className="me-h2">{titre}</h2>
