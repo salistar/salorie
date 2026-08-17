@@ -950,3 +950,54 @@ tbody tr:last-child td { border-bottom: none; }
 /* Le denominateur d'un compteur « 3 / 7 » doit rester lisible comme un seuil,
    pas comme une partie du nombre. */
 .serie-sur { font-size: 18px; font-weight: 600; color: var(--muted); }
+
+/* Journal : une colonne calibree pour la LECTURE. Au-dela de ~70 caracteres,
+   l'oeil perd la ligne suivante en revenant a gauche. */
+.journal-flux { display: flex; flex-direction: column; gap: 16px; }
+.journal-article {
+  background: var(--surface, #fff); border: 1px solid var(--trait, #e2e8f0);
+  border-radius: 16px; padding: 20px 24px; max-width: 72ch;
+}
+.journal-tete { display: flex; gap: 12px; align-items: flex-start; }
+.journal-icone { font-size: 22px; line-height: 1.2; }
+.journal-titre { font-size: 19px; font-weight: 800; margin: 0 0 2px; }
+.journal-image { width: 100%; border-radius: 12px; margin: 12px 0 4px; display: block; }
+.journal-corps { margin-top: 10px; font-size: 15px; line-height: 1.65; white-space: pre-wrap; }
+.journal-courses { list-style: none; margin: 6px 0 0; padding: 0; }
+.journal-courses li { padding: 6px 0; border-bottom: 1px solid var(--trait, #e2e8f0); }
+.journal-courses li:last-child { border-bottom: 0; }
+
+/* Agenda : grille mensuelle. */
+.cal-entete, .cal-grille { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-entete { margin: 14px 0 4px; text-align: center; font-size: 12px; }
+.cal-case {
+  min-height: 84px; border: 1px solid var(--trait, #e2e8f0); border-radius: 10px;
+  padding: 5px 6px; display: flex; flex-direction: column; gap: 3px;
+}
+/* Les jours du mois voisin restent VISIBLES mais en retrait : les masquer
+   casserait la continuite des semaines a cheval sur deux mois. */
+.cal-hors { opacity: .38; }
+.cal-jour { outline: 2px solid var(--accent, #0ea5e9); outline-offset: -1px; }
+.cal-num { font-size: 12px; font-weight: 700; color: var(--muted); }
+.cal-seance {
+  font-size: 11.5px; text-align: start; padding: 3px 6px; border-radius: 6px;
+  background: var(--accent, #0ea5e9); color: #fff; border: 0; cursor: pointer;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;
+}
+
+/* Activite : douze barres hebdomadaires. */
+.barres-semaines { display: flex; gap: 8px; align-items: flex-end; overflow-x: auto; padding: 10px 0 0; }
+.barre-colonne { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1 0 46px; }
+.barre { width: 100%; border-radius: 6px 6px 0 0; background: var(--accent, #0ea5e9); }
+/* Une semaine sans seance garde une barre visible : sinon on ne distingue plus
+   « rien fait » de « pas de donnee ». */
+.barre-vide { background: var(--trait, #e2e8f0); }
+.barre-val { font-size: 11px; font-variant-numeric: tabular-nums; }
+.barre-lab { font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+
+/* Bibliotheque de modeles : une grille, parce qu'on la parcourt du regard. */
+.grille-modeles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.carte-modele {
+  background: var(--surface, #fff); border: 1px solid var(--trait, #e2e8f0);
+  border-radius: 16px; padding: 14px 18px;
+}
