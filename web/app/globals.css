@@ -1168,3 +1168,11 @@ tbody tr:last-child td { border-bottom: none; }
 
 /* Champ avec son intitule au-dessus, pour les grilles de nombres. */
 .champ-bloc { display: flex; flex-direction: column; gap: 3px; }
+
+/* Reponses de modele : texte libre, retours a la ligne conserves sans etre
+   interpretes comme du balisage. */
+.texte-ia { white-space: pre-wrap; margin: 8px 0 0; line-height: 1.55; }
+
+/* Apercu de la photo envoyee : borne en hauteur pour ne pas pousser la reponse
+   hors de l'ecran sur une photo en mode portrait. */
+.frigo-apercu { display: block; max-width: 100%; max-height: 320px; border-radius: 6px; margin: 10px 0 0; }

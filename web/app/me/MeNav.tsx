@@ -39,6 +39,8 @@ const SECTIONS = [
   { href: '/me/saisie', label: 'Saisie manuelle', icone: '✍️' },
   { href: '/me/eau', label: 'Eau', icone: '💧' },
   { href: '/me/nutri-score', label: 'Nutri-Score', icone: '🔤' },
+  { href: '/me/substitutions', label: 'Substitutions', icone: '🔁' },
+  { href: '/me/frigo', label: 'Frigo', icone: '🧊' },
   { href: '/me/progression', label: 'Progression', icone: '⭐' },
   { href: '/me/medailles', label: 'Médailles', icone: '🏅' },
   { href: '/me/parrainage', label: 'Parrainage', icone: '🎁' },
