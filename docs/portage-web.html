@@ -473,36 +473,62 @@
       <em>tous</em> les jours. Il n'y régénère rien : deux estimations pour la même journée, et on ne sait plus laquelle croire.</li>
     </ul>
 
-    <h3 class="sous-titre">Le stockage local : débloqué pour l'essentiel</h3>
-    <p class="sous">Neuf écrans gardaient tout en <code>AsyncStorage</code>. Cinq sont maintenant synchronisés ; sur les
-    quatre restants, <strong>trois n'ont tout simplement rien à synchroniser</strong> — ce n'est pas la même chose qu'un
-    blocage, et la distinction méritait d'être faite.</p>
+    <h3 class="sous-titre">Le portage est terminé</h3>
+    <p class="sous">Les 94 écrans mobiles ont tous été tranchés. <strong>67 routes</strong> couvrent l'espace personnel ;
+    ce qui reste dehors y reste pour une raison écrite, pas par oubli.</p>
+
+    <div class="cadre">
+      <table>
+        <thead><tr><th>Sort</th><th class="n">Écrans</th><th>Pourquoi</th></tr></thead>
+        <tbody>
+          <tr><td>Portés</td><td class="n">76</td><td>Le clavier, la largeur ou le copier-coller changent quelque chose</td></tr>
+          <tr><td><strong>Matériel manquant</strong></td><td class="n">13</td><td>GPS continu, caméra live, accéléromètre, micro, Health&nbsp;Connect</td></tr>
+          <tr><td><strong>Écartés sciemment</strong></td><td class="n">5</td><td>Détaillés ci-dessous</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="sous-titre">Les cinq écartés, un par un</h3>
     <ul class="mesure">
-      <li><strong><a href="https://app.salorie.salistar.com/me/courses">/me/courses</a></strong> — <code>shopping-list</code>.
-      Le local reste la source : une liste de courses s'utilise dans un magasin, là où le réseau ne passe pas, et le SDK
-      Firestore tourne ici avec un cache en mémoire. Tout basculer l'aurait rendue <em>moins</em> fiable. Firestore ne
-      fait que porter les changements ; un document par article, et des pierres tombales pour qu'un téléphone hors ligne
-      ne ressuscite pas ce qu'on vient d'enlever.</li>
-      <li><strong><a href="https://app.salorie.salistar.com/me/progression">/me/progression</a></strong> —
-      <code>annual-challenge</code>, <code>rewards</code>, <code>avatar</code>. XP, niveau, défi annuel, kilomètres
-      cumulés. Le web les affiche et ne peut pas les faire monter : ils viennent du GPS. Il n'écrit qu'une chose,
-      l'objectif de l'année — le seul champ à deux auteurs, et le seul qui porte son propre horodatage.</li>
-      <li><code>progress-photos</code> — <strong>toujours bloqué, et volontairement.</strong> Ce sont des URI de fichiers
-      locaux, inutilisables depuis un navigateur. Une vraie synchronisation voudrait dire téléverser des photos de corps :
-      coût de stockage, et surtout une question de vie privée qui ne se tranche pas en passant.</li>
-      <li><code>health</code>, <code>ramadan</code>, <code>readiness</code> — <strong>rien à synchroniser.</strong> Les
-      deux premiers ne gardent qu'un cache (déduplication de séances, horaires de prière) ; le troisième n'écrase qu'un
-      seul instantané à chaque saisie, ce n'est pas un historique.</li>
+      <li><code>kitchen</code> — un écran-MENU qui renvoie vers cinq autres. La barre latérale du web fait déjà
+      exactement cela : le porter aurait dupliqué la navigation.</li>
+      <li><code>scan-analysis</code> — l'écran de RÉSULTAT du scan caméra.
+      <a href="https://app.salorie.salistar.com/me/scan">/me/scan</a> couvre déjà photo → reconnaissance → journal.
+      Deux écrans concurrents pour le même geste valent moins qu'un seul.</li>
+      <li><code>health</code>, <code>ramadan</code> (horaires) — ces deux-là ne gardent qu'un <em>cache</em> :
+      déduplication de séances Health&nbsp;Connect, horaires de prière géolocalisés. Il n'y avait rien à synchroniser.
+      Les assiettes de Ramadan, elles, sont portées sur
+      <a href="https://app.salorie.salistar.com/me/ramadan">/me/ramadan</a> — sans les horaires, et la page le dit.</li>
+      <li><code>upgrade</code> — <strong>le seul écart qui coûte de l'argent, et il est assumé.</strong> Le mobile
+      encaisse via RevenueCat, le rail des boutiques d'applications. Vendre sur le web demanderait un second
+      prestataire, ses webhooks, la TVA et la réconciliation de deux sources d'abonnement :
+      <a href="https://app.salorie.salistar.com/me/abonnement">/me/abonnement</a> montre l'état réel et où souscrire,
+      sans aucun bouton mort. Une page de paiement qui « ne marche pas encore » serait pire que pas de page.</li>
     </ul>
 
-    <h3 class="sous-titre">Déjà couverts ailleurs</h3>
-    <p class="sous"><code>terms</code> et <code>privacy</code> sont déjà publics sur <code>salorie.com</code> — les
-    dupliquer dans l'espace personnel n'apporterait rien. Et <code>add-water</code>, <code>update-weight</code>,
-    <code>log-manual</code>, <code>log-food-details</code>, <code>log-exercise</code>, <code>streaks</code>,
-    <code>meal-plan-history</code>, <code>listing-detail</code>, <code>feature-requests</code> tombent dans des pages
-    existantes.</p>
+    <h3 class="sous-titre">Trois portages qui ne sont pas des copies</h3>
+    <ul class="mesure">
+      <li><strong><a href="https://app.salorie.salistar.com/me/photos">/me/photos</a></strong> — le mobile gardait ces
+      photos <em>sur l'appareil</em>. Les rendre visibles ici oblige à les téléverser : dossier par personne, propriétaire
+      seul, <strong>aucune exception administrateur</strong>, aucune URL conservée. La page l'annonce avant le bouton
+      d'envoi, pas après.</li>
+      <li><strong><a href="https://app.salorie.salistar.com/me/etiquette">/me/etiquette</a></strong> — sur le téléphone,
+      la lecture est <em>entièrement sur l'appareil</em> et la photo ne sort jamais. Un navigateur n'a pas d'équivalent
+      hors ligne. Même écran, promesse différente : l'avertissement passe avant le bouton.</li>
+      <li><strong><a href="https://app.salorie.salistar.com/me/seance">/me/seance</a></strong> — l'écran mobile ne
+      persiste rien, il reçoit ses chiffres en paramètres de fin de séance. Porté tel quel, il aurait attendu des
+      paramètres qui n'arrivent jamais. Il lit donc la source qui existe : la dernière activité du journal.</li>
+    </ul>
+
+    <h3 class="sous-titre">Ce qui n'a pas été recopié</h3>
+    <p class="sous">Cinq modules de calcul sont <strong>importés</strong> du dépôt mobile plutôt que dupliqués :
+    <code>nutriScore</code>, <code>readiness</code>, <code>panierSouk</code>, <code>ramadanAssiettes</code> et
+    <code>sadaqaCalcul</code> — ce dernier <em>extrait</em> pour l'occasion d'un module qui importait AsyncStorage.
+    Deux copies d'une même règle finissent toujours par diverger, et ces règles-là annoncent des chiffres à quelqu'un :
+    un Nutri-Score, un score de forme, un nombre de repas financés.</p>
+
   </section>
 
-  <p class="pied">Salorie · 99 écrans mobiles recensés, 39 routes web livrées · 17 août 2026</p>
+  <p class="pied">Salorie · 94 écrans mobiles tranchés, 67 routes web livrées · 18 août 2026</p>
 
 </div>
