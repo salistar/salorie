@@ -6,6 +6,7 @@ import { UserButton } from '@clerk/clerk-react';
 
 const SECTIONS = [
   { href: '/me', label: 'Accueil', icone: '🏠' },
+  { href: '/me/bienvenue', label: 'Bienvenue', icone: '👋' },
   // Deux ecrans distincts portaient le meme libelle « Journal ». Le mobile les
   // nomme differemment — « Journal alimentaire » et « Journal » — et le web doit
   // faire pareil : deux entrees identiques dans une barre, on clique au hasard.
@@ -54,6 +55,7 @@ const SECTIONS = [
   { href: '/me/composition', label: 'Composition', icone: '🧬' },
   { href: '/me/jeune', label: 'Jeûne', icone: '⏳' },
   { href: '/me/microbiote', label: 'Microbiote', icone: '🦠' },
+  { href: '/me/seance', label: 'Dernière séance', icone: '🏃' },
   { href: '/me/progression', label: 'Progression', icone: '⭐' },
   { href: '/me/medailles', label: 'Médailles', icone: '🏅' },
   { href: '/me/parrainage', label: 'Parrainage', icone: '🎁' },
@@ -69,6 +71,7 @@ const SECTIONS = [
   { href: '/me/conditions', label: 'Conditions', icone: '📄' },
   { href: '/me/contact', label: 'Contact', icone: '✉️' },
   { href: '/me/reglages', label: 'Mes infos', icone: '📋' },
+  { href: '/me/abonnement', label: 'Abonnement', icone: '⭐' },
   { href: '/me/profile', label: 'Profil', icone: '⚙️' },
 ];
 
