@@ -1263,3 +1263,36 @@ tbody tr:last-child td { border-bottom: none; }
 
 /* Texte legal : interligne plus aere, la mesure reste bornee par .me-page. */
 .texte-legal { white-space: pre-wrap; line-height: 1.65; margin: 6px 0 0; }
+
+/* Portes d'entree de la page Bienvenue : des cartes cliquables, pas des liens
+   en ligne — la cible doit etre large, c'est la premiere page qu'on voit. */
+.grille-departs {
+  display: grid; gap: 12px; margin-top: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+.carte-depart {
+  display: flex; flex-direction: column; gap: 3px;
+  border: 1px solid var(--trait, #d6d2ca); border-radius: 8px; padding: 13px 14px;
+  color: inherit; text-decoration: none; min-width: 0;
+}
+.carte-depart:hover { background: var(--creux, #e7e5e0); }
+.depart-icone { font-size: 22px; line-height: 1; }
+
+/* Salon de course. Hauteur bornee et defilement interne : le fil ne doit pas
+   pousser le champ de saisie hors de l'ecran. */
+.chat-fil {
+  max-height: 52vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;
+  padding: 4px 2px;
+}
+.chat-msg {
+  border: 1px solid var(--trait, #d6d2ca); border-radius: 8px; padding: 8px 11px;
+  max-width: 82%; align-self: flex-start;
+}
+/* `align-self` plutot que `margin-left` : marche identiquement en RTL. */
+.chat-msg.moi { align-self: flex-end; background: var(--creux, #e7e5e0); }
+.chat-auteur { font-size: 14px; }
+.chat-texte { margin: 3px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat-signaler {
+  margin-top: 4px; padding: 0; background: none; border: none; cursor: pointer;
+  font: inherit; font-size: 12px; color: var(--encre-pale, #948d82); text-decoration: underline;
+}
