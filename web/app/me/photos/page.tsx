@@ -15,7 +15,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMe } from '../MeProvider';
 import { useProfil, jourLocal } from '../../../lib/useFirestoreMe';
 import { traducteur, sensLecture, locale, type Langue } from '../../../lib/i18nMe';
-import { envoyer, lister, supprimer, type PhotoProgression } from '../../../lib/photosProgression';
+import {
+  envoyer, lister, supprimer, stockageConfigure, type PhotoProgression,
+} from '../../../lib/photosProgression';
 
 export default function PagePhotos() {
   const { uid } = useMe();
@@ -62,7 +64,8 @@ export default function PagePhotos() {
     } catch (e: any) {
       const m = String(e?.message || '');
       setErreur(
-        m === 'pas-une-image' ? t('photosPasImage')
+        m === 'stockage-absent' ? t('photosStockageAbsent')
+        : m === 'pas-une-image' ? t('photosPasImage')
         : m === 'trop-lourde' ? t('photosTropLourde')
         : t('photosErreurEnvoi'),
       );
@@ -96,6 +99,14 @@ export default function PagePhotos() {
         <p className="me-sous">{t('photosSous')}</p>
       </header>
 
+      {/* Si le stockage n'est pas active sur le projet, on le DIT au lieu de
+          laisser cliquer sur un bouton qui echouera. */}
+      {!stockageConfigure() ? (
+        <section className="carte-amis">
+          <p className="me-erreur">{t('photosStockageAbsent')}</p>
+        </section>
+      ) : null}
+
       {/* L'avertissement passe en tete : il doit se lire AVANT d'envoyer une
           premiere photo, pas apres. */}
       <section className="carte-amis">
@@ -109,7 +120,7 @@ export default function PagePhotos() {
           onChange={(e) => { const f = e.target.files?.[0]; if (f) ajouter(f); e.target.value = ''; }}
         />
         <div className="ligne-champ">
-          <button className="btn btn-primary" onClick={() => champ.current?.click()} disabled={occupe || !uid}>
+          <button className="btn btn-primary" onClick={() => champ.current?.click()} disabled={occupe || !uid || !stockageConfigure()}>
             {occupe ? t('photosEnvoi') : t('photosAjouter')}
           </button>
           <span className="me-note">{photos.length} {t('photosEnregistrees')}</span>

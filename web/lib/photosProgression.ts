@@ -26,8 +26,21 @@ import { firebaseApp } from './firebaseClient';
 export const LARGEUR_MAX = 1200;
 export const TAILLE_MAX_OCTETS = 8 * 1024 * 1024;
 
+/**
+ * Le bucket est-il configure ?
+ *
+ * Verification AJOUTEE APRES COUP, et c'est la lecon : cette page a ete ecrite
+ * en supposant que Firebase Storage etait actif sur le projet. Il ne l'etait
+ * pas — le service n'a jamais ete initialise, et `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+ * etait vide. Sans ce garde-fou, la premiere photo envoyee echouait sur une
+ * erreur interne du SDK, sans rien dire de la vraie cause.
+ */
+export const stockageConfigure = (): boolean =>
+  Boolean((process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '').trim());
+
 let memo: FirebaseStorage | null = null;
 function stockage(): FirebaseStorage {
+  if (!stockageConfigure()) throw new Error('stockage-absent');
   if (!memo) memo = getStorage(firebaseApp());
   return memo;
 }
@@ -97,7 +110,7 @@ export async function envoyer(uid: string, file: File, jour: string): Promise<st
 
 /** Liste les photos, de la plus ancienne à la plus récente. */
 export async function lister(uid: string): Promise<PhotoProgression[]> {
-  if (!uid) return [];
+  if (!uid || !stockageConfigure()) return [];
   const res = await listAll(ref(stockage(), dossier(uid)));
   const items = res.items.slice().sort((a, b) => a.name.localeCompare(b.name));
   const sorties: PhotoProgression[] = [];
