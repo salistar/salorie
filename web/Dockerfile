@@ -1,9 +1,26 @@
 # Salorie admin web (Next.js)
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY package*.json ./
+
+# ⚠ Le contexte de build est la RACINE du depot, pas `web/` (voir docker-compose).
+# Raison : les pages de /me importent des modules de CALCUL du depot mobile —
+# `lib/nutriScore`, `lib/readiness`, `lib/panierSouk`, `lib/ramadanAssiettes`,
+# `lib/sadaqaCalcul` — et deux tables de `assets/data/`, au lieu d'en garder des
+# copies qui divergeraient. Ces regles annoncent des chiffres a quelqu'un : un
+# Nutri-Score, un score de forme, un nombre de repas finances.
+#
+# Ces imports s'ecrivent `../../../../lib/...` depuis `web/app/me/<page>/`, donc
+# ils se resolvent a la RACINE du systeme de fichiers une fois `web/` place dans
+# `/app`. D'ou les deux COPY vers `/lib` et `/assets` : ils reconstituent
+# exactement l'arborescence que le build voit en local.
+#
+# Sans cela le build echoue sur « Module not found » — ce qui est arrive, et a
+# bloque six deploiements d'affilee sans que le build local ne montre rien.
+COPY web/package*.json ./
 RUN npm install
-COPY . .
+COPY web/ ./
+COPY lib/ /lib/
+COPY assets/data/ /assets/data/
 # Next.js FIGE les `NEXT_PUBLIC_*` dans le bundle au moment du build : les passer en
 # `environment:` (runtime) ne les fait PAS arriver jusqu'au navigateur. Il faut donc un
 # ARG de build, alimenté par `args:` dans docker-compose.yml.

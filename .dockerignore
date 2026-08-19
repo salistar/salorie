@@ -1,0 +1,23 @@
+# Contexte de build Docker — racine du depot.
+# ---------------------------------------------------------------------------
+# Le service `web` a besoin de plus que `web/` : ses pages importent des modules
+# de CALCUL du depot mobile (`lib/nutriScore`, `lib/panierSouk`…) et deux tables
+# de donnees (`assets/data/`), au lieu d'en garder des copies qui divergeraient.
+#
+# Le contexte est donc la racine, et ce fichier limite ce qui part vers le
+# demon Docker. Sans lui, l'envoi inclurait `node_modules` (plusieurs Go),
+# `android/`, `.git` et les APK — des minutes perdues a chaque deploiement.
+#
+# Principe : tout est exclu, puis on RE-INCLUT le strict necessaire.
+*
+
+!web
+!lib
+!assets/data
+!package.json
+
+# Re-exclusions a l'interieur de ce qu'on vient d'inclure.
+web/node_modules
+web/.next
+web/.env.local
+web/.env
