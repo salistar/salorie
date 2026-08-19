@@ -44,7 +44,16 @@ jobs:
           # gratuit et avec un backend injoignable par Caddy.
           # Le modele .onnx (212 Mo) reste hors git — trop gros pour GitHub. Il est publie
           # en asset de Release et telecharge au build (cf. food4k/Dockerfile).
-          source: "backend/,web/,food4k/,docker-compose.yml,docker-compose.override.yml"
+          # `lib/` et `assets/data/` ajoutes le 19 aout 2026. Les pages de /me
+          # IMPORTENT des modules de calcul du depot mobile (nutriScore, readiness,
+          # panierSouk, ramadanAssiettes, sadaqaCalcul) et deux tables de donnees,
+          # au lieu d'en garder des copies qui divergeraient. Ces regles annoncent
+          # des chiffres a quelqu'un : un Nutri-Score, un score de forme.
+          #
+          # Sans ces deux repertoires, le build du conteneur `web` echoue sur le
+          # serveur avec « /lib: not found » — alors qu'il passe en local, ou tout
+          # le depot est present. C'est ce qui a bloque six deploiements d'affilee.
+          source: "backend/,web/,food4k/,lib/,assets/data/,docker-compose.yml,docker-compose.override.yml,.dockerignore"
           target: ${{ secrets.VPS_APP_DIR }}
           rm: false
           overwrite: true
