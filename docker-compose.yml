@@ -94,7 +94,11 @@ services:
     container_name: salorie-web
     networks: [default, edge]
     build:
-      context: ./web
+      # Contexte = racine du depot (et non `./web`) : les pages de /me importent
+      # des modules de calcul de `lib/` et deux tables de `assets/data/`. Voir
+      # l'entete de web/Dockerfile et le .dockerignore racine.
+      context: .
+      dockerfile: web/Dockerfile
       args:
         # Doit être un ARG de BUILD : Next.js fige les `NEXT_PUBLIC_*` dans le bundle.
         # Fournie en `environment:` elle n'atteindrait jamais le navigateur, et la carte

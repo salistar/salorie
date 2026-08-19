@@ -12,6 +12,8 @@ const SECTIONS = [
   // faire pareil : deux entrees identiques dans une barre, on clique au hasard.
   { href: '/me/diary', label: 'Repas du jour', icone: '🍽️' },
   { href: '/me/scan', label: 'Scanner', icone: '📷' },
+  { href: '/me/code-barres', label: 'Code-barres', icone: '📊' },
+  { href: '/me/dicter', label: 'Dictée', icone: '🎤' },
   { href: '/me/plans', label: 'Plans', icone: '🗓️' },
   { href: '/me/modeles', label: 'Modèles', icone: '🔖' },
   { href: '/me/exercices', label: 'Exercices', icone: '💪' },

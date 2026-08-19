@@ -1296,3 +1296,18 @@ tbody tr:last-child td { border-bottom: none; }
   margin-top: 4px; padding: 0; background: none; border: none; cursor: pointer;
   font: inherit; font-size: 12px; color: var(--encre-pale, #948d82); text-decoration: underline;
 }
+
+/* Vignette produit du code-barres. */
+.cb-vignette {
+  width: 84px; height: 84px; object-fit: contain; flex: 0 0 auto;
+  background: var(--creux, #e7e5e0); border-radius: 6px;
+}
+
+/* Point rouge d'enregistrement. `prefers-reduced-motion` coupe le clignotement :
+   un point qui pulse en continu est penible pour certaines personnes. */
+.dicte-point {
+  width: 11px; height: 11px; border-radius: 50%; background: #c62828;
+  animation: dicte-pulse 1.2s ease-in-out infinite;
+}
+@keyframes dicte-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .dicte-point { animation: none; } }
