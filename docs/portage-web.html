@@ -474,16 +474,16 @@
     </ul>
 
     <h3 class="sous-titre">Le portage est terminé</h3>
-    <p class="sous">Les 94 écrans mobiles ont tous été tranchés. <strong>67 routes</strong> couvrent l'espace personnel ;
+    <p class="sous">Les 94 écrans mobiles ont tous été tranchés. <strong>69 routes</strong> couvrent l'espace personnel ;
     ce qui reste dehors y reste pour une raison écrite, pas par oubli.</p>
 
     <div class="cadre">
       <table>
         <thead><tr><th>Sort</th><th class="n">Écrans</th><th>Pourquoi</th></tr></thead>
         <tbody>
-          <tr><td>Portés</td><td class="n">76</td><td>Le clavier, la largeur ou le copier-coller changent quelque chose</td></tr>
-          <tr><td><strong>Matériel manquant</strong></td><td class="n">13</td><td>GPS continu, caméra live, accéléromètre, micro, Health&nbsp;Connect</td></tr>
-          <tr><td><strong>Écartés sciemment</strong></td><td class="n">5</td><td>Détaillés ci-dessous</td></tr>
+          <tr><td>Portés</td><td class="n">81</td><td>Le clavier, la largeur ou le copier-coller changent quelque chose</td></tr>
+          <tr><td><strong>Matériel manquant</strong></td><td class="n">10</td><td>GPS continu, caméra en direct, accéléromètre, réalité augmentée, Health&nbsp;Connect</td></tr>
+          <tr><td><strong>Écartés sciemment</strong></td><td class="n">3</td><td>Détaillés ci-dessous</td></tr>
         </tbody>
       </table>
     </div>
@@ -520,6 +520,34 @@
       paramètres qui n'arrivent jamais. Il lit donc la source qui existe : la dernière activité du journal.</li>
     </ul>
 
+    <h3 class="sous-titre">Deux écrans classés « impossibles » à tort</h3>
+    <p class="sous">Le premier tri comptait 12 écrans bloqués par le matériel. Deux n'y avaient pas leur place, et les
+    rouvrir valait mieux que de défendre le classement.</p>
+    <ul class="mesure">
+      <li><strong><a href="https://app.salorie.salistar.com/me/dicter">/me/dicter</a></strong> — écarté pour
+      <code>Audio.Recording</code>. Mais un navigateur enregistre de l'audio depuis quinze ans, et l'endpoint de
+      transcription ne demande qu'un son encodé — exactement ce que le téléphone lui envoie. Le micro n'est ouvert que
+      pendant l'enregistrement, chaque piste est coupée à l'arrêt, et un oubli s'interrompt seul au bout d'une minute.</li>
+      <li><strong><a href="https://app.salorie.salistar.com/me/code-barres">/me/code-barres</a></strong> — écarté pour
+      <code>expo-camera</code>. Or la caméra n'est qu'un moyen d'obtenir <em>treize chiffres</em>, et un clavier les
+      obtient très bien. Interroger OpenFoodFacts, lire la fiche, calculer la note : rien de tout cela n'a jamais eu
+      besoin d'un appareil photo. Piège refermé au passage — OpenFoodFacts publie le sodium en <strong>grammes</strong>
+      quand le Nutri-Score le veut en milligrammes, et ce facteur 1000 oublié donnerait une note flatteuse à tous les
+      produits salés.</li>
+    </ul>
+
+    <h3 class="sous-titre">La panne que le build local ne pouvait pas voir</h3>
+    <div class="socle">
+      <span class="label">Six déploiements échoués</span>
+      <p>Les modules de calcul sont <em>importés</em> du dépôt mobile plutôt que dupliqués — c'est la bonne décision, et
+      elle est expliquée juste en dessous. Mais le conteneur de production ne copiait que <code>web/</code> : ces
+      chemins n'y existaient pas. Le build passait sur un poste de développement, où tout le dépôt est présent, et
+      échouait en production sur un « Module not found ».</p>
+      <p>Ni <code>tsc</code> ni <code>next build</code> ne pouvaient l'attraper. Un <code>docker build</code> si — et
+      c'est désormais la vérification qui compte avant de déclarer quoi que ce soit livré. Le contexte de build est
+      remonté à la racine du dépôt, avec un <code>.dockerignore</code> pour ne pas y envoyer les gigaoctets inutiles.</p>
+    </div>
+
     <h3 class="sous-titre">Ce qui n'a pas été recopié</h3>
     <p class="sous">Cinq modules de calcul sont <strong>importés</strong> du dépôt mobile plutôt que dupliqués :
     <code>nutriScore</code>, <code>readiness</code>, <code>panierSouk</code>, <code>ramadanAssiettes</code> et
@@ -529,6 +557,6 @@
 
   </section>
 
-  <p class="pied">Salorie · 94 écrans mobiles tranchés, 67 routes web livrées · 18 août 2026</p>
+  <p class="pied">Salorie · 94 écrans mobiles tranchés, 69 routes web livrées · 18 août 2026</p>
 
 </div>
