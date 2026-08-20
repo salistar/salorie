@@ -40,14 +40,14 @@ const T: Record<Lang, any> = {
   fr: {
     dir: "ltr",
     nav: { features: "Fonctions", shots: "Captures", testi: "Avis", download: "Télécharger" },
-    badge: "Propulsé par l'IA Gemini",
+    badge: "Propulsé par l'IA",
     h1a: "Scanne ton repas,", h1b: "suis tes calories", h1c: ", atteins tes objectifs.",
     heroSub: "Salorie analyse tes repas en temps réel par photo. Macros, calories, micronutriments, coach adaptatif et plans de repas — tout en un scan.",
     ctaApk: "Télécharger l'APK", ctaSee: "Voir l'app",
     stats: [{ v: "100%", l: "Privé & sécurisé" }, { v: "<2s", l: "Analyse IA" }, { v: "3", l: "Langues · FR/EN/AR" }],
     featTitle: "Tout pour atteindre tes objectifs", featSub: "Une app complète, pensée pour de vrais utilisateurs.",
     features: [
-      { t: "Scan IA instantané", d: "Photographie ton assiette : Gemini identifie les aliments et calcule les macros en moins de 2 secondes." },
+      { t: "Scan IA instantané", d: "Photographie ton assiette : l'IA identifie les aliments et calcule les macros en moins de 2 secondes." },
       { t: "Suivi nutritionnel complet", d: "Calories, protéines, glucides, lipides, eau, exercice — centralisés dans un dashboard clair." },
       { t: "Micronutriments + insights", d: "Vitamines, fer, magnésium… estimés par IA, avec recommandations personnalisées en 3 langues." },
       { t: "Coach TDEE adaptatif", d: "Tes besoins recalculés en continu selon ta dépense réelle et ta tendance de poids." },
@@ -60,7 +60,7 @@ const T: Record<Lang, any> = {
     howTitle: "Comment ça marche",
     steps: [
       { t: "Onboarding rapide", d: "Renseigne ton profil (5 questions). On calcule tes besoins en moins d'une minute." },
-      { t: "Scan tes repas", d: "Pointe la caméra sur ton assiette. Gemini te dit ce que tu manges, avec macros précis." },
+      { t: "Scan tes repas", d: "Pointe la caméra sur ton assiette. l'IA te dit ce que tu manges, avec macros précis." },
       { t: "Suis tes progrès", d: "Dashboard quotidien, graphiques hebdo, insights IA pour ajuster ton plan." },
     ],
     demoTitle: "Démo en direct", demoSub: "Un aperçu animé des écrans clés.",
@@ -79,14 +79,14 @@ const T: Record<Lang, any> = {
   en: {
     dir: "ltr",
     nav: { features: "Features", shots: "Screens", testi: "Reviews", download: "Download" },
-    badge: "Powered by Gemini AI",
+    badge: "Powered by AI",
     h1a: "Scan your meal,", h1b: "track your calories", h1c: ", hit your goals.",
     heroSub: "Salorie analyzes your meals in real time from a photo. Macros, calories, micronutrients, an adaptive coach and meal plans — all in one scan.",
     ctaApk: "Download the APK", ctaSee: "See the app",
     stats: [{ v: "100%", l: "Private & secure" }, { v: "<2s", l: "AI analysis" }, { v: "3", l: "Languages · EN/FR/AR" }],
     featTitle: "Everything you need to reach your goals", featSub: "A complete app, built for real users.",
     features: [
-      { t: "Instant AI scan", d: "Snap your plate: Gemini identifies the foods and computes macros in under 2 seconds." },
+      { t: "Instant AI scan", d: "Snap your plate: the AI identifies the foods and computes macros in under 2 seconds." },
       { t: "Full nutrition tracking", d: "Calories, protein, carbs, fat, water, exercise — centralized in a clean dashboard." },
       { t: "Micronutrients + insights", d: "Vitamins, iron, magnesium… AI-estimated, with personalized tips in 3 languages." },
       { t: "Adaptive TDEE coach", d: "Your needs recalculated continuously from your real burn and weight trend." },
@@ -99,7 +99,7 @@ const T: Record<Lang, any> = {
     howTitle: "How it works",
     steps: [
       { t: "Quick onboarding", d: "Fill in your profile (5 questions). We compute your needs in under a minute." },
-      { t: "Scan your meals", d: "Point the camera at your plate. Gemini tells you what you're eating, with precise macros." },
+      { t: "Scan your meals", d: "Point the camera at your plate. the AI tells you what you're eating, with precise macros." },
       { t: "Track progress", d: "Daily dashboard, weekly charts, AI insights to fine-tune your plan." },
     ],
     demoTitle: "Live demo", demoSub: "An animated preview of the key screens.",
@@ -118,14 +118,14 @@ const T: Record<Lang, any> = {
   ar: {
     dir: "rtl",
     nav: { features: "الميزات", shots: "اللقطات", testi: "الآراء", download: "تحميل" },
-    badge: "مدعوم بالذكاء الاصطناعي Gemini",
+    badge: "مدعوم بالذكاء الاصطناعي",
     h1a: "صوّر وجبتك،", h1b: "تتبّع سعراتك", h1c: "، وحقّق أهدافك.",
     heroSub: "يحلّل Salorie وجباتك فوريًا من صورة. الماكروز والسعرات والعناصر الدقيقة ومدرّب متكيّف وخطط وجبات — كل ذلك بمسحة واحدة.",
     ctaApk: "تحميل APK", ctaSee: "شاهد التطبيق",
     stats: [{ v: "100%", l: "خاص وآمن" }, { v: "<2 ث", l: "تحليل بالذكاء" }, { v: "3", l: "لغات · ع/إن/فر" }],
     featTitle: "كل ما تحتاجه لتحقيق أهدافك", featSub: "تطبيق متكامل مصمّم لمستخدمين حقيقيين.",
     features: [
-      { t: "مسح فوري بالذكاء", d: "صوّر طبقك: يتعرّف Gemini على الأطعمة ويحسب الماكروز في أقل من ثانيتين." },
+      { t: "مسح فوري بالذكاء", d: "صوّر طبقك: يتعرّف الذكاء الاصطناعي على الأطعمة ويحسب الماكروز في أقل من ثانيتين." },
       { t: "تتبّع غذائي كامل", d: "السعرات والبروتين والكربوهيدرات والدهون والماء والتمارين — في لوحة واحدة واضحة." },
       { t: "عناصر دقيقة + رؤى", d: "الفيتامينات والحديد والمغنيسيوم… تُقدَّر بالذكاء مع نصائح مخصّصة بثلاث لغات." },
       { t: "مدرّب TDEE متكيّف", d: "تُعاد حسابات احتياجك باستمرار وفق حرقك الفعلي واتجاه وزنك." },
@@ -138,7 +138,7 @@ const T: Record<Lang, any> = {
     howTitle: "كيف يعمل",
     steps: [
       { t: "إعداد سريع", d: "أدخل ملفك (5 أسئلة). نحسب احتياجك في أقل من دقيقة." },
-      { t: "صوّر وجباتك", d: "وجّه الكاميرا نحو طبقك. يخبرك Gemini بما تأكله مع ماكروز دقيقة." },
+      { t: "صوّر وجباتك", d: "وجّه الكاميرا نحو طبقك. يخبرك l’IA بما تأكله مع ماكروز دقيقة." },
       { t: "تابع تقدّمك", d: "لوحة يومية ورسوم أسبوعية ورؤى بالذكاء لضبط خطتك." },
     ],
     demoTitle: "عرض مباشر", demoSub: "معاينة متحركة للشاشات الرئيسية.",
@@ -161,7 +161,7 @@ const FAQ: Record<Lang, { faqTitle: string; faqSub: string; items: { q: string; 
     faqTitle: "Questions fréquentes", faqSub: "Tout ce qu'il faut savoir avant de commencer.",
     items: [
       { q: "Salorie est-il gratuit ?", a: "Oui, les fonctions principales (scan IA, suivi, coach) sont gratuites. L'offre Premium optionnelle — 4,99 €/mois ou 29,99 €/an — débloque des insights avancés." },
-      { q: "Le scan par photo est-il précis ?", a: "Il utilise l'IA Gemini pour estimer les aliments et les macros. Tu peux toujours ajuster les quantités avant d'enregistrer." },
+      { q: "Le scan par photo est-il précis ?", a: "Il utilise l'IA l’IA pour estimer les aliments et les macros. Tu peux toujours ajuster les quantités avant d'enregistrer." },
       { q: "Mes données sont-elles privées ?", a: "Oui. Chaque utilisateur n'accède qu'à ses propres données (Firestore verrouillé par utilisateur, connexion sécurisée Clerk)." },
       { q: "Sur quelles plateformes ?", a: "Android maintenant (APK signé, bientôt sur Google Play). iOS est prévu." },
       { q: "L'app est-elle en arabe ?", a: "Oui — français, anglais et arabe, avec une interface RTL complète." },
@@ -171,7 +171,7 @@ const FAQ: Record<Lang, { faqTitle: string; faqSub: string; items: { q: string; 
     faqTitle: "Frequently asked questions", faqSub: "Everything you need to know before starting.",
     items: [
       { q: "Is Salorie free?", a: "Yes, the core features (AI scan, tracking, coach) are free. The optional Premium tier — €4.99/month or €29.99/year — unlocks advanced insights." },
-      { q: "Is the photo scan accurate?", a: "It uses Gemini AI to estimate foods and macros. You can always adjust the quantities before saving." },
+      { q: "Is the photo scan accurate?", a: "It uses l’IA AI to estimate foods and macros. You can always adjust the quantities before saving." },
       { q: "Is my data private?", a: "Yes. Each user can only access their own data (per-user locked Firestore, secure Clerk sign-in)." },
       { q: "Which platforms?", a: "Android now (signed APK, soon on Google Play). iOS is planned." },
       { q: "Is the app available in Arabic?", a: "Yes — French, English and Arabic, with a full RTL interface." },
@@ -181,7 +181,7 @@ const FAQ: Record<Lang, { faqTitle: string; faqSub: string; items: { q: string; 
     faqTitle: "الأسئلة الشائعة", faqSub: "كل ما تحتاج معرفته قبل البدء.",
     items: [
       { q: "هل Salorie مجاني؟", a: "نعم، الميزات الأساسية (المسح بالذكاء، التتبّع، المدرّب) مجانية. وتتيح باقة Premium الاختيارية — 4.99 € شهريًا أو 29.99 € سنويًا — رؤى متقدمة." },
-      { q: "هل المسح بالصورة دقيق؟", a: "يستخدم ذكاء Gemini لتقدير الأطعمة والماكروز. يمكنك دائمًا تعديل الكميات قبل الحفظ." },
+      { q: "هل المسح بالصورة دقيق؟", a: "يستخدم ذكاء l’IA لتقدير الأطعمة والماكروز. يمكنك دائمًا تعديل الكميات قبل الحفظ." },
       { q: "هل بياناتي خاصة؟", a: "نعم. كل مستخدم يصل إلى بياناته فقط (Firestore مقفل لكل مستخدم وتسجيل آمن عبر Clerk)." },
       { q: "ما المنصات المدعومة؟", a: "أندرويد الآن (APK موقّع، وقريبًا على Google Play). iOS قيد التخطيط." },
       { q: "هل التطبيق متوفر بالعربية؟", a: "نعم — الفرنسية والإنجليزية والعربية، بواجهة RTL كاملة." },

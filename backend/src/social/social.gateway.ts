@@ -262,6 +262,17 @@ export class SocialGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     socket.join(salon);
     socket.to(salon).emit('duo:arrivee', { auteur: h(uid) });
+
+    // Et l'inverse : dire au NOUVEAU VENU qui est deja la. Sans cette ligne,
+    // `duo:arrivee` ne prevenait que les personnes deja dans le salon — celui qui
+    // arrivait en dernier restait donc sur « En attente de l'autre… » alors que
+    // l'autre etait devant lui, et ne pouvait pas savoir qu'il pouvait appeler.
+    // Invisible dans le parcours habituel (celui qui cree le duo entre en premier),
+    // le defaut apparaissait des que l'invite ouvrait le lien le premier.
+    // Constate a l'ecran le 20/08/2026, entre deux onglets.
+    for (const s of autres) {
+      socket.emit('duo:arrivee', { auteur: h((s.data as any).uid) });
+    }
   }
 
   @SubscribeMessage('duo:pos')

@@ -25,6 +25,10 @@ import {
 } from '../../../../lib/socketSocial';
 import { ouvrirAppel, appelDisponible, type SessionAppel } from '../../../../lib/appelWeb';
 
+/** Clé Maps. Absente, la carte ne s'affiche pas — plutôt qu'un cadre d'erreur
+ *  Google en travers de l'écran pendant un appel. */
+const CLE_CARTE = (process.env.NEXT_PUBLIC_GMAP_KEY || '').trim();
+
 type Etat = 'attente' | 'connexion' | 'en_appel' | 'refuse' | 'impossible';
 
 export default function PageDuo() {
@@ -49,6 +53,10 @@ export default function PageDuo() {
   const [avecVideo, setAvecVideo] = useState(false);
   const [sansRelais, setSansRelais] = useState(false);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
+  // Le telephone envoie lat/lng depuis toujours ; cet ecran n'en lisait que le
+  // kilometrage et jetait le reste. Un nombre qui monte ne dit pas OU marche
+  // l'autre — c'est pourtant la seule chose qu'on veut savoir en l'accompagnant.
+  const [position, setPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [erreur, setErreur] = useState('');
 
   const session = useRef<SessionAppel | null>(null);
@@ -74,6 +82,13 @@ export default function PageDuo() {
       s.on('duo:pos', (d: any) => {
         const km = Number(d?.km);
         if (Number.isFinite(km)) setDistanceKm(km);
+        const lat = Number(d?.lat);
+        const lng = Number(d?.lng);
+        // Le (0, 0) est au large du golfe de Guinee : c'est la valeur qu'envoie un
+        // GPS qui n'a pas encore accroche, pas un lieu ou quelqu'un marche.
+        if (Number.isFinite(lat) && Number.isFinite(lng) && (lat !== 0 || lng !== 0)) {
+          setPosition({ lat, lng });
+        }
       });
       rejoindreDuo(duoId);
     })();
@@ -207,6 +222,27 @@ export default function PageDuo() {
 
       {/* L'audio vit toujours, meme sans image : c'est lui qui porte l'appel. */}
       <audio ref={audioDistant} autoPlay playsInline />
+
+      {/* La carte n'apparait QUE lorsqu'une position arrive. Un cadre vide « en
+          attente du GPS » occuperait la moitie de l'ecran pour ne rien dire, et
+          l'appel voix seul — le mode normal — n'a aucune position a montrer.
+          Embed plutot que le SDK : une iframe ne charge aucune bibliotheque dans
+          le paquet, et cet ecran n'a besoin de rien d'interactif. */}
+      {position && CLE_CARTE ? (
+        <section className="carte-amis">
+          <h2 className="me-sous-titre">{t('duoOuEstIl')}</h2>
+          <div className="duo-carte">
+            <iframe
+              title={t('duoOuEstIl')}
+              className="duo-carte-cadre"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              src={`https://www.google.com/maps/embed/v1/view?key=${CLE_CARTE}&center=${position.lat},${position.lng}&zoom=15`}
+            />
+          </div>
+          <p className="me-note">{t('duoCarteNote')}</p>
+        </section>
+      ) : null}
 
       {avecVideo ? (
         <section className="carte-amis">
