@@ -96,7 +96,7 @@ export default function WelcomeScreen() {
       <Animated.View entering={FadeInDown.delay(800).duration(600)} style={styles.bottomBar}>
         <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: accent, shadowColor: accent }]} onPress={handleGetStarted} activeOpacity={0.85}>
           <Text style={styles.primaryBtnText}>{t('welcome.get_started')}</Text>
-          <ArrowRight size={22} color="#fff" style={flipAuto()} />
+          <View style={flipAuto()}><ArrowRight size={22} color="#fff" /></View>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.secondaryBtn} onPress={handleSignIn}>

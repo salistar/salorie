@@ -192,7 +192,7 @@ export default function SocialScreen() {
           <>
         <View style={styles.topRow}>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={styles.backBtn} onPress={() => router.back()}>
-            <ArrowLeft size={22} color={text} style={flipAuto()} />
+            <View style={flipAuto()}><ArrowLeft size={22} color={text} /></View>
           </TouchableOpacity>
           <View style={{ flex: 1 }}><ScreenTopBar showBrand={false} showNotif={false} /></View>
         </View>

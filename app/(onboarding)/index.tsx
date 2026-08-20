@@ -420,7 +420,7 @@ export default function OnboardingScreen() {
       <View style={styles.footer}>
         {currentStep > 0 && (
           <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backButton, { backgroundColor: C.backBtn }]} onPress={prevStep}>
-            <ArrowLeft size={22} color={C.backIcon} style={flipAuto()} />
+            <View style={flipAuto()}><ArrowLeft size={22} color={C.backIcon} /></View>
           </TouchableOpacity>
         )}
         {/* Bouton "Suivant" harmonisé sur SubmitBar (h.56, radius 18). */}
@@ -432,7 +432,7 @@ export default function OnboardingScreen() {
           <Text style={styles.nextButtonText}>
             {isLast ? tx.finish : tx.next}
           </Text>
-          <ArrowRight size={22} color="#fff" style={flipAuto()} />
+          <View style={flipAuto()}><ArrowRight size={22} color="#fff" /></View>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

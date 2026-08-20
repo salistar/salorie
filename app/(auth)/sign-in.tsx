@@ -291,7 +291,7 @@ export default function SignInScreen() {
             disabled={loading}
           >
             <Text style={styles.buttonText}>{loading ? t('auth.signing_in') : t('auth.sign_in')}</Text>
-            {!loading && <ArrowRight size={20} color="#fff" style={flipAuto()} />}
+            {!loading && <View style={flipAuto()}><ArrowRight size={20} color="#fff" /></View>}
           </TouchableOpacity>
 
           <View style={styles.dividerContainer}>
@@ -304,7 +304,7 @@ export default function SignInScreen() {
             style={[styles.googleButton, { backgroundColor: cardBg, borderColor: dividerColor, flexDirection: rowDir(isRTL) }]}
             onPress={onGoogleSignInPress}
           >
-            <View style={styles.googleIcon}><LogoGoogle size={20} /></View>
+            <LogoGoogle size={20} />
             <Text style={[styles.googleButtonText, { color: textPrimary }]}>{t('auth.continue_google')}</Text>
           </TouchableOpacity>
         </View>
@@ -477,9 +477,10 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  googleIcon: {
-    marginRight: 12,
+    // `gap` et non `marginRight` sur l'icone : la ligne s'inverse en
+    // arabe (row-reverse), et une marge PHYSIQUE se retrouve alors du
+    // mauvais cote — le logo Google etait colle au texte.
+    gap: 12,
   },
   googleButtonText: {
     color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],

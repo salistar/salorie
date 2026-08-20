@@ -155,7 +155,7 @@ export default function Sadaqa() {
               title={t.donate}
               onPress={openDonate}
               style={s.donate}
-              icon={<ExternalLink size={18} color="#fff" style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />}
+              icon={<View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ExternalLink size={18} color="#fff" /></View>}
             />
           </>
         )}

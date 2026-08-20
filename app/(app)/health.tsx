@@ -250,7 +250,7 @@ export default function HealthScreen() {
             <Text style={[styles.readinessTitle, { color: text, textAlign: txtAlign(isRTL) }]}>{tx.readiness}</Text>
             <Text style={[styles.readinessSub, { color: sub, textAlign: txtAlign(isRTL) }]}>{tx.readinessSub}</Text>
           </View>
-          <ChevronRight size={20} color={sub} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+          <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ChevronRight size={20} color={sub} /></View>
         </TouchableOpacity>
 
         {/* Steps mode: Real (Health Connect) vs Simulation */}

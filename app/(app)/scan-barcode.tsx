@@ -467,7 +467,7 @@ export default function ScanBarcodeScreen() {
       {/* Top bar : retour à gauche, marque au centre */}
       <View style={styles.topBar}>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={styles.iconBtn} onPress={() => router.back()}>
-          <ArrowLeft size={22} color="#fff" style={flipAuto()} />
+          <View style={flipAuto()}><ArrowLeft size={22} color="#fff" /></View>
         </TouchableOpacity>
         <View style={{ width: 40 }} />
       </View>

@@ -102,7 +102,7 @@ export default function Journal() {
                         <Text style={[s.cardTitle, { color: text }, align]} numberOfLines={1}>{r.name}</Text>
                         <Text style={[s.cardBody, { color: sub }, align]}>{r.totalKm} {t.km} · {(r.waypoints || []).length} pts</Text>
                       </View>
-                      <ChevronRight size={18} color={sub} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+                      <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ChevronRight size={18} color={sub} /></View>
                     </TouchableOpacity>
                   );
                 })}

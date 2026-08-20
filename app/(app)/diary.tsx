@@ -123,13 +123,13 @@ export default function Diary() {
         {/* Navigation par date */}
         <View style={[s.dateRow, rowDir]}>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[s.dateBtn, { backgroundColor: card }]} onPress={() => setDate(shift(date, -1))}>
-            <ChevronLeft size={20} color={text} style={flipAuto()} />
+            <View style={flipAuto()}><ChevronLeft size={20} color={text} /></View>
           </TouchableOpacity>
           <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => setDate(dstr(new Date()))}>
             <Text style={[s.dateTxt, { color: text }]}>{date === dstr(new Date()) ? t.today : date}</Text>
           </TouchableOpacity>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('suivant')} style={[s.dateBtn, { backgroundColor: card }]} onPress={() => setDate(shift(date, 1))}>
-            <ChevronRight size={20} color={text} style={flipAuto()} />
+            <View style={flipAuto()}><ChevronRight size={20} color={text} /></View>
           </TouchableOpacity>
         </View>
 

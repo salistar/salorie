@@ -97,7 +97,7 @@ export default function MealPlanHistoryScreen() {
                       {Math.round(totals.calories || 0)} kcal · {Math.round(totals.protein || 0)}P / {Math.round(totals.carbs || 0)}C / {Math.round(totals.fat || 0)}F
                     </Text>
                   </View>
-                  <ChevronDown size={22} color={sub} style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }, { scaleX: isRTL ? -1 : 1 }] }} />
+                  <View style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }, { scaleX: isRTL ? -1 : 1 }] }}><ChevronDown size={22} color={sub} /></View>
                 </TouchableOpacity>
                 {isOpen && (p.meals || []).map((m: any, j: number) => (
                   <View key={j} style={styles.mealRow}>

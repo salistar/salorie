@@ -380,7 +380,7 @@ export default function NotificationsScreen() {
       <ScreenTopBar />
       <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backButton, isDark && { backgroundColor: Colors.dark.gray[50] }]} onPress={() => router.back()}>
-          <ChevronLeft size={24} color={isDark ? '#fff' : Colors.light.gray[900]} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+          <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ChevronLeft size={24} color={isDark ? '#fff' : Colors.light.gray[900]} /></View>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{t.notifications}</Text>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} style={styles.clearButton} onPress={clearAll}>
