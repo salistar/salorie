@@ -59,5 +59,8 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  // `.*\..*` : tout chemin AVEC UNE EXTENSION (robots.txt, sitemap.xml, og.png,
+  // screenshots/*.png…) est un fichier public — le middleware n'a rien a y faire.
+  // Avant cette exclusion, robots.txt repondait... la page de connexion.
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\..*).*)'],
 };

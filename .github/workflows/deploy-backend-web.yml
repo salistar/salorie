@@ -31,6 +31,22 @@ jobs:
       - uses: actions/checkout@v4
 
       # 1) Copy the stack to the VPS (source only — node_modules/.next are .dockerignored).
+      # scp OVERWRITE mais ne SUPPRIME jamais (`rm: false`, voulu : le dossier
+      # cible porte .env et l'override compose, qu'un rm global emporterait).
+      # Consequence decouverte le 20/08/2026 : l'ancien web/app/page.tsx a
+      # survecu a son deplacement vers /admin, deux pages se sont disputees
+      # la racine, et le conteneur a servi un 500. On purge donc AVANT l'envoi
+      # les repertoires que le depot possede EN ENTIER — et eux seuls.
+      - name: Purge des repertoires possedes par le depot
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ${{ secrets.VPS_APP_DIR }}
+            rm -rf web/app web/lib web/public lib assets/data backend/src
+
       - name: Copy files to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
