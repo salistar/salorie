@@ -97,7 +97,9 @@ export class SocialGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('race:join')
   async rejoindreCourse(@ConnectedSocket() socket: Socket, @MessageBody() body: { raceId?: string; langue?: string }) {
     const raceId = String(body?.raceId || '').trim();
-    if (!raceId) return;
+    // Le salon d'une course porte son fil de discussion : y entrer sans compte
+    // reviendrait a lire les messages des participants.
+    if (!raceId || !(socket.data as any).uid) return;
     if (body?.langue) (socket.data as any).langue = String(body.langue).slice(0, 2);
     socket.join(`race:${raceId}`);
     // Arriver dans un salon vide de tout historique donne l'impression que personne
@@ -113,7 +115,7 @@ export class SocialGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('race:leave')
   quitterCourse(@ConnectedSocket() socket: Socket, @MessageBody() body: { raceId?: string }) {
     const raceId = String(body?.raceId || '').trim();
-    if (raceId) socket.leave(`race:${raceId}`);
+    if (raceId && (socket.data as any).uid) socket.leave(`race:${raceId}`);
   }
 
   @SubscribeMessage('race:msg')
@@ -267,6 +269,15 @@ export class SocialGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const duoId = String(body?.duoId || '').trim();
     const lat = Number(body?.lat);
     const lng = Number(body?.lng);
+    // L'authentification a lieu dans `handleConnection`, donc APRES que la
+    // connexion soit etablie, et `verifyIdToken` est asynchrone : il existe une
+    // fenetre (mesuree a 2-3 ms le 20/08/2026) pendant laquelle une socket sans
+    // jeton valide est connectee et peut emettre. `socket.data.uid` n'est pose
+    // QUE sur un jeton verifie — le tester ferme la fenetre pour de bon.
+    // A noter : `socket.to(salon)` diffuse sans que l'emetteur soit DANS le
+    // salon. Sans ce garde, un identifiant de duo devine suffisait a injecter
+    // de la signalisation dans un appel en cours.
+    if (!(socket.data as any).uid) return;
     if (!duoId || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
     // Diffusion aux AUTRES seulement : renvoyer sa position à l'émetteur doublerait
     // le trafic sans rien apporter.
@@ -285,6 +296,7 @@ export class SocialGateway implements OnGatewayConnection, OnGatewayDisconnect {
   signalWebrtc(@ConnectedSocket() socket: Socket, @MessageBody() body: { duoId?: string; type?: string; data?: unknown }) {
     const duoId = String(body?.duoId || '').trim();
     const type = String(body?.type || '');
+    if (!(socket.data as any).uid) return;
     if (!duoId || !['offer', 'answer', 'ice'].includes(type)) return;
     socket.to(`duo:${duoId}`).emit('webrtc:signal', {
       auteur: h((socket.data as any).uid),
@@ -296,7 +308,7 @@ export class SocialGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('duo:leave')
   quitterDuo(@ConnectedSocket() socket: Socket, @MessageBody() body: { duoId?: string }) {
     const duoId = String(body?.duoId || '').trim();
-    if (!duoId) return;
+    if (!duoId || !(socket.data as any).uid) return;
     socket.to(`duo:${duoId}`).emit('duo:depart', { auteur: h((socket.data as any).uid) });
     socket.leave(`duo:${duoId}`);
   }
