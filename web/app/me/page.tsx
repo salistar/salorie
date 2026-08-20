@@ -1,9 +1,10 @@
 'use client';
 // Accueil de l'espace personnel : la preuve visible que le compte web EST le compte
 // mobile. Tout ce qui s'affiche ici vient de `users/{uid}` et de sa sous-collection
-// `logs`, lus en direct par le navigateur sous les regles Firestore existantes.
+// `logs`, lus en direct par le navigateur sous les règles Firestore existantes.
+import { useMemo, useState } from 'react';
 import { useMe } from './MeProvider';
-import { useProfil, useJournal, jourLocal, totaux } from '../../lib/useFirestoreMe';
+import { useProfil, useJournal, useLogsDepuis, jourLocal, totaux } from '../../lib/useFirestoreMe';
 
 const OBJECTIFS: Record<string, string> = {
   lose: 'Perdre du poids',
@@ -35,6 +36,95 @@ function Tuile({
   );
 }
 
+/** `YYYY-MM-DD` local, décalé de n jours. */
+function jourDecale(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return jourLocal(d);
+}
+
+/**
+ * La semaine en barres — sept jours de calories face à l'objectif.
+ *
+ * Choix de forme (et pas d'ornement) : sept magnitudes quotidiennes → des
+ * barres ancrées à la ligne de base ; UNE série, donc pas de légende, le titre
+ * suffit. L'objectif est une référence discrète en pointillés, pas une seconde
+ * série. Étiquettes SÉLECTIVES : la valeur ne s'affiche que sur aujourd'hui et
+ * sur le jour survolé ou focalisé — un chiffre sur chaque barre serait du bruit.
+ */
+function SemaineKcal({ uid, cible }: { uid: string; cible: number }) {
+  const { lignes } = useLogsDepuis(uid, jourDecale(-6));
+  const [survol, setSurvol] = useState<number | null>(null);
+
+  const jours = useMemo(() => {
+    const parJour = new Map<string, number>();
+    for (const l of lignes) {
+      if (l.type !== 'meal' || !l.date) continue;
+      parJour.set(l.date, (parJour.get(l.date) || 0) + (Number(l.calories) || 0));
+    }
+    const auj = jourLocal();
+    return Array.from({ length: 7 }, (_, i) => {
+      const date = jourDecale(i - 6);
+      const d = new Date(`${date}T00:00:00`);
+      return {
+        date,
+        // Initiale du jour : assez pour se repérer, pas assez pour encombrer.
+        libelle: d.toLocaleDateString('fr-FR', { weekday: 'narrow' }),
+        long: d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }),
+        kcal: Math.round(parJour.get(date) || 0),
+        aujourdhui: date === auj,
+      };
+    });
+  }, [lignes]);
+
+  // L'échelle inclut l'objectif : une barre qui le dépasse doit se voir DÉPASSER.
+  const max = Math.max(cible, ...jours.map((j) => j.kcal), 1);
+  const rien = jours.every((j) => j.kcal === 0);
+
+  return (
+    <section className="carte-amis sem-carte">
+      <div className="ligne-champ" style={{ justifyContent: 'space-between' }}>
+        <h2 className="me-h2" style={{ margin: 0 }}>Ta semaine</h2>
+        {cible ? <span className="me-note">objectif {cible} kcal / jour</span> : null}
+      </div>
+
+      <div className="sem-cadre">
+        {cible ? (
+          <div className="sem-objectif" style={{ bottom: `${(cible / max) * 100}%` }} aria-hidden />
+        ) : null}
+        <div className="sem-barres">
+          {jours.map((j, i) => (
+            <div
+              key={j.date}
+              className="sem-jour"
+              tabIndex={0}
+              role="img"
+              aria-label={`${j.long} : ${j.kcal} kcal`}
+              onMouseEnter={() => setSurvol(i)}
+              onMouseLeave={() => setSurvol(null)}
+              onFocus={() => setSurvol(i)}
+              onBlur={() => setSurvol(null)}
+            >
+              <span className={`sem-valeur${j.aujourdhui || survol === i ? ' visible' : ''}`}>
+                {j.kcal}
+              </span>
+              <div
+                className={`sem-barre${j.aujourdhui ? ' actuel' : ''}`}
+                style={{ height: `${Math.max(j.kcal > 0 ? 4 : 2, (j.kcal / max) * 100)}%` }}
+              />
+              <span className={`sem-libelle${j.aujourdhui ? ' actuel' : ''}`}>{j.libelle}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {rien ? (
+        <p className="me-note">Encore rien cette semaine — le premier repas enregistré dessinera la première barre.</p>
+      ) : null}
+    </section>
+  );
+}
+
 export default function AccueilMe() {
   const { uid, prenom, email } = useMe();
   const { profil, charge, erreur } = useProfil(uid);
@@ -50,9 +140,9 @@ export default function AccueilMe() {
   if (erreur) {
     return (
       <div className="me-centre">
-        <p className="me-erreur">Lecture refusee par Firestore : {erreur}</p>
+        <p className="me-erreur">Lecture refusée par Firestore : {erreur}</p>
         <p className="me-centre-txt">
-          Cela signifie que la session ne porte pas l'identite attendue. Deconnecte-toi puis
+          Cela signifie que la session ne porte pas l'identité attendue. Déconnecte-toi puis
           reconnecte-toi.
         </p>
       </div>
@@ -83,19 +173,19 @@ export default function AccueilMe() {
         <Tuile
           titre="Calories du jour"
           valeur={cible ? `${t.kcal} / ${cible}` : String(t.kcal)}
-          detail={cible ? `${restant} kcal restantes` : 'Objectif non defini'}
+          detail={cible ? `${restant} kcal restantes` : 'Objectif non défini'}
           accent
         />
-        <Tuile titre="Repas enregistres" valeur={String(t.nbRepas)} detail="aujourd'hui" />
+        <Tuile titre="Repas enregistrés" valeur={String(t.nbRepas)} detail="aujourd'hui" />
         <Tuile
-          titre="Proteines"
+          titre="Protéines"
           valeur={`${t.proteines} g`}
           detail={`Glucides ${t.glucides} g · Lipides ${t.lipides} g`}
         />
         <Tuile
-          titre="Activite"
+          titre="Activité"
           valeur={t.kcalBrulees ? `${t.kcalBrulees} kcal` : '—'}
-          detail={t.nbActivites ? `${t.nbActivites} seance(s)` : 'Aucune seance'}
+          detail={t.nbActivites ? `${t.nbActivites} séance(s)` : 'Aucune séance'}
         />
         <Tuile
           titre="Hydratation"
@@ -103,6 +193,8 @@ export default function AccueilMe() {
           detail="objectif 2 L"
         />
       </section>
+
+      {uid ? <SemaineKcal uid={uid} cible={cible} /> : null}
 
       <section className="me-actions">
         <a className="btn btn-primary btn-lg" href="/me/diary">
@@ -114,8 +206,8 @@ export default function AccueilMe() {
       </section>
 
       <p className="me-note">
-        Ces donnees sont les memes que sur ton telephone, en direct : une modification d'un
-        cote apparait de l'autre sans rechargement.
+        Ces données sont les mêmes que sur ton téléphone, en direct : une modification d'un
+        côté apparaît de l'autre sans rechargement.
       </p>
     </div>
   );

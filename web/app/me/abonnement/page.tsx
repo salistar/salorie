@@ -16,8 +16,16 @@ import { useMe } from '../MeProvider';
 import { useProfil } from '../../../lib/useFirestoreMe';
 import { traducteur, sensLecture, type Langue } from '../../../lib/i18nMe';
 
-/** Les fonctions que Premium ouvre. Chaque clé résout titre et description. */
-const AVANTAGES = ['scans', 'plans', 'coach', 'rapport', 'famille', 'pub'] as const;
+/** Les fonctions que Premium ouvre. Chaque clé résout titre et description ;
+ *  l'icône reprend le langage des pastilles de la barre latérale. */
+const AVANTAGES = [
+  { cle: 'scans', icone: '📷' },
+  { cle: 'plans', icone: '📝' },
+  { cle: 'coach', icone: '💬' },
+  { cle: 'rapport', icone: '🩺' },
+  { cle: 'famille', icone: '🏡' },
+  { cle: 'pub', icone: '🚫' },
+] as const;
 
 export default function PageAbonnement() {
   const { uid } = useMe();
@@ -51,14 +59,17 @@ export default function PageAbonnement() {
 
       <section className="carte-amis">
         <h2 className="me-h2">{t('aboCeQuiOuvre')}</h2>
-        <ul className="liste-nue">
+        <div className="abo-grille">
           {AVANTAGES.map((a) => (
-            <li key={a}>
-              <strong>{t(`abo_${a}_t`)}</strong>
-              <p className="me-sous" style={{ margin: '2px 0 0' }}>{t(`abo_${a}_c`)}</p>
-            </li>
+            <div key={a.cle} className="abo-carte">
+              <span className="abo-icone" aria-hidden>{a.icone}</span>
+              <div className="abo-texte">
+                <strong>{t(`abo_${a.cle}_t`)}</strong>
+                <p className="me-sous">{t(`abo_${a.cle}_c`)}</p>
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
       </section>
 
       <section className="carte-amis">
