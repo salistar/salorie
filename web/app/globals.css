@@ -1420,3 +1420,18 @@ tbody tr:last-child td { border-bottom: none; }
 @media (prefers-reduced-motion: reduce) {
   .me-nav, .btn-primary { transition: none; }
 }
+
+/* ── Affinage vague 1 (audit sur captures, 20/08/2026) ──────────────────────
+   Deux bugs de mise en page reveles par les captures pleine page :
+
+   1. `.champ-amis` porte `flex: 1 1 240px`. Dans `.champ-bloc` — un conteneur
+      COLONNE — ce flex-basis devient une HAUTEUR : les champs macros de la
+      saisie manuelle mesuraient 240 px de haut. Treize pages touchees, depuis
+      le lot 1 — jamais vu faute d'avoir regarde le rendu.
+
+   2. `.carte-ajout` est une colonne flex : son `align-items: stretch` par
+      defaut etirait le bouton « Ajouter au journal » sur toute la largeur de
+      la carte, ecrasant la hierarchie visuelle du formulaire du journal. */
+.champ-bloc > .champ-amis { flex: none; }
+.carte-ajout .btn { align-self: flex-start; }
+
