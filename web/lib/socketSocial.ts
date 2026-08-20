@@ -81,3 +81,21 @@ export function signalerMessage(messageId: string): void {
 }
 
 export const socialConfigure = () => Boolean(API_URL);
+
+// ── Duo (marche a deux) : le salon d'appel ──────────────────────────────────
+// Le serveur borne un duo a DEUX personnes et exige qu'elles soient amies
+// (sinon `duo:refus` avec motif `pas_ami`). C'est ce qui empeche un
+// identifiant devine d'ouvrir le micro de deux inconnus a un troisieme.
+export function rejoindreDuo(duoId: string): void {
+  socket?.emit('duo:join', { duoId });
+}
+
+export function quitterDuo(duoId: string): void {
+  socket?.emit('duo:leave', { duoId });
+}
+
+/** Relais de signalisation. Le serveur ne voit jamais le media, seulement ceci. */
+export function envoyerSignalWebrtc(duoId: string, type: 'offer' | 'answer' | 'ice', data: unknown): void {
+  socket?.emit('webrtc:signal', { duoId, type, data });
+}
+
