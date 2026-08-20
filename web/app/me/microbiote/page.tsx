@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMe } from '../MeProvider';
 import { useProfil } from '../../../lib/useFirestoreMe';
 import { traducteur, sensLecture, type Langue } from '../../../lib/i18nMe';
-import { genererTexte, iaConfiguree, IaIndisponible } from '../../../lib/ia';
+import { genererTexte, iaConfiguree, IaIndisponible, IaNonAutorise } from '../../../lib/ia';
 
 /** Mêmes questions et mêmes options que l'écran mobile. */
 const QUESTIONS = [
@@ -67,7 +67,7 @@ export default function PageMicrobiote() {
       setReco(txt);
     } catch (e: any) {
       if (e?.name === 'AbortError') return;
-      setErreur(e instanceof IaIndisponible ? t('mbioIndispo') : t('mbioErreur'));
+      setErreur(e instanceof IaNonAutorise ? t('iaSessionExpiree') : e instanceof IaIndisponible ? t('mbioIndispo') : t('mbioErreur'));
     } finally {
       if (!ctrl.signal.aborted) setOccupe(false);
     }

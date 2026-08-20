@@ -90,7 +90,7 @@ export default function PageRestaurant() {
         libelles={{
           choisir: t('restoChoisir'), analyse: t('restoAnalyse'), apercu: t('restoApercu'),
           notePhoto: t('restoNotePhoto'), indispo: t('restoIndispo'), erreur: t('restoErreur'),
-          pasDeBackend: t('restoPasDeBackend'),
+          pasDeBackend: t('restoPasDeBackend'), sessionExpiree: t('iaSessionExpiree'),
         }}
       />
 

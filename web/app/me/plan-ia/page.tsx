@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMe } from '../MeProvider';
 import { useProfil } from '../../../lib/useFirestoreMe';
 import { traducteur, sensLecture, type Langue } from '../../../lib/i18nMe';
-import { genererTexte, iaConfiguree, IaIndisponible } from '../../../lib/ia';
+import { genererTexte, iaConfiguree, IaIndisponible, IaNonAutorise } from '../../../lib/ia';
 
 const OBJECTIFS: Record<string, string> = {
   lose: 'perte de poids', gain: 'prise de masse', maintain: 'maintien du poids',
@@ -97,7 +97,7 @@ export default function PagePlanIA() {
       setPlan(txt);
     } catch (e: any) {
       if (e?.name === 'AbortError') return;
-      setErreur(e instanceof IaIndisponible ? t('planIndispo') : t('planErreur'));
+      setErreur(e instanceof IaNonAutorise ? t('iaSessionExpiree') : e instanceof IaIndisponible ? t('planIndispo') : t('planErreur'));
     } finally {
       if (!ctrl.signal.aborted) setOccupe(false);
     }

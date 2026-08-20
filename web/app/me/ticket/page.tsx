@@ -112,7 +112,7 @@ export default function PageTicket() {
         libelles={{
           choisir: t('ticketChoisir'), analyse: t('ticketAnalyse'), apercu: t('ticketApercu'),
           notePhoto: t('ticketNotePhoto'), indispo: t('ticketIndispo'), erreur: t('ticketErreur'),
-          pasDeBackend: t('ticketPasDeBackend'),
+          pasDeBackend: t('ticketPasDeBackend'), sessionExpiree: t('iaSessionExpiree'),
         }}
       />
     </div>

@@ -14,7 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMe } from '../MeProvider';
 import { useProfil } from '../../../lib/useFirestoreMe';
 import { traducteur, sensLecture, type Langue } from '../../../lib/i18nMe';
-import { genererTexte, iaConfiguree, IaIndisponible } from '../../../lib/ia';
+import { genererTexte, iaConfiguree, IaIndisponible, IaNonAutorise } from '../../../lib/ia';
 import { prioriteSubstitution, consigneSubstitution, type Priorite } from '../../../lib/substitutions';
 
 export default function PageSubstitutions() {
@@ -53,7 +53,7 @@ export default function PageSubstitutions() {
       setReponse(txt);
     } catch (e: any) {
       if (e?.name === 'AbortError') return;
-      setErreur(e instanceof IaIndisponible ? t('subsIndispo') : t('subsErreur'));
+      setErreur(e instanceof IaNonAutorise ? t('iaSessionExpiree') : e instanceof IaIndisponible ? t('subsIndispo') : t('subsErreur'));
     } finally {
       if (!ctrl.signal.aborted) setOccupe(false);
     }

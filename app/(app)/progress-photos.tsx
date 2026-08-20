@@ -13,15 +13,19 @@ import { aiVision, aiGenerate } from '../../lib/aiProxy';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
 import { useScreenGate } from '../../components/FeatureGate';
+import { useUser } from '@clerk/clerk-expo';
+// Synchronisation vers Firebase Storage : c'est ce qui fait qu'une photo prise
+// ici se retrouve sur app.salorie.salistar.com/me/photos, et l'inverse.
+import { televerser, stockageConfigure, jourLocal } from '../../lib/photosProgressionSync';
 
 const GREEN = '#2E8B57';
 const KEY = 'progress_photos_v1';
 const COL = (Dimensions.get('window').width - 52) / 2;
 
 const TXT: any = {
-  en: { title: 'Progress photos', sub: 'Keep a visual record (stored on your device, private).', photo: 'Photo', gallery: 'Gallery', empty: 'No photos yet. Add your first one to track your progress.', analyze: 'Analyze my evolution', analyzing: 'Analyzing…', needTwo: 'Add at least 2 photos to analyze your evolution.', result: 'Evolution analysis', err: 'Analysis unavailable.' },
-  fr: { title: 'Photos de progression', sub: 'Garde une trace visuelle (stockée sur ton appareil, privée).', photo: 'Photo', gallery: 'Galerie', empty: 'Aucune photo. Ajoute ta première pour suivre ton évolution.', analyze: 'Analyser mon évolution', analyzing: 'Analyse…', needTwo: 'Ajoute au moins 2 photos pour analyser ton évolution.', result: 'Analyse de l’évolution', err: 'Analyse indisponible.' },
-  ar: { title: 'صور التقدم', sub: 'احتفظ بسجل مرئي (مخزّن على جهازك، خاص).', photo: 'صورة', gallery: 'المعرض', empty: 'لا توجد صور. أضف أول صورة لتتابع تطورك.', analyze: 'حلّل تطوري', analyzing: 'جارٍ التحليل…', needTwo: 'أضف صورتين على الأقل لتحليل تطورك.', result: 'تحليل التطور', err: 'التحليل غير متاح.' },
+  en: { title: 'Progress photos', sub: 'Keep a visual record. New photos sync to your account so you can compare them on a large screen; only you can see them.', photo: 'Photo', gallery: 'Gallery', empty: 'No photos yet. Add your first one to track your progress.', analyze: 'Analyze my evolution', analyzing: 'Analyzing…', needTwo: 'Add at least 2 photos to analyze your evolution.', result: 'Evolution analysis', err: 'Analysis unavailable.', send: 'Send to my account', sent: '✓ Synced' },
+  fr: { title: 'Photos de progression', sub: 'Garde une trace visuelle. Les nouvelles photos rejoignent ton compte pour se comparer sur grand écran ; toi seul(e) peux les voir.', photo: 'Photo', gallery: 'Galerie', empty: 'Aucune photo. Ajoute ta première pour suivre ton évolution.', analyze: 'Analyser mon évolution', analyzing: 'Analyse…', needTwo: 'Ajoute au moins 2 photos pour analyser ton évolution.', result: 'Analyse de l’évolution', err: 'Analyse indisponible.', send: 'Envoyer vers mon compte', sent: '✓ Synchronisée' },
+  ar: { title: 'صور التقدم', sub: 'احتفظ بسجل مرئي. الصور الجديدة تُزامَن مع حسابك لمقارنتها على شاشة كبيرة؛ أنت وحدك من يراها.', photo: 'صورة', gallery: 'المعرض', empty: 'لا توجد صور. أضف أول صورة لتتابع تطورك.', analyze: 'حلّل تطوري', analyzing: 'جارٍ التحليل…', needTwo: 'أضف صورتين على الأقل لتحليل تطورك.', result: 'تحليل التطور', err: 'التحليل غير متاح.', send: 'أرسل إلى حسابي', sent: '✓ مُزامنة' },
 };
 
 export default function ProgressPhotosScreen() {
@@ -39,7 +43,10 @@ export default function ProgressPhotosScreen() {
   const sub = tok.textMuted;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 
-  const [photos, setPhotos] = useState<{ uri: string; date: string }[]>([]);
+  const [photos, setPhotos] = useState<{ uri: string; date: string; distant?: string }[]>([]);
+  const [envoi, setEnvoi] = useState(false);
+  const { user } = useUser();
+  const email = user?.primaryEmailAddress?.emailAddress || '';
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState('');
 
@@ -78,10 +85,51 @@ export default function ProgressPhotosScreen() {
       await FileSystem.copyAsync({ from: res.assets[0].uri, to: dest }); // persiste
       const d = new Date(ts);
       const date = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-      const next = [{ uri: dest, date }, ...photos];
+      // La copie locale est ecrite D'ABORD : elle doit exister meme sans reseau,
+      // et l'ecran reste utilisable hors ligne comme avant.
+      const next: any[] = [{ uri: dest, date }, ...photos];
       setPhotos(next);
       await AsyncStorage.setItem(KEY, JSON.stringify(next));
+
+      // Puis l'envoi, en arriere-plan. Un echec ne fait rien perdre : la photo
+      // est deja sur l'appareil, et un prochain envoi la reprendra.
+      if (email && stockageConfigure()) {
+        setEnvoi(true);
+        try {
+          const nom = await televerser(email, dest, jourLocal(new Date(ts)));
+          next[0].distant = nom;
+          setPhotos([...next]);
+          await AsyncStorage.setItem(KEY, JSON.stringify(next));
+        } catch {
+          // Silencieux : la photo est sauve en local, c'est l'essentiel.
+        } finally {
+          setEnvoi(false);
+        }
+      }
     } catch {}
+  };
+
+  /**
+   * Envoie une photo ANCIENNE, a la demande.
+   *
+   * Volontairement manuel : ces photos ont ete prises quand l'ecran promettait
+   * « stockee sur ton appareil ». Les televerser en silence trahirait
+   * retroactivement ce qui avait ete annonce.
+   */
+  const envoyerAncienne = async (index: number) => {
+    const ph = photos[index];
+    if (!ph || ph.distant || !email || envoi) return;
+    setEnvoi(true);
+    try {
+      const nom = await televerser(email, ph.uri, jourLocal());
+      const next = [...photos];
+      next[index] = { ...ph, distant: nom };
+      setPhotos(next);
+      await AsyncStorage.setItem(KEY, JSON.stringify(next));
+    } catch {
+    } finally {
+      setEnvoi(false);
+    }
   };
 
   if (!__gate.ok) return __gate.node;
@@ -119,6 +167,18 @@ export default function ProgressPhotosScreen() {
               <View key={i} style={styles.cell}>
                 <Image source={{ uri: p.uri }} style={[styles.photo, isDark && { backgroundColor: '#334155' }]} resizeMode="cover" />
                 <Text style={[styles.date, { color: sub }]}>{p.date}</Text>
+                {/* Les photos d'AVANT la synchronisation ne partent que sur ce
+                    geste explicite : elles ont ete prises quand l'ecran
+                    promettait « stockee sur ton appareil ». */}
+                {p.distant ? (
+                  <Text style={{ fontSize: 11, fontWeight: '700', marginTop: 2, color: accent }}>{t.sent}</Text>
+                ) : email ? (
+                  <TouchableOpacity onPress={() => envoyerAncienne(i)} disabled={envoi}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', marginTop: 2, textDecorationLine: 'underline', color: sub }}>
+                      {envoi ? '…' : t.send}
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
             ))}
           </View>

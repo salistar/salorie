@@ -3,6 +3,7 @@
 // Lecture seule assumee : on rejoint et on avance depuis le telephone, qui porte le
 // GPS. Le web sert a SUIVRE — un grand ecran vaut mieux qu'un petit pour comparer sa
 // progression et regarder ses medailles.
+import Link from 'next/link';
 import { useMe } from '../MeProvider';
 import { useProfil } from '../../../lib/useFirestoreMe';
 import { useApi } from '../../../lib/apiSalorie';
@@ -76,6 +77,11 @@ export default function PageCourses() {
                 <h3>{nomDe(c)}</h3>
                 {distanceDe(c) ? <div className="course-distance">{distanceDe(c)} km</div> : null}
                 {c.description ? <p className="course-desc">{c.description}</p> : null}
+                {/* Le salon existait mais rien n'y menait : une page sans lien
+                    entrant est une page qui n'existe pas. */}
+                <Link href={`/me/races/${idDe(c)}/chat`} className="annonce-lien">
+                  {t('racesSalon')}
+                </Link>
               </div>
             </article>
           ))}
