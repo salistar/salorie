@@ -58,7 +58,7 @@ export class SocialGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleConnection(socket: Socket) {
     try {
       const jeton = (socket.handshake.auth as any)?.token || (socket.handshake.query as any)?.token;
-      const decode = await admin.auth().verifyIdToken(String(jeton));
+      const decode = await this.fb.auth().verifyIdToken(String(jeton));
       const uid = String(decode.uid || decode.email || '').toLowerCase();
       if (!uid) throw new Error('uid absent');
       (socket.data as any).uid = uid;
@@ -69,7 +69,12 @@ export class SocialGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // On ne diffuse que des uid HACHÉS : le feed a besoin de savoir QUI est en
       // ligne parmi ses amis, pas de recevoir la liste des emails de l'app.
       this.server.emit('presence:maj', { enLigne: this.presencePublique() });
-    } catch {
+    } catch (e) {
+      // Un `catch` muet a cache ce defaut pendant des semaines : le client voyait
+      // « auth » et concluait a un jeton expire, alors que le module Firebase
+      // n'etait pas initialise. On journalise la CAUSE (jamais le jeton) — sans
+      // quoi la prochaine panne se diagnostiquera aussi a l'aveugle.
+      this.log.warn(`connexion /social refusee : ${(e as any)?.message || e}`);
       socket.emit('social:erreur', { motif: 'auth' });
       socket.disconnect(true);
     }
