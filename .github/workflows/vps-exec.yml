@@ -1,0 +1,30 @@
+# Execution d'une commande sur le VPS, a la demande.
+# ---------------------------------------------------------------------------
+# Le poste de travail n'a pas de cle SSH vers srv3 : ce workflow EST l'acces —
+# memes secrets que le deploiement. Cree le 20/08/2026 pour lire les journaux
+# du conteneur web (un 500 en prod invisible en local), et sert ensuite a
+# toute operation ponctuelle (Caddy, docker, diagnostics).
+#
+# Garde-fou : `commande` passe dans un script telle quelle — ce workflow est
+# reserve aux mainteneurs du depot (workflow_dispatch, jamais sur push).
+name: VPS exec
+on:
+  workflow_dispatch:
+    inputs:
+      commande:
+        description: "Commande shell a executer sur srv3"
+        required: true
+        type: string
+
+jobs:
+  exec:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Executer sur le VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: ${{ inputs.commande }}
