@@ -16,8 +16,9 @@ import { useMe } from '../MeProvider';
 import { useProfil, jourLocal } from '../../../lib/useFirestoreMe';
 import { traducteur, sensLecture, locale, type Langue } from '../../../lib/i18nMe';
 import {
-  envoyer, lister, supprimer, stockageConfigure, type PhotoProgression,
+  envoyer, lister, supprimer, recupererBlob, stockageConfigure, type PhotoProgression,
 } from '../../../lib/photosProgression';
+import { analyserImage, genererTexte, fichierVersBase64, iaConfiguree, IaIndisponible, IaNonAutorise } from '../../../lib/ia';
 
 export default function PagePhotos() {
   const { uid } = useMe();
@@ -32,6 +33,9 @@ export default function PagePhotos() {
   const [erreur, setErreur] = useState('');
   const [gauche, setGauche] = useState<string>('');
   const [droite, setDroite] = useState<string>('');
+  const [analyse, setAnalyse] = useState('');
+  const [analyseEnCours, setAnalyseEnCours] = useState(false);
+  const [analyseErr, setAnalyseErr] = useState('');
   const champ = useRef<HTMLInputElement | null>(null);
 
   const recharger = useCallback(async () => {
@@ -81,6 +85,52 @@ export default function PagePhotos() {
       await recharger();
     } catch {
       setErreur(t('photosErreurSuppr'));
+    }
+  };
+
+  /**
+   * Analyse d'évolution — le flux du mobile, à l'identique : chaque photo est
+   * d'abord DÉCRITE seule et neutrement (une phrase), puis une synthèse
+   * compare les deux descriptions. Deux avantages : aucune composition
+   * d'images (donc aucun piège CORS), et le modèle juge des textes plutôt que
+   * de comparer des corps côte à côte.
+   */
+  const analyserEvolution = async () => {
+    const a = par.get(gauche);
+    const b = par.get(droite);
+    if (!uid || !a || !b || a.nom === b.nom || analyseEnCours) return;
+    setAnalyseEnCours(true);
+    setAnalyse('');
+    setAnalyseErr('');
+    try {
+      const versB64 = async (nom: string) => {
+        const blob = await recupererBlob(uid, nom);
+        // 512 px suffisent pour decrire une silhouette — c'est le calibre du mobile.
+        return (await fichierVersBase64(blob as File, 512)).base64;
+      };
+      const [b1, b2] = await Promise.all([versB64(a.nom), versB64(b.nom)]);
+      const consigne = 'Décris en 1 phrase la silhouette/corpulence sur cette photo (objectif, neutre).';
+      const [d1, d2] = await Promise.all([
+        analyserImage(consigne, b1),
+        analyserImage(consigne, b2),
+      ]);
+      const langues: Record<string, string> = {
+        fr: 'Réponds en français', en: 'Reply in English', ar: 'Réponds en arabe',
+      };
+      const res = await genererTexte(
+        `Photo de départ (${a.date}) : ${d1}. Photo récente (${b.date}) : ${d2}. ` +
+        `Compare l'évolution physique entre les deux photos, donne un verdict encourageant ` +
+        `et 2 conseils concrets. ${langues[langue] || langues.fr}, court (4-5 lignes).`,
+      );
+      setAnalyse(res);
+    } catch (e: any) {
+      setAnalyseErr(
+        e instanceof IaNonAutorise ? t('iaSessionExpiree')
+        : e instanceof IaIndisponible ? t('photosAnalyseIndispo')
+        : t('photosAnalyseErreur'),
+      );
+    } finally {
+      setAnalyseEnCours(false);
     }
   };
 
@@ -161,6 +211,27 @@ export default function PagePhotos() {
               ),
             )}
           </div>
+
+          {iaConfiguree() ? (
+            <div className="ligne-champ" style={{ marginTop: 12 }}>
+              <button
+                className="btn btn-primary"
+                onClick={analyserEvolution}
+                disabled={analyseEnCours || !gauche || !droite || gauche === droite}
+              >
+                {analyseEnCours ? t('photosAnalyseEnCours') : t('photosAnalyser')}
+              </button>
+              <span className="me-note">{t('photosAnalyseNote')}</span>
+            </div>
+          ) : null}
+          {analyseErr ? <p className="me-erreur">{analyseErr}</p> : null}
+          {analyse ? (
+            <div className="photos-analyse">
+              <h3 className="me-h3">{t('photosEvolution')}</h3>
+              <p className="texte-ia">{analyse}</p>
+              <p className="me-note">{t('photosAnalyseAvertissement')}</p>
+            </div>
+          ) : null}
         </section>
       )}
 

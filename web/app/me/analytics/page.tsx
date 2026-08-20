@@ -123,7 +123,6 @@ export default function PageAnalyses() {
       <h2 className="me-h2">{t('analysesCaloriesJour')}</h2>
       <div className="carte-graphe">
         {charge ? <Barres points={parJour} cible={cible} inverse={rtl} /> : <div className="graphe-vide">…</div>}
-        {cible ? <p className="graphe-legende">{t('analysesTraitObjectif')} : {cible} kcal</p> : null}
       </div>
 
       <h2 className="me-h2">{t('analysesEvolutionPoids')}</h2>
