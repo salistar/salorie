@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, act, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 
 /**
  * L'écran d'attente ne se montre que quand Clerk traîne — donc presque jamais en
@@ -27,7 +27,19 @@ jest.mock(
 
 import AttenteConnexion, { DELAI_EXPLICATION_MS } from '../../components/AttenteConnexion';
 
-/** Fait passer le délai d'explication, en laissant les promesses se résoudre. */
+/**
+ * Fait passer le délai d'explication, en laissant les promesses se résoudre.
+ *
+ * ⚠ NE PAS enchaîner un `waitFor` derrière cet appel. `act(async …)` vide déjà
+ * les timers ET les promesses en attente : l'état est settled au retour, donc
+ * l'assertion qui suit peut être SYNCHRONE.
+ *
+ * Ajouter un `waitFor` par-dessus est pire qu'inutile : sous `useFakeTimers`,
+ * son mécanisme de sondage repose sur des timers qui n'avancent plus tout
+ * seuls. C'était la cause d'un échec intermittent — un seul, jamais reproduit
+ * en quatre exécutions, et survenu lors d'un passage anormalement lent (86 s
+ * contre 15 d'ordinaire), donc sous forte contention CPU.
+ */
 async function laisserPasserLeDelai() {
   await act(async () => {
     jest.advanceTimersByTime(DELAI_EXPLICATION_MS);
@@ -57,7 +69,7 @@ describe('<AttenteConnexion />', () => {
     mockReseau.joignable = false;
     const { getByText } = render(<AttenteConnexion onReessayer={() => {}} />);
     await laisserPasserLeDelai();
-    await waitFor(() => expect(getByText('Aucune connexion internet')).toBeTruthy());
+    expect(getByText('Aucune connexion internet')).toBeTruthy();
     expect(getByText('Réessayer')).toBeTruthy();
   });
 
@@ -65,7 +77,7 @@ describe('<AttenteConnexion />', () => {
     mockReseau.joignable = true;
     const { getByText, queryByText } = render(<AttenteConnexion onReessayer={() => {}} />);
     await laisserPasserLeDelai();
-    await waitFor(() => expect(getByText('La connexion est lente')).toBeTruthy());
+    expect(getByText('La connexion est lente')).toBeTruthy();
     // Pas de bouton : rien à réessayer, ça arrive tout seul.
     expect(queryByText('Réessayer')).toBeNull();
   });
@@ -74,7 +86,7 @@ describe('<AttenteConnexion />', () => {
     mockReseau.jette = true;
     const { getByText, queryByText } = render(<AttenteConnexion onReessayer={() => {}} />);
     await laisserPasserLeDelai();
-    await waitFor(() => expect(getByText('La connexion est lente')).toBeTruthy());
+    expect(getByText('La connexion est lente')).toBeTruthy();
     expect(queryByText('Aucune connexion internet')).toBeNull();
   });
 
@@ -83,7 +95,7 @@ describe('<AttenteConnexion />', () => {
     const onReessayer = jest.fn();
     const { getByText } = render(<AttenteConnexion onReessayer={onReessayer} />);
     await laisserPasserLeDelai();
-    await waitFor(() => expect(getByText('Réessayer')).toBeTruthy());
+    expect(getByText('Réessayer')).toBeTruthy();
     fireEvent.press(getByText('Réessayer'));
     expect(onReessayer).toHaveBeenCalledTimes(1);
   });
@@ -93,7 +105,7 @@ describe('<AttenteConnexion />', () => {
     mockReseau.joignable = false;
     const { getByText } = render(<AttenteConnexion onReessayer={() => {}} />);
     await laisserPasserLeDelai();
-    await waitFor(() => expect(getByText('لا يوجد اتصال بالإنترنت')).toBeTruthy());
+    expect(getByText('لا يوجد اتصال بالإنترنت')).toBeTruthy();
     expect(getByText('إعادة المحاولة')).toBeTruthy();
   });
 

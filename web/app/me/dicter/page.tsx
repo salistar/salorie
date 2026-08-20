@@ -13,10 +13,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMe } from '../MeProvider';
 import { useProfil } from '../../../lib/useFirestoreMe';
 import { traducteur, sensLecture, type Langue } from '../../../lib/i18nMe';
-import { genererTexte, extraireObjet, iaConfiguree, IaIndisponible } from '../../../lib/ia';
+import { genererTexte, transcrireAudio, extraireObjet, iaConfiguree, IaIndisponible, IaNonAutorise } from '../../../lib/ia';
 import { ajouterLog, type Creneau } from '../../../lib/ecrireLog';
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || '').trim().replace(/\/$/, '');
 const CRENEAUX: Creneau[] = ['breakfast', 'lunch', 'snack', 'dinner'];
 /** Au-delà, ce n'est plus une phrase mais un enregistrement oublié. */
 const DUREE_MAX_MS = 60_000;
@@ -62,13 +61,10 @@ export default function PageDicter() {
         fr.readAsDataURL(blob);
       });
 
-      const rep = await fetch(`${API_URL}/ai/transcribe`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ audioBase64: base64, mimeType: blob.type || 'audio/webm', language: langue }),
-      });
-      if (!rep.ok) throw new IaIndisponible(`transcribe ${rep.status}`);
-      const dit = String((await rep.json())?.text || '').trim();
+      // Passe par `lib/ia.ts` : c'est lui qui porte le jeton Firebase et le
+      // reessai sur jeton expire. Un `fetch` direct ici oubliait l'autorisation
+      // et recevait un 401 « Missing bearer token ».
+      const dit = await transcrireAudio(base64, blob.type || 'audio/webm', langue);
       if (!dit) { setErreur(t('dicteRienCompris')); setEtat('repos'); return; }
       setTexte(dit);
 
@@ -85,7 +81,7 @@ export default function PageDicter() {
       setEstim(o && String(o.nom || '').trim() ? o : null);
       if (!o || !String(o.nom || '').trim()) setErreur(t('dictePasUnRepas'));
     } catch (e: any) {
-      setErreur(e instanceof IaIndisponible ? t('dicteIndispo') : t('dicteErreur'));
+      setErreur(e instanceof IaNonAutorise ? t('iaSessionExpiree') : e instanceof IaIndisponible ? t('dicteIndispo') : t('dicteErreur'));
     } finally {
       setEtat('repos');
     }

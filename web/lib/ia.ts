@@ -9,9 +9,68 @@
 //
 // Conséquence assumée : sans backend joignable, ces écrans ne fonctionnent pas.
 // Ils le disent, plutôt que de faire semblant.
+import { firebaseAuth } from './firebaseClient';
+
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || '').trim().replace(/\/$/, '');
 
+/**
+ * En-tetes avec le jeton Firebase, exactement comme `lib/aiProxy.ts` du mobile.
+ *
+ * ⚠ Oubli initial de ma part, et il rendait NEUF ecrans inoperants : le backend
+ * refuse `/ai/*` sans `Authorization: Bearer`, avec un 401 « Missing bearer
+ * token ». En local rien ne le montrait — le backend n'y est pas joignable, donc
+ * les pages affichaient sagement « service indisponible » et j'ai cru que
+ * c'etait le comportement attendu hors connexion.
+ */
+async function enTetes(forcer = false): Promise<Record<string, string>> {
+  const jeton = await firebaseAuth().currentUser?.getIdToken(forcer).catch(() => null);
+  return { 'Content-Type': 'application/json', ...(jeton ? { Authorization: `Bearer ${jeton}` } : {}) };
+}
+
+/**
+ * POST vers le backend, avec UN reessai sur 401 en rafraichissant le jeton.
+ *
+ * Un jeton Firebase expire au bout d'une heure. Sans ce reessai, laisser un
+ * onglet /me ouvert une matinee suffirait a rendre tous les ecrans a IA
+ * inoperants, sans que rien n'indique qu'il faut simplement recharger la page.
+ */
+async function poster(chemin: string, corps: any, signal?: AbortSignal): Promise<any> {
+  if (!API_URL) throw new IaIndisponible('NEXT_PUBLIC_API_URL absent');
+  const envoyer = async (forcer: boolean) => {
+    try {
+      return await fetch(`${API_URL}${chemin}`, {
+        method: 'POST',
+        headers: await enTetes(forcer),
+        body: JSON.stringify(corps),
+        signal,
+      });
+    } catch (e: any) {
+      if (e?.name === 'AbortError') throw e;
+      throw new IaIndisponible('backend injoignable');
+    }
+  };
+
+  let rep = await envoyer(false);
+  if (rep.status === 401 || rep.status === 403) rep = await envoyer(true);
+  if (rep.status === 401 || rep.status === 403) throw new IaNonAutorise('jeton refuse');
+  if (!rep.ok) throw new IaIndisponible(`backend ${rep.status}`);
+  return await rep.json().catch(() => null);
+}
+
+/** Transcription audio. Meme contrat que `aiTranscribe` du mobile. */
+export async function transcrireAudio(
+  audioBase64: string,
+  mimeType = 'audio/webm',
+  langue?: string,
+  signal?: AbortSignal,
+): Promise<string> {
+  const data = await poster('/ai/transcribe', { audioBase64, mimeType, language: langue }, signal);
+  return (data?.text ?? '').toString().trim();
+}
+
 export class IaIndisponible extends Error {}
+/** Jeton absent ou expire : distinct d'une panne, et corrigeable en se reconnectant. */
+export class IaNonAutorise extends Error {}
 
 /**
  * Envoie une consigne au backend et renvoie le texte produit.
@@ -21,22 +80,7 @@ export class IaIndisponible extends Error {}
  * surgir dans une page qu'il a quittée.
  */
 export async function genererTexte(consigne: string, signal?: AbortSignal): Promise<string> {
-  if (!API_URL) throw new IaIndisponible('NEXT_PUBLIC_API_URL absent');
-  let rep: Response;
-  try {
-    rep = await fetch(`${API_URL}/ai/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: consigne }),
-      signal,
-    });
-  } catch (e: any) {
-    // AbortError n'est pas une panne : c'est l'utilisateur qui est parti.
-    if (e?.name === 'AbortError') throw e;
-    throw new IaIndisponible('backend injoignable');
-  }
-  if (!rep.ok) throw new IaIndisponible(`backend ${rep.status}`);
-  const data = await rep.json().catch(() => null);
+  const data = await poster('/ai/generate', { prompt: consigne }, signal);
   const texte = (data?.text ?? data?.result ?? data?.output ?? '').toString().trim();
   if (!texte) throw new IaIndisponible('réponse vide');
   return texte;
@@ -56,21 +100,7 @@ export async function analyserImage(
   mimeType = 'image/jpeg',
   signal?: AbortSignal,
 ): Promise<string> {
-  if (!API_URL) throw new IaIndisponible('NEXT_PUBLIC_API_URL absent');
-  let rep: Response;
-  try {
-    rep = await fetch(`${API_URL}/ai/vision`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: consigne, imageBase64, mimeType }),
-      signal,
-    });
-  } catch (e: any) {
-    if (e?.name === 'AbortError') throw e;
-    throw new IaIndisponible('backend injoignable');
-  }
-  if (!rep.ok) throw new IaIndisponible(`backend ${rep.status}`);
-  const data = await rep.json().catch(() => null);
+  const data = await poster('/ai/vision', { prompt: consigne, imageBase64, mimeType }, signal);
   const texte = (data?.text ?? '').toString().trim();
   if (!texte) throw new IaIndisponible('réponse vide');
   return texte;

@@ -91,7 +91,7 @@ export default function PageEquipement() {
         libelles={{
           choisir: t('equipChoisir'), analyse: t('equipAnalyse'), apercu: t('equipApercu'),
           notePhoto: t('equipNotePhoto'), indispo: t('equipIndispo'), erreur: t('equipErreur'),
-          pasDeBackend: t('equipPasDeBackend'),
+          pasDeBackend: t('equipPasDeBackend'), sessionExpiree: t('iaSessionExpiree'),
         }}
       />
     </div>

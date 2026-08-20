@@ -136,7 +136,7 @@ export default function PageEtiquette() {
         libelles={{
           choisir: t('etiqChoisir'), analyse: t('etiqAnalyse'), apercu: t('etiqApercu'),
           notePhoto: t('etiqNotePhoto'), indispo: t('etiqIndispo'), erreur: t('etiqErreur'),
-          pasDeBackend: t('etiqPasDeBackend'),
+          pasDeBackend: t('etiqPasDeBackend'), sessionExpiree: t('iaSessionExpiree'),
         }}
       />
     </div>

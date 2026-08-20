@@ -47,7 +47,7 @@ export default function PageFrigo() {
         libelles={{
           choisir: t('frigoChoisir'), analyse: t('frigoAnalyse'), apercu: t('frigoApercu'),
           notePhoto: t('frigoNotePhoto'), indispo: t('frigoIndispo'), erreur: t('frigoErreur'),
-          pasDeBackend: t('frigoPasDeBackend'),
+          pasDeBackend: t('frigoPasDeBackend'), sessionExpiree: t('iaSessionExpiree'),
         }}
       />
     </div>

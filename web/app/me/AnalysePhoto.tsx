@@ -13,7 +13,7 @@
 //   - retirer le préfixe `data:` du base64, sinon le décodage serveur échoue ;
 //   - dire que le backend manque, plutôt qu'un bouton qui échoue en silence.
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { analyserImage, fichierVersBase64, iaConfiguree, IaIndisponible } from '../../lib/ia';
+import { analyserImage, fichierVersBase64, iaConfiguree, IaIndisponible, IaNonAutorise } from '../../lib/ia';
 
 interface Props {
   /** Consigne envoyée au modèle avec l'image. */
@@ -27,6 +27,8 @@ interface Props {
     indispo: string;
     erreur: string;
     pasDeBackend: string;
+    /** Session expiree (401) : distinct d'une panne — se reconnecter suffit. */
+    sessionExpiree?: string;
   };
   /** Rendu de la réponse. Par défaut, du texte brut. */
   rendu?: (reponse: string) => ReactNode;
@@ -61,7 +63,11 @@ export default function AnalysePhoto({ consigne, libelles, rendu, onReponse }: P
       onReponse?.(txt);
     } catch (e: any) {
       if (e?.name === 'AbortError') return;
-      setErreur(e instanceof IaIndisponible ? libelles.indispo : libelles.erreur);
+      setErreur(
+        e instanceof IaNonAutorise ? (libelles.sessionExpiree || libelles.erreur)
+        : e instanceof IaIndisponible ? libelles.indispo
+        : libelles.erreur,
+      );
     } finally {
       if (!ctrl.signal.aborted) setOccupe(false);
     }
