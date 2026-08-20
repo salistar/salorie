@@ -270,8 +270,13 @@ export class SocialGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Invisible dans le parcours habituel (celui qui cree le duo entre en premier),
     // le defaut apparaissait des que l'invite ouvrait le lien le premier.
     // Constate a l'ecran le 20/08/2026, entre deux onglets.
-    for (const s of autres) {
-      socket.emit('duo:arrivee', { auteur: h((s.data as any).uid) });
+    // On part de `dedans`, PAS de `autres` : cette derniere sert au controle
+    // d'amitie et exclut donc les sockets du MEME compte. Les reutiliser ici
+    // rendait la presence muette entre deux fenetres d'un meme compte — le cas
+    // exact d'un essai, et celui d'une personne qui ouvre son duo sur deux
+    // appareils. La presence ne regarde que le salon, pas l'identite.
+    for (const s of dedans) {
+      if (s.id !== socket.id) socket.emit('duo:arrivee', { auteur: h((s.data as any).uid) });
     }
   }
 
