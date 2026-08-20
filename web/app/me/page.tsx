@@ -205,7 +205,7 @@ export default function AccueilMe() {
     <div className="me-page">
       <header className="me-entete">
         <h1>
-          Bon retour, <span className="me-prenom">{nom}</span> 👋
+          Bon retour, <span className="me-prenom">{nom}</span>
         </h1>
         <p className="me-sous">
           {objectif ? (
