@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Modal, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Bell, Sun, Moon, Smartphone, Globe, ArrowLeft } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
@@ -37,6 +38,7 @@ interface ScreenTopBarProps {
 
 export default function ScreenTopBar({ showBrand = true, showNotif = true, showBack = false, title, onBack }: ScreenTopBarProps) {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { mode, setMode, resolved, colors } = useTheme();
   const { language, setLanguage, isRTL } = useTranslation();
   const [langMenuOpen, setLangMenuOpen] = useState(false);
@@ -63,7 +65,13 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
   const a11y = A11Y_LABELS[language] || A11Y_LABELS.en;
 
   return (
-    <View style={[styles.row, isRTL && { flexDirection: 'row-reverse' }]}>
+    // L'app dessine BORD A BORD sur Android : sans ce decalage, la barre se
+    // glisse sous l'heure et la batterie — le logo recouvrait l'icone systeme,
+    // les boutons Langue et Theme passaient sous le wifi. `SafeAreaView` de
+    // react-native n'y change rien : il n'agit QUE sur iOS. Seul
+    // react-native-safe-area-context mesure l'encoche sur Android.
+    // 12 px restent le respirant habituel quand il n'y a pas d'encoche.
+    <View style={[styles.row, { paddingTop: insets.top + 12 }, isRTL && { flexDirection: 'row-reverse' }]}>
       <View style={[styles.leading, isRTL && { flexDirection: 'row-reverse' }]}>
         {showBack && (
           <TouchableOpacity

@@ -15,7 +15,8 @@ import { useSignIn } from '@clerk/clerk-expo';
 import * as Sentry from '@sentry/react-native';
 import { useGoogleSSO, OAUTH_REDIRECT } from '../../lib/googleSSO';
 import { useRouter, Link } from 'expo-router';
-import { Mail, Lock, ArrowRight, Globe, ArrowLeft } from 'lucide-react-native';
+import { Mail, Lock, ArrowRight } from 'lucide-react-native';
+import LogoGoogle from '../../components/LogoGoogle';
 import { useTranslation, Language } from '../../lib/i18n';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
@@ -217,14 +218,17 @@ export default function SignInScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <View style={[styles.topRow, { flexDirection: rowDir(isRTL) }]}>
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={styles.backBtn} onPress={() => router.replace('/welcome' as any)}>
-          <ArrowLeft size={20} color={isDark ? Colors.dark.gray[700] : Colors.light.gray[700]} style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }} />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <ScreenTopBar showBrand={false} showNotif={false} />
-        </View>
-      </View>
+      {/* Le bouton retour est celui de ScreenTopBar, pas un bouton pose A COTE.
+          Assemble a la main, il ne recevait pas le decalage de l'encoche que la
+          barre s'applique, et se retrouvait ~35 px plus haut que le logo et les
+          boutons de droite. Au passage : un seul bouton retour dans l'app, avec
+          son inversion RTL et son libelle d'accessibilite deja traites. */}
+      <ScreenTopBar
+        showBrand={false}
+        showNotif={false}
+        showBack
+        onBack={() => router.replace('/welcome' as any)}
+      />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <View style={styles.logoWrapper}>
@@ -300,7 +304,7 @@ export default function SignInScreen() {
             style={[styles.googleButton, { backgroundColor: cardBg, borderColor: dividerColor, flexDirection: rowDir(isRTL) }]}
             onPress={onGoogleSignInPress}
           >
-            <Globe size={20} color={isDark ? '#fff' : '#222'} style={styles.googleIcon} />
+            <View style={styles.googleIcon}><LogoGoogle size={20} /></View>
             <Text style={[styles.googleButtonText, { color: textPrimary }]}>{t('auth.continue_google')}</Text>
           </TouchableOpacity>
         </View>
@@ -324,21 +328,6 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 16,
-    borderWidth: 1,
-    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
   },
   scrollContent: {
     flexGrow: 1,

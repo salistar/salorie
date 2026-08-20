@@ -65,8 +65,12 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // `.*\..*` : tout chemin AVEC UNE EXTENSION (robots.txt, sitemap.xml, og.png,
-  // screenshots/*.png…) est un fichier public — le middleware n'a rien a y faire.
-  // Avant cette exclusion, robots.txt repondait... la page de connexion.
+  // ⚠ NE JAMAIS AJOUTER DE MOTIF A LA CLAUSE DE NEGATION `(?!…)`.
+  // Le 20/08/2026, y ajouter `.*\..*` pour laisser passer robots.txt a ouvert une
+  // FAILLE : a la compilation du motif, `\.` devient `.` (n'importe quel caractere),
+  // donc la negation excluait TOUT — /admin etait servi SANS jeton, emails exposes.
+  // Les fichiers publics (un point dans le dernier segment) sont traites DANS LE
+  // CORPS du middleware, ou aucune regle d'echappement ne se retourne contre nous.
+  // Apres tout changement ici : re-tester `/admin` sans cookie (doit repondre 307).
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

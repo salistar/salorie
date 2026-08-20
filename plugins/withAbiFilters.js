@@ -26,9 +26,24 @@
 // A savoir : Play decoupe deja l'AAB par appareil a la livraison, donc un utilisateur ne
 // telechargeait pas ces 74 Mo. Le gain porte sur le poids de l'AAB depose et sur la duree
 // de compilation, pas sur ce que telecharge l'utilisateur final.
+//
+// EMULATEUR DU POSTE DE DEV
+//
+// Un emulateur Android tourne en x86_64. Meme quand il annonce `arm64-v8a` dans sa
+// liste d'ABI (traduction ARM), SoLoader cherche l'ABI PRIMAIRE du systeme : sans
+// lib/x86_64 dans l'APK, l'app meurt au demarrage sur
+// `couldn't find DSO to load: libreactnative.so`. D'ou la variable ci-dessous, qui
+// laisse ouvrir l'app sur un emulateur SANS toucher a ce qui part sur le Play Store :
+//
+//     SALORIE_ABIS=x86_64 npx expo prebuild --platform android --clean
+//     cd android && ./gradlew assembleDebug -PreactNativeArchitectures=x86_64
+//
+// Sans la variable, la valeur est EXACTEMENT celle d'avant.
 const { withAppBuildGradle } = require('@expo/config-plugins');
 
-const ABIS = ["'armeabi-v7a'", "'arm64-v8a'"];
+const ABIS = (process.env.SALORIE_ABIS || 'armeabi-v7a,arm64-v8a')
+  .split(',')
+  .map((a) => `'${a.trim()}'`);
 const MARKER = 'abiFilters';
 
 module.exports = function withAbiFilters(config) {
