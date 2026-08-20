@@ -21,7 +21,13 @@ export async function middleware(req: NextRequest) {
   if (pathname === ESPACE_PERSONNEL || pathname.startsWith(ESPACE_PERSONNEL + '/')) {
     return NextResponse.next();
   }
-  // Routes publiques : pages d'auth + API d'auth
+  // Fichiers publics servis a la racine par la landing (robots.txt, sitemap.xml,
+  // og.png, screenshots/*). Un point dans le DERNIER segment = un fichier statique.
+  const dernier = pathname.split('/').pop() || '';
+  if (dernier.includes('.')) {
+    return NextResponse.next();
+  }
+  // Routes publiques : pages d'auth + API d'auth + landing.
   if (pathname.startsWith('/api/auth') || PUBLIC.some((p) => pathname === p || pathname.startsWith(p + '/'))
       || LANDING.some((r) => pathname === r || (r !== '/' && pathname.startsWith(r + '/')))) {
     return NextResponse.next();
@@ -62,5 +68,5 @@ export const config = {
   // `.*\..*` : tout chemin AVEC UNE EXTENSION (robots.txt, sitemap.xml, og.png,
   // screenshots/*.png…) est un fichier public — le middleware n'a rien a y faire.
   // Avant cette exclusion, robots.txt repondait... la page de connexion.
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\..*).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };
