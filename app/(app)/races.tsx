@@ -258,7 +258,7 @@ export default function RacesScreen() {
       {/* Header */}
       <View style={[styles.header, { flexDirection: rowDir }]}>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backBtn, { backgroundColor: card }]} onPress={() => router.back()}>
-          <ArrowLeft size={22} color={text} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+          <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ArrowLeft size={22} color={text} /></View>
         </TouchableOpacity>
         <Text style={[styles.title, { color: text }]}>{t.title}</Text>
         <View style={styles.backBtn} />
@@ -289,7 +289,7 @@ export default function RacesScreen() {
             >
               <View style={styles.communityIcon}><RouteIcon size={20} color={PRIMARY} /></View>
               <Text style={[styles.communityTxt, { color: text, textAlign: align }]} numberOfLines={1}>{t.community}</Text>
-              <ChevronRight size={20} color={sub} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+              <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ChevronRight size={20} color={sub} /></View>
             </TouchableOpacity>
 
             {/* Race list */}
@@ -316,7 +316,7 @@ export default function RacesScreen() {
                   <View style={[styles.badge, r.status === 'live' && styles.badgeLive]}>
                     <Text style={[styles.badgeTxt, r.status === 'live' && { color: '#fff' }]}>{statusLabel(r.status)}</Text>
                   </View>
-                  <ChevronRight size={20} color={sub} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+                  <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ChevronRight size={20} color={sub} /></View>
                 </TouchableOpacity>
               ))
             )}

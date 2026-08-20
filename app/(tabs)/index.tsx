@@ -235,7 +235,7 @@ export default function HomeScreen() {
                 {s.d} · {mealStreak.streak} {mealStreak.streak > 1 ? s.days : s.day}
                 {mealStreak.freezes > 0 ? `   🛡️ ${s.prot}${mealStreak.freezes > 1 ? ` ×${mealStreak.freezes}` : ''}` : ''}
               </Text>
-              <ChevronRight size={18} color={colors.gray[400]} style={flipAuto()} />
+              <View style={flipAuto()}><ChevronRight size={18} color={colors.gray[400]} /></View>
             </TouchableOpacity>
           );
         })()}</FeatureGate>

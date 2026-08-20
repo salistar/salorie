@@ -400,7 +400,7 @@ export default function RunScreen() {
       )}
 
       <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.back, { backgroundColor: card }]} onPress={() => router.back()}>
-        <ArrowLeft size={22} color={text} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+        <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ArrowLeft size={22} color={text} /></View>
       </TouchableOpacity>
 
       <View style={[styles.panel, { backgroundColor: card }]}>

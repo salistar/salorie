@@ -103,12 +103,10 @@ export default function LogExerciseScreen() {
                   {option.desc}
                 </Text>
               </View>
-              <ChevronRight
+              <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ChevronRight
                 size={20}
                 color={textMuted}
-                strokeWidth={3}
-                style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}
-              />
+                strokeWidth={3} /></View>
             </TouchableOpacity>
           ))}
         </View>

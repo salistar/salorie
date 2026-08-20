@@ -180,7 +180,7 @@ export default function DefisTab() {
                           <Text style={[{ ...(type.cardTitle as any), color: colors.gray[900], fontSize: 13.5 }, align]} numberOfLines={1}>{n.title}</Text>
                           {n.body ? <Text style={[{ ...(type.micro as any), color: colors.gray[500], marginTop: 2 }, align]} numberOfLines={1}>{n.body}</Text> : null}
                         </View>
-                        <ChevronRight size={16} color={colors.gray[400]} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+                        <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ChevronRight size={16} color={colors.gray[400]} /></View>
                       </Card>
                     </TouchableOpacity>
                   ))}

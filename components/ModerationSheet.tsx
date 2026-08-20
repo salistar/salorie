@@ -94,7 +94,7 @@ export default function ModerationSheet({
         <Pressable style={[styles.sheet, { backgroundColor: sheetBg }]} onPress={(e) => e.stopPropagation()}>
           <View style={[styles.header, isRTL && { flexDirection: 'row-reverse' }]}>
             {step === 'reasons' ? (
-              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} onPress={() => setStep('menu')} hitSlop={10}><ChevronLeft size={22} color={sub} style={flipAuto()} /></TouchableOpacity>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} onPress={() => setStep('menu')} hitSlop={10}><View style={flipAuto()}><ChevronLeft size={22} color={sub} /></View></TouchableOpacity>
             ) : <View style={{ width: 22 }} />}
             <Text style={[styles.title, { color: text }]}>{step === 'reasons' ? t.reason_q : t.title}</Text>
             <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={close} hitSlop={10}><X size={22} color={sub} /></TouchableOpacity>

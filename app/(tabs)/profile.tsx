@@ -227,7 +227,7 @@ export default function ProfileScreen() {
         <Text style={styles.menuLabel}>{label}</Text>
         {subtext && <Text style={styles.menuSubtext}>{subtext}</Text>}
       </View>
-      <ChevronRight size={18} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} style={flipAuto()} />
+      <View style={flipAuto()}><ChevronRight size={18} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} /></View>
     </TouchableOpacity>
   );
 
@@ -309,7 +309,7 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.trialButton}>
                 <Text style={styles.trialButtonText}>{t('profile.start')}</Text>
-                <ArrowRight size={16} color={Colors.light.white} style={flipAuto()} />
+                <View style={flipAuto()}><ArrowRight size={16} color={Colors.light.white} /></View>
               </View>
             </View>
           </TouchableOpacity>

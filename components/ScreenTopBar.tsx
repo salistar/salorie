@@ -80,7 +80,7 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
             accessibilityRole="button"
             accessibilityLabel={a11y.back}
           >
-            <ArrowLeft size={20} color={iconColor} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+            <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ArrowLeft size={20} color={iconColor} /></View>
           </TouchableOpacity>
         )}
         {/* Flame logo — affiché quand il n'y a PAS de titre d'écran (sinon le logo
@@ -141,7 +141,7 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
 
       {/* Language menu */}
       <Modal visible={langMenuOpen} transparent animationType="fade" onRequestClose={() => setLangMenuOpen(false)}>
-        <Pressable style={[styles.modalBackdrop, directionAuto()]} onPress={() => setLangMenuOpen(false)}>
+        <Pressable style={[styles.modalBackdrop, { alignItems: isRTL ? 'flex-start' : 'flex-end', paddingTop: insets.top + 60 }, directionAuto()]} onPress={() => setLangMenuOpen(false)}>
           <View style={[styles.menu, { backgroundColor: menuBg }]}>
             {(['en', 'fr', 'ar'] as Language[]).map((lang) => (
               <TouchableOpacity
@@ -172,7 +172,7 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
 
       {/* Theme menu */}
       <Modal visible={themeMenuOpen} transparent animationType="fade" onRequestClose={() => setThemeMenuOpen(false)}>
-        <Pressable style={[styles.modalBackdrop, directionAuto()]} onPress={() => setThemeMenuOpen(false)}>
+        <Pressable style={[styles.modalBackdrop, { alignItems: isRTL ? 'flex-start' : 'flex-end', paddingTop: insets.top + 60 }, directionAuto()]} onPress={() => setThemeMenuOpen(false)}>
           <View style={[styles.menu, { backgroundColor: menuBg }]}>
             {(['light', 'dark', 'system'] as ThemeMode[]).map((m) => {
               const Icon = themeIcons[m];
@@ -297,8 +297,10 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.2)',
     justifyContent: 'flex-start',
-    alignItems: 'flex-end',
-    paddingTop: 72,
+    // `alignItems` et `paddingTop` sont poses au point d'usage : le menu doit
+    // tomber SOUS SON PROPRE BOUTON. Figes ici a 'flex-end' et 72 px, ils
+    // collaient le menu a droite alors qu'en arabe le bouton passe a gauche —
+    // on tapait a gauche, le menu surgissait a droite.
     paddingHorizontal: 20,
   },
   menu: {

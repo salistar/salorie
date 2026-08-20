@@ -306,7 +306,7 @@ export default function LiveTwinScreen() {
               </Text>
             </View>
             <TouchableOpacity style={[styles.leaveBtn, { flexDirection: rowDir(isRTL) }]} onPress={leaveCurrent}>
-              <LogOut size={15} color={Colors.red} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+              <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><LogOut size={15} color={Colors.red} /></View>
               <Text style={styles.leaveTxt}>{t.leave}</Text>
             </TouchableOpacity>
           </View>

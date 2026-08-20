@@ -31,7 +31,7 @@ export default function CollapsibleSection({ title, defaultOpen = false, childre
     <View style={styles.wrap}>
       <TouchableOpacity style={styles.header} activeOpacity={0.7} onPress={toggle}>
         <Text style={[styles.title, { color: titleColor }]}>{title}</Text>
-        {open ? <ChevronDown size={20} color={tint} /> : <ChevronRight size={20} color={tint} style={flipAuto()} />}
+        {open ? <ChevronDown size={20} color={tint} /> : <View style={flipAuto()}><ChevronRight size={20} color={tint} /></View>}
       </TouchableOpacity>
       {open && <View style={styles.body}>{children}</View>}
     </View>

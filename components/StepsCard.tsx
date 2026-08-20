@@ -94,7 +94,7 @@ export default function StepsCard() {
               </View>
               <View style={[styles.head, row(), { gap: 8 }]}>
                 <View style={styles.modePill}><Text style={styles.modePillTxt}>{mode === 'sim' ? 'SIM' : t.real}</Text></View>
-                <ChevronRight size={22} color="rgba(255,255,255,0.9)" style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+                <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ChevronRight size={22} color="rgba(255,255,255,0.9)" /></View>
               </View>
             </View>
 

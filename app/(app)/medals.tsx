@@ -86,14 +86,14 @@ export default function Medals() {
         <TouchableOpacity style={[s.sadaqaLink, { flexDirection: rowDir(isRTL) }]} activeOpacity={0.7} onPress={() => router.push('/sadaqa')}>
           <HandHeart size={16} color={GREEN} />
           <Text style={[s.sadaqaTxt, { color: GREEN }]}>{t.sadaqa}</Text>
-          <ChevronRight size={15} color={GREEN} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+          <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ChevronRight size={15} color={GREEN} /></View>
         </TouchableOpacity>
 
         {/* Lien vers les Récompenses commerçants locaux (O2O : effort → bon partenaire). */}
         <TouchableOpacity style={[s.sadaqaLink, { flexDirection: rowDir(isRTL) }]} activeOpacity={0.7} onPress={() => router.push('/rewards')}>
           <Gift size={16} color={GREEN} />
           <Text style={[s.sadaqaTxt, { color: GREEN }]}>{t.rewards}</Text>
-          <ChevronRight size={15} color={GREEN} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+          <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ChevronRight size={15} color={GREEN} /></View>
         </TouchableOpacity>
 
         {loading ? <ActivityIndicator color={GREEN} style={{ marginTop: 40 }} />

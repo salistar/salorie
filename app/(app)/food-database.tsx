@@ -302,7 +302,7 @@ export default function FoodDatabaseScreen() {
       <ScreenTopBar />
       <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backBtn, { backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] }]} onPress={() => router.back()}>
-          <ArrowLeft size={28} color={isDark ? '#fff' : Colors.light.gray[900]} strokeWidth={2.5} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+          <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ArrowLeft size={28} color={isDark ? '#fff' : Colors.light.gray[900]} strokeWidth={2.5} /></View>
         </TouchableOpacity>
         <Text numberOfLines={1} style={[styles.headerTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{t.title}</Text>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('scanner')} style={styles.scanBtn} onPress={() => router.push('/scan-barcode' as any)}>

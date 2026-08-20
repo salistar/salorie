@@ -330,7 +330,7 @@ export default function ResultsScreen() {
         {/* AHA MOMENT : CTA principal vers le logging du premier repas. */}
         <TouchableOpacity disabled={saving} style={[styles.finishButton, { flexDirection: isRTL ? 'row-reverse' : 'row', opacity: saving ? 0.7 : 1 }]} onPress={() => finishOnboarding('/food-database')}>
           <Text style={styles.finishButtonText}>{t.logFirstMeal}</Text>
-          <ArrowRight size={24} color={Colors.light.white} style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+          <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ArrowRight size={24} color={Colors.light.white} /></View>
         </TouchableOpacity>
         {/* Secondaire : continuer plus tard, direct au tableau de bord. */}
         <TouchableOpacity disabled={saving} style={styles.laterButton} onPress={() => finishOnboarding('/(tabs)')}>

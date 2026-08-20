@@ -573,7 +573,7 @@ export default function AnalyticsScreen() {
                 })()}
 
                 <View style={styles.nextIconContainer}>
-                  <ChevronRight size={18} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} strokeWidth={3} style={flipAuto()} />
+                  <View style={flipAuto()}><ChevronRight size={18} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} strokeWidth={3} /></View>
                 </View>
               </Animated.View>
             </TouchableOpacity>
