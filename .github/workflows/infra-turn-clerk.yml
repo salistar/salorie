@@ -156,7 +156,7 @@ jobs:
               echo "CLERK_SECRET_KEY introuvable : etape sautee (rien de casse)."
             fi
 
-      - name: DNS turn.salorie.com (Cloudflare, DNS seul)
+      - name: DNS turn + www (Cloudflare, DNS seul)
         if: ${{ inputs.appliquer }}
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
@@ -175,17 +175,30 @@ jobs:
           fi
           echo "zone trouvee : $ZONE"
 
-          EXISTANT=$(api "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records?name=turn.salorie.com" \
+          # Deux enregistrements, meme traitement :
+          #  . turn — le relais d appel, en DNS SEUL. `proxied: false` est
+          #    OBLIGATOIRE : Cloudflare ne relaie pas l UDP, et un enregistrement
+          #    proxifie ferait pointer le client vers un edge qui ne parle pas TURN.
+          #  . www  — l apex repond deja, mais `www.salorie.com` ne resolvait PAS :
+          #    une adresse que beaucoup tapent d instinct tombait dans le vide. Le
+          #    bloc de redirection existe dans le Caddyfile depuis le 20/08 et
+          #    n attendait que cet enregistrement. DNS seul aussi, pour que la
+          #    redirection vienne de Caddy et non d un edge intermediaire.
+          for NOM in turn www; do
+            EXISTANT=$(api "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records?name=$NOM.salorie.com" \
             | sed -n 's/.*"id":"\([a-f0-9]\{32\}\)".*/\1/p' | head -1)
-          # `proxied: false` est OBLIGATOIRE : Cloudflare ne relaie pas l UDP, et un
-          # enregistrement proxifie ferait pointer le client vers un edge qui ne
-          # parle pas TURN.
-          CORPS="{\"type\":\"A\",\"name\":\"turn\",\"content\":\"$VPS_HOST\",\"ttl\":300,\"proxied\":false}"
-
-          if [ -n "$EXISTANT" ]; then
-            echo "enregistrement deja present — mise a jour"
-            api -X PUT "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records/$EXISTANT" -d "$CORPS" | head -c 300
-          else
-            api -X POST "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records" -d "$CORPS" | head -c 300
-          fi
-          echo
+            CORPS="{\"type\":\"A\",\"name\":\"$NOM\",\"content\":\"$VPS_HOST\",\"ttl\":300,\"proxied\":false}"
+            if [ -n "$EXISTANT" ]; then
+              echo "--- $NOM : deja present, mise a jour"
+              api -X PUT "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records/$EXISTANT" -d "$CORPS" \
+                | sed -n 's/.*"success":\(true\|false\).*/    succes=\1/p'
+            else
+              echo "--- $NOM : absent, creation"
+              api -X POST "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records" -d "$CORPS" \
+                | sed -n 's/.*"success":\(true\|false\).*/    succes=\1/p'
+            fi
+          done
+          echo "--- resolution apres coup ---"
+          for N in turn.salorie.com www.salorie.com; do
+            printf "    %-22s %s\n" "$N" "$(getent hosts $N | awk '{print $1}' | head -1 || echo INEXISTANT)"
+          done
