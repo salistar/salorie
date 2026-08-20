@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /me
+Disallow: /admin
+Disallow: /login
+Disallow: /register
+Disallow: /users
+Disallow: /moderation
+Disallow: /premium
+Disallow: /orgs
+Disallow: /api
+
+Sitemap: https://salorie.com/sitemap.xml

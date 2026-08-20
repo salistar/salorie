@@ -33,13 +33,16 @@ export default function Sidebar() {
   // /me est l'espace des UTILISATEURS, pas du back-office : il porte sa propre
   // navigation (cf. app/me/MeNav.tsx) et ne doit rien laisser filtrer de l'admin.
   if (path === '/me' || path.startsWith('/me/')) return null;
+  // Les pages PUBLIQUES (landing fusionnee) n'ont pas de chrome d'admin.
+  const PUBLIQUES = ['/', '/ar', '/en', '/contact', '/privacy', '/terms', '/refund', '/delete-account'];
+  if (PUBLIQUES.some((r) => path === r || path.startsWith(r + '/'))) return null;
 
   // Tant que la session n'est pas connue, on affiche le menu du role le plus
   // RESTREINT plutot que le plus large : mieux vaut un lien qui apparait une demi-
   // seconde plus tard qu'un lien interdit qui clignote a l'ecran.
   const sections = session ? sectionsVisibles(session.role, session.scopes) : [];
   const isActive = (href: string) =>
-    href === '/' ? path === '/' || path.startsWith('/users') : path.startsWith(href);
+    href === '/admin' ? path === '/admin' || path.startsWith('/users') : path.startsWith(href);
 
   return (
     <aside className="sidebar">

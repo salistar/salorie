@@ -37,7 +37,7 @@ export type Section = {
 };
 
 export const SECTIONS: Section[] = [
-  { href: '/', label: "Vue d'ensemble", icone: '📊', scope: 'apercu', aussi: ['/users'] },
+  { href: '/admin', label: "Vue d'ensemble", icone: '📊', scope: 'apercu', aussi: ['/users'] },
   { href: '/notify', label: 'Notifications', icone: '📣', scope: 'notifications' },
   { href: '/news', label: 'Journal app', icone: '📰', scope: 'journal' },
   { href: '/races', label: 'Courses virtuelles', icone: '🏁', scope: 'courses' },
