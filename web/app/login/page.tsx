@@ -20,7 +20,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
       const j = await r.json();
-      if (j.ok) { router.push('/'); router.refresh(); }
+      if (j.ok) { router.push('/admin'); router.refresh(); }
       else setErr(j.error || 'Identifiants invalides');
     } catch { setErr('Erreur réseau'); }
     finally { setLoading(false); }

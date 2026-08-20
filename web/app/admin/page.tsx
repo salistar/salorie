@@ -1,6 +1,6 @@
-import { listUsers, getRecentEvents, AdminUser } from '../lib/firebaseAdmin';
-import { withTimeout } from '../lib/withTimeout';
-import AutoRefresh from './AutoRefresh';
+import { listUsers, getRecentEvents, AdminUser } from '../../lib/firebaseAdmin';
+import { withTimeout } from '../../lib/withTimeout';
+import AutoRefresh from '../AutoRefresh';
 
 export const dynamic = 'force-dynamic'; // always read fresh from Firestore
 

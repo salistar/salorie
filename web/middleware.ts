@@ -5,6 +5,8 @@ import { sectionDuChemin, peutVoir, sectionsVisibles, peutAppelerApi } from './l
 // Auth gate basée sur un JWT cookie (login/register custom + MongoDB).
 // Remplace l'ancien HTTP Basic Auth. Edge-safe (jose uniquement, pas de mongoose).
 const PUBLIC = ['/login', '/register'];
+// Landing fusionnee (ex-depot salorie-landing) : pages publiques par nature.
+const LANDING = ['/', '/ar', '/en', '/contact', '/privacy', '/terms', '/refund', '/delete-account'];
 
 // L'espace personnel /me a son PROPRE gardien — Clerk, cote navigateur, avec la meme
 // instance que l'app mobile. Le laisser tomber dans le portail par jeton d'admin
@@ -20,7 +22,8 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
   // Routes publiques : pages d'auth + API d'auth
-  if (pathname.startsWith('/api/auth') || PUBLIC.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
+  if (pathname.startsWith('/api/auth') || PUBLIC.some((p) => pathname === p || pathname.startsWith(p + '/'))
+      || LANDING.some((r) => pathname === r || (r !== '/' && pathname.startsWith(r + '/')))) {
     return NextResponse.next();
   }
   const token = req.cookies.get(AUTH_COOKIE)?.value;
