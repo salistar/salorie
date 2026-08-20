@@ -51,7 +51,7 @@ export default function PageAnalyses() {
       if (l.type !== 'meal' || !l.date) continue;
       if (somme.has(l.date)) somme.set(l.date, (somme.get(l.date) || 0) + (Number(l.calories) || 0));
     }
-    return jours.map((j) => ({ x: j.slice(5), y: somme.get(j) || 0 }));
+    return jours.map((j) => ({ x: j, y: somme.get(j) || 0 }));
   }, [jours, lignes]);
 
   const courbePoids = useMemo(

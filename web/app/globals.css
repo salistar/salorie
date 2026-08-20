@@ -1520,3 +1520,27 @@ tbody tr:last-child td { border-bottom: none; }
 .abo-texte { min-width: 0; }
 .abo-texte strong { display: block; margin-bottom: 2px; }
 
+/* ── Barres 30 j (Analyses) : le traitement de la semaine, a l'echelle du mois. */
+.g30-zone { position: relative; }
+.g30-jour { cursor: default; outline: none; }
+.g30-jour:focus-visible .g30-barre, .g30-barre.vise { filter: brightness(1.22); }
+.g30-barre {
+  fill: color-mix(in srgb, var(--green) 34%, var(--inset));
+  transition: filter .12s ease;
+}
+.g30-barre.actuel { fill: var(--green); }
+/* Depassement de l'objectif : l'ambre + la POSITION au-dessus du trait — le
+   sens n'est jamais porte par la couleur seule. */
+.g30-barre.depasse { fill: var(--c-ambre); }
+.g30-fantome { fill: color-mix(in srgb, var(--muted) 25%, transparent); }
+.g30-cible-txt { font-size: 10px; fill: var(--muted); font-weight: 650; }
+.g30-bulle { top: -2px; }
+
+/* Sparkline des tuiles : la forme, rien que la forme. */
+.me-tuile-spark {
+  display: block; width: 100%; height: 26px; margin-top: 10px;
+  color: color-mix(in srgb, var(--green) 75%, var(--muted));
+  overflow: visible;
+}
+.me-tuile.accent .me-tuile-spark { color: var(--green); }
+

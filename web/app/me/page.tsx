@@ -16,22 +16,52 @@ const OBJECTIFS: Record<string, string> = {
   build_muscle: 'Prendre du muscle',
 };
 
+/**
+ * Mini-tendance d'une tuile : la FORME des sept derniers jours, rien d'autre.
+ * Pas d'axes, pas d'etiquettes, pas de bulle — c'est le regime du sparkline :
+ * il accompagne un chiffre, il ne le remplace pas. Un point marque la fin.
+ */
+function Sparkline({ valeurs }: { valeurs: number[] }) {
+  // Tout a zero : ne rien dessiner. Une ligne plate au ras du sol ressemblerait
+  // a une donnee, alors que c'est une absence.
+  if (!valeurs.length || valeurs.every((v) => v === 0)) return null;
+  const L = 100;
+  const H = 28;
+  const max = Math.max(...valeurs, 1);
+  const pts = valeurs.map((v, i) => ({
+    x: (i / (valeurs.length - 1)) * (L - 6) + 3,
+    y: H - 4 - (v / max) * (H - 8),
+  }));
+  const d = 'M ' + pts.map((p2) => `${p2.x.toFixed(1)},${p2.y.toFixed(1)}`).join(' L ');
+  const fin = pts[pts.length - 1];
+  return (
+    <svg className="me-tuile-spark" viewBox={`0 0 ${L} ${H}`} preserveAspectRatio="none" aria-hidden>
+      <path d={d} fill="none" stroke="currentColor" strokeWidth="2"
+            strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+      <circle cx={fin.x} cy={fin.y} r="2.6" fill="currentColor" />
+    </svg>
+  );
+}
+
 function Tuile({
   titre,
   valeur,
   detail,
   accent,
+  spark,
 }: {
   titre: string;
   valeur: string;
   detail?: string;
   accent?: boolean;
+  spark?: number[];
 }) {
   return (
     <div className={`me-tuile${accent ? ' accent' : ''}`}>
       <div className="me-tuile-titre">{titre}</div>
       <div className="me-tuile-valeur">{valeur}</div>
       {detail ? <div className="me-tuile-detail">{detail}</div> : null}
+      {spark ? <Sparkline valeurs={spark} /> : null}
     </div>
   );
 }
@@ -52,8 +82,7 @@ function jourDecale(n: number): string {
  * série. Étiquettes SÉLECTIVES : la valeur ne s'affiche que sur aujourd'hui et
  * sur le jour survolé ou focalisé — un chiffre sur chaque barre serait du bruit.
  */
-function SemaineKcal({ uid, cible }: { uid: string; cible: number }) {
-  const { lignes } = useLogsDepuis(uid, jourDecale(-6));
+function SemaineKcal({ lignes, cible }: { lignes: any[]; cible: number }) {
   const [survol, setSurvol] = useState<number | null>(null);
 
   const jours = useMemo(() => {
@@ -132,6 +161,29 @@ export default function AccueilMe() {
   const { lignes } = useJournal(uid, aujourdhui);
   const t = totaux(lignes);
 
+  // UNE lecture de sept jours, partagee entre le graphique de la semaine et
+  // les mini-tendances des tuiles — pas une requete par tuile.
+  const { lignes: semaine } = useLogsDepuis(uid, jourDecale(-6));
+  const tendances = useMemo(() => {
+    const jours = Array.from({ length: 7 }, (_, i) => jourDecale(i - 6));
+    const zero = () => new Map(jours.map((j) => [j, 0]));
+    const kcal = zero(), prot = zero(), brulees = zero(), eau = zero();
+    for (const l of semaine) {
+      if (!l.date || !kcal.has(l.date)) continue;
+      const v = Number(l.calories) || 0;
+      if (l.type === 'meal') {
+        kcal.set(l.date, (kcal.get(l.date) || 0) + v);
+        prot.set(l.date, (prot.get(l.date) || 0) + (Number(l.protein) || 0));
+      } else if (l.type === 'activity') {
+        brulees.set(l.date, (brulees.get(l.date) || 0) + v);
+      } else if (l.type === 'water') {
+        eau.set(l.date, (eau.get(l.date) || 0) + v);
+      }
+    }
+    const serie = (m: Map<string, number>) => jours.map((j) => m.get(j) || 0);
+    return { kcal: serie(kcal), prot: serie(prot), brulees: serie(brulees), eau: serie(eau) };
+  }, [semaine]);
+
   const nom = profil?.firstName || prenom || email.split('@')[0];
   const objectif = profil?.goal ? OBJECTIFS[profil.goal] || profil.goal : null;
   const cible = Number(profil?.nutritionalPlan?.dailyCalories) || 0;
@@ -175,26 +227,30 @@ export default function AccueilMe() {
           valeur={cible ? `${t.kcal} / ${cible}` : String(t.kcal)}
           detail={cible ? `${restant} kcal restantes` : 'Objectif non défini'}
           accent
+          spark={tendances.kcal}
         />
         <Tuile titre="Repas enregistrés" valeur={String(t.nbRepas)} detail="aujourd'hui" />
         <Tuile
           titre="Protéines"
           valeur={`${t.proteines} g`}
           detail={`Glucides ${t.glucides} g · Lipides ${t.lipides} g`}
+          spark={tendances.prot}
         />
         <Tuile
           titre="Activité"
           valeur={t.kcalBrulees ? `${t.kcalBrulees} kcal` : '—'}
           detail={t.nbActivites ? `${t.nbActivites} séance(s)` : 'Aucune séance'}
+          spark={tendances.brulees}
         />
         <Tuile
           titre="Hydratation"
           valeur={t.eauMl ? `${(t.eauMl / 1000).toFixed(1)} L` : '—'}
           detail="objectif 2 L"
+          spark={tendances.eau}
         />
       </section>
 
-      {uid ? <SemaineKcal uid={uid} cible={cible} /> : null}
+      {uid ? <SemaineKcal lignes={semaine} cible={cible} /> : null}
 
       <section className="me-actions">
         <a className="btn btn-primary btn-lg" href="/me/diary">
