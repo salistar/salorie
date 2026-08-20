@@ -53,6 +53,7 @@ printLogLegend();
 import { LoggingProvider } from '../lib/LoggingContext';
 import { FlagsProvider } from '../lib/FlagsContext';
 import { RouteFlagGate } from '../components/FeatureGate';
+import { StatusBar } from 'expo-status-bar';
 import { ThemeProvider, useTheme } from '../lib/ThemeContext';
 import { I18nProvider, useTranslation } from '../lib/i18n';
 import { NotificationService } from '../lib/NotificationService';
@@ -768,6 +769,11 @@ function RootLayout() {
   return (
     <ErrorBoundary>
     <ThemeProvider>
+      {/* L'heure, le wifi et la batterie appartiennent au systeme, mais leur
+          COULEUR est a la charge de l'app. Sans cette ligne, Android gardait un
+          contenu clair : en theme clair, l'heure etait blanche sur fond clair,
+          donc illisible — sur les 95 ecrans. */}
+      <BarreEtatDuTheme />
       <I18nProvider>
         <ClerkProvider key={essai} tokenCache={tokenCache} publishableKey={publishableKey}>
           {/* Fallback brandé pendant l'init de Clerk (evite l'ecran BLANC :
@@ -787,6 +793,23 @@ function RootLayout() {
     </ThemeProvider>
     </ErrorBoundary>
   );
+}
+
+/**
+ * Barre d'etat accordee au theme REEL de l'app.
+ *
+ * `style="auto"` d'expo-status-bar suivrait le theme du SYSTEME — ce qui serait
+ * faux ici : Salorie laisse forcer clair ou sombre independamment (mode
+ * 'light' | 'dark' | 'system'). Un utilisateur en clair sur un telephone en
+ * sombre aurait donc de nouveau une heure illisible. On lit donc `resolved`,
+ * qui est la couleur reellement affichee.
+ *
+ * Le style nomme la couleur du CONTENU, pas du fond : sur un theme sombre il
+ * faut un contenu clair, et inversement.
+ */
+function BarreEtatDuTheme() {
+  const { resolved } = useTheme();
+  return <StatusBar style={resolved === 'dark' ? 'light' : 'dark'} />;
 }
 
 // `Sentry.wrap` enveloppe le composant racine : il attache le suivi de navigation

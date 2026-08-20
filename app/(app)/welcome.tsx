@@ -40,7 +40,12 @@ export default function WelcomeScreen() {
       {/* Top bar with brand + language + theme + notif buttons */}
       <ScreenTopBar showNotif={false} />
 
+      {/* `flex: 1` donne au defilement TOUTE la hauteur restante. Sans lui, il
+          s'arretait a la hauteur de son contenu et laissait ~380 px inutilises
+          sous les boutons : les trois arguments de vente etaient coupes alors
+          que la place existait. */}
       <ScrollView
+        style={{ flex: 1 }}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
