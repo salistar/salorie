@@ -1598,3 +1598,21 @@ tbody tr:last-child td { border-bottom: none; }
    de l'action principale. */
 .btn-danger { background: #b3261e; border-color: #b3261e; color: #fff; }
 .btn-danger:hover { background: #9a1f18; }
+
+
+/* ── Carte du duo (21/08/2026) : où marche l'autre, pas seulement combien ──── */
+.duo-carte {
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--inset);
+}
+/* Hauteur en `aspect-ratio` et non en pixels : sur un téléphone tenu à la main,
+   une carte de 400 px de haut pousse les boutons d'appel hors de l'écran. */
+.duo-carte-cadre {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border: 0;
+}
+@media (max-width: 560px) { .duo-carte-cadre { aspect-ratio: 4 / 3; } }
