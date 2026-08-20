@@ -15,14 +15,18 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Slot } from 'expo-router';
-import PersistentTabBar from '../../components/PersistentTabBar';
+import PersistentTabBar, { useBarreVisible } from '../../components/PersistentTabBar';
 import { useEspaceBasSimple } from '../../lib/espaceBas';
 
 export default function AppGroupLayout() {
   const espaceBas = useEspaceBasSimple();
+  // La place n'est reservee que si la barre est REELLEMENT rendue. Sinon, les
+  // ecrans d'avant-connexion (welcome) perdaient ~129 dp au profit d'une barre
+  // absente — l'accueil coupait son troisieme argument faute de hauteur.
+  const barreVisible = useBarreVisible();
   return (
     <View style={{ flex: 1 }}>
-      <View style={{ flex: 1, paddingBottom: espaceBas }}>
+      <View style={{ flex: 1, paddingBottom: barreVisible ? espaceBas : 0 }}>
         <Slot />
       </View>
       <PersistentTabBar />

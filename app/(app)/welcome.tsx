@@ -40,10 +40,10 @@ export default function WelcomeScreen() {
       {/* Top bar with brand + language + theme + notif buttons */}
       <ScreenTopBar showNotif={false} />
 
-      {/* `flex: 1` donne au defilement TOUTE la hauteur restante. Sans lui, il
-          s'arretait a la hauteur de son contenu et laissait ~380 px inutilises
-          sous les boutons : les trois arguments de vente etaient coupes alors
-          que la place existait. */}
+      {/* `flex: 1` : le defilement prend la hauteur restante et les boutons se
+          posent dessous. (La coupure des trois arguments ne venait PAS d'ici mais
+          de la place que `(app)/_layout.tsx` reservait a une barre d'onglets
+          absente avant connexion — corrige la.) */}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.scrollContent}

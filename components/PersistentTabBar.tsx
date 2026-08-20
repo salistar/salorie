@@ -11,6 +11,23 @@ import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+/**
+ * La barre est-elle rendue ?
+ *
+ * Cette question a DEUX clients : la barre elle-meme, et `app/(app)/_layout.tsx`
+ * qui lui reserve sa place. Les deux repondaient separement — et avaient diverge :
+ * la barre se retirait quand personne n'etait connecte (`welcome`), mais la place
+ * restait reservee. Resultat, ~129 dp de vide au bas de l'ecran d'accueil, assez
+ * pour couper le troisieme argument de vente. Vu a l'ecran le 20 aout 2026.
+ *
+ * Le clavier ne compte PAS ici : la barre s'efface pendant la saisie, mais liberer
+ * sa place au meme instant ferait sauter toute la mise en page sous les doigts.
+ */
+export function useBarreVisible(): boolean {
+  const { isSignedIn } = useAuth();
+  return Boolean(isSignedIn);
+}
+
 const GREY = '#94A3B8';
 
 const TABS = [
@@ -38,7 +55,9 @@ export default function PersistentTabBar() {
     return () => { s.remove(); h.remove(); };
   }, []);
   if (kbOpen) return null;
-  // Pas connecté (welcome…) → pas de barre d'onglets (elle mènerait à des écrans qui exigent une session).
+  // Pas connecté (welcome…) → pas de barre d'onglets (elle mènerait à des écrans
+  // qui exigent une session). Même condition que `useBarreVisible`, qui pilote
+  // la place réservée par le layout — les deux ne peuvent plus diverger.
   if (!isSignedIn) return null;
 
   // Les traductions viennent des clés `tabs.*`, celles-là même qu'emploie la barre
