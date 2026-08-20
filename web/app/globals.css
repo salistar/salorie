@@ -357,41 +357,51 @@ button:disabled { opacity: .55; cursor: not-allowed; }
    le theme sombre fonctionne sans une ligne de plus), mais une mise en page qui
    reprend celle de l'app mobile — barre du haut, tuiles, respiration large.
    ═══════════════════════════════════════════════════════════════════════════ */
-.me-shell { display: flex; flex-direction: column; min-height: 100vh; width: 100%; background: var(--bg); }
+.me-shell { display: grid; grid-template-columns: 272px minmax(0, 1fr); min-height: 100vh; width: 100%; background: var(--bg); }
 
+/* La barre laterale : les groupes disent OU chercher, le contenu recupere
+   toute la largeur. Sticky et defilante en interne — 67 liens ne tiennent
+   dans aucune hauteur d'ecran. */
 .me-nav {
-  display: flex; align-items: center; gap: var(--sp-6);
-  /* `min-height` et non `height` : depuis que les liens passent a la ligne, une
-     hauteur FIXE les couperait hors du cadre. C'est exactement le defaut qui
-     avait rendu le bouton de deconnexion inatteignable dans la barre laterale
-     de l'admin — meme cause, meme correction. */
-  padding: var(--sp-2) var(--sp-6); min-height: 64px;
-  background: var(--card); border-bottom: 1px solid var(--line);
-  position: sticky; top: 0; z-index: 20;
+  display: flex; flex-direction: column; gap: var(--sp-4);
+  padding: var(--sp-5) var(--sp-3);
+  background: var(--card); border-inline-end: 1px solid var(--line);
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+  z-index: 20;
 }
 .me-nav-marque {
-  display: flex; align-items: center; gap: var(--sp-2);
-  font-weight: 900; font-size: 17px; letter-spacing: -.4px;
-  color: var(--ink); text-decoration: none; flex-shrink: 0;
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 900; font-size: 18px; letter-spacing: -.4px;
+  color: var(--ink); text-decoration: none; padding: 2px 10px; flex-shrink: 0;
 }
-/* Le logo est une IMAGE depuis qu'on a remplace l'emoji : une taille de police
-   n'a plus d'effet dessus, il lui faut des dimensions et un rendu net. */
-.me-nav-logo { width: 26px; height: 26px; display: block; object-fit: contain; }
-/* La barre passe A LA LIGNE au lieu de defiler horizontalement. Elle comptait 14
-   entrees, elle en compte 28 : un defilement horizontal sans affordance visible
-   cachait la moitie des sections, et personne ne va chercher ce qu'il ne voit
-   pas. Sur deux ou trois lignes, tout est atteignable d'un coup d'oeil. */
-.me-nav-liens { display: flex; gap: var(--sp-1); flex: 1; min-width: 0; flex-wrap: wrap; }
+.me-nav-logo { width: 28px; height: 28px; display: block; object-fit: contain; }
+.me-nav-liens { display: flex; flex-direction: column; gap: var(--sp-4); flex: 1; min-width: 0; }
+.nav-groupe { display: flex; flex-direction: column; gap: 2px; }
+.nav-groupe-titre {
+  font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--muted); opacity: .75; padding: 8px 10px 4px;
+}
 .me-nav-lien {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 8px 14px; border-radius: var(--r-full);
-  font-size: 14px; font-weight: 650; white-space: nowrap;
-  color: var(--muted); text-decoration: none;
-  transition: background .15s ease, color .15s ease;
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px; border-radius: 10px;
+  font-size: 13.5px; font-weight: 600; color: var(--muted); text-decoration: none;
+  transition: background .14s ease, color .14s ease;
 }
-.me-nav-lien:hover { background: var(--green-light); color: var(--ink); }
-.me-nav-lien.actif { background: var(--green); color: #fff; }
-.me-nav-compte { flex-shrink: 0; display: flex; align-items: center; }
+/* L'emoji vit dans une pastille : aligne, calibre, et il porte l'etat actif. */
+.nav-icone {
+  width: 26px; height: 26px; display: grid; place-items: center; font-size: 14px;
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  border-radius: 8px; flex-shrink: 0;
+}
+.me-nav-lien:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); color: var(--ink); }
+.me-nav-lien.actif { background: var(--green-light); color: var(--green-dark); font-weight: 750; }
+.me-nav-lien.actif .nav-icone { background: var(--green); }
+.me-nav-compte {
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  padding: 12px 10px 4px; border-top: 1px solid var(--line);
+}
+.me-nav-compte-note { font-size: 13px; font-weight: 650; color: var(--muted); }
 
 .me-contenu { flex: 1; min-width: 0; }
 .me-page { max-width: 1060px; margin: 0 auto; padding: var(--sp-8) var(--sp-6) 72px; }
@@ -1311,3 +1321,102 @@ tbody tr:last-child td { border-bottom: none; }
 }
 @keyframes dicte-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
 @media (prefers-reduced-motion: reduce) { .dicte-point { animation: none; } }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REFONTE PREMIUM — 20/08/2026
+   ═══════════════════════════════════════════════════════════════════════════
+   1. LES JETONS FANTOMES — la cause racine du chaos en theme sombre.
+   Les composants de /me referencaient --surface/--trait/--fond/--creux/
+   --encre-pale/--rouge : le vocabulaire de l'ARTEFACT de documentation,
+   jamais defini dans CETTE feuille. Les secours en dur (#fff, #e2e8f0,
+   #f8fafc, #e7e5e0) s'appliquaient donc TOUJOURS — cartes blanches, champs
+   clairs et bordures pales posees sur un fond sombre. Les alias ci-dessous
+   branchent ce vocabulaire sur les vrais jetons : ce seul bloc repare les
+   69 pages, dans les deux themes. */
+:root {
+  --field: #f8fafc; --inset: #eef2f7;
+  --surface: var(--card); --trait: var(--line); --fond: var(--field);
+  --creux: var(--inset); --encre-pale: var(--muted); --rouge: var(--danger);
+  --accent: var(--green);
+  /* Couleurs de FONCTION des barres de progression, par theme — fini les hex
+     en dur qui ignoraient le mode sombre. */
+  --c-eau: #2563eb; --c-forme: #7c3aed; --c-ambre: #b45309; --c-terre: #a2571c;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --field: #0d141d; --inset: #101823;
+    --c-eau: #60a5fa; --c-forme: #a78bfa; --c-ambre: #fbbf24; --c-terre: #e8956a;
+  }
+}
+:root[data-theme='dark'] {
+  --field: #0d141d; --inset: #101823;
+  --c-eau: #60a5fa; --c-forme: #a78bfa; --c-ambre: #fbbf24; --c-terre: #e8956a;
+}
+
+/* 2. Le fond respire : un halo d'accent discret en haut du contenu. */
+.me-contenu {
+  background: radial-gradient(1100px 380px at 78% -8%,
+    color-mix(in srgb, var(--green) 8%, transparent), transparent 62%);
+}
+.me-page { max-width: 1080px; }
+.me-entete h1 { font-size: clamp(28px, 3.6vw, 38px); letter-spacing: -1.1px; }
+
+/* 3. Cartes et champs : relief doux, bords nets. */
+.carte-amis {
+  background: var(--card); border-color: var(--line);
+  border-radius: var(--r-xl); padding: 22px 24px;
+  margin-bottom: var(--sp-4); box-shadow: var(--shadow);
+}
+.champ-amis { background: var(--field); border-color: var(--line); }
+.champ-amis::placeholder { color: color-mix(in srgb, var(--muted) 75%, transparent); }
+
+/* 4. Tuiles de stats : le chiffre est la vedette. */
+.tuile-serie { background: var(--field); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 14px 16px; }
+.serie-nombre {
+  font-size: 28px; font-weight: 850; letter-spacing: -.8px;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(135deg, var(--green), var(--green-dark));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  display: inline-block;
+}
+.grille-series { gap: 12px; margin: 14px 0; }
+
+/* 5. Boutons : le primaire a du poids. */
+.btn-primary {
+  background: linear-gradient(135deg, var(--green), var(--green-dark));
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--green) 30%, transparent);
+}
+.btn-primary:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-1px); }
+.btn-primary:active:not(:disabled) { transform: translateY(0); filter: none; }
+
+/* 6. Barres de progression : les couleurs suivent le theme. */
+.prog-piste { background: var(--inset); }
+.prog-eau { background: var(--c-eau); }
+.prog-forme { background: var(--c-forme); }
+.prog-jeune, .prog-repas { background: var(--c-ambre); }
+.prog-annee { background: var(--c-terre); }
+.prog-arbre { background: var(--green); }
+
+/* 7. Mobile : la barre devient un tiroir. */
+.nav-bouton {
+  display: none; position: fixed; top: 14px; inset-inline-start: 14px; z-index: 40;
+  width: 42px; height: 42px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  font-size: 17px; cursor: pointer; box-shadow: var(--shadow);
+}
+.nav-voile { position: fixed; inset: 0; background: rgba(8, 12, 18, .55); z-index: 25; }
+@media (max-width: 979px) {
+  .me-shell { grid-template-columns: 1fr; }
+  .nav-bouton { display: grid; place-items: center; }
+  .me-nav {
+    position: fixed; inset-block: 0; inset-inline-start: 0;
+    width: min(300px, 84vw); height: 100dvh;
+    transform: translateX(-102%); transition: transform .2s ease;
+    box-shadow: var(--shadow-lg); z-index: 30;
+  }
+  .me-nav.nav-ouverte { transform: none; }
+  .me-page { padding-top: 68px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .me-nav, .btn-primary { transition: none; }
+}
