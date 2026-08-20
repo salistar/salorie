@@ -12,16 +12,20 @@ import Link from 'next/link';
 import { useMe } from '../MeProvider';
 import { useProfil } from '../../../lib/useFirestoreMe';
 import { traducteur, sensLecture, type Langue } from '../../../lib/i18nMe';
+import {
+  UtensilsCrossed, PenLine, Camera, NotebookPen, ShoppingCart, ChartColumn,
+  type LucideIcon,
+} from 'lucide-react';
 
 /** Les portes d'entrée, dans l'ordre où elles servent réellement. */
-const DEPARTS = [
-  { href: '/me/diary', cle: 'diary', icone: '🍽️' },
-  { href: '/me/saisie', cle: 'saisie', icone: '✍️' },
-  { href: '/me/scan', cle: 'scan', icone: '📷' },
-  { href: '/me/plan-ia', cle: 'plan', icone: '📝' },
-  { href: '/me/courses', cle: 'courses', icone: '🛒' },
-  { href: '/me/analytics', cle: 'analyses', icone: '📈' },
-] as const;
+const DEPARTS: { href: string; cle: string; icone: LucideIcon }[] = [
+  { href: '/me/diary', cle: 'diary', icone: UtensilsCrossed },
+  { href: '/me/saisie', cle: 'saisie', icone: PenLine },
+  { href: '/me/scan', cle: 'scan', icone: Camera },
+  { href: '/me/plan-ia', cle: 'plan', icone: NotebookPen },
+  { href: '/me/courses', cle: 'courses', icone: ShoppingCart },
+  { href: '/me/analytics', cle: 'analyses', icone: ChartColumn },
+];
 
 /** Ce que le clavier et la largeur changent vraiment. */
 const FORCES = ['clavier', 'largeur', 'coller'] as const;
@@ -49,7 +53,7 @@ export default function PageBienvenue() {
         <div className="grille-departs">
           {DEPARTS.map((d) => (
             <Link key={d.href} href={d.href} className="carte-depart">
-              <span aria-hidden className="depart-icone">{d.icone}</span>
+              <span aria-hidden className="depart-icone"><d.icone size={22} strokeWidth={1.9} /></span>
               <strong>{t(`bv_${d.cle}_t`)}</strong>
               <span className="me-sous">{t(`bv_${d.cle}_c`)}</span>
             </Link>

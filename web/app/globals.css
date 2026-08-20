@@ -1550,3 +1550,18 @@ tbody tr:last-child td { border-bottom: none; }
   background: var(--field); border: 1px solid var(--line); border-radius: var(--r-lg);
 }
 
+/* Icones Lucide (20/08/2026) : les emoji quittent l'interface. Meme
+   bibliotheque que le mobile (lucide-react-native) : un seul langage d'icones
+   des deux cotes, des traits dessines au lieu de glyphes dependant de l'OS. */
+.nav-icone { color: var(--muted); }
+.nav-icone svg { display: block; }
+.me-nav-lien:hover .nav-icone { color: var(--ink); }
+.me-nav-lien.actif .nav-icone { color: #fff; }
+.abo-icone { color: var(--green-dark); }
+.abo-icone svg { display: block; }
+.depart-icone { color: var(--green); }
+.depart-icone svg { display: block; }
+.btn-icone { display: inline-flex; align-items: center; gap: 7px; }
+.btn-icone svg { flex-shrink: 0; }
+.nav-bouton svg { display: block; margin: auto; }
+

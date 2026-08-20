@@ -13,12 +13,27 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/clerk-react';
+// Lucide : la bibliotheque d'icones que le MOBILE utilise deja
+// (lucide-react-native). Meme langage visuel des deux cotes — et des traits
+// dessines, pas des emoji dont le rendu depend de l'OS.
+import {
+  Home, Hand, UtensilsCrossed, PenLine, Camera, Barcode, Mic, Tag, ReceiptText,
+  GlassWater, Gauge, Repeat, Refrigerator, Salad, CookingPot, ChefHat, Link2,
+  CalendarRange, NotebookPen, Bookmark, Hourglass, MoonStar, Utensils,
+  ShoppingCart, ShoppingBasket, Package, Footprints, Activity, Dumbbell, Cable,
+  CalendarDays, Shirt, MapPin, Flag, Trophy, Swords, Building2, Map, Medal,
+  Star, Sprout, ChartColumn, Flame, TrendingDown, Scale, BatteryCharging, Dna,
+  Microscope, Images, Stethoscope, HeartPulse, Ruler, Pill, StickyNote, Users,
+  House, Newspaper, MessageCircle, Gift, Download, Bell, Sparkles,
+  ClipboardList, Settings, Lock, FileText, Mail, Menu, X,
+  type LucideIcon,
+} from 'lucide-react';
 import { useMe } from './MeProvider';
 import { useProfil } from '../../lib/useFirestoreMe';
 import { sensLecture, type Langue } from '../../lib/i18nMe';
 
 type Tri = { fr: string; en: string; ar: string };
-type Lien = { href: string; label: Tri; icone: string };
+type Lien = { href: string; label: Tri; icone: LucideIcon };
 type Groupe = { titre: Tri | null; liens: Lien[] };
 
 /** Les 67 routes, inchangées — seuls les libellés sont devenus trilingues. */
@@ -26,103 +41,103 @@ const GROUPES: Groupe[] = [
   {
     titre: null,
     liens: [
-      { href: '/me', label: { fr: 'Accueil', en: 'Home', ar: 'الرئيسية' }, icone: '🏠' },
-      { href: '/me/bienvenue', label: { fr: 'Bienvenue', en: 'Welcome', ar: 'مرحباً' }, icone: '👋' },
+      { href: '/me', label: { fr: 'Accueil', en: 'Home', ar: 'الرئيسية' }, icone: Home },
+      { href: '/me/bienvenue', label: { fr: 'Bienvenue', en: 'Welcome', ar: 'مرحباً' }, icone: Hand },
     ],
   },
   {
     titre: { fr: 'Nutrition', en: 'Nutrition', ar: 'التغذية' },
     liens: [
-      { href: '/me/diary', label: { fr: 'Repas du jour', en: "Today's meals", ar: 'وجبات اليوم' }, icone: '🍽️' },
-      { href: '/me/saisie', label: { fr: 'Saisie manuelle', en: 'Manual entry', ar: 'إدخال يدوي' }, icone: '✍️' },
-      { href: '/me/scan', label: { fr: 'Scanner', en: 'Scan a meal', ar: 'مسح وجبة' }, icone: '📷' },
-      { href: '/me/code-barres', label: { fr: 'Code-barres', en: 'Barcode', ar: 'الباركود' }, icone: '📊' },
-      { href: '/me/dicter', label: { fr: 'Dictée', en: 'Dictation', ar: 'الإملاء' }, icone: '🎤' },
-      { href: '/me/etiquette', label: { fr: 'Étiquette', en: 'Label', ar: 'الملصق' }, icone: '🏷️' },
-      { href: '/me/ticket', label: { fr: 'Ticket de caisse', en: 'Receipt', ar: 'الإيصال' }, icone: '🧾' },
-      { href: '/me/eau', label: { fr: 'Eau', en: 'Water', ar: 'الماء' }, icone: '💧' },
-      { href: '/me/nutri-score', label: { fr: 'Nutri-Score', en: 'Nutri-Score', ar: 'نوتري سكور' }, icone: '🔤' },
-      { href: '/me/substitutions', label: { fr: 'Substitutions', en: 'Substitutions', ar: 'البدائل' }, icone: '🔁' },
-      { href: '/me/frigo', label: { fr: 'Frigo', en: 'Fridge', ar: 'الثلاجة' }, icone: '🧊' },
-      { href: '/me/aliments', label: { fr: 'Aliments', en: 'Foods', ar: 'الأطعمة' }, icone: '🥗' },
-      { href: '/me/composer', label: { fr: 'Composer', en: 'Meal builder', ar: 'تركيب وجبة' }, icone: '🥣' },
-      { href: '/me/recettes', label: { fr: 'Recettes', en: 'Recipes', ar: 'الوصفات' }, icone: '🍲' },
-      { href: '/me/recette-url', label: { fr: 'Import recette', en: 'Import recipe', ar: 'استيراد وصفة' }, icone: '🔗' },
-      { href: '/me/plans', label: { fr: 'Plans', en: 'Plans', ar: 'الخطط' }, icone: '🗓️' },
-      { href: '/me/plan-ia', label: { fr: 'Plan de repas', en: 'Meal plan', ar: 'خطة الوجبات' }, icone: '📝' },
-      { href: '/me/modeles', label: { fr: 'Modèles', en: 'Templates', ar: 'القوالب' }, icone: '🔖' },
-      { href: '/me/jeune', label: { fr: 'Jeûne', en: 'Fasting', ar: 'الصيام' }, icone: '⏳' },
-      { href: '/me/ramadan', label: { fr: 'Ramadan', en: 'Ramadan', ar: 'رمضان' }, icone: '🌙' },
-      { href: '/me/restaurant', label: { fr: 'Mode resto', en: 'Restaurant', ar: 'المطعم' }, icone: '🍴' },
+      { href: '/me/diary', label: { fr: 'Repas du jour', en: "Today's meals", ar: 'وجبات اليوم' }, icone: UtensilsCrossed },
+      { href: '/me/saisie', label: { fr: 'Saisie manuelle', en: 'Manual entry', ar: 'إدخال يدوي' }, icone: PenLine },
+      { href: '/me/scan', label: { fr: 'Scanner', en: 'Scan a meal', ar: 'مسح وجبة' }, icone: Camera },
+      { href: '/me/code-barres', label: { fr: 'Code-barres', en: 'Barcode', ar: 'الباركود' }, icone: Barcode },
+      { href: '/me/dicter', label: { fr: 'Dictée', en: 'Dictation', ar: 'الإملاء' }, icone: Mic },
+      { href: '/me/etiquette', label: { fr: 'Étiquette', en: 'Label', ar: 'الملصق' }, icone: Tag },
+      { href: '/me/ticket', label: { fr: 'Ticket de caisse', en: 'Receipt', ar: 'الإيصال' }, icone: ReceiptText },
+      { href: '/me/eau', label: { fr: 'Eau', en: 'Water', ar: 'الماء' }, icone: GlassWater },
+      { href: '/me/nutri-score', label: { fr: 'Nutri-Score', en: 'Nutri-Score', ar: 'نوتري سكور' }, icone: Gauge },
+      { href: '/me/substitutions', label: { fr: 'Substitutions', en: 'Substitutions', ar: 'البدائل' }, icone: Repeat },
+      { href: '/me/frigo', label: { fr: 'Frigo', en: 'Fridge', ar: 'الثلاجة' }, icone: Refrigerator },
+      { href: '/me/aliments', label: { fr: 'Aliments', en: 'Foods', ar: 'الأطعمة' }, icone: Salad },
+      { href: '/me/composer', label: { fr: 'Composer', en: 'Meal builder', ar: 'تركيب وجبة' }, icone: CookingPot },
+      { href: '/me/recettes', label: { fr: 'Recettes', en: 'Recipes', ar: 'الوصفات' }, icone: ChefHat },
+      { href: '/me/recette-url', label: { fr: 'Import recette', en: 'Import recipe', ar: 'استيراد وصفة' }, icone: Link2 },
+      { href: '/me/plans', label: { fr: 'Plans', en: 'Plans', ar: 'الخطط' }, icone: CalendarRange },
+      { href: '/me/plan-ia', label: { fr: 'Plan de repas', en: 'Meal plan', ar: 'خطة الوجبات' }, icone: NotebookPen },
+      { href: '/me/modeles', label: { fr: 'Modèles', en: 'Templates', ar: 'القوالب' }, icone: Bookmark },
+      { href: '/me/jeune', label: { fr: 'Jeûne', en: 'Fasting', ar: 'الصيام' }, icone: Hourglass },
+      { href: '/me/ramadan', label: { fr: 'Ramadan', en: 'Ramadan', ar: 'رمضان' }, icone: MoonStar },
+      { href: '/me/restaurant', label: { fr: 'Mode resto', en: 'Restaurant', ar: 'المطعم' }, icone: Utensils },
     ],
   },
   {
     titre: { fr: 'Courses & marché', en: 'Shopping & market', ar: 'التسوّق والسوق' },
     liens: [
-      { href: '/me/courses', label: { fr: 'Liste de courses', en: 'Shopping list', ar: 'قائمة التسوّق' }, icone: '🛒' },
-      { href: '/me/panier', label: { fr: 'Panier du souk', en: 'Souk basket', ar: 'سلّة السوق' }, icone: '🧺' },
-      { href: '/me/annonces', label: { fr: 'Annonces', en: 'Listings', ar: 'الإعلانات' }, icone: '📦' },
+      { href: '/me/courses', label: { fr: 'Liste de courses', en: 'Shopping list', ar: 'قائمة التسوّق' }, icone: ShoppingCart },
+      { href: '/me/panier', label: { fr: 'Panier du souk', en: 'Souk basket', ar: 'سلّة السوق' }, icone: ShoppingBasket },
+      { href: '/me/annonces', label: { fr: 'Annonces', en: 'Listings', ar: 'الإعلانات' }, icone: Package },
     ],
   },
   {
     titre: { fr: 'Sport', en: 'Sport', ar: 'الرياضة' },
     liens: [
-      { href: '/me/activite', label: { fr: 'Activité', en: 'Activity', ar: 'النشاط' }, icone: '🚶' },
-      { href: '/me/seance', label: { fr: 'Dernière séance', en: 'Last session', ar: 'آخر حصة' }, icone: '🏃' },
-      { href: '/me/exercices', label: { fr: 'Exercices', en: 'Exercises', ar: 'التمارين' }, icone: '💪' },
-      { href: '/me/equipement', label: { fr: 'Équipement', en: 'Equipment', ar: 'المعدّات' }, icone: '🏋️' },
-      { href: '/me/agenda', label: { fr: 'Agenda', en: 'Agenda', ar: 'المفكرة الرياضية' }, icone: '📅' },
-      { href: '/me/matchs', label: { fr: 'Matchs', en: 'Matches', ar: 'المباريات' }, icone: '⚽' },
-      { href: '/me/terrains', label: { fr: 'Terrains', en: 'Fields', ar: 'الملاعب' }, icone: '📍' },
-      { href: '/me/races', label: { fr: 'Courses', en: 'Races', ar: 'السباقات' }, icone: '🏁' },
-      { href: '/me/ligues', label: { fr: 'Ligue', en: 'League', ar: 'الدوري' }, icone: '🏆' },
-      { href: '/me/duel', label: { fr: 'Duel', en: 'Duel', ar: 'المبارزة' }, icone: '🤜' },
-      { href: '/me/villes', label: { fr: 'Villes', en: 'Cities', ar: 'المدن' }, icone: '🏙️' },
-      { href: '/me/parcours', label: { fr: 'Parcours', en: 'Routes', ar: 'المسارات' }, icone: '🗺️' },
-      { href: '/me/medailles', label: { fr: 'Médailles', en: 'Medals', ar: 'الميداليات' }, icone: '🏅' },
-      { href: '/me/progression', label: { fr: 'Progression', en: 'Progress', ar: 'التقدّم' }, icone: '⭐' },
-      { href: '/me/sadaqa', label: { fr: 'Sadaqa', en: 'Sadaqa', ar: 'صدقة جارية' }, icone: '🌱' },
+      { href: '/me/activite', label: { fr: 'Activité', en: 'Activity', ar: 'النشاط' }, icone: Footprints },
+      { href: '/me/seance', label: { fr: 'Dernière séance', en: 'Last session', ar: 'آخر حصة' }, icone: Activity },
+      { href: '/me/exercices', label: { fr: 'Exercices', en: 'Exercises', ar: 'التمارين' }, icone: Dumbbell },
+      { href: '/me/equipement', label: { fr: 'Équipement', en: 'Equipment', ar: 'المعدّات' }, icone: Cable },
+      { href: '/me/agenda', label: { fr: 'Agenda', en: 'Agenda', ar: 'المفكرة الرياضية' }, icone: CalendarDays },
+      { href: '/me/matchs', label: { fr: 'Matchs', en: 'Matches', ar: 'المباريات' }, icone: Shirt },
+      { href: '/me/terrains', label: { fr: 'Terrains', en: 'Fields', ar: 'الملاعب' }, icone: MapPin },
+      { href: '/me/races', label: { fr: 'Courses', en: 'Races', ar: 'السباقات' }, icone: Flag },
+      { href: '/me/ligues', label: { fr: 'Ligue', en: 'League', ar: 'الدوري' }, icone: Trophy },
+      { href: '/me/duel', label: { fr: 'Duel', en: 'Duel', ar: 'المبارزة' }, icone: Swords },
+      { href: '/me/villes', label: { fr: 'Villes', en: 'Cities', ar: 'المدن' }, icone: Building2 },
+      { href: '/me/parcours', label: { fr: 'Parcours', en: 'Routes', ar: 'المسارات' }, icone: Map },
+      { href: '/me/medailles', label: { fr: 'Médailles', en: 'Medals', ar: 'الميداليات' }, icone: Medal },
+      { href: '/me/progression', label: { fr: 'Progression', en: 'Progress', ar: 'التقدّم' }, icone: Star },
+      { href: '/me/sadaqa', label: { fr: 'Sadaqa', en: 'Sadaqa', ar: 'صدقة جارية' }, icone: Sprout },
     ],
   },
   {
     titre: { fr: 'Santé', en: 'Health', ar: 'الصحة' },
     liens: [
-      { href: '/me/analytics', label: { fr: 'Analyses', en: 'Analytics', ar: 'التحليلات' }, icone: '📈' },
-      { href: '/me/metabolisme', label: { fr: 'Métabolisme', en: 'Metabolism', ar: 'الأيض' }, icone: '🔥' },
-      { href: '/me/projection', label: { fr: 'Projection', en: 'Projection', ar: 'التوقّع' }, icone: '📉' },
-      { href: '/me/poids', label: { fr: 'Poids', en: 'Weight', ar: 'الوزن' }, icone: '⚖️' },
-      { href: '/me/forme', label: { fr: 'Forme du jour', en: 'Readiness', ar: 'جاهزية اليوم' }, icone: '🔋' },
-      { href: '/me/composition', label: { fr: 'Composition', en: 'Body composition', ar: 'تركيب الجسم' }, icone: '🧬' },
-      { href: '/me/microbiote', label: { fr: 'Microbiote', en: 'Microbiome', ar: 'الميكروبيوم' }, icone: '🦠' },
-      { href: '/me/photos', label: { fr: 'Photos de progression', en: 'Progress photos', ar: 'صور التقدّم' }, icone: '📸' },
-      { href: '/me/rapport', label: { fr: 'Rapport', en: 'Health report', ar: 'التقرير الصحي' }, icone: '🩺' },
-      { href: '/me/constantes', label: { fr: 'Constantes', en: 'Vitals', ar: 'المؤشّرات الحيوية' }, icone: '❤️' },
-      { href: '/me/mesures', label: { fr: 'Mensurations', en: 'Measurements', ar: 'القياسات' }, icone: '📏' },
-      { href: '/me/micronutriments', label: { fr: 'Micronutriments', en: 'Micronutrients', ar: 'المغذّيات الدقيقة' }, icone: '💊' },
+      { href: '/me/analytics', label: { fr: 'Analyses', en: 'Analytics', ar: 'التحليلات' }, icone: ChartColumn },
+      { href: '/me/metabolisme', label: { fr: 'Métabolisme', en: 'Metabolism', ar: 'الأيض' }, icone: Flame },
+      { href: '/me/projection', label: { fr: 'Projection', en: 'Projection', ar: 'التوقّع' }, icone: TrendingDown },
+      { href: '/me/poids', label: { fr: 'Poids', en: 'Weight', ar: 'الوزن' }, icone: Scale },
+      { href: '/me/forme', label: { fr: 'Forme du jour', en: 'Readiness', ar: 'جاهزية اليوم' }, icone: BatteryCharging },
+      { href: '/me/composition', label: { fr: 'Composition', en: 'Body composition', ar: 'تركيب الجسم' }, icone: Dna },
+      { href: '/me/microbiote', label: { fr: 'Microbiote', en: 'Microbiome', ar: 'الميكروبيوم' }, icone: Microscope },
+      { href: '/me/photos', label: { fr: 'Photos de progression', en: 'Progress photos', ar: 'صور التقدّم' }, icone: Images },
+      { href: '/me/rapport', label: { fr: 'Rapport', en: 'Health report', ar: 'التقرير الصحي' }, icone: Stethoscope },
+      { href: '/me/constantes', label: { fr: 'Constantes', en: 'Vitals', ar: 'المؤشّرات الحيوية' }, icone: HeartPulse },
+      { href: '/me/mesures', label: { fr: 'Mensurations', en: 'Measurements', ar: 'القياسات' }, icone: Ruler },
+      { href: '/me/micronutriments', label: { fr: 'Micronutriments', en: 'Micronutrients', ar: 'المغذّيات الدقيقة' }, icone: Pill },
     ],
   },
   {
     titre: { fr: 'Social', en: 'Social', ar: 'الاجتماعي' },
     liens: [
-      { href: '/me/mur', label: { fr: 'Mur', en: 'Wall', ar: 'الحائط' }, icone: '📝' },
-      { href: '/me/amis', label: { fr: 'Amis', en: 'Friends', ar: 'الأصدقاء' }, icone: '👥' },
-      { href: '/me/famille', label: { fr: 'Famille', en: 'Family', ar: 'العائلة' }, icone: '🏡' },
-      { href: '/me/journal', label: { fr: 'Journal', en: 'Feed', ar: 'الأخبار' }, icone: '📰' },
-      { href: '/me/coach', label: { fr: 'Coach', en: 'Coach', ar: 'المدرّب' }, icone: '💬' },
-      { href: '/me/parrainage', label: { fr: 'Parrainage', en: 'Referral', ar: 'الإحالة' }, icone: '🎁' },
+      { href: '/me/mur', label: { fr: 'Mur', en: 'Wall', ar: 'الحائط' }, icone: StickyNote },
+      { href: '/me/amis', label: { fr: 'Amis', en: 'Friends', ar: 'الأصدقاء' }, icone: Users },
+      { href: '/me/famille', label: { fr: 'Famille', en: 'Family', ar: 'العائلة' }, icone: House },
+      { href: '/me/journal', label: { fr: 'Journal', en: 'Feed', ar: 'الأخبار' }, icone: Newspaper },
+      { href: '/me/coach', label: { fr: 'Coach', en: 'Coach', ar: 'المدرّب' }, icone: MessageCircle },
+      { href: '/me/parrainage', label: { fr: 'Parrainage', en: 'Referral', ar: 'الإحالة' }, icone: Gift },
     ],
   },
   {
     titre: { fr: 'Compte', en: 'Account', ar: 'الحساب' },
     liens: [
-      { href: '/me/import', label: { fr: 'Import', en: 'Import', ar: 'الاستيراد' }, icone: '📥' },
-      { href: '/me/notifications', label: { fr: 'Notifications', en: 'Notifications', ar: 'الإشعارات' }, icone: '🔔' },
-      { href: '/me/abonnement', label: { fr: 'Abonnement', en: 'Subscription', ar: 'الاشتراك' }, icone: '💫' },
-      { href: '/me/reglages', label: { fr: 'Mes infos', en: 'My info', ar: 'معلوماتي' }, icone: '📋' },
-      { href: '/me/profile', label: { fr: 'Profil', en: 'Profile', ar: 'الملف الشخصي' }, icone: '⚙️' },
-      { href: '/me/confidentialite', label: { fr: 'Confidentialité', en: 'Privacy', ar: 'الخصوصية' }, icone: '🔒' },
-      { href: '/me/conditions', label: { fr: 'Conditions', en: 'Terms', ar: 'الشروط' }, icone: '📄' },
-      { href: '/me/contact', label: { fr: 'Contact', en: 'Contact', ar: 'اتصل بنا' }, icone: '✉️' },
+      { href: '/me/import', label: { fr: 'Import', en: 'Import', ar: 'الاستيراد' }, icone: Download },
+      { href: '/me/notifications', label: { fr: 'Notifications', en: 'Notifications', ar: 'الإشعارات' }, icone: Bell },
+      { href: '/me/abonnement', label: { fr: 'Abonnement', en: 'Subscription', ar: 'الاشتراك' }, icone: Sparkles },
+      { href: '/me/reglages', label: { fr: 'Mes infos', en: 'My info', ar: 'معلوماتي' }, icone: ClipboardList },
+      { href: '/me/profile', label: { fr: 'Profil', en: 'Profile', ar: 'الملف الشخصي' }, icone: Settings },
+      { href: '/me/confidentialite', label: { fr: 'Confidentialité', en: 'Privacy', ar: 'الخصوصية' }, icone: Lock },
+      { href: '/me/conditions', label: { fr: 'Conditions', en: 'Terms', ar: 'الشروط' }, icone: FileText },
+      { href: '/me/contact', label: { fr: 'Contact', en: 'Contact', ar: 'اتصل بنا' }, icone: Mail },
     ],
   },
 ];
@@ -151,7 +166,7 @@ export default function MeNav() {
         aria-expanded={ouvert}
         onClick={() => setOuvert((v) => !v)}
       >
-        <span aria-hidden>{ouvert ? '✕' : '☰'}</span>
+        <span aria-hidden>{ouvert ? <X size={19} /> : <Menu size={19} />}</span>
       </button>
       {ouvert ? <div className="nav-voile" onClick={() => setOuvert(false)} aria-hidden /> : null}
 
@@ -167,17 +182,22 @@ export default function MeNav() {
           {GROUPES.map((g, gi) => (
             <div key={gi} className="nav-groupe">
               {g.titre ? <div className="nav-groupe-titre">{l(g.titre)}</div> : null}
-              {g.liens.map((li) => (
-                <a
-                  key={li.href}
-                  href={li.href}
-                  className={`me-nav-lien${actif(li.href) ? ' actif' : ''}`}
-                  onClick={() => setOuvert(false)}
-                >
-                  <span className="nav-icone" aria-hidden>{li.icone}</span>
-                  {l(li.label)}
-                </a>
-              ))}
+              {g.liens.map((li) => {
+                const Icone = li.icone;
+                return (
+                  <a
+                    key={li.href}
+                    href={li.href}
+                    className={`me-nav-lien${actif(li.href) ? ' actif' : ''}`}
+                    onClick={() => setOuvert(false)}
+                  >
+                    <span className="nav-icone" aria-hidden>
+                      <Icone size={15} strokeWidth={2.1} />
+                    </span>
+                    {l(li.label)}
+                  </a>
+                );
+              })}
             </div>
           ))}
         </nav>

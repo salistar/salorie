@@ -15,6 +15,7 @@ import { useProfil } from '../../../lib/useFirestoreMe';
 import { traducteur, sensLecture, type Langue } from '../../../lib/i18nMe';
 import { genererTexte, transcrireAudio, extraireObjet, iaConfiguree, IaIndisponible, IaNonAutorise } from '../../../lib/ia';
 import { ajouterLog, type Creneau } from '../../../lib/ecrireLog';
+import { Mic, Square } from 'lucide-react';
 
 const CRENEAUX: Creneau[] = ['breakfast', 'lunch', 'snack', 'dinner'];
 /** Au-delà, ce n'est plus une phrase mais un enregistrement oublié. */
@@ -151,10 +152,10 @@ export default function PageDicter() {
       <section className="carte-amis">
         <div className="ligne-champ">
           {etat === 'enregistre' ? (
-            <button className="btn btn-primary" onClick={arreter}>{t('dicteArreter')}</button>
+            <button className="btn btn-primary btn-icone" onClick={arreter}><Square size={15} /> {t('dicteArreter')}</button>
           ) : (
-            <button className="btn btn-primary" onClick={demarrer} disabled={etat === 'traite'}>
-              {etat === 'traite' ? t('dicteTraitement') : t('dicteParler')}
+            <button className="btn btn-primary btn-icone" onClick={demarrer} disabled={etat === 'traite'}>
+              <Mic size={15} /> {etat === 'traite' ? t('dicteTraitement') : t('dicteParler')}
             </button>
           )}
           {etat === 'enregistre' ? <span className="dicte-point" aria-hidden /> : null}
