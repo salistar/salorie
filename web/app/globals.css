@@ -1544,3 +1544,9 @@ tbody tr:last-child td { border-bottom: none; }
 }
 .me-tuile.accent .me-tuile-spark { color: var(--green); }
 
+/* Analyse d'evolution des photos : un encart dans la carte de comparaison. */
+.photos-analyse {
+  margin-top: 12px; padding: 14px 16px;
+  background: var(--field); border: 1px solid var(--line); border-radius: var(--r-lg);
+}
+

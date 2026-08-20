@@ -19,7 +19,7 @@
 //    plusieurs mégaoctets ; 1200 px suffisent largement à comparer deux
 //    silhouettes, et moins d'octets stockés, c'est moins d'octets exposés.
 import {
-  deleteObject, getDownloadURL, getStorage, listAll, ref, uploadBytes, type FirebaseStorage,
+  deleteObject, getBlob, getDownloadURL, getStorage, listAll, ref, uploadBytes, type FirebaseStorage,
 } from 'firebase/storage';
 import { firebaseApp } from './firebaseClient';
 
@@ -132,3 +132,17 @@ export async function supprimer(uid: string, nom: string): Promise<void> {
   if (!uid || !nom) return;
   await deleteObject(ref(stockage(), `${dossier(uid)}/${nom}`));
 }
+
+/**
+ * Récupère le CONTENU d'une photo, en Blob, via le SDK.
+ *
+ * Pas via son URL de téléchargement : `fetch(downloadURL)` et un canvas qui la
+ * dessinerait sont soumis au CORS du domaine de téléchargement, non garanti.
+ * `getBlob` passe par l'API du SDK (firebasestorage.googleapis.com), pensée
+ * pour le navigateur — et porte le jeton du propriétaire, comme le reste.
+ */
+export async function recupererBlob(uid: string, nom: string): Promise<Blob> {
+  if (!uid || !nom) throw new Error('non-connecte');
+  return await getBlob(ref(stockage(), `${dossier(uid)}/${nom}`));
+}
+
