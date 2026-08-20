@@ -45,6 +45,21 @@ export class SocialController {
       const username = `${expiration}:${uid}`;
       const credential = createHmac('sha1', secret).update(username).digest('base64');
       const urls = [`turn:${hote}:3478?transport=udp`, `turn:${hote}:3478?transport=tcp`];
+
+      // TURN sur TLS. Ce n'est pas de la confidentialité en plus — le média est
+      // déjà chiffré de bout en bout par DTLS-SRTP, et le relais ne sait pas ce
+      // qu'il transporte. C'est une question d'ACCESSIBILITÉ : beaucoup de
+      // réseaux d'entreprise et d'hôtels laissent passer le TLS et bloquent le
+      // reste. Sans lui, l'appel n'échoue pas à moitié : il n'a lieu du tout.
+      //
+      // En TÊTE de liste et en TCP : quand un client en a besoin, c'est qu'il n'a
+      // rien d'autre, et un client pressé s'arrête au premier serveur qui répond.
+      //
+      // Piloté par une variable : tant que `TURN_TLS_PORT` n'est pas posée, rien
+      // n'est annoncé. Annoncer une adresse `turns:` que personne n'écoute ferait
+      // patienter chaque client sur un serveur mort avant qu'il essaie les autres.
+      const portTls = String(process.env.TURN_TLS_PORT || '').trim();
+      if (portTls) urls.unshift(`turns:${hote}:${portTls}?transport=tcp`);
       // L'IP passe en TETE : elle marche aujourd'hui, le nom marchera quand le DNS
       // sera pose. L'ordre compte — un client presse s'arrete au premier qui repond.
       if (ip) urls.unshift(`turn:${ip}:3478?transport=udp`, `turn:${ip}:3478?transport=tcp`);
@@ -56,6 +71,9 @@ export class SocialController {
       // Le client saura qu'il n'a que du STUN et pourra prévenir honnêtement que
       // l'appel peut échouer, au lieu de tourner dans le vide.
       relaisDisponible: Boolean(secret),
+      // Le client sait ainsi s'il dispose d'un chemin qui traverse les reseaux
+      // filtrants, et peut le dire au lieu de laisser l'appel echouer sans mot.
+      relaisTls: Boolean(secret && process.env.TURN_TLS_PORT),
       expireDansSec: 3600,
     };
   }
