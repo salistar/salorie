@@ -177,6 +177,30 @@ jobs:
             # .env : coturn ecoute 5349 depuis le compose du depot, les deux doivent
             # s'accorder ou l'un annonce ce que l'autre n'ouvre pas.
             grep -q '^TURN_TLS_PORT=' .env || printf 'TURN_TLS_PORT=%s\n' '5349' >> .env
+
+            # Certificat du TURN sur TLS. On COPIE les fichiers que Caddy renouvelle
+            # pour turn.salorie.com : les monter en place ne marche pas, l'image
+            # coturn tourne en `nobody` (65534) et le magasin de Caddy est en
+            # `drwx------ root`. `docker cp` passe par le demon, qui est root, donc
+            # il lit ce que l'utilisateur de deploiement ne peut pas lire.
+            #
+            # Refait a CHAQUE deploiement : Caddy renouvelle tous les deux mois et
+            # coturn ne relit ses fichiers qu'au demarrage. Si les deploiements
+            # s'espacaient au-dela de deux mois, il servirait un certificat expire —
+            # a surveiller, ou a confier a une tache periodique.
+            CD=/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/turn.salorie.com
+            mkdir -p certs-turn
+            if docker cp "caddy:$CD/turn.salorie.com.crt" certs-turn/turn.crt 2>/dev/null \
+               && docker cp "caddy:$CD/turn.salorie.com.key" certs-turn/turn.key 2>/dev/null; then
+              # Un conteneur jetable pour donner les fichiers a `nobody` : l'utilisateur
+              # de deploiement n'a pas de sudo (verifie le 20/08), le demon docker si.
+              docker run --rm -v "$PWD/certs-turn:/c" alpine:3 sh -c \
+                'chown 65534:65533 /c/turn.crt /c/turn.key && chmod 644 /c/turn.crt && chmod 600 /c/turn.key' \
+                >/dev/null 2>&1 || true
+              echo "certificat TURN copie pour coturn"
+            else
+              echo "certificat turn.salorie.com introuvable chez Caddy — le TLS restera inactif"
+            fi
             # coturn est passe derriere la traduction d'adresse de Docker (ports
             # publies au lieu du mode host, 15 aout 2026). Il doit donc annoncer
             # l'adresse PUBLIQUE dans ses candidats ICE : sans elle il proposerait
