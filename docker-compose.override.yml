@@ -48,6 +48,11 @@ services:
       # aucune base de comptes. Vide = seul le STUN est propose, et l'API le DIT.
       TURN_SECRET: ${TURN_SECRET:-}
       TURN_HOST: ${TURN_HOST:-turn.salorie.com}
+      # Port du TURN sur TLS. Vide = l'adresse `turns:` n'est pas annoncee : une
+      # adresse que personne n'ecoute ferait patienter chaque client sur un
+      # serveur mort avant qu'il essaie les autres. Doit rester d'accord avec le
+      # `--tls-listening-port` de coturn plus bas.
+      TURN_TLS_PORT: ${TURN_TLS_PORT:-}
 
   web:
     # Meme raison que pour backend : Caddy relaie vers `salorie-web:3000` sur le reseau
@@ -108,6 +113,19 @@ services:
       # publier les 16 000 ports par defaut rendrait le demarrage interminable.
       # 21 ports = 21 sessions relayees simultanees, tres au-dela du trafic actuel.
       - "49160-49180:49160-49180/udp"
+      # 5349 : le port standard du TURN sur TLS. Il ne REMPLACE pas le 3478 — un
+      # client parcourt la liste ICE dans l'ordre et retombe dessus si le TLS est
+      # filtre. Reserve : un reseau qui n'autorise QUE le 443 restera bloque, le
+      # 443 appartenant a Caddy et cette machine n'ayant qu'une adresse IP.
+      - "5349:5349/tcp"
+      - "5349:5349/udp"
+    volumes:
+      # Le magasin de certificats de Caddy, en LECTURE SEULE : coturn n'a aucune
+      # raison d'y ecrire. Chemin d'hote plutot que volume externe declare, pour
+      # ne pas creer une dependance de nommage entre deux piles independantes.
+      # Au renouvellement, Caddy reecrit les fichiers mais coturn ne les relit
+      # qu'au demarrage — un `docker restart salorie-coturn` suffit alors.
+      - /var/lib/docker/volumes/caddy_caddy_data/_data:/certs:ro
     command: >-
       -n
       --listening-ip=0.0.0.0
@@ -118,8 +136,18 @@ services:
       --static-auth-secret=${TURN_SECRET:-changez-moi}
       --min-port=49160
       --max-port=49180
-      --no-tls
-      --no-dtls
+      # TLS. Ce n'est PAS de la confidentialite en plus : le media est deja
+      # chiffre de bout en bout par DTLS-SRTP, et le relais ignore ce qu'il
+      # transporte. C'est une question d'ACCESSIBILITE — beaucoup de reseaux
+      # d'entreprise et d'hotels laissent passer le TLS et bloquent le reste.
+      # Sans lui, l'appel n'echoue pas a moitie : il n'a pas lieu.
+      #
+      # Le certificat est celui que Caddy obtient et RENOUVELLE pour
+      # turn.salorie.com (bloc ajoute a son Caddyfile le 20/08/2026 dans ce seul
+      # but) : aucun certbot separe a maintenir.
+      --tls-listening-port=5349
+      --cert=/certs/caddy/certificates/acme-v02.api.letsencrypt.org-directory/turn.salorie.com/turn.salorie.com.crt
+      --pkey=/certs/caddy/certificates/acme-v02.api.letsencrypt.org-directory/turn.salorie.com/turn.salorie.com.key
       --no-cli
       --log-file=stdout
       --fingerprint
