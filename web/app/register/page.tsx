@@ -7,6 +7,7 @@ import AuthShell from '../AuthShell';
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [cle, setCle] = useState('');
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function RegisterPage() {
     try {
       const r = await fetch('/api/auth/register', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, setupKey: cle || undefined }),
       });
       const j = await r.json();
       if (j.ok) { router.push('/'); router.refresh(); }
@@ -58,6 +59,22 @@ export default function RegisterPage() {
             value={password} onChange={(e) => setPassword(e.target.value)}
           />
           <span className="hint" id="pwd-hint">12 caractères minimum.</span>
+        </div>
+
+        {/* La route acceptait `setupKey` depuis le debut et le sous-titre de cette
+            page la mentionnait — mais aucun champ ne permettait de la saisir. Un
+            administrateur qui avait perdu son mot de passe se retrouvait donc
+            enferme dehors : `/register` refuse des qu'un compte existe, et la
+            seule issue documentee etait inutilisable. */}
+        <div className="field">
+          <label className="label" htmlFor="setupKey">Clé d’installation <span className="hint">— seulement si un compte existe déjà</span></label>
+          <input
+            className="input" id="setupKey" name="setupKey" type="password"
+            autoComplete="off"
+            aria-describedby="cle-hint"
+            value={cle} onChange={(e) => setCle(e.target.value)}
+          />
+          <span className="hint" id="cle-hint">Laisse vide pour créer le tout premier compte.</span>
         </div>
 
         {err && <div className="msg msg-err" id="auth-err" role="alert">{err}</div>}
