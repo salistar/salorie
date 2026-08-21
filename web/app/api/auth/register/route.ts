@@ -15,8 +15,23 @@ export async function POST(req: NextRequest) {
     const existing = await countUsers();
     if (existing > 0) {
       const expected = process.env.ADMIN_SETUP_KEY;
-      if (!expected || setupKey !== expected) {
-        return NextResponse.json({ ok: false, error: 'Inscription désactivée' }, { status: 403 });
+      // Deux situations bien differentes, et un seul message les confondait :
+      // « aucune cle n'est configuree sur le serveur » n'appelle pas la meme
+      // action que « ta cle est fausse ». Le premier cas se corrige en posant
+      // ADMIN_SETUP_KEY dans l'environnement ; le second en relisant la cle.
+      // Aucun des deux messages ne revele quoi que ce soit : ils disent seulement
+      // quelle porte essayer.
+      if (!expected) {
+        return NextResponse.json(
+          { ok: false, error: "Inscription fermée : aucune clé d'installation n'est configurée sur le serveur (ADMIN_SETUP_KEY)." },
+          { status: 403 },
+        );
+      }
+      if (setupKey !== expected) {
+        return NextResponse.json(
+          { ok: false, error: "Clé d'installation incorrecte." },
+          { status: 403 },
+        );
       }
     }
     // Le tout premier compte — ou celui cree avec la cle d'installation — est owner.
