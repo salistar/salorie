@@ -127,6 +127,13 @@ services:
       # Auth admin (mongoose + JWT) — DOIT être présent sinon login/register cassent.
       MONGO_URI: mongodb://mongo:27017/salorie
       AUTH_SECRET: ${AUTH_SECRET}
+      # Cle d'installation admin. `/api/auth/register` la lit pour autoriser la
+      # creation d'un compte alors qu'il en existe deja — la SEULE issue quand le
+      # mot de passe du back-office est perdu, puisque les mots de passe sont en
+      # bcrypt et qu'aucun n'est lisible. Elle n'etait cablee NULLE PART : ni ici,
+      # ni dans le workflow, d'ou « aucune cle d'installation n'est configuree ».
+      # Vide = inscription fermee, ce qui reste le bon defaut.
+      ADMIN_SETUP_KEY: ${ADMIN_SETUP_KEY:-}
       # ADMIN_USER / ADMIN_PASS retirés le 5 août 2026 : plus AUCUNE lecture dans le code
       # (l'auth admin passe par Mongo + bcrypt via lib/adminAuth.ts, cf. AUTH_SECRET).
       # Les garder revenait à réécrire un mot de passe en clair dans le .env du serveur
