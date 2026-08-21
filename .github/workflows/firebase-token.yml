@@ -58,6 +58,20 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd ${{ secrets.VPS_PATH }}
+            # Domaine Clerk du pont. `CLERK_JWKS_URL` et `CLERK_ISSUER` vivaient
+            # UNIQUEMENT dans le .env du serveur : changer le domaine primaire
+            # Clerk aurait donc casse la validation ici, sans moyen de la reparer
+            # depuis le depot — et avec elle TOUTE la chaine Firebase (espace /me,
+            # sockets, appels). Pilote par une variable de depot, vide = on ne
+            # touche a rien, ce qui garde le comportement actuel.
+            if [ -n "${{ vars.CLERK_DOMAINE }}" ]; then
+              touch .env
+              grep -v '^CLERK_JWKS_URL=' .env | grep -v '^CLERK_ISSUER=' > .env.neuf || true
+              echo "CLERK_JWKS_URL=https://${{ vars.CLERK_DOMAINE }}/.well-known/jwks.json" >> .env.neuf
+              echo "CLERK_ISSUER=https://${{ vars.CLERK_DOMAINE }}" >> .env.neuf
+              cat .env.neuf > .env && rm -f .env.neuf
+              echo "domaine Clerk du pont : ${{ vars.CLERK_DOMAINE }}"
+            fi
             docker compose pull
             docker compose up -d
             docker image prune -f
