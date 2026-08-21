@@ -170,6 +170,13 @@ jobs:
               echo "TURN_SECRET deja present — conserve"
             fi
             grep -q '^TURN_HOST=' .env || printf 'TURN_HOST=%s\n' 'turn.salorie.com' >> .env
+            # TURN_TLS_PORT : le backend n'annonce l'adresse `turns:` que si elle
+            # existe. Elle passe EN TETE de la liste ICE — quand un client en a
+            # besoin, c'est qu'il n'a rien d'autre, et un client presse s'arrete au
+            # premier serveur qui repond. Posee ici et non laissee au hasard d'un
+            # .env : coturn ecoute 5349 depuis le compose du depot, les deux doivent
+            # s'accorder ou l'un annonce ce que l'autre n'ouvre pas.
+            grep -q '^TURN_TLS_PORT=' .env || printf 'TURN_TLS_PORT=%s\n' '5349' >> .env
             # coturn est passe derriere la traduction d'adresse de Docker (ports
             # publies au lieu du mode host, 15 aout 2026). Il doit donc annoncer
             # l'adresse PUBLIQUE dans ses candidats ICE : sans elle il proposerait
