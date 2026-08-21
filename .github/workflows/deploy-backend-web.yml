@@ -190,18 +190,24 @@ jobs:
             # a surveiller, ou a confier a une tache periodique.
             CD=/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/turn.salorie.com
             mkdir -p certs-turn
-            EMPREINTE_AVANT="$(sha256sum certs-turn/turn.crt 2>/dev/null | cut -c1-16 || echo absent)"
-            if docker cp "caddy:$CD/turn.salorie.com.crt" certs-turn/turn.crt 2>/dev/null \
-               && docker cp "caddy:$CD/turn.salorie.com.key" certs-turn/turn.key 2>/dev/null; then
-              # Un conteneur jetable pour donner les fichiers a `nobody` : l'utilisateur
-              # de deploiement n'a pas de sudo (verifie le 20/08), le demon docker si.
-              # Le REPERTOIRE compte autant que les fichiers : sans droit de
-              # traversee, coturn recoit « Permission denied » sur /certs/ et
-              # rapporte « cannot find certificate file » — un refus d'acces
-              # deguise en fichier absent (21/08/2026, deuxieme fois).
-              docker run --rm -v "$PWD/certs-turn:/c" alpine:3 sh -c \
-                'chown 65534:65533 /c /c/turn.crt /c/turn.key && chmod 750 /c && chmod 644 /c/turn.crt && chmod 600 /c/turn.key' \
-                >/dev/null 2>&1 || true
+            # L'empreinte est gardee HORS du repertoire protege : celui-ci appartient
+            # a `nobody` et l'utilisateur de deploiement n'y a pas acces — il ne peut
+            # donc ni lire ni ecrire dedans. (Mon premier essai le faisait, et c'est
+            # ce qui a casse la copie au deploiement suivant.)
+            EMPREINTE_AVANT="$(cat certs-turn.empreinte 2>/dev/null || echo absent)"
+            # UN SEUL conteneur root fait tout : il lit le magasin de Caddy
+            # (`--volumes-from`), ecrit dans le repertoire protege, et donne les
+            # fichiers a `nobody`. L'utilisateur de deploiement n'a de sudo ni
+            # d'acces a l'un ni a l'autre — le demon docker, si.
+            # Le REPERTOIRE compte autant que les fichiers : sans droit de traversee,
+            # coturn recoit « Permission denied » sur /certs/ et rapporte « cannot
+            # find certificate file » — un refus d'acces deguise en fichier absent.
+            if docker run --rm --volumes-from caddy -v "$PWD/certs-turn:/c" alpine:3 sh -c "
+                 cp $CD/turn.salorie.com.crt /c/turn.crt &&
+                 cp $CD/turn.salorie.com.key /c/turn.key &&
+                 chown 65534:65533 /c /c/turn.crt /c/turn.key &&
+                 chmod 750 /c && chmod 644 /c/turn.crt && chmod 600 /c/turn.key &&
+                 sha256sum /c/turn.crt | cut -c1-16" > certs-turn.empreinte 2>/dev/null; then
               echo "certificat TURN copie pour coturn"
               # coturn ne relit ses certificats qu'au DEMARRAGE, et `docker compose
               # up -d` ne recree un service que si sa configuration a change — le
@@ -209,7 +215,7 @@ jobs:
               # coturn, mais UNIQUEMENT si le fichier a reellement change : un
               # redemarrage systematique couperait les appels relayes en cours a
               # chaque livraison, ce que tout le reste de ce workflow evite.
-              EMPREINTE_APRES="$(sha256sum certs-turn/turn.crt 2>/dev/null | cut -c1-16 || echo absent)"
+              EMPREINTE_APRES="$(cat certs-turn.empreinte 2>/dev/null || echo absent)"
               # Deux raisons de redemarrer, et deux seulement :
               #  · le certificat a change (renouvellement Caddy) ;
               #  · coturn n'ecoute PAS en TLS alors qu'il le devrait — cas d'un
