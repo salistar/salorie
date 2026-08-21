@@ -194,8 +194,12 @@ jobs:
                && docker cp "caddy:$CD/turn.salorie.com.key" certs-turn/turn.key 2>/dev/null; then
               # Un conteneur jetable pour donner les fichiers a `nobody` : l'utilisateur
               # de deploiement n'a pas de sudo (verifie le 20/08), le demon docker si.
+              # Le REPERTOIRE compte autant que les fichiers : sans droit de
+              # traversee, coturn recoit « Permission denied » sur /certs/ et
+              # rapporte « cannot find certificate file » — un refus d'acces
+              # deguise en fichier absent (21/08/2026, deuxieme fois).
               docker run --rm -v "$PWD/certs-turn:/c" alpine:3 sh -c \
-                'chown 65534:65533 /c/turn.crt /c/turn.key && chmod 644 /c/turn.crt && chmod 600 /c/turn.key' \
+                'chown 65534:65533 /c /c/turn.crt /c/turn.key && chmod 750 /c && chmod 644 /c/turn.crt && chmod 600 /c/turn.key' \
                 >/dev/null 2>&1 || true
               echo "certificat TURN copie pour coturn"
             else
