@@ -6,7 +6,12 @@ on:
   push:
     branches: [main]
     paths: ['backend/**', 'web/**', 'food4k/**', 'docker-compose.yml', 'docker-compose.override.yml', '.github/workflows/deploy-backend-web.yml']
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      rotation_turn:
+        description: "Faire tourner TURN_SECRET (coupe les appels en cours)"
+        type: boolean
+        default: false
 
 jobs:
   build-check:
@@ -144,6 +149,20 @@ jobs:
             # n'a besoin de le connaitre, pas meme pour l'installer. Il est ADDITIF —
             # une fois pose, les deploiements suivants le conservent, sinon toutes les
             # sessions vocales en cours seraient invalidees a chaque livraison.
+            # ROTATION DELIBEREE. Le secret est conserve par defaut (voir ci-dessus) :
+            # le regenerer a chaque livraison invaliderait toutes les sessions vocales
+            # en cours. Mais il faut pouvoir le faire tourner — le 21/08/2026 il a ete
+            # expose en clair dans un journal d Actions d un depot PUBLIC, par un
+            # `docker inspect` de coturn. Un secret vu une fois est un secret mort.
+            #
+            # On le RETIRE ici ; le bloc suivant en genere un neuf, sur le serveur,
+            # avec `openssl rand`. Il ne transite donc par aucun journal, aucun secret
+            # GitHub, aucun presse-papier — exactement comme a la premiere installation.
+            # Consequence assumee : les appels en cours tombent le temps du redemarrage.
+            if [ "${{ inputs.rotation_turn }}" = "true" ]; then
+              grep -v '^TURN_SECRET=' .env > .env.rot && mv .env.rot .env
+              echo "TURN_SECRET retire — un nouveau va etre genere"
+            fi
             if ! grep -q '^TURN_SECRET=' .env; then
               printf 'TURN_SECRET=%s\n' "$(openssl rand -hex 32)" >> .env
               echo "TURN_SECRET genere (premiere installation)"
