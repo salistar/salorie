@@ -210,11 +210,28 @@ jobs:
               # redemarrage systematique couperait les appels relayes en cours a
               # chaque livraison, ce que tout le reste de ce workflow evite.
               EMPREINTE_APRES="$(sha256sum certs-turn/turn.crt 2>/dev/null | cut -c1-16 || echo absent)"
-              if [ "$EMPREINTE_AVANT" != "$EMPREINTE_APRES" ]; then
-                docker restart salorie-coturn >/dev/null 2>&1 || true
-                echo "certificat different — coturn redemarre"
+              # Deux raisons de redemarrer, et deux seulement :
+              #  · le certificat a change (renouvellement Caddy) ;
+              #  · coturn n'ecoute PAS en TLS alors qu'il le devrait — cas d'un
+              #    demarrage anterieur a la mise en place des droits, ou d'une
+              #    configuration corrigee sans que docker recree le service.
+              # Ce second test rend l'etape auto-reparatrice : un `docker compose
+              # up -d` ne recree un service que si sa configuration RESOLUE change,
+              # et un commentaire n'en fait pas partie — j'ai cru le forcer ainsi,
+              # sans effet (21/08/2026).
+              if docker exec salorie-coturn sh -lc 'netstat -lnt 2>/dev/null | grep -q ":5349"' 2>/dev/null; then
+                ECOUTE_TLS=oui
               else
-                echo "certificat inchange — coturn laisse tranquille"
+                ECOUTE_TLS=non
+              fi
+              if [ "$EMPREINTE_AVANT" != "$EMPREINTE_APRES" ] || [ "$ECOUTE_TLS" = "non" ]; then
+                docker restart salorie-coturn >/dev/null 2>&1 || true
+                sleep 4
+                docker exec salorie-coturn sh -lc 'netstat -lnt 2>/dev/null | grep ":5349"' 2>/dev/null \
+                  && echo "coturn redemarre — TLS en ecoute" \
+                  || echo "coturn redemarre mais TOUJOURS PAS de listener TLS"
+              else
+                echo "TLS deja en ecoute et certificat inchange — coturn laisse tranquille"
               fi
             else
               echo "certificat turn.salorie.com introuvable chez Caddy — le TLS restera inactif"
