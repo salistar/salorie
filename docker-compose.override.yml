@@ -128,6 +128,10 @@ services:
       # (le demon docker, lui, est root) puis les donne a `nobody`. La cle reste
       # en 600 : lisible par coturn, par personne d'autre.
       - ./certs-turn:/certs:ro
+    # (Cette ligne existe pour que `docker compose up -d` recree coturn : il ne
+    # recree un service que si sa configuration a change, et il fallait le forcer
+    # une fois pour qu'il relise enfin ses certificats — 21/08/2026.)
+    #
     # ⚠ AUCUN COMMENTAIRE DANS LE BLOC `command:` CI-DESSOUS. C'est un scalaire
     # replie (`>-`) : un `#` n'y est pas un commentaire, il devient du TEXTE et
     # docker refuse tout le service — « invalid command line string », 21/08/2026.

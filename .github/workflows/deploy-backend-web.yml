@@ -190,6 +190,7 @@ jobs:
             # a surveiller, ou a confier a une tache periodique.
             CD=/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/turn.salorie.com
             mkdir -p certs-turn
+            EMPREINTE_AVANT="$(sha256sum certs-turn/turn.crt 2>/dev/null | cut -c1-16 || echo absent)"
             if docker cp "caddy:$CD/turn.salorie.com.crt" certs-turn/turn.crt 2>/dev/null \
                && docker cp "caddy:$CD/turn.salorie.com.key" certs-turn/turn.key 2>/dev/null; then
               # Un conteneur jetable pour donner les fichiers a `nobody` : l'utilisateur
@@ -202,6 +203,19 @@ jobs:
                 'chown 65534:65533 /c /c/turn.crt /c/turn.key && chmod 750 /c && chmod 644 /c/turn.crt && chmod 600 /c/turn.key' \
                 >/dev/null 2>&1 || true
               echo "certificat TURN copie pour coturn"
+              # coturn ne relit ses certificats qu'au DEMARRAGE, et `docker compose
+              # up -d` ne recree un service que si sa configuration a change — le
+              # certificat, lui, change sans que le compose bouge. On redemarre donc
+              # coturn, mais UNIQUEMENT si le fichier a reellement change : un
+              # redemarrage systematique couperait les appels relayes en cours a
+              # chaque livraison, ce que tout le reste de ce workflow evite.
+              EMPREINTE_APRES="$(sha256sum certs-turn/turn.crt 2>/dev/null | cut -c1-16 || echo absent)"
+              if [ "$EMPREINTE_AVANT" != "$EMPREINTE_APRES" ]; then
+                docker restart salorie-coturn >/dev/null 2>&1 || true
+                echo "certificat different — coturn redemarre"
+              else
+                echo "certificat inchange — coturn laisse tranquille"
+              fi
             else
               echo "certificat turn.salorie.com introuvable chez Caddy — le TLS restera inactif"
             fi
