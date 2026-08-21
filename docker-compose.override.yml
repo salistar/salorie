@@ -120,12 +120,14 @@ services:
       - "5349:5349/tcp"
       - "5349:5349/udp"
     volumes:
-      # Le magasin de certificats de Caddy, en LECTURE SEULE : coturn n'a aucune
-      # raison d'y ecrire. Chemin d'hote plutot que volume externe declare, pour
-      # ne pas creer une dependance de nommage entre deux piles independantes.
-      # Au renouvellement, Caddy reecrit les fichiers mais coturn ne les relit
-      # qu'au demarrage — un `docker restart salorie-coturn` suffit alors.
-      - /var/lib/docker/volumes/caddy_caddy_data/_data:/certs:ro
+      # Une COPIE des certificats, pas le magasin de Caddy lui-meme. Monter ce
+      # dernier ne marche pas : l'image coturn tourne en `nobody` (uid 65534) et
+      # Caddy garde son magasin en `drwx------ root` — coturn repondait « cannot
+      # find certificate file », qui etait en verite un refus de permission
+      # (21/08/2026). Le deploiement copie les deux fichiers ici via `docker cp`
+      # (le demon docker, lui, est root) puis les donne a `nobody`. La cle reste
+      # en 600 : lisible par coturn, par personne d'autre.
+      - ./certs-turn:/certs:ro
     # ⚠ AUCUN COMMENTAIRE DANS LE BLOC `command:` CI-DESSOUS. C'est un scalaire
     # replie (`>-`) : un `#` n'y est pas un commentaire, il devient du TEXTE et
     # docker refuse tout le service — « invalid command line string », 21/08/2026.
@@ -148,8 +150,8 @@ services:
       --min-port=49160
       --max-port=49180
       --tls-listening-port=5349
-      --cert=/certs/caddy/certificates/acme-v02.api.letsencrypt.org-directory/turn.salorie.com/turn.salorie.com.crt
-      --pkey=/certs/caddy/certificates/acme-v02.api.letsencrypt.org-directory/turn.salorie.com/turn.salorie.com.key
+      --cert=/certs/turn.crt
+      --pkey=/certs/turn.key
       --no-cli
       --log-file=stdout
       --fingerprint
