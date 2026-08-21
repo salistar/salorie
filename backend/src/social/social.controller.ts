@@ -58,11 +58,17 @@ export class SocialController {
       // Piloté par une variable : tant que `TURN_TLS_PORT` n'est pas posée, rien
       // n'est annoncé. Annoncer une adresse `turns:` que personne n'écoute ferait
       // patienter chaque client sur un serveur mort avant qu'il essaie les autres.
+      // L'IP en plus du nom : elle marchait deja quand `turn.salorie.com` n'existait
+      // pas encore au DNS. Depuis le 20/08 il resout, mais la garder ne coute rien.
+      if (ip) urls.unshift(`turn:${ip}:3478?transport=udp`, `turn:${ip}:3478?transport=tcp`);
+      // `turns:` en DERNIER `unshift`, donc en PREMIER dans la liste. Les deux etaient
+      // inverses : l'IP passait devant et la ligne TLS se retrouvait troisieme, alors
+      // que son commentaire affirmait le contraire. Trouve en relisant ce commit.
+      //
+      // Le NOM et non l'IP : le certificat est emis pour turn.salorie.com, une
+      // adresse en IP echouerait a la verification TLS.
       const portTls = String(process.env.TURN_TLS_PORT || '').trim();
       if (portTls) urls.unshift(`turns:${hote}:${portTls}?transport=tcp`);
-      // L'IP passe en TETE : elle marche aujourd'hui, le nom marchera quand le DNS
-      // sera pose. L'ordre compte — un client presse s'arrete au premier qui repond.
-      if (ip) urls.unshift(`turn:${ip}:3478?transport=udp`, `turn:${ip}:3478?transport=tcp`);
       iceServers.push({ urls, username, credential });
     }
 
