@@ -103,9 +103,16 @@ export class AiService {
     const tiers: Array<() => Promise<{ text: string; engine: string } | null>> = [
       // GRATUIT — Cloudflare Workers AI, meme quota que la vision (10 000 neurones/jour,
       // mais un appel texte coute une fraction de ce que coute une image).
+      // `messages` et NON `prompt` : avec `prompt`, l'API de Cloudflare fait de la
+      // COMPLETION BRUTE — le modele n'a pas de tour de parole a terminer, donc il
+      // ne s'arrete jamais et remplit ses 1024 jetons. Constate le 22/08/2026 :
+      // « reponds exactement par le mot OK » a rendu « OK » repete quarante fois
+      // en 12 secondes. Le meme modele en mode conversation s'arrete tout seul.
+      // Tous les autres fournisseurs de cette cascade recevaient deja `messages`.
       () => cfAccount
         ? ask('cloudflare', `https://api.cloudflare.com/client/v4/accounts/${cfAccount}/ai/run/${cfModel}`,
-            'CF_API_TOKEN', cfModel, undefined, { prompt, max_tokens: 1024 })
+            'CF_API_TOKEN', cfModel, undefined,
+            { messages: [{ role: 'user', content: prompt }], max_tokens: 1024 })
         : Promise.resolve(null),
       // GRATUIT — Groq, tres rapide.
       () => ask('groq', 'https://api.groq.com/openai/v1/chat/completions', 'GROQ_API_KEY',
