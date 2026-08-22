@@ -79,6 +79,13 @@ services:
     image: coturn/coturn:4.6-alpine
     container_name: salorie-coturn
     restart: unless-stopped
+    # `edge` en plus du reseau par defaut : c'est celui de Caddy. Sans lui, Caddy
+    # ne resout meme pas le nom `salorie-coturn` — necessaire pour router vers le
+    # relais depuis le port 443 selon le SNI (les reseaux d'entreprise qui ne
+    # laissent sortir que le 443 sont les seuls que le 5349 ne couvre pas).
+    # Passer par l'IP de la passerelle de l'hote marcherait aussi, mais elle
+    # change au gre des recreations de reseau — un nom, non.
+    networks: [default, edge]
     # PORTS PUBLIES plutot que `network_mode: host` (15 aout 2026).
     #
     # Le mode host etait le choix « propre » sur le papier : coturn voit la vraie
