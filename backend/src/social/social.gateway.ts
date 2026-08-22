@@ -34,9 +34,21 @@ type Presence = { uid: string; name: string; depuis: number };
 @WebSocketGateway({
   namespace: '/social',
   // Même politique que l'API HTTP (cf. main.ts) : les clients natifs n'envoient
-  // pas d'Origin et passent ; seuls les navigateurs sont contraints, et l'espace
-  // /me est servi depuis un sous-domaine de salorie.com.
-  cors: { origin: [/\.salorie\.com$/, /\.salistar\.com$/, 'http://localhost:3000', 'http://localhost:8081'] },
+  // pas d'Origin et passent ; seuls les navigateurs sont contraints.
+  //
+  // ⚠ L'APEX autant que les sous-domaines. L'ancienne expression `/\.salorie\.com$/`
+  // exigeait un POINT avant : elle refusait `salorie.com`, qui est justement l'adresse
+  // de l'espace /me depuis la bascule du 22/08/2026. Le duo, la presence et le chat
+  // de course s'en trouvaient coupes depuis un navigateur — sans erreur serveur,
+  // puisque c'est le navigateur qui bloque.
+  cors: {
+    origin: [
+      /^https:\/\/([a-z0-9-]+\.)*salorie\.com$/,
+      /^https:\/\/([a-z0-9-]+\.)*salistar\.com$/,
+      'http://localhost:3000',
+      'http://localhost:8081',
+    ],
+  },
 })
 export class SocialGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;

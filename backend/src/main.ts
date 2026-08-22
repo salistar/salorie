@@ -19,8 +19,24 @@ async function bootstrap() {
   // Rien ne cassait parce que l'admin appelle via ses routes serveur — mais le premier
   // appel navigateur direct aurait echoue sans un mot. gowithsally.com retire : reste de
   // copier-coller d'un autre projet, aucun front de ce domaine n'appelle ce backend.
+  // ⚠ L'APEX, pas seulement les sous-domaines. `/\.salorie\.com$/` exige un POINT
+  // avant : il accepte `app.salorie.com` et refuse `salorie.com`. Tant que l'espace
+  // utilisateur vivait sur un sous-domaine, personne ne s'en apercevait. Depuis la
+  // bascule du 22/08/2026 il vit sur l'APEX — et tout ce qui passe par cette API
+  // (les 9 ecrans d'IA, les identifiants TURN) tombait sur un « Failed to fetch »
+  // muet, sans erreur serveur puisque le navigateur bloque avant l'envoi.
+  //
+  // Ancrees des deux cotes : `^https://` empeche qu'un `http://` en clair passe, et
+  // le groupe optionnel couvre l'apex comme les sous-domaines sans jamais accepter
+  // un voisin du genre `evilsalorie.com`.
+  const ORIGINES = [
+    /^https:\/\/([a-z0-9-]+\.)*salorie\.com$/,
+    /^https:\/\/([a-z0-9-]+\.)*salistar\.com$/,
+    'http://localhost:3000',
+    'http://localhost:8081',
+  ];
   app.enableCors({
-    origin: [/\.salorie\.com$/, /\.salistar\.com$/, 'http://localhost:3000', 'http://localhost:8081'],
+    origin: ORIGINES,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
