@@ -65,15 +65,29 @@ jobs:
             # sockets, appels). Pilote par une variable de depot, vide = on ne
             # touche a rien, ce qui garde le comportement actuel.
             if [ -n "${{ vars.CLERK_DOMAINE }}" ]; then
-              touch .env
-              grep -v '^CLERK_JWKS_URL=' .env | grep -v '^CLERK_ISSUER=' > .env.neuf || true
-              echo "CLERK_JWKS_URL=https://${{ vars.CLERK_DOMAINE }}/.well-known/jwks.json" >> .env.neuf
-              echo "CLERK_ISSUER=https://${{ vars.CLERK_DOMAINE }}" >> .env.neuf
-              cat .env.neuf > .env && rm -f .env.neuf
-              echo "domaine Clerk du pont : ${{ vars.CLERK_DOMAINE }}"
+              # Le fichier s'appelle `firebase-token.env`, PAS `.env` — c'est ce que
+              # `env_file:` designe dans le compose. Ma premiere version ecrivait
+              # dans `.env`, un fichier que personne ne lit : le workflow rapportait
+              # un succes et le pont continuait de valider l'ANCIEN domaine Clerk.
+              # Resultat le 22/08/2026 : « La session securisee n'a pas pu s'ouvrir »
+              # sur tout /me, apres la bascule du domaine.
+              F=firebase-token.env
+              if [ -f "$F" ]; then
+                grep -v '^CLERK_JWKS_URL=' "$F" | grep -v '^CLERK_ISSUER=' > "$F.neuf" || true
+                echo "CLERK_JWKS_URL=https://${{ vars.CLERK_DOMAINE }}/.well-known/jwks.json" >> "$F.neuf"
+                echo "CLERK_ISSUER=https://${{ vars.CLERK_DOMAINE }}" >> "$F.neuf"
+                cat "$F.neuf" > "$F" && rm -f "$F.neuf"
+                echo "domaine Clerk du pont : ${{ vars.CLERK_DOMAINE }}"
+              else
+                echo "::warning::$F introuvable dans $(pwd) — le domaine Clerk n a PAS ete pose."
+              fi
             fi
             docker compose pull
-            docker compose up -d
+            # `--force-recreate` : docker ne recree PAS un service quand seul le
+            # CONTENU d'un `env_file` change — il ne compare que la configuration
+            # resolue. Sans cela, le conteneur garde l'ancien domaine indefiniment
+            # (il tournait depuis 2 mois quand le probleme a ete trouve).
+            docker compose up -d --force-recreate
             docker image prune -f
 
       - name: Deploy skipped notice
