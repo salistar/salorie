@@ -67,8 +67,19 @@ export class SocialController {
       //
       // Le NOM et non l'IP : le certificat est emis pour turn.salorie.com, une
       // adresse en IP echouerait a la verification TLS.
-      const portTls = String(process.env.TURN_TLS_PORT || '').trim();
-      if (portTls) urls.unshift(`turns:${hote}:${portTls}?transport=tcp`);
+      // PLUSIEURS ports, du plus universel au plus specifique. Depuis le
+      // 22/08/2026 coturn est aussi joignable sur le **443**, par routage TCP
+      // selon le SNI : Caddy garde le port et n'y envoie que ce qui annonce
+      // turn.salorie.com. C'est le seul port qui traverse les reseaux
+      // d'entreprise les plus fermes — ceux qui ne laissent sortir que lui.
+      // Le 5349 reste annonce : il est le port standard du TURN sur TLS, et
+      // rien ne dit qu'un pare-feu qui bloque l'un bloque l'autre.
+      const portsTls = String(process.env.TURN_TLS_PORT || '')
+        .split(',')
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .reverse(); // `unshift` inverse l'ordre : on renverse pour le retablir
+      for (const p of portsTls) urls.unshift(`turns:${hote}:${p}?transport=tcp`);
       iceServers.push({ urls, username, credential });
     }
 
