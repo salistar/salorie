@@ -12,6 +12,15 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: [
+          // HSTS : le navigateur refuse ensuite tout http:// vers ce domaine, sans
+          // meme tenter la requete. Caddy redirige deja 80 vers 443, mais cette
+          // premiere requete en clair reste interceptable — c'est exactement la
+          // fenetre que HSTS ferme.
+          //
+          // `preload` VOLONTAIREMENT ABSENT : il inscrit le domaine dans une liste
+          // embarquee dans les navigateurs, dont on ne sort qu'apres des mois. Un
+          // an de max-age donne la meme protection et reste reversible.
+          { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'no-referrer' },
