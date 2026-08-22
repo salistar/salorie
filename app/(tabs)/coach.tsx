@@ -2,7 +2,19 @@ import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { useEspaceBas } from '../../lib/espaceBas';
 import { directionAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, RefreshControl, TouchableOpacity, Modal, Pressable, TextInput, ViewStyle } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  RefreshControl,
+  TouchableOpacity,
+  Modal,
+  Pressable,
+  TextInput,
+  ViewStyle,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
@@ -205,7 +217,7 @@ export default function CoachScreen() {
   // sans ce garde, `data!` crashait l'onglet Coach pour un user signé out.
   if (loading || !data) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
+      <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
         <ScreenTopBar />
         <View style={styles.content}>
           <SkeletonCard height={150} />
@@ -224,7 +236,7 @@ export default function CoachScreen() {
   const unlocked = d.achievements.filter(a => a.unlocked).length;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]}
         showsVerticalScrollIndicator={false}

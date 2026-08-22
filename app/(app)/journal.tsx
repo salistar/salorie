@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Newspaper, Flag, Trophy, Sparkles, ChevronRight } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -54,7 +63,7 @@ export default function Journal() {
   );
 
   return (
-    <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
         <View style={[s.head, rowDir]}>

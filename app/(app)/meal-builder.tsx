@@ -3,7 +3,17 @@
 import React, { useState } from 'react';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, FlatList, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  FlatList,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, Plus, Minus, Trash2, ChefHat, Check } from 'lucide-react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
@@ -99,7 +109,7 @@ export default function MealBuilderScreen() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
       <View style={[styles.head, row]}><ChefHat size={22} color={accent} /><Text style={[styles.title, { color: text }, align]}>{t.title}</Text></View>
 

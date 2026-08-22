@@ -6,13 +6,13 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
   Image,
   Share,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, Users, Home, LogIn, Share2, UserPlus, Target } from 'lucide-react-native';
@@ -219,7 +219,7 @@ export default function FamilyScreen() {
   const progress = Math.min(1, WEEKLY_GOAL_KM > 0 ? weekly.totalKm / WEEKLY_GOAL_KM : 0);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.topRow}>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backBtn, { backgroundColor: isDark ? 'rgba(40,50,60,0.6)' : Colors.light.gray[50] }]} onPress={() => router.back()}>

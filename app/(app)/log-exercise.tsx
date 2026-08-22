@@ -4,10 +4,10 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, Footprints, Weight, Settings2, ChevronRight } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
@@ -70,7 +70,7 @@ export default function LogExerciseScreen() {
   ];
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
 
       <ScrollView contentContainerStyle={styles.content}>

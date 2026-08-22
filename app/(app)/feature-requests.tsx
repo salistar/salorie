@@ -4,14 +4,14 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Modal,
   Dimensions,
-  Alert
+  Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import {
@@ -195,7 +195,7 @@ export default function FeatureRequestsScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: resolved === 'dark' ? '#0f1419' : Colors.light.white }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: resolved === 'dark' ? '#0f1419' : Colors.light.white }]}>
       <ScreenTopBar showBack title={FL.board} showBrand={false} showNotif={false} />
 
       <View style={styles.topInfo}>

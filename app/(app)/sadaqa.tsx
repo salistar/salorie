@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Linking, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Linking,
+  ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { HandHeart, Utensils, Trees, ExternalLink } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { Card, PrimaryButton } from '../../components/ui';
@@ -100,7 +108,7 @@ export default function Sadaqa() {
   );
 
   return (
-    <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
         <View style={[s.head, { flexDirection: rowDir(isRTL) }]}>

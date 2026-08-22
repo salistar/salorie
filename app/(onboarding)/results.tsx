@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ActivityIndicator,
   ScrollView,
   TouchableOpacity,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Sentry from '@sentry/react-native';
 import { 
@@ -266,7 +266,7 @@ export default function ResultsScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0f1419' : 'transparent' }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: isDark ? '#0f1419' : 'transparent' }]}>
       <ScreenTopBar showNotif={false} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>

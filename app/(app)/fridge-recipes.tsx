@@ -1,7 +1,16 @@
 // Photo du frigo → recettes (Gemini Vision). Identifie les ingrédients + propose des recettes.
 import React, { useState } from 'react';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Image,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { router } from 'expo-router';
@@ -69,7 +78,7 @@ export default function FridgeRecipesScreen() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
         <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}><Refrigerator size={24} color={accent} style={flipForRTL(isRTL)} /><Text style={[styles.title, { color: text }, align]}>{t.title}</Text></View>

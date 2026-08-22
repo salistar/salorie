@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   Dimensions,
   KeyboardAvoidingView,
@@ -12,6 +11,7 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Clock, Dumbbell } from 'lucide-react-native';
 import { Video, ResizeMode } from 'expo-av';
@@ -360,7 +360,7 @@ Output a single integer (e.g. 247). No explanation.`;
   const cardBorder = isDark ? colors.gray[200] : Colors.light.gray[100];
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: bg }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}

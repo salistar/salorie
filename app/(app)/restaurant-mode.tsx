@@ -4,7 +4,16 @@
 // uniquement si l'endpoint backend échoue ou ne lit aucun plat.
 import React, { useEffect, useState } from 'react';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Image,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUser } from '@clerk/clerk-expo';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera, Image as ImageIcon, UtensilsCrossed, Star, CheckCircle2, AlertTriangle } from 'lucide-react-native';
@@ -110,7 +119,7 @@ export default function RestaurantModeScreen() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.head}><UtensilsCrossed size={24} color={accent} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>

@@ -3,7 +3,15 @@
 // écrans existants (zéro duplication de logique) : courses virtuelles (photos),
 // mes médailles, journal/actus, agenda. Trilingue + dark + RTL.
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { Trophy, Flag, Newspaper, ChevronRight, Award, MapPin, Users, Mountain, Ghost, Radio, Route as RouteIcon, Timer, Volleyball, Store, Moon, Swords, CalendarDays } from 'lucide-react-native';
@@ -101,7 +109,7 @@ export default function DefisTab() {
   };
 
   return (
-    <SafeAreaView style={[s.safe, { backgroundColor: colors.gray[50] }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: colors.gray[50] }]}>
       <ScreenTopBar />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
         <View style={{ paddingHorizontal: spacing.xl }}>

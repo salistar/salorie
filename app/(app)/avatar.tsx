@@ -2,7 +2,14 @@
 // et paliers/équipement débloqués. XP 100% locale (lib/avatar.ts).
 import React, { useEffect, useState } from 'react';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Sparkles, Lock, Check } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useTranslation } from '../../lib/i18n';
@@ -84,7 +91,7 @@ export default function AvatarScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} title={t.title} />
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         <View style={[styles.head, rowDir]}>

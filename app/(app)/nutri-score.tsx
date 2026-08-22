@@ -2,7 +2,17 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { partager, lienPartage } from '../../lib/partage';
 import { useTokens } from '../../constants/tokens';
-import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, Animated, Easing, Share } from 'react-native';
+import {
+  Image,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Animated,
+  Easing,
+  Share,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Award, Share2 } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -121,7 +131,7 @@ export default function NutriScoreScreen() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <Image source={require('../../assets/images/illustrations/healthy_food.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />

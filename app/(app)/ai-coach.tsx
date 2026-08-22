@@ -4,7 +4,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  TextInput,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Sparkles, Send, RefreshCw, Volume2, VolumeX, Mic, Square, Flag } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
@@ -229,7 +238,7 @@ export default function AiCoachScreen() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
       <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}>
         <Sparkles size={22} color={GREEN} />

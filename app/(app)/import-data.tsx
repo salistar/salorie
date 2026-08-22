@@ -4,7 +4,15 @@
 // à jour), on affiche un message clair au lieu de planter.
 import React, { useState } from 'react';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as FileSystem from 'expo-file-system/legacy';
 import { router } from 'expo-router';
 import { Upload, FileText, CheckCircle2, AlertTriangle } from 'lucide-react-native';
@@ -110,7 +118,7 @@ export default function ImportDataScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={[styles.title, { color: text, textAlign: isRTL ? 'right' : 'left' }]}>{t.title}</Text>

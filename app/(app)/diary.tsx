@@ -6,7 +6,16 @@ import { flipAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import { numLocaleFor } from '../../lib/format';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUser } from '@clerk/clerk-expo';
 import { ChevronLeft, ChevronRight, Trash2, CopyPlus, Coffee, Sun, Cookie, Moon, Flame, Plus } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -117,7 +126,7 @@ export default function Diary() {
   };
 
   return (
-    <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
         {/* Navigation par date */}

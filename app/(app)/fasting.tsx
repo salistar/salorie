@@ -2,7 +2,17 @@
 // Persiste l'heure de début (AsyncStorage) → survit au redémarrage de l'app.
 import React, { useEffect, useRef, useState } from 'react';
 import { useTokens } from '../../constants/tokens';
-import { Image, View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import {
+  Image,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  TextInput,
+  ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Play, Square, Timer, Utensils, Users, Moon, Sunrise, Droplets } from 'lucide-react-native';
 import { useUser } from '@clerk/clerk-expo';
@@ -197,7 +207,7 @@ export default function FastingScreen() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
         <Image source={require('../../assets/images/illustrations/plan.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />

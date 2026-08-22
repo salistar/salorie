@@ -3,7 +3,18 @@
 // 100% on-device, hors-ligne. Gestion d'erreur robuste (jamais de crash).
 import React, { useState, useRef, useEffect } from 'react';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Image, Animated, Easing } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Image,
+  Animated,
+  Easing,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { Camera, Images, ScanText, AlertTriangle } from 'lucide-react-native';
@@ -179,7 +190,7 @@ export default function LabelScanScreen() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
         <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}>

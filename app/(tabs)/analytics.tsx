@@ -3,7 +3,17 @@ import { useEspaceBas } from '../../lib/espaceBas';
 import { flipAuto, directionAuto } from '../../lib/rtl';
 import { useTokens } from '../../constants/tokens';
 import { a11y } from '../../lib/a11y';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, Image, TouchableOpacity, Modal, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  Modal,
+  Dimensions,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { TrendingUp, TrendingDown, Minus, Scale, Check, Circle, ChevronRight, X } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { useAnalyticsData } from '../../hooks/useAnalyticsData';
@@ -266,7 +276,7 @@ export default function AnalyticsScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bgColor }]}>
       <ScrollView 
         contentContainerStyle={[styles.content, { paddingBottom: espaceBas }]}
         showsVerticalScrollIndicator={false}

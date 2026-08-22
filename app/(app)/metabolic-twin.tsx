@@ -2,7 +2,16 @@
 import React, { useEffect, useState } from 'react';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
-import { Image, View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  Image,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUser } from '@clerk/clerk-expo';
 import { Minus, Plus, TrendingDown, Flag } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -109,7 +118,7 @@ export default function MetabolicTwinScreen() {
   }, []);
 
   if (loading || !p) {
-    return <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}><ScreenTopBar showBack showNotif={false} /><View style={styles.center}><ActivityIndicator color={GREEN} /></View></SafeAreaView>;
+    return <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}><ScreenTopBar showBack showNotif={false} /><View style={styles.center}><ActivityIndicator color={GREEN} /></View></SafeAreaView>;
   }
 
   const tdee = estimateTDEE(p);
@@ -123,7 +132,7 @@ export default function MetabolicTwinScreen() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
         <Image source={require('../../assets/images/illustrations/scale.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />

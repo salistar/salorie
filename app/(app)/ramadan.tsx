@@ -14,7 +14,16 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { suggererSuhoor, suggererIftar, nomAliment, type Aliment } from '../../lib/ramadanAssiettes';
 import BASE_LOCALE from '../../assets/data/local-foods.json';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, Switch } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Switch,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUser } from '@clerk/clerk-expo';
 import { Moon, Sunrise, MapPin, Droplets, Flame, CheckCircle2 } from 'lucide-react-native';
 import { SkeletonCard, Skeleton, Card, PrimaryButton, SecondaryButton, SectionHeader, Input } from '../../components/ui';
@@ -329,7 +338,7 @@ export default function RamadanScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack title={t.title} showBrand={false} showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}>

@@ -4,7 +4,14 @@
 // État 100% local via lib/annualChallenge. Trilingue + dark + RTL + ScreenTopBar.
 import React, { useState, useCallback } from 'react';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Mountain, Minus, Plus, Flag } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -147,7 +154,7 @@ export default function AnnualChallenge() {
   const reached = pct >= 100;
 
   return (
-    <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
         <View style={[s.head, rowDir]}>

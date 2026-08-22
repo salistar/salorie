@@ -1,7 +1,17 @@
 import React, { useCallback, useState, useMemo, useEffect } from 'react';
 import { a11y } from '../../lib/a11y';
 import { connecterSocial, socketSocial, type Presence } from '../../lib/socialSocket';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, TextInput, ActivityIndicator, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  Image,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, Trophy, UserPlus, Flame, MoreVertical } from 'lucide-react-native';
@@ -176,7 +186,7 @@ export default function SocialScreen() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
       {/* PerfList : le fil était rendu par `.map()` dans un ScrollView — aucune
           virtualisation, et chaque ligne porte un avatar distant. Le CLASSEMENT (liste
           courte, bornée aux amis) passe en ListHeaderComponent : on garde ainsi un seul

@@ -4,7 +4,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUser } from '@clerk/clerk-expo';
 import { Droplet, Heart, Check, AlertTriangle, TrendingUp, TrendingDown, Minus, Trash2 } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -174,7 +181,7 @@ export default function VitalsScreen() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} title={t.title} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>

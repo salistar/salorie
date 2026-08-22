@@ -5,7 +5,15 @@
 //    (Appareil / Backend / Gemini) transmis à scan-analysis (forceModel).
 import { useRef, useState, useEffect, useMemo } from 'react';
 import BrandOverlay from '../../components/BrandOverlay';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, SafeAreaView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions, scanFromURLAsync } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';

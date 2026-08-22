@@ -5,12 +5,12 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Image,
   Dimensions,
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, Plus, Minus, Droplet } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
@@ -117,7 +117,7 @@ export default function AddWaterScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: bg }]}>
       <ScreenTopBar showBack title={t('water.title')} showBrand={false} showNotif={false} />
 
       <View style={styles.content}>

@@ -1,4 +1,14 @@
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Image, Dimensions, Linking } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Dimensions,
+  Linking,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEspaceBas } from '../../lib/espaceBas';
 import { flipAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
@@ -248,7 +258,7 @@ export default function ProfileScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bgColor }]}>
       <ScrollView 
         contentContainerStyle={[styles.scrollContent, { paddingBottom: espaceBas }]}
         showsVerticalScrollIndicator={false}

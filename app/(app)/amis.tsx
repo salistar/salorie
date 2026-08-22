@@ -1,7 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert, ActivityIndicator,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { UserMinus, Users, Phone, Video } from 'lucide-react-native';
 import { useUser } from '@clerk/clerk-expo';
@@ -166,7 +173,7 @@ export default function MesAmis() {
 
   const s = styles(tok);
   return (
-    <SafeAreaView style={[s.safe, { backgroundColor: tok.bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: tok.bg }]}>
       <ScreenTopBar showBack title={t.titre} showNotif={false} />
       <ScrollView
         contentContainerStyle={[s.corps, { paddingBottom: espaceBas }]}

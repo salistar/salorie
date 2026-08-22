@@ -1,7 +1,17 @@
 // Templates de repas — enregistre tes repas habituels, re-logge en 1 tap.
 import React, { useEffect, useState } from 'react';
 import { useTokens } from '../../constants/tokens';
-import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import {
+  Image,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUser } from '@clerk/clerk-expo';
 import { BookmarkPlus, Plus, Check } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -70,7 +80,7 @@ export default function MealTemplatesScreen() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}><BookmarkPlus size={24} color={accent} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>

@@ -2,7 +2,14 @@
 // conditions médicales (diabète/hypertension…) + ingrédients locaux/MENA.
 import React, { useEffect, useRef, useState } from 'react';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { Sparkles, Bookmark, MapPin } from 'lucide-react-native';
@@ -250,7 +257,7 @@ export default function AiMealPlanScreen() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <ScreenTitle title={t.title} icon={<Sparkles size={24} color={accent} />} />

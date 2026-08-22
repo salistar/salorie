@@ -2,7 +2,14 @@
 import React, { useEffect, useState } from 'react';
 import { useTokens } from '../../constants/tokens';
 import { numLocaleFor } from '../../lib/format';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUser } from '@clerk/clerk-expo';
 import { PersonStanding } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -93,7 +100,7 @@ export default function BodyCompositionScreen() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}><PersonStanding size={24} color={GREEN} /><Text style={[styles.title, { color: text }, align]}>{t.title}</Text></View>
