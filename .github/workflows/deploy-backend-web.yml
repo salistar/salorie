@@ -176,7 +176,16 @@ jobs:
             # premier serveur qui repond. Posee ici et non laissee au hasard d'un
             # .env : coturn ecoute 5349 depuis le compose du depot, les deux doivent
             # s'accorder ou l'un annonce ce que l'autre n'ouvre pas.
-            grep -q '^TURN_TLS_PORT=' .env || printf 'TURN_TLS_PORT=%s\n' '5349' >> .env
+            # 443 EN PREMIER : c'est le port que meme les reseaux les plus fermes
+            # laissent sortir. coturn y est joignable depuis le 22/08/2026, par
+            # routage TCP selon le SNI dans Caddy (le port reste a Caddy, qui n'y
+            # envoie que ce qui annonce turn.salorie.com). Le 5349 suit : c'est le
+            # port standard du TURN sur TLS, et rien ne dit qu'un pare-feu qui
+            # bloque l'un bloque l'autre.
+            # Reecrit a chaque deploiement, et non « pose si absent » : la valeur a
+            # change une fois, elle rechangera.
+            sed -i '/^TURN_TLS_PORT=/d' .env 2>/dev/null || true
+            printf 'TURN_TLS_PORT=%s\n' '443,5349' >> .env
 
             # Certificat du TURN sur TLS. On COPIE les fichiers que Caddy renouvelle
             # pour turn.salorie.com : les monter en place ne marche pas, l'image
