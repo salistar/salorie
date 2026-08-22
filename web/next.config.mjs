@@ -15,7 +15,20 @@ const nextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'no-referrer' },
-          { key: 'Permissions-Policy', value: 'geolocation=(), microphone=(), camera=()' },
+          // `()` = liste vide = AUCUNE origine, pas meme la notre. Ecrit avant que
+          // le web sache appeler, cet en-tete interdisait a l'app son propre micro
+          // et sa propre camera : `navigator.permissions.query` repondait `denied`
+          // et `getUserMedia` echouait, quoi que fasse l'utilisateur dans son
+          // navigateur. Les appels du duo ne pouvaient donc PAS fonctionner — le
+          // defaut ressemblait a une autorisation refusee a la main (constate le
+          // 22/08/2026, apres avoir envoye l'utilisateur quatre fois vers le
+          // cadenas de la barre d'adresse pour rien).
+          //
+          // `(self)` n'ouvre qu'a NOTRE origine : une iframe tierce reste exclue,
+          // ce qui etait le but de cet en-tete. La geolocalisation reste fermee :
+          // c'est le TELEPHONE qui mesure le parcours, cet ecran ne fait
+          // qu'afficher la distance qu'il envoie.
+          { key: 'Permissions-Policy', value: 'geolocation=(), microphone=(self), camera=(self)' },
           { key: 'Content-Security-Policy', value: "frame-ancestors 'none'" },
         ],
       },
