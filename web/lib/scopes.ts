@@ -151,10 +151,33 @@ const API_PERIMETRES: { prefixe: string; scope: Scope; superadminSeul?: boolean 
   { prefixe: '/api/sport-fields', scope: 'terrains' },
 ];
 
-/** Droit d'appeler une route d'API. Vrai si la route n'exige aucun perimetre. */
+/**
+ * Routes d'API qui ne relevent d'AUCUN perimetre, et pourquoi. Toute route
+ * absente de cette liste ET d'`API_PERIMETRES` est refusee — voir plus bas.
+ */
+const API_SANS_PERIMETRE = [
+  // Formulaire de contact : il existe pour recevoir des messages, y compris de
+  // gens qui n'ont aucun droit dans le back-office.
+  '/api/contact',
+  // Renvoie la session de CELUI qui appelle, rien d'autre. Un perimetre y serait
+  // circulaire : il faut deja etre identifie pour l'atteindre.
+  '/api/session',
+];
+
+/** Droit d'appeler une route d'API. */
 export function peutAppelerApi(role: Role, scopes: Scope[] | undefined, chemin: string): boolean {
   const regle = API_PERIMETRES.find((r) => chemin === r.prefixe || chemin.startsWith(r.prefixe + '/'));
-  if (!regle) return true;
+  if (!regle) {
+    // ⚠ REFUS PAR DEFAUT. L'ancienne version rendait `true` : une route d'API
+    // oubliee dans `API_PERIMETRES` devenait appelable par n'importe quel admin
+    // connecte, quels que soient ses perimetres — et rien ne le signalait.
+    // Un controle de permission ne doit jamais s'ouvrir sur ce qu'il ignore.
+    //
+    // Constate le 22/08/2026 : 2 routes sur 22 etaient dans ce cas. Aucune
+    // n'etait sensible (contact, session), mais la prochaine le sera peut-etre,
+    // et elle passerait aussi silencieusement.
+    return API_SANS_PERIMETRE.some((p) => chemin === p || chemin.startsWith(p + '/'));
+  }
   return peutVoir(role, scopes, {
     href: regle.prefixe,
     label: regle.prefixe,
