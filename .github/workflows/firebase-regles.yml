@@ -55,8 +55,27 @@ jobs:
           PROJET=$(node -e "process.stdout.write(require('/tmp/sa.json').project_id||'')")
           echo "  projet : $PROJET"
           [ -n "$PROJET" ] || { echo "::error::project_id absent du compte de service"; exit 1; }
+          # ⚠ `| tail` MASQUE le code de sortie : le statut du tube est celui de
+          # `tail`, donc toujours 0. Ma premiere version faisait exactement cela et
+          # a rapporte « success » sur un deploiement en erreur 403. `pipefail`
+          # rend au tube le code de la commande qui a echoue.
+          set -o pipefail
+
+          # Firestore d'abord, et il est OBLIGATOIRE : c'est lui qui protege les
+          # donnees des utilisateurs. Un echec ici doit faire echouer le workflow.
           npx --yes firebase-tools@13 deploy \
-            --only firestore:rules,storage \
-            --project "$PROJET" \
-            --non-interactive 2>&1 | tail -20
+            --only firestore:rules --project "$PROJET" --non-interactive 2>&1 | tail -20
+
+          # Storage ensuite, et TOLERANT : le compte de service n'a pas
+          # forcement le droit de lire l'etat du service Storage
+          # (« Permission denied to get service firebasestorage.googleapis.com »,
+          # constate le 22/08/2026). Faire echouer tout le workflow pour cela
+          # empecherait de deployer les regles Firestore, qui comptent davantage.
+          if npx --yes firebase-tools@13 deploy \
+               --only storage --project "$PROJET" --non-interactive 2>&1 | tail -10; then
+            echo "  regles Storage deployees"
+          else
+            echo "::warning::regles Storage NON deployees — le compte de service manque"
+            echo "::warning::du role Firebase Rules Admin ou de l acces au service Storage."
+          fi
           rm -f /tmp/sa.json
