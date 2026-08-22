@@ -57,7 +57,23 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd ${{ secrets.VPS_PATH }}
+            # Le service se LOCALISE lui-meme. `VPS_PATH` vaut le repertoire
+            # personnel (/home/deploy) et non celui du pont (apps/salorie-auth) :
+            # `docker compose pull` et `up -d` s'executaient donc dans le vide,
+            # sans un mot, et ce workflow n'a JAMAIS rien deploye — le conteneur
+            # tournait depuis deux mois quand on s'en est apercu, le 22/08/2026.
+            #
+            # L'etiquette que docker pose sur tout conteneur lance par compose dit
+            # ou vit son fichier. Le service se retrouve donc meme s'il demenage,
+            # ce qu'un chemin en dur ne survivrait pas.
+            D=$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project.working_dir"}}' salorie-firebase-token 2>/dev/null || true)
+            if [ -n "$D" ] && [ -d "$D" ]; then
+              cd "$D"
+            else
+              echo "::warning::conteneur du pont introuvable — repli sur VPS_PATH."
+              cd ${{ secrets.VPS_PATH }}
+            fi
+            echo "repertoire de deploiement : $(pwd)"
             # Domaine Clerk du pont. `CLERK_JWKS_URL` et `CLERK_ISSUER` vivaient
             # UNIQUEMENT dans le .env du serveur : changer le domaine primaire
             # Clerk aurait donc casse la validation ici, sans moyen de la reparer
