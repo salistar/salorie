@@ -1,0 +1,89 @@
+# Renouvellement du certificat TLS de coturn.
+# ---------------------------------------------------------------------------
+# POURQUOI CE WORKFLOW EXISTE
+#
+# Caddy renouvelle le certificat de turn.salorie.com tous les deux mois, mais
+# coturn ne relit ses fichiers qu'au DEMARRAGE. La copie se faisait jusqu'ici
+# dans le deploiement du backend — donc si personne ne deployait pendant deux
+# mois, le relais servait un certificat expire et les appels tombaient sur les
+# reseaux qui n'acceptent que le TLS.
+#
+# Faire dependre une expiration d'un rythme de livraison est une fragilite que
+# j'ai introduite le 22/08/2026 en activant le TLS. Ceci la retire.
+#
+# Hebdomadaire : le certificat vit 90 jours, une verification par semaine laisse
+# douze occasions de le renouveler avant l'echeance.
+name: TURN — certificat
+
+on:
+  schedule:
+    - cron: '17 4 * * 1'   # lundi, 4h17 UTC — creux de trafic
+  workflow_dispatch: {}
+
+jobs:
+  certificat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Copier si le certificat a change, redemarrer si besoin
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 5m
+          script: |
+            set -u
+            cd /home/${{ secrets.VPS_USER }}/apps/salorie-stack 2>/dev/null || cd $HOME/apps/salorie-stack
+            CD=/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/turn.salorie.com
+            AVANT="$(cat certs-turn.empreinte 2>/dev/null || echo absent)"
+
+            # Un seul conteneur root : il lit le magasin de Caddy, ecrit dans le
+            # repertoire protege et donne les fichiers a `nobody` (l'utilisateur
+            # de coturn). L'utilisateur de deploiement n'a acces ni a l'un ni a
+            # l'autre ; le demon docker, si.
+            if ! docker run --rm --volumes-from caddy -v "$PWD/certs-turn:/c" alpine:3 sh -c "
+                 cp $CD/turn.salorie.com.crt /c/turn.crt &&
+                 cp $CD/turn.salorie.com.key /c/turn.key &&
+                 chown 65534:65533 /c /c/turn.crt /c/turn.key &&
+                 chmod 750 /c && chmod 644 /c/turn.crt && chmod 600 /c/turn.key &&
+                 sha256sum /c/turn.crt | cut -c1-16" > certs-turn.empreinte 2>/dev/null; then
+              echo "::error::certificat turn.salorie.com introuvable chez Caddy."
+              exit 1
+            fi
+            APRES="$(cat certs-turn.empreinte)"
+
+            # Deux raisons de redemarrer, et deux seulement : le certificat a
+            # change, ou coturn n'ecoute pas en TLS alors qu'il le devrait. Un
+            # redemarrage systematique couperait les appels relayes en cours.
+            if docker exec salorie-coturn sh -lc 'netstat -lnt 2>/dev/null | grep -q ":5349"' 2>/dev/null; then
+              ECOUTE=oui
+            else
+              ECOUTE=non
+            fi
+            echo "  empreinte : $AVANT -> $APRES | TLS en ecoute : $ECOUTE"
+
+            if [ "$AVANT" != "$APRES" ] || [ "$ECOUTE" = "non" ]; then
+              docker restart salorie-coturn >/dev/null 2>&1 || true
+              sleep 5
+              docker exec salorie-coturn sh -lc 'netstat -lnt 2>/dev/null | grep -q ":5349"' 2>/dev/null \
+                && echo "  coturn redemarre — TLS en ecoute" \
+                || { echo "::error::coturn redemarre mais PAS de listener TLS."; exit 1; }
+            else
+              echo "  rien a faire"
+            fi
+
+      - name: Verifier depuis l exterieur
+        run: |
+          set -o pipefail
+          for PORT in 443 5349; do
+            SUJET=$(echo | timeout 20 openssl s_client -connect turn.salorie.com:$PORT \
+                    -servername turn.salorie.com 2>/dev/null \
+                    | openssl x509 -noout -subject -enddate 2>/dev/null || true)
+            if echo "$SUJET" | grep -q "turn.salorie.com"; then
+              echo "  port $PORT : $(echo "$SUJET" | tr '\n' ' ')"
+            else
+              echo "::error::port $PORT ne sert pas le certificat de turn.salorie.com"
+              exit 1
+            fi
+          done
