@@ -1,0 +1,62 @@
+# Deploiement des regles Firestore et Storage.
+# ---------------------------------------------------------------------------
+# POURQUOI CE WORKFLOW EXISTE
+#
+# `firestore.rules` (409 lignes) et `storage.rules` vivaient dans le depot sans
+# que RIEN ne les deploie — verifie le 22/08/2026. Le fichier versionne pouvait
+# donc differer de ce qui protege reellement les donnees, et personne ne l'aurait
+# su : on relit le depot, on se rassure, et la base obeit a une autre version.
+#
+# C'est le pire genre d'ecart en securite — celui qu'on ne peut pas voir en
+# lisant le code.
+#
+# Le service ne demande aucun secret nouveau : `FIREBASE_SERVICE_ACCOUNT` existe
+# deja pour le backend.
+name: Firebase — regles
+
+on:
+  push:
+    branches: [main]
+    paths: ['firestore.rules', 'storage.rules', 'firebase.json', '.github/workflows/firebase-regles.yml']
+  workflow_dispatch: {}
+
+jobs:
+  regles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verifier que les fichiers sont la
+        run: |
+          for f in firestore.rules storage.rules firebase.json; do
+            [ -f "$f" ] || { echo "::error::$f manquant"; exit 1; }
+            echo "  $f : $(wc -l < "$f") lignes"
+          done
+
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+
+      - name: Deployer
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "${SA:-}" ]; then
+            echo "::error::FIREBASE_SERVICE_ACCOUNT absent des secrets."
+            exit 1
+          fi
+          # Le compte de service passe par un FICHIER et la variable que la CLI
+          # attend : le coller dans une ligne de commande le rendrait visible de
+          # tout processus de la machine via `ps`.
+          printf '%s' "$SA" > /tmp/sa.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
+          # Le projet est lu du compte de service : pas de valeur en dur qui
+          # pourrait pointer ailleurs que la cle utilisee.
+          PROJET=$(node -e "process.stdout.write(require('/tmp/sa.json').project_id||'')")
+          echo "  projet : $PROJET"
+          [ -n "$PROJET" ] || { echo "::error::project_id absent du compte de service"; exit 1; }
+          npx --yes firebase-tools@13 deploy \
+            --only firestore:rules,storage \
+            --project "$PROJET" \
+            --non-interactive 2>&1 | tail -20
+          rm -f /tmp/sa.json
