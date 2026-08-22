@@ -44,11 +44,25 @@ jobs:
             echo "::error::CLERK_SECRET_KEY absente des secrets du depot."
             exit 1
           fi
-          # On n'affiche jamais la cle : seulement ce que le serveur repond.
+          # `Get-Clipboard` sous PowerShell ajoute un retour a la ligne. Colle tel
+          # quel dans un secret, il se retrouve dans l'en-tete Authorization et
+          # Clerk repond 401 — l'echec ressemble alors a une mauvaise cle.
+          PROPRE="$(printf '%s' "$CSK" | tr -d '\r\n')"
+          # On decrit la cle sans jamais l'afficher : sa longueur et son prefixe
+          # suffisent a distinguer « mauvaise valeur » de « bonne valeur salie ».
+          echo "  longueur brute : ${#CSK}  |  apres nettoyage : ${#PROPRE}"
+          case "$PROPRE" in
+            sk_live_*) echo "  prefixe : sk_live_ (cle secrete de production)" ;;
+            sk_test_*) echo "  prefixe : sk_test_ (cle de DEVELOPPEMENT, pas celle de prod)" ;;
+            pk_*)      echo "::error::C'est une cle PUBLIABLE (pk_), pas la cle secrete." ;;
+            https://*) echo "::error::C'est une URL, pas une cle — mauvais bouton de copie." ;;
+            *)         echo "  prefixe : inattendu" ;;
+          esac
           CODE=$(curl -s -o /tmp/i.json -w '%{http_code}' \
-            -H "Authorization: Bearer $CSK" https://api.clerk.com/v1/instance)
+            -H "Authorization: Bearer $PROPRE" https://api.clerk.com/v1/instance)
           echo "  GET /v1/instance -> HTTP $CODE"
           [ "$CODE" = "200" ] || { echo "::error::La cle est refusee par Clerk."; exit 1; }
+          echo "CSK=$PROPRE" >> "$GITHUB_ENV"
 
       - name: Etat de l instance
         run: |
