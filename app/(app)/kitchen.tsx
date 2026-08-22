@@ -3,7 +3,14 @@
 // Aucune feature supprimée : juste mieux organisées + connectées au même endroit.
 import React from 'react';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import {
   BookmarkPlus, ChefHat, ScanText, Receipt, Sparkles, ShoppingCart, Refrigerator,
@@ -74,7 +81,7 @@ export default function KitchenScreen() {
   ];
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         <View style={[styles.head, isRTL && { flexDirection: 'row-reverse' }]}>

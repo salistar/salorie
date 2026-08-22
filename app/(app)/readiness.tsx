@@ -1,7 +1,15 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Activity, Moon, HeartPulse, Minus, Plus } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -150,7 +158,7 @@ export default function ReadinessScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <ScreenTopBar showBack showBrand={false} showNotif={false} />
 

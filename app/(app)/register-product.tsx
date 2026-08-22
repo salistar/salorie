@@ -4,9 +4,17 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { useTokens } from '../../constants/tokens';
 import {
-  View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity,
-  Image, Alert, KeyboardAvoidingView, Platform,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -165,7 +173,7 @@ export default function RegisterProductScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <ScreenTopBar showBack title={newProductTitle} showBrand={false} showNotif={false} />

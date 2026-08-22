@@ -4,13 +4,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Image,
   ActivityIndicator,
   ScrollView,
   TextInput,
   Share,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Check, Circle, Flame, Beef, Wheat, Droplets, Scale, FileText, Share2 } from 'lucide-react-native';
@@ -772,7 +772,7 @@ ${langInstr}`;
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

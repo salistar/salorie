@@ -6,12 +6,12 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Share,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Users, Share2, Gift, Check, Lock, Ticket, Hash } from 'lucide-react-native';
 import { useUser } from '@clerk/clerk-expo';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -203,7 +203,7 @@ export default function Referral() {
   const count = stats?.count ?? 0;
 
   return (
-    <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={[s.head, { flexDirection: rowDir(isRTL) }]}>

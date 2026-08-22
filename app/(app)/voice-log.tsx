@@ -1,7 +1,16 @@
 import React, { useState, useRef } from 'react';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUser } from '@clerk/clerk-expo';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -117,7 +126,7 @@ export default function VoiceLog() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body}>
         <View style={s.head}><Mic size={26} color={accent} /><Text style={[s.title, { color: text }]}>{t.title}</Text></View>

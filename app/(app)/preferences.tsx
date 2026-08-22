@@ -3,13 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Switch,
   ActivityIndicator,
   ScrollView,
-  Dimensions
+  Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 import { router } from 'expo-router';
@@ -162,7 +162,7 @@ export default function PreferencesScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: resolved === 'dark' ? '#0f1419' : Colors.light.white }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: resolved === 'dark' ? '#0f1419' : Colors.light.white }]}>
       <ScreenTopBar showBack title={t('prefs.title')} showBrand={false} showNotif={false} />
 
       {loading ? (

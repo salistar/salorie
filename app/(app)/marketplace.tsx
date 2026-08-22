@@ -7,9 +7,14 @@ import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import React, { useCallback, useState, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Skeleton } from '../../components/ui';
 import { router, useFocusEffect } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
@@ -107,7 +112,7 @@ export default function MarketplaceScreen() {
     l.price > 0 ? `${l.price} MAD` : t.free;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
       <ScreenTopBar />
       {/* Header */}
       <View style={[styles.header, { flexDirection: dir }]}>

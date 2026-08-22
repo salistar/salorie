@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Linking,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUser } from '@clerk/clerk-expo';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { MessagesSquare, Check, Mail } from 'lucide-react-native';
@@ -100,7 +108,7 @@ export default function Contact() {
 
   if (sent) {
     return (
-      <SafeAreaView style={[s.safe, { backgroundColor: bg }]}><ScreenTopBar />
+      <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: bg }]}><ScreenTopBar />
         <View style={s.done}><Check size={48} color={accent} /><Text style={[s.doneTxt, { color: text }]}>{t.doneTxt}</Text>
           <Text style={[s.doneSub, { color: sub }]}>{t.doneSub}</Text>
           <TouchableOpacity style={s.btn} onPress={() => { setSent(false); setSubject(''); setMessage(''); }}><Text style={s.btnTxt}>{t.newMessage}</Text></TouchableOpacity>
@@ -110,7 +118,7 @@ export default function Contact() {
   }
 
   return (
-    <SafeAreaView style={[s.safe, { backgroundColor: bg }]}><ScreenTopBar />
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: bg }]}><ScreenTopBar />
       <ScrollView contentContainerStyle={s.body}>
         <View style={s.head}><MessagesSquare size={26} color={accent} /><Text style={[s.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[s.sub, { color: sub }, align]}>{t.sub}</Text>

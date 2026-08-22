@@ -1,6 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { Award, HandHeart, ChevronRight, Gift } from 'lucide-react-native';
@@ -76,7 +84,7 @@ export default function Medals() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body}>
         <View style={[s.head, { flexDirection: rowDir(isRTL) }]}><Award size={26} color={GREEN} /><Text style={[s.title, { color: text }, align]}>{t.title}</Text></View>

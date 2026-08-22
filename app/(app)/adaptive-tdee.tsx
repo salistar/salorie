@@ -1,5 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import {
+  Image,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUser } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
 import { Activity, TrendingDown, TrendingUp, Check, Scale, Utensils } from 'lucide-react-native';
@@ -181,7 +190,7 @@ export default function AdaptiveTDEE() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[s.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body}>
         <Image source={require('../../assets/images/illustrations/lose_weight.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />

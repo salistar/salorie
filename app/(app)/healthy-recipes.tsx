@@ -9,7 +9,16 @@ import { partager, lienPartage } from '../../lib/partage';
 import { directionAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Modal, Share } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+  Share,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useUser } from '@clerk/clerk-expo';
 import { CheckCircle2, MinusCircle, AlertTriangle, X, Utensils, Info, Share2 } from 'lucide-react-native';
@@ -183,7 +192,7 @@ export default function HealthyRecipesScreen() {
   const selectedScore = selected ? scoreRecipe(selected, safeCtx) : null;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         <View style={[styles.head, { flexDirection: rowDir }]}>

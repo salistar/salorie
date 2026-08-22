@@ -8,9 +8,9 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, Trophy, ChevronUp, ChevronDown, Clock } from 'lucide-react-native';
@@ -146,7 +146,7 @@ export default function LeaguesScreen() {
   const myXp = data?.me?.xp ?? 0;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topRow}>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')}

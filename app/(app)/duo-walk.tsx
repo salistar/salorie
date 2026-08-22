@@ -10,7 +10,15 @@
 //   · la VOIX passe par WebRTC, dont le module natif est optionnel. Son absence
 //     masque le bouton micro sans rien casser d'autre.
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Share } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Share,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Mic, MicOff, PhoneOff, Share2, Users, Video } from 'lucide-react-native';
 import * as Location from 'expo-location';
@@ -160,7 +168,7 @@ export default function MarcheADeux() {
 
   const s = styles(tok);
   return (
-    <SafeAreaView style={[s.safe, { backgroundColor: tok.bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: tok.bg }]}>
       <ScreenTopBar showBack title={t.titre} showNotif={false} />
       <ScrollView contentContainerStyle={s.corps}>
         <View style={[s.carte, { flexDirection: rowDir(isRTL) }]}>

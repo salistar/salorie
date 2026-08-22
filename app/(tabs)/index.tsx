@@ -1,4 +1,11 @@
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEspaceBas } from '../../lib/espaceBas';
 import { flipAuto } from '../../lib/rtl';
 import { useEffect, useState, useCallback } from 'react';

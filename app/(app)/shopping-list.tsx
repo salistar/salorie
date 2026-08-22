@@ -7,7 +7,16 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
-import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import {
+  Image,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUser } from '@clerk/clerk-expo';
 import { ShoppingCart, Plus, Check, Trash2, RefreshCw } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -125,7 +134,7 @@ export default function ShoppingListScreen() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <Image source={require('../../assets/images/photos/veggies_0.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />

@@ -7,7 +7,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   TextInput,
   Image,
   KeyboardAvoidingView,
@@ -15,6 +14,7 @@ import {
   Animated,
   Easing,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   Ruler,
@@ -404,7 +404,7 @@ export default function OnboardingScreen() {
   const isLast = currentStep === STEPS.length - 1;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: C.bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: C.bg }]}>
       <ScreenTopBar showNotif={false} />
 
       {renderProgressBar()}

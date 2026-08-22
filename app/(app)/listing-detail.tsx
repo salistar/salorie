@@ -6,9 +6,16 @@ import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity,
-  ActivityIndicator, Image, Linking,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Image,
+  Linking,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, MessageCircle, Tag, MapPin, User as UserIcon } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
@@ -103,7 +110,7 @@ export default function ListingDetailScreen() {
   const priceLabel = (l: MarketplaceListing) => (l.price > 0 ? `${l.price} MAD` : t.free);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
       <ScreenTopBar />
       {/* Header */}
       <View style={[styles.header, { flexDirection: dir }]}>

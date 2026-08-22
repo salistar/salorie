@@ -3,7 +3,14 @@
 // haut/bas + anti-rebond temporel). 100% local, hors-ligne, aucune caméra.
 import React, { useEffect, useRef, useState } from 'react';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Accelerometer } from 'expo-sensors';
 import { Play, Pause, RotateCcw, Activity } from 'lucide-react-native';
 import { router } from 'expo-router';
@@ -125,7 +132,7 @@ export default function RepCounterScreen() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
         <Text style={[styles.title, { color: text }]}>{t.title}</Text>

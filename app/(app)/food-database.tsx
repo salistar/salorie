@@ -7,11 +7,11 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
   Keyboard,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Search, Plus, Utensils, ScanBarcode, Star, History, RotateCcw, Flame } from 'lucide-react-native';
@@ -298,7 +298,7 @@ export default function FoodDatabaseScreen() {
   const keyExtractor = useCallback((item: any) => item.food_id.toString(), []);
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#0f1419' : Colors.light.white }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: isDark ? '#0f1419' : Colors.light.white }]}>
       <ScreenTopBar />
       <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backBtn, { backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] }]} onPress={() => router.back()}>

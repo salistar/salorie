@@ -5,7 +5,15 @@
 // même chose, ce sont deux façons opposées d'aborder la semaine — et la seconde est
 // celle que vit la majorité des foyers marocains.
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TextInput, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Wallet, Users } from 'lucide-react-native';
 import { useTokens } from '../../constants/tokens';
 import { useTranslation } from '../../lib/i18n';
@@ -62,7 +70,7 @@ export default function PanierSouk() {
 
   const s = styles(tok);
   return (
-    <SafeAreaView style={[s.safe, { backgroundColor: tok.bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: tok.bg }]}>
       <ScreenTopBar showBack title={t.titre} showNotif={false} />
       <ScrollView contentContainerStyle={s.corps} keyboardShouldPersistTaps="handled">
         <View style={[s.saisies, { flexDirection: rowDir(isRTL) }]}>

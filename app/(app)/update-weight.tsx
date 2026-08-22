@@ -4,10 +4,10 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ArrowLeft, Check, Scale } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -103,7 +103,7 @@ export default function UpdateWeightScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: pageBg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: pageBg }]}>
       <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
       <View style={styles.titleSection}>

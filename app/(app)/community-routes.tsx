@@ -3,9 +3,15 @@ import { a11y } from '../../lib/a11y';
 import { useTokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity,
-  ActivityIndicator, TextInput,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, MapPin, Plus, Trash2, Send, Clock, ChevronDown, ChevronRight, Route as RouteIcon, Flag } from 'lucide-react-native';
@@ -228,7 +234,7 @@ export default function CommunityRoutesScreen() {
     s === 'approved' ? '#22c55e' : s === 'rejected' ? '#ef4444' : Colors.light.secondary;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
       <ScreenTopBar />
       {/* Header */}
       <View style={[styles.header, { flexDirection: dir }]}>

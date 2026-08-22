@@ -6,12 +6,12 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Dimensions,
   Platform,
   ActivityIndicator,
-  Share
+  Share,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Flame, Check, ArrowLeft, Share2 } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
@@ -91,7 +91,7 @@ export default function WorkoutResultScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#0f1419' : Colors.light.white }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: isDark ? '#0f1419' : Colors.light.white }]}>
       <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
       <View style={styles.content}>

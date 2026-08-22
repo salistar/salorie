@@ -1,6 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ShieldCheck, Fingerprint, Trash2 } from 'lucide-react-native';
 import { useUser, useAuth } from '@clerk/clerk-expo';
@@ -192,7 +201,7 @@ export default function PrivacyScreen() {
   const infoBoxBorder = isDark ? '#283241' : '#D1FAE5';
   const infoBoxText = isDark ? Colors.dark.primaryDark : '#065F46';
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
       <ScreenTopBar showBack title={tx.title} showBrand={false} showNotif={false} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

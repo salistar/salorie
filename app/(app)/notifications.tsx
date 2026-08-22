@@ -6,12 +6,12 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ActivityIndicator,
   Modal,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -376,7 +376,7 @@ export default function NotificationsScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, isDark && { backgroundColor: '#000' }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, isDark && { backgroundColor: '#000' }]}>
       <ScreenTopBar />
       <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backButton, isDark && { backgroundColor: Colors.dark.gray[50] }]} onPress={() => router.back()}>

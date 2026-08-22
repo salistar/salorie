@@ -4,13 +4,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, Flame, Activity } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
@@ -88,7 +88,7 @@ export default function LogManualExerciseScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showBrand showNotif={false} />
 
       <KeyboardAvoidingView

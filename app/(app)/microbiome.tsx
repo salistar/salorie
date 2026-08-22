@@ -1,7 +1,16 @@
 // Microbiote — questionnaire santé intestinale → recommandations IA. Analyse labo = à venir.
 import React, { useState } from 'react';
 import { useTokens } from '../../constants/tokens';
-import { Image, View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+  Image,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Activity, Sparkles } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useScreenGate } from '../../components/FeatureGate';
@@ -61,7 +70,7 @@ export default function MicrobiomeScreen() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
         <Image source={require('../../assets/images/illustrations/loading_bg.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />

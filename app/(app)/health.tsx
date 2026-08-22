@@ -1,7 +1,16 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { a11y } from '../../lib/a11y';
 import { numLocaleFor } from '../../lib/format';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Image,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, Footprints, Flame, Scale, RefreshCw, HeartPulse, Plus, Zap, Navigation, RotateCcw, Activity, ChevronRight } from 'lucide-react-native';
@@ -228,7 +237,7 @@ export default function HealthScreen() {
   if (!__gate.ok) return __gate.node;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <ScreenTopBar showBack showBrand={false} showNotif={false} />
 

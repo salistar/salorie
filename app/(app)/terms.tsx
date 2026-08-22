@@ -1,6 +1,13 @@
 import React, { useMemo } from 'react';
 import { useTokens } from '../../constants/tokens';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ChevronLeft, Scale, ShieldCheck, ScrollText } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
@@ -61,7 +68,7 @@ export default function TermsScreen() {
   const tPrimary = isDark ? '#fff' : Colors.light.gray[900];
   const tMuted = isDark ? '#9BA1A6' : Colors.light.gray[500];
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
       <ScreenTopBar showBack title={tx.title} showBrand={false} showNotif={false} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
