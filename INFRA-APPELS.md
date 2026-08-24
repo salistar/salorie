@@ -83,6 +83,16 @@ Sur srv3, dans `$HOME/caddy` : `Caddyfile.avant-l4` et
   retrait vaut immediatement des deux cotes — ce qui n'etait pas le cas avant.
 - **Les regles Firestore se deploient.** Le compte de service a recu le role
   `Administrateur des regles Firebase`, et rien de plus large.
+- **Une faille trouvee en interrogeant les regles, pas en les relisant.** Le
+  joker `match /{document=**}` dans `users/{userId}` matche zero segment ou plus
+  en `rules_version = '2'` : il couvrait donc aussi le document parent. Comme
+  Firestore autorise des qu'UNE regle autorise, il annulait les cinq garde-fous
+  contre l'auto-attribution du Premium — n'importe qui pouvait s'offrir un
+  abonnement en une ecriture. Corrige par `/{sousCollection}/{doc=**}`, qui
+  exige au moins un nom de collection.
+  `scripts/tester-regles-firestore.js` pose desormais 13 questions au moteur
+  AVANT chaque publication, et les repose au jeu de regles publie. Sans
+  dependance : le jeton d'acces est signe avec `crypto`.
 
 ## Ce qui reste ouvert
 
