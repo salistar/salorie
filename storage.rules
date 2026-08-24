@@ -9,6 +9,16 @@ rules_version = '2';
 // propriétaire d'un dossier peut y accéder. Il n'y a AUCUNE exception admin —
 // un compte d'administration peut lire les journaux alimentaires de quelqu'un,
 // il n'a aucune raison de voir ces photos-là.
+//
+// ## Comment ce fichier est publié
+//
+// Par `scripts/publier-regles-storage.js`, qui parle directement à l'API des
+// règles — PAS par `firebase deploy --only storage`. La CLI vérifie d'abord que
+// l'API Storage est activée, ce qui exige `serviceusage.services.get` : un droit
+// que le compte de service n'a pas, alors qu'il a bien celui de publier des
+// règles. L'étape était donc tolérante et n'a JAMAIS rien publié, du 22 au
+// 24/08/2026 — ce fichier pouvait diverger de ce qui protège réellement le
+// bucket sans que rien ne le signale.
 service firebase.storage {
   match /b/{bucket}/o {
 
