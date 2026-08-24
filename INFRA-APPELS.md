@@ -93,14 +93,16 @@ Sur srv3, dans `$HOME/caddy` : `Caddyfile.avant-l4` et
   `scripts/tester-regles-firestore.js` pose desormais 13 questions au moteur
   AVANT chaque publication, et les repose au jeu de regles publie. Sans
   dependance : le jeton d'acces est signe avec `crypto`.
+- **Les regles Storage se publient enfin.** L'echec de la CLI n'etait pas un
+  droit sur les regles : elle verifie d'abord que l'API Storage est activee, ce
+  qui demande `serviceusage.services.get`. L'etape etait tolerante, donc elle
+  n'avait JAMAIS rien publie. `scripts/publier-regles-storage.js` s'adresse
+  directement a l'API — creer un jeu de regles, pointer la release dessus,
+  relire pour verifier — et ne demande aucun role supplementaire. Aucun degat
+  cette fois : le publie et le depot etaient identiques.
 
 ## Ce qui reste ouvert
 
-- **Les regles Storage ne se deploient toujours pas**, mais pas pour la raison
-  qu'on croyait : la CLI verifie d'abord que l'API Storage est activee, ce qui
-  demande `serviceusage.services.get`. Il manque donc au compte de service le
-  role **Lecteur Service Usage** (`roles/serviceusage.serviceUsageViewer`), en
-  lecture seule. Les regles Firestore, elles, sont bien deployees.
 - **Les 95 ecrans du telephone n'ont jamais ete vus tourner** apres la migration
   des marges de securite : le raisonnement tient et le compilateur suit, mais
   aucun appareil n'a ete branche.
