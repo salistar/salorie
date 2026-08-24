@@ -270,6 +270,59 @@ jobs:
               if [ "$n" -le 1 ]; then echo "::warning::$v est VIDE dans .env — la fonctionnalite associee restera inactive"; else echo "$v: ok ($((n-1)) caracteres)"; fi
             done
 
+            # ── MongoDB : une serrure, pas seulement une porte fermee ────────
+            #
+            # Mongo n'est publie sur aucun port de l'hote et ne vit que sur le
+            # reseau docker interne : il faut deja etre sur la machine pour lui
+            # parler. Mais « il faut deja etre dedans » n'est pas une serrure —
+            # n'importe quel conteneur du meme reseau, ou n'importe quel
+            # processus ayant obtenu un shell, lisait et ecrivait TOUT sans
+            # avoir a se presenter.
+            #
+            # Le mot de passe est genere ICI, sur le serveur, comme TURN_SECRET :
+            # il ne transite par aucun journal, aucun secret GitHub, aucun
+            # presse-papier. En hexadecimal, donc sans un seul caractere a
+            # echapper dans une URI de connexion.
+            if ! docker compose ps --status running --format '{{.Service}}' 2>/dev/null | grep -qx mongo; then
+              # Installation neuve : mongo n'existe pas encore. On ne pose rien —
+              # le deploiement suivant le fera, une fois la base debout.
+              echo "::warning::mongo pas encore lance — authentification remise au prochain deploiement."
+            else
+              if ! grep -q '^MONGO_PASS=' .env; then
+                printf 'MONGO_PASS=%s\n' "$(openssl rand -hex 24)" >> .env
+                echo "MONGO_PASS genere (premiere pose)"
+              fi
+              MP=$(grep -m1 '^MONGO_PASS=' .env | cut -d= -f2-)
+
+              # Le mot de passe passe par l'ENVIRONNEMENT du conteneur, jamais par
+              # la ligne de commande : `docker exec ... -u salorie -p <secret>`
+              # serait lisible dans `ps` par tout processus de la machine.
+              #
+              # Le meme script sert avant et apres l'activation : `auth()` echoue
+              # sans consequence quand l'authentification n'est pas encore active
+              # (il n'y a rien a prouver), et il est indispensable ensuite.
+              POSER='
+                const a = db.getSiblingDB("admin");
+                const p = process.env.MP;
+                try { a.auth("salorie", p); } catch (e) {}
+                if (a.getUser("salorie")) { a.updateUser("salorie", { pwd: p }); print("compte Mongo a jour"); }
+                else { a.createUser({ user: "salorie", pwd: p, roles: [{ role: "readWrite", db: "salorie" }] }); print("compte Mongo cree"); }
+              '
+              if ! docker compose exec -T -e MP="$MP" mongo mongosh --quiet --eval "$POSER"; then
+                # On n'active PAS la serrure : personne n'en aurait la clef.
+                echo "::error::compte MongoDB impossible a poser — authentification NON activee."
+                exit 1
+              fi
+
+              # L'URI et le --auth ne sont ecrits qu'APRES la reussite ci-dessus.
+              # Reecrits a chaque fois plutot que « poses si absents » : le mot de
+              # passe peut avoir change, et une URI perimee vaut une panne totale.
+              sed -i '/^MONGO_URI=/d;/^MONGO_CMD=/d' .env
+              printf 'MONGO_URI=mongodb://salorie:%s@mongo:27017/salorie?authSource=admin\n' "$MP" >> .env
+              printf 'MONGO_CMD=%s\n' 'mongod --auth' >> .env
+              echo "authentification MongoDB armee — verifiee apres le demarrage"
+            fi
+
             docker compose up -d --build --remove-orphans
             docker compose ps
 
@@ -294,6 +347,35 @@ jobs:
               done
               docker compose logs --tail=40 backend
               exit 1
+            fi
+
+            # La serrure s'est-elle refermee sur nous ? Une VRAIE requete sur la
+            # base applicative, avec les identifiants du .env. `ping` ne suffirait
+            # pas : MongoDB l'autorise sans aucun privilege, donc il repondrait
+            # « up » meme si le compte n'avait pas le droit de lire une collection.
+            if [ -n "${MP:-}" ]; then
+              if docker compose exec -T -e MP="$MP" mongo mongosh --quiet --eval '
+                    db.getSiblingDB("admin").auth("salorie", process.env.MP);
+                    print("collections lisibles : " + db.getSiblingDB("salorie").getCollectionNames().length);
+                  '; then
+                echo "authentification MongoDB verifiee"
+              else
+                echo "::error::MongoDB refuse les identifiants poses — retour en arriere."
+                sed -i '/^MONGO_URI=/d;/^MONGO_CMD=/d' .env
+                docker compose up -d
+                exit 1
+              fi
+              # Le compte peut etre valide et l'APPLICATION echouer quand meme :
+              # driver, base ou source d'authentification differente. On lit donc
+              # ce que le backend dit de sa propre connexion.
+              if docker compose logs --tail=200 backend 2>/dev/null \
+                   | grep -qiE 'Authentication failed|not authorized|MongoServerSelectionError'; then
+                echo "::error::le backend n'arrive pas a s'authentifier aupres de MongoDB — retour en arriere."
+                docker compose logs --tail=40 backend || true
+                sed -i '/^MONGO_URI=/d;/^MONGO_CMD=/d' .env
+                docker compose up -d
+                exit 1
+              fi
             fi
 
             docker image prune -f
