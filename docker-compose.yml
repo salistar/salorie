@@ -7,6 +7,12 @@ services:
   mongo:
     image: mongo:7
     restart: unless-stopped
+    # `MONGO_CMD` vaut `mongod --auth` en production, pose par le deploiement
+    # UNE FOIS le compte cree. La valeur par defaut demarre SANS
+    # authentification, et c'est deliberé : activer la serrure avant d'avoir
+    # fabrique la clef rendrait la base inaccessible a tout le monde, y compris
+    # au deploiement qui doit justement y creer le compte.
+    command: ${MONGO_CMD:-mongod}
     volumes: [salorie_mongo:/data/db]
     expose: ["27017"]
 
@@ -40,7 +46,7 @@ services:
     depends_on: [mongo, redis]
     environment:
       PORT: 4000
-      MONGO_URI: mongodb://mongo:27017/salorie
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/salorie}
       REDIS_URL: redis://redis:6379
       UPLOAD_DIR: /data/uploads
       FIREBASE_SERVICE_ACCOUNT: ${FIREBASE_SERVICE_ACCOUNT}
@@ -125,7 +131,7 @@ services:
       # au runtime n'atteint jamais le navigateur (Next.js les fige au build, cf. le bloc
       # `build.args` ci-dessus). L'admin joint le backend par ses routes serveur.
       # Auth admin (mongoose + JWT) — DOIT être présent sinon login/register cassent.
-      MONGO_URI: mongodb://mongo:27017/salorie
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/salorie}
       AUTH_SECRET: ${AUTH_SECRET}
       # Cle d'installation admin. `/api/auth/register` la lit pour autoriser la
       # creation d'un compte alors qu'il en existe deja — la SEULE issue quand le

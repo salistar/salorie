@@ -66,16 +66,32 @@ jobs:
           npx --yes firebase-tools@13 deploy \
             --only firestore:rules --project "$PROJET" --non-interactive 2>&1 | tail -20
 
-          # Storage ensuite, et TOLERANT : le compte de service n'a pas
-          # forcement le droit de lire l'etat du service Storage
-          # (« Permission denied to get service firebasestorage.googleapis.com »,
-          # constate le 22/08/2026). Faire echouer tout le workflow pour cela
+          # Storage ensuite, et TOLERANT. Le blocage n'est PAS un droit sur les
+          # regles : avant de deployer, la CLI verifie que l'API Storage est
+          # activee, et cette verification demande `serviceusage.services.get`
+          # — que le compte de service n'a pas.
+          #
+          #   Permission denied to get service firebasestorage.googleapis.com
+          #   (sur serviceusage.googleapis.com), constate le 24/08/2026 APRES
+          #   l'octroi du role Administrateur des regles Firebase — lequel a
+          #   bien debloque Firestore, deploye avec succes le meme jour.
+          #
+          # J'avais d'abord attribue cet echec au meme droit manquant que
+          # Firestore. C'etait faux, et le message ci-dessous l'a repete : il
+          # envoyait chercher un role deja accorde.
+          #
+          # Pour le lever : ajouter au compte de service le role
+          # « Lecteur Service Usage » (roles/serviceusage.serviceUsageViewer),
+          # dans la console Cloud > IAM. Il est en LECTURE SEULE.
+          #
+          # Tolerant, parce que faire echouer tout le workflow pour cela
           # empecherait de deployer les regles Firestore, qui comptent davantage.
           if npx --yes firebase-tools@13 deploy \
                --only storage --project "$PROJET" --non-interactive 2>&1 | tail -10; then
             echo "  regles Storage deployees"
           else
-            echo "::warning::regles Storage NON deployees — le compte de service manque"
-            echo "::warning::du role Firebase Rules Admin ou de l acces au service Storage."
+            echo "::warning::regles Storage NON deployees. Il manque au compte de service"
+            echo "::warning::le role Lecteur Service Usage (serviceusage.services.get)."
+            echo "::warning::Ce n est PAS un droit sur les regles : Firestore est bien deploye."
           fi
           rm -f /tmp/sa.json
