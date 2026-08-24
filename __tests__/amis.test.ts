@@ -14,6 +14,7 @@ jest.mock('firebase/firestore', () => ({
   getDoc: async (r: any) => ({ data: () => mockDocs[r.path] }),
   setDoc: async (r: any, v: any) => { mockEcritures.push({ path: r.path, ...v }); },
   arrayRemove: (...v: any[]) => ({ __retire: v }),
+  arrayUnion: (...v: any[]) => ({ __ajoute: v }),
 }));
 jest.mock('../lib/firebase', () => ({
   db: {},
@@ -24,7 +25,18 @@ jest.mock('../lib/publicProfile', () => ({
     id === 'connu@x.com' ? { name: 'Yassine' } : null,
 }));
 
-import { listerEmailsAmis, listerAmis, sontAmis, retirerAmi } from '../lib/amis';
+import {
+  listerEmailsAmis,
+  listerAmis,
+  listerDemandes,
+  listerInvitations,
+  listerTout,
+  sontAmis,
+  retirerAmi,
+  accepterDemande,
+  refuserDemande,
+  annulerInvitation,
+} from '../lib/amis';
 
 beforeEach(() => {
   for (const k of Object.keys(mockDocs)) delete mockDocs[k];
@@ -74,12 +86,27 @@ describe('sontAmis — la barrière avant le micro', () => {
 });
 
 describe('retirerAmi', () => {
-  it('retire des DEUX côtés', async () => {
-    // Retirer d'un seul côté laisserait l'autre croire au lien, voir mon activité
-    // et pouvoir m'appeler. Une rupture qui ne rompt rien est pire que rien.
+  it('n’écrit que dans MON document', async () => {
+    // Ce test disait l'inverse jusqu'au 24/08/2026 : « retire des DEUX côtés ».
+    // C'était faux en production. Les règles Firestore interdisent — à raison —
+    // de retirer quoi que ce soit chez autrui : la seconde écriture était
+    // REFUSÉE à chaque fois, l'exception tombait dans le `catch`, et la fonction
+    // rendait { ok: false } alors que le retrait venait de réussir. L'écran
+    // affichait donc une erreur à chaque suppression.
+    //
+    // Ce qui rompt vraiment le lien des deux côtés, c'est la réciprocité exigée
+    // par le serveur (backend/src/social/amis.ts) : vider ma liste suffit.
     const r = await retirerAmi('moi@x.com', 'ami@x.com');
     expect(r.ok).toBe(true);
-    expect(mockEcritures.map((e) => e.path).sort()).toEqual(['users/ami@x.com', 'users/moi@x.com']);
+    expect(mockEcritures.map((e) => e.path)).toEqual(['users/moi@x.com']);
+  });
+
+  it('efface aussi une invitation en cours vers cette personne', async () => {
+    // Sans cela, un `friend_pending` oublié laisserait la personne libre de se
+    // réinscrire dans mes amis — la règle Firestore ne lui demanderait rien de
+    // plus — alors que je viens précisément de la retirer.
+    await retirerAmi('moi@x.com', 'ami@x.com');
+    expect(mockEcritures[0].friend_pending).toHaveProperty('__retire');
   });
 
   it('emploie arrayRemove et non une réécriture du tableau', async () => {
@@ -106,5 +133,75 @@ describe('listerAmis', () => {
       { email: 'sansprofil@x.com', nom: 'sansprofil' },
       { email: 'connu@x.com', nom: 'Yassine' },
     ]);
+  });
+});
+
+describe('l’amitié se demande', () => {
+  it('listerDemandes montre qui attend ma réponse, sans ceux déjà amis', async () => {
+    // Deux personnes qui s'invitent en même temps : la demande n'a plus d'objet
+    // une fois le lien créé, et la laisser afficherait un bouton sans effet.
+    mockDocs['users/moi@x.com'] = {
+      friends: ['deja@x.com'],
+      friend_requests: ['NOUVEAU@x.com', 'deja@x.com', ''],
+    };
+    expect((await listerDemandes('moi@x.com')).map((d) => d.email)).toEqual(['nouveau@x.com']);
+  });
+
+  it('listerInvitations montre celles restées sans réponse', async () => {
+    mockDocs['users/moi@x.com'] = {
+      friends: ['accepte@x.com'],
+      friend_pending: ['accepte@x.com', 'attend@x.com'],
+    };
+    expect((await listerInvitations('moi@x.com')).map((d) => d.email)).toEqual(['attend@x.com']);
+  });
+
+  it('listerTout ne lit le document qu’UNE fois', async () => {
+    // Trois appels séparés feraient trois trajets réseau pour des données
+    // identiques, à chaque ouverture de l'écran.
+    let lectures = 0;
+    mockDocs['users/moi@x.com'] = { friends: ['a@x.com'], friend_requests: ['b@x.com'] };
+    const vrai = Object.getOwnPropertyDescriptor(mockDocs, 'users/moi@x.com');
+    Object.defineProperty(mockDocs, 'users/moi@x.com', {
+      get: () => {
+        lectures++;
+        return vrai!.value;
+      },
+      configurable: true,
+    });
+    await listerTout('moi@x.com');
+    expect(lectures).toBe(1);
+  });
+
+  it('accepter écrit CHEZ L’AUTRE d’abord, puis chez moi', async () => {
+    // L'ordre compte : l'écriture chez l'autre peut être refusée (invitation
+    // annulée entre temps). Si elle passait en second, la demande aurait déjà
+    // disparu de ma liste et le lien n'existerait nulle part.
+    const r = await accepterDemande('moi@x.com', 'lui@x.com');
+    expect(r.ok).toBe(true);
+    expect(mockEcritures.map((e) => e.path)).toEqual(['users/lui@x.com', 'users/moi@x.com']);
+    expect(mockEcritures[0].friends).toHaveProperty('__ajoute', ['moi@x.com']);
+    expect(mockEcritures[1].friend_requests).toHaveProperty('__retire', ['lui@x.com']);
+  });
+
+  it('refuser ne touche que ma propre file, et n’annonce rien', async () => {
+    const r = await refuserDemande('moi@x.com', 'LUI@x.com');
+    expect(r.ok).toBe(true);
+    expect(mockEcritures.map((e) => e.path)).toEqual(['users/moi@x.com']);
+    expect(mockEcritures[0].friend_requests).toHaveProperty('__retire', ['lui@x.com']);
+  });
+
+  it('annuler retire mon accord ET la sonnette', async () => {
+    // Le premier retrait est celui qui compte : sans mon `friend_pending`, la
+    // règle Firestore n'autorise plus la personne à s'inscrire dans mes amis.
+    const r = await annulerInvitation('moi@x.com', 'cible@x.com');
+    expect(r.ok).toBe(true);
+    expect(mockEcritures.map((e) => e.path)).toEqual(['users/moi@x.com', 'users/cible@x.com']);
+    expect(mockEcritures[0].friend_pending).toHaveProperty('__retire', ['cible@x.com']);
+    expect(mockEcritures[1].friend_requests).toHaveProperty('__retire', ['moi@x.com']);
+  });
+
+  it('refuse de s’accepter soi-même', async () => {
+    expect(await accepterDemande('moi@x.com', 'MOI@x.com')).toEqual({ ok: false, motif: 'invalide' });
+    expect(mockEcritures).toHaveLength(0);
   });
 });

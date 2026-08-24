@@ -54,13 +54,46 @@ service cloud.firestore {
         && request.resource.data.get('referralCount', 0) == resource.data.get('referralCount', 0);
       allow delete: if isOwner(userId);
 
-      // S-fix (réciprocité d'amitié) : un AUTRE utilisateur peut UNIQUEMENT s'ajouter lui-même
-      // (et lui seul) au tableau `friends` de ce doc — jamais lire le doc, ni toucher un autre
-      // champ, ni retirer un ami existant. Remplace l'ancienne écriture cross-user non bornée.
+      // ── L'AMITIÉ SE DEMANDE, ELLE NE S'IMPOSE PAS ──────────────────────────
+      //
+      // La règle précédente laissait un tiers s'ajouter lui-même au tableau
+      // `friends` de ce document. Elle était bien bornée — et elle suffisait :
+      // qui connaissait votre adresse e-mail devenait votre ami sans vous
+      // demander. Or l'amitié ouvre le mur ET les appels du duo.
+      //
+      // Deux champs, deux moments :
+      //   `friend_requests` — la DEMANDE. Un tiers s'y ajoute lui-même, et
+      //                       n'obtient RIEN. C'est une sonnette.
+      //   `friends`         — le LIEN. Un tiers ne peut s'y ajouter que si le
+      //                       propriétaire l'a lui-même invité, ce dont
+      //                       `friend_pending` (écrit par le seul propriétaire)
+      //                       fait foi.
+      //
+      // Le consentement des DEUX côtés est donc exigé : l'un a invité, l'autre a
+      // accepté. Le serveur vérifie en plus la réciprocité des deux listes, pour
+      // qu'une écriture à moitié faite n'ouvre rien.
+
+      // 1. SONNER. On ne peut faire basculer que sa propre présence : ni ajouter
+      //    un tiers à la file de quelqu'un, ni effacer les demandes des autres.
+      //    La retirer est permis — c'est ainsi qu'on annule une invitation.
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friend_requests'])
+        && request.resource.data.friend_requests
+             .removeAll(resource.data.get('friend_requests', [])).hasOnly([request.auth.uid])
+        && resource.data.get('friend_requests', [])
+             .removeAll(request.resource.data.friend_requests).hasOnly([request.auth.uid]);
+
+      // 2. ACCEPTER. Le tiers s'inscrit dans `friends` UNIQUEMENT si le
+      //    propriétaire de ce document l'attend (`friend_pending`). Pas de
+      //    `get()` d'un autre document : l'invitation est écrite ICI, par celui
+      //    qui l'a lancée. Et toujours rien de retiré — seul le propriétaire
+      //    enlève quelqu'un de sa propre liste (règle plus haut).
       allow update: if signedIn()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friends'])
         && request.resource.data.friends.hasAll(resource.data.get('friends', []))
-        && request.resource.data.friends.removeAll(resource.data.get('friends', [])).hasOnly([request.auth.uid]);
+        && request.resource.data.friends
+             .removeAll(resource.data.get('friends', [])).hasOnly([request.auth.uid])
+        && resource.data.get('friend_pending', []).hasAny([request.auth.uid]);
 
       // SUIVI GLYCÉMIE / TENSION (boucle santé, données privées).
       // Déjà couvert par le wildcard {document=**} ci-dessous — explicité ici pour

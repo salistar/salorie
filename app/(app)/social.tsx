@@ -22,7 +22,7 @@ import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { loadEngagement } from '../../lib/engagement';
-import { publishStats, addFriend, getLeaderboard, LeaderRow } from '../../lib/social';
+import { publishStats, inviterAmi, getLeaderboard, LeaderRow } from '../../lib/social';
 import { getFriendsFeed, getKudosStatesBatch, toggleKudos, FeedItem } from '../../lib/socialFeed';
 import { rowDir, txtAlign, flipAuto } from '../../lib/rtl';
 import { SkeletonCard, Skeleton } from '../../components/ui';
@@ -168,13 +168,22 @@ export default function SocialScreen() {
   const onAdd = async () => {
     if (!input.trim()) return;
     setAdding(true); setMsg(null);
-    const r = await addFriend(email, input);
+    const r = await inviterAmi(email, input);
     setAdding(false);
     if (r.ok) {
       setInput(''); setMsg(`${t('social.added')} ✓`);
       load();
     } else {
-      setMsg(r.reason === 'self' ? t('social.self') : r.reason === 'notfound' ? t('social.not_found') : t('social.error'));
+      // L'invitation remplace l'ajout : deux refus de plus a nommer, sinon
+      // « une erreur est survenue » ferait croire a une panne alors qu'on a
+      // simplement deja invite la personne.
+      const dits: Record<string, string> = {
+        self: t('social.self'),
+        notfound: t('social.not_found'),
+        deja: t('social.already'),
+        envoyee: t('social.requested'),
+      };
+      setMsg(dits[String(r.reason)] || t('social.error'));
     }
   };
 

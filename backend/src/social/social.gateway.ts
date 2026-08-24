@@ -25,6 +25,7 @@ import { RaceChatMessage, RaceChatMute } from './social.schemas';
 import { RedisService } from '../redis.service';
 import { FirebaseService } from '../firebase.service';
 import { filtrerMessage, expliquerRefus, verifierPhoto } from './moderation-chat';
+import { sontAmis } from './amis';
 
 /** Hash court pour les journaux : l'uid EST l'email, il ne doit jamais s'y écrire. */
 const h = (uid: string) => createHash('sha1').update(String(uid || '')).digest('hex').slice(0, 8);
@@ -229,26 +230,17 @@ export class SocialGateway implements OnGatewayConnection, OnGatewayDisconnect {
   /**
    * Ces deux comptes sont-ils amis ?
    *
-   * La liste vit dans Firestore (`users/{docId}.friends`), écrite par l'app. Le
-   * serveur la RELIT lui-même plutôt que de croire le client : une vérification
-   * faite dans l'app protège l'usage normal, pas quelqu'un qui parle au socket
-   * directement — et c'est précisément celui-là qu'il faut arrêter.
+   * Le serveur RELIT Firestore lui-même plutôt que de croire le client : une
+   * vérification faite dans l'app protège l'usage normal, pas quelqu'un qui
+   * parle au socket directement — et c'est précisément celui-là qu'il faut
+   * arrêter. La définition (réciprocité exigée) vit dans `./amis`.
    *
    * En cas d'erreur de lecture on répond FAUX. Devant une incertitude, on refuse
    * l'appel : un appel manqué se rejoue, un appel avec un inconnu non.
    */
   private async sontAmis(a: string, b: string): Promise<boolean> {
-    if (!a || !b || a === b) return false;
     try {
-      // Même transformation que `emailToDocId` côté app — VÉRIFIÉE dans
-      // `lib/firebase.ts` : c'est `trim().toLowerCase()`, et RIEN d'autre. Aucun
-      // remplacement de caractère. Une transformation inventée lirait un document
-      // inexistant, donc une liste d'amis vide, donc un refus de TOUS les duos —
-      // une panne totale qui aurait l'air d'une sécurité qui marche.
-      const docId = String(a).trim().toLowerCase();
-      const snap = await this.fb.db().collection('users').doc(docId).get();
-      const amis: string[] = (snap.data()?.friends as string[]) || [];
-      return amis.map((x) => String(x).toLowerCase()).includes(String(b).toLowerCase());
+      return await sontAmis(this.fb.db(), a, b);
     } catch (e) {
       this.log.warn(`lecture des amis impossible pour ${h(a)} : ${(e as any)?.message}`);
       return false;
