@@ -41,11 +41,20 @@ function monter(opts: { publications: Doc[]; groupes: any[]; amis: Record<string
     create: async (d: any) => ({ _id: 'g_neuf', ...d }),
     deleteOne: async () => ({ deletedCount: 1 }),
   };
+  // L'amitie est RECIPROQUE : le service lit les deux listes, donc la base
+  // simulee doit savoir rendre plusieurs documents d'un coup. Les fixtures
+  // ci-dessous declarent volontairement les deux sens — un lien a sens unique
+  // n'est pas une amitie, et un test le verifie.
   const fb: any = {
     db: () => ({
       collection: () => ({
-        doc: (id: string) => ({ get: async () => ({ data: () => ({ friends: opts.amis[id] || [] }) }) }),
+        doc: (id: string) => ({
+          id,
+          get: async () => ({ data: () => ({ friends: opts.amis[id] || [] }) }),
+        }),
       }),
+      getAll: async (...refs: { id: string }[]) =>
+        refs.map((r) => ({ data: () => ({ friends: opts.amis[r.id] || [] }) })),
     }),
   };
   const redis: any = { rateLimit: async () => true };
@@ -55,11 +64,24 @@ function monter(opts: { publications: Doc[]; groupes: any[]; amis: Record<string
 const P = (id: string, uid: string, groupe = ''): Doc => ({ _id: id, uid, groupe, texte: 't', ts: 1 });
 
 describe('qui voit quoi', () => {
+  it('ne montre rien de quelqu’un qui s’est ajouté tout seul', async () => {
+    // Avant le 24/08/2026, connaître une adresse e-mail suffisait à s'inscrire
+    // dans la liste de son propriétaire — et donc à lire son mur. Ici `intrus`
+    // est dans MA liste mais je ne suis pas dans la sienne : ce n'est pas une
+    // amitié, et il ne voit rien.
+    const s = monter({
+      publications: [P('1', 'moi@x.com')],
+      groupes: [],
+      amis: { 'intrus@x.com': ['moi@x.com'], 'moi@x.com': [] },
+    });
+    expect(await s.lire('intrus@x.com')).toHaveLength(0);
+  });
+
   it('montre les publications de mes amis', async () => {
     const s = monter({
       publications: [P('1', 'ami@x.com'), P('2', 'inconnu@x.com')],
       groupes: [],
-      amis: { 'moi@x.com': ['ami@x.com'] },
+      amis: { 'moi@x.com': ['ami@x.com'], 'ami@x.com': ['moi@x.com'] },
     });
     const vues = await s.lire('moi@x.com');
     expect(vues.map((v) => v.id)).toEqual(['1']);
@@ -78,7 +100,7 @@ describe('qui voit quoi', () => {
     const s = monter({
       publications: [P('1', 'ami@x.com', 'g1')],
       groupes: [{ _id: 'g1', uid: 'ami@x.com', membres: ['autre@x.com'] }],
-      amis: { 'moi@x.com': ['ami@x.com'] },
+      amis: { 'moi@x.com': ['ami@x.com'], 'ami@x.com': ['moi@x.com'] },
     });
     expect(await s.lire('moi@x.com')).toHaveLength(0);
   });
@@ -87,7 +109,7 @@ describe('qui voit quoi', () => {
     const s = monter({
       publications: [P('1', 'ami@x.com', 'g1')],
       groupes: [{ _id: 'g1', uid: 'ami@x.com', membres: ['moi@x.com'] }],
-      amis: { 'moi@x.com': ['ami@x.com'] },
+      amis: { 'moi@x.com': ['ami@x.com'], 'ami@x.com': ['moi@x.com'] },
     });
     expect(await s.lire('moi@x.com')).toHaveLength(1);
   });
@@ -150,7 +172,7 @@ describe('publier', () => {
 describe('groupes', () => {
   it("refuse un membre qui n'est pas mon ami", async () => {
     // C'est ce qui empêche un groupe de contourner la liste d'amis.
-    const s = monter({ publications: [], groupes: [], amis: { 'moi@x.com': ['ami@x.com'] } });
+    const s = monter({ publications: [], groupes: [], amis: { 'moi@x.com': ['ami@x.com'], 'ami@x.com': ['moi@x.com'] } });
     expect(await s.creerGroupe('moi@x.com', 'Collègues', ['ami@x.com', 'inconnu@x.com'])).toMatchObject({
       ok: false,
       motif: 'membre_non_ami',
@@ -158,7 +180,7 @@ describe('groupes', () => {
   });
 
   it('accepte un groupe entièrement composé d’amis', async () => {
-    const s = monter({ publications: [], groupes: [], amis: { 'moi@x.com': ['ami@x.com'] } });
+    const s = monter({ publications: [], groupes: [], amis: { 'moi@x.com': ['ami@x.com'], 'ami@x.com': ['moi@x.com'] } });
     expect((await s.creerGroupe('moi@x.com', 'Collègues', ['ami@x.com'])).ok).toBe(true);
   });
 

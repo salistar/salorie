@@ -42,33 +42,50 @@ export async function publishStats(email: string, stats: PublicStats): Promise<v
   });
 }
 
-/** Adds a friend by email (must already be a Salorie user). Reciprocal. */
-export async function addFriend(email: string, friendEmailRaw: string): Promise<{ ok: boolean; name?: string; reason?: 'self' | 'notfound' | 'error' }> {
+/**
+ * Invite quelqu'un a devenir ami. La personne doit ACCEPTER.
+ *
+ * Avant le 24/08/2026 cette fonction s'appelait `addFriend` et portait bien son
+ * nom : elle inscrivait l'invitant dans la liste de l'invite, sans rien lui
+ * demander. Connaitre une adresse e-mail suffisait donc a voir le mur de son
+ * proprietaire et a pouvoir le rejoindre en appel.
+ *
+ * Deux ecritures, et l'ordre compte :
+ *   1. MON `friend_pending` — mon consentement, dans mon propre document. C'est
+ *      lui que la regle Firestore lira quand la personne acceptera : sans cette
+ *      ligne, elle ne POURRA pas s'inscrire dans mes amis.
+ *   2. SA `friend_requests` — la sonnette. Elle n'accorde rien par elle-meme.
+ */
+export async function inviterAmi(
+  email: string,
+  friendEmailRaw: string,
+): Promise<{ ok: boolean; name?: string; reason?: 'self' | 'notfound' | 'deja' | 'envoyee' | 'error' }> {
   const friendEmail = norm(friendEmailRaw);
-  if (!friendEmail || friendEmail === norm(email)) return { ok: false, reason: 'self' };
+  const moi = norm(email);
+  if (!friendEmail || friendEmail === moi) return { ok: false, reason: 'self' };
   try {
     const friendDocId = emailToDocId(friendEmail);
-    // SÉCURITÉ : le doc user privé d'autrui n'est plus lisible. L'existence se vérifie via
-    // le profil PUBLIC (créé au 1er publishStats). Un compte jamais ouvert n'est pas ajoutable.
+    // SECURITE : le doc user prive d'autrui n'est plus lisible. L'existence se verifie via
+    // le profil PUBLIC (cree au 1er publishStats). Un compte jamais ouvert n'est pas invitable.
     const fp = await readPublicProfile(friendDocId);
     if (!fp) return { ok: false, reason: 'notfound' };
 
-    // add friend to my list (mon propre doc — autorisé au propriétaire)
-    const myref = doc(db, 'users', emailToDocId(email));
-    const mysnap = await getDoc(myref);
-    const myFriends: string[] = (mysnap.data()?.friends as string[]) || [];
-    if (!myFriends.includes(friendEmail)) myFriends.push(friendEmail);
-    await setDoc(myref, { friends: myFriends }, { merge: true });
+    // Deja ami, ou deja invite : le dire plutot que d'ecrire une seconde fois.
+    // `arrayUnion` serait sans effet, mais l'ecran annoncerait une invitation qui
+    // n'a pas ete envoyee — et la personne attendrait une sonnette qui a deja sonne.
+    const monRef = doc(db, 'users', emailToDocId(moi));
+    const mien: any = (await getDoc(monRef)).data() || {};
+    const dedans = (v: unknown) => ((v as string[]) || []).map(norm).includes(friendEmail);
+    if (dedans(mien.friends)) return { ok: false, reason: 'deja' };
+    if (dedans(mien.friend_pending)) return { ok: false, reason: 'envoyee' };
 
-    // reciprocal: add me to their list — écriture ATOMIQUE field-scopée `friends` : la règle
-    // Firestore autorise un tiers à s'ajouter (et lui seul) au tableau `friends` d'autrui,
-    // sans lire ni modifier aucun autre champ du doc privé.
-    await setDoc(doc(db, 'users', friendDocId), { friends: arrayUnion(norm(email)) }, { merge: true });
+    await setDoc(monRef, { friend_pending: arrayUnion(friendEmail) }, { merge: true });
+    await setDoc(doc(db, 'users', friendDocId), { friend_requests: arrayUnion(moi) }, { merge: true });
 
     const name = fp?.name || friendEmail.split('@')[0];
     return { ok: true, name };
   } catch (e) {
-    console.warn('[social] addFriend failed', e);
+    console.warn('[social] inviterAmi failed', e);
     return { ok: false, reason: 'error' };
   }
 }

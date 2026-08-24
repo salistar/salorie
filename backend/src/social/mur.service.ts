@@ -5,6 +5,7 @@ import { Publication, GroupeAmis } from './social.schemas';
 import { FirebaseService } from '../firebase.service';
 import { RedisService } from '../redis.service';
 import { filtrerMessage, verifierPhoto } from './moderation-chat';
+import { amisConfirmes } from './amis';
 
 /**
  * Le mur : publications écrites, et groupes qui en restreignent l'audience.
@@ -42,15 +43,12 @@ export class MurService {
    *
    * Le serveur relit lui-même plutôt que de croire le client : une vérification
    * faite dans l'app protège l'usage normal, pas quelqu'un qui appelle l'API
-   * directement. En cas d'erreur on rend une liste VIDE — on montre moins, jamais
-   * plus, quand on n'est pas sûr.
+   * directement. La définition (réciprocité exigée) vit dans `./amis` — sans
+   * elle, s'ajouter quelqu'un suffirait à voir son mur.
    */
   private async amisDe(uid: string): Promise<string[]> {
     try {
-      // `emailToDocId` côté app est `trim().toLowerCase()`, et rien d'autre.
-      const snap = await this.fb.db().collection('users').doc(String(uid).trim().toLowerCase()).get();
-      const bruts = (snap.data()?.friends as string[]) || [];
-      return [...new Set(bruts.map((x) => String(x).trim().toLowerCase()).filter(Boolean))];
+      return await amisConfirmes(this.fb.db(), uid);
     } catch (e) {
       this.log.warn(`lecture des amis impossible : ${(e as any)?.message}`);
       return [];

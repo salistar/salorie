@@ -781,6 +781,11 @@ tbody tr:last-child td { border-bottom: none; }
    au lieu d'etre tronquee. */
 .ami-identite { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .ami-identite strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Accepter / Refuser. `flex-shrink: 0` : ces deux boutons ne se compriment pas
+   quand le nom est long — c'est le nom qui est tronque (cf. .ami-identite).
+   `flex-wrap` les met l'un sous l'autre sur les tres petits ecrans plutot que de
+   les faire deborder. */
+.ami-actions { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
 
 /* ── Import CSV ───────────────────────────────────────────────────────────── */
 .depot {
