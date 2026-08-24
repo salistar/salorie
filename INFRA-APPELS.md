@@ -71,14 +71,26 @@ renouvelé.
 Sur srv3, dans `$HOME/caddy` : `Caddyfile.avant-l4` et
 `docker-compose.yml.avant-l4`, image d'origine `caddy:2-alpine`.
 
+## Ce qui a ete referme le 24/08/2026
+
+- **MongoDB exige desormais une authentification.** `mongod --auth`, compte
+  `salorie` en `readWrite` sur sa seule base, mot de passe genere sur le serveur
+  et jamais sorti. Verifie : une connexion anonyme recoit
+  « Command listCollections requires authentication ».
+- **L'amitie se demande.** `friend_requests` est la sonnette et n'accorde rien ;
+  `friends` n'accepte un tiers que si le proprietaire l'a invite
+  (`friend_pending`). Le serveur exige en plus la reciprocite, si bien qu'un
+  retrait vaut immediatement des deux cotes — ce qui n'etait pas le cas avant.
+- **Les regles Firestore se deploient.** Le compte de service a recu le role
+  `Administrateur des regles Firebase`, et rien de plus large.
+
 ## Ce qui reste ouvert
 
-- **MongoDB accepte les connexions sans authentification.** Aucun port n'est
-  publié et le réseau est interne, donc il faut déjà être sur la machine — mais
-  la défense en profondeur manque.
-- **L'amitié ne demande aucun accord.** On peut s'ajouter à la liste d'amis de
-  quelqu'un en connaissant son adresse e-mail, et l'amitié ouvre l'accès aux
-  appels du duo. Les règles Firestore bornent correctement l'écriture ; c'est la
-  conception qu'il faut trancher.
-- **Les règles Firestore ne se déploient pas** : le compte de service n'a pas le
-  rôle `Firebase Rules Admin` (403).
+- **Les regles Storage ne se deploient toujours pas**, mais pas pour la raison
+  qu'on croyait : la CLI verifie d'abord que l'API Storage est activee, ce qui
+  demande `serviceusage.services.get`. Il manque donc au compte de service le
+  role **Lecteur Service Usage** (`roles/serviceusage.serviceUsageViewer`), en
+  lecture seule. Les regles Firestore, elles, sont bien deployees.
+- **Les 95 ecrans du telephone n'ont jamais ete vus tourner** apres la migration
+  des marges de securite : le raisonnement tient et le compilateur suit, mais
+  aucun appareil n'a ete branche.
