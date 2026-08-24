@@ -86,35 +86,27 @@ jobs:
           npx --yes firebase-tools@13 deploy \
             --only firestore:rules --project "$PROJET" --non-interactive 2>&1 | tail -20
 
-          # Storage ensuite, et TOLERANT. Le blocage n'est PAS un droit sur les
-          # regles : avant de deployer, la CLI verifie que l'API Storage est
-          # activee, et cette verification demande `serviceusage.services.get`
-          # — que le compte de service n'a pas.
-          #
-          #   Permission denied to get service firebasestorage.googleapis.com
-          #   (sur serviceusage.googleapis.com), constate le 24/08/2026 APRES
-          #   l'octroi du role Administrateur des regles Firebase — lequel a
-          #   bien debloque Firestore, deploye avec succes le meme jour.
-          #
-          # J'avais d'abord attribue cet echec au meme droit manquant que
-          # Firestore. C'etait faux, et le message ci-dessous l'a repete : il
-          # envoyait chercher un role deja accorde.
-          #
-          # Pour le lever : ajouter au compte de service le role
-          # « Lecteur Service Usage » (roles/serviceusage.serviceUsageViewer),
-          # dans la console Cloud > IAM. Il est en LECTURE SEULE.
-          #
-          # Tolerant, parce que faire echouer tout le workflow pour cela
-          # empecherait de deployer les regles Firestore, qui comptent davantage.
-          if npx --yes firebase-tools@13 deploy \
-               --only storage --project "$PROJET" --non-interactive 2>&1 | tail -10; then
-            echo "  regles Storage deployees"
-          else
-            echo "::warning::regles Storage NON deployees. Il manque au compte de service"
-            echo "::warning::le role Lecteur Service Usage (serviceusage.services.get)."
-            echo "::warning::Ce n est PAS un droit sur les regles : Firestore est bien deploye."
-          fi
           rm -f /tmp/sa.json
+
+      # ── Storage : par l'API, pas par la CLI ───────────────────────────────
+      #
+      # `firebase deploy --only storage` echouait avec « Permission denied to
+      # get service firebasestorage.googleapis.com ». Ce n'est PAS un droit sur
+      # les regles : avant de publier, la CLI verifie que l'API Storage est
+      # activee, ce qui demande `serviceusage.services.get`. Le compte de
+      # service ne l'a pas — mais il a `firebaserules.admin`, c'est-a-dire tout
+      # ce qu'il faut pour publier reellement des regles.
+      #
+      # L'etape etait donc TOLERANTE et n'a jamais rien publie : `storage.rules`
+      # pouvait diverger de ce qui protege le bucket sans que personne le voie.
+      # C'est exactement l'ecart que ce workflow existe pour supprimer.
+      #
+      # On s'adresse a l'API directement. Bloquant, desormais : il n'y a plus de
+      # raison d'echouer, et un echec silencieux serait pire que pas d'etape.
+      - name: Publier les regles Storage
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/publier-regles-storage.js storage.rules
 
       # Le meme jeu de questions, mais posees au jeu de regles EN LIGNE. L'etape
       # precedente interroge un fichier ; celle-ci interroge ce que la base

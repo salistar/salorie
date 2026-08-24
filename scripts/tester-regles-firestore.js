@@ -19,92 +19,20 @@
 // leurs repas, une regle trop laxiste rouvrirait le trou. Les deux se voient
 // ici, et nulle part ailleurs.
 //
-// AUCUNE DEPENDANCE : le jeton d'acces est fabrique avec `crypto`, presque
-// installe. Le script tourne donc aussi bien dans un runner nu que dans le
-// conteneur du backend.
+// AUCUNE DEPENDANCE : le jeton d'acces est signe avec `crypto` (cf.
+// `scripts/google-regles.js`). Le script tourne donc aussi bien dans un runner
+// nu que dans le conteneur du backend.
 //
 // Usage :
 //   FIREBASE_SERVICE_ACCOUNT='<json>' node scripts/tester-regles-firestore.js [fichier]
 //   Sans argument, il interroge le jeu de regles EN LIGNE — celui que la base
 //   applique vraiment, et qui peut differer du depot.
-const https = require('https');
-const crypto = require('crypto');
 const fs = require('fs');
+const { compteDeService, jetonAcces, regles } = require('./google-regles');
 
-const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
-if (!sa.client_email || !sa.private_key) {
-  console.log('  FIREBASE_SERVICE_ACCOUNT absent ou incomplet.');
-  process.exit(1);
-}
+const sa = compteDeService();
 const PROJET = sa.project_id;
 const FICHIER = process.argv[2] || '';
-
-const b64url = (x) =>
-  Buffer.from(x).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-function poste(hote, chemin, corps, entetes) {
-  return new Promise((resolve, reject) => {
-    const req = https.request(
-      { hostname: hote, path: chemin, method: 'POST', headers: entetes },
-      (res) => {
-        let b = '';
-        res.on('data', (c) => (b += c));
-        res.on('end', () => {
-          let j;
-          try { j = JSON.parse(b); } catch (e) { j = { brut: b.slice(0, 400) }; }
-          resolve({ code: res.statusCode, json: j });
-        });
-      },
-    );
-    req.on('error', reject);
-    req.write(corps);
-    req.end();
-  });
-}
-
-function lit(chemin, jeton) {
-  return new Promise((resolve, reject) => {
-    https.get(
-      { hostname: 'firebaserules.googleapis.com', path: chemin, headers: { Authorization: 'Bearer ' + jeton } },
-      (res) => {
-        let b = '';
-        res.on('data', (c) => (b += c));
-        res.on('end', () => {
-          let j;
-          try { j = JSON.parse(b); } catch (e) { j = { brut: b.slice(0, 400) }; }
-          resolve({ code: res.statusCode, json: j });
-        });
-      },
-    ).on('error', reject);
-  });
-}
-
-/** Jeton d'acces Google, signe a la main — evite d'installer une bibliotheque. */
-async function jetonAcces() {
-  const now = Math.floor(Date.now() / 1000);
-  const tete = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
-  const corps = b64url(JSON.stringify({
-    iss: sa.client_email,
-    scope: 'https://www.googleapis.com/auth/cloud-platform',
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: now,
-    exp: now + 3600,
-  }));
-  const sig = crypto.createSign('RSA-SHA256').update(tete + '.' + corps)
-    .sign(sa.private_key.replace(/\\n/g, '\n'));
-  const assertion = tete + '.' + corps + '.' +
-    sig.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  const form = 'grant_type=' + encodeURIComponent('urn:ietf:params:oauth:grant-type:jwt-bearer') +
-    '&assertion=' + assertion;
-  const r = await poste('oauth2.googleapis.com', '/token', form, {
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'Content-Length': Buffer.byteLength(form),
-  });
-  if (r.code !== 200 || !r.json.access_token) {
-    throw new Error('jeton refuse : ' + r.code + ' ' + JSON.stringify(r.json).slice(0, 200));
-  }
-  return r.json.access_token;
-}
 
 const T = '2026-08-24T12:00:00Z';
 const chemin = (id) => '/databases/(default)/documents/users/' + id;
@@ -182,33 +110,25 @@ const CAS = [
 ];
 
 (async () => {
-  const jeton = await jetonAcces();
+  const jeton = await jetonAcces(sa);
   let rep;
 
   if (FICHIER) {
     const contenu = fs.readFileSync(FICHIER, 'utf8');
     console.log('  source candidate : ' + FICHIER + ' (' + contenu.split('\n').length + ' lignes, non publiee)');
-    const corps = JSON.stringify({
+    rep = await regles('POST', '/v1/projects/' + PROJET + ':test', jeton, {
       source: { files: [{ name: 'firestore.rules', content: contenu }] },
       testSuite: { testCases: CAS.map((c) => c.tc) },
     });
-    rep = await poste('firebaserules.googleapis.com', '/v1/projects/' + PROJET + ':test', corps, {
-      Authorization: 'Bearer ' + jeton,
-      'Content-Type': 'application/json',
-      'Content-Length': Buffer.byteLength(corps),
-    });
   } else {
-    const rel = await lit('/v1/projects/' + PROJET + '/releases/cloud.firestore', jeton);
+    const rel = await regles('GET', '/v1/projects/' + PROJET + '/releases/cloud.firestore', jeton);
     if (rel.code !== 200) {
       console.log('  release illisible : ' + rel.code + ' ' + JSON.stringify(rel.json).slice(0, 200));
       process.exit(1);
     }
     console.log('  jeu de regles EN LIGNE : ' + rel.json.rulesetName);
-    const corps = JSON.stringify({ testSuite: { testCases: CAS.map((c) => c.tc) } });
-    rep = await poste('firebaserules.googleapis.com', '/v1/' + rel.json.rulesetName + ':test', corps, {
-      Authorization: 'Bearer ' + jeton,
-      'Content-Type': 'application/json',
-      'Content-Length': Buffer.byteLength(corps),
+    rep = await regles('POST', '/v1/' + rel.json.rulesetName + ':test', jeton, {
+      testSuite: { testCases: CAS.map((c) => c.tc) },
     });
   }
 
