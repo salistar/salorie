@@ -132,7 +132,22 @@ service cloud.firestore {
 
       // Everything private (logs, weight_history, ai_insights, notifications…)
       // is readable/writable ONLY by the owner — friends never see your meals.
-      match /{document=**} {
+      //
+      // ⚠ DEUX SEGMENTS, ET C'EST TOUT L'INTERET. En `rules_version = '2'`, un
+      // joker recursif `{document=**}` matche ZERO segment ou plus : il couvrait
+      // donc AUSSI le document `users/{userId}` lui-meme. Or Firestore autorise
+      // des qu'UNE regle autorise — ce `allow write: if isOwner` annulait
+      // silencieusement les cinq garde-fous ecrits plus haut, et n'importe qui
+      // pouvait s'accorder le Premium en une seule ecriture sur son propre doc.
+      //
+      // Constate le 24/08/2026 en interrogeant le moteur sur le jeu de regles
+      // EN LIGNE : 7 cas sur 8 conformes, le 8e etant precisement celui-la. Les
+      // garde-fous etaient sinceres et morts depuis leur ecriture.
+      //
+      // `/{sousCollection}/{doc=**}` exige au moins un nom de collection : il ne
+      // peut plus, par construction, designer le document parent. Les
+      // sous-collections restent couvertes a l'identique, a toute profondeur.
+      match /{sousCollection}/{doc=**} {
         allow read, write: if isOwner(userId);
       }
     }

@@ -17,7 +17,7 @@ name: Firebase — regles
 on:
   push:
     branches: [main]
-    paths: ['firestore.rules', 'storage.rules', 'firebase.json', '.github/workflows/firebase-regles.yml']
+    paths: ['firestore.rules', 'storage.rules', 'firebase.json', 'scripts/tester-regles-firestore.js', '.github/workflows/firebase-regles.yml']
   workflow_dispatch: {}
 
 jobs:
@@ -36,6 +36,26 @@ jobs:
 
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
+
+      # ── Les regles font-elles ce qu'elles disent ? ─────────────────────────
+      #
+      # Le 24/08/2026, un deploiement a prouve que les regles COMPILENT. Il n'a
+      # rien prouve sur leur comportement. Interrogees, elles ont revele que
+      # cinq garde-fous contre l'auto-attribution du Premium etaient MORTS
+      # depuis leur ecriture : un joker `{document=**}`, 90 lignes plus bas,
+      # couvrait aussi le document parent — et Firestore autorise des qu'UNE
+      # regle autorise. N'importe qui pouvait s'offrir un abonnement.
+      #
+      # Rien dans la relecture du fichier ne le montrait.
+      #
+      # AVANT le deploiement, et bloquant : une regle trop laxiste rouvrirait le
+      # trou, une regle trop stricte empecherait les gens d'ecrire leurs repas.
+      # Publier d'abord et regarder ensuite, c'est choisir laquelle des deux on
+      # fera subir aux utilisateurs.
+      - name: Interroger les regles candidates
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/tester-regles-firestore.js firestore.rules
 
       - name: Deployer
         env:
@@ -95,3 +115,13 @@ jobs:
             echo "::warning::Ce n est PAS un droit sur les regles : Firestore est bien deploye."
           fi
           rm -f /tmp/sa.json
+
+      # Le meme jeu de questions, mais posees au jeu de regles EN LIGNE. L'etape
+      # precedente interroge un fichier ; celle-ci interroge ce que la base
+      # applique reellement. Les deux peuvent differer — un deploiement partiel,
+      # une publication faite ailleurs — et c'est la seconde qui protege
+      # vraiment les donnees.
+      - name: Verifier le jeu de regles publie
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/tester-regles-firestore.js
