@@ -301,11 +301,22 @@ jobs:
               # Le meme script sert avant et apres l'activation : `auth()` echoue
               # sans consequence quand l'authentification n'est pas encore active
               # (il n'y a rien a prouver), et il est indispensable ensuite.
+              # ⚠ On SORT des que le mot de passe du .env est accepte, et c'est
+              # essentiel : le compte `salorie` n'a que `readWrite` sur SA base.
+              # Il peut s'authentifier, il ne peut pas se modifier lui-meme.
+              # Ma premiere version appelait `updateUser` a chaque passage : elle
+              # a marche a la premiere pose (authentification encore inactive,
+              # donc tous les droits) et a fait echouer TOUS les deploiements
+              # suivants sur « not authorized on admin to execute updateUser ».
+              # Une etape qui ne marche que la premiere fois.
+              #
+              # Rien a mettre a jour de toute facon : le mot de passe vit dans le
+              # .env et n'y change pas. `auth()` qui passe = compte en place.
               POSER='
                 const a = db.getSiblingDB("admin");
                 const p = process.env.MP;
-                try { a.auth("salorie", p); } catch (e) {}
-                if (a.getUser("salorie")) { a.updateUser("salorie", { pwd: p }); print("compte Mongo a jour"); }
+                try { a.auth("salorie", p); print("compte Mongo deja en place"); quit(0); } catch (e) {}
+                if (a.getUser("salorie")) { a.updateUser("salorie", { pwd: p }); print("compte Mongo mis a jour"); }
                 else { a.createUser({ user: "salorie", pwd: p, roles: [{ role: "readWrite", db: "salorie" }] }); print("compte Mongo cree"); }
               '
               if ! docker compose exec -T -e MP="$MP" mongo mongosh --quiet --eval "$POSER"; then
