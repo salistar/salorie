@@ -12,6 +12,46 @@ import { SecretsService } from '../secrets.service';
  * un prompt identique ne re-déclenche PAS d'appel Gemini. Additif, réponses
  * inchangées (mêmes textes), juste moins d'appels + plus rapide.
  */
+/**
+ * Le texte d'une reponse de fournisseur, quelle que soit sa forme.
+ *
+ * Trois formes coexistent : OpenAI (`choices[].message.content`), Cloudflare
+ * (`result.response`) et Anthropic (`content[].text`).
+ *
+ * ## Le piege, et il a coute cher
+ *
+ * Cloudflare rend `result.response` **deja analyse** quand le modele emet du
+ * JSON : un objet, pas une chaine. L'ancienne version faisait `String(text)`,
+ * ce qui vaut alors « [object Object] » — quinze caracteres, non vides, donc
+ * acceptes comme une reponse valide et journalises comme un succes.
+ *
+ * Consequence, verifiee le 25/08/2026 en interrogeant Cloudflare directement :
+ * la meme question posee en prose rend une `string`, posee en JSON rend un
+ * `object`. Donc TOUTE fonctionnalite qui demandait du JSON — analyses
+ * hebdomadaires, plans de repas, analyse d'aliments — recevait
+ * « [object Object] », echouait a l'analyser, et retombait en silence sur son
+ * contenu hors-ligne. Les journaux disaient « texte servi par cloudflare ».
+ * Depuis le 14/08/2026, date ou la cascade est passee sur Cloudflare en tete.
+ *
+ * On serialise donc l'objet au lieu de le stringifier : les appelants
+ * extraient un `{...}` du texte et l'analysent, c'est exactement ce qu'ils
+ * attendent.
+ */
+export function texteDeLaReponse(j: any): string {
+  const brut = j?.choices?.[0]?.message?.content
+    || j?.result?.response
+    || (Array.isArray(j?.content) ? j.content.map((c: any) => c?.text || '').join('') : '');
+  if (brut == null) return '';
+  if (typeof brut === 'string') return brut.trim();
+  // Un objet ou un tableau : c'est du JSON deja analyse. On le rend a l'etat de
+  // texte plutot que d'en faire « [object Object] ».
+  try {
+    return JSON.stringify(brut).trim();
+  } catch {
+    return '';
+  }
+}
+
 @Injectable()
 export class AiService {
   private readonly logger = new Logger('AiService');
@@ -84,12 +124,7 @@ export class AiService {
         clearTimeout(to);
         if (!r.ok) { this.logger.warn(`${label} ${r.status}: ${(await r.text()).slice(0, 160)}`); return null; }
         const j: any = await r.json();
-        // Trois formes de reponse coexistent : OpenAI (choices[].message.content),
-        // Cloudflare (result.response) et Anthropic (content[].text).
-        const text = j?.choices?.[0]?.message?.content
-          || j?.result?.response
-          || (Array.isArray(j?.content) ? j.content.map((c: any) => c?.text || '').join('') : '');
-        const s = String(text || '').trim();
+        const s = texteDeLaReponse(j);
         if (s) return { text: s, engine: `${label}:${model}` };
         this.logger.warn(`${label} réponse vide`);
       } catch (e: any) { this.logger.warn(`${label} KO: ${e?.message}`); }
