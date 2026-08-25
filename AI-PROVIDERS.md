@@ -1,9 +1,42 @@
 # Salorie — Pipeline IA & ajout de providers
 
+## Qui répond, en vrai (mesuré le 25/08/2026)
+
+**Cloudflare Workers AI**, `@cf/meta/llama-3.3-70b-instruct-fp8-fast` — le premier
+palier de la cascade, et il est **gratuit**. 445 ms sur une question courte, 2,3 s
+sur une demande de macros. L'app ne retombe donc pas en silence sur OpenAI ou
+Anthropic, derniers de la liste et seuls à coûter à chaque appel.
+
+Le service le journalise (`[AiService] texte servi par <moteur> (<ms>)`) mais
+`/ai/generate` ne renvoie que `{ text }` : le nom du moteur est calculé puis jeté.
+Pour le savoir depuis l'extérieur, il faut lire les journaux du conteneur.
+
+### ⚠ Le piège de Cloudflare, et ce qu'il a coûté
+
+`result.response` arrive **déjà analysé** quand le modèle émet du JSON : un objet,
+pas une chaîne. Vérifié en interrogeant l'API directement — la même question posée
+en prose rend `typeof === "string"`, posée en JSON rend `"object"`.
+
+L'extraction faisait `String(text)`, ce qui vaut alors `[object Object]` : quinze
+caractères, **non vides**, donc acceptés comme une réponse valide et journalisés
+comme un succès. Toute fonctionnalité demandant du JSON — analyses hebdomadaires,
+plans de repas — recevait ces quinze caractères, échouait à les analyser, et
+retombait sans un mot sur son contenu hors-ligne. Depuis le 14/08/2026, date où la
+cascade est passée sur Cloudflare en tête.
+
+Corrigé par `texteDeLaReponse()` (`ai.service.ts`), fonction pure et testée : un
+objet est **sérialisé** au lieu d'être stringifié. Le test
+`backend/src/ai/reponse.spec.ts` garde la porte — s'il redevient rouge, les
+analyses cessent de fonctionner sans qu'aucune erreur n'apparaisse nulle part.
+
+Note : les réponses cassées restent en cache Redis 6 h. Après un correctif de ce
+genre, purger `ai:*` — sinon on teste l'ancien.
+
+
 ## Ordre du pipeline (du moins cher/plus rapide au plus coûteux)
 1. **On-device (offline, gratuit)** : reconnaissance d'aliment (TFLite MobileNet), OCR étiquette/ticket (MLKit), comptage de reps (accéléromètre), code-barres (MLKit + Open Food Facts + base locale 502 aliments).
 2. **Backend self-host (peu cher)** : faster-whisper (vocal→texte), cache Redis des générations.
-3. **Providers cloud (payant, fallback)** : actuellement **Gemini** via `backend/src/ai/ai.service.ts` (`/ai/generate`, `/ai/vision`, `/ai/transcribe`). Rate-limité 30 req/min/user.
+3. **Providers cloud (cascade de 12, gratuits d'abord)** : Cloudflare et Groq en tête, puis du moins cher au plus cher, Gemini en dernier — via `backend/src/ai/ai.service.ts` (`/ai/generate`, `/ai/vision`, `/ai/transcribe`). Rate-limité 30 req/min/user.
 
 L'app n'appelle JAMAIS un provider en direct : elle passe par le backend `/ai/*` (clé serveur, token Firebase requis) → la clé ne fuit pas dans le bundle.
 
