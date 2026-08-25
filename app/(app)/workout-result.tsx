@@ -42,6 +42,24 @@ export default function WorkoutResultScreen() {
   const params = useLocalSearchParams();
   const { calories, name, duration } = params;
 
+  // ⚠ `useLocalSearchParams` rend `undefined` quand l'écran s'ouvre SANS
+  // paramètres — par un lien profond, par une navigation qui a oublié d'en
+  // passer, ou après une reprise à froid. Or `String(undefined)` vaut
+  // « undefined » : ce mot s'affichait EN TOUTES LETTRES à l'utilisateur, sous
+  // le récapitulatif de sa séance. Constaté le 25/08/2026 en ouvrant les 95
+  // écrans un par un — invisible en lisant le code, `String()` ayant l'air sûr.
+  //
+  // Pire, `handleLog` faisait `(name as string).split(...)` : sur un paramètre
+  // absent cela LÈVE, le `catch` avalait l'erreur, et le bouton « Enregistrer »
+  // ne faisait rien du tout, sans un mot.
+  //
+  // On normalise donc ici, une seule fois, et tout le reste s'y réfère.
+  const nomBrut = typeof name === 'string' ? name : Array.isArray(name) ? name[0] || '' : '';
+  const typeSeance = nomBrut.split(' (')[0];
+  const intensiteSeance = nomBrut.match(/\((.*?)\)/)?.[1] || '';
+  const kcalSeance = Number(calories);
+  const dureeSeance = parseInt(String(duration ?? ''), 10);
+
   const [loading, setLoading] = useState(false);
 
   // i18n #90 — locale-aware number formatting (display only, no calc change).
@@ -55,8 +73,7 @@ export default function WorkoutResultScreen() {
   // Feature #100 — share a plain-text summary (type + duration + kcal).
   const handleShare = async () => {
     try {
-      const workoutName = String(name || '').split(' (')[0] || t.great;
-      const summary = `${workoutName} — ${fmtNum(duration)} ${t.min} · ${fmtNum(calories)} ${t.kcal}`;
+      const summary = `${typeSeance || t.great} — ${fmtNum(duration)} ${t.min} · ${fmtNum(calories)} ${t.kcal}`;
       await partager({ texte: summary, lien: lienPartage('seance', 'seance'), titre: t.shareTitle });
     } catch {
       // user cancelled / share unavailable — no-op
@@ -66,20 +83,24 @@ export default function WorkoutResultScreen() {
   const handleLog = async () => {
     const email = user?.primaryEmailAddress?.emailAddress || '';
     if (!user || !email) return;
+    // Sans calories il n'y a rien à enregistrer. Écrire `NaN` dans le journal
+    // corromprait les totaux du jour, et l'ancienne version le faisait dès que
+    // le paramètre manquait — après avoir levé une exception silencieuse.
+    if (!Number.isFinite(kcalSeance)) return;
     setLoading(true);
 
     try {
       await addNutritionLog({
         userId: email,
         type: 'activity',
-        name: (name as string).split(' (')[0] || 'Workout',
-        calories: parseFloat(calories as string),
+        name: typeSeance || 'Workout',
+        calories: kcalSeance,
         protein: 0,
         carbs: 0,
         fat: 0,
         date: selectedDate,
-        intensity: (name as string).match(/\((.*?)\)/)?.[1] || 'Medium',
-        duration: parseInt(duration as string),
+        intensity: intensiteSeance || 'Medium',
+        duration: Number.isFinite(dureeSeance) ? dureeSeance : 0,
       });
       triggerRefresh();
       router.replace('/(tabs)' as any);
@@ -107,22 +128,22 @@ export default function WorkoutResultScreen() {
         <Animated.View entering={FadeInUp.delay(300).duration(600)} style={{ alignItems: 'center', alignSelf: 'stretch' }}>
           <Text style={[styles.great, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{t.great}</Text>
           <Text style={[styles.subtitle, { color: isDark ? '#9BA1A6' : Colors.light.gray[500] }]}>{t.burned}</Text>
-          <Text style={[styles.calories, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{fmtNum(calories)}<Text style={styles.calUnit}> {t.kcal}</Text></Text>
+          <Text style={[styles.calories, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{fmtNum(calories) || '—'}<Text style={styles.calUnit}> {t.kcal}</Text></Text>
 
           {/* Rangée de stats designée */}
           <View style={[styles.statsRow, { backgroundColor: isDark ? '#161C23' : Colors.light.gray[50] }]}>
             <View style={styles.stat}>
-              <Text style={[styles.statVal, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{fmtNum(duration)}</Text>
+              <Text style={[styles.statVal, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{fmtNum(duration) || '—'}</Text>
               <Text style={[styles.statLbl, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>{t.dur} ({t.min})</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: isDark ? '#283241' : Colors.light.gray[100] }]} />
             <View style={styles.stat}>
-              <Text style={[styles.statVal, { color: isDark ? '#fff' : Colors.light.gray[900] }]} numberOfLines={1}>{String(name).match(/\((.*?)\)/)?.[1] || '—'}</Text>
+              <Text style={[styles.statVal, { color: isDark ? '#fff' : Colors.light.gray[900] }]} numberOfLines={1}>{intensiteSeance || '—'}</Text>
               <Text style={[styles.statLbl, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>{t.intensity}</Text>
             </View>
           </View>
 
-          <Text style={[styles.info, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]} numberOfLines={1}>{String(name).split(' (')[0]}</Text>
+          <Text style={[styles.info, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]} numberOfLines={1}>{typeSeance}</Text>
           <Text style={[styles.savedHint, { color: isDark ? Colors.dark.primary : Colors.light.primary }]}>{t.saved}</Text>
         </Animated.View>
       </View>
