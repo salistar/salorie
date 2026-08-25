@@ -1,4 +1,4 @@
-import { texteDeLaReponse } from './ai.service';
+import { texteDeLaReponse, enTexte } from './ai.service';
 
 /**
  * La lecture d'une reponse de fournisseur.
@@ -54,5 +54,37 @@ describe('texteDeLaReponse', () => {
       choices: [{ message: { content: 'openai' } }],
       result: { response: 'cloudflare' },
     })).toBe('openai');
+  });
+});
+
+/**
+ * `enTexte` est la brique que la cascade VISION partage avec la cascade texte.
+ * Elle a ete extraite le 25/08/2026 en decouvrant que les cinq extractions de
+ * `ml.service.ts` portaient le meme `String(text)` — donc le meme piege, latent :
+ * il ne se declenchait pas parce que le palier gratuit `food4k` repond avant
+ * Cloudflare. Le jour ou food4k tombe ou doute, il se serait declenche.
+ */
+describe('enTexte — la brique partagee avec la cascade vision', () => {
+  it('laisse une chaine tranquille, en la rognant', () => {
+    expect(enTexte('  du poulet  ')).toBe('du poulet');
+  });
+
+  it('serialise un objet plutot que d en faire « [object Object] »', () => {
+    const t = enTexte({ name: 'Salade', calories: 120 });
+    expect(t).not.toContain('[object Object]');
+    expect(JSON.parse(t)).toEqual({ name: 'Salade', calories: 120 });
+  });
+
+  it('rend vide sur rien, pour que la cascade passe au palier suivant', () => {
+    expect(enTexte(null)).toBe('');
+    expect(enTexte(undefined)).toBe('');
+    expect(enTexte('')).toBe('');
+    expect(enTexte('   ')).toBe('');
+  });
+
+  it('survit a une structure circulaire plutot que de faire tomber la cascade', () => {
+    const a: any = { nom: 'x' };
+    a.soi = a;
+    expect(enTexte(a)).toBe('');
   });
 });

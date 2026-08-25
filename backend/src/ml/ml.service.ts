@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FirebaseService } from '../firebase.service';
-import { AiService } from '../ai/ai.service';
+import { AiService, enTexte } from '../ai/ai.service';
 import { RedisService } from '../redis.service';
 import { SecretsService } from '../secrets.service';
 import * as fs from 'fs';
@@ -342,8 +342,13 @@ export class MlService {
         clearTimeout(to);
         if (r.ok) {
           const j: any = await r.json();
-          const text = j?.result?.description || j?.result?.response || '';
-          if (text && String(text).trim()) return { text: String(text), engine: `cloudflare:${cfModel}` };
+          // ⚠ Cloudflare rend son champ DEJA ANALYSE quand le modele emet du
+          // JSON — et le prompt du scan en demande. `String(objet)` vaut
+          // « [object Object] » : 15 caracteres non vides, donc acceptes comme
+          // une reconnaissance valide. Meme piege que la cascade texte, corrige
+          // le 25/08/2026 (cf. `enTexte`).
+          const text = enTexte(j?.result?.description || j?.result?.response || '');
+          if (text) return { text, engine: `cloudflare:${cfModel}` };
           this.log(`cloudflare réponse vide: ${JSON.stringify(j).slice(0, 200)}`);
         } else {
           this.log(`cloudflare ${r.status}: ${(await r.text()).slice(0, 200)}`);
@@ -411,7 +416,7 @@ export class MlService {
         if (r.ok) {
           const j: any = await r.json();
           const text = j?.choices?.[0]?.message?.content || '';
-          if (text && String(text).trim()) return { text: String(text), engine: `groq:${groqModel}` };
+          if (enTexte(text)) return { text: enTexte(text), engine: `groq:${groqModel}` };
           this.log(`groq réponse vide: ${JSON.stringify(j).slice(0, 200)}`);
         } else {
           this.log(`groq ${r.status}: ${(await r.text()).slice(0, 200)}`);
@@ -452,7 +457,7 @@ export class MlService {
         if (r.ok) {
           const j: any = await r.json();
           const text = j?.choices?.[0]?.message?.content || '';
-          if (text && String(text).trim()) return { text: String(text), engine: `${label}:${model}` };
+          if (enTexte(text)) return { text: enTexte(text), engine: `${label}:${model}` };
           this.log(`${label} réponse vide: ${JSON.stringify(j).slice(0, 200)}`);
         } else {
           this.log(`${label} ${r.status}: ${(await r.text()).slice(0, 200)}`);
@@ -545,7 +550,7 @@ export class MlService {
         if (r.ok) {
           const j: any = await r.json();
           const text = j?.choices?.[0]?.message?.content || '';
-          if (text && String(text).trim()) return { text: String(text), engine: `mistral:${model}` };
+          if (enTexte(text)) return { text: enTexte(text), engine: `mistral:${model}` };
           this.log(`mistral réponse vide: ${JSON.stringify(j).slice(0, 200)}`);
         } else {
           this.log(`mistral ${r.status}: ${(await r.text()).slice(0, 200)}`);
@@ -594,7 +599,7 @@ export class MlService {
         if (r.ok) {
           const j: any = await r.json();
           const text = j?.choices?.[0]?.message?.content || '';
-          if (text && String(text).trim()) return { text: String(text), engine: `zhipu:${zhipuModel}` };
+          if (enTexte(text)) return { text: enTexte(text), engine: `zhipu:${zhipuModel}` };
           this.log(`zhipu réponse vide: ${JSON.stringify(j).slice(0, 200)}`);
         } else {
           this.log(`zhipu ${r.status}: ${(await r.text()).slice(0, 200)}`);
