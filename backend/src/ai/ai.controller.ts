@@ -3,11 +3,12 @@ import { AiService } from './ai.service';
 import { RedisService } from '../redis.service';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 import { lirePage } from './lecture-page';
+import { MlService } from '../ml/ml.service';
 
 @UseGuards(FirebaseAuthGuard)
 @Controller('ai')
 export class AiController {
-  constructor(private ai: AiService, private redis: RedisService) {}
+  constructor(private ai: AiService, private redis: RedisService, private ml: MlService) {}
 
   // Anti-abus : 30 appels IA / min / utilisateur (coût Gemini). 429 au-delà.
   private async limit(req: any, bucket: string) {
@@ -31,6 +32,25 @@ export class AiController {
     // S-fix : borne la taille de l'image AVANT tout envoi cloud (anti-abus coût/mémoire).
     if (typeof body.imageBase64 !== 'string' || body.imageBase64.length > 8_000_000)
       throw new BadRequestException('image too large');
+    // ── La cascade D'ABORD, Gemini en dernier recours ────────────────────
+    //
+    // Cet endpoint n'appelait QUE Gemini. Le 25/08/2026 il rendait 500 sur
+    // chaque appel — le modele par defaut avait ete retire par Google — et
+    // avec lui trois ecrans : scan d'equipement, recettes du frigo, photos de
+    // progression. Tous levent sur `!res.ok`, donc tous morts.
+    //
+    // Or `/ml/vision` fait deja tourner ONZE paliers, gratuits d'abord
+    // (food4k auto-heberge, Cloudflare, Groq, Ollama...), et repond en 82 ms.
+    // Il n'y avait aucune raison que celui-ci s'en prive.
+    //
+    // Injection au niveau du CONTROLEUR : `MlService` importe deja `AiService`,
+    // l'inverse ferait une dependance circulaire.
+    try {
+      const r = await this.ml.visionLocal(body.prompt, body.imageBase64, body.mimeType || 'image/jpeg');
+      if (r?.text) return { text: r.text, engine: r.engine };
+    } catch (e: any) {
+      // On ne renonce pas ici : Gemini reste a essayer juste en dessous.
+    }
     return { text: await this.ai.vision(body.prompt, body.imageBase64, body.mimeType || 'image/jpeg', body.model) };
   }
 

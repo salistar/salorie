@@ -37,19 +37,24 @@ import { SecretsService } from '../secrets.service';
  * extraient un `{...}` du texte et l'analysent, c'est exactement ce qu'ils
  * attendent.
  */
-export function texteDeLaReponse(j: any): string {
-  const brut = j?.choices?.[0]?.message?.content
-    || j?.result?.response
-    || (Array.isArray(j?.content) ? j.content.map((c: any) => c?.text || '').join('') : '');
-  if (brut == null) return '';
-  if (typeof brut === 'string') return brut.trim();
-  // Un objet ou un tableau : c'est du JSON deja analyse. On le rend a l'etat de
-  // texte plutot que d'en faire « [object Object] ».
+export function enTexte(v: any): string {
+  if (v == null) return '';
+  if (typeof v === 'string') return v.trim();
+  // Un objet ou un tableau : c'est du JSON deja analyse par le fournisseur. On le
+  // rend a l'etat de texte plutot que d'en faire « [object Object] ».
   try {
-    return JSON.stringify(brut).trim();
+    return JSON.stringify(v).trim();
   } catch {
     return '';
   }
+}
+
+export function texteDeLaReponse(j: any): string {
+  return enTexte(
+    j?.choices?.[0]?.message?.content
+      || j?.result?.response
+      || (Array.isArray(j?.content) ? j.content.map((c: any) => c?.text || '').join('') : ''),
+  );
 }
 
 @Injectable()
@@ -260,7 +265,11 @@ export class AiService {
 
   // Vision : modèle LITE par défaut (latence 2-3× plus faible que flash, suffisant
   // pour reconnaître un plat / une machine). Overridable par GEMINI_VISION_MODEL.
-  private visionModel = process.env.GEMINI_VISION_MODEL || 'gemini-2.5-flash-lite';
+  // `gemini-2.5-flash-lite` a ete RETIRE : l'API repond 404 « no longer available
+  // to new users. Please update your code to use models/gemini-3.5-flash-lite ».
+  // Constate le 25/08/2026 — /ai/vision rendait 500 sur chaque appel, donc trois
+  // ecrans morts (scan d'equipement, recettes du frigo, photos de progression).
+  private visionModel = process.env.GEMINI_VISION_MODEL || 'gemini-3.5-flash-lite';
 
   // Transcription : faster-whisper local (rapide, gratuit) → fallback Gemini audio.
   async transcribe(audioBase64: string, mimeType = 'audio/mp4', language?: string): Promise<{ text: string; engine: string }> {
