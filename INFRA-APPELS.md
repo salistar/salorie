@@ -103,6 +103,8 @@ Sur srv3, dans `$HOME/caddy` : `Caddyfile.avant-l4` et
 
 ## Ce qui reste ouvert
 
-- **Les 95 ecrans du telephone n'ont jamais ete vus tourner** apres la migration
-  des marges de securite : le raisonnement tient et le compilateur suit, mais
-  aucun appareil n'a ete branche.
+- (Rien.) Les 95 ecrans du telephone ont ete ouverts un par un le 25/08/2026 :
+  marges de securite correctes partout, aucune double marge. Le balayage a
+  revele un defaut qu'aucun audit de code n'avait vu — `workout-result`
+  affichait « undefined » en toutes lettres et son bouton « Enregistrer » levait
+  une exception avalee par un `catch`. Corrige et verifie a l'ecran.
