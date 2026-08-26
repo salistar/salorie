@@ -11,7 +11,7 @@ import {
   Dimensions,
   ScrollView,
 } from 'react-native';
-import { useSignUp } from '@clerk/clerk-expo';
+import { useSignUp, useClerk } from '@clerk/clerk-expo';
 import * as Sentry from '@sentry/react-native';
 import { useGoogleSSO, OAUTH_REDIRECT } from '../../lib/googleSSO';
 import { useRouter, Link } from 'expo-router';
@@ -65,6 +65,9 @@ export default function SignUpScreen() {
   const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const tx = TXT[language as keyof typeof TXT] ?? TXT.en;
   const { isLoaded, signUp, setActive } = useSignUp();
+  // Lu AU MOMENT du catch : `useAuth()` fermerait sur une valeur figee
+  // d'avant la connexion, donc toujours fausse la ou on en a besoin.
+  const clerk = useClerk();
   const { startGoogleSSO } = useGoogleSSO();
   const router = useRouter();
 
@@ -183,16 +186,20 @@ export default function SignUpScreen() {
       console.log('\x1b[33m[Google SSO sign-up] await startSSOFlow…\x1b[0m');
       const t0 = Date.now();
 
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('startSSOFlow timeout 120s — browser n\'est pas revenu')), 120_000)
-      );
+      // ⚠ LE MINUTEUR DOIT ETRE ANNULE. `Promise.race` se regle des que la
+      // premiere promesse aboutit, mais le `setTimeout` continue de courir :
+      // il rejetait 120 s APRES une inscription deja reussie.
+      let minuteur: any;
+      const timeoutPromise = new Promise((_, reject) => {
+        minuteur = setTimeout(() => reject(new Error('startSSOFlow timeout 120s — browser n\'est pas revenu')), 120_000);
+      });
 
       const result: any = await Promise.race([
         startGoogleSSO({
           redirectUrl,
         }),
         timeoutPromise,
-      ]);
+      ]).finally(() => clearTimeout(minuteur));
       const { createdSessionId, setActive: ssoSetActive, signIn: ssoSignIn, signUp: ssoSignUp } = result || {};
       console.log('\x1b[34m[API←Clerk] startSSOFlow RESPONSE (sign-up)\x1b[0m', {
         ms: Date.now() - t0,
@@ -237,6 +244,24 @@ export default function SignUpScreen() {
       // compte ne remplit pas de formulaire de support — il desinstalle.
       console.error('[API<-Clerk] Google Sign Up FAILED:', JSON.stringify(err, null, 2));
       // Meme raison que sur sign-in : une 4G coupee n'est pas un bug a remonter.
+      // ── SI LA SESSION EXISTE, LE FLUX A REUSSI : ON SE TAIT ────────────
+      //
+      // La redirection `salorie://oauth-callback` conclut parfois la session par
+      // le lien profond pendant que la promesse de `startGoogleSSO` reste
+      // suspendue. L'utilisateur est alors DEJA CONNECTE, et deux minutes plus
+      // tard le minuteur lui annoncait un echec.
+      //
+      // Constate sur un Galaxy A07 le 26/08/2026 : « startSSOFlow timeout 120s »
+      // affiche par-dessus l'accueil, avec « Bon retour idriss » lisible derriere.
+      //
+      // Le garde-fou existant cherchait « session », « already », « signed out »
+      // DANS LE MESSAGE. Celui du minuteur n'en contient aucun, donc il passait au
+      // travers. On lit desormais l'ETAT — la seule chose qui ne depende pas de
+      // la formulation d'une erreur.
+      if (clerk?.session) {
+        console.log('[Google SSO] session active malgre l\'erreur — aucune alerte');
+        return;
+      }
       if (!err?.horsLigne) {
         Sentry.captureException(err, {
           tags: { ecran: 'sign-up', flux: 'google-sso' },
