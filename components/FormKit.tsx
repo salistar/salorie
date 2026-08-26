@@ -10,6 +10,10 @@ import { Minus, Plus, Check } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
+import {
+  CHAMP_HAUTEUR, CHAMP_HAUTEUR_COMPACTE, RAYON_CHAMP, RAYON_CARTE, RAYON_PUCE,
+  BORDURE, LIBELLE, SAISIE, SAISIE_NOMBRE, ERREUR, ESPACE_ENTRE_CHAMPS, haloFocus,
+} from '../constants/formTokens';
 
 const GREEN = '#2E8B57';
 const GREEN_DARK = '#246B43';
@@ -71,7 +75,7 @@ export function FormInput({ label, error, style, icon: Icon, ...props }: any) {
   const [focus, setFocus] = useState(false);
   const bColor = error ? '#e11d48' : focus ? th.accent : th.border;
   return (
-    <View style={{ marginBottom: 14 }}>
+    <View style={{ marginBottom: ESPACE_ENTRE_CHAMPS }}>
       {label ? <FormLabel>{label}</FormLabel> : null}
       <View style={[s.inputWrap, { backgroundColor: th.inputBg, borderColor: bColor }, focus && s.focusGlow, th.rowDir]}>
         {Icon ? <Icon size={18} color={focus ? th.accent : th.sub} style={{ marginHorizontal: 4 }} /> : null}
@@ -106,7 +110,7 @@ export function Stepper({ label, value, onChange, step = 1, min = 0, max = 10000
   const num = Number(value) || 0;
   const set = (v: number) => onChange(String(Math.max(min, Math.min(max, v))));
   return (
-    <View style={{ marginBottom: 14 }}>
+    <View style={{ marginBottom: ESPACE_ENTRE_CHAMPS }}>
       {label ? <FormLabel>{label}</FormLabel> : null}
       <View style={[s.stepperWrap, { backgroundColor: th.inputBg, borderColor: error ? '#e11d48' : th.border }, th.rowDir]}>
         {/* Les boutons −/+ n'étaient que des icônes : TalkBack annonçait « bouton » sans dire
@@ -156,7 +160,7 @@ export function Stepper({ label, value, onChange, step = 1, min = 0, max = 10000
 export function ChipGroup({ label, options, value, onChange }: any) {
   const th = useFormTheme();
   return (
-    <View style={{ marginBottom: 14 }}>
+    <View style={{ marginBottom: ESPACE_ENTRE_CHAMPS }}>
       {label ? <FormLabel>{label}</FormLabel> : null}
       {/* Choix unique = sémantique radio. Sans accessibilityState, la coche verte est le
           SEUL indice de sélection → invisible pour TalkBack et pour un daltonien. */}
@@ -216,20 +220,23 @@ const s = StyleSheet.create({
   headIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   headTitle: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5, flex: 1 },
   headSub: { fontSize: 13.5, marginTop: 8, lineHeight: 19 },
-  card: { borderRadius: 24, padding: 18, borderWidth: 1.5, marginBottom: 16 },
+  card: { borderRadius: RAYON_CARTE, padding: 18, borderWidth: BORDURE, marginBottom: 16 },
   cardShadow: { shadowColor: '#0F172A', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 14, elevation: 2 },
-  label: { fontSize: 12.5, fontWeight: '800', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.4, opacity: 0.85 },
-  inputWrap: { borderRadius: 16, borderWidth: 1.5, paddingHorizontal: 14, alignItems: 'center' },
-  focusGlow: { shadowColor: GREEN, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 2 },
-  input: { fontSize: 16, fontWeight: '700', paddingVertical: 14, flex: 1 },
-  error: { color: '#e11d48', fontSize: 12, fontWeight: '700', marginTop: 5 },
-  stepperWrap: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, borderWidth: 1.5, padding: 6 },
-  stepBtn: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  label: { ...LIBELLE },
+  // `minHeight` MANQUAIT : padding 14 x2 + ligne ~19 donnait ~47 dp, sous le
+  // plancher d'accessibilite Android de 48. Les champs etaient plus petits que
+  // ceux de <Input> (54) dans les ecrans qui melangent les deux.
+  inputWrap: { borderRadius: RAYON_CHAMP, borderWidth: BORDURE, paddingHorizontal: 14, alignItems: 'center', minHeight: CHAMP_HAUTEUR },
+  focusGlow: { ...haloFocus(GREEN) },
+  input: { ...SAISIE, flex: 1 },
+  error: { color: '#e11d48', ...ERREUR },
+  stepperWrap: { flexDirection: 'row', alignItems: 'center', borderRadius: RAYON_CHAMP, borderWidth: BORDURE, padding: 6, minHeight: CHAMP_HAUTEUR },
+  stepBtn: { width: CHAMP_HAUTEUR_COMPACTE, height: CHAMP_HAUTEUR_COMPACTE, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   stepValueWrap: { flex: 1, flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', gap: 4 },
-  stepInput: { fontSize: 22, fontWeight: '900', paddingVertical: 8, minWidth: 60 },
+  stepInput: { ...SAISIE_NOMBRE, paddingVertical: 8, minWidth: 60 },
   unit: { fontSize: 13, fontWeight: '800' },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { flexDirection: 'row', alignItems: 'center', borderRadius: 999, borderWidth: 1.5, paddingHorizontal: 16, paddingVertical: 10 },
+  chip: { flexDirection: 'row', alignItems: 'center', borderRadius: RAYON_PUCE, borderWidth: BORDURE, paddingHorizontal: 16, paddingVertical: 10, minHeight: CHAMP_HAUTEUR_COMPACTE },
   chipActiveShadow: { shadowColor: GREEN, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
   chipTxt: { fontSize: 13.5, fontWeight: '800' },
   footer: { padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20 },
