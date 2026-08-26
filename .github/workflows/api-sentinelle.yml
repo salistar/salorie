@@ -1,0 +1,44 @@
+# Les routes produit repondent-elles encore ?
+# ---------------------------------------------------------------------------
+# POURQUOI CE WORKFLOW EXISTE
+#
+# Les 25 et 26/08/2026, CINQ fonctionnalites ont ete trouvees mortes — par
+# hasard, en cherchant autre chose. Elles rendaient 500 depuis des semaines :
+#
+#   /ai/vision            Google avait retire le modele par defaut. Trois ecrans
+#                         avec : scan d'equipement, recettes du frigo, photos de
+#                         progression.
+#   /ai/transcribe        la dictee vocale n'avait JAMAIS fonctionne — son
+#                         palier local visait un conteneur qui n'existe pas.
+#   /ml/portion-estimate  Gemini appele sans cascade, credits epuises.
+#
+# Les ecrans s'affichaient parfaitement. Seul le bouton echouait. Le deploiement
+# etait vert, les tests etaient verts, /health etait vert. Rien n'appelait ces
+# routes, donc rien ne pouvait le dire.
+#
+# Une fois par jour suffit : ces pannes viennent de l'exterieur (un fournisseur
+# qui retire un modele, un credit qui s'epuise) et durent des semaines.
+name: API — sentinelle
+
+on:
+  schedule:
+    - cron: '41 5 * * *'   # tous les jours, 5h41 UTC
+  workflow_dispatch: {}
+
+jobs:
+  sentinelle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+
+      # Depuis le runner, donc a travers le DNS, Cloudflare et Caddy — comme un
+      # utilisateur. Une verification depuis l'interieur du serveur passerait a
+      # cote d'une panne de routage.
+      - name: Appeler toutes les routes produit
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_WEB_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
+        run: node scripts/balayage-api.js https://api.salorie.com
