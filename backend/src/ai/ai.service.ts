@@ -243,8 +243,10 @@ export class AiService {
     prompt: string,
     model?: string,
   ): Promise<string> {
-    const genAI = await this.client();
-    if (!genAI) throw new Error('GEMINI_API_KEY not configured');
+    // PAS de garde Gemini ici : la generation delegue a `generate()`, qui essaie
+    // douze fournisseurs AVANT Gemini. L'ancienne version jetait
+    // « GEMINI_API_KEY not configured » sans meme regarder la cascade — une
+    // precondition devenue fausse le jour ou la cascade a ete construite.
     const m = model || this.defaultModel;
     // Sérialisation stable des entrées : clés triées → même hash quel que soit
     // l'ordre des propriétés fourni par l'appelant.
@@ -288,7 +290,53 @@ export class AiService {
         const j: any = await r.json();
         if (typeof j?.text === 'string') return { text: j.text, engine: 'whisper' };
       }
-    } catch { /* whisper indisponible → fallback Gemini */ }
+    } catch { /* whisper indisponible → on descend d'un palier */ }
+
+    // ── Cloudflare Whisper : gratuit, et le compte existe deja ─────────────
+    //
+    // Le palier local ci-dessus vise `http://whisper:9000`. Ce service N'EXISTE
+    // PAS dans la pile — aucun conteneur `whisper` n'y a jamais tourne. Toute
+    // dictee tombait donc directement sur Gemini, dont les credits sont epuises
+    // (429 « prepayment credits are depleted »). La dictee vocale n'a donc
+    // jamais fonctionne en production. Constate le 26/08/2026.
+    //
+    // Le modele et la forme de la requete sont VERIFIES sur l'API, pas devines :
+    // `whisper-large-v3-turbo` accepte `{ audio: <base64> }` et rend
+    // `result.text`.
+    try {
+      const cfCompte = await this.secrets.get('CF_ACCOUNT_ID');
+      const cfCle = await this.secrets.get('CF_API_TOKEN');
+      if (cfCompte && cfCle) {
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 45000);
+        const modele = process.env.CF_WHISPER_MODEL || '@cf/openai/whisper-large-v3-turbo';
+        const r = await fetch(
+          `https://api.cloudflare.com/client/v4/accounts/${cfCompte}/ai/run/${modele}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfCle}` },
+            body: JSON.stringify({ audio: audioBase64 }),
+            signal: ctrl.signal,
+          },
+        );
+        clearTimeout(to);
+        if (r.ok) {
+          const j: any = await r.json();
+          const t = enTexte(j?.result?.text);
+          if (t) {
+            this.logger.log(`transcription servie par cloudflare:${modele}`);
+            return { text: t, engine: `cloudflare:${modele}` };
+          }
+        } else {
+          this.logger.warn(`whisper cloudflare ${r.status}: ${(await r.text()).slice(0, 160)}`);
+        }
+      }
+    } catch (e: any) {
+      this.logger.warn(`whisper cloudflare KO: ${e?.message}`);
+    }
+
+    // Gemini en tout dernier — il reste le seul a savoir lire un audio si les
+    // deux paliers au-dessus manquent, mais on n'y compte plus.
     const text = await this.vision('Transcribe this audio exactly as spoken. Reply with ONLY the raw transcription text, nothing else.', audioBase64, mimeType);
     return { text, engine: 'gemini' };
   }
