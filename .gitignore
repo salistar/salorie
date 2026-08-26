@@ -111,3 +111,7 @@ assets/videos/*.mp4
 # Cache Python des scripts utilitaires (scripts/*.py)
 __pycache__/
 *.pyc
+
+# Profil Edge des campagnes de captures : contient des COOKIES DE SESSION.
+# Ne doit jamais entrer dans le depot.
+web/profil-captures/

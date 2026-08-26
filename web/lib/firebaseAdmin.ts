@@ -15,6 +15,18 @@ export function db() {
   return admin.firestore();
 }
 
+/**
+ * Le service d'authentification, pour verifier un jeton d'identite cote serveur.
+ *
+ * Sert au pont Google du back-office : le navigateur prouve son identite avec un
+ * jeton Firebase, et `verifyIdToken` en verifie la signature ici. C'est ce qui
+ * permet d'accepter une connexion Google SANS embarquer le SDK serveur de Clerk.
+ */
+export function authAdmin() {
+  init();
+  return admin.auth();
+}
+
 export interface AdminUser {
   id: string;
   email?: string;
