@@ -64,4 +64,29 @@ export default withSentryConfig(nextConfig, {
   webpack: {
     treeshake: { removeDebugLogging: true },
   },
+  // ── Elagage de Replay : pose, MAIS SANS EFFET MESURABLE ─────────────────
+  //
+  // `sentry.client.config.ts` eteint Replay des deux cotes
+  // (`replaysSessionSampleRate` et `replaysOnErrorSampleRate` a 0), et c'est
+  // deliberе : l'ecran de moderation affiche des donnees sensibles. Mettre un
+  // taux a zero n'ENLEVE toutefois pas le code du bundle, d'ou ces drapeaux.
+  //
+  // MESURE DU 26/08/2026, avant / apres : le chunk Sentry fait 364 Ko dans les
+  // DEUX cas. Aucun gain. Ces options n'excluent que des sous-modules de Replay
+  // (canvas, iframe, shadow DOM, worker), qui sont petits. Le poids reel est le
+  // coeur du SDK plus le TRACAGE navigateur, et `tracesSampleRate: 0.1` le
+  // garde actif.
+  //
+  // On les laisse : elles sont justes sur le principe, et sans elles quelqu'un
+  // refera l'essai en croyant tenir la solution. Mais le vrai levier n'est pas
+  // un reglage, c'est un arbitrage : 364 Ko sur CHAQUE chargement valent-ils
+  // 10 % de traces navigateur ? A comparer avec Clerk + Firebase, 366 Ko dans
+  // le meme ordre de grandeur, eux indispensables.
+  bundleSizeOptimizations: {
+    excludeReplayCanvas: true,
+    excludeReplayIframe: true,
+    excludeReplayShadowDom: true,
+    excludeReplayWorker: true,
+    excludeDebugStatements: true,
+  },
 });
