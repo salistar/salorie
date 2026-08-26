@@ -8,7 +8,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
-import * as admin from 'firebase-admin';
+import { FirebaseService } from '../firebase.service';
 
 type FastState = { uid: string; name: string; startTs: number | null; targetHours: number; status: 'fasting' | 'idle' };
 
@@ -16,17 +16,40 @@ type FastState = { uid: string; name: string; startTs: number | null; targetHour
 export class FastingGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
   private readonly log = new Logger('FastingGateway');
+
+  // ⚠ CE CONSTRUCTEUR N'EXISTAIT PAS, et c'etait un bug latent.
+  //
+  // `handleConnection` appelait `admin.auth()` en direct. Or `FirebaseService`
+  // initialise l'application Firebase PARESSEUSEMENT : tant que personne n'a
+  // touche a Firestore, `admin.auth()` leve « default Firebase app does not
+  // exist ». L'exception tombait dans le `catch` juste en dessous, qui la
+  // traite comme un echec d'authentification et deconnecte.
+  //
+  // Consequence : sur un demarrage a froid, si la premiere connexion au defi de
+  // jeune en direct precede tout acces a Firestore, TOUS les participants sont
+  // rejetes — et le journal dit « auth », ce qui envoie chercher au mauvais
+  // endroit.
+  //
+  // Exactement le meme defaut que celui deja corrige dans `social.gateway.ts` ;
+  // `twin.gateway.ts` s'en premunit en appelant `this.firebase.db()` d'abord.
+  // `FirebaseService.auth()` existe pour cela : il appelle `ensure()` avant.
+  constructor(private readonly firebase: FirebaseService) {}
   // challengeId -> (socketId -> état)
   private rooms = new Map<string, Map<string, FastState>>();
 
   async handleConnection(socket: Socket) {
     try {
       const token = (socket.handshake.auth as any)?.token || (socket.handshake.query as any)?.token;
-      const decoded = await admin.auth().verifyIdToken(String(token));
+      const decoded = await this.firebase.auth().verifyIdToken(String(token));
       (socket.data as any).uid = decoded.uid || decoded.email || 'anon';
-    } catch {
+    } catch (e) {
+      // On dit POURQUOI. Un « auth » muet ne distingue pas un jeton invalide
+      // d'une application Firebase non initialisee — et c'est precisement la
+      // confusion qui rendait ce bug invisible.
+      this.log.warn(`jeune WS refuse : ${(e as any)?.message || e}`);
       socket.emit('fasting:error', 'auth');
       socket.disconnect(true);
+      return; // ne pas continuer sur un socket non authentifie
     }
   }
 
