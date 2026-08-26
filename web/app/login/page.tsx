@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthShell from '../AuthShell';
+import ConnexionGoogle from './ConnexionGoogle';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -38,6 +39,12 @@ export default function LoginPage() {
           sans dire lequel. */}
       <h1 className="auth-title">Connexion</h1>
       <p className="auth-sub">Accès réservé aux administrateurs.</p>
+
+      {/* Google d'abord : c'est le chemin le plus court pour qui a déjà sa
+          session ouverte. Le formulaire e-mail reste dessous, entier — il ne
+          dépend ni de Clerk ni du réseau Google, et reste le seul recours si
+          l'un des deux tombe. */}
+      <ConnexionGoogle />
 
       <form onSubmit={submit} noValidate>
         <div className="field">

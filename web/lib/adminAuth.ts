@@ -74,6 +74,28 @@ export async function verifyUserRole(
   return { role: roleOf(u), scopes: Array.isArray(u.scopes) ? (u.scopes as Scope[]) : [] };
 }
 
+/**
+ * Le role d'un compte EXISTANT, retrouve par son seul e-mail.
+ *
+ * ⚠ CETTE FONCTION NE VERIFIE AUCUN MOT DE PASSE. Elle n'a qu'un seul appelant
+ * legitime : la connexion Google, ou la preuve d'identite a DEJA ete faite par
+ * Google puis verifiee par Firebase. L'appeler ailleurs reviendrait a ouvrir le
+ * back-office a qui connait une adresse.
+ *
+ * ⚠ ET ELLE NE CREE RIEN. Un compte Google inconnu reçoit `null`, jamais un
+ * compte neuf : sans cela, toute personne possedant une adresse Gmail
+ * s'inviterait dans l'administration. C'est LE garde-fou de ce chemin.
+ */
+export async function trouverCompte(
+  email: string,
+): Promise<{ role: Role; scopes: Scope[] } | null> {
+  if (typeof email !== 'string' || !email.trim()) return null;
+  await db();
+  const u = await AdminUser.findOne({ email: email.toLowerCase().trim() });
+  if (!u) return null;
+  return { role: roleOf(u), scopes: Array.isArray(u.scopes) ? (u.scopes as Scope[]) : [] };
+}
+
 /** Comptes du back-office, sans jamais exposer d'empreinte de mot de passe. */
 export async function listerComptes(): Promise<
   { email: string; role: Role; scopes: Scope[]; createdAt?: Date }[]
