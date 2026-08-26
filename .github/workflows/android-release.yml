@@ -178,6 +178,29 @@ jobs:
       # `project.hasProperty('MYAPP_RELEASE_STORE_FILE')` est faux et la configuration de
       # signature reste vide — vérifié le 3 août 2026 par un projet Gradle témoin.
       # Le garde de withReleaseSigning.js fait alors échouer le build, ce qui est voulu.
+      # ── versionCode : automatique, et toujours croissant ──────────────────
+      #
+      # `versionCode 108` etait FIGE dans build.gradle et app.json, et rien ne
+      # l'incrementait. Google Play exige un numero STRICTEMENT SUPERIEUR a
+      # chaque envoi : le deuxieme depot d'un 108 est refuse sans appel.
+      #
+      # Pire au quotidien : sans numero qui bouge, rien ne distingue un build du
+      # 16 aout d'un build du 26. Le 26/08/2026, cela a produit DEUX fausses
+      # pistes en une seule session sur le meme telephone — des cartes d'accueil
+      # jugees manquantes (corrigees le 20) et une connexion Google jugee cassee
+      # (c'etait la bascule du domaine Clerk du 22). Chaque fois, des heures.
+      #
+      # 1000 + run_number : toujours au-dessus du 108 deja publie, strictement
+      # croissant, et plus jamais a y penser. Le versionName, lui, reste pilote
+      # a la main dans app.json — c'est lui que l'utilisateur lit.
+      - name: Poser un versionCode croissant
+        run: |
+          CODE=$(( 1000 + ${{ github.run_number }} ))
+          sed -i "s/versionCode [0-9]\+/versionCode $CODE/" android/app/build.gradle
+          sed -i "s/\"versionCode\": [0-9]\+/\"versionCode\": $CODE/" app.json
+          echo "  versionCode de ce build : $CODE"
+          grep -n "versionCode" android/app/build.gradle app.json | sed 's/^/    /'
+
       - name: Gradle bundleRelease (AAB signé)
         env:
           ORG_GRADLE_PROJECT_MYAPP_RELEASE_STORE_FILE: salorie-upload.jks

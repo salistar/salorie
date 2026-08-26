@@ -10,6 +10,10 @@ import { Eye, EyeOff } from 'lucide-react-native';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { radius, spacing, type } from '../../constants/theme';
+import {
+  CHAMP_HAUTEUR, RAYON_CHAMP, BORDURE, BORDURE_FOCUS,
+  LIBELLE, SAISIE, ERREUR, ESPACE_ENTRE_CHAMPS, haloFocus, DUREE_FOCUS,
+} from '../../constants/formTokens';
 
 interface Props extends TextInputProps {
   label?: string;
@@ -38,7 +42,7 @@ export const Input = React.forwardRef<TextInput, Props>(function Input(
   useEffect(() => {
     Animated.timing(anim, {
       toValue: focused ? 1 : 0,
-      duration: 180,
+      duration: DUREE_FOCUS,
       useNativeDriver: false, // on anime borderColor/borderWidth/shadow → JS driver requis
     }).start();
   }, [focused, anim]);
@@ -47,26 +51,32 @@ export const Input = React.forwardRef<TextInput, Props>(function Input(
   const animatedBorderColor = error
     ? colors.error
     : anim.interpolate({ inputRange: [0, 1], outputRange: [restCol, colors.primary] });
-  const animatedBorderWidth = anim.interpolate({ inputRange: [0, 1], outputRange: [1.5, 2] });
-  const animatedScale = anim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.012] });
+  const animatedBorderWidth = anim.interpolate({ inputRange: [0, 1], outputRange: [BORDURE, BORDURE_FOCUS] });
+  // ⚠ PLUS DE `scale` AU FOCUS. Le champ grandissait de 1,2 % quand on le
+  // touchait : le texte deja saisi se decalait sous le doigt, et sur une liste
+  // de champs le voisin bougeait aussi. Un formulaire soigne ne tremble pas —
+  // c'est la bordure et le halo qui disent le focus, pas la geometrie.
   const animatedShadowOpacity = error ? 0 : anim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.18] });
 
   return (
-    <View style={[{ marginBottom: spacing.md }, containerStyle]}>
+    <View style={[{ marginBottom: ESPACE_ENTRE_CHAMPS }, containerStyle]}>
       {!!label && (
-        <Text style={{ ...(type.micro as TextStyle), color: colors.gray[500], marginBottom: 6, marginLeft: 2, textAlign: isRTL ? 'right' : 'left' }}>
+        // Meme libelle que FormKit : MAJUSCULES interlettrees. Sans cela, les
+        // neuf ecrans qui melangent les deux systemes affichaient deux styles
+        // de libelle dans le meme formulaire.
+        <Text style={{ ...LIBELLE, color: colors.gray[500], marginLeft: 2, textAlign: isRTL ? 'right' : 'left' }}>
           {label}
         </Text>
       )}
       <Animated.View style={{
         flexDirection: dir, alignItems: 'center', gap: spacing.sm,
-        backgroundColor: fieldBg, borderRadius: radius.lg,
+        backgroundColor: fieldBg, borderRadius: RAYON_CHAMP,
         borderWidth: animatedBorderWidth, borderColor: animatedBorderColor,
-        paddingHorizontal: spacing.lg, minHeight: 54,
-        transform: [{ scale: animatedScale }],
-        // léger glow premium quand focus (ignoré sur web/anciennes versions sans souci)
-        shadowColor: colors.primary, shadowOpacity: animatedShadowOpacity,
-        shadowRadius: 8, shadowOffset: { width: 0, height: 0 },
+        paddingHorizontal: spacing.lg, minHeight: CHAMP_HAUTEUR,
+        // ⚠ `elevation` vient de `haloFocus` : sans lui, Android ignore
+        // purement et simplement shadowColor/Opacity/Radius. Le « glow premium »
+        // ne s'affichait donc que sur iOS — pas sur la plateforme livree.
+        ...haloFocus(colors.primary), shadowOpacity: animatedShadowOpacity,
       }}>
         {icon}
         <TextInput
@@ -76,7 +86,7 @@ export const Input = React.forwardRef<TextInput, Props>(function Input(
           placeholderTextColor={colors.gray[400]}
           onFocus={(e) => { setFocused(true); onFocus?.(e); }}
           onBlur={(e) => { setFocused(false); onBlur?.(e); }}
-          style={[{ flex: 1, ...(type.body as TextStyle), color: colors.gray[900], paddingVertical: spacing.md, textAlign: isRTL ? 'right' : 'left' }, style as any]}
+          style={[{ flex: 1, ...SAISIE, color: colors.gray[900], textAlign: isRTL ? 'right' : 'left' }, style as any]}
         />
         {secureTextEntry ? (
           <Pressable
@@ -96,7 +106,7 @@ export const Input = React.forwardRef<TextInput, Props>(function Input(
         <Text
           accessibilityLiveRegion="polite"
           accessibilityRole="alert"
-          style={{ ...(type.micro as TextStyle), color: colors.error, marginTop: 4, marginLeft: 2, textAlign: isRTL ? 'right' : 'left' }}
+          style={{ ...ERREUR, color: colors.error, marginLeft: 2, textAlign: isRTL ? 'right' : 'left' }}
         >{error}</Text>
       )}
     </View>
