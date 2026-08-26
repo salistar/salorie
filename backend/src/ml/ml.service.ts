@@ -962,13 +962,22 @@ export class MlService {
       `en te basant sur les repères visuels (assiette ~26cm, fourchette, main). ` +
       `Réponds STRICTEMENT en JSON: ` +
       `{"food":"...","estimatedGrams":<number>,"confidence":<0..1>,"calories":<number>,"reasoning":"..."}`;
-    const text = await this.ai.vision(prompt, imageBase64);
+    // `this.ai.vision()` appelle Gemini SEUL. Les credits du compte sont
+    // epuises depuis des semaines (429 « prepayment credits are depleted »),
+    // donc cette route rendait 500 a chaque appel — verifie le 26/08/2026.
+    //
+    // La cascade de onze paliers, gratuits d'abord, est dans CE fichier, dix
+    // lignes plus haut. Il n'y avait aucune raison de s'en priver.
+    const r = await this.visionLocal(prompt, imageBase64);
+    const text = r.text;
     let parsed: any = null;
     try {
       const m = text.match(/\{[\s\S]*\}/);
       parsed = m ? JSON.parse(m[0]) : null;
     } catch { /* noop */ }
-    return { ok: !!parsed, model: 'gemini-vision', raw: parsed ? undefined : text, ...parsed };
+    // Le moteur REEL, pas un nom en dur : c'etait « gemini-vision » alors que
+    // Gemini ne repondait plus depuis longtemps.
+    return { ok: !!parsed, model: r.engine, raw: parsed ? undefined : text, ...parsed };
   }
 
   // ---------------------------------------------------------------------------
