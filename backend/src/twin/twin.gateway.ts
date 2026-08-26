@@ -12,7 +12,6 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { randomBytes } from 'crypto';
-import * as admin from 'firebase-admin';
 import { FirebaseService } from '../firebase.service';
 
 type Member = { uid: string; name: string };
@@ -40,11 +39,13 @@ export class TwinGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(socket: Socket) {
     try {
-      // Garantit que l'app Firebase par défaut est initialisée (init paresseuse de
-      // FirebaseService) AVANT admin.auth() — sinon "default Firebase app does not exist".
-      this.firebase.db();
+      // `FirebaseService.auth()` appelle `ensure()` : l'application Firebase est
+      // initialisee avant la verification. L'ancienne version appelait
+      // `this.firebase.db()` uniquement pour ce ROLE DE BORD, puis
+      // `admin.auth()` — ca marchait, mais rien ne disait au relecteur que le
+      // `db()` etait obligatoire, et le supprimer aurait casse l'authentification.
       const token = (socket.handshake.auth as any)?.token || (socket.handshake.query as any)?.token;
-      const decoded = await admin.auth().verifyIdToken(String(token));
+      const decoded = await this.firebase.auth().verifyIdToken(String(token));
       (socket.data as any).uid = decoded.uid || decoded.email || 'anon';
       this.log.log(`twin WS connect OK uid=${(socket.data as any).uid}`);
     } catch (e) {
