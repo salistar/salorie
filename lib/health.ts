@@ -18,13 +18,54 @@ export interface HealthToday {
   weightKg: number | null;
 }
 
+/**
+ * Borne une promesse dans le temps.
+ *
+ * ⚠ POURQUOI C'EST INDISPENSABLE ICI
+ * Un `try/catch` ne rattrape PAS une promesse qui ne se regle jamais. Or
+ * `getSdkStatus()` est un appel au pont natif : si le fournisseur Health Connect
+ * ne repond pas, l'appel reste en suspens, sans erreur et sans resultat.
+ *
+ * Constate le 26/08/2026 sur un Galaxy A07 sous Android 16 : `isHealthAvailable()`
+ * ne rendait jamais la main, `setAvailable()` n'etait donc jamais appele, et
+ * l'ecran « Synchro sante » restait bloque sur son squelette de chargement —
+ * sans bouton, sans message, sans erreur dans le journal. Aucun chemin
+ * n'existait pour accorder l'acces, meme une fois le manifeste corrige.
+ *
+ * Un ecran doit toujours finir par dire quelque chose. Mieux vaut annoncer
+ * « indisponible » a tort que ne rien annoncer du tout.
+ */
+function avecDelai<T>(promesse: Promise<T>, ms: number, repli: T): Promise<T> {
+  return new Promise<T>((resolve) => {
+    let regle = false;
+    const minuteur = setTimeout(() => {
+      if (regle) return;
+      regle = true;
+      console.log('[health] appel natif sans reponse au bout de ' + ms + ' ms — repli');
+      resolve(repli);
+    }, ms);
+    promesse.then(
+      (v) => { if (!regle) { regle = true; clearTimeout(minuteur); resolve(v); } },
+      () => { if (!regle) { regle = true; clearTimeout(minuteur); resolve(repli); } },
+    );
+  });
+}
+
+/** Six secondes : large pour un appel au pont natif, court pour qui attend. */
+const DELAI_NATIF_MS = 6000;
+
+/** Statut du SDK, borne dans le temps. `null` = le pont n'a pas repondu. */
+async function statutSdk(): Promise<number | null> {
+  return avecDelai<number | null>(
+    Promise.resolve().then(() => getSdkStatus()),
+    DELAI_NATIF_MS,
+    null,
+  );
+}
+
 export async function isHealthAvailable(): Promise<boolean> {
-  try {
-    const status = await getSdkStatus();
-    return status === SdkAvailabilityStatus.SDK_AVAILABLE;
-  } catch {
-    return false;
-  }
+  const status = await statutSdk();
+  return status === SdkAvailabilityStatus.SDK_AVAILABLE;
 }
 
 export type ConnectResult = 'ok' | 'denied' | 'unavailable' | 'update_required' | 'error';
@@ -35,12 +76,19 @@ export type ConnectResult = 'ok' | 'denied' | 'unavailable' | 'update_required' 
 // let the UI offer to install/update Health Connect instead.
 export async function connectHealthStatus(): Promise<ConnectResult> {
   try {
-    let status: number | undefined;
-    try { status = await getSdkStatus(); } catch { return 'unavailable'; }
+    // Borne dans le temps, comme partout ailleurs ici : un pont natif muet ne
+    // doit jamais laisser un bouton tourner indefiniment. `null` = pas de
+    // reponse, ce qui vaut « indisponible » du point de vue de l'utilisateur.
+    const status = await statutSdk();
+    if (status === null) return 'unavailable';
     if (status === SdkAvailabilityStatus.SDK_UNAVAILABLE) return 'unavailable';
     if (status === SdkAvailabilityStatus.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED) return 'update_required';
 
-    const ok = await initialize();
+    const ok = await avecDelai(
+      Promise.resolve().then(() => initialize()),
+      DELAI_NATIF_MS,
+      false,
+    );
     if (!ok) return 'error';
     const perms = [
       { accessType: 'read' as const, recordType: 'Steps' as const },
@@ -66,10 +114,23 @@ export async function connectHealthStatus(): Promise<ConnectResult> {
 // Has the user already granted Steps access? (used to auto-connect on open)
 export async function hasStepsPermission(): Promise<boolean> {
   try {
-    const status = await getSdkStatus();
+    const status = await statutSdk();
     if (status !== SdkAvailabilityStatus.SDK_AVAILABLE) return false;
-    await initialize();
-    const granted = (await getGrantedPermissions()) || [];
+    // `initialize()` et `getGrantedPermissions()` passent par le meme pont natif
+    // et peuvent rester en suspens pour la meme raison : on les borne aussi.
+    // Sans cela, l'ecran repasserait de « disponible » a fige des la ligne
+    // suivante — on aurait deplace le blocage sans le supprimer.
+    const pret = await avecDelai(
+      Promise.resolve().then(() => initialize()).then(() => true),
+      DELAI_NATIF_MS,
+      false,
+    );
+    if (!pret) return false;
+    const granted = await avecDelai<any[]>(
+      Promise.resolve().then(() => getGrantedPermissions()).then((g) => g || []),
+      DELAI_NATIF_MS,
+      [],
+    );
     return granted.some((p: any) => p?.recordType === 'Steps');
   } catch { return false; }
 }

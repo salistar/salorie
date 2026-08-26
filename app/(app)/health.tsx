@@ -37,6 +37,7 @@ const TXT: any = {
     hcRetry: 'Connection failed. Retry, open Health Connect, or use Simulation mode.',
     hcRetry2: 'Connection failed. Retry or use Simulation mode.',
     openHC: 'Open Health Connect',
+    retry: 'Try again',
     tip: 'Tip: in Health Connect → App permissions → Salorie, enable "Steps".',
     watches: '⌚ Compatible watches: Garmin, Fitbit, Samsung Health, Google Fit — connect them in Health Connect and their data (steps, calories, weight) arrives here automatically.',
     syncLabel: 'Sync workouts + weight',
@@ -55,6 +56,7 @@ const TXT: any = {
     hcRetry: 'Connexion impossible. Réessaie, ouvre Health Connect, ou utilise le mode Simulation.',
     hcRetry2: 'Connexion impossible. Réessaie ou utilise le mode Simulation.',
     openHC: 'Ouvrir Health Connect',
+    retry: 'Réessayer',
     tip: 'Astuce : dans Health Connect → Autorisations des applications → Salorie, active « Pas ».',
     watches: '⌚ Montres compatibles : Garmin, Fitbit, Samsung Health, Google Fit — connecte-les dans Health Connect et leurs données (pas, calories, poids) arrivent automatiquement ici.',
     syncLabel: 'Synchroniser séances + poids',
@@ -72,6 +74,7 @@ const TXT: any = {
     hcRetry: 'تعذّر الاتصال. أعد المحاولة، أو افتح Health Connect، أو استخدم وضع المحاكاة.',
     hcRetry2: 'تعذّر الاتصال. أعد المحاولة أو استخدم وضع المحاكاة.',
     openHC: 'فتح Health Connect',
+    retry: 'إعادة المحاولة',
     tip: 'نصيحة: في Health Connect ← أذونات التطبيقات ← Salorie، فعّل «الخطوات».',
     watches: '⌚ ساعات متوافقة: Garmin وFitbit وSamsung Health وGoogle Fit — اربطها في Health Connect وستصل بياناتها (الخطوات، السعرات، الوزن) هنا تلقائياً.',
     syncLabel: 'مزامنة التمارين + الوزن',
@@ -114,17 +117,20 @@ export default function HealthScreen() {
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const walkRef = React.useRef<any>(null);
 
-  useEffect(() => {
-    (async () => {
-      const avail = await isHealthAvailable();
-      setAvailable(avail);
-      // Auto-connect if Steps access was already granted before.
-      if (avail && (await hasStepsPermission())) {
-        setConnected(true);
-        try { setData(await readToday()); } catch {}
-      }
-    })();
+  // Extrait de l'effet pour etre rejouable : quand le pont natif n'a pas repondu,
+  // l'ecran propose « Reessayer » plutot que d'obliger a quitter l'application.
+  const verifierDisponibilite = React.useCallback(async () => {
+    setAvailable(null);
+    const avail = await isHealthAvailable();
+    setAvailable(avail);
+    // Auto-connect if Steps access was already granted before.
+    if (avail && (await hasStepsPermission())) {
+      setConnected(true);
+      try { setData(await readToday()); } catch {}
+    }
   }, []);
+
+  useEffect(() => { verifierDisponibilite(); }, [verifierDisponibilite]);
   useEffect(() => {
     (async () => {
       setMode(await getStepsMode());
@@ -308,9 +314,27 @@ export default function HealthScreen() {
           <SkeletonCard height={140} />
         )}
 
+        {/* « Indisponible » ne doit JAMAIS etre un cul-de-sac. Ce cas couvre deux
+            situations tres differentes — Health Connect vraiment absent, ou pont
+            natif muet — et l'utilisateur ne peut pas les distinguer. On lui donne
+            donc les deux sorties : reessayer, et ouvrir Health Connect lui-meme. */}
         {mode === 'real' && available === false && (
           <View style={[styles.box, { backgroundColor: card }]}>
             <Text style={[styles.boxText, { color: sub }]}>{t('health.unavailable')}</Text>
+            <TouchableOpacity
+              style={[styles.ghostBtn, { flexDirection: rowDir(isRTL) }]}
+              onPress={verifierDisponibilite}
+            >
+              <HeartPulse size={18} color={accent} />
+              <Text style={[styles.ghostText, { color: accent }]}>{tx.retry}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.ghostBtn, { flexDirection: rowDir(isRTL) }]}
+              onPress={openHealthSettings}
+            >
+              <HeartPulse size={18} color={accent} />
+              <Text style={[styles.ghostText, { color: accent }]}>{tx.openHC}</Text>
+            </TouchableOpacity>
           </View>
         )}
 
