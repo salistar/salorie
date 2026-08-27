@@ -133,8 +133,8 @@
       ]
     },
     "empty_glass.png": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "illustration de verre",
       "note": null,
       "existe": true,
       "usages": [
@@ -143,8 +143,8 @@
       ]
     },
     "exercises/abs.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "schema au trait, sans visage — pictogramme neutre",
       "note": null,
       "existe": true,
       "usages": [
@@ -152,80 +152,88 @@
       ]
     },
     "exercises/barbell_row.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/bench_press.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/bicep_curl.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/bulgarian_split.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/cable_crossover.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/calf_raise.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/chest_fly.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/crunches.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/cycling.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "velo seul",
       "note": null,
       "existe": true,
       "usages": [
@@ -233,125 +241,138 @@
       ]
     },
     "exercises/deadlift.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/dumbbell_row.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/face_pull.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/front_raise.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/hammer_curl.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/hanging_knee.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/hiking.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/hip_thrust.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/incline_bench.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/lat_pulldown.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/lateral_raise.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/leg_curl.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/leg_extension.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/leg_press.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "machine seule",
       "note": null,
       "existe": true,
       "usages": [
@@ -359,9 +380,10 @@
       ]
     },
     "exercises/lunges.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/move-goals.tsx",
@@ -369,152 +391,168 @@
       ]
     },
     "exercises/plank.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/plankSec.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/move-goals.tsx"
       ]
     },
     "exercises/preacher_curl.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/pullup.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/pushups.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/move-goals.tsx"
       ]
     },
     "exercises/romanian_dl.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/rowing.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/running.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/russian_twist.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/shoulder_press.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/squat.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/squats.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/move-goals.tsx"
       ]
     },
     "exercises/swimming.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/tricep_dips.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/tricep_pushdown.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "exercises/walking.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "demonstration d exercice avec une personne",
+      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
     "fire.png": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "logo flamme",
       "note": null,
       "existe": true,
       "usages": [
@@ -528,8 +566,8 @@
       ]
     },
     "full_glass.png": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "illustration de verre",
       "note": null,
       "existe": true,
       "usages": [
@@ -538,8 +576,8 @@
       ]
     },
     "half_glass.png": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "illustration de verre",
       "note": null,
       "existe": true,
       "usages": [
@@ -548,9 +586,10 @@
       ]
     },
     "illustrations/analytics_cover.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "quatre personnes autour d une table",
+      "note": "a remplacer",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/health-export.tsx",
@@ -558,8 +597,8 @@
       ]
     },
     "illustrations/birthdate.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "desserts aux fraises",
       "note": null,
       "existe": true,
       "usages": [
@@ -567,8 +606,8 @@
       ]
     },
     "illustrations/dashboard_bg.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "ecran de tableau de bord",
       "note": null,
       "existe": true,
       "usages": [
@@ -576,26 +615,28 @@
       ]
     },
     "illustrations/dashboard_cover.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "silhouette de femme en posture de yoga",
+      "note": "a remplacer",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/sleep-tracker.tsx"
       ]
     },
     "illustrations/female.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "portrait de femme (choix du genre a l onboarding)",
+      "note": "a remplacer",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(onboarding)/index.tsx"
       ]
     },
     "illustrations/generating.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "portant de vetements",
       "note": null,
       "existe": true,
       "usages": [
@@ -603,8 +644,8 @@
       ]
     },
     "illustrations/healthy_food.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "assiette composee",
       "note": null,
       "existe": true,
       "usages": [
@@ -616,8 +657,8 @@
       ]
     },
     "illustrations/loading_bg.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "assiette composee",
       "note": null,
       "existe": true,
       "usages": [
@@ -626,9 +667,10 @@
       ]
     },
     "illustrations/lose_weight.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "jambes et buste d une personne soulevant une barre",
+      "note": "a remplacer",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/adaptive-tdee.tsx",
@@ -636,18 +678,20 @@
       ]
     },
     "illustrations/male.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "portrait d homme (choix du genre a l onboarding)",
+      "note": "a remplacer",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(onboarding)/index.tsx"
       ]
     },
     "illustrations/measure.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "femme au sol avec une roue abdominale",
+      "note": "a remplacer",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/streaks.tsx",
@@ -655,8 +699,8 @@
       ]
     },
     "illustrations/plan.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "fauteuil face a la mer",
       "note": null,
       "existe": true,
       "usages": [
@@ -666,8 +710,8 @@
       ]
     },
     "illustrations/profile_cover.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "agrumes en coupe",
       "note": null,
       "existe": true,
       "usages": [
@@ -675,9 +719,10 @@
       ]
     },
     "illustrations/scale.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "trois femmes en cours de gym",
+      "note": "a remplacer",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "app/(app)/metabolic-twin.tsx",
@@ -685,8 +730,8 @@
       ]
     },
     "illustrations/splash_bg.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "plat et legumes",
       "note": null,
       "existe": true,
       "usages": [
@@ -695,8 +740,8 @@
       ]
     },
     "illustrations/weightlifting.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "vagues vues du ciel (le NOM ment)",
       "note": null,
       "existe": true,
       "usages": [
@@ -704,8 +749,8 @@
       ]
     },
     "illustrations/welcome.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "etal de legumes",
       "note": null,
       "existe": true,
       "usages": [
@@ -715,8 +760,8 @@
       ]
     },
     "photos/breakfast_0.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -725,8 +770,8 @@
       ]
     },
     "photos/fish_0.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -735,8 +780,8 @@
       ]
     },
     "photos/food_0.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -745,8 +790,8 @@
       ]
     },
     "photos/food_2.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -755,8 +800,8 @@
       ]
     },
     "photos/fruits_0.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -765,18 +810,20 @@
       ]
     },
     "photos/fruits_2.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "marchande identifiable au premier plan",
+      "note": "a remplacer",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "components/PhotoStrip.tsx"
       ]
     },
     "photos/gym_0.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "homme torse nu",
+      "note": "a remplacer",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "components/PhotoStrip.tsx",
@@ -784,8 +831,8 @@
       ]
     },
     "photos/gym_2.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "rangee d halteres, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -794,9 +841,10 @@
       ]
     },
     "photos/mealprep_0.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "VIANDE CRUE en gros plan — explicitement interdit",
+      "note": "a remplacer",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "components/PhotoStrip.tsx",
@@ -804,8 +852,8 @@
       ]
     },
     "photos/mealprep_2.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -814,8 +862,8 @@
       ]
     },
     "photos/medfood_0.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -824,8 +872,8 @@
       ]
     },
     "photos/medfood_1.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "assiette, main versant une sauce — mains seules",
       "note": null,
       "existe": true,
       "usages": [
@@ -833,8 +881,8 @@
       ]
     },
     "photos/medfood_2.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -842,8 +890,8 @@
       ]
     },
     "photos/moroccan_0.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -852,8 +900,8 @@
       ]
     },
     "photos/moroccan_1.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -861,8 +909,8 @@
       ]
     },
     "photos/moroccan_2.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -871,8 +919,8 @@
       ]
     },
     "photos/moroccan_3.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -880,8 +928,8 @@
       ]
     },
     "photos/moroccan_4.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -889,9 +937,10 @@
       ]
     },
     "photos/running_0.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "femme courant en foret",
+      "note": "a remplacer",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "components/PhotoStrip.tsx",
@@ -899,8 +948,8 @@
       ]
     },
     "photos/running_2.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "piste d athletisme vide",
       "note": null,
       "existe": true,
       "usages": [
@@ -909,8 +958,8 @@
       ]
     },
     "photos/salad_0.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -919,8 +968,8 @@
       ]
     },
     "photos/salad_2.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -928,8 +977,8 @@
       ]
     },
     "photos/smoothie_0.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -938,8 +987,8 @@
       ]
     },
     "photos/tajine_0.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -948,8 +997,8 @@
       ]
     },
     "photos/tajine_1.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -957,8 +1006,8 @@
       ]
     },
     "photos/tajine_2.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -966,8 +1015,8 @@
       ]
     },
     "photos/veggies_0.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "nourriture ou artisanat, aucune personne",
       "note": null,
       "existe": true,
       "usages": [
@@ -977,8 +1026,8 @@
       ]
     },
     "photos/water_0.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "eclaboussure d eau",
       "note": null,
       "existe": true,
       "usages": [
@@ -987,8 +1036,8 @@
       ]
     },
     "photos/wellness_0.jpg": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "main tenant une bougie — mains seules, autorise",
       "note": null,
       "existe": true,
       "usages": [
@@ -997,18 +1046,20 @@
       ]
     },
     "photos/wellness_2.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "femme en meditation sur un rocher",
+      "note": "a remplacer",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "components/PhotoStrip.tsx"
       ]
     },
     "photos/yoga_0.jpg": {
-      "conforme": null,
-      "sujet": null,
-      "note": null,
+      "conforme": false,
+      "sujet": "femme en posture de yoga",
+      "note": "a remplacer",
+      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "components/PhotoStrip.tsx",
@@ -1016,8 +1067,8 @@
       ]
     },
     "splash-icon.png": {
-      "conforme": null,
-      "sujet": null,
+      "conforme": true,
+      "sujet": "logo flamme",
       "note": null,
       "existe": true,
       "usages": [

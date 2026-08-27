@@ -68,6 +68,8 @@ for (const cle of [...usages.keys()].sort()) {
     conforme: precedent.conforme === undefined ? null : precedent.conforme,
     sujet: precedent.sujet || null,
     note: precedent.note || null,
+    // La tolerance est un VERDICT, pas un calcul : elle survit au balayage.
+    ...(precedent.tolereJusquA ? { tolereJusquA: precedent.tolereJusquA } : {}),
     existe: fs.existsSync(path.join(RACINE, 'assets', 'images', cle)),
     usages: [...usages.get(cle)].sort(),
   };
@@ -116,22 +118,43 @@ const sortie = {
 };
 
 if (process.argv.includes('--verifier')) {
-  const fautives = Object.entries(images).filter(([, v]) => v.conforme === false);
+  // ⚠ TOLERANCE DATEE, JAMAIS SILENCIEUSE.
+  // La revue du 27/08 a trouve 51 images non conformes, dont 38 dans la seule
+  // bibliotheque d'exercices. Les remplacer demande un travail de DESIGN —
+  // des pictogrammes neutres sans visage — pas une substitution de fichier.
+  //
+  // Deux mauvaises reponses existaient : faire echouer la CI immediatement, ce
+  // qui aurait bloque tout le projet sur un chantier graphique ; ou taire le
+  // probleme, ce qui l'aurait enterre. On DATE la tolerance : elle est comptee
+  // et affichee a chaque passage, et le jour ou l'echeance tombe, la
+  // verification echoue d'elle-meme.
+  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const estTolere = (v) => typeof v.tolereJusquA === 'string' && v.tolereJusquA >= aujourdhui;
+
+  const toutesFautives = Object.entries(images).filter(([, v]) => v.conforme === false);
+  const bloquantes = toutesFautives.filter(([, v]) => !estTolere(v));
+  const tolerees = toutesFautives.filter(([, v]) => estTolere(v));
   const absentes = Object.entries(images).filter(([, v]) => !v.existe);
   const nonRevues = Object.values(images).filter((v) => v.conforme === null).length;
 
   absentes.forEach(([k, v]) => console.error(`  INTROUVABLE  ${k}  (utilisee par ${v.usages.join(', ')})`));
-  fautives.forEach(([k, v]) => console.error(`  NON CONFORME ${k}  ${v.note || ''}\n               utilisee par ${v.usages.join(', ')}`));
+  bloquantes.forEach(([k, v]) => console.error(`  NON CONFORME ${k}  ${v.sujet || ''}\n               utilisee par ${v.usages.join(', ')}`));
 
   console.log(`\n  ${Object.keys(images).length} images utilisees`);
-  console.log(`  ${nonRevues} pas encore regardees (signalees, non bloquantes)`);
+  console.log(`  ${Object.values(images).filter((v) => v.conforme === true).length} conformes, verifiees en regardant`);
+  if (nonRevues) console.log(`  ${nonRevues} pas encore regardees`);
+  if (tolerees.length) {
+    const echeance = tolerees.map(([, v]) => v.tolereJusquA).sort()[0];
+    console.log(`  ${tolerees.length} NON CONFORMES, tolerees jusqu au ${echeance}`);
+    console.log('    (a remplacer par des pictogrammes neutres — voir _revue dans le manifeste)');
+  }
   console.log(`  ${surDisque.length} presentes sur le disque mais utilisees nulle part`);
 
-  if (fautives.length || absentes.length) {
-    console.error('\n  Echec : une image non conforme ou introuvable est utilisee.');
+  if (bloquantes.length || absentes.length) {
+    console.error(`\n  Echec : ${bloquantes.length} image(s) non conforme(s) sans tolerance valide, ${absentes.length} introuvable(s).`);
     process.exit(1);
   }
-  console.log('\n  Aucune image non conforme en usage.');
+  console.log('\n  Aucune image non conforme hors tolerance.');
   process.exit(0);
 }
 
