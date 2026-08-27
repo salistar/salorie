@@ -1,3 +1,10 @@
+/* Les six themes Salorie, generes depuis design/themes.json.
+   ⚠ EN TETE DE FICHIER, ET C'EST OBLIGATOIRE : une regle @import placee apres
+   la moindre declaration est ignoree par le navigateur, sans erreur — les
+   variables seraient simplement absentes, et tout le site sans couleurs.
+   Les jetons definis plus bas restent prioritaires la ou ils existent deja. */
+@import './themes.generated.css';
+
 /* ─────────────────────────────────────────────────────────────────────────────
    Système de design de l'admin.
 

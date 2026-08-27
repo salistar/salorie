@@ -1,0 +1,190 @@
+/* Bibliotheque de composants Salorie — web.
+   ---------------------------------------------------------------------------
+   Chaque couleur vient d'une variable de themes.generated.css. AUCUN
+   hexadecimal ici : c'est la regle qui empeche les six themes de diverger, et
+   c'est precisement son absence cote mobile qui a produit 1 843 couleurs en dur.
+
+   Grille 4 pt, rayons 20/16/12, typographie Inter — memes invariants que le
+   mobile. */
+
+/* ── Bouton ──────────────────────────────────────────────────────────────── */
+.sui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: 12px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+  padding: 12px 18px;
+  min-height: 44px; /* plancher tactile : 44 px, pas 40 */
+  cursor: pointer;
+  text-decoration: none;
+  transition: filter .16s ease, transform .16s ease, background-color .16s ease;
+}
+.sui-btn:disabled { opacity: .55; cursor: not-allowed; }
+.sui-btn:not(:disabled):hover { filter: brightness(1.06); }
+.sui-btn:not(:disabled):active { transform: translateY(1px); }
+/* Le focus clavier doit rester VISIBLE : un contour invisible rend le site
+   inutilisable sans souris, et c'est le defaut le plus courant. */
+.sui-btn:focus-visible,
+.sui-input:focus-visible,
+.sui-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sui-btn--primary { background: var(--accent); color: #fff; }
+.sui-btn--gradient { background: var(--gradient-hero); color: #fff; }
+.sui-btn--secondary {
+  background: var(--surface2);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.sui-btn--ghost { background: transparent; color: var(--text); }
+.sui-btn--ghost:hover { background: var(--surface2); }
+.sui-btn--danger { background: var(--danger); color: #fff; }
+.sui-btn--lg { font-size: 15px; padding: 15px 24px; min-height: 52px; border-radius: 16px; }
+.sui-btn--bloc { width: 100%; }
+
+/* ── Puce ────────────────────────────────────────────────────────────────── */
+.sui-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--surface2);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.sui-chip--accent { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.sui-chip--succes { background: var(--accent-soft); color: var(--success); border-color: transparent; }
+.sui-chip--alerte { background: var(--surface2); color: var(--warning); border-color: var(--warning); }
+.sui-chip--danger { background: var(--surface2); color: var(--danger); border-color: var(--danger); }
+
+/* ── Carte ───────────────────────────────────────────────────────────────── */
+.sui-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 18px;
+}
+.sui-card--elev { background: var(--surface2); }
+.sui-card--compacte { padding: 14px; border-radius: 16px; }
+
+/* ── Saisie ──────────────────────────────────────────────────────────────── */
+.sui-champ { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.sui-label {
+  font-size: 12.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: var(--text-muted);
+}
+.sui-input {
+  background: var(--surface);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 0 14px;
+  min-height: 54px; /* aligne sur CHAMP_HAUTEUR du mobile */
+  font-family: inherit;
+  font-size: 16px;  /* 16 px : en dessous, iOS zoome au focus */
+  font-weight: 600;
+  width: 100%;
+}
+.sui-input:focus { border-color: var(--accent); }
+.sui-input[aria-invalid='true'] { border-color: var(--danger); }
+.sui-erreur { font-size: 12px; font-weight: 700; color: var(--danger); }
+
+/* ── Stat ────────────────────────────────────────────────────────────────── */
+.sui-stat { display: flex; flex-direction: column; gap: 4px; }
+.sui-stat__valeur {
+  font-size: 30px;
+  font-weight: 900;
+  color: var(--text);
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums; /* les chiffres s'alignent en colonne */
+}
+.sui-stat__label { font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+
+/* ── Etat vide ───────────────────────────────────────────────────────────── */
+.sui-vide { text-align: center; padding: 40px 20px; }
+.sui-vide__icone {
+  width: 64px; height: 64px; border-radius: 999px;
+  background: var(--accent-soft);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 28px; margin-bottom: 14px;
+}
+.sui-vide__titre { font-size: 16px; font-weight: 800; color: var(--text); margin: 0 0 6px; }
+.sui-vide__texte { font-size: 13.5px; color: var(--text-muted); margin: 0 auto; max-width: 42ch; line-height: 1.5; }
+
+/* ── Bandeau hors-ligne ──────────────────────────────────────────────────── */
+.sui-horsligne {
+  display: flex; align-items: center; gap: 9px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--warning);
+  color: var(--text);
+  font-size: 13px; font-weight: 600;
+  padding: 9px 16px;
+}
+
+/* ── Toast ───────────────────────────────────────────────────────────────── */
+.sui-toasts {
+  position: fixed; inset-inline: 0; bottom: 18px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  pointer-events: none; z-index: 9999;
+}
+.sui-toast {
+  pointer-events: auto;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-inline-start: 3px solid var(--accent);
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-size: 13.5px; font-weight: 600;
+  max-width: min(92vw, 460px);
+  box-shadow: 0 8px 28px rgb(0 0 0 / .16);
+}
+.sui-toast--danger { border-inline-start-color: var(--danger); }
+.sui-toast--succes { border-inline-start-color: var(--success); }
+
+/* ── Squelette ───────────────────────────────────────────────────────────── */
+.sui-skel {
+  background: var(--surface2);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.sui-skel::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, var(--surface) 50%, transparent);
+  animation: sui-brille 1.3s infinite;
+}
+@keyframes sui-brille { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+/* Une animation en boucle donne la nausee a qui y est sensible, et le reglage
+   systeme existe justement pour le dire. */
+@media (prefers-reduced-motion: reduce) {
+  .sui-skel::after { animation: none; }
+  .sui-btn { transition: none; }
+}
+
+/* ── Sélecteur de thème — six pastilles ──────────────────────────────────── */
+.sui-themes { display: inline-flex; gap: 8px; align-items: center; }
+.sui-pastille {
+  width: 26px; height: 26px; border-radius: 999px;
+  border: 2px solid var(--border);
+  cursor: pointer; padding: 0;
+  transition: transform .14s ease, border-color .14s ease;
+}
+.sui-pastille:hover { transform: scale(1.12); }
+.sui-pastille[aria-pressed='true'] { border-color: var(--accent); transform: scale(1.12); }

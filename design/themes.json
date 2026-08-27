@@ -1,0 +1,159 @@
+{
+  "_lisezMoi": [
+    "SOURCE UNIQUE des six thèmes Salorie. Ce fichier n'est lu par AUCUN code à",
+    "l'exécution : il est COMPILÉ par scripts/generer-themes.js vers deux cibles —",
+    "constants/themesGeneres.ts (mobile) et web/app/themes.generated.css (web).",
+    "",
+    "Pourquoi passer par une génération plutôt que deux fichiers tenus à la main :",
+    "parce que deux fichiers tenus à la main divergent. C'est exactement ce qui a",
+    "produit les 1 843 hexadécimaux en dur de l'application mobile — faute d'une",
+    "source, chacun réécrivait sa nuance.",
+    "",
+    "NE MODIFIEZ JAMAIS LES FICHIERS GÉNÉRÉS. Modifiez celui-ci, puis relancez",
+    "`node scripts/generer-themes.js`. Un test vérifie que les fichiers générés",
+    "correspondent bien à cette source."
+  ],
+
+  "_valeursDerivees": [
+    "Le cahier des charges ne donne pas TOUS les jetons pour tous les thèmes.",
+    "Les valeurs manquantes ont été dérivées ici, et chaque thème liste lesquelles",
+    "dans son champ `_derives`. C'est important à la relecture : une valeur imposée",
+    "et une valeur déduite ne se discutent pas de la même façon.",
+    "",
+    "Règles de dérivation appliquées :",
+    "  · surface2 — un cran entre `surface` et `bg`, dans le sens du thème",
+    "  · border   — assez contrasté pour se voir, jamais assez pour trancher",
+    "  · muted    — visé à ~4.6:1 sur `bg`, soit juste au-dessus du plancher AA",
+    "  · accentSoft — la teinte d'accent très désaturée, fond des puces et badges",
+    "  · success / warning / danger — teintés vers le thème, pas des couleurs système"
+  ],
+
+  "themes": {
+    "obsidian": {
+      "nom": "Noir",
+      "sombre": true,
+      "_derives": ["accentSoft", "success", "warning", "danger", "gradientHero"],
+      "bg": "#0A0C10",
+      "surface": "#12151C",
+      "surface2": "#1A1E27",
+      "border": "#232936",
+      "text": "#F4F6F8",
+      "textMuted": "#9AA3B2",
+      "accent": "#34D98F",
+      "accent2": "#22B573",
+      "accentSoft": "#123125",
+      "success": "#34D98F",
+      "warning": "#E8B84B",
+      "danger": "#F26D6D",
+      "gradientHero": ["#34D98F", "#22B573"]
+    },
+
+    "ivory": {
+      "nom": "Blanc",
+      "sombre": false,
+      "_derives": ["accent2", "accentSoft", "success", "warning", "danger", "gradientHero"],
+      "bg": "#FAFAF8",
+      "surface": "#FFFFFF",
+      "surface2": "#F1F2F4",
+      "border": "#E6E8EC",
+      "text": "#14181F",
+      "textMuted": "#5B6470",
+      "accent": "#16A06A",
+      "accent2": "#0E7C51",
+      "accentSoft": "#E3F5EC",
+      "success": "#16A06A",
+      "warning": "#B27A10",
+      "danger": "#C4392F",
+      "gradientHero": ["#16A06A", "#0E7C51"]
+    },
+
+    "blush": {
+      "nom": "Rose",
+      "sombre": false,
+      "_derives": ["border", "textMuted", "accentSoft", "success", "warning", "danger"],
+      "bg": "#FFF7F9",
+      "surface": "#FFFFFF",
+      "surface2": "#FFEDF2",
+      "border": "#EDC6D5",
+      "text": "#2B1B22",
+      "textMuted": "#6E5560",
+      "accent": "#E8467C",
+      "accent2": "#FF8FB1",
+      "accentSoft": "#FFE1EB",
+      "success": "#1F9E6E",
+      "warning": "#B27A10",
+      "danger": "#C4392F",
+      "gradientHero": ["#FF6B9D", "#FF9E7D"]
+    },
+
+    "ocean": {
+      "nom": "Bleu",
+      "sombre": true,
+      "_derives": ["surface2", "border", "textMuted", "accentSoft", "success", "warning", "danger"],
+      "bg": "#0B1220",
+      "surface": "#111A2C",
+      "surface2": "#18243B",
+      "border": "#233248",
+      "text": "#EDF2FA",
+      "textMuted": "#94A4BE",
+      "accent": "#3E8BFF",
+      "accent2": "#4DD8E6",
+      "accentSoft": "#132743",
+      "success": "#3ECF8E",
+      "warning": "#E8B84B",
+      "danger": "#F26D6D",
+      "gradientHero": ["#2563EB", "#06B6D4"]
+    },
+
+    "platinum": {
+      "nom": "Argenté",
+      "sombre": false,
+      "_derives": ["textMuted", "accent2", "accentSoft", "success", "warning", "danger", "gradientHero"],
+      "bg": "#F4F5F7",
+      "surface": "#FFFFFF",
+      "surface2": "#EBEDF0",
+      "border": "#C9CED6",
+      "borderSoft": "#E8EAEE",
+      "text": "#1C2128",
+      "textMuted": "#5A6472",
+      "accent": "#6B7A90",
+      "accent2": "#4C5867",
+      "accentSoft": "#E4E8EE",
+      "success": "#16A06A",
+      "warning": "#B27A10",
+      "danger": "#C4392F",
+      "gradientHero": ["#6B7A90", "#4C5867"]
+    },
+
+    "gold": {
+      "nom": "Doré",
+      "sombre": true,
+      "_derives": ["surface2", "border", "textMuted", "accentSoft", "success", "warning", "danger"],
+      "bg": "#0F0D08",
+      "surface": "#17140D",
+      "surface2": "#211C12",
+      "border": "#3A3222",
+      "text": "#F7F3E8",
+      "textMuted": "#A99C82",
+      "accent": "#D4A94E",
+      "accent2": "#F0C868",
+      "accentSoft": "#2A2213",
+      "success": "#5FBF8C",
+      "warning": "#D4A94E",
+      "danger": "#E07A6B",
+      "gradientHero": ["#B8860B", "#F5D061"]
+    }
+  },
+
+  "ordreAffichage": ["obsidian", "ivory", "blush", "ocean", "platinum", "gold"],
+
+  "_defauts": [
+    "Quand AUCUN thème n'est choisi (reglage « systeme », ou premiere visite), le",
+    "web doit rendre les memes couleurs qu'avant ce chantier : clair par defaut,",
+    "sombre si le systeme le demande. Faire de  le defaut de :root",
+    "basculerait tout le site en sombre du jour au lendemain — une regression",
+    "visuelle massive, et invisible en relecture de code."
+  ],
+  "themeParDefautClair": "ivory",
+  "themeParDefautSombre": "obsidian"
+}
