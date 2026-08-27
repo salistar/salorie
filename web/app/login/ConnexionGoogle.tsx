@@ -111,8 +111,45 @@ function Echange({ onErreur }: { onErreur: (m: string) => void }) {
   return <p style={{ textAlign: 'center', opacity: 0.75, margin: '10px 0' }}>{etat}</p>;
 }
 
+/**
+ * Ferme la session Clerk apres une deconnexion du back-office.
+ *
+ * ⚠ SANS CE COMPOSANT, CHANGER DE COMPTE EST IMPOSSIBLE. Effacer le cookie
+ * admin ne touche pas a Clerk : en revenant sur /login, `<SignedIn>` etait
+ * encore vrai, l'echange se rejouait tout seul, et on se retrouvait reconnecte
+ * au MEME compte sans jamais voir le bouton. Constate le 27/08/2026.
+ */
+function Fermeture() {
+  const { signOut } = useAuth();
+  const [etat, setEtat] = useState('Fermeture de la session…');
+  useEffect(() => {
+    (async () => {
+      try {
+        await signOut();
+        // Le parametre est retire de l'URL : sans cela, un rechargement
+        // relancerait une deconnexion alors qu'on vient de se reconnecter.
+        window.history.replaceState({}, '', '/login');
+      } catch {
+        setEtat('La session n\'a pas pu être fermée — rechargez la page.');
+      }
+    })();
+  }, [signOut]);
+  return <p style={{ textAlign: 'center', opacity: 0.75, margin: '10px 0' }}>{etat}</p>;
+}
+
 export default function ConnexionGoogle() {
   const [err, setErr] = useState('');
+  // Lu depuis `window` et NON via `useSearchParams()` : ce hook impose une
+  // frontiere <Suspense> en App Router, sans quoi le build echoue.
+  //
+  // ⚠ INITIALISEUR PARESSEUX, PAS UN useEffect. Avec un effet, `deconnexion`
+  // vaudrait `false` au premier rendu : `<Echange>` partirait AVANT que l'effet
+  // ne le corrige, et reconnecterait au compte qu'on vient de quitter. Le
+  // parametre doit etre connu des le rendu initial.
+  const [deconnexion] = useState(
+    () => typeof window !== 'undefined'
+      && new URLSearchParams(window.location.search).get('deconnexion') === '1',
+  );
 
   // Sans cle publiable, Clerk leve au montage et emporterait TOUTE la page de
   // connexion — y compris le formulaire e-mail qui, lui, fonctionne. On
@@ -126,7 +163,9 @@ export default function ConnexionGoogle() {
           <BoutonGoogle onErreur={setErr} />
         </SignedOut>
         <SignedIn>
-          <Echange onErreur={setErr} />
+          {/* On sort de Clerk AVANT de proposer quoi que ce soit : c'est la
+              seule facon d'offrir le choix d'un autre compte Google. */}
+          {deconnexion ? <Fermeture /> : <Echange onErreur={setErr} />}
         </SignedIn>
 
         {!!err && (
