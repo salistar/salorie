@@ -387,7 +387,14 @@ export default function RunScreen() {
         <WebView
           ref={webRef}
           originWhitelist={['*']}
-          source={{ html, baseUrl: 'https://localhost/' }}
+          // ⚠  EST LE REFERENT envoye a Google Maps. Il valait
+          // 'https://localhost/', que la console GCP ne peut pas restreindre
+          // utilement : n'importe qui peut se declarer localhost. La cle JS
+          // partant dans l'APK, elle etait donc exploitable sans limite.
+          // Aligne sur le domaine reel pour rendre la restriction par
+          // referent possible. Le HTML injecte est autonome (scripts en URL
+          // absolue) : changer la base ne casse aucune resolution relative.
+          source={{ html, baseUrl: 'https://salorie.com' }}
           style={StyleSheet.absoluteFill}
           javaScriptEnabled
           domStorageEnabled
