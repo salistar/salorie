@@ -1649,3 +1649,8 @@ tbody tr:last-child td { border-bottom: none; }
   border-bottom: 1px solid var(--t-border);
   margin-bottom: 8px;
 }
+/* La barre est plus etroite que la rangee de six pastilles + le bouton Auto :
+   la derniere pastille sortait du cadre, coupee net. On laisse la rangee
+   passer a la ligne plutot que de retrecir les cibles — 26 px est deja le
+   minimum confortable au doigt. */
+.me-nav-themes .sui-themes { flex-wrap: wrap; row-gap: 8px; }
