@@ -1,4 +1,5 @@
 import { getFeatureRequests, getContactMessages } from '../../lib/firebaseAdmin';
+import MessageContact from './MessageContact';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,11 +44,12 @@ export default async function FeedbackPage() {
       <h3 style={{ marginTop: 24 }}>✉️ Messages de contact ({msgs.length})</h3>
       <div style={{ display: 'grid', gap: 10, marginTop: 8 }}>
         {msgs.map((m) => (
-          <div key={m.id} className="card" style={{ padding: 14 }}>
-            <div style={{ fontWeight: 700 }}>{m.subject || '(sans sujet)'}</div>
-            <div style={{ fontSize: 13, color: '#475569', marginTop: 4, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{m.message}</div>
-            <div className="foot" style={{ marginTop: 6 }}>{m.email || '—'} · {when(m.createdAt)}</div>
-          </div>
+          <MessageContact
+            key={m.id}
+            sujet={m.subject || '(sans sujet)'}
+            message={m.message || ''}
+            pied={`${m.email || '—'} · ${when(m.createdAt)}`}
+          />
         ))}
         {!msgs.length && !error && <div className="card empty">Aucun message. (Le formulaire de contact in-app les enverra ici.)</div>}
       </div>
