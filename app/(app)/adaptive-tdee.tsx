@@ -193,7 +193,7 @@ export default function AdaptiveTDEE() {
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: bg }]}>
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body}>
-        <Image source={require('../../assets/images/illustrations/lose_weight.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
+        <Image source={require('../../assets/images/abstraits/hero-seance.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <ScreenTitle title={t.title} icon={<Activity size={26} color={GREEN} />} subtitle={t.sub} />
 
         {loading ? (

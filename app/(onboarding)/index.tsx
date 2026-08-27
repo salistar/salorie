@@ -251,7 +251,7 @@ export default function OnboardingScreen() {
                 onPress={() => setGender('male')}
               >
                 <Image
-                  source={require('../../assets/images/illustrations/male.jpg')}
+                  source={require('../../assets/images/exercices/genre-homme.png')}
                   style={styles.genderImage}
                 />
                 <Text style={[styles.optionLabel, { color: C.text }, gender === 'male' && styles.textWhite]}>{t('onboarding.male')}</Text>
@@ -261,7 +261,7 @@ export default function OnboardingScreen() {
                 onPress={() => setGender('female')}
               >
                 <Image
-                  source={require('../../assets/images/illustrations/female.jpg')}
+                  source={require('../../assets/images/exercices/genre-femme.png')}
                   style={styles.genderImage}
                 />
                 <Text style={[styles.optionLabel, { color: C.text }, gender === 'female' && styles.textWhite]}>{t('onboarding.female')}</Text>
@@ -274,7 +274,7 @@ export default function OnboardingScreen() {
           <View style={styles.stepContainer}>
             <Text style={[styles.stepTitle, { color: C.title }]}>{t('onboarding.step2_title')}</Text>
             {[
-              { id: 'lose', label: t('onboarding.lose'), img: require('../../assets/images/illustrations/lose_weight.jpg') },
+              { id: 'lose', label: t('onboarding.lose'), img: require('../../assets/images/abstraits/hero-seance.jpg') },
               { id: 'maintain', label: t('onboarding.maintain'), img: require('../../assets/images/illustrations/healthy_food.jpg') },
               { id: 'gain', label: t('onboarding.gain'), img: require('../../assets/images/abstraits/hero-duel.jpg') },
             ].map((item) => (
@@ -300,7 +300,7 @@ export default function OnboardingScreen() {
               // le bon nom, pas le bon contenu) : l'option la plus sportive du questionnaire
               // s'illustrait d'une photo de mer. On pointe vers une vraie image d'entraînement
               // en attendant de remplacer le fichier lui-même.
-              { id: '5-6', label: '5-6 / 7', img: require('../../assets/images/illustrations/scale.jpg') },
+              { id: '5-6', label: '5-6 / 7', img: require('../../assets/images/abstraits/hero-sante.jpg') },
             ].map((item) => (
               <TouchableOpacity
                 key={item.id}
@@ -360,7 +360,7 @@ export default function OnboardingScreen() {
           <View style={styles.stepContainer}>
             <Text style={[styles.stepTitle, { color: C.title }]}>{t('onboarding.step5_title')}</Text>
             <Image
-              source={require('../../assets/images/illustrations/measure.jpg')}
+              source={require('../../assets/images/abstraits/hero-progression.jpg')}
               style={styles.stepHeroImage}
             />
             <View style={styles.metricsContainer}>

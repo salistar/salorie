@@ -32,11 +32,11 @@ const TXT: any = {
 
 // Image de démonstration par exercice (assets locaux).
 const MOVE_IMG: Record<string, any> = {
-  pushups: require('../../assets/images/exercises/pushups.jpg'),
-  squats: require('../../assets/images/exercises/squats.jpg'),
-  abs: require('../../assets/images/exercises/abs.jpg'),
-  lunges: require('../../assets/images/exercises/lunges.jpg'),
-  plankSec: require('../../assets/images/exercises/plankSec.jpg'),
+  pushups: require('../../assets/images/exercices/pushups.png'),
+  squats: require('../../assets/images/exercices/squats.png'),
+  abs: require('../../assets/images/exercices/abs.png'),
+  lunges: require('../../assets/images/exercices/lunges.png'),
+  plankSec: require('../../assets/images/exercices/plankSec.png'),
 };
 
 // Exercices (objectif/jour, incrément par série, kcal approx par rep) + description du geste.
