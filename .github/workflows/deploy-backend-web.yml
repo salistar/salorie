@@ -346,6 +346,27 @@ jobs:
               echo "authentification MongoDB armee — verifiee apres le demarrage"
             fi
 
+            # ⚠ CONTENEURS FANTOMES — la panne du 27/08/2026.
+            # Quand Docker remplace un conteneur mais n'arrive pas a supprimer
+            # l'ancien, il le RENOMME en « <id_court>_<nom> » et le laisse la.
+            # Au deploiement suivant, compose veut reutiliser ce nom, tombe sur
+            # le fantome et echoue :
+            #   Conflict. The container name "/843ed059fe47_salorie-food4k"
+            #   is already in use
+            # Les images etaient pourtant construites : seul l'echange final
+            # ratait, donc le site continuait de servir l'ANCIENNE version alors
+            # que le workflow annoncait un echec dont la cause semblait ailleurs.
+            #
+            # On ne supprime que les noms PREFIXES par un id hexadecimal, jamais
+            # les conteneurs normaux : un `docker rm` trop large couperait la
+            # production.
+            fantomes=$(docker ps -a --format '{{.Names}}' | grep -E '^[0-9a-f]{12}_' || true)
+            if [ -n "$fantomes" ]; then
+              echo "conteneurs fantomes a retirer :"
+              echo "$fantomes" | sed 's/^/  /'
+              echo "$fantomes" | xargs -r docker rm -f
+            fi
+
             docker compose up -d --build --remove-orphans
             docker compose ps
 
