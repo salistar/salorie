@@ -49,7 +49,15 @@ for (const cle of ordre) {
 }
 
 /** camelCase -> kebab-case, pour les variables CSS. */
-const kebab = (s) => s.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
+// ⚠ PREFIXE `--t-` OBLIGATOIRE.
+// globals.css definit deja --bg, --success, --warning, --danger avec les MEMES
+// noms, et il est charge APRES : il ecrasait donc silencieusement les jetons du
+// theme. Resultat, les six themes existaient sans que rien ne change a l ecran.
+// Le prefixe les met hors de portee de toute collision.
+// Le gabarit d'appel ajoute deja les deux tirets : on ne rend donc que
+// `t-bg`, jamais `-t-bg` — sans quoi on produit `---t-bg`, que le navigateur
+// ignore en silence.
+const kebab = (s) => 't-' + s.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
 
 function genererMobile() {
   const l = [];
@@ -87,11 +95,11 @@ function genererMobile() {
 function bloc(l, cle, selecteur) {
   const t = themes[cle];
   l.push(`${selecteur} {`);
-  l.push(`  --theme-nom: '${t.nom}';`);
+  l.push(`  --t-theme-nom: '${t.nom}';`);
   l.push(`  color-scheme: ${t.sombre ? 'dark' : 'light'};`);
   REQUIS.forEach((j) => l.push(`  --${kebab(j)}: ${t[j]};`));
-  if (t.borderSoft) l.push(`  --border-soft: ${t.borderSoft};`);
-  l.push(`  --gradient-hero: linear-gradient(135deg, ${t.gradientHero[0]}, ${t.gradientHero[1]});`);
+  if (t.borderSoft) l.push(`  --t-border-soft: ${t.borderSoft};`);
+  l.push(`  --t-gradient-hero: linear-gradient(135deg, ${t.gradientHero[0]}, ${t.gradientHero[1]});`);
   l.push('}');
   l.push('');
 }
@@ -114,7 +122,7 @@ function genererWeb() {
   l.push(`  :root:not([data-theme]) {`);
   REQUIS.forEach((j) => l.push(`    --${kebab(j)}: ${sombre[j]};`));
   l.push(`    color-scheme: dark;`);
-  l.push(`    --gradient-hero: linear-gradient(135deg, ${sombre.gradientHero[0]}, ${sombre.gradientHero[1]});`);
+  l.push(`    --t-gradient-hero: linear-gradient(135deg, ${sombre.gradientHero[0]}, ${sombre.gradientHero[1]});`);
   l.push('  }');
   l.push('}');
   l.push('');
@@ -134,11 +142,11 @@ function genererWeb() {
     const t = themes[cle];
     const sel = `[data-theme='${cle}']`;
     l.push(`${sel} {`);
-    l.push(`  --theme-nom: '${t.nom}';`);
+    l.push(`  --t-theme-nom: '${t.nom}';`);
     l.push(`  color-scheme: ${t.sombre ? 'dark' : 'light'};`);
     REQUIS.forEach((j) => l.push(`  --${kebab(j)}: ${t[j]};`));
-    if (t.borderSoft) l.push(`  --border-soft: ${t.borderSoft};`);
-    l.push(`  --gradient-hero: linear-gradient(135deg, ${t.gradientHero[0]}, ${t.gradientHero[1]});`);
+    if (t.borderSoft) l.push(`  --t-border-soft: ${t.borderSoft};`);
+    l.push(`  --t-gradient-hero: linear-gradient(135deg, ${t.gradientHero[0]}, ${t.gradientHero[1]});`);
     l.push('}');
     l.push('');
   });

@@ -1,12 +1,25 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { Camera, Activity, Brain, TrendingUp, Globe, Shield, Smartphone, Code2, ExternalLink, Download, Package, Trophy, Dumbbell, Heart, Sparkles, Sun, Moon, Quote, ChevronDown, Check, X, LogIn, UserPlus } from "lucide-react";
+import SelecteurTheme from "@/components/ui/SelecteurTheme";
+import { Camera, Activity, Brain, TrendingUp, Globe, Shield, Smartphone, Code2, ExternalLink, Download, Package, Trophy, Dumbbell, Heart, Sparkles, Quote, ChevronDown, Check, X, LogIn, UserPlus } from "lucide-react";
 import type { ReleaseMeta } from "./releaseMeta";
 import { lireTemoin } from "../../lib/temoinPrenom";
 
-const PRIMARY = "#298f50";
-const PRIMARY_DARK = "#1f6b3c";
+// L'accent de la landing SUIT LE THEME choisi.
+//
+// Ces deux constantes valaient "#298f50" / "#1f6b3c". Comme elles alimentent 31
+// styles inline, un vert fixe survivait a tous les themes : le fond passait bien
+// en dore ou en rose, les boutons restaient verts. C'est ce qui donnait
+// l'impression que rien n'avait change.
+//
+// ⚠ Ce sont des chaines CSS, pas des couleurs manipulables en JS : on ne peut
+// donc plus en deriver un rgba(). La ou il fallait de la transparence, on passe
+// par color-mix(), qui melange la couleur RESOLUE du theme.
+const PRIMARY = "var(--t-accent)";
+const PRIMARY_DARK = "var(--t-accent2)";
+/** L'accent a l'opacite voulue, quel que soit le theme. */
+const teinte = (pct: number) => `color-mix(in srgb, var(--t-accent) ${pct}%, transparent)`;
 const REL = "https://github.com/salistar/salorie/releases/download/v1.0.0";
 const APK_URL = `${REL}/salorie-v1.0.0-prod.apk`;
 const AAB_URL = `${REL}/salorie-v1.0.0-prod.aab`;
@@ -329,7 +342,7 @@ export default function Landing({
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icon.png" alt="Salorie" width={34} height={34} style={{ borderRadius: 10, boxShadow: "0 4px 12px rgba(41,143,80,0.25)" }} />
+            <img src="/icon.png" alt="Salorie" width={34} height={34} style={{ borderRadius: 10, boxShadow: `0 4px 12px ${teinte(25)}` }} />
             <span style={{ fontSize: 21, fontWeight: 900, letterSpacing: -0.5 }}>Salorie</span>
           </div>
           <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
@@ -345,11 +358,13 @@ export default function Landing({
                 }}>{l.toUpperCase()}</button>
               ))}
             </div>
-            {/* Theme toggle */}
-            <button aria-label="theme" onClick={() => setTheme((x) => (x === "dark" ? "light" : "dark"))} style={{
-              border: "1px solid var(--border)", background: "var(--surface)", cursor: "pointer",
-              width: 38, height: 38, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text)",
-            }}>{theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}</button>
+            {/* Les six themes, et non plus deux.
+                La bascule lune n'ouvrait que clair/sombre : quatre palettes sur
+                six etaient inatteignables depuis la page d'accueil. Le
+                selecteur est le MEME composant que dans /me et le back-office,
+                et il ecrit la meme cle — un choix fait ici suit l'utilisateur
+                partout. */}
+            <SelecteurTheme compact />
             {/* GitHub redevient DISCRET : il occupait la place du bouton
                 principal, alors que la landing doit mener a l'application. */}
             <a href={REPO} target="_blank" rel="noopener" title="Code source"
@@ -378,10 +393,10 @@ export default function Landing({
       </nav>
 
       {/* HERO */}
-      <section style={{ paddingTop: 128, paddingBottom: 64, background: "radial-gradient(1200px 500px at 80% -10%, rgba(41,143,80,0.10), transparent), linear-gradient(180deg, var(--hero-from) 0%, transparent 60%)" }}>
+      <section style={{ paddingTop: 128, paddingBottom: 64, background: `radial-gradient(1200px 500px at 80% -10%, ${teinte(10)}, transparent), linear-gradient(180deg, var(--hero-from) 0%, transparent 60%)` }}>
         <div className="hero-grid" style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 56, alignItems: "center" }}>
           <div>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 999, background: "rgba(41,143,80,0.12)", color: PRIMARY, fontSize: 13, fontWeight: 800, marginBottom: 22 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 999, background: teinte(12), color: PRIMARY, fontSize: 13, fontWeight: 800, marginBottom: 22 }}>
               <Sparkles size={14} /> {t.badge}
             </div>
             <h1 className="h1-resp" style={{ fontSize: 54, fontWeight: 900, lineHeight: 1.06, letterSpacing: -1.5, margin: "0 0 22px 0" }}>
@@ -389,7 +404,7 @@ export default function Landing({
             </h1>
             <p style={{ fontSize: 19, color: "var(--muted-2)", lineHeight: 1.6, margin: "0 0 30px 0", maxWidth: 520 }}>{t.heroSub}</p>
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-              <a href={APK_URL} download style={{ ...btnPrimary, boxShadow: "0 10px 30px rgba(41,143,80,0.3)" }}>
+              <a href={APK_URL} download style={{ ...btnPrimary, boxShadow: `0 10px 30px ${teinte(30)}` }}>
                 <Download size={18} /> {t.ctaApk}{meta?.apkMB && <span style={{ opacity: 0.8, fontSize: 13 }}>({meta.apkMB} MB)</span>}
               </a>
               <a href={`${APP_URL}/login`} target="_blank" rel="noopener" style={btnGhost}>
@@ -407,7 +422,7 @@ export default function Landing({
             </div>
           </div>
           <div className="hero-phone" style={{ position: "relative", height: 620, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ position: "absolute", width: 360, height: 360, borderRadius: "50%", background: "radial-gradient(circle, rgba(41,143,80,0.2), transparent 70%)", filter: "blur(20px)" }} />
+            <div style={{ position: "absolute", width: 360, height: 360, borderRadius: "50%", background: `radial-gradient(circle, ${teinte(20)}, transparent 70%)`, filter: "blur(20px)" }} />
             <Phone src={SHOT_SRCS[0]} big />
           </div>
         </div>
@@ -421,7 +436,7 @@ export default function Landing({
           <div className="grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 22 }}>
             {t.features.map((f: any, i: number) => (
               <div key={i} style={card}>
-                <div style={{ width: 54, height: 54, borderRadius: 14, background: "rgba(41,143,80,0.12)", color: PRIMARY, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>{FEAT_ICONS[i]}</div>
+                <div style={{ width: 54, height: 54, borderRadius: 14, background: teinte(12), color: PRIMARY, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>{FEAT_ICONS[i]}</div>
                 <h3 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{f.t}</h3>
                 <p style={{ fontSize: 15, color: "var(--muted)", marginTop: 10, marginBottom: 0, lineHeight: 1.6 }}>{f.d}</p>
               </div>
@@ -559,7 +574,7 @@ export default function Landing({
 
       {/* DOWNLOAD */}
       <section id="download" style={{ padding: "66px 24px" }}>
-        <div style={{ maxWidth: 920, margin: "0 auto", padding: 54, borderRadius: 32, background: `linear-gradient(135deg, ${PRIMARY}, ${PRIMARY_DARK})`, color: "#fff", textAlign: "center", boxShadow: "0 30px 60px rgba(41,143,80,0.3)" }}>
+        <div style={{ maxWidth: 920, margin: "0 auto", padding: 54, borderRadius: 32, background: `linear-gradient(135deg, ${PRIMARY}, ${PRIMARY_DARK})`, color: "#fff", textAlign: "center", boxShadow: `0 30px 60px ${teinte(30)}` }}>
           <Smartphone size={50} style={{ marginBottom: 18 }} />
           <h2 style={{ fontSize: 38, fontWeight: 900, letterSpacing: -1, margin: 0 }}>{t.dlTitle}</h2>
           <p style={{ fontSize: 18, marginTop: 14, opacity: 0.95 }}>{t.dlSub}</p>
@@ -676,7 +691,7 @@ function CmpRow({ feat, us, them, last }: { feat: string; us: boolean | string; 
   return (
     <>
       <div style={{ ...base, fontWeight: 600, fontSize: 14.5, color: "var(--text)" }}>{feat}</div>
-      <div style={{ ...base, justifyContent: "center", background: "rgba(41,143,80,0.06)" }}>{render(us)}</div>
+      <div style={{ ...base, justifyContent: "center", background: teinte(6) }}>{render(us)}</div>
       <div style={{ ...base, justifyContent: "center" }}>{render(them)}</div>
     </>
   );
