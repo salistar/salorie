@@ -1,0 +1,1021 @@
+{
+  "_lisezMoi": [
+    "Manifeste des images. Genere par scripts/manifeste-images.js — les USAGES",
+    "sont recalcules a chaque passage, les VERDICTS sont conserves.",
+    "",
+    "`conforme` : true = verifie en regardant, conforme · false = verifie, NON",
+    "conforme (la CI echoue) · null = pas encore regardee.",
+    "",
+    "⚠ NE JUGEZ JAMAIS UNE IMAGE SUR SON NOM. weightlifting.jpg est une photo de",
+    "vagues, gain_weight.jpg montre deux personnes. Les noms mentent."
+  ],
+  "_politique": [
+    "Autorise : plats dresses et appetissants, ingredients, marches, equipement",
+    "sportif, terrains, pistes, paysages, degrades et geometries abstraites.",
+    "",
+    "Interdit : toute personne identifiable, silhouettes comprises. Si un humain",
+    "est indispensable (demonstration d'exercice), pictogramme neutre sans visage",
+    "ou mains seules. Pas de viande crue en gros plan."
+  ],
+  "_genere": "node scripts/manifeste-images.js",
+  "imagesNonUtilisees": [
+    "abstraits/hero-progression.jpg",
+    "android-icon-background.png",
+    "android-icon-foreground.png",
+    "android-icon-monochrome.png",
+    "favicon.png",
+    "icon.png",
+    "illustrations/gain_weight.jpg",
+    "illustrations/running.jpg",
+    "illustrations/signin_hero.jpg",
+    "illustrations/workout.jpg",
+    "logo.png",
+    "photos/breakfast_1.jpg",
+    "photos/breakfast_2.jpg",
+    "photos/breakfast_3.jpg",
+    "photos/breakfast_4.jpg",
+    "photos/fish_1.jpg",
+    "photos/fish_2.jpg",
+    "photos/fish_3.jpg",
+    "photos/food_1.jpg",
+    "photos/food_3.jpg",
+    "photos/food_4.jpg",
+    "photos/food_5.jpg",
+    "photos/fruits_1.jpg",
+    "photos/fruits_3.jpg",
+    "photos/fruits_4.jpg",
+    "photos/gym_1.jpg",
+    "photos/gym_3.jpg",
+    "photos/gym_4.jpg",
+    "photos/gym_5.jpg",
+    "photos/mealprep_1.jpg",
+    "photos/mealprep_3.jpg",
+    "photos/mealprep_4.jpg",
+    "photos/medfood_3.jpg",
+    "photos/medfood_4.jpg",
+    "photos/moroccan_5.jpg",
+    "photos/running_1.jpg",
+    "photos/running_3.jpg",
+    "photos/running_4.jpg",
+    "photos/running_5.jpg",
+    "photos/salad_1.jpg",
+    "photos/salad_3.jpg",
+    "photos/salad_4.jpg",
+    "photos/smoothie_1.jpg",
+    "photos/smoothie_2.jpg",
+    "photos/smoothie_3.jpg",
+    "photos/tajine_3.jpg",
+    "photos/veggies_1.jpg",
+    "photos/veggies_2.jpg",
+    "photos/veggies_3.jpg",
+    "photos/veggies_4.jpg",
+    "photos/water_1.jpg",
+    "photos/water_2.jpg",
+    "photos/water_3.jpg",
+    "photos/wellness_1.jpg",
+    "photos/wellness_3.jpg",
+    "photos/wellness_4.jpg",
+    "photos/yoga_1.jpg",
+    "photos/yoga_2.jpg",
+    "photos/yoga_3.jpg",
+    "photos/yoga_4.jpg"
+  ],
+  "images": {
+    "abstraits/hero-connexion.jpg": {
+      "conforme": true,
+      "sujet": "degrade abstrait + cercles concentriques",
+      "note": "genere : aucune personne possible",
+      "existe": true,
+      "usages": [
+        "app/(auth)/sign-in.tsx"
+      ]
+    },
+    "abstraits/hero-duel.jpg": {
+      "conforme": true,
+      "sujet": "degrade abstrait + cercles concentriques",
+      "note": "genere : aucune personne possible",
+      "existe": true,
+      "usages": [
+        "app/(app)/battle.tsx",
+        "app/(app)/log-manual.tsx",
+        "app/(onboarding)/index.tsx",
+        "components/HomeDiscover.tsx"
+      ]
+    },
+    "abstraits/hero-sante.jpg": {
+      "conforme": true,
+      "sujet": "degrade abstrait + cercles concentriques",
+      "note": "genere : aucune personne possible",
+      "existe": true,
+      "usages": [
+        "app/(app)/health.tsx",
+        "app/(app)/mood-tracker.tsx",
+        "app/(onboarding)/index.tsx",
+        "components/SplashIntro.tsx"
+      ]
+    },
+    "abstraits/hero-seance.jpg": {
+      "conforme": true,
+      "sujet": "degrade abstrait + cercles concentriques",
+      "note": "genere : aucune personne possible",
+      "existe": true,
+      "usages": [
+        "app/(app)/log-exercise.tsx",
+        "app/(app)/social.tsx",
+        "app/(onboarding)/index.tsx"
+      ]
+    },
+    "empty_glass.png": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/add-water.tsx",
+        "components/WaterIntakeCard.tsx"
+      ]
+    },
+    "exercises/abs.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/move-goals.tsx"
+      ]
+    },
+    "exercises/barbell_row.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/bench_press.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/bicep_curl.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/bulgarian_split.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/cable_crossover.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/calf_raise.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/chest_fly.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/crunches.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/cycling.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/deadlift.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/dumbbell_row.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/face_pull.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/front_raise.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/hammer_curl.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/hanging_knee.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/hiking.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/hip_thrust.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/incline_bench.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/lat_pulldown.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/lateral_raise.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/leg_curl.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/leg_extension.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/leg_press.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/lunges.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/move-goals.tsx",
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/plank.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/plankSec.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/move-goals.tsx"
+      ]
+    },
+    "exercises/preacher_curl.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/pullup.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/pushups.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/move-goals.tsx"
+      ]
+    },
+    "exercises/romanian_dl.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/rowing.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/running.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/russian_twist.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/shoulder_press.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/squat.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/squats.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/move-goals.tsx"
+      ]
+    },
+    "exercises/swimming.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/tricep_dips.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/tricep_pushdown.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercises/walking.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "fire.png": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(tabs)/analytics.tsx",
+        "app/_layout.tsx",
+        "components/AppBrand.tsx",
+        "components/AttenteConnexion.tsx",
+        "components/BrandBanner.tsx",
+        "components/BrandOverlay.tsx",
+        "components/ScreenTopBar.tsx"
+      ]
+    },
+    "full_glass.png": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/add-water.tsx",
+        "components/WaterIntakeCard.tsx"
+      ]
+    },
+    "half_glass.png": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/add-water.tsx",
+        "components/WaterIntakeCard.tsx"
+      ]
+    },
+    "illustrations/analytics_cover.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/health-export.tsx",
+        "components/HomeDiscover.tsx"
+      ]
+    },
+    "illustrations/birthdate.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(onboarding)/index.tsx"
+      ]
+    },
+    "illustrations/dashboard_bg.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/calorie-budget.tsx"
+      ]
+    },
+    "illustrations/dashboard_cover.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/sleep-tracker.tsx"
+      ]
+    },
+    "illustrations/female.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(onboarding)/index.tsx"
+      ]
+    },
+    "illustrations/generating.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(onboarding)/results.tsx"
+      ]
+    },
+    "illustrations/healthy_food.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/import-recipe.tsx",
+        "app/(app)/nutri-score.tsx",
+        "app/(onboarding)/index.tsx",
+        "components/HomeDiscover.tsx",
+        "components/SplashIntro.tsx"
+      ]
+    },
+    "illustrations/loading_bg.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/microbiome.tsx",
+        "app/(app)/substitutions.tsx"
+      ]
+    },
+    "illustrations/lose_weight.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/adaptive-tdee.tsx",
+        "app/(onboarding)/index.tsx"
+      ]
+    },
+    "illustrations/male.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(onboarding)/index.tsx"
+      ]
+    },
+    "illustrations/measure.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/streaks.tsx",
+        "app/(onboarding)/index.tsx"
+      ]
+    },
+    "illustrations/plan.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/fasting.tsx",
+        "app/(onboarding)/results.tsx",
+        "components/HomeDiscover.tsx"
+      ]
+    },
+    "illustrations/profile_cover.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(tabs)/profile.tsx"
+      ]
+    },
+    "illustrations/scale.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/metabolic-twin.tsx",
+        "app/(onboarding)/index.tsx"
+      ]
+    },
+    "illustrations/splash_bg.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/meal-plan-history.tsx",
+        "app/(app)/nutrients.tsx"
+      ]
+    },
+    "illustrations/weightlifting.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/smart-hydration.tsx"
+      ]
+    },
+    "illustrations/welcome.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/meal-templates.tsx",
+        "app/(app)/welcome.tsx",
+        "app/(auth)/sign-up.tsx"
+      ]
+    },
+    "photos/breakfast_0.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/fish_0.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/food_0.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/food_2.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/fruits_0.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/fruits_2.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx"
+      ]
+    },
+    "photos/gym_0.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/gym_2.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/mealprep_0.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/mealprep_2.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/medfood_0.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/medfood_1.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/medfood_2.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/moroccan_0.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/moroccan_1.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/moroccan_2.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/moroccan_3.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/moroccan_4.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/running_0.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/running_2.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/salad_0.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/salad_2.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx"
+      ]
+    },
+    "photos/smoothie_0.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/tajine_0.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/tajine_1.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/tajine_2.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/veggies_0.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "app/(app)/shopping-list.tsx",
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/water_0.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/wellness_0.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "photos/wellness_2.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx"
+      ]
+    },
+    "photos/yoga_0.jpg": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/PhotoStrip.tsx",
+        "constants/heroImages.ts"
+      ]
+    },
+    "splash-icon.png": {
+      "conforme": null,
+      "sujet": null,
+      "note": null,
+      "existe": true,
+      "usages": [
+        "components/SplashIntro.tsx"
+      ]
+    }
+  }
+}

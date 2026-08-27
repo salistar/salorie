@@ -77,7 +77,7 @@ export default function LogExerciseScreen() {
         <Text style={[styles.title, { color: textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
           {t('logex.title')}
         </Text>
-        <Image source={require('../../assets/images/illustrations/workout.jpg')} style={styles.hero} resizeMode="cover" />
+        <Image source={require('../../assets/images/abstraits/hero-seance.jpg')} style={styles.hero} resizeMode="cover" />
 
         <View style={styles.optionsList}>
           {options.map((option) => (

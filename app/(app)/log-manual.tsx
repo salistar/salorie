@@ -27,7 +27,7 @@ import { Input } from '../../components/ui';
 console.log('\x1b[35m[log-manual.tsx] MODULE LOADED\x1b[0m');
 
 // Photo bundlée (offline-safe) au lieu d'une image distante Unsplash.
-const HERO_IMAGE = require('../../assets/images/illustrations/gain_weight.jpg');
+const HERO_IMAGE = require('../../assets/images/abstraits/hero-duel.jpg');
 
 export default function LogManualExerciseScreen() {
   const { user } = useUser();

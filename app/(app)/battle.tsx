@@ -170,7 +170,7 @@ export default function BattleScreen() {
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <View style={styles.hero}>
-          <HeroImage source={require('../../assets/images/illustrations/gain_weight.jpg')} height={140} title={t.title} />
+          <HeroImage source={require('../../assets/images/abstraits/hero-duel.jpg')} height={140} title={t.title} />
         </View>
         <View style={[styles.head, { flexDirection: rowDir(isRTL) }]}><Swords size={24} color={GREEN} /><Text style={[styles.sub, { color: sub, flex: 1 }, align]}>{t.sub}</Text></View>
 

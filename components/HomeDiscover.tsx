@@ -43,7 +43,7 @@ export default function HomeDiscover() {
     { label: t.challenge, img: poiPhoto('casa-loop', 0), onPress: () => router.push('/challenge?id=casa-loop' as any) },
     { label: t.eat, img: require('../assets/images/illustrations/healthy_food.jpg'), onPress: () => router.push('/ai-meal-plan' as any) },
     { label: t.paris, img: poiPhoto('paris-marathon', 0), onPress: () => router.push('/challenge?id=paris-marathon' as any) },
-    { label: t.workout, img: require('../assets/images/illustrations/gain_weight.jpg'), onPress: () => router.push('/log-exercise' as any) },
+    { label: t.workout, img: require('../assets/images/abstraits/hero-duel.jpg'), onPress: () => router.push('/log-exercise' as any) },
     { label: t.progress, img: require('../assets/images/illustrations/analytics_cover.jpg'), onPress: () => router.push('/progress-photos' as any) },
     { label: t.community, img: poiPhoto('casa-loop', 2), onPress: () => router.push('/community-routes' as any) },
   ];

@@ -254,7 +254,7 @@ export default function HealthScreen() {
           <Text style={[styles.title, { color: text, textAlign: txtAlign(isRTL) }]}>{t('health.title')}</Text>
         </View>
         <Text style={[styles.subtitle, { color: sub, textAlign: txtAlign(isRTL) }]}>{t('health.subtitle')}</Text>
-        <Image source={require('../../assets/images/illustrations/running.jpg')} style={styles.hero} resizeMode="cover" />
+        <Image source={require('../../assets/images/abstraits/hero-sante.jpg')} style={styles.hero} resizeMode="cover" />
 
         {/* Lien vers l'écran "Forme du jour" (score de récupération) */}
         <TouchableOpacity

@@ -25,7 +25,11 @@
     "  · border   — assez contrasté pour se voir, jamais assez pour trancher",
     "  · muted    — visé à ~4.6:1 sur `bg`, soit juste au-dessus du plancher AA",
     "  · accentSoft — la teinte d'accent très désaturée, fond des puces et badges",
-    "  · success / warning / danger — teintés vers le thème, pas des couleurs système"
+    "  · success / warning / danger — teintés vers le thème, pas des couleurs système",
+    "",
+    "Ecart assume avec le cahier des charges : les bordures d'obsidian (#232936)",
+    "et d'ivory (#E6E8EC) tombaient sous le seuil de visibilite mesure. Elles ont",
+    "ete foncees/eclaircies d'un cran sur demande explicite du 27/08/2026."
   ],
 
   "themes": {
@@ -36,7 +40,7 @@
       "bg": "#0A0C10",
       "surface": "#12151C",
       "surface2": "#1A1E27",
-      "border": "#232936",
+      "border": "#2E3646",
       "text": "#F4F6F8",
       "textMuted": "#9AA3B2",
       "accent": "#34D98F",
@@ -55,7 +59,7 @@
       "bg": "#FAFAF8",
       "surface": "#FFFFFF",
       "surface2": "#F1F2F4",
-      "border": "#E6E8EC",
+      "border": "#D8DCE3",
       "text": "#14181F",
       "textMuted": "#5B6470",
       "accent": "#16A06A",

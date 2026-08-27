@@ -276,7 +276,7 @@ export default function OnboardingScreen() {
             {[
               { id: 'lose', label: t('onboarding.lose'), img: require('../../assets/images/illustrations/lose_weight.jpg') },
               { id: 'maintain', label: t('onboarding.maintain'), img: require('../../assets/images/illustrations/healthy_food.jpg') },
-              { id: 'gain', label: t('onboarding.gain'), img: require('../../assets/images/illustrations/gain_weight.jpg') },
+              { id: 'gain', label: t('onboarding.gain'), img: require('../../assets/images/abstraits/hero-duel.jpg') },
             ].map((item) => (
               <TouchableOpacity
                 key={item.id}
@@ -294,8 +294,8 @@ export default function OnboardingScreen() {
           <View style={styles.stepContainer}>
             <Text style={[styles.stepTitle, { color: C.title }]}>{t('onboarding.step3_title')}</Text>
             {[
-              { id: '2-3', label: '2-3 / 7', img: require('../../assets/images/illustrations/running.jpg') },
-              { id: '3-4', label: '3-4 / 7', img: require('../../assets/images/illustrations/workout.jpg') },
+              { id: '2-3', label: '2-3 / 7', img: require('../../assets/images/abstraits/hero-sante.jpg') },
+              { id: '3-4', label: '3-4 / 7', img: require('../../assets/images/abstraits/hero-seance.jpg') },
               // `weightlifting.jpg` contient en réalité une VAGUE OCÉANIQUE (le fichier porte
               // le bon nom, pas le bon contenu) : l'option la plus sportive du questionnaire
               // s'illustrait d'une photo de mer. On pointe vers une vraie image d'entraînement
