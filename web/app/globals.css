@@ -1640,3 +1640,12 @@ tbody tr:last-child td { border-bottom: none; }
   border: 0;
 }
 @media (max-width: 560px) { .duo-carte-cadre { aspect-ratio: 4 / 3; } }
+
+/* Le selecteur de theme dans la barre de l'espace membre. Il vient juste sous
+   la marque, la ou l'oeil revient naturellement — et non enfoui dans Reglages,
+   ou personne ne serait alle le chercher. */
+.me-nav-themes {
+  padding: 10px 14px 4px;
+  border-bottom: 1px solid var(--t-border);
+  margin-bottom: 8px;
+}

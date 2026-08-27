@@ -11,6 +11,7 @@
 // dans i18nMe : ils n'existent que pour cette barre, les colocaliser évite
 // 200 lignes de dictionnaire et garde chaque entrée lisible d'un coup d'œil.
 import { useState } from 'react';
+import SelecteurTheme from '@/components/ui/SelecteurTheme';
 import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/clerk-react';
 // Lucide : la bibliotheque d'icones que le MOBILE utilise deja
@@ -183,6 +184,15 @@ export default function MeNav() {
           <img className="me-nav-logo" src="/me/logo.png" alt="" width={28} height={28} />
           <span>Salorie</span>
         </a>
+
+        {/* Les six themes, ici aussi.
+            L'espace membre etait la seule des trois surfaces sans selecteur :
+            landing et back-office l'avaient, /me obligeait a repasser par la
+            page d'accueil pour changer de palette. Meme composant, meme cle de
+            stockage — le choix suit l'utilisateur d'une surface a l'autre. */}
+        <div className="me-nav-themes">
+          <SelecteurTheme compact />
+        </div>
 
         <nav className="me-nav-liens">
           {GROUPES.map((g, gi) => (
