@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Camera, Activity, Brain, TrendingUp, Globe, Shield, Smartphone, Code2, ExternalLink, Download, Package, Trophy, Dumbbell, Heart, Sparkles, Sun, Moon, Quote, ChevronDown, Check, X, LogIn, UserPlus } from "lucide-react";
 import type { ReleaseMeta } from "./releaseMeta";
+import { lireTemoin } from "../../lib/temoinPrenom";
 
 const PRIMARY = "#298f50";
 const PRIMARY_DARK = "#1f6b3c";
@@ -40,7 +41,7 @@ type Lang = "fr" | "en" | "ar";
 const T: Record<Lang, any> = {
   fr: {
     dir: "ltr",
-    nav: { features: "Fonctions", shots: "Captures", testi: "Avis", download: "Télécharger", member: "Espace membre", admin: "Administration" },
+    nav: { features: "Fonctions", shots: "Captures", testi: "Avis", download: "Télécharger", member: "Espace membre", admin: "Administration", resume: "Reprendre" },
     badge: "Propulsé par l'IA",
     h1a: "Scanne ton repas,", h1b: "suis tes calories", h1c: ", atteins tes objectifs.",
     heroSub: "Salorie analyse tes repas en temps réel par photo. Macros, calories, micronutriments, coach adaptatif et plans de repas — tout en un scan.",
@@ -80,7 +81,7 @@ const T: Record<Lang, any> = {
   },
   en: {
     dir: "ltr",
-    nav: { features: "Features", shots: "Screens", testi: "Reviews", download: "Download", member: "Member area", admin: "Administration" },
+    nav: { features: "Features", shots: "Screens", testi: "Reviews", download: "Download", member: "Member area", admin: "Administration", resume: "Resume" },
     badge: "Powered by AI",
     h1a: "Scan your meal,", h1b: "track your calories", h1c: ", hit your goals.",
     heroSub: "Salorie analyzes your meals in real time from a photo. Macros, calories, micronutrients, an adaptive coach and meal plans — all in one scan.",
@@ -120,7 +121,7 @@ const T: Record<Lang, any> = {
   },
   ar: {
     dir: "rtl",
-    nav: { features: "الميزات", shots: "اللقطات", testi: "الآراء", download: "تحميل", member: "حسابي", admin: "الإدارة" },
+    nav: { features: "الميزات", shots: "اللقطات", testi: "الآراء", download: "تحميل", member: "حسابي", admin: "الإدارة", resume: "متابعة" },
     badge: "مدعوم بالذكاء الاصطناعي",
     h1a: "صوّر وجبتك،", h1b: "تتبّع سعراتك", h1c: "، وحقّق أهدافك.",
     heroSub: "يحلّل Salorie وجباتك فوريًا من صورة. الماكروز والسعرات والعناصر الدقيقة ومدرّب متكيّف وخطط وجبات — كل ذلك بمسحة واحدة.",
@@ -307,6 +308,13 @@ export default function Landing({
     return () => clearInterval(id);
   }, []);
 
+  // ⚠ Lu dans un effet, PAS a l'initialisation : le serveur rend cette page en
+  // statique et n'a pas de cookie. Initialiser depuis `document` ferait diverger
+  // le HTML serveur et le premier rendu client — React signalerait une erreur
+  // d'hydratation, et le bouton pourrait clignoter.
+  const [prenom, setPrenom] = useState<string | null>(null);
+  useEffect(() => { setPrenom(lireTemoin()); }, []);
+
   const t = T[lang];
   const faq = FAQ[lang];
   const cmp = COMPARE[lang];
@@ -350,10 +358,15 @@ export default function Landing({
             </a>
 
             {/* Espace membre — la porte d'entree qui manquait : RIEN, sur la
-                landing, ne menait a l'application web. */}
+                landing, ne menait a l'application web.
+                Le libelle devient « Reprendre — {prenom} » quand un temoin est
+                present. Ce temoin est un simple cookie, lu ICI, dans le
+                navigateur : le lire cote serveur rendrait la page dynamique et
+                lui ferait perdre son cache CDN, et passer par Clerk couterait
+                407 Ko sur une page publique qui en pese 706. */}
             <a href="/me"
-               style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 14px", borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text)", fontWeight: 700, fontSize: 14 }}>
-              {t.nav.member}
+               style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 14px", borderRadius: 10, background: prenom ? PRIMARY : "var(--surface-2)", border: prenom ? "1px solid transparent" : "1px solid var(--border)", color: prenom ? "#fff" : "var(--text)", fontWeight: 700, fontSize: 14 }}>
+              {prenom ? `${t.nav.resume} — ${prenom}` : t.nav.member}
             </a>
 
             <a href="#download"
