@@ -259,7 +259,7 @@ export default function SignInScreen() {
         <View style={styles.header}>
           <View style={styles.logoWrapper}>
             <Image
-              source={require('../../assets/images/illustrations/signin_hero.jpg')}
+              source={require('../../assets/images/abstraits/hero-connexion.jpg')}
               style={styles.heroPhoto}
               resizeMode="cover"
             />

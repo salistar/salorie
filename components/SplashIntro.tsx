@@ -44,7 +44,7 @@ export default function SplashIntro({ duration = 1700 }: { duration?: number }) 
           (right), so the splash represents BOTH sides of the app. */}
       <View style={[StyleSheet.absoluteFillObject, { flexDirection: 'row' }]}>
         <Image source={require('../assets/images/illustrations/healthy_food.jpg')} style={{ flex: 1, height: '100%' }} resizeMode="cover" />
-        <Image source={require('../assets/images/illustrations/running.jpg')} style={{ flex: 1, height: '100%' }} resizeMode="cover" />
+        <Image source={require('../assets/images/abstraits/hero-sante.jpg')} style={{ flex: 1, height: '100%' }} resizeMode="cover" />
       </View>
       {/* Green brand veil for contrast + cohesion across the two photos */}
       <LinearGradient
