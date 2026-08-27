@@ -146,13 +146,35 @@ async function capturer(page, url, fichier) {
   }
   console.log('  Session detectee. Captures en cours.\n');
 
-  let ok = 0, redir = 0, ko = 0;
+  let ok = 0, redir = 0, ko = 0, deja = 0;
   const rates = [], renvoyees = [];
 
-  for (const [nomTheme, schema] of [['clair', 'light'], ['sombre', 'dark']]) {
-    const p = await ctx.newPage();
-    await p.setViewportSize({ width: 1440, height: 900 });
-    await p.emulateMedia({ colorScheme: schema });
+  // Un theme peut etre demande seul : `node capturer-connecte.js sombre`.
+  // Refaire une passe deja complete coute une dizaine de minutes pour rien.
+  const demande = (process.argv[2] || '').toLowerCase();
+  const THEMES = [['clair', 'light'], ['sombre', 'dark']]
+    .filter(([nom]) => !demande || nom === demande);
+  if (!THEMES.length) {
+    console.log('  Theme inconnu : ' + demande + '  (attendu : clair, sombre, ou rien pour les deux)');
+    await nav.close();
+    process.exit(1);
+  }
+  console.log('  themes a capturer : ' + THEMES.map((t) => t[0]).join(', ') + '\n');
+
+  for (const [nomTheme, schema] of THEMES) {
+    // Si Edge a ete ferme entre-temps, on veut le BILAN de ce qui a ete
+    // capture, pas une exception brute qui l'emporte. C'est arrive le 26/08 :
+    // la fenetre fermee en cours de passe a produit un `Target page, context or
+    // browser has been closed` non rattrape, et le compte final s'est perdu.
+    let p;
+    try {
+      p = await ctx.newPage();
+      await p.setViewportSize({ width: 1440, height: 900 });
+      await p.emulateMedia({ colorScheme: schema });
+    } catch (e) {
+      console.log('\n  Edge n est plus joignable — arret propre. ' + String(e.message).split('\n')[0]);
+      break;
+    }
 
     for (const [dossier, liste, prefixe] of [
       ['web-user', ME, '/me'],
@@ -162,11 +184,32 @@ async function capturer(page, url, fichier) {
       fs.mkdirSync(sortie, { recursive: true });
 
       for (const route of liste) {
+        // ⚠ UN ONGLET PEUT MOURIR EN COURS DE ROUTE. Certaines pages ouvrent la
+        // camera ou un flux temps reel et font planter l'onglet qui les affiche.
+        // Le 27/08, `/me/code-barres` a tue le sien : les 77 pages suivantes ont
+        // toutes echoue sur « Target page has been closed » sans que rien ne
+        // tente de se relever. On recree l'onglet et on continue.
+        if (p.isClosed()) {
+          try {
+            p = await ctx.newPage();
+            await p.setViewportSize({ width: 1440, height: 900 });
+            await p.emulateMedia({ colorScheme: schema });
+            console.log('  (onglet recree)');
+          } catch (e) {
+            console.log('\n  Edge n est plus joignable — arret propre.');
+            break;
+          }
+        }
         const chemin = prefixe + (route ? '/' + route : '');
         // `/me` seul s'appelle `me-accueil` : sinon il ecrase la capture de la
         // page d'accueil publique qui porte deja le nom `accueil`.
         const nom = route ? route.replace(/\//g, '-') : 'me-accueil';
         const f = path.join(sortie, `${nom}-${nomTheme}.png`);
+
+        // Deja en boite : on passe. Une campagne interrompue se reprend ainsi la
+        // ou elle s'est arretee, au lieu de tout refaire. `REFAIRE=1` force.
+        if (!process.env.REFAIRE && fs.existsSync(f)) { deja++; continue; }
+
         const r = await capturer(p, RACINE + chemin, f);
 
         if (!r.ok) { console.log(`  ECHEC ${dossier}/${nom}-${nomTheme} : ${r.err}`); ko++; rates.push(chemin); continue; }
@@ -193,6 +236,7 @@ async function capturer(page, url, fichier) {
 
   await nav.close();
   console.log(`\n  captures utiles              : ${ok}`);
+  console.log(`  deja presentes, sautees      : ${deja}`);
   console.log(`  renvoyees vers la connexion  : ${redir}${renvoyees.length ? '  ' + [...new Set(renvoyees)].join(' ') : ''}`);
   console.log(`  echecs                       : ${ko}${rates.length ? '  ' + [...new Set(rates)].join(' ') : ''}`);
   console.log('\n  Edge reste ouvert : fermez-le quand vous voulez.');

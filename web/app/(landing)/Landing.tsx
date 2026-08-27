@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Camera, Activity, Brain, TrendingUp, Globe, Shield, Smartphone, Code2, ExternalLink, Download, Package, Trophy, Dumbbell, Heart, Sparkles, Sun, Moon, Quote, ChevronDown, Check, X, LogIn, UserPlus } from "lucide-react";
+import type { ReleaseMeta } from "./releaseMeta";
 
 const PRIMARY = "#298f50";
 const PRIMARY_DARK = "#1f6b3c";
@@ -39,7 +40,7 @@ type Lang = "fr" | "en" | "ar";
 const T: Record<Lang, any> = {
   fr: {
     dir: "ltr",
-    nav: { features: "Fonctions", shots: "Captures", testi: "Avis", download: "Télécharger" },
+    nav: { features: "Fonctions", shots: "Captures", testi: "Avis", download: "Télécharger", member: "Espace membre", admin: "Administration" },
     badge: "Propulsé par l'IA",
     h1a: "Scanne ton repas,", h1b: "suis tes calories", h1c: ", atteins tes objectifs.",
     heroSub: "Salorie analyse tes repas en temps réel par photo. Macros, calories, micronutriments, coach adaptatif et plans de repas — tout en un scan.",
@@ -74,11 +75,12 @@ const T: Record<Lang, any> = {
     ],
     dlTitle: "Disponible sur Android", dlSub: "APK signé de production — installation directe. Bientôt sur Google Play.",
     build: "Build", dlApk: "Télécharger l'APK", dlAab: "Bundle .aab (Play Store)", source: "Code source & releases sur GitHub",
-    footer: { privacy: "Confidentialité", terms: "Conditions", refund: "Remboursement", contact: "Contact", deleteAccount: "Supprimer mon compte", github: "GitHub" },
+    footer: { privacy: "Confidentialité", terms: "Conditions", refund: "Remboursement", contact: "Contact", deleteAccount: "Supprimer mon compte", github: "GitHub", releases: "Versions", bug: "Signaler un bug" },
+    releaseNotes: "Notes de version",
   },
   en: {
     dir: "ltr",
-    nav: { features: "Features", shots: "Screens", testi: "Reviews", download: "Download" },
+    nav: { features: "Features", shots: "Screens", testi: "Reviews", download: "Download", member: "Member area", admin: "Administration" },
     badge: "Powered by AI",
     h1a: "Scan your meal,", h1b: "track your calories", h1c: ", hit your goals.",
     heroSub: "Salorie analyzes your meals in real time from a photo. Macros, calories, micronutrients, an adaptive coach and meal plans — all in one scan.",
@@ -113,11 +115,12 @@ const T: Record<Lang, any> = {
     ],
     dlTitle: "Available on Android", dlSub: "Signed production APK — direct install. Coming soon to Google Play.",
     build: "Build", dlApk: "Download the APK", dlAab: "Bundle .aab (Play Store)", source: "Source code & releases on GitHub",
-    footer: { privacy: "Privacy", terms: "Terms", refund: "Refunds", contact: "Contact", deleteAccount: "Delete my account", github: "GitHub" },
+    footer: { privacy: "Privacy", terms: "Terms", refund: "Refunds", contact: "Contact", deleteAccount: "Delete my account", github: "GitHub", releases: "Releases", bug: "Report a bug" },
+    releaseNotes: "Release notes",
   },
   ar: {
     dir: "rtl",
-    nav: { features: "الميزات", shots: "اللقطات", testi: "الآراء", download: "تحميل" },
+    nav: { features: "الميزات", shots: "اللقطات", testi: "الآراء", download: "تحميل", member: "حسابي", admin: "الإدارة" },
     badge: "مدعوم بالذكاء الاصطناعي",
     h1a: "صوّر وجبتك،", h1b: "تتبّع سعراتك", h1c: "، وحقّق أهدافك.",
     heroSub: "يحلّل Salorie وجباتك فوريًا من صورة. الماكروز والسعرات والعناصر الدقيقة ومدرّب متكيّف وخطط وجبات — كل ذلك بمسحة واحدة.",
@@ -152,7 +155,8 @@ const T: Record<Lang, any> = {
     ],
     dlTitle: "متوفّر على أندرويد", dlSub: "APK موقّع للإنتاج — تثبيت مباشر. قريبًا على Google Play.",
     build: "إصدار", dlApk: "تحميل APK", dlAab: "حزمة ‎.aab (Play Store)", source: "الشيفرة والإصدارات على GitHub",
-    footer: { privacy: "الخصوصية", terms: "الشروط", refund: "الاسترداد", contact: "اتصل بنا", deleteAccount: "حذف حسابي", github: "GitHub" },
+    footer: { privacy: "الخصوصية", terms: "الشروط", refund: "الاسترداد", contact: "اتصل بنا", deleteAccount: "حذف حسابي", github: "GitHub", releases: "الإصدارات", bug: "الإبلاغ عن خلل" },
+    releaseNotes: "ملاحظات الإصدار",
   },
 };
 
@@ -266,7 +270,9 @@ export default function Landing({
   meta,
   langueForcee,
 }: {
-  meta: { apkMB: string | null; aabMB: string | null; iso: string | null } | null;
+  // Type importe plutot que redeclare : une copie locale aurait diverge des
+  // que releaseMeta.ts a gagne les URLs et les empreintes.
+  meta: ReleaseMeta;
   /** Langue imposee par l'URL (/en, /ar). Quand elle est fournie, ni la preference
    *  memorisee ni celle du navigateur ne s'y substituent : une page servie sous /en
    *  DOIT rendre de l'anglais, sinon Google indexerait un contenu qui ne correspond
@@ -336,8 +342,23 @@ export default function Landing({
               border: "1px solid var(--border)", background: "var(--surface)", cursor: "pointer",
               width: 38, height: 38, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text)",
             }}>{theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}</button>
-            <a href={REPO} target="_blank" rel="noopener" style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 14px", borderRadius: 10, background: PRIMARY, color: "#fff", fontWeight: 700, fontSize: 14 }}>
+            {/* GitHub redevient DISCRET : il occupait la place du bouton
+                principal, alors que la landing doit mener a l'application. */}
+            <a href={REPO} target="_blank" rel="noopener" title="Code source"
+               style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 12px", borderRadius: 10, border: "1px solid var(--border)", color: "var(--muted-2)", fontWeight: 600, fontSize: 14 }}>
               <Code2 size={16} /> GitHub
+            </a>
+
+            {/* Espace membre — la porte d'entree qui manquait : RIEN, sur la
+                landing, ne menait a l'application web. */}
+            <a href="/me"
+               style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 14px", borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text)", fontWeight: 700, fontSize: 14 }}>
+              {t.nav.member}
+            </a>
+
+            <a href="#download"
+               style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 10, background: PRIMARY, color: "#fff", fontWeight: 800, fontSize: 14 }}>
+              {t.nav.download}
             </a>
           </div>
         </div>
@@ -529,15 +550,39 @@ export default function Landing({
           <Smartphone size={50} style={{ marginBottom: 18 }} />
           <h2 style={{ fontSize: 38, fontWeight: 900, letterSpacing: -1, margin: 0 }}>{t.dlTitle}</h2>
           <p style={{ fontSize: 18, marginTop: 14, opacity: 0.95 }}>{t.dlSub}</p>
-          {dateStr && <p style={{ fontSize: 13, marginTop: 8, opacity: 0.78 }}>{t.build} v1.0.0 · {dateStr}{meta?.apkMB && ` · APK ${meta.apkMB} MB`}{meta?.aabMB && ` · AAB ${meta.aabMB} MB`}</p>}
+          {/* La version affichee vient du build REEL, plus d'un « v1.0.0 » ecrit
+              a la main qui restait juste alors que les fichiers vieillissaient. */}
+          {dateStr && (
+            <p style={{ fontSize: 13, marginTop: 8, opacity: 0.78 }}>
+              {t.build} {meta?.versionCode ?? meta?.tag ?? "—"} · {dateStr}
+              {meta?.apkMB && ` · APK ${meta.apkMB} MB`}
+              {meta?.aabMB && ` · AAB ${meta.aabMB} MB`}
+            </p>
+          )}
           <div style={{ display: "flex", gap: 14, justifyContent: "center", marginTop: 26, flexWrap: "wrap" }}>
-            <a href={APK_URL} download style={{ padding: "16px 28px", borderRadius: 14, background: "#fff", color: PRIMARY_DARK, fontWeight: 800, fontSize: 16, display: "inline-flex", alignItems: "center", gap: 10 }}>
+            <a href={meta?.apk?.url ?? APK_URL} download style={{ padding: "16px 28px", borderRadius: 14, background: "#fff", color: PRIMARY_DARK, fontWeight: 800, fontSize: 16, display: "inline-flex", alignItems: "center", gap: 10 }}>
               <Download size={20} /> {t.dlApk}{meta?.apkMB && <span style={{ opacity: 0.7, fontSize: 13 }}>({meta.apkMB} MB)</span>}
             </a>
-            <a href={AAB_URL} download style={{ padding: "16px 28px", borderRadius: 14, background: "rgba(255,255,255,0.15)", color: "#fff", fontWeight: 800, fontSize: 16, display: "inline-flex", alignItems: "center", gap: 10, border: "2px solid rgba(255,255,255,0.35)" }}>
+            <a href={meta?.aab?.url ?? AAB_URL} download style={{ padding: "16px 28px", borderRadius: 14, background: "rgba(255,255,255,0.15)", color: "#fff", fontWeight: 800, fontSize: 16, display: "inline-flex", alignItems: "center", gap: 10, border: "2px solid rgba(255,255,255,0.35)" }}>
               <Package size={20} /> {t.dlAab}{meta?.aabMB && <span style={{ opacity: 0.7, fontSize: 13 }}>({meta.aabMB} MB)</span>}
             </a>
           </div>
+
+          {/* L'empreinte est PUBLIEE : sans elle, personne ne peut verifier que
+              le fichier telecharge est bien celui sorti de la CI. C'est ce qui
+              separe un telechargement direct d'un acte de foi. */}
+          {meta?.apk?.sha256 && (
+            <p style={{ marginTop: 16, fontSize: 11, opacity: 0.72, fontFamily: "ui-monospace, monospace", wordBreak: "break-all", maxWidth: 620, marginInline: "auto" }}>
+              SHA-256 · {meta.apk.sha256}
+            </p>
+          )}
+          {meta?.notesUrl && (
+            <div style={{ marginTop: 10 }}>
+              <a href={meta.notesUrl} target="_blank" rel="noopener" style={{ fontSize: 13, fontWeight: 700, opacity: 0.9, textDecoration: "underline" }}>
+                {t.releaseNotes}
+              </a>
+            </div>
+          )}
           <div style={{ marginTop: 20 }}>
             <a href={REPO} target="_blank" rel="noopener" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 700, opacity: 0.92, textDecoration: "underline" }}>
               <ExternalLink size={16} /> {t.source}
@@ -559,6 +604,13 @@ export default function Landing({
               mais n etait liee depuis AUCUNE page — un relecteur ne l aurait pas trouvee. */}
           <a href="/delete-account" style={{ color: PRIMARY, fontWeight: 600 }}>{t.footer.deleteAccount}</a>
           <a href={REPO} target="_blank" rel="noopener" style={{ color: PRIMARY, fontWeight: 600 }}>{t.footer.github}</a>
+          <a href={`${REPO}/releases`} target="_blank" rel="noopener" style={{ color: PRIMARY, fontWeight: 600 }}>{t.footer.releases}</a>
+          <a href={`${REPO}/issues/new`} target="_blank" rel="noopener" style={{ color: PRIMARY, fontWeight: 600 }}>{t.footer.bug}</a>
+          {/* L'administration doit etre TROUVABLE, pas mise en avant. Un bouton
+              criard dans l'en-tete inviterait chaque visiteur a pousser une porte
+              qui ne le concerne pas ; l'absence de lien obligerait l'equipe a
+              retenir une URL. Un lien sobre en pied de page tranche les deux. */}
+          <a href="/login" style={{ color: "var(--muted)", fontWeight: 600 }}>{t.nav.admin}</a>
         </div>
         <p>© 2026 Salorie — <a href="https://salistar.com" style={{ color: PRIMARY, fontWeight: 600 }}>salistar.com</a> — Idriss Kriouile</p>
       </footer>

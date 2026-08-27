@@ -330,3 +330,67 @@ jobs:
           name: salorie-apk-${{ github.sha }}
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 90
+
+      # ── Publier une RELEASE, pas seulement des artefacts ───────────────────
+      #
+      # Les artefacts Actions expirent sous 90 jours et exigent un compte GitHub
+      # pour etre telecharges : ils ne peuvent pas servir le public. La landing
+      # pointait donc vers une release figee dont les fichiers dataient du
+      # 9 juin 2026 — 205 Mo d'APK contre 122 aujourd'hui. Quiconque installait
+      # Salorie depuis le site obtenait une version anterieure au consentement
+      # d'amitie, au correctif de la faille Premium et a Health Connect.
+      #
+      # Le tag porte le versionCode : unique et croissant par construction, ce
+      # qu'aucune date ne garantit.
+      #
+      # Les empreintes SHA-256 sont publiees dans les notes : sans elles,
+      # personne ne peut verifier que l'APK telecharge est bien celui sorti d'ici.
+      - name: Publier la release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          CODE=$(grep -oE 'versionCode [0-9]+' android/app/build.gradle | head -1 | grep -oE '[0-9]+')
+          TAG="build-${CODE}"
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+
+          FICHIERS=""
+          if [ -f "$APK" ]; then
+            cp "$APK" "salorie-${CODE}.apk"
+            FICHIERS="salorie-${CODE}.apk"
+          fi
+          if [ -f "$AAB" ]; then
+            cp "$AAB" "salorie-${CODE}.aab"
+            FICHIERS="${FICHIERS} salorie-${CODE}.aab"
+          fi
+          if [ -z "$FICHIERS" ]; then
+            echo "Aucun binaire produit — rien a publier."
+            exit 0
+          fi
+
+          {
+            printf 'Build automatique **%s** — commit `%s`\n\n' "$CODE" "${GITHUB_SHA:0:7}"
+            printf '| Fichier | Taille | SHA-256 |\n'
+            printf '|---|---:|---|\n'
+            for f in $FICHIERS; do
+              printf '| %s | %s | `%s` |\n' \
+                "$f" \
+                "$(du -h "$f" | cut -f1)" \
+                "$(sha256sum "$f" | cut -d' ' -f1)"
+            done
+          } > notes.md
+
+          # Reecriture idempotente : relancer le meme build ne doit pas echouer
+          # sur « tag deja existant ».
+          gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Salorie build ${CODE}" \
+            --notes-file notes.md \
+            --latest \
+            $FICHIERS
+
+          echo "Release ${TAG} publiee : ${FICHIERS}"
+
