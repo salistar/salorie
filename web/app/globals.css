@@ -22,15 +22,27 @@
    3 août, l'a écrasée par la version du dépôt. Tout ce qui doit survivre passe par
    git — le serveur est reconstruit à chaque déploiement.
    ───────────────────────────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   LES COULEURS NE SONT PLUS ECRITES ICI.
+
+   Les jetons ci-dessous (--green, --ink, --card, --line, --muted, --bg...)
+   DERIVENT desormais des six themes, definis dans design/themes.json et
+   compiles vers themes.generated.css sous le prefixe --t-.
+
+   Changer une couleur se fait donc dans design/themes.json, PAS ici. Une valeur
+   ecrite en dur a cet endroit re-casserait le lien : elle gagnerait sur le
+   theme, et les six palettes cesseraient d'agir sans qu'aucune erreur ne le
+   signale — c'est exactement ce qui s'etait produit avant le 27/08/2026.
+   ───────────────────────────────────────────────────────────────────────────── */
 :root {
-  --green: #2e8b57;
-  --green-dark: #1f6e3d;
-  --green-light: #e9f6ef;
-  --ink: #0f172a;
-  --muted: #64748b;
-  --line: #eef2f7;
-  --bg: #f5f7fa;
-  --card: #ffffff;
+  --green: var(--t-accent);
+  --green-dark: var(--t-accent2);
+  --green-light: var(--t-accent-soft);
+  --ink: var(--t-text);
+  --muted: var(--t-text-muted);
+  --line: var(--t-border);
+  --bg: var(--t-bg);
+  --card: var(--t-surface);
   --radius: 20px;
   --shadow: 0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06);
   --shadow-lg: 0 12px 40px rgba(16,24,40,.12);
@@ -38,10 +50,10 @@
   /* Sémantique : un état a une couleur de fond ET une couleur de texte associée,
      choisies pour rester au-dessus de 4,5:1 (AA). Les badges affichaient avant du
      blanc sur #cbd5e1, soit ≈ 1,6:1 — illisible. */
-  --danger: #dc2626;   --danger-bg: #fef2f2;   --danger-ink: #991b1b;
-  --warning: #d97706;  --warning-bg: #fffbeb;  --warning-ink: #92400e;
+  --danger: var(--t-danger);   --danger-bg: #fef2f2;   --danger-ink: #991b1b;
+  --warning: var(--t-warning);  --warning-bg: #fffbeb;  --warning-ink: #92400e;
   --info: #2563eb;     --info-bg: #eff6ff;     --info-ink: #1e40af;
-  --success: #16a34a;  --success-bg: #f0fdf4;  --success-ink: #166534;
+  --success: var(--t-success);  --success-bg: #f0fdf4;  --success-ink: #166534;
   --neutral: #94a3b8;  --neutral-bg: #f1f5f9;  --neutral-ink: #475569;
 
   /* Échelles : espacements et rayons nommés, pour cesser de semer des px au hasard. */
@@ -56,14 +68,14 @@
 /* Thème sombre — SEULS les jetons changent. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --green: #4ade80;
-    --green-dark: #22c55e;
-    --green-light: #14301f;
-    --ink: #e6edf3;
-    --muted: #94a3b8;
-    --line: #1e293b;
-    --bg: #0f1419;
-    --card: #161b22;
+    --green: var(--t-accent);
+    --green-dark: var(--t-accent2);
+    --green-light: var(--t-accent-soft);
+    --ink: var(--t-text);
+    --muted: var(--t-text-muted);
+    --line: var(--t-border);
+    --bg: var(--t-bg);
+    --card: var(--t-surface);
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
     --shadow-lg: 0 12px 40px rgba(0,0,0,.5);
     --danger-bg: #2a1416;  --danger-ink: #fca5a5;
@@ -78,14 +90,14 @@
 
 /* Choix explicite de l'utilisateur — il prime sur le réglage du système. */
 :root[data-theme='dark'] {
-  --green: #4ade80;
-  --green-dark: #22c55e;
-  --green-light: #14301f;
-  --ink: #e6edf3;
-  --muted: #94a3b8;
-  --line: #1e293b;
-  --bg: #0f1419;
-  --card: #161b22;
+  --green: var(--t-accent);
+  --green-dark: var(--t-accent2);
+  --green-light: var(--t-accent-soft);
+  --ink: var(--t-text);
+  --muted: var(--t-text-muted);
+  --line: var(--t-border);
+  --bg: var(--t-bg);
+  --card: var(--t-surface);
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
   --shadow-lg: 0 12px 40px rgba(0,0,0,.5);
   --danger-bg: #2a1416;  --danger-ink: #fca5a5;
