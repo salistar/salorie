@@ -106,6 +106,11 @@ const sortie = {
     "ou mains seules. Pas de viande crue en gros plan."
   ],
   _genere: 'node scripts/manifeste-images.js',
+  // ⚠ CONSERVE, comme les verdicts. La liste des images BANNIES doit survivre a
+  // une regeneration : sinon le garde-fou qui les empeche de revenir disparait
+  // au premier balayage, et personne ne s'en apercoit — c'est exactement ce qui
+  // s'est produit le 27/08, mon propre test detruisant la donnee qu'il verifiait.
+  _retirees: ancien._retirees || {},
   imagesNonUtilisees: surDisque.sort(),
   images,
 };
