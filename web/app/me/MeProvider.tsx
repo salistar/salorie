@@ -22,6 +22,7 @@ import {
 import { frFR, arSA } from '@clerk/localizations';
 import { PUBLIC_CONFIG, espaceMePret, variablesManquantes, emailToDocId } from '../../lib/publicConfig';
 import { connecterFirebase } from '../../lib/firebaseBridge';
+import { poserTemoin, effacerTemoin } from '../../lib/temoinPrenom';
 
 type EtatMe = {
   /** Session Firebase ouverte : les lectures Firestore sont autorisees. */
@@ -58,6 +59,25 @@ function PontFirebase({ children }: { children: ReactNode }) {
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const uid = emailToDocId(email);
 
+  // Le temoin de courtoisie : il permet a la landing de dire « Reprendre —
+  // {prenom} » SANS charger le runtime Clerk (407 Ko mesures sur cette page).
+  // Il ne contient qu'un prenom et n'autorise rien — voir lib/temoinPrenom.ts.
+  useEffect(() => {
+    // `isLoaded` signifie que Clerk a RESOLU l'etat : pas d'utilisateur a ce
+    // moment veut donc dire pas de session, sans ambiguite.
+    if (!isLoaded) return;
+    const p = user?.firstName || user?.fullName || '';
+    if (p) {
+      poserTemoin(p);
+    } else if (!user) {
+      // Efface AUSSI ici, et pas seulement sur le bouton « Se deconnecter » :
+      // le `UserButton` de Clerk, dans la barre laterale, deconnecte lui aussi
+      // et ne passe pas par notre bouton. Sans ce cas, la landing continuerait
+      // a dire « Reprendre — idriss » a quelqu'un parti par l'autre porte.
+      effacerTemoin();
+    }
+  }, [isLoaded, user, user?.firstName, user?.fullName]);
+
   useEffect(() => {
     if (!isLoaded || !email) return;
     let vivant = true;
@@ -85,7 +105,11 @@ function PontFirebase({ children }: { children: ReactNode }) {
         <button className="btn btn-primary" onClick={() => window.location.reload()}>
           Reessayer
         </button>
-        <button className="btn btn-ghost" onClick={() => signOut()}>
+        {/* Le temoin s'efface AVANT la deconnexion : `signOut()` peut naviguer,
+            et le code d'apres ne s'executerait pas. La landing continuerait
+            alors a dire « Reprendre — idriss » a quelqu'un qui vient
+            explicitement de partir. */}
+        <button className="btn btn-ghost" onClick={() => { effacerTemoin(); void signOut(); }}>
           Se deconnecter
         </button>
       </div>
