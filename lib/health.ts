@@ -21,19 +21,28 @@ export interface HealthToday {
 /**
  * Borne une promesse dans le temps.
  *
- * ⚠ POURQUOI C'EST INDISPENSABLE ICI
- * Un `try/catch` ne rattrape PAS une promesse qui ne se regle jamais. Or
- * `getSdkStatus()` est un appel au pont natif : si le fournisseur Health Connect
- * ne repond pas, l'appel reste en suspens, sans erreur et sans resultat.
+ * POURQUOI. Un `try/catch` ne rattrape PAS une promesse qui ne se regle jamais.
+ * Or `getSdkStatus()` est un appel au pont natif : si le fournisseur Health
+ * Connect ne repond pas, l'appel peut rester en suspens, sans erreur et sans
+ * resultat — et `setAvailable()` ne serait jamais appele.
  *
- * Constate le 26/08/2026 sur un Galaxy A07 sous Android 16 : `isHealthAvailable()`
- * ne rendait jamais la main, `setAvailable()` n'etait donc jamais appele, et
- * l'ecran « Synchro sante » restait bloque sur son squelette de chargement —
- * sans bouton, sans message, sans erreur dans le journal. Aucun chemin
- * n'existait pour accorder l'acces, meme une fois le manifeste corrige.
+ * ⚠ HONNETETE SUR L'ORIGINE DE CE CODE. Il a ete ecrit le 26/08/2026 pour
+ * corriger un blocage qui, verification faite le 27/08, N'EXISTAIT PAS. Le
+ * symptome observe — ecran « Synchro sante » apparemment vide — venait d'un
+ * test errone : le balayage de verification partait de y=1200 alors que la zone
+ * defilante s'arrete a y=1150. Il tombait donc hors du conteneur, rien ne
+ * bougeait, et j'en ai conclu a un figement. L'arbre des vues (`uiautomator
+ * dump`) montre que le bouton « Connecter Health Connect » etait rendu des le
+ * depart, simplement sous la ligne de flottaison.
  *
- * Un ecran doit toujours finir par dire quelque chose. Mieux vaut annoncer
- * « indisponible » a tort que ne rien annoncer du tout.
+ * Le repli n'a d'ailleurs JAMAIS ete declenche en conditions reelles : la trace
+ * `[health]` ci-dessous n'est jamais apparue dans le journal.
+ *
+ * Ce garde-fou est donc une PRECAUTION, pas la correction d'un defaut constate.
+ * Il est conserve parce que borner un appel au pont natif reste juste : un ecran
+ * doit toujours finir par dire quelque chose, et mieux vaut annoncer
+ * « indisponible » a tort que ne rien annoncer du tout. Mais que personne ne
+ * cherche le bug qu'il est cense avoir corrige — il n'y en a pas.
  */
 function avecDelai<T>(promesse: Promise<T>, ms: number, repli: T): Promise<T> {
   return new Promise<T>((resolve) => {
@@ -117,9 +126,10 @@ export async function hasStepsPermission(): Promise<boolean> {
     const status = await statutSdk();
     if (status !== SdkAvailabilityStatus.SDK_AVAILABLE) return false;
     // `initialize()` et `getGrantedPermissions()` passent par le meme pont natif
-    // et peuvent rester en suspens pour la meme raison : on les borne aussi.
-    // Sans cela, l'ecran repasserait de « disponible » a fige des la ligne
-    // suivante — on aurait deplace le blocage sans le supprimer.
+    // et pourraient rester en suspens pour la meme raison : on les borne aussi,
+    // par coherence. Borner le seul `getSdkStatus()` reviendrait a deplacer le
+    // risque d'une ligne a la suivante. (Precaution, comme `avecDelai` : aucun
+    // blocage n'a ete constate sur ces appels non plus.)
     const pret = await avecDelai(
       Promise.resolve().then(() => initialize()).then(() => true),
       DELAI_NATIF_MS,

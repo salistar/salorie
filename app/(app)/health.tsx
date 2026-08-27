@@ -117,8 +117,10 @@ export default function HealthScreen() {
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const walkRef = React.useRef<any>(null);
 
-  // Extrait de l'effet pour etre rejouable : quand le pont natif n'a pas repondu,
-  // l'ecran propose « Reessayer » plutot que d'obliger a quitter l'application.
+  // Extrait de l'effet pour etre rejouable : si Health Connect est annonce
+  // indisponible, l'ecran propose « Reessayer » plutot que d'obliger a quitter
+  // l'application. (Le cas ne s'est pas presente en test le 27/08 — l'ecran
+  // fonctionnait ; c'est une sortie de secours, pas la correction d'un defaut.)
   const verifierDisponibilite = React.useCallback(async () => {
     setAvailable(null);
     const avail = await isHealthAvailable();
