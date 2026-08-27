@@ -207,7 +207,11 @@ export default function PageProjection() {
                 </label>
 
                 <svg viewBox="0 0 600 130" className="courbe-proj" role="img" aria-hidden>
-                  <path d={chemin} fill="none" stroke="#2e8b57" strokeWidth="2.5" strokeLinejoin="round" />
+                  {/* La courbe suit l'accent du theme. Figee au vert de marque,
+                      elle s'effacait presque sur le theme Argente et jurait sur
+                      le Rose : une courbe de donnees doit rester LISIBLE avant
+                      d'etre a la couleur de la marque. */}
+                  <path d={chemin} fill="none" stroke="var(--accent, #2e8b57)" strokeWidth="2.5" strokeLinejoin="round" />
                 </svg>
 
                 <div className="grille-series">
