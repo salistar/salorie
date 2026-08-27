@@ -1,0 +1,66 @@
+name: Design system
+
+# Ce qui empeche les six themes de se defaire.
+# ---------------------------------------------------------------------------
+# Le chantier des themes a bute trois fois sur la meme classe de probleme : un
+# fichier genere modifie a la main, une palette qui cesse d'atteindre l'ecran,
+# une couleur derivee qui passe sous le seuil de contraste. Aucun de ces trois
+# defauts ne produit d'erreur — l'application compile, se lance, et rend une
+# interface fausse.
+#
+# Ces controles sont donc la seule chose qui les rende visibles. Ils tournent
+# sur chaque poussee touchant le design, et ils DOIVENT rester bloquants : un
+# controle qu'on laisse rouge cesse d'etre un controle.
+
+on:
+  push:
+    paths:
+      - 'design/**'
+      - 'constants/**'
+      - 'scripts/generer-themes.js'
+      - 'scripts/verifier-contraste*.js'
+      - 'scripts/manifeste-images.js'
+      - 'assets/images.manifest.json'
+      - 'web/app/**.css'
+      - 'lib/ThemeContext.tsx'
+      - '.github/workflows/design-system.yml'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Installer les dependances
+        run: npm ci --no-audit --no-fund
+
+      - name: Les fichiers generes correspondent a leur source
+        # design/themes.json est la seule source des couleurs. Si quelqu'un
+        # modifie themesGeneres.ts ou themes.generated.css a la main, sa
+        # modification serait ecrasee a la prochaine generation, sans prevenir.
+        run: node scripts/generer-themes.js --verifier
+
+      - name: Contraste des six palettes
+        run: node scripts/verifier-contraste.js
+
+      - name: Contraste de la palette mobile derivee
+        # La partie la plus exposee : ces couleurs ne sont pas choisies, elles
+        # sont calculees. Onze paires sont passees sous le seuil des la premiere
+        # execution de ce controle.
+        run: node scripts/verifier-contraste-mobile.js
+
+      - name: Aucune image hors manifeste
+        run: node scripts/manifeste-images.js --verifier
+
+      - name: Typage
+        run: npx tsc --noEmit
+
+      - name: Tests
+        run: npm test

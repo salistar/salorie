@@ -23,71 +23,28 @@
 // point faible des badges écrits à la main.
 import { useMemo } from 'react';
 import { useTheme } from '../lib/ThemeContext';
+import { THEMES, CleTheme } from './themesGeneres';
+import { paletteComplete } from './derivationThemes';
 
-export type Tokens = ReturnType<typeof makeTokens>;
+export type Tokens = ReturnType<typeof paletteComplete>;
 
-export function makeTokens(isDark: boolean) {
-  return {
-    // ── Surfaces, de la plus basse à la plus haute ────────────────────────────
-    /** Fond de l'écran. */
-    bg: isDark ? '#0f1419' : '#f8fafc',
-    /** Carte, feuille, panneau posé sur le fond. */
-    surface: isDark ? '#1a1f2a' : '#ffffff',
-    /** Carte posée SUR une carte (modale, tuile active). */
-    surfaceRaised: isDark ? '#1f2833' : '#ffffff',
-    /** Creux : champ de saisie, zone inactive, piste de barre de progression. */
-    surfaceSunken: isDark ? '#161c23' : '#f1f5f9',
-
-    // ── Texte ─────────────────────────────────────────────────────────────────
-    /** Texte principal. */
-    text: isDark ? '#ecedee' : '#0f172a',
-    /** Texte secondaire : légendes, unités, aides. */
-    textMuted: isDark ? '#94a3b8' : '#64748b',
-    /** Texte tertiaire : horodatages, mentions discrètes. */
-    textFaint: isDark ? '#64748b' : '#94a3b8',
-    /** Texte posé sur une couleur d'accent ou sémantique pleine. */
-    onAccent: '#ffffff',
-
-    // ── Traits ────────────────────────────────────────────────────────────────
-    border: isDark ? '#2d3543' : '#e2e8f0',
-    borderStrong: isDark ? '#404a5a' : '#cbd5e1',
-
-    // ── Marque ────────────────────────────────────────────────────────────────
-    accent: isDark ? '#4ade80' : '#2e8b57',
-    /** Fond teinté de marque : puce active, tuile sélectionnée. */
-    accentSoft: isDark ? '#14331f' : '#eaf4ee',
-    /** Marque appuyée : état pressé, contraste renforcé. */
-    accentStrong: isDark ? '#86efac' : '#1d6440',
-
-    // ── Sémantique : base pleine, fond doux, encre lisible SUR le fond doux ───
-    success: isDark ? '#34d399' : '#10b981',
-    successSoft: isDark ? '#0f2e21' : '#ecfdf3',
-    successInk: isDark ? '#6ee7b7' : '#065f46',
-
-    warning: isDark ? '#f59e0b' : '#d97706',
-    warningSoft: isDark ? '#372c17' : '#fef3c7',
-    warningInk: isDark ? '#fcd34d' : '#92400e',
-
-    danger: isDark ? '#f87171' : '#dc2626',
-    dangerSoft: isDark ? '#3a221d' : '#fef2f2',
-    dangerInk: isDark ? '#fca5a5' : '#991b1b',
-
-    info: isDark ? '#7dd3fc' : '#0284c7',
-    infoSoft: isDark ? '#0c2b3a' : '#e0f2fe',
-    infoInk: isDark ? '#bae6fd' : '#075985',
-
-    // ── Voiles et superpositions ──────────────────────────────────────────────
-    /** Voile derrière une modale. */
-    scrim: 'rgba(0,0,0,0.55)',
-    /** Surface translucide posée sur une photo ou la caméra. */
-    glass: isDark ? 'rgba(15,20,25,0.72)' : 'rgba(255,255,255,0.82)',
-    /** Séparateur très léger sur fond translucide. */
-    hairline: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.07)',
-
-    /** Vrai en mode sombre — pour les rares cas qui ne sont pas une couleur
-     *  (choix d'une image, d'un `barStyle`, d'un `keyboardAppearance`). */
-    isDark,
-  } as const;
+export function makeTokens(theme: CleTheme | boolean): Tokens {
+  // ⚠ SIGNATURE ELARGIE, PAS REMPLACEE.
+  // Cette fonction recevait un booleen `isDark`. Elle accepte desormais l'une
+  // des six cles de theme — mais continue d'accepter le booleen, car du code
+  // ancien le passe encore. `true` devient Obsidian, `false` devient Ivory :
+  // les deux themes par defaut de design/themes.json, et non deux palettes
+  // improvisees pour l'occasion.
+  const cle: CleTheme =
+    typeof theme === 'boolean' ? (theme ? 'obsidian' : 'ivory') : theme;
+  // ⚠ UNE CLE INCONNUE NE DOIT PAS FAIRE PLANTER L'ECRAN.
+  // `THEMES[cle]` rendait `undefined`, et la derivation levait aussitot
+  // « Cannot read properties of undefined ». Trois cas mènent la : une valeur
+  // ancienne restee dans AsyncStorage, une preference venue d'une version plus
+  // recente installee sur un autre appareil, ou un contexte simule dans un
+  // test. Aucun ne justifie un ecran blanc — on retombe sur le theme clair par
+  // defaut, exactement comme le web le fait avec ses alias.
+  return paletteComplete(THEMES[cle] ?? THEMES.ivory);
 }
 
 /**
@@ -97,11 +54,12 @@ export function makeTokens(isDark: boolean) {
  * décider ce qu'est « une carte en sombre », il se contente de le demander.
  */
 export function useTokens(): Tokens {
-  const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
+  // `theme` porte l'une des six cles ; `resolved` reste expose pour le code qui
+  // ne raisonne qu'en clair/sombre.
+  const { theme } = useTheme();
   // Mémorisé : l'objet sert de dépendance à des `useMemo(makeStyles)` dans les
   // écrans. Le recréer à chaque rendu reconstruirait toutes leurs feuilles de style.
-  return useMemo(() => makeTokens(isDark), [isDark]);
+  return useMemo(() => makeTokens(theme), [theme]);
 }
 
 /**
