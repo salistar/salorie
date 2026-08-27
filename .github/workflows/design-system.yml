@@ -39,7 +39,21 @@ jobs:
           cache: npm
 
       - name: Installer les dependances
-        run: npm ci --no-audit --no-fund
+        # ⚠ PAS `npm ci`. Le projet embarque des dependances en conflit de pairs
+        # (React 19 RC tire par jest-expo) : `npm ci` les refuse et s'arrete.
+        # Les autres workflows emploient tous cette forme — s'en ecarter n'a
+        # servi qu'a faire echouer ce controle des sa premiere execution.
+        run: npm install --legacy-peer-deps
+
+      - name: Ecarter les sous-dependances React 19 RC de jest-expo
+        # Sans ce menage, deux React coexistent et la suite de tests plante sur
+        # des erreurs de hooks sans rapport avec le code teste.
+        run: |
+          rm -rf node_modules/jest-expo/node_modules/react
+          rm -rf node_modules/jest-expo/node_modules/react-dom
+          rm -rf node_modules/jest-expo/node_modules/react-server-dom-webpack
+          rm -rf node_modules/jest-expo/node_modules/react-test-renderer
+          rm -rf node_modules/jest-expo/node_modules/@types/react
 
       - name: Les fichiers generes correspondent a leur source
         # design/themes.json est la seule source des couleurs. Si quelqu'un
