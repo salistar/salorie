@@ -1,7 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import ThemeToggle from './ThemeToggle';
+// Le selecteur a SIX pastilles remplace le bouton Clair/Sombre/Auto.
+// Les anciennes valeurs "light" et "dark", deja enregistrees dans le
+// localStorage des utilisateurs, continuent de s'appliquer : le CSS genere
+// porte des alias pour elles. Sans quoi leur preference cesserait simplement
+// d'etre respectee, sans erreur et sans que personne comprenne pourquoi.
+import SelecteurTheme from '../components/ui/SelecteurTheme';
 import { sectionsVisibles, libelleRole, type Role, type Scope } from '../lib/scopes';
 
 // Le menu n'est plus une liste figee : il est DERIVE des droits du compte connecte
@@ -74,7 +79,7 @@ export default function Sidebar() {
             <span className="sb-email">{session.email}</span>
           </div>
         ) : null}
-        <ThemeToggle />
+        <SelecteurTheme compact />
         <form action="/api/auth/logout" method="post">
           <button type="submit" className="sb-logout">⎋ Déconnexion</button>
         </form>
