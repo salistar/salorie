@@ -18,9 +18,20 @@ export const runtime = 'nodejs';
 //
 // 303 (See Other) et non 302 : apres un POST, c'est le code qui impose au
 // navigateur de suivre en GET. Un 302 laisse certains clients rejouer le POST.
-function deconnecter(req: NextRequest) {
-  const url = new URL('/login?deconnexion=1', req.url);
-  const res = NextResponse.redirect(url, 303);
+//
+// ⚠ REDIRECTION RELATIVE, ET SURTOUT PAS `NextResponse.redirect(new URL(..., req.url))`.
+// Derriere Caddy, `req.url` porte l'adresse INTERNE du conteneur : l'en-tete
+// Location partait vers `http://localhost:3000/login` et le navigateur affichait
+// ERR_CONNECTION_REFUSED. Constate en production le 27/08/2026.
+//
+// Un chemin relatif est autorise par la RFC 7231 et resolu par le navigateur
+// contre l'URL courante : aucune detection d'hote, donc rien a casser le jour
+// ou le domaine change — et il a deja change une fois cette annee.
+function deconnecter(_req: NextRequest) {
+  const res = new NextResponse(null, {
+    status: 303,
+    headers: { Location: '/login?deconnexion=1' },
+  });
   res.cookies.set(AUTH_COOKIE, '', { httpOnly: true, path: '/', maxAge: 0 });
   return res;
 }
