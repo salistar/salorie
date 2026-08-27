@@ -28,7 +28,8 @@ import ScreenTopBar from '../../components/ScreenTopBar';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useTheme, ThemeMode } from '../../lib/ThemeContext';
+import { useTheme, ChoixTheme } from '../../lib/ThemeContext';
+import SelecteurTheme from '../../components/ui/SelecteurTheme';
 import { useTranslation, Language, getLanguageName } from '../../lib/i18n';
 import { getMLConsent, setMLConsent } from '../../lib/alConsent';
 import { getDietPrefs, setDietPrefs, DietPref } from '../../lib/dietPrefs';
@@ -36,7 +37,12 @@ import { Utensils } from 'lucide-react-native';
 
 export default function PreferencesScreen() {
   const { user } = useUser();
-  const { mode: theme, setMode: setTheme, colors, resolved } = useTheme();
+  // ⚠ `setMode` ne connait que light / dark / system. Il ne peut donc PAS
+  // restaurer un theme enregistre parmi les six : « gold » ne correspondant a
+  // aucune de ses trois valeurs, il retombait sur « system » — le reglage de
+  // l'utilisateur se perdait a chaque ouverture de l'ecran, sans erreur.
+  // `choix` et `setTheme` portent les six.
+  const { choix, setTheme, colors, resolved } = useTheme();
   const tPrimary = resolved === 'dark' ? '#fff' : Colors.light.gray[900];
   const tMuted = resolved === 'dark' ? '#9BA1A6' : Colors.light.gray[500];
   const isDark = resolved === 'dark';
@@ -100,8 +106,10 @@ export default function PreferencesScreen() {
         if (userDoc.exists()) {
           const data = userDoc.data();
           const prefs = data.preferences || {};
-          if (prefs.theme && prefs.theme !== theme) {
-            setTheme(prefs.theme as ThemeMode);
+          if (prefs.theme && prefs.theme !== choix) {
+            // Les profils anciens portent « light » / « dark » : le contexte
+            // les traduit lui-meme vers Ivory et Obsidian.
+            setTheme(prefs.theme as ChoixTheme);
           }
           if (prefs.language && prefs.language !== language) {
             setLanguage(prefs.language as Language);
@@ -138,28 +146,6 @@ export default function PreferencesScreen() {
     }
   };
 
-  const ThemeCard = ({ type, label, icon: Icon }: any) => {
-    const isSelected = theme === type;
-    return (
-      <TouchableOpacity
-        style={[styles.themeCard, isSelected && styles.themeCardSelected]}
-        onPress={() => {
-          setTheme(type as ThemeMode);
-          updatePreference('theme', type);
-        }}
-      >
-        <View style={[styles.themeIconWrapper, isSelected && { backgroundColor: Colors.light.primary }]}>
-          <Icon size={24} color={isSelected ? Colors.light.white : isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} />
-        </View>
-        <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.themeLabel, isSelected && styles.themeLabelSelected]}>{label}</Text>
-        {isSelected && (
-          <View style={styles.selectedBadge}>
-            <CheckCircle2 size={12} color={Colors.light.white} />
-          </View>
-        )}
-      </TouchableOpacity>
-    );
-  };
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: resolved === 'dark' ? '#0f1419' : Colors.light.white }]}>
@@ -176,11 +162,12 @@ export default function PreferencesScreen() {
             <Text style={[styles.sectionDesc, { color: tMuted }]}>{t('prefs.appearance_desc')}</Text>
           </View>
 
-          <View style={styles.themeRow}>
-            <ThemeCard type="light" label={t('prefs.light')} icon={Sun} />
-            <ThemeCard type="dark" label={t('prefs.dark')} icon={Moon} />
-            <ThemeCard type="system" label={t('prefs.system')} icon={Smartphone} />
-          </View>
+          {/* Les trois cartes Clair / Sombre / Systeme cedent la place aux six
+              palettes. Elles n'ouvraient que deux des six themes partages, et
+              rien dans l'ecran ne laissait deviner que les quatre autres
+              existaient. Le choix est enregistre dans le profil comme avant :
+              `onChoix` reprend exactement ce que faisait `updatePreference`. */}
+          <SelecteurTheme onChoix={(c) => updatePreference('theme', c)} />
 
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: tPrimary }]}>{t('prefs.language')}</Text>
