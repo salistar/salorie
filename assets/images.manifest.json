@@ -23,17 +23,67 @@
     "illustrations/gain_weight.jpg": "deux personnes, cordes de battle rope — remplacee le 27/08/2026",
     "illustrations/workout.jpg": "femme faisant des abdominaux — remplacee le 27/08/2026",
     "illustrations/running.jpg": "femme en posture de yoga — remplacee le 27/08/2026",
-    "_note": "Verdicts rendus en REGARDANT chaque image. Fichiers conserves sur le disque, plus references."
+    "_note": "Verdicts rendus en REGARDANT chaque image. Fichiers conserves sur le disque, plus references.",
+    "exercises/* (38 fichiers)": "photos de demonstration avec des personnes — remplacees par des pictogrammes le 27/08/2026",
+    "illustrations/female.jpg": "portrait de femme (choix du genre) — remplace par le symbole de Venus",
+    "illustrations/male.jpg": "portrait d homme (choix du genre) — remplace par le symbole de Mars"
   },
   "imagesNonUtilisees": [
-    "abstraits/hero-progression.jpg",
     "android-icon-background.png",
     "android-icon-foreground.png",
     "android-icon-monochrome.png",
+    "exercises/abs.jpg",
+    "exercises/barbell_row.jpg",
+    "exercises/bench_press.jpg",
+    "exercises/bicep_curl.jpg",
+    "exercises/bulgarian_split.jpg",
+    "exercises/cable_crossover.jpg",
+    "exercises/calf_raise.jpg",
+    "exercises/chest_fly.jpg",
+    "exercises/crunches.jpg",
+    "exercises/cycling.jpg",
+    "exercises/deadlift.jpg",
+    "exercises/dumbbell_row.jpg",
+    "exercises/face_pull.jpg",
+    "exercises/front_raise.jpg",
+    "exercises/hammer_curl.jpg",
+    "exercises/hanging_knee.jpg",
+    "exercises/hiking.jpg",
+    "exercises/hip_thrust.jpg",
+    "exercises/incline_bench.jpg",
+    "exercises/lat_pulldown.jpg",
+    "exercises/lateral_raise.jpg",
+    "exercises/leg_curl.jpg",
+    "exercises/leg_extension.jpg",
+    "exercises/leg_press.jpg",
+    "exercises/lunges.jpg",
+    "exercises/plank.jpg",
+    "exercises/plankSec.jpg",
+    "exercises/preacher_curl.jpg",
+    "exercises/pullup.jpg",
+    "exercises/pushups.jpg",
+    "exercises/romanian_dl.jpg",
+    "exercises/rowing.jpg",
+    "exercises/running.jpg",
+    "exercises/russian_twist.jpg",
+    "exercises/shoulder_press.jpg",
+    "exercises/squat.jpg",
+    "exercises/squats.jpg",
+    "exercises/swimming.jpg",
+    "exercises/tricep_dips.jpg",
+    "exercises/tricep_pushdown.jpg",
+    "exercises/walking.jpg",
     "favicon.png",
     "icon.png",
+    "illustrations/analytics_cover.jpg",
+    "illustrations/dashboard_cover.jpg",
+    "illustrations/female.jpg",
     "illustrations/gain_weight.jpg",
+    "illustrations/lose_weight.jpg",
+    "illustrations/male.jpg",
+    "illustrations/measure.jpg",
     "illustrations/running.jpg",
+    "illustrations/scale.jpg",
     "illustrations/signin_hero.jpg",
     "illustrations/workout.jpg",
     "logo.png",
@@ -49,18 +99,22 @@
     "photos/food_4.jpg",
     "photos/food_5.jpg",
     "photos/fruits_1.jpg",
+    "photos/fruits_2.jpg",
     "photos/fruits_3.jpg",
     "photos/fruits_4.jpg",
+    "photos/gym_0.jpg",
     "photos/gym_1.jpg",
     "photos/gym_3.jpg",
     "photos/gym_4.jpg",
     "photos/gym_5.jpg",
+    "photos/mealprep_0.jpg",
     "photos/mealprep_1.jpg",
     "photos/mealprep_3.jpg",
     "photos/mealprep_4.jpg",
     "photos/medfood_3.jpg",
     "photos/medfood_4.jpg",
     "photos/moroccan_5.jpg",
+    "photos/running_0.jpg",
     "photos/running_1.jpg",
     "photos/running_3.jpg",
     "photos/running_4.jpg",
@@ -80,8 +134,10 @@
     "photos/water_2.jpg",
     "photos/water_3.jpg",
     "photos/wellness_1.jpg",
+    "photos/wellness_2.jpg",
     "photos/wellness_3.jpg",
     "photos/wellness_4.jpg",
+    "photos/yoga_0.jpg",
     "photos/yoga_1.jpg",
     "photos/yoga_2.jpg",
     "photos/yoga_3.jpg",
@@ -109,6 +165,18 @@
         "components/HomeDiscover.tsx"
       ]
     },
+    "abstraits/hero-progression.jpg": {
+      "conforme": true,
+      "sujet": "degrade abstrait + cercles concentriques",
+      "note": "genere : aucune personne possible",
+      "existe": true,
+      "usages": [
+        "app/(app)/health-export.tsx",
+        "app/(app)/streaks.tsx",
+        "app/(onboarding)/index.tsx",
+        "components/HomeDiscover.tsx"
+      ]
+    },
     "abstraits/hero-sante.jpg": {
       "conforme": true,
       "sujet": "degrade abstrait + cercles concentriques",
@@ -116,7 +184,9 @@
       "existe": true,
       "usages": [
         "app/(app)/health.tsx",
+        "app/(app)/metabolic-twin.tsx",
         "app/(app)/mood-tracker.tsx",
+        "app/(app)/sleep-tracker.tsx",
         "app/(onboarding)/index.tsx",
         "components/SplashIntro.tsx"
       ]
@@ -127,6 +197,7 @@
       "note": "genere : aucune personne possible",
       "existe": true,
       "usages": [
+        "app/(app)/adaptive-tdee.tsx",
         "app/(app)/log-exercise.tsx",
         "app/(app)/social.tsx",
         "app/(onboarding)/index.tsx"
@@ -142,409 +213,389 @@
         "components/WaterIntakeCard.tsx"
       ]
     },
-    "exercises/abs.jpg": {
+    "exercices/abs.png": {
       "conforme": true,
-      "sujet": "schema au trait, sans visage — pictogramme neutre",
-      "note": null,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/move-goals.tsx"
       ]
     },
-    "exercises/barbell_row.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/bench_press.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/bicep_curl.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/bulgarian_split.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/cable_crossover.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/calf_raise.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/chest_fly.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/crunches.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/cycling.jpg": {
+    "exercices/barbell_row.png": {
       "conforme": true,
-      "sujet": "velo seul",
-      "note": null,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
-    "exercises/deadlift.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/dumbbell_row.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/face_pull.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/front_raise.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/hammer_curl.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/hanging_knee.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/hiking.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/hip_thrust.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/incline_bench.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/lat_pulldown.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/lateral_raise.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/leg_curl.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/leg_extension.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/workout-details.tsx"
-      ]
-    },
-    "exercises/leg_press.jpg": {
+    "exercices/bench_press.png": {
       "conforme": true,
-      "sujet": "machine seule",
-      "note": null,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
-    "exercises/lunges.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
+    "exercices/bicep_curl.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/bulgarian_split.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/cable_crossover.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/calf_raise.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/chest_fly.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/crunches.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/cycling.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/deadlift.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/dumbbell_row.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/face_pull.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/front_raise.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/genre-femme.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(onboarding)/index.tsx"
+      ]
+    },
+    "exercices/genre-homme.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(onboarding)/index.tsx"
+      ]
+    },
+    "exercices/hammer_curl.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/hanging_knee.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/hiking.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/hip_thrust.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/incline_bench.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/lat_pulldown.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/lateral_raise.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/leg_curl.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/leg_extension.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/leg_press.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
+      "existe": true,
+      "usages": [
+        "app/(app)/workout-details.tsx"
+      ]
+    },
+    "exercices/lunges.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/move-goals.tsx",
         "app/(app)/workout-details.tsx"
       ]
     },
-    "exercises/plank.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
+    "exercices/plank.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
-    "exercises/plankSec.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
+    "exercices/plankSec.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/move-goals.tsx"
       ]
     },
-    "exercises/preacher_curl.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
+    "exercices/preacher_curl.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
-    "exercises/pullup.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
+    "exercices/pullup.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
-    "exercises/pushups.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
+    "exercices/pushups.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/move-goals.tsx"
       ]
     },
-    "exercises/romanian_dl.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
+    "exercices/romanian_dl.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
-    "exercises/rowing.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
+    "exercices/rowing.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
-    "exercises/running.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
+    "exercices/running.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
-    "exercises/russian_twist.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
+    "exercices/russian_twist.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
-    "exercises/shoulder_press.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
+    "exercices/shoulder_press.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
-    "exercises/squat.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
+    "exercices/squat.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
-    "exercises/squats.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
+    "exercices/squats.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/move-goals.tsx"
       ]
     },
-    "exercises/swimming.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
+    "exercices/swimming.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
-    "exercises/tricep_dips.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
+    "exercices/tricep_dips.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
-    "exercises/tricep_pushdown.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
+    "exercices/tricep_pushdown.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
       ]
     },
-    "exercises/walking.jpg": {
-      "conforme": false,
-      "sujet": "demonstration d exercice avec une personne",
-      "note": "personne identifiable — a remplacer par un pictogramme neutre sans visage",
-      "tolereJusquA": "2026-10-31",
+    "exercices/walking.png": {
+      "conforme": true,
+      "sujet": "pictogramme d equipement, dessine",
+      "note": "aucune personne possible : c est un objet, calcule",
       "existe": true,
       "usages": [
         "app/(app)/workout-details.tsx"
@@ -585,17 +636,6 @@
         "components/WaterIntakeCard.tsx"
       ]
     },
-    "illustrations/analytics_cover.jpg": {
-      "conforme": false,
-      "sujet": "quatre personnes autour d une table",
-      "note": "a remplacer",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/health-export.tsx",
-        "components/HomeDiscover.tsx"
-      ]
-    },
     "illustrations/birthdate.jpg": {
       "conforme": true,
       "sujet": "desserts aux fraises",
@@ -612,26 +652,6 @@
       "existe": true,
       "usages": [
         "app/(app)/calorie-budget.tsx"
-      ]
-    },
-    "illustrations/dashboard_cover.jpg": {
-      "conforme": false,
-      "sujet": "silhouette de femme en posture de yoga",
-      "note": "a remplacer",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/sleep-tracker.tsx"
-      ]
-    },
-    "illustrations/female.jpg": {
-      "conforme": false,
-      "sujet": "portrait de femme (choix du genre a l onboarding)",
-      "note": "a remplacer",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(onboarding)/index.tsx"
       ]
     },
     "illustrations/generating.jpg": {
@@ -666,38 +686,6 @@
         "app/(app)/substitutions.tsx"
       ]
     },
-    "illustrations/lose_weight.jpg": {
-      "conforme": false,
-      "sujet": "jambes et buste d une personne soulevant une barre",
-      "note": "a remplacer",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/adaptive-tdee.tsx",
-        "app/(onboarding)/index.tsx"
-      ]
-    },
-    "illustrations/male.jpg": {
-      "conforme": false,
-      "sujet": "portrait d homme (choix du genre a l onboarding)",
-      "note": "a remplacer",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(onboarding)/index.tsx"
-      ]
-    },
-    "illustrations/measure.jpg": {
-      "conforme": false,
-      "sujet": "femme au sol avec une roue abdominale",
-      "note": "a remplacer",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/streaks.tsx",
-        "app/(onboarding)/index.tsx"
-      ]
-    },
     "illustrations/plan.jpg": {
       "conforme": true,
       "sujet": "fauteuil face a la mer",
@@ -716,17 +704,6 @@
       "existe": true,
       "usages": [
         "app/(tabs)/profile.tsx"
-      ]
-    },
-    "illustrations/scale.jpg": {
-      "conforme": false,
-      "sujet": "trois femmes en cours de gym",
-      "note": "a remplacer",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "app/(app)/metabolic-twin.tsx",
-        "app/(onboarding)/index.tsx"
       ]
     },
     "illustrations/splash_bg.jpg": {
@@ -809,42 +786,10 @@
         "constants/heroImages.ts"
       ]
     },
-    "photos/fruits_2.jpg": {
-      "conforme": false,
-      "sujet": "marchande identifiable au premier plan",
-      "note": "a remplacer",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "components/PhotoStrip.tsx"
-      ]
-    },
-    "photos/gym_0.jpg": {
-      "conforme": false,
-      "sujet": "homme torse nu",
-      "note": "a remplacer",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "components/PhotoStrip.tsx",
-        "constants/heroImages.ts"
-      ]
-    },
     "photos/gym_2.jpg": {
       "conforme": true,
       "sujet": "rangee d halteres, aucune personne",
       "note": null,
-      "existe": true,
-      "usages": [
-        "components/PhotoStrip.tsx",
-        "constants/heroImages.ts"
-      ]
-    },
-    "photos/mealprep_0.jpg": {
-      "conforme": false,
-      "sujet": "VIANDE CRUE en gros plan — explicitement interdit",
-      "note": "a remplacer",
-      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "components/PhotoStrip.tsx",
@@ -933,17 +878,6 @@
       "note": null,
       "existe": true,
       "usages": [
-        "constants/heroImages.ts"
-      ]
-    },
-    "photos/running_0.jpg": {
-      "conforme": false,
-      "sujet": "femme courant en foret",
-      "note": "a remplacer",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "components/PhotoStrip.tsx",
         "constants/heroImages.ts"
       ]
     },
@@ -1039,27 +973,6 @@
       "conforme": true,
       "sujet": "main tenant une bougie — mains seules, autorise",
       "note": null,
-      "existe": true,
-      "usages": [
-        "components/PhotoStrip.tsx",
-        "constants/heroImages.ts"
-      ]
-    },
-    "photos/wellness_2.jpg": {
-      "conforme": false,
-      "sujet": "femme en meditation sur un rocher",
-      "note": "a remplacer",
-      "tolereJusquA": "2026-10-31",
-      "existe": true,
-      "usages": [
-        "components/PhotoStrip.tsx"
-      ]
-    },
-    "photos/yoga_0.jpg": {
-      "conforme": false,
-      "sujet": "femme en posture de yoga",
-      "note": "a remplacer",
-      "tolereJusquA": "2026-10-31",
       "existe": true,
       "usages": [
         "components/PhotoStrip.tsx",

@@ -259,7 +259,7 @@ export default function HealthExportScreen() {
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
         <Image
-          source={require('../../assets/images/illustrations/analytics_cover.jpg')}
+          source={require('../../assets/images/abstraits/hero-progression.jpg')}
           style={styles.cover}
           resizeMode="cover"
         />
