@@ -1,0 +1,188 @@
+/* FICHIER GENERE — NE PAS MODIFIER A LA MAIN.
+   Source : design/themes.json
+   Regenerer : node scripts/generer-themes.js
+   Toute modification directe sera ecrasee, et la CI la refusera. */
+
+/* Sans choix explicite : clair, ou sombre si le systeme le demande. */
+:root {
+  --theme-nom: 'Blanc';
+  color-scheme: light;
+  --bg: #FAFAF8;
+  --surface: #FFFFFF;
+  --surface2: #F1F2F4;
+  --border: #E6E8EC;
+  --text: #14181F;
+  --text-muted: #5B6470;
+  --accent: #16A06A;
+  --accent2: #0E7C51;
+  --accent-soft: #E3F5EC;
+  --success: #16A06A;
+  --warning: #B27A10;
+  --danger: #C4392F;
+  --gradient-hero: linear-gradient(135deg, #16A06A, #0E7C51);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #0A0C10;
+    --surface: #12151C;
+    --surface2: #1A1E27;
+    --border: #232936;
+    --text: #F4F6F8;
+    --text-muted: #9AA3B2;
+    --accent: #34D98F;
+    --accent2: #22B573;
+    --accent-soft: #123125;
+    --success: #34D98F;
+    --warning: #E8B84B;
+    --danger: #F26D6D;
+    color-scheme: dark;
+    --gradient-hero: linear-gradient(135deg, #34D98F, #22B573);
+  }
+}
+
+/* Les six thèmes, quand l'un est explicitement choisi. */
+[data-theme='light'] {
+  --theme-nom: 'Blanc';
+  color-scheme: light;
+  --bg: #FAFAF8;
+  --surface: #FFFFFF;
+  --surface2: #F1F2F4;
+  --border: #E6E8EC;
+  --text: #14181F;
+  --text-muted: #5B6470;
+  --accent: #16A06A;
+  --accent2: #0E7C51;
+  --accent-soft: #E3F5EC;
+  --success: #16A06A;
+  --warning: #B27A10;
+  --danger: #C4392F;
+  --gradient-hero: linear-gradient(135deg, #16A06A, #0E7C51);
+}
+
+[data-theme='dark'] {
+  --theme-nom: 'Noir';
+  color-scheme: dark;
+  --bg: #0A0C10;
+  --surface: #12151C;
+  --surface2: #1A1E27;
+  --border: #232936;
+  --text: #F4F6F8;
+  --text-muted: #9AA3B2;
+  --accent: #34D98F;
+  --accent2: #22B573;
+  --accent-soft: #123125;
+  --success: #34D98F;
+  --warning: #E8B84B;
+  --danger: #F26D6D;
+  --gradient-hero: linear-gradient(135deg, #34D98F, #22B573);
+}
+
+[data-theme='obsidian'] {
+  --theme-nom: 'Noir';
+  color-scheme: dark;
+  --bg: #0A0C10;
+  --surface: #12151C;
+  --surface2: #1A1E27;
+  --border: #232936;
+  --text: #F4F6F8;
+  --text-muted: #9AA3B2;
+  --accent: #34D98F;
+  --accent2: #22B573;
+  --accent-soft: #123125;
+  --success: #34D98F;
+  --warning: #E8B84B;
+  --danger: #F26D6D;
+  --gradient-hero: linear-gradient(135deg, #34D98F, #22B573);
+}
+
+[data-theme='ivory'] {
+  --theme-nom: 'Blanc';
+  color-scheme: light;
+  --bg: #FAFAF8;
+  --surface: #FFFFFF;
+  --surface2: #F1F2F4;
+  --border: #E6E8EC;
+  --text: #14181F;
+  --text-muted: #5B6470;
+  --accent: #16A06A;
+  --accent2: #0E7C51;
+  --accent-soft: #E3F5EC;
+  --success: #16A06A;
+  --warning: #B27A10;
+  --danger: #C4392F;
+  --gradient-hero: linear-gradient(135deg, #16A06A, #0E7C51);
+}
+
+[data-theme='blush'] {
+  --theme-nom: 'Rose';
+  color-scheme: light;
+  --bg: #FFF7F9;
+  --surface: #FFFFFF;
+  --surface2: #FFEDF2;
+  --border: #EDC6D5;
+  --text: #2B1B22;
+  --text-muted: #6E5560;
+  --accent: #E8467C;
+  --accent2: #FF8FB1;
+  --accent-soft: #FFE1EB;
+  --success: #1F9E6E;
+  --warning: #B27A10;
+  --danger: #C4392F;
+  --gradient-hero: linear-gradient(135deg, #FF6B9D, #FF9E7D);
+}
+
+[data-theme='ocean'] {
+  --theme-nom: 'Bleu';
+  color-scheme: dark;
+  --bg: #0B1220;
+  --surface: #111A2C;
+  --surface2: #18243B;
+  --border: #233248;
+  --text: #EDF2FA;
+  --text-muted: #94A4BE;
+  --accent: #3E8BFF;
+  --accent2: #4DD8E6;
+  --accent-soft: #132743;
+  --success: #3ECF8E;
+  --warning: #E8B84B;
+  --danger: #F26D6D;
+  --gradient-hero: linear-gradient(135deg, #2563EB, #06B6D4);
+}
+
+[data-theme='platinum'] {
+  --theme-nom: 'Argenté';
+  color-scheme: light;
+  --bg: #F4F5F7;
+  --surface: #FFFFFF;
+  --surface2: #EBEDF0;
+  --border: #C9CED6;
+  --text: #1C2128;
+  --text-muted: #5A6472;
+  --accent: #6B7A90;
+  --accent2: #4C5867;
+  --accent-soft: #E4E8EE;
+  --success: #16A06A;
+  --warning: #B27A10;
+  --danger: #C4392F;
+  --border-soft: #E8EAEE;
+  --gradient-hero: linear-gradient(135deg, #6B7A90, #4C5867);
+}
+
+[data-theme='gold'] {
+  --theme-nom: 'Doré';
+  color-scheme: dark;
+  --bg: #0F0D08;
+  --surface: #17140D;
+  --surface2: #211C12;
+  --border: #3A3222;
+  --text: #F7F3E8;
+  --text-muted: #A99C82;
+  --accent: #D4A94E;
+  --accent2: #F0C868;
+  --accent-soft: #2A2213;
+  --success: #5FBF8C;
+  --warning: #D4A94E;
+  --danger: #E07A6B;
+  --gradient-hero: linear-gradient(135deg, #B8860B, #F5D061);
+}
