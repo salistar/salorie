@@ -105,7 +105,10 @@ export default function PagePanier() {
             <span className="me-sous">kcal</span>
           </div>
           <div className="tuile-serie">
-            <span className="serie-nombre" style={{ color: tient ? undefined : 'var(--rouge, #b3261e)' }}>
+            {/* `--rouge` n'existe dans aucune feuille de style : seul le repli
+                s'appliquait, donc la meme teinte sur les six themes. `--danger`
+                est le jeton reel, teinte par chaque theme pour rester lisible. */}
+            <span className="serie-nombre" style={{ color: tient ? undefined : 'var(--danger, #b3261e)' }}>
               {couverturePct}%
             </span>
             <span className="me-sous">{t('panierCouverture')}</span>
