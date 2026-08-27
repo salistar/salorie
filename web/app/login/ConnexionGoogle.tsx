@@ -37,6 +37,14 @@ function BoutonGoogle({ onErreur }: { onErreur: (m: string) => void }) {
         // le relais, echange l'identite contre le cookie admin, puis redirige.
         redirectUrl: '/login',
         redirectUrlComplete: '/login',
+        // ⚠ SANS CECI, ON NE PEUT PAS CHANGER DE COMPTE GOOGLE.
+        // Google reutilise silencieusement la session active : apres une
+        // deconnexion complete (cookie admin efface ET session Clerk fermee),
+        // un clic sur « Continuer avec Google » re-authentifiait quand meme le
+        // DERNIER compte utilise, sans jamais montrer le selecteur. Verifie le
+        // 27/08/2026 : le retour se faisait directement sur /admin.
+        // `select_account` force Google a poser la question.
+        oidcPrompt: 'select_account',
       });
     } catch (e: any) {
       setEnCours(false);
