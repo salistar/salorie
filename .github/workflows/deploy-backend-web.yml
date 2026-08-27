@@ -112,12 +112,24 @@ jobs:
             # serveur jusqu'au 13 aout 2026 — reclamee depuis le 29 juillet — elle laissait
             # POST /pipeline/webhook-sink ouvert a tout Internet.
             printf '%s\n' 'ADMIN_API_KEY=${{ secrets.ADMIN_API_KEY }}' >> .env.next
-            # Cle d'installation admin : absente = inscription fermee (bon defaut).
-            # Posee, elle rouvre /register a UN compte de plus — l'unique issue quand
-            # le mot de passe du back-office est perdu, les mots de passe etant en
-            # bcrypt et donc illisibles. Elle n'etait cablee NULLE PART avant le
-            # 21/08/2026, d'ou « aucune cle d'installation n'est configuree ».
-            printf '%s\n' 'ADMIN_SETUP_KEY=${{ secrets.ADMIN_SETUP_KEY }}' >> .env.next
+            # ADMIN_SETUP_KEY : RETIREE le 27/08/2026.
+            #
+            # Elle rouvrait /register a un compte de plus, et servait d'unique issue
+            # si le mot de passe du back-office etait perdu — les mots de passe
+            # etant en bcrypt, donc illisibles.
+            #
+            # Cette issue n'est plus l'unique : depuis le 27/08 les DEUX comptes
+            # sont owner et se connectent par Google, et idriss.kriouile.pro garde
+            # son mot de passe. Deux chemins independants subsistent donc.
+            #
+            # Sans cette variable, /api/auth/register repond 403 « Inscription
+            # fermee » — le bon defaut. Un nouvel administrateur se cree desormais
+            # depuis la page /admins, avec journal d'audit, plutot que par une cle
+            # partagee qui trainait dans les secrets du depot.
+            #
+            # Pour la retablir en urgence : reposer le secret ADMIN_SETUP_KEY et
+            # decommenter la ligne ci-dessous.
+            # printf '%s\n' 'ADMIN_SETUP_KEY=${{ secrets.ADMIN_SETUP_KEY }}' >> .env.next
             # MAIL_INGEST_KEY : cle partagee avec l'Email Worker Cloudflare qui poste les
             # mails de support@salorie.com sur POST /support-mail/ingest. Sans elle,
             # l'endpoint est ferme et les mails n'arrivent que sur le Gmail (forward).
