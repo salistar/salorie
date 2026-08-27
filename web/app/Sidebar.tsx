@@ -46,13 +46,19 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="sb-brand">
+      {/* La marque devient un LIEN vers le site public. Depuis le back-office,
+          rien ne ramenait a salorie.com : il fallait retaper l'adresse. Le logo
+          est l'endroit ou chacun clique d'instinct pour « rentrer ». */}
+      <a className="sb-brand" href="/" title="Retour au site public" style={{ textDecoration: 'none', color: 'inherit' }}>
         <span className="sb-logo">🔥</span>
         <div>
           <div className="sb-name">Salorie</div>
+          {/* « Back-office » n'est pas decoratif : c'est ce qui empeche de
+              confondre cette interface avec l'espace membre, alors que les deux
+              vivent sur le meme domaine et partagent la meme marque. */}
           <div className="sb-sub">Back-office</div>
         </div>
-      </div>
+      </a>
       <nav className="sb-nav">
         {sections.map((n) => (
           <a key={n.href} href={n.href} className={`sb-link${isActive(n.href) ? ' active' : ''}`}>

@@ -171,7 +171,13 @@ export default function MeNav() {
       {ouvert ? <div className="nav-voile" onClick={() => setOuvert(false)} aria-hidden /> : null}
 
       <aside className={`me-nav${ouvert ? ' nav-ouverte' : ''}`} dir={sens}>
-        <a className="me-nav-marque" href="/me">
+        {/* La marque pointe vers le SITE PUBLIC, plus vers /me lui-meme.
+            Depuis l'espace membre, rien ne ramenait a salorie.com : le seul
+            chemin etait de retaper l'adresse. Un logo qui renvoie a la page ou
+            l'on se trouve deja ne sert a personne — c'est « rentrer » qu'on
+            attend d'un logo. L'accueil de l'espace reste accessible par le
+            premier lien du menu. */}
+        <a className="me-nav-marque" href="/" title="Retour au site public">
           {/* Le VRAI logo — l'exact fichier de l'app mobile, la marque doit etre
               la meme des deux cotes. */}
           <img className="me-nav-logo" src="/me/logo.png" alt="" width={28} height={28} />
