@@ -18,6 +18,13 @@
     "ou mains seules. Pas de viande crue en gros plan."
   ],
   "_genere": "node scripts/manifeste-images.js",
+  "_retirees": {
+    "illustrations/signin_hero.jpg": "femme sur une presse a cuisses — remplacee le 27/08/2026",
+    "illustrations/gain_weight.jpg": "deux personnes, cordes de battle rope — remplacee le 27/08/2026",
+    "illustrations/workout.jpg": "femme faisant des abdominaux — remplacee le 27/08/2026",
+    "illustrations/running.jpg": "femme en posture de yoga — remplacee le 27/08/2026",
+    "_note": "Verdicts rendus en REGARDANT chaque image. Fichiers conserves sur le disque, plus references."
+  },
   "imagesNonUtilisees": [
     "abstraits/hero-progression.jpg",
     "android-icon-background.png",
