@@ -8,7 +8,6 @@ import { Bell, UtensilsCrossed, Dumbbell, Trophy, Newspaper, Sparkles } from 'lu
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
 
-const GREEN = '#2E8B57';
 
 const TXT: any = {
   en: { title: 'Quick start', notif: 'Notifications', log: 'Log a meal', diary: 'Diary', workout: 'Workout', races: 'Virtual races', journal: 'Journal', coach: 'AI Coach', a11yOpen: 'Open' },
@@ -18,16 +17,18 @@ const TXT: any = {
 
 export default function HomeQuickActions({ onLog }: { onLog?: () => void }) {
   const { resolved } = useTheme();
+  const k = useTokens();
   const { language } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme, plus d'un couple clair/sombre fige.
+  const accent = k.accent;
   const tok = useTokens();
   const card = tok.surface;
   const text = tok.text;
-  const chipBg = isDark ? '#243b2f' : '#EAF4EE';
+  const chipBg = k.accentSoft;
 
   const ACTIONS = [
     { icon: UtensilsCrossed, label: t.log, onPress: () => (onLog ? onLog() : router.push('/scan-camera' as any)) },
@@ -44,7 +45,7 @@ export default function HomeQuickActions({ onLog }: { onLog?: () => void }) {
         <Bell size={16} color={accent} />
         <Text style={[styles.title, { color: text }]}>{t.title}</Text>
         <TouchableOpacity onPress={() => router.push('/notifications' as any)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.notif}>
-          <Text style={styles.link}>{t.notif}</Text>
+          <Text style={[styles.link, { color: accent }]}>{t.notif}</Text>
         </TouchableOpacity>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
@@ -74,7 +75,7 @@ const styles = StyleSheet.create({
   // boîte — en arabe il venait buter contre le lien, sans un espace entre les deux.
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, paddingEnd: 16, gap: 8 },
   title: { fontSize: 15, fontWeight: '700', marginStart: 8, flex: 1 },
-  link: { fontSize: 12, color: GREEN, fontWeight: '700' },
+  link: { fontSize: 12, fontWeight: '700' },
   row: { gap: 10, paddingEnd: 16 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14 },
   chipTxt: { fontSize: 13, fontWeight: '600' },
