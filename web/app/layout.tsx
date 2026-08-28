@@ -18,10 +18,21 @@ export const metadata = {
 // clair puis bascule — le fameux flash blanc. Ce script est volontairement minuscule
 // et synchrone dans <head> : il lit le choix mémorisé et pose l'attribut. En son
 // absence, aucun attribut n'est posé et `prefers-color-scheme` décide.
+//
+// ⚠ IL LISAIT LA MAUVAISE CLE, ET N'ACCEPTAIT QUE DEUX VALEURS.
+// `salorie-admin-theme` etait la cle du back-office avant l'unification, et le
+// test n'admettait que 'dark' ou 'light'. Resultat : aucun des six themes
+// n'etait pose avant la premiere peinture. Choisir « Ocean » ou « Dore »
+// donnait une page claire, puis un basculement — precisement le flash que ce
+// script existe pour eviter.
+//
+// L'ancienne cle reste lue en second : les navigateurs qui la portent encore
+// ne doivent pas perdre leur reglage.
 const SCRIPT_THEME = `
 try {
-  var c = localStorage.getItem('salorie-admin-theme');
-  if (c === 'dark' || c === 'light') document.documentElement.setAttribute('data-theme', c);
+  var T = ['obsidian','ivory','blush','ocean','platinum','gold','dark','light'];
+  var c = localStorage.getItem('salorie-theme') || localStorage.getItem('salorie-admin-theme');
+  if (T.indexOf(c) >= 0) document.documentElement.setAttribute('data-theme', c);
 } catch (e) {}
 `;
 
