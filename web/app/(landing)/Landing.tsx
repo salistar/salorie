@@ -705,13 +705,17 @@ function Head({ title, sub, left }: { title: string; sub?: string; left?: boolea
   );
 }
 
+// ⚠ Le fond de la capture etait `#fff` en dur — c'est-a-dire exactement la
+// « vignette blanche » que la charte reproche, et la seule couleur de cette
+// page a ne suivre aucun theme. Sur Obsidian ou Dore, un rectangle blanc
+// s'allumait dans le cadre du telephone le temps du chargement.
 function Phone({ src, big = false, fade = false }: { src: string; big?: boolean; fade?: boolean }) {
   const h = big ? 600 : 540;
   return (
     <div className={fade ? "demo-fade" : undefined} style={{ height: h, width: big ? 296 : 266, padding: 10, borderRadius: 42, background: "linear-gradient(135deg, #1f2937, #0f172a)", boxShadow: "0 26px 60px rgba(15,23,42,0.35)", flex: "0 0 auto", position: "relative" }}>
       <div style={{ position: "absolute", top: 18, left: "50%", transform: "translateX(-50%)", width: 90, height: 18, borderRadius: 999, background: "#0f172a", zIndex: 2 }} />
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="Salorie" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 32, display: "block", background: "#fff" }} />
+      <img src={src} alt="Salorie" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 32, display: "block", background: "var(--t-surface)" }} />
     </div>
   );
 }
