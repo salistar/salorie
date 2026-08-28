@@ -293,23 +293,22 @@ export default function Landing({
    *  pas a son URL — et le lecteur arrive dans une langue qu'il n'a pas demandee. */
   langueForcee?: Lang;
 }) {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
   const [lang, setLang] = useState<Lang>(langueForcee ?? "fr");
   const [demo, setDemo] = useState(0);
 
   // Restore prefs.
   useEffect(() => {
-    const st = (localStorage.getItem("salorie-theme") as "light" | "dark") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     const nav = (typeof navigator !== "undefined" ? navigator.language : "").slice(0, 2);
     const detected: Lang = nav === "ar" ? "ar" : nav === "en" ? "en" : "fr";
     const sl = langueForcee || (localStorage.getItem("salorie-lang") as Lang) || detected;
-    setTheme(st); setLang(sl);
+    setLang(sl);
   }, []);
-  // Apply theme + dir/lang to <html>.
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("salorie-theme", theme);
-  }, [theme]);
+  // ⚠ LA LANDING NE GERE PLUS LE THEME — et surtout ne l'ECRIT plus.
+  // Elle en gardait une copie initialisee a "light". Au montage, l'effet
+  // ecrivait donc "light" dans localStorage AVANT que la valeur memorisee ne
+  // soit restauree : un theme « ocean » choisi puis rechargé revenait en
+  // clair. C'est le selecteur a six pastilles qui en est proprietaire, et le
+  // script du layout qui le pose avant la premiere peinture.
   useEffect(() => {
     document.documentElement.setAttribute("lang", lang);
     document.documentElement.setAttribute("dir", T[lang].dir);
