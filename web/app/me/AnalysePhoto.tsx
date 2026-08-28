@@ -91,7 +91,7 @@ export default function AnalysePhoto({ consigne, libelles, rendu, onReponse }: P
         </div>
         {apercu ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={apercu} alt={libelles.apercu} className="frigo-apercu" />
+          <img loading="lazy" decoding="async" src={apercu} alt={libelles.apercu} className="frigo-apercu" />
         ) : null}
         <p className="me-note">{libelles.notePhoto}</p>
       </section>

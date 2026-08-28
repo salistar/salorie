@@ -88,7 +88,7 @@ export default function MarketplacePage() {
           {listings.map((l) => (
             <div key={l.id} className="card" style={{ padding: 14, display: 'flex', gap: 12, alignItems: 'center' }}>
               {photoOf(l)
-                ? <img src={photoOf(l)} alt="annonce" style={{ width: 64, height: 64, borderRadius: 10, objectFit: 'cover', border: '1px solid #e5e7eb' }} />
+                ? <img loading="lazy" decoding="async" src={photoOf(l)} alt="annonce" style={{ width: 64, height: 64, borderRadius: 10, objectFit: 'cover', border: '1px solid #e5e7eb' }} />
                 : <div style={{ width: 64, height: 64, borderRadius: 10, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>🛒</div>}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis' }}>

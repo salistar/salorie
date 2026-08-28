@@ -95,7 +95,7 @@ export default function ModerationPage() {
           {pending.map((p) => (
             <div key={pid(p)} className="card" style={{ padding: 14, display: 'flex', gap: 12, alignItems: 'center' }}>
               {pphoto(p)
-                ? <img src={pphoto(p)} alt="étiquette" style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', border: '1px solid #e5e7eb' }} />
+                ? <img loading="lazy" decoding="async" src={pphoto(p)} alt="étiquette" style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', border: '1px solid #e5e7eb' }} />
                 : <div style={{ width: 56, height: 56, borderRadius: 10, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🏷️</div>}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis' }}>{pname(p)}</div>

@@ -117,7 +117,7 @@ export default function PageMedailles() {
             {liste.map((m, i) => (
               <li key={m.id || m.raceId || i} className="carte-medaille">
                 {m.imageUrl || m.image ? (
-                  <img src={m.imageUrl || m.image} alt="" className="medaille-img" />
+                  <img loading="lazy" decoding="async" src={m.imageUrl || m.image} alt="" className="medaille-img" />
                 ) : (
                   <div className="medaille-img vide">🏅</div>
                 )}
