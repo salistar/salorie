@@ -37,7 +37,22 @@ export function appliquerTheme(choix: CleThemeWeb) {
   else html.setAttribute('data-theme', choix);
 }
 
-export default function SelecteurTheme({ compact = false }: { compact?: boolean }) {
+interface Props {
+  compact?: boolean;
+  /** Appele apres un choix — pour l'enregistrer cote profil, par exemple. */
+  onChoix?: (choix: CleThemeWeb) => void;
+  /**
+   * Un theme venu d'AILLEURS (le profil Firestore, donc le telephone).
+   *
+   * ⚠ IL NE S'APPLIQUE QUE SI LE NAVIGATEUR N'A PAS DE CHOIX EXPLICITE.
+   * Sinon un reglage fait ici serait ecrase a chaque chargement par celui du
+   * telephone — l'utilisateur verrait sa selection revenir en arriere sans
+   * comprendre. Le distant est une PROPOSITION, pas une autorite.
+   */
+  themeDistant?: string | null;
+}
+
+export default function SelecteurTheme({ compact = false, onChoix, themeDistant }: Props) {
   const [choix, setChoix] = React.useState<CleThemeWeb>('system');
 
   React.useEffect(() => {
@@ -51,10 +66,29 @@ export default function SelecteurTheme({ compact = false }: { compact?: boolean 
     } catch { /* mode privé : on reste sur « système » */ }
   }, []);
 
+  // Le theme du profil s'applique une seule fois, et seulement en l'absence de
+  // choix local. `applique` empeche qu'un nouveau rendu du profil (onSnapshot
+  // en emet a chaque modification du document) ne rejoue l'operation.
+  const applique = React.useRef(false);
+  React.useEffect(() => {
+    if (applique.current || !themeDistant) return;
+    let local: string | null = null;
+    try { local = localStorage.getItem(CLE_THEME); } catch { /* mode prive */ }
+    if (local) { applique.current = true; return; }
+    applique.current = true;
+    setChoix(themeDistant as CleThemeWeb);
+    appliquerTheme(themeDistant as CleThemeWeb);
+    // On N'ECRIT PAS dans localStorage : tant que l'utilisateur n'a rien
+    // choisi ici, son telephone reste la reference.
+  }, [themeDistant]);
+
   const choisir = (c: CleThemeWeb) => {
     setChoix(c);
+    // Un choix fait ici devient le choix local : il cesse de suivre le profil.
+    applique.current = true;
     try { localStorage.setItem(CLE_THEME, c); } catch { /* le choix ne survivra pas, tant pis */ }
     appliquerTheme(c);
+    onChoix?.(c);
   };
 
   return (

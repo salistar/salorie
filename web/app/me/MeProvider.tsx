@@ -218,6 +218,19 @@ function localisationClerk() {
   };
 }
 
+/**
+ * L'accent du theme courant, en couleur reelle.
+ *
+ * Cote serveur — et avant le premier rendu — `getComputedStyle` n'existe pas :
+ * on retombe alors sur l'accent d'Ivory, le theme clair par defaut. C'est
+ * exactement ce que le CSS afficherait de toute facon a cet instant.
+ */
+function accentResolu(): string {
+  if (typeof window === 'undefined') return '#16A06A';
+  const v = getComputedStyle(document.documentElement).getPropertyValue('--t-accent').trim();
+  return v || '#16A06A';
+}
+
 export default function MeProvider({ children }: { children: ReactNode }) {
   // Mauvaise configuration de build : on le DIT, au lieu d'un ecran blanc que
   // personne ne sait diagnostiquer six mois plus tard.
@@ -242,7 +255,12 @@ export default function MeProvider({ children }: { children: ReactNode }) {
       // tranchait comme un corps étranger. On lui passe la couleur de marque et on
       // le laisse s'accorder au reste.
       appearance={{
-        variables: { colorPrimary: '#2e8b57', borderRadius: '12px' },
+        // ⚠ Clerk ne comprend PAS `var(--t-accent)` : il compose ses propres
+        // nuances (survol, focus, desactive) a partir de cette valeur, ce qui
+        // exige une couleur reelle. On lit donc le jeton resolu au moment du
+        // rendu. Un vert fixe restait vert sur les six themes — la carte de
+        // connexion etait le seul element de la page a ne pas suivre.
+        variables: { colorPrimary: accentResolu(), borderRadius: '12px' },
         // Le formulaire n'affichait AUCUN logo — `logo_image_url` est vide côté
         // Clerk. La marque disparaissait donc au moment précis où l'on demande à
         // quelqu'un de confier son compte.

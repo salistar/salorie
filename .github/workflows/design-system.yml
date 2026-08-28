@@ -22,7 +22,10 @@ on:
       - 'scripts/manifeste-images.js'
       - 'assets/images.manifest.json'
       - 'web/app/**.css'
-      - 'lib/ThemeContext.tsx'
+      - 'lib/**'
+      - 'app/**'
+      - 'components/**'
+      - 'hooks/**'
       - '.github/workflows/design-system.yml'
   pull_request:
   workflow_dispatch:
@@ -69,6 +72,12 @@ jobs:
         # sont calculees. Onze paires sont passees sous le seuil des la premiere
         # execution de ce controle.
         run: node scripts/verifier-contraste-mobile.js
+
+      - name: Les couleurs en dur ne remontent pas
+        # Fige la dette a son niveau du 28/08/2026 (1 992) et refuse
+        # l'aggravation. Il ne s'agit PAS de ramener le compteur a zero : la
+        # consigne d'audit demandait explicitement de ne pas tout refactoriser.
+        run: node scripts/couleurs-en-dur.js
 
       - name: Aucune image hors manifeste
         run: node scripts/manifeste-images.js --verifier
