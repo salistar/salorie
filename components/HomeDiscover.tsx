@@ -10,8 +10,8 @@ import { streetViewUrl } from '../lib/races';
 import { poiPhoto } from '../assets/challenges/registry';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
+import { useTokens } from '../constants/tokens';
 
-const GREEN = '#2E8B57';
 
 const TXT: any = {
   en: { title: 'Discover', races: 'Virtual races', challenge: 'Casablanca challenge', eat: 'Eat healthy', paris: 'Paris Marathon', progress: 'My progress', workout: 'Train now', community: 'Community routes', ramadan: '🌙 Ramadan mode' },
@@ -21,12 +21,14 @@ const TXT: any = {
 
 export default function HomeDiscover() {
   const { resolved } = useTheme();
+  const k = useTokens();
   const { language } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme, plus d'un couple clair/sombre fige.
+  const accent = k.accent;
   const [raceImg, setRaceImg] = useState<string | null>(null);
 
   // Photo Street View du départ de la 1re course active (image vivante, pilotée par l'admin).
@@ -52,7 +54,7 @@ export default function HomeDiscover() {
     <View style={styles.wrap}>
       <View style={styles.header}>
         <Compass size={16} color={accent} />
-        <Text style={[styles.title, { color: isDark ? '#f1f5f9' : '#0F172A' }]}>{t.title}</Text>
+        <Text style={[styles.title, { color: k.text }]}>{t.title}</Text>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {CARDS.map((c, i) => (

@@ -4,6 +4,7 @@ import { Colors } from '../../constants/Colors';
 import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { LoggingProvider, useLogging } from '../../lib/LoggingContext';
 import { useTheme } from '../../lib/ThemeContext';
+import { useTokens } from '../../constants/tokens';
 import { useTranslation } from '../../lib/i18n';
 import * as Haptics from 'expo-haptics';
 import { useBasBarre, useBasBouton } from '../../lib/espaceBas';
@@ -16,15 +17,19 @@ function TabsContent() {
   const basBouton = useBasBouton();
   const defisLabel = language === 'fr' ? 'Défis' : language === 'ar' ? 'تحديات' : 'Challenges';
   const isDark = resolved === 'dark';
-  const tabBg = isDark ? '#161C23' : Colors.light.white; // theme-aware (plus de barre blanche en dark)
+  const k = useTokens();
+  // La barre suit la palette : `surface` est la couleur d'une carte posee sur
+  // le fond, ce qu'est exactement cette barre flottante. Le couple en dur
+  // #161C23 / blanc ne bougeait pas d'un theme a l'autre.
+  const tabBg = k.surface;
 
   return (
     <>
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: colors.primary,
-          tabBarInactiveTintColor: colors.gray[400],
+          tabBarActiveTintColor: k.accent,
+          tabBarInactiveTintColor: k.textMuted,
           // La barre flotte en `position: absolute`, donc React Navigation ne lui
           // applique PAS son décalage de zone sûre : le `bottom: 24` en dur de la
           // feuille de style était tout ce qui la séparait du bas de l'écran.
@@ -91,7 +96,9 @@ function TabsContent() {
 
       {/* Floating quick-add button (D6: labelled for accessibility) */}
       <TouchableOpacity
-        style={[styles.floatingButton, { bottom: basBouton }]}
+        // Le bouton portait l'accent EN DUR dans sa feuille de style : il
+        // restait vert sur les six themes, au centre de l'ecran.
+        style={[styles.floatingButton, { bottom: basBouton, backgroundColor: k.accent, shadowColor: k.accent }]}
         activeOpacity={0.8}
         accessibilityRole="button"
         accessibilityLabel="Quick add"
@@ -100,7 +107,7 @@ function TabsContent() {
           showActionMenu();
         }}
       >
-        <Plus size={32} color={Colors.light.white} strokeWidth={3} />
+        <Plus size={32} color={k.onAccent} strokeWidth={3} />
       </TouchableOpacity>
     </>
   );
@@ -138,11 +145,9 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: Colors.light.primary,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
-    shadowColor: Colors.light.primary,
     shadowOffset: {
       width: 0,
       height: 8,

@@ -14,13 +14,15 @@ import { useTranslation } from '../lib/i18n';
 import ScreenTopBar from './ScreenTopBar';
 import { useTheme } from '../lib/ThemeContext';
 import { getNotificationsHistory } from '../lib/firebase';
+import { useTokens, Tokens } from '../constants/tokens';
 
 export default function HomeHeader() {
   const { user } = useUser();
   const { t } = useTranslation();
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -35,8 +37,8 @@ export default function HomeHeader() {
   }, [user?.primaryEmailAddress?.emailAddress]);
 
   const hasNotification = unreadCount > 0;
-  const textColor = resolved === 'dark' ? '#fff' : Colors.light.gray[900];
-  const subTextColor = resolved === 'dark' ? '#aaa' : Colors.light.gray[500];
+  const textColor = k.text;
+  const subTextColor = k.textMuted;
 
   const avatarUrl = user?.imageUrl;
   const fullName = user?.fullName || user?.firstName || 'User';
@@ -86,7 +88,10 @@ export default function HomeHeader() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+// ⚠ La fabrique recevait `isDark`, et chaque couleur s'ecrivait deux fois.
+// La branche claire lisait `Colors.light`, l'objet STATIQUE, qui ignore le
+// theme choisi : l'en-tete restait vert quand le reste passait au dore.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -109,22 +114,22 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     height: 52,
     borderRadius: 26,
     borderWidth: 2,
-    borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
+    borderColor: k.accent,
   },
   avatarFallback: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight,
+    backgroundColor: k.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
+    borderColor: k.accent,
   },
   avatarInitials: {
     fontSize: 20,
     fontWeight: '700',
-    color: isDark ? Colors.dark.primary : Colors.light.primary,
+    color: k.accent,
   },
   onlineDot: {
     position: 'absolute',
@@ -133,9 +138,9 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: isDark ? Colors.dark.success : Colors.light.success,
+    backgroundColor: k.success,
     borderWidth: 2.5,
-    borderColor: isDark ? Colors.dark.white : Colors.light.white,
+    borderColor: k.surface,
   },
   textSection: {
     marginLeft: 14,
@@ -143,14 +148,14 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   },
   welcomeText: {
     fontSize: 14,
-    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
+    color: k.textMuted,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
   userName: {
     fontSize: 19,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     marginTop: 1,
     letterSpacing: -0.5,
   },
@@ -159,12 +164,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,
     borderWidth: 1,
-    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderColor: k.border,
   },
   notificationDot: {
     position: 'absolute',
@@ -174,14 +179,14 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     height: 18,
     paddingHorizontal: 4,
     borderRadius: 9,
-    backgroundColor: isDark ? Colors.dark.error : Colors.light.error,
+    backgroundColor: k.danger,
     borderWidth: 2,
-    borderColor: isDark ? Colors.dark.white : Colors.light.white,
+    borderColor: k.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   notificationDotText: {
-    color: Colors.light.white,
+    color: k.surface,
     fontSize: 9,
     fontWeight: '900',
     lineHeight: 10,

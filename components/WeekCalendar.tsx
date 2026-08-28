@@ -7,9 +7,9 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import { Colors } from '../constants/Colors';
 import { useLogging } from '../lib/LoggingContext';
 import { useTheme } from '../lib/ThemeContext';
+import { useTokens, Tokens } from '../constants/tokens';
 import { useTranslation } from '../lib/i18n';
 import { rowDir } from '../lib/rtl';
 import { useUser } from '@clerk/clerk-expo';
@@ -84,10 +84,11 @@ interface DayItemProps {
 
 // ── DayItem ────────────────────────────────────────────────────────────────
 const DayItem = React.memo(function DayItem({ date, isToday, isSelected, isFuture, consumed, goal, onPress }: DayItemProps) {
-  const { resolved, colors } = useTheme();
+  const { resolved } = useTheme();
+  const k = useTokens();
   const { t } = useTranslation();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const dayLabel = t(DAY_KEYS[date.getDay()] as any);
   const dateNumber = date.getDate();
 
@@ -109,9 +110,9 @@ const DayItem = React.memo(function DayItem({ date, isToday, isSelected, isFutur
       <Text
         style={[
           styles.dayLabel,
-          isDark && !isSelected && { color: '#ccc' },
-          isToday && !isSelected && (isDark ? { color: colors.primary, fontWeight: '800' } : styles.dayLabelToday),
-          isSelected && (isDark ? { color: colors.gray[900], fontWeight: '800' } : styles.dayLabelSelected),
+          isDark && !isSelected && { color: k.textMuted },
+          isToday && !isSelected && styles.dayLabelToday,
+          isSelected && styles.dayLabelSelected,
           isFuture && !isSelected && !isToday && styles.dayLabelFuture,
         ]}
       >
@@ -122,19 +123,17 @@ const DayItem = React.memo(function DayItem({ date, isToday, isSelected, isFutur
       <View
         style={[
           styles.circle,
-          isDark && { borderColor: colors.gray[200] },
-          isToday && (isDark ? { backgroundColor: colors.primaryLight, borderColor: colors.primary } : styles.circleToday),
-          isSelected && (isDark ? { backgroundColor: colors.primary, borderColor: colors.primaryDark, borderWidth: 2 } : styles.circleSelected),
+          isToday && styles.circleToday,
+          isSelected && styles.circleSelected,
           isSelected && styles.circleSelectedShadow,
-          isFuture && !isSelected && !isToday && (isDark ? { borderColor: colors.gray[200], borderStyle: 'dashed' } : styles.circleFuture),
-          !isToday && !isSelected && !isFuture && (isDark ? { backgroundColor: colors.gray[50], borderColor: colors.gray[200] } : styles.circlePast),
+          isFuture && !isSelected && !isToday && styles.circleFuture,
+          !isToday && !isSelected && !isFuture && styles.circlePast,
         ]}
       >
         <Text
           style={[
             styles.dateNumber,
-            isDark && !isSelected && !isToday && { color: colors.gray[900] },
-            isToday && !isSelected && (isDark ? { color: colors.primary } : styles.dateNumberToday),
+            isToday && !isSelected && styles.dateNumberToday,
             isSelected && styles.dateNumberSelected,
             isFuture && !isSelected && !isToday && styles.dateNumberFuture,
             !isToday && !isSelected && !isFuture && !isDark && styles.dateNumberPast,
@@ -183,7 +182,7 @@ const DayItem = React.memo(function DayItem({ date, isToday, isSelected, isFutur
             : `+${remaining}`;
         return (
           <Text
-            style={[styles.caloriesLabel, { color: over ? '#EF4444' : '#10B981' }]}
+            style={[styles.caloriesLabel, { color: over ? k.danger : k.success }]}
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.6}
@@ -208,9 +207,10 @@ interface WeekRowProps {
 
 const WeekRow = React.memo(function WeekRow({ week, today, selectedDate, caloriesByDate, dailyGoal, onPress }: WeekRowProps) {
   const { resolved } = useTheme();
+  const k = useTokens();
   const { isRTL } = useTranslation();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   return (
   <View style={[styles.weekRow, { flexDirection: rowDir(isRTL) }]}>
     {week.map((date) => {
@@ -234,9 +234,10 @@ const WeekRow = React.memo(function WeekRow({ week, today, selectedDate, calorie
 
 // ── WeekCalendar ───────────────────────────────────────────────────────────
 export default function WeekCalendar() {
-  const { colors, resolved } = useTheme();
+  const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { selectedDate, setSelectedDate } = useLogging();
   const { user } = useUser();
   const today = startOfDay(new Date());
@@ -339,7 +340,7 @@ export default function WeekCalendar() {
   );
 
   return (
-    <View style={[styles.container, { borderBottomColor: colors.gray[100] }]}>
+    <View style={styles.container}>
       <FlatList
         ref={flatListRef}
         data={weeks}
@@ -366,15 +367,22 @@ export default function WeekCalendar() {
 // ── styles ─────────────────────────────────────────────────────────────────
 const CIRCLE_SIZE = 44;
 
-// Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
-// n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+// Fabrique thémée : un StyleSheet est évalué au chargement du module, où le
+// thème n'existe pas encore. Le composant l'appelle via useMemo, recalculé à
+// chaque changement de palette.
+//
+// ⚠ ELLE RECEVAIT UN BOOLÉEN `isDark`, et chaque couleur s'écrivait deux fois :
+// `isDark ? Colors.dark.X : Colors.light.X`. La branche claire lisait l'objet
+// STATIQUE `Colors.light`, qui ignore le thème choisi — les pastilles de date
+// restaient vertes en Doré comme en Rose. Un seul chemin maintenant : les
+// jetons, qui portent déjà la bonne valeur pour la palette active.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: {
     backgroundColor: 'transparent',
     paddingTop: 12,
     paddingBottom: 24,
     borderBottomWidth: 1,
-    borderBottomColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderBottomColor: k.border,
   },
   weekRow: {
     width: SCREEN_WIDTH,
@@ -397,21 +405,21 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   dayLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     marginBottom: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
   dayLabelToday: {
-    color: isDark ? Colors.dark.primary : Colors.light.primary,
+    color: k.accent,
     fontWeight: '800',
   },
   dayLabelSelected: {
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     fontWeight: '800',
   },
   dayLabelFuture: {
-    color: isDark ? Colors.dark.gray[300] : Colors.light.gray[300],
+    color: k.textFaint,
   },
   circle: {
     width: CIRCLE_SIZE,
@@ -421,48 +429,48 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
     borderWidth: 1.5,
-    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200], // Default border
+    borderColor: k.border, // Default border
   },
   circlePast: {
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
-    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
+    backgroundColor: k.surfaceSunken,
+    borderColor: k.border,
   },
   circleToday: {
-    backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight,
-    borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
+    backgroundColor: k.accentSoft,
+    borderColor: k.accent,
   },
   circleSelected: {
-    backgroundColor: Colors.light.primary,
-    borderColor: isDark ? Colors.dark.primaryDark : Colors.light.primaryDark,
+    backgroundColor: k.accent,
+    borderColor: k.accentStrong,
     borderWidth: 2,
   },
   circleSelectedShadow: {
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
     elevation: 6,
   },
   circleFuture: {
-    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
+    borderColor: k.border,
     borderStyle: 'dashed',
   },
   dateNumber: {
     fontSize: 15,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
   },
   dateNumberPast: {
-    color: isDark ? Colors.dark.gray[600] : Colors.light.gray[600],
+    color: k.textMuted,
   },
   dateNumberToday: {
-    color: isDark ? Colors.dark.primary : Colors.light.primary,
+    color: k.accent,
   },
   dateNumberSelected: {
-    color: '#FFFFFF', // Ensuring white is pure and forced
+    color: k.onAccent,
   },
   dateNumberFuture: {
-    color: isDark ? Colors.dark.gray[300] : Colors.light.gray[300],
+    color: k.textFaint,
   },
   todayIndicator: {
     position: 'absolute',
@@ -470,13 +478,13 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
   },
   caloriesLabel: {
     marginTop: 4,
     fontSize: 9,
     fontWeight: '800',
-    color: '#10B981', // GREEN
+    color: k.success,
     letterSpacing: -0.2,
     maxWidth: DAY_ITEM_WIDTH - 4, // Never exceed the fixed-width day cell
     textAlign: 'center',

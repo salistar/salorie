@@ -1,12 +1,20 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, ImageStyle, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors } from '../constants/Colors';
+import { useTokens } from '../constants/tokens';
 
 /**
- * Branded green banner — replaces the generic stock photos (D2).
- * On-brand (flame + green gradient), reinforces identity instead of diluting it,
- * and carries a short contextual line per screen. Purely presentational.
+ * Bandeau de marque — le dégradé d'accent, pas une photo générique.
+ *
+ * ⚠ IL EMPLOYAIT `Colors.light.primary`, l'objet STATIQUE.
+ * C'est le motif qui rendait les six thèmes invisibles sur l'accueil : lire
+ * `Colors.light.…` court-circuite le thème, puisque cet objet ne sait rien de
+ * ce que l'utilisateur a choisi. Le fond de l'écran passait au doré, ce bandeau
+ * restait vert. Il lit maintenant `useTokens()`, qui suit la palette active.
+ *
+ * Le texte reste posé sur l'accent : sa couleur vient donc de `onAccent`, que la
+ * dérivation choisit entre clair et foncé selon ce qui contraste le mieux avec
+ * l'accent DE CE THÈME — du blanc sur le vert d'Ivory ne tenait que 3,3:1.
  */
 export default function BrandBanner({
   title,
@@ -19,19 +27,27 @@ export default function BrandBanner({
   height?: number;
   style?: ViewStyle;
 }) {
+  const k = useTokens();
+
   return (
     <LinearGradient
-      colors={[Colors.light.primary, Colors.light.primaryDark]}
+      colors={[k.accent, k.accentStrong]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={[styles.banner, { height }, style]}
     >
-      <View style={styles.logoWrap}>
+      {/* Le voile du logo se teinte comme le texte : un blanc translucide posé
+          sur un accent clair disparaissait presque. */}
+      <View style={[styles.logoWrap, { backgroundColor: k.onAccent + '2E' }]}>
         <Image source={require('../assets/images/fire.png')} style={styles.logo as ImageStyle} />
       </View>
       <View style={styles.textWrap}>
-        <Text style={styles.title} numberOfLines={1}>{title}</Text>
-        {!!subtitle && <Text style={styles.subtitle} numberOfLines={2}>{subtitle}</Text>}
+        <Text style={[styles.title, { color: k.onAccent }]} numberOfLines={1}>{title}</Text>
+        {!!subtitle && (
+          <Text style={[styles.subtitle, { color: k.onAccent + 'E0' }]} numberOfLines={2}>
+            {subtitle}
+          </Text>
+        )}
       </View>
     </LinearGradient>
   );
@@ -50,7 +66,6 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -63,13 +78,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: '#fff',
     fontSize: 18,
     fontWeight: '900',
     letterSpacing: -0.3,
   },
   subtitle: {
-    color: 'rgba(255,255,255,0.88)',
     fontSize: 13,
     fontWeight: '600',
     marginTop: 3,
