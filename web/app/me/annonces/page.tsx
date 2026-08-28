@@ -163,7 +163,7 @@ export default function PageAnnonces() {
         <ul className="grille-annonces">
           {visibles.map((a) => (
             <li key={a.id} className="carte-annonce">
-              {a.imageUrl ? <img src={a.imageUrl} alt="" className="annonce-img" /> : null}
+              {a.imageUrl ? <img loading="lazy" decoding="async" src={a.imageUrl} alt="" className="annonce-img" /> : null}
               <div className="annonce-corps">
                 <strong>{a.title}</strong>
                 <span className="me-sous">{t(`annoncesCat_${a.category}`) || a.category}{a.placeName ? ` · ${a.placeName}` : ''}</span>

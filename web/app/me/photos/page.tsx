@@ -204,7 +204,7 @@ export default function PagePhotos() {
                   </label>
                   {par.get(sel) ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={par.get(sel)!.url} alt={`${t(cle)} — ${dateLisible(par.get(sel)!.date)}`}
+                    <img loading="lazy" decoding="async" src={par.get(sel)!.url} alt={`${t(cle)} — ${dateLisible(par.get(sel)!.date)}`}
                          className="photos-image" />
                   ) : null}
                 </div>

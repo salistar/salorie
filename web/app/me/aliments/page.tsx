@@ -119,7 +119,7 @@ export default function PageAliments() {
             const pris = compares.some((x) => x.code === a.code);
             return (
               <li key={a.code} className={`carte-aliment${pris ? ' choisi' : ''}`}>
-                {a.image ? <img src={a.image} alt="" className="aliment-img" /> : <div className="aliment-img vide" />}
+                {a.image ? <img loading="lazy" decoding="async" src={a.image} alt="" className="aliment-img" /> : <div className="aliment-img vide" />}
                 <div className="aliment-corps">
                   <strong>{a.nom}</strong>
                   {a.marque ? <span className="me-sous">{a.marque}</span> : null}

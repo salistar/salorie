@@ -26,7 +26,15 @@ function routes(dir: string): string[] {
 // /api/auth/* gère sa propre logique : on ne peut pas exiger d'être connecté pour se
 // connecter. Ces routes ont leurs propres protections (limitation de tentatives,
 // clé d'installation).
-const HORS_PERIMETRE = (p: string) => p.replace(/\\/g, '/').includes('/api/auth/');
+// `/api/contact` relaie le formulaire public vers salistar.com : il s'adresse a
+// des visiteurs ANONYMES, exiger un role y serait un contresens. Il n'est
+// exclu que parce qu'il porte sa propre limitation de debit — sans elle, cette
+// exclusion serait un blanc-seing, et cette route etait justement la seule
+// entree publique sans aucune protection.
+const HORS_PERIMETRE = (p: string) => {
+  const c = p.replace(/\\/g, '/');
+  return c.includes('/api/auth/') || c.includes('/api/contact/');
+};
 
 // Gardes acceptes pour une route mutante. `requireWriter` refuse les `viewer` ;
 // `requireSuperadmin` n'accepte QUE les `owner` — il est donc strictement plus

@@ -83,7 +83,7 @@ interface DayItemProps {
 }
 
 // ── DayItem ────────────────────────────────────────────────────────────────
-const DayItem = React.memo(({ date, isToday, isSelected, isFuture, consumed, goal, onPress }: DayItemProps) => {
+const DayItem = React.memo(function DayItem({ date, isToday, isSelected, isFuture, consumed, goal, onPress }: DayItemProps) {
   const { resolved, colors } = useTheme();
   const { t } = useTranslation();
   const isDark = resolved === 'dark';
@@ -206,7 +206,7 @@ interface WeekRowProps {
   onPress: (date: Date) => void;
 }
 
-const WeekRow = React.memo(({ week, today, selectedDate, caloriesByDate, dailyGoal, onPress }: WeekRowProps) => {
+const WeekRow = React.memo(function WeekRow({ week, today, selectedDate, caloriesByDate, dailyGoal, onPress }: WeekRowProps) {
   const { resolved } = useTheme();
   const { isRTL } = useTranslation();
   const isDark = resolved === 'dark';

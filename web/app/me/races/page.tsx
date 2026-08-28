@@ -67,7 +67,7 @@ export default function PageCourses() {
             <article key={idDe(c)} className="carte-course">
               {c.image || c.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={c.image || c.imageUrl} alt="" className="course-image" />
+                <img loading="lazy" decoding="async" src={c.image || c.imageUrl} alt="" className="course-image" />
               ) : (
                 <div className="course-image vide" aria-hidden>
                   🏁
@@ -97,7 +97,7 @@ export default function PageCourses() {
             <div key={m.id || `${m.raceId}-${i}`} className="medaille">
               {m.imageUrl || m.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={m.imageUrl || m.image} alt="" />
+                <img loading="lazy" decoding="async" src={m.imageUrl || m.image} alt="" />
               ) : (
                 <div className="medaille-vide" aria-hidden>
                   🥇

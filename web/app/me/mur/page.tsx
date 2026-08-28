@@ -176,7 +176,7 @@ export default function PageMur() {
                 <span className="me-sous">{depuis(p.ts, langue)}</span>
               </div>
               {p.image ? (
-                <img
+                <img loading="lazy" decoding="async"
                   className="pub-image"
                   src={`data:${p.imageType || 'image/jpeg'};base64,${p.image}`}
                   alt={p.texte || ''}

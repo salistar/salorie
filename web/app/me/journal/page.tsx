@@ -97,7 +97,7 @@ export default function PageJournal() {
                   {a.createdAt ? <span className="me-sous">{dateLisible(a.createdAt)}</span> : null}
                 </div>
               </div>
-              {a.imageUrl ? <img src={a.imageUrl} alt="" className="journal-image" /> : null}
+              {a.imageUrl ? <img loading="lazy" decoding="async" src={a.imageUrl} alt="" className="journal-image" /> : null}
               {/* Les sauts de ligne du texte source sont conserves : un article
                   ecrit en paragraphes doit se lire en paragraphes. Le contenu
                   reste du TEXTE, jamais interprete comme du HTML — il vient d'un

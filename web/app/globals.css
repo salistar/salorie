@@ -1654,3 +1654,23 @@ tbody tr:last-child td { border-bottom: none; }
    passer a la ligne plutot que de retrecir les cibles — 26 px est deja le
    minimum confortable au doigt. */
 .me-nav-themes .sui-themes { flex-wrap: wrap; row-gap: 8px; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   La vignette blanche pendant le chargement.
+
+   Une image differee n'affiche RIEN tant qu'elle n'est pas arrivee : sur une
+   liste, cela donne une colonne de trous blancs qui se remplissent un a un —
+   c'est ce que la landing montrait. Un fond teinte occupe la place des le
+   premier rendu, et la mise en page ne saute plus.
+
+   ⚠ Cible `img[loading='lazy']` et non `img` : un fond pose derriere un PNG
+   transparent — un logo, une icone — se verrait a travers.
+
+   Ce n'est pas un blurhash. Calculer une empreinte floue suppose de connaitre
+   l'image a l'avance ; ici la plupart des adresses viennent de Firestore a
+   l'execution. Un a-plat aux couleurs du theme resout le probleme reel (le
+   trou blanc) sans machinerie qui ne pourrait pas s'appliquer.
+   ───────────────────────────────────────────────────────────────────────────── */
+img[loading='lazy'] {
+  background-color: var(--t-surface2);
+}

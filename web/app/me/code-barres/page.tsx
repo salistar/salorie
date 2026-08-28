@@ -123,7 +123,7 @@ export default function PageCodeBarres() {
             <div className="ligne-champ" style={{ gap: 14, alignItems: 'flex-start' }}>
               {produit.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={produit.image} alt="" className="cb-vignette" />
+                <img loading="lazy" decoding="async" src={produit.image} alt="" className="cb-vignette" />
               ) : null}
               <div style={{ minWidth: 0 }}>
                 <h2 className="me-h2">{produit.nom || t('cbSansNom')}</h2>

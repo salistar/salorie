@@ -382,7 +382,7 @@ export default function FoodDatabaseScreen() {
           !loading && query.length >= 3 ? (
             <View style={styles.emptyState}>
               <Utensils size={48} color={isDark ? Colors.dark.gray[200] : Colors.light.gray[200]} />
-              <Text style={[styles.emptyText, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>{t.noResults} "{query}"</Text>
+              <Text style={[styles.emptyText, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>{t.noResults} {String.fromCharCode(8220)}{query}{String.fromCharCode(8221)}</Text>
             </View>
           ) : query.length > 0 && query.length < 3 ? (
              <View style={styles.emptyState}>

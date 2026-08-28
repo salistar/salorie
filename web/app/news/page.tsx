@@ -65,7 +65,7 @@ export default function NewsAdmin() {
         <textarea style={{ ...inp, height: 70 }} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Détails de l'annonce…" />
         <label style={lbl}>Image (URL — affichée en grand dans l'app)</label>
         <input style={inp} value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…/photo.jpg" />
-        {imageUrl.trim() ? <img src={imageUrl.trim()} alt="" style={{ maxHeight: 120, borderRadius: 10, marginTop: 8 }} /> : null}
+        {imageUrl.trim() ? <img loading="lazy" decoding="async" src={imageUrl.trim()} alt="" style={{ maxHeight: 120, borderRadius: 10, marginTop: 8 }} /> : null}
         <button onClick={publish} disabled={busy || !title.trim()} style={{ marginTop: 10, padding: '10px 18px', borderRadius: 10, border: 'none', background: '#2E8B57', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
           {busy ? '…' : '📣 Publier dans l\'app'}
         </button>

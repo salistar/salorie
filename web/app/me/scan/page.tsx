@@ -128,7 +128,7 @@ export default function PageScan() {
         />
         {apercu ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={apercu} alt="" className="depot-apercu" />
+          <img loading="lazy" decoding="async" src={apercu} alt="" className="depot-apercu" />
         ) : (
           <>
             <div className="depot-ico" aria-hidden>
