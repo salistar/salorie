@@ -30,7 +30,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useMe } from './MeProvider';
-import { useProfil } from '../../lib/useFirestoreMe';
+import { useProfil, enregistrerTheme } from '../../lib/useFirestoreMe';
 import { sensLecture, type Langue } from '../../lib/i18nMe';
 
 type Tri = { fr: string; en: string; ar: string };
@@ -191,7 +191,17 @@ export default function MeNav() {
             page d'accueil pour changer de palette. Meme composant, meme cle de
             stockage — le choix suit l'utilisateur d'une surface a l'autre. */}
         <div className="me-nav-themes">
-          <SelecteurTheme compact />
+          {/* Le theme suit l'utilisateur d'un appareil a l'autre.
+              Le mobile ecrit `preferences.theme` dans le meme document que
+              celui-ci lit : il n'y a pas de synchronisation a maintenir, les
+              deux clients ecoutent la meme cle. Le reglage du telephone est
+              PROPOSE ici, et cede des que l'utilisateur choisit sur ce
+              navigateur — voir `themeDistant` dans le composant. */}
+          <SelecteurTheme
+            compact
+            themeDistant={profil?.preferences?.theme ?? null}
+            onChoix={(c) => { void enregistrerTheme(uid, c); }}
+          />
         </div>
 
         <nav className="me-nav-liens">

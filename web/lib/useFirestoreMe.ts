@@ -20,6 +20,19 @@ export type ProfilUtilisateur = {
   weight?: number;
   height?: { feet: number; inches: number };
   language?: 'en' | 'fr' | 'ar';
+  /**
+   * Les preferences ecrites par le MOBILE (`preferences.theme`, ecran
+   * Reglages). C'est par ce champ que le theme choisi sur le telephone
+   * rejoint l'espace membre : les deux clients ecrivent la meme cle du meme
+   * document, il n'y a aucun mecanisme de synchronisation a maintenir.
+   */
+  preferences?: {
+    /** L'une des six cles de theme, ou 'system'. Les profils anciens portent
+     *  encore 'light' / 'dark' : themes.generated.css en fait des alias. */
+    theme?: string;
+    language?: string;
+    notificationsEnabled?: boolean;
+  };
   nutritionalPlan?: { dailyCalories?: number; protein?: number; carbs?: number; fats?: number };
 };
 
@@ -64,6 +77,27 @@ export function useProfil(uid: string) {
   }, [uid]);
 
   return { profil, charge, erreur };
+}
+
+/**
+ * Enregistre le theme choisi dans le profil, la ou le mobile le lit.
+ *
+ * ⚠ `updateDoc` et non `setDoc` : ecraser le document entier ferait disparaitre
+ * le reste du profil. Et on n'ecrit QUE `preferences.theme` — la notation
+ * pointee laisse `preferences.language` intact, ce qu'un objet complet
+ * remplacerait silencieusement.
+ *
+ * L'echec est volontairement muet : ne pas pouvoir enregistrer un theme ne
+ * justifie pas d'interrompre l'utilisateur. Le choix vaut deja localement.
+ */
+export async function enregistrerTheme(uid: string, theme: string): Promise<void> {
+  if (!uid) return;
+  try {
+    const { updateDoc } = await import('firebase/firestore');
+    await updateDoc(doc(firestore(), 'users', uid), { 'preferences.theme': theme });
+  } catch {
+    /* hors ligne, ou droits insuffisants : sans consequence visible */
+  }
 }
 
 /** Journee au format `YYYY-MM-DD` LOCAL — identique a la cle `date` ecrite par le mobile. */
