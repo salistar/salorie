@@ -38,11 +38,16 @@ jobs:
       - name: Installer de quoi executer le modele
         run: pip install --quiet tensorflow-cpu pillow numpy
 
-      # Un corpus REDUIT : une photo par plat suffit a distinguer « reconnait »
-      # de « ne reconnait pas ». Telecharger les 1 414 images a chaque fois
-      # couterait des minutes de CI pour une decision que 101 tranchent deja.
-      - name: Construire le corpus de reference (101 images)
-        run: node scripts/construire-corpus.js 101
+      # Un corpus REDUIT : une photo par plat suffit, et c'est d'ailleurs tout
+      # ce que le validateur evalue.
+      #
+      # ⚠ L'ARGUMENT EST UN NOMBRE PAR CLASSE, PAS UN TOTAL.
+      # Il valait « 101 » ici, herite d'une version du constructeur ou c'etait un
+      # total. Depuis la reecriture, cela demandait 101 photos de CHACUN des 101
+      # plats : 10 201 images, vingt minutes de CI, pour une mesure qui n'en
+      # regarde que 101.
+      - name: Construire le corpus de reference (une photo par plat)
+        run: node scripts/construire-corpus.js 1
 
       # ⚠ LE MODELE DU TELEPHONE ET CELUI DU SERVEUR DOIVENT ETRE LE MEME.
       # Ils l'etaient — c'est ce qui a fait que le defaut touchait les deux
