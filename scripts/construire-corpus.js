@@ -8,19 +8,26 @@
 //
 // LA SOURCE : Food-101 (ETH Zurich), 101 plats, 25 250 photos de validation.
 // C'est le jeu de reference du domaine, et surtout : ce sont des PLATS CADRES,
-// exactement ce qu'un utilisateur photographie. Les 19 images de substitution
-// utilisees jusqu'ici venaient de Pixabay et etaient des SCENES (un etal, un bol
-// sur une table) : mesurer la reconnaissance dessus mesurait surtout le decalage
-// de domaine.
+// exactement ce qu'un utilisateur photographie.
 //
-// ⚠ LA STRATIFICATION N'EST PAS UN DETAIL.
-// Le jeu est TRIE PAR CLASSE : 250 photos d'apple_pie, puis 250 de
-// baby_back_ribs, etc. Prendre les 1 471 premieres lignes donnerait six classes
-// sur cent-une, et le taux mesure serait celui de six plats — un chiffre qui
-// bougerait au gre de ces six-la et qu'on prendrait pour le taux global.
-// On prend donc un nombre EGAL de photos par classe.
+// ⚠⚠ L'ETIQUETTE EST LUE, JAMAIS CALCULEE. ⚠⚠
 //
-// Usage :  node scripts/construire-corpus.js [nombre]
+// La premiere version de ce fichier supposait que la partition de validation
+// etait triee par classe, 250 photos chacune, et deduisait l'etiquette de la
+// position : `classe = offset / 250`. Cette hypothese est FAUSSE, et elle n'a
+// jamais ete verifiee — il suffisait de lire le champ `label` que l'API renvoie
+// a cote de chaque image.
+//
+// Ce que cela a coute (29/08/2026) : l'offset 19000, calcule comme « pizza »,
+// contient en realite des nachos. Le classifieur repondait « Nachos », on
+// comptait une erreur, et on a conclu qu'il ne reconnaissait RIEN — 0 sur 74.
+// Sur cette base, le palier a ete debranche en production, cote serveur ET cote
+// telephone. Le modele avait raison ; c'est la mesure qui avait tort.
+//
+// Une mesure qui deduit sa verite au lieu de la lire ne mesure pas : elle
+// invente une reference et note le monde dessus.
+//
+// Usage :  node scripts/construire-corpus.js [par classe]
 //   Les images vont dans `corpus-ia/` (ignore par git : ~75 Mo).
 
 const fs = require('fs');
@@ -29,51 +36,70 @@ const path = require('path');
 const RACINE = path.join(__dirname, '..', 'corpus-ia');
 const API = 'https://datasets-server.huggingface.co/rows';
 const JEU = 'ethz%2Ffood101';
-const PAR_CLASSE_TOTAL = 250; // 25 250 / 101 : la taille d'un bloc de classe
-const CIBLE = Number(process.argv[2] || 1471);
+const LOT = 100; // le maximum accepte par l'API en une requete
+const PAR_CLASSE = Number(process.argv[2] || 14);
 
 const dodo = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function lignes(offset, longueur) {
-  // L'API repond parfois 502 sous charge : on retente, sinon la construction
-  // s'arrete a mi-parcours et laisse un corpus incomplet qu'on croirait entier.
-  for (let essai = 1; essai <= 4; essai++) {
-    const r = await fetch(`${API}?dataset=${JEU}&config=default&split=validation&offset=${offset}&length=${longueur}`);
-    if (r.ok) return r.json();
-    await dodo(essai * 1500);
+  // ⚠ HUGGING FACE LIMITE LE DEBIT, ET LA CONSTRUCTION EST LONGUE.
+  // Quatre essais rapproches ne suffisaient pas : la construction s'arretait
+  // apres 182 images sur 1 414. On patiente donc vraiment — jusqu'a une demi-
+  // minute — et on rend `null` plutot que de lever, pour qu'un trou dans un lot
+  // ne detruise pas le travail deja fait. Les classes incompletes sont
+  // signalees a la fin.
+  for (let essai = 1; essai <= 7; essai++) {
+    try {
+      const r = await fetch(`${API}?dataset=${JEU}&config=default&split=validation&offset=${offset}&length=${longueur}`);
+      if (r.ok) return r.json();
+      if (r.status !== 429 && r.status < 500) return null;
+    } catch { /* coupure reseau : on retente */ }
+    await dodo(Math.min(30_000, essai * 4000));
   }
-  throw new Error(`lignes(${offset}) : l'API n'a pas repondu`);
+  return null;
 }
 
 async function main() {
   fs.mkdirSync(RACINE, { recursive: true });
 
   const entete = await lignes(0, 1);
+  if (!entete) throw new Error("l'API des jeux de donnees est injoignable");
   const classes = entete.features.find((f) => f.name === 'label').type.names;
-  const parClasse = Math.max(1, Math.floor(CIBLE / classes.length));
-  console.log(`  ${classes.length} classes, ${parClasse} photos chacune → ${classes.length * parClasse} images`);
+  const total = entete.num_rows_total || 25250;
+  console.log(`  ${classes.length} classes, ${total} photos disponibles`);
+  console.log(`  objectif : ${PAR_CLASSE} par classe → ${classes.length * PAR_CLASSE} images\n`);
 
+  const compte = {};        // classe -> nombre deja pris
   const manifeste = [];
   let telecharges = 0;
   let ignores = 0;
 
-  for (let c = 0; c < classes.length; c++) {
-    const classe = classes[c];
-    // Le bloc de cette classe commence a c * 250. On prend au DEBUT du bloc :
-    // deterministe, donc le corpus est reproductible a l'identique, et une
-    // comparaison d'un mois sur l'autre porte sur les memes photos.
-    const lot = await lignes(c * PAR_CLASSE_TOTAL, parClasse);
+  // On balaie la partition et on remplit les classes au fur et a mesure. On
+  // s'arrete des que toutes sont pleines : inutile de parcourir 25 250 lignes
+  // si les 1 414 images voulues sont trouvees avant.
+  for (let offset = 0; offset < total; offset += LOT) {
+    const pleines = classes.filter((c) => (compte[c] || 0) >= PAR_CLASSE).length;
+    if (pleines === classes.length) break;
 
-    for (let i = 0; i < lot.rows.length; i++) {
-      const nom = `${String(c).padStart(3, '0')}_${classe}_${i}.jpg`;
+    const lot = await lignes(offset, LOT);
+    if (!lot) { console.log(`  offset ${offset} — lot manquant, on continue`); continue; }
+    for (const ligne of lot.rows) {
+      // ⚠ ICI. L'etiquette vient du jeu de donnees, pas d'un calcul.
+      const classe = classes[ligne.row.label];
+      if (!classe) continue;
+      const n = compte[classe] || 0;
+      if (n >= PAR_CLASSE) continue;
+
+      const nom = `${String(ligne.row.label).padStart(3, '0')}_${classe}_${n}.jpg`;
       const dest = path.join(RACINE, nom);
+      compte[classe] = n + 1;
       manifeste.push({ fichier: nom, classe, mots: classe.split('_') });
 
-      // Deja la : on ne retelecharge pas. Relancer le script apres une coupure
-      // reprend donc ou il en etait au lieu de tout refaire.
+      // Deja la : on ne retelecharge pas. Relancer apres une coupure reprend
+      // donc ou on en etait au lieu de tout refaire.
       if (fs.existsSync(dest) && fs.statSync(dest).size > 1000) { ignores++; continue; }
 
-      const src = lot.rows[i].row.image?.src;
+      const src = ligne.row.image?.src;
       if (!src) continue;
       try {
         const img = await fetch(src);
@@ -84,12 +110,27 @@ async function main() {
         /* une image manquante ne doit pas faire tomber la construction */
       }
     }
-    if (c % 10 === 0) console.log(`  ${classe} … ${telecharges} telechargees, ${ignores} deja la`);
+    await dodo(400);
+    if ((offset / LOT) % 10 === 0) {
+      console.log(`  offset ${offset} — ${manifeste.length} images, ${pleines}/${classes.length} classes pleines`);
+    }
+  }
+
+  const manquantes = classes.filter((c) => (compte[c] || 0) < PAR_CLASSE);
+  if (manquantes.length) {
+    // Dit, jamais taise : un corpus incomplet dont on croit qu'il est complet
+    // fausse toute comparaison ulterieure.
+    console.log(`\n  ⚠ ${manquantes.length} classes incompletes : ${manquantes.slice(0, 6).join(', ')}…`);
   }
 
   fs.writeFileSync(
     path.join(RACINE, 'manifeste.json'),
-    JSON.stringify({ source: 'ethz/food101 (validation)', parClasse, images: manifeste }, null, 2),
+    JSON.stringify({
+      source: 'ethz/food101 (validation)',
+      etiquettes: 'lues dans le champ `label` du jeu, jamais deduites de la position',
+      parClasse: PAR_CLASSE,
+      images: manifeste,
+    }, null, 2),
   );
   console.log(`\n  ${manifeste.length} images au manifeste (${telecharges} telechargees, ${ignores} deja presentes)`);
 }

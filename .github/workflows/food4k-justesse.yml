@@ -63,9 +63,6 @@ jobs:
       # reponses qui atteignent l'utilisateur.
       - name: Mesurer la justesse
         run: python food4k/valider_modele.py food4k/food_salorie.tflite food4k/label_map_172.json --seuil 0.50
-        # Le modele actuel echoue DELIBEREMENT ici, et c'est le comportement
-        # attendu tant qu'il n'est pas remplace. `continue-on-error` garde
-        # l'information visible sans bloquer les autres travaux — a retirer le
-        # jour ou un modele passe la barre, pour que la regression suivante
-        # arrete vraiment la chaine.
-        continue-on-error: true
+        # Plus de `continue-on-error` : le modele en place passe la barre
+        # (71,9 % de justesse sur ce qui est servi, mesure du 29/08/2026), donc
+        # un echec ici signale une VRAIE regression et doit arreter la chaine.
