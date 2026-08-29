@@ -50,11 +50,11 @@
   /* Sémantique : un état a une couleur de fond ET une couleur de texte associée,
      choisies pour rester au-dessus de 4,5:1 (AA). Les badges affichaient avant du
      blanc sur #cbd5e1, soit ≈ 1,6:1 — illisible. */
-  --danger: var(--t-danger);   --danger-bg: #fef2f2;   --danger-ink: #991b1b;
-  --warning: var(--t-warning);  --warning-bg: #fffbeb;  --warning-ink: #92400e;
-  --info: #2563eb;     --info-bg: #eff6ff;     --info-ink: #1e40af;
-  --success: var(--t-success);  --success-bg: #f0fdf4;  --success-ink: #166534;
-  --neutral: #94a3b8;  --neutral-bg: #f1f5f9;  --neutral-ink: #475569;
+  --danger: var(--t-danger);   --danger-bg: color-mix(in srgb, var(--t-danger) 14%, var(--t-bg));   --danger-ink: color-mix(in srgb, var(--t-danger) 55%, var(--t-text));
+  --warning: var(--t-warning);  --warning-bg: color-mix(in srgb, var(--t-warning) 14%, var(--t-bg));  --warning-ink: color-mix(in srgb, var(--t-warning) 55%, var(--t-text));
+  --info: var(--t-accent2);     --info-bg: color-mix(in srgb, var(--t-accent2) 14%, var(--t-bg));     --info-ink: color-mix(in srgb, var(--t-accent2) 40%, var(--t-text));
+  --success: var(--t-success);  --success-bg: color-mix(in srgb, var(--t-success) 14%, var(--t-bg));  --success-ink: color-mix(in srgb, var(--t-success) 55%, var(--t-text));
+  --neutral: var(--t-text-muted);  --neutral-bg: color-mix(in srgb, var(--t-text-muted) 14%, var(--t-bg));  --neutral-ink: color-mix(in srgb, var(--t-text-muted) 55%, var(--t-text));
 
   /* Échelles : espacements et rayons nommés, pour cesser de semer des px au hasard. */
   --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
@@ -78,11 +78,11 @@
     --card: var(--t-surface);
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
     --shadow-lg: 0 12px 40px rgba(0,0,0,.5);
-    --danger-bg: #2a1416;  --danger-ink: #fca5a5;
-    --warning-bg: #2a2113; --warning-ink: #fcd34d;
-    --info-bg: #13203a;    --info-ink: #93c5fd;
-    --success-bg: #10241a; --success-ink: #86efac;
-    --neutral-bg: #1b2430; --neutral-ink: #cbd5e1;
+    --danger-bg: color-mix(in srgb, var(--t-danger) 14%, var(--t-bg));  --danger-ink: color-mix(in srgb, var(--t-danger) 55%, var(--t-text));
+    --warning-bg: color-mix(in srgb, var(--t-warning) 14%, var(--t-bg)); --warning-ink: color-mix(in srgb, var(--t-warning) 55%, var(--t-text));
+    --info-bg: color-mix(in srgb, var(--t-accent2) 14%, var(--t-bg));    --info-ink: color-mix(in srgb, var(--t-accent2) 40%, var(--t-text));
+    --success-bg: color-mix(in srgb, var(--t-success) 14%, var(--t-bg)); --success-ink: color-mix(in srgb, var(--t-success) 55%, var(--t-text));
+    --neutral-bg: color-mix(in srgb, var(--t-text-muted) 14%, var(--t-bg)); --neutral-ink: color-mix(in srgb, var(--t-text-muted) 55%, var(--t-text));
     --ring: 0 0 0 3px rgba(74, 222, 128, .35);
     color-scheme: dark;
   }
@@ -100,11 +100,11 @@
   --card: var(--t-surface);
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
   --shadow-lg: 0 12px 40px rgba(0,0,0,.5);
-  --danger-bg: #2a1416;  --danger-ink: #fca5a5;
-  --warning-bg: #2a2113; --warning-ink: #fcd34d;
-  --info-bg: #13203a;    --info-ink: #93c5fd;
-  --success-bg: #10241a; --success-ink: #86efac;
-  --neutral-bg: #1b2430; --neutral-ink: #cbd5e1;
+  --danger-bg: color-mix(in srgb, var(--t-danger) 14%, var(--t-bg));  --danger-ink: color-mix(in srgb, var(--t-danger) 55%, var(--t-text));
+  --warning-bg: color-mix(in srgb, var(--t-warning) 14%, var(--t-bg)); --warning-ink: color-mix(in srgb, var(--t-warning) 55%, var(--t-text));
+  --info-bg: color-mix(in srgb, var(--t-accent2) 14%, var(--t-bg));    --info-ink: color-mix(in srgb, var(--t-accent2) 40%, var(--t-text));
+  --success-bg: color-mix(in srgb, var(--t-success) 14%, var(--t-bg)); --success-ink: color-mix(in srgb, var(--t-success) 55%, var(--t-text));
+  --neutral-bg: color-mix(in srgb, var(--t-text-muted) 14%, var(--t-bg)); --neutral-ink: color-mix(in srgb, var(--t-text-muted) 55%, var(--t-text));
   --ring: 0 0 0 3px rgba(74, 222, 128, .35);
   color-scheme: dark;
 }
@@ -1358,23 +1358,23 @@ tbody tr:last-child td { border-bottom: none; }
    branchent ce vocabulaire sur les vrais jetons : ce seul bloc repare les
    69 pages, dans les deux themes. */
 :root {
-  --field: #f8fafc; --inset: #eef2f7;
+  --field: var(--t-surface2); --inset: var(--t-surface2);
   --surface: var(--card); --trait: var(--line); --fond: var(--field);
   --creux: var(--inset); --encre-pale: var(--muted); --rouge: var(--danger);
   --accent: var(--green);
   /* Couleurs de FONCTION des barres de progression, par theme — fini les hex
      en dur qui ignoraient le mode sombre. */
-  --c-eau: #2563eb; --c-forme: #7c3aed; --c-ambre: #b45309; --c-terre: #a2571c;
+  --c-eau: var(--t-accent2); --c-forme: #7c3aed; --c-ambre: #b45309; --c-terre: #a2571c;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --field: #0d141d; --inset: #101823;
-    --c-eau: #60a5fa; --c-forme: #a78bfa; --c-ambre: #fbbf24; --c-terre: #e8956a;
+    --field: var(--t-surface2); --inset: var(--t-surface2);
+    --c-eau: var(--t-accent2); --c-forme: #a78bfa; --c-ambre: #fbbf24; --c-terre: #e8956a;
   }
 }
 :root[data-theme='dark'] {
-  --field: #0d141d; --inset: #101823;
-  --c-eau: #60a5fa; --c-forme: #a78bfa; --c-ambre: #fbbf24; --c-terre: #e8956a;
+  --field: var(--t-surface2); --inset: var(--t-surface2);
+  --c-eau: var(--t-accent2); --c-forme: #a78bfa; --c-ambre: #fbbf24; --c-terre: #e8956a;
 }
 
 /* 2. Le fond respire : un halo d'accent discret en haut du contenu. */

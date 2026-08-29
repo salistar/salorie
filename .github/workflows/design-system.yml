@@ -79,6 +79,13 @@ jobs:
         # consigne d'audit demandait explicitement de ne pas tout refactoriser.
         run: node scripts/couleurs-en-dur.js
 
+      - name: Contraste des variantes web derivees
+        # Les fonds doux et les encres du web sont calcules par color-mix() a
+        # l affichage : rien ne peut les verifier au moment de la construction.
+        # Ce script refait le calcul et mesure le couple encre/fond de chaque
+        # message. Il a trouve un couple a 4,27:1 des sa premiere execution.
+        run: node scripts/verifier-contraste-web.js
+
       - name: Aucun jeton fige, aucun crochet dans une classe
         # Deux defauts que ni TypeScript ni les tests ne voient :
         #  · un jeton lu dans un StyleSheet evalue a l importation garde la
