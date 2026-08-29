@@ -84,8 +84,8 @@ export default function EquipmentScan() {
           <TouchableOpacity style={[s.btn, { backgroundColor: accent }]} onPress={() => pick(true)} disabled={busy}>
             <Camera size={18} color="#fff" /><Text style={s.btnTxt} numberOfLines={1}>{t.cam}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[s.btn, { backgroundColor: isDark ? '#334155' : '#e2e8f0' }]} onPress={() => pick(false)} disabled={busy}>
-            <ImageIcon size={18} color={isDark ? '#fff' : '#0f172a'} /><Text style={[s.btnTxt, { color: isDark ? '#fff' : '#0f172a' }]} numberOfLines={1}>{t.lib}</Text>
+          <TouchableOpacity style={[s.btn, { backgroundColor: k.surfaceSunken }]} onPress={() => pick(false)} disabled={busy}>
+            <ImageIcon size={18} color={isDark ? '#fff' : '#0f172a'} /><Text style={[s.btnTxt, { color: k.text }]} numberOfLines={1}>{t.lib}</Text>
           </TouchableOpacity>
         </View>
 

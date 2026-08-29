@@ -271,9 +271,9 @@ export default function RaceLiveScreen() {
   const mmss = `${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`;
   const paceStr = paceMin > 0 ? `${Math.floor(paceMin)}'${String(Math.round((paceMin % 1) * 60)).padStart(2, '0')}"` : "--'--";
 
-  const text = isDark ? '#fff' : k.text;
-  const sub = isDark ? '#9BA1A6' : k.textMuted;
-  const card = isDark ? k.surface : '#fff';
+  const text = k.text;
+  const sub = k.textMuted;
+  const card = k.surface;
   const tok = useTokens();
   const bg = tok.bg;
 
@@ -375,7 +375,7 @@ export default function RaceLiveScreen() {
             ? teamGroups.map((g, i) => {
                 const mine = !!myTeam && g.team.toLowerCase() === myTeam.toLowerCase();
                 return (
-                  <View key={g.team || i} style={[styles.boardRow, mine && { backgroundColor: isDark ? '#14321f' : '#ecfdf3' }, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                  <View key={g.team || i} style={[styles.boardRow, mine && { backgroundColor: k.surface }, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                     <Text style={styles.boardRank}>{medals[i] || `${i + 1}`}</Text>
                     <Text numberOfLines={1} style={[styles.boardName, { color: mine ? ME_COLOR : text, textAlign: isRTL ? 'right' : 'left' }]}>
                       {g.team} · {g.members.length}👥
@@ -388,7 +388,7 @@ export default function RaceLiveScreen() {
                 const mine = p.email === email;
                 const tn = normalizeTeamName((p as TeamMember).teamName);
                 return (
-                  <View key={p.email || i} style={[styles.boardRow, mine && { backgroundColor: isDark ? '#14321f' : '#ecfdf3' }, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                  <View key={p.email || i} style={[styles.boardRow, mine && { backgroundColor: k.surface }, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                     <Text style={styles.boardRank}>{medals[i] || `${i + 1}`}</Text>
                     <Text numberOfLines={1} style={[styles.boardName, { color: mine ? ME_COLOR : text, textAlign: isRTL ? 'right' : 'left' }]}>
                       {mine ? t.you : (p.name || '—')}{tn ? ` · ${tn}` : ''}{p.finished ? ` · ${t.done}` : ''}
@@ -421,7 +421,7 @@ export default function RaceLiveScreen() {
                 placeholder={t.teamPlaceholder}
                 placeholderTextColor={sub}
                 maxLength={24}
-                style={[styles.teamInput, { color: text, borderColor: isDark ? '#334155' : '#e2e8f0', backgroundColor: isDark ? '#0f1419' : '#f8fafc', textAlign: isRTL ? 'right' : 'left' }]}
+                style={[styles.teamInput, { color: text, borderColor: k.border, backgroundColor: k.surface, textAlign: isRTL ? 'right' : 'left' }]}
               />
               <TouchableOpacity activeOpacity={0.85} onPress={saveTeam} disabled={!normalizeTeamName(teamInput)}
                 style={[styles.teamBtn, { opacity: normalizeTeamName(teamInput) ? 1 : 0.5 }]}>
@@ -446,7 +446,7 @@ export default function RaceLiveScreen() {
                     style={[
                       styles.modeSeg,
                       active
-                        ? { backgroundColor: isDark ? '#14321f' : '#ecfdf3', borderColor: k.accent }
+                        ? { backgroundColor: k.surface, borderColor: k.accent }
                         : { borderColor: 'transparent' },
                     ]}
                   />

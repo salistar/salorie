@@ -65,8 +65,8 @@ export default function TermsScreen() {
   const tx = TXT[language as keyof typeof TXT] ?? TXT.en;
   const tok = useTokens();
   const bg = tok.bg;
-  const tPrimary = isDark ? '#fff' : k.text;
-  const tMuted = isDark ? '#9BA1A6' : k.textMuted;
+  const tPrimary = k.text;
+  const tMuted = k.textMuted;
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
       <ScreenTopBar showBack title={tx.title} showBrand={false} showNotif={false} />

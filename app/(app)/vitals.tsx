@@ -325,8 +325,9 @@ function TrendCard({ trend, secondary, label, avg, range, unit, spark, card, tex
   const mn = Math.min(...vals, trend.min);
   const mx = Math.max(...vals, trend.max);
   const span = mx - mn || 1;
+  const k = useTokens();
   return (
-    <View style={[styles.trendCard, { backgroundColor: card, borderColor: isDark ? '#283241' : '#E8EDF2' }]}>
+    <View style={[styles.trendCard, { backgroundColor: card, borderColor: k.border }]}>
       <View style={[styles.trendTop, { flexDirection: rowDir(isRTL) }]}>
         <Text style={[styles.trendLabel, { color: sub }, align]}>{label}</Text>
         <View style={[styles.trendDir, { flexDirection: rowDir(isRTL) }]}>

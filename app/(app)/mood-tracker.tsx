@@ -78,7 +78,7 @@ export default function MoodTrackerScreen() {
         <Text style={[styles.label, { color: sub }, align]}>{t.mood}</Text>
         <View style={[styles.row, { flexDirection: rowDir(isRTL) }]}>
           {MOODS.map((e, i) => (
-            <TouchableOpacity key={i} style={[styles.btn, { backgroundColor: card }, mood === i + 1 && { borderColor: accent, backgroundColor: isDark ? '#173a26' : '#EAF4EE' }]} onPress={() => setMood(i + 1)}><Text style={styles.emoji}>{e}</Text></TouchableOpacity>
+            <TouchableOpacity key={i} style={[styles.btn, { backgroundColor: card }, mood === i + 1 && { borderColor: accent, backgroundColor: k.surfaceSunken }]} onPress={() => setMood(i + 1)}><Text style={styles.emoji}>{e}</Text></TouchableOpacity>
           ))}
         </View>
 

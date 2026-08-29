@@ -233,10 +233,10 @@ export default function SignInScreen() {
   // Couleurs dérivées du thème (l'écran était tout blanc en dur)
   const cardBg = isDark ? colors.card : '#fff';
   const inputBg = k.border;
-  const textPrimary = isDark ? '#fff' : k.text;
+  const textPrimary = k.text;
   const textMuted = k.textMuted;
-  const placeholderColor = isDark ? k.textMuted : '#666';
-  const iconColor = isDark ? k.textMuted : '#666';
+  const placeholderColor = k.textMuted;
+  const iconColor = k.textMuted;
   const dividerColor = k.border;
   const orLabel = language === 'fr' ? 'OU' : language === 'ar' ? 'أو' : 'OR';
 

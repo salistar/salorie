@@ -165,7 +165,7 @@ export default function ProgressPhotosScreen() {
           </TouchableOpacity>
         )}
         {!!analysis && (
-          <View style={[styles.analysisCard, { backgroundColor: isDark ? '#161C23' : '#fff' }]}>
+          <View style={[styles.analysisCard, { backgroundColor: k.surface }]}>
             <Text style={[styles.analysisTitle, align]}>{t.result}</Text>
             <Text style={[styles.analysisTxt, { color: text }, align]}>{analysis}</Text>
             <Text style={[styles.analysisSrc, { color: sub }, align]}>⛅ {language === 'fr' ? 'Source : IA · Gemini (pas de modèle on-device pour juger le physique)' : language === 'ar' ? 'المصدر: ذكاء · Gemini' : 'Source: AI · Gemini'}</Text>

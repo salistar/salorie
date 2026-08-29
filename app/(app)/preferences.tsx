@@ -44,13 +44,13 @@ export default function PreferencesScreen() {
   // `choix` et `setTheme` portent les six.
   const { choix, setTheme, colors, resolved } = useTheme();
   const k = useTokens();
-  const tPrimary = resolved === 'dark' ? '#fff' : k.text;
-  const tMuted = resolved === 'dark' ? '#9BA1A6' : k.textMuted;
+  const tPrimary = k.text;
+  const tMuted = k.textMuted;
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(k), [k]);
-  const cardBg = isDark ? '#161C23' : k.surfaceSunken;
-  const titleCol = isDark ? '#f1f5f9' : k.text;
-  const iconWrap = isDark ? '#0f1419' : k.surface;
+  const cardBg = k.surfaceSunken;
+  const titleCol = k.text;
+  const iconWrap = k.surface;
   const { language, setLanguage, t, isRTL } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState(true);
@@ -149,7 +149,7 @@ export default function PreferencesScreen() {
 
 
   return (
-    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: resolved === 'dark' ? '#0f1419' : k.surface }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: k.surface }]}>
       <ScreenTopBar showBack title={t('prefs.title')} showBrand={false} showNotif={false} />
 
       {loading ? (

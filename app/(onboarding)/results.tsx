@@ -234,13 +234,13 @@ export default function ResultsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: isDark ? '#0f1419' : k.surface }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: k.surface }]}>
         <Image
           source={require('../../assets/images/illustrations/generating.jpg')}
           style={{ width: 180, height: 180, borderRadius: 90, marginBottom: 20 }}
         />
         <Sparkles size={40} color={k.accent} style={styles.aiIcon} />
-        <Text style={[styles.loadingTitle, { color: isDark ? '#fff' : k.text }]}>{t.generating}</Text>
+        <Text style={[styles.loadingTitle, { color: k.text }]}>{t.generating}</Text>
         <View style={styles.stepsList}>
           {steps.map((step, index) => (
             <View key={index} style={[styles.stepItem, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: k.surfaceSunken }]}>
@@ -253,7 +253,7 @@ export default function ResultsScreen() {
               )}
               <Text style={[
                 styles.stepLabel,
-                { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' },
+                { color: k.textMuted, textAlign: isRTL ? 'right' : 'left' },
                 step.status === 'completed' && styles.stepLabelCompleted,
                 step.status === 'loading' && (isDark ? { color: '#fff', fontWeight: '700' as const } : styles.stepLabelActive)
               ]}>
@@ -276,51 +276,51 @@ export default function ResultsScreen() {
             style={styles.heroImage}
           />
           <CheckCircle size={48} color={k.accent} style={{ marginTop: 12 }} />
-          <Text style={[styles.title, { color: isDark ? '#fff' : k.text }]}>{t.yourPlan}</Text>
-          <Text style={[styles.subtitle, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.planSubtitle}</Text>
+          <Text style={[styles.title, { color: k.text }]}>{t.yourPlan}</Text>
+          <Text style={[styles.subtitle, { color: k.textMuted }]}>{t.planSubtitle}</Text>
         </View>
 
-        <View style={[styles.card, { backgroundColor: isDark ? k.surface : '#fff' }]}>
+        <View style={[styles.card, { backgroundColor: k.surface }]}>
           <View style={[styles.caloriesRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <Flame size={32} color={k.accent} />
             <View>
-              <Text style={[styles.label, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{t.dailyCalories}</Text>
-              <Text style={[styles.value, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}>{plan?.dailyCalories} kcal</Text>
+              <Text style={[styles.label, { color: k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{t.dailyCalories}</Text>
+              <Text style={[styles.value, { color: k.text, textAlign: isRTL ? 'right' : 'left' }]}>{plan?.dailyCalories} kcal</Text>
             </View>
           </View>
 
           <View style={styles.macrosRow}>
             <View style={styles.macroItem}>
-              <Text style={[styles.macroLabel, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.protein}</Text>
+              <Text style={[styles.macroLabel, { color: k.textMuted }]}>{t.protein}</Text>
               <Text style={styles.macroValue}>{plan?.proteins}g</Text>
             </View>
             <View style={styles.macroItem}>
-              <Text style={[styles.macroLabel, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.carbs}</Text>
+              <Text style={[styles.macroLabel, { color: k.textMuted }]}>{t.carbs}</Text>
               <Text style={styles.macroValue}>{plan?.carbs}g</Text>
             </View>
             <View style={styles.macroItem}>
-              <Text style={[styles.macroLabel, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.fats}</Text>
+              <Text style={[styles.macroLabel, { color: k.textMuted }]}>{t.fats}</Text>
               <Text style={styles.macroValue}>{plan?.fats}g</Text>
             </View>
           </View>
         </View>
 
-        <View style={[styles.card, { marginTop: 16, backgroundColor: isDark ? k.surface : '#fff' }]}>
+        <View style={[styles.card, { marginTop: 16, backgroundColor: k.surface }]}>
           <View style={[styles.caloriesRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <Droplets size={32} color="#0EA5E9" />
             <View>
-              <Text style={[styles.label, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{t.waterIntake}</Text>
-              <Text style={[styles.value, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}>{plan?.waterIntake} {t.liters}</Text>
+              <Text style={[styles.label, { color: k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{t.waterIntake}</Text>
+              <Text style={[styles.value, { color: k.text, textAlign: isRTL ? 'right' : 'left' }]}>{plan?.waterIntake} {t.liters}</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.adviceSection}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}>{t.aiAdvice}</Text>
+          <Text style={[styles.sectionTitle, { color: k.text, textAlign: isRTL ? 'right' : 'left' }]}>{t.aiAdvice}</Text>
           {plan?.advice.map((item, index) => (
-            <View key={index} style={[styles.adviceItem, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: isDark ? k.surface : '#fff' }]}>
+            <View key={index} style={[styles.adviceItem, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: k.surface }]}>
               <Zap size={20} color={k.warning} />
-              <Text style={[styles.adviceText, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{item}</Text>
+              <Text style={[styles.adviceText, { color: k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{item}</Text>
             </View>
           ))}
         </View>
@@ -335,7 +335,7 @@ export default function ResultsScreen() {
         </TouchableOpacity>
         {/* Secondaire : continuer plus tard, direct au tableau de bord. */}
         <TouchableOpacity disabled={saving} style={styles.laterButton} onPress={() => finishOnboarding('/(tabs)')}>
-          <Text style={[styles.laterButtonText, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.later}</Text>
+          <Text style={[styles.laterButtonText, { color: k.textMuted }]}>{t.later}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

@@ -156,7 +156,7 @@ export default function ShoppingListScreen() {
         </TouchableOpacity>
 
         <View style={styles.addRow}>
-          <TextInput style={[styles.input, { backgroundColor: card, color: textCol, borderColor: isDark ? '#283241' : '#E2E8F0' }, align]} placeholder={t.placeholder} placeholderTextColor={isDark ? '#64748b' : '#94A3B8'} value={text} onChangeText={setText} onSubmitEditing={add} returnKeyType="done" />
+          <TextInput style={[styles.input, { backgroundColor: card, color: textCol, borderColor: k.border }, align]} placeholder={t.placeholder} placeholderTextColor={isDark ? '#64748b' : '#94A3B8'} value={text} onChangeText={setText} onSubmitEditing={add} returnKeyType="done" />
           <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('ajouter')} style={styles.addBtn} onPress={add}><Plus size={22} color="#fff" /></TouchableOpacity>
         </View>
 

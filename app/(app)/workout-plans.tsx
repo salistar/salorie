@@ -193,9 +193,9 @@ export default function WorkoutPlansScreen() {
     finally { setBusy(null); }
   };
 
-  const text = isDark ? '#fff' : k.text;
-  const sub = isDark ? '#9BA1A6' : k.textMuted;
-  const card = isDark ? k.surface : '#fff';
+  const text = k.text;
+  const sub = k.textMuted;
+  const card = k.surface;
   const bg = isDark ? '#0f1419' : 'transparent';
   const row = (rev = false): any => ({ flexDirection: isRTL ? (rev ? 'row' : 'row-reverse') : (rev ? 'row-reverse' : 'row') });
   const ta: any = { textAlign: isRTL ? 'right' : 'left' };
@@ -237,7 +237,7 @@ export default function WorkoutPlansScreen() {
                   {p.exercises.map((ex, j) => {
                     const how = (EX_HOW[language] || EX_HOW.en)[ex.name];
                     return (
-                      <View key={j} style={[styles.exItem, { borderTopColor: isDark ? '#1e293b' : '#f1f5f9' }]}>
+                      <View key={j} style={[styles.exItem, { borderTopColor: k.border }]}>
                         <View style={[styles.exRow, row()]}>
                           <View style={[styles.exDot, { backgroundColor: p.color }]} />
                           <Text style={[styles.exName, { color: text }, ta]}>{ex.name}</Text>

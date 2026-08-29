@@ -22,7 +22,7 @@ export default function CollapsibleSection({ title, defaultOpen = false, childre
   const [open, setOpen] = useState(defaultOpen);
   const { resolved } = useTheme();
   const k = useTokens();
-  const titleColor = resolved === 'dark' ? '#f1f5f9' : k.text;
+  const titleColor = k.text;
   const toggle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setOpen((o) => !o);

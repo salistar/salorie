@@ -164,9 +164,9 @@ export default function HealthScreen() {
   const addChunk = async () => { setSimSteps(await addSimSteps(email, 1000)); };
   const resetWalk = async () => { await resetSimSteps(email); setSimSteps(0); };
 
-  const text = isDark ? '#fff' : k.text;
-  const sub = isDark ? '#9BA1A6' : k.textMuted;
-  const card = isDark ? k.surface : '#fff';
+  const text = k.text;
+  const sub = k.textMuted;
+  const card = k.surface;
   const bg = isDark ? '#0f1419' : 'transparent';
 
   const connect = useCallback(async () => {
@@ -272,7 +272,7 @@ export default function HealthScreen() {
         </TouchableOpacity>
 
         {/* Steps mode: Real (Health Connect) vs Simulation */}
-        <View style={[styles.modeRow, { backgroundColor: isDark ? k.border : '#f1f5f9', flexDirection: rowDir(isRTL) }]}>
+        <View style={[styles.modeRow, { backgroundColor: k.border, flexDirection: rowDir(isRTL) }]}>
           <TouchableOpacity style={[styles.modeBtn, mode === 'real' && { backgroundColor: card }]} onPress={() => switchMode('real')}>
             <Navigation size={16} color={mode === 'real' ? accent : sub} />
             <Text style={[styles.modeTxt, { color: mode === 'real' ? accent : sub }]}>{tx.real}</Text>
@@ -305,7 +305,7 @@ export default function HealthScreen() {
                 <Plus size={16} color="#fff" />
                 <Text style={styles.simBtnTxt}>+1 000</Text>
               </TouchableOpacity>
-              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('recommencer')} style={[styles.simBtnGhost, { borderColor: isDark ? '#283241' : '#cbd5e1' }]} onPress={resetWalk}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('recommencer')} style={[styles.simBtnGhost, { borderColor: k.border }]} onPress={resetWalk}>
                 <RotateCcw size={16} color={sub} />
               </TouchableOpacity>
             </View>

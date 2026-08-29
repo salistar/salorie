@@ -130,7 +130,7 @@ export default function MealBuilderScreen() {
               const m = parseDescription(r.food_description);
               return (
                 <TouchableOpacity style={[styles.resRow, row, isDark && { borderBottomColor: '#334155' }]} onPress={() => add(r)}>
-                  <Text style={[styles.resName, { color: isDark ? '#e2e8f0' : '#1F2937' }, align]} numberOfLines={1}>{r.food_name}</Text>
+                  <Text style={[styles.resName, { color: k.text }, align]} numberOfLines={1}>{r.food_name}</Text>
                   <Text style={[styles.resMacro, { color: sub }, align]}>{m.calories} kcal</Text>
                   <Plus size={18} color={accent} />
                 </TouchableOpacity>

@@ -18,14 +18,14 @@ function ActivityList({ logs, onAddPress }: ActivityListProps) {
   const k = useTokens();
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(k), [k]);
-  const titleColor = isDark ? '#f1f5f9' : k.text;
-  const itemBg = isDark ? '#161C23' : k.surface;
+  const titleColor = k.text;
+  const itemBg = k.surface;
   const itemBorder = isDark ? 'rgba(255,255,255,0.08)' : k.surfaceSunken;
-  const nameColor = isDark ? '#f1f5f9' : k.text;
-  const valueColor = isDark ? '#f1f5f9' : k.text;
+  const nameColor = k.text;
+  const valueColor = k.text;
   const emptyBg = isDark ? 'rgba(255,255,255,0.04)' : k.surfaceSunken;
-  const subColor = isDark ? '#94a3b8' : k.textMuted;
-  const tsColor = isDark ? '#64748b' : k.textFaint;
+  const subColor = k.textMuted;
+  const tsColor = k.textFaint;
   // Perf : on est DANS le ScrollView du Home (FlatList imbriquée interdite) →
   // rendu plafonné + « voir plus » incrémental pour éviter 100+ items montés.
   const [visibleCount, setVisibleCount] = useState(30);
@@ -110,7 +110,7 @@ function ActivityList({ logs, onAddPress }: ActivityListProps) {
       <View style={styles.emptyIconWrapper}>
         <ClipboardList size={40} color={k.accent} strokeWidth={2} />
       </View>
-      <Text style={[styles.emptyTitle, { color: isDark ? '#f1f5f9' : k.text }]}>{t('home.no_activity')}</Text>
+      <Text style={[styles.emptyTitle, { color: k.text }]}>{t('home.no_activity')}</Text>
       <Text style={styles.emptySub}>{t('home.add_first')}</Text>
 
       <TouchableOpacity style={styles.addCta} onPress={onAddPress} activeOpacity={0.8}>

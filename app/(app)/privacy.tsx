@@ -195,11 +195,11 @@ export default function PrivacyScreen() {
 
   const tok = useTokens();
   const bg = tok.bg;
-  const tPrimary = isDark ? '#fff' : k.text;
-  const tMuted = isDark ? '#9BA1A6' : k.textMuted;
-  const infoBoxBg = isDark ? k.accentSoft : '#ECFDF5';
+  const tPrimary = k.text;
+  const tMuted = k.textMuted;
+  const infoBoxBg = k.accentSoft;
   const infoBoxBorder = isDark ? '#283241' : '#D1FAE5';
-  const infoBoxText = isDark ? k.accentStrong : '#065F46';
+  const infoBoxText = k.accentStrong;
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
       <ScreenTopBar showBack title={tx.title} showBrand={false} showNotif={false} />
@@ -260,7 +260,7 @@ export default function PrivacyScreen() {
           </Text>
 
           {/* Zone de danger — suppression de compte in-app (exigence Google Play) */}
-          <View style={[styles.dangerBox, { borderColor: isDark ? '#4C1D1D' : '#FEE2E2', backgroundColor: isDark ? '#1F1416' : '#FEF2F2' }]}>
+          <View style={[styles.dangerBox, { borderColor: k.border, backgroundColor: k.surface }]}>
             <Text style={[styles.dangerTitle, { textAlign: txtAlign(isRTL) }]}>{tx.del_title}</Text>
             <Text style={[styles.dangerDesc, { color: tMuted, textAlign: txtAlign(isRTL), writingDirection: writingDir(isRTL) }]}>{tx.del_desc}</Text>
             <TouchableOpacity

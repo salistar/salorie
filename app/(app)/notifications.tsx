@@ -222,10 +222,10 @@ export default function NotificationsScreen() {
     const plan = cachedProfile?.nutritionalPlan || {};
 
     const detailCardStyle = [styles.detailCard, isDark && { backgroundColor: k.surface }];
-    const detailTitleStyle = [styles.detailTitle, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' as const : 'left' as const }];
+    const detailTitleStyle = [styles.detailTitle, { color: k.text, textAlign: isRTL ? 'right' as const : 'left' as const }];
     const detailRowStyle = [styles.detailRow, { flexDirection: isRTL ? 'row-reverse' as const : 'row' as const }];
-    const detailLabelStyle = [styles.detailLabel, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' as const : 'left' as const }];
-    const detailValueStyle = [styles.detailValue, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' as const : 'left' as const }];
+    const detailLabelStyle = [styles.detailLabel, { color: k.textMuted, textAlign: isRTL ? 'right' as const : 'left' as const }];
+    const detailValueStyle = [styles.detailValue, { color: k.text, textAlign: isRTL ? 'right' as const : 'left' as const }];
 
     if (kind === 'calories') {
       return (
@@ -347,8 +347,8 @@ export default function NotificationsScreen() {
           <Bell size={20} color={k.accent} />
         </View>
         <View style={styles.content}>
-          <Text style={[styles.notifTitle, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}>{item.title}</Text>
-          <Text style={[styles.notifBody, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{item.body}</Text>
+          <Text style={[styles.notifTitle, { color: k.text, textAlign: isRTL ? 'right' : 'left' }]}>{item.title}</Text>
+          <Text style={[styles.notifBody, { color: k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{item.body}</Text>
           <View style={[styles.footer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <Clock size={12} color={k.textMuted} />
             <Text style={styles.timeText}>
@@ -381,9 +381,9 @@ export default function NotificationsScreen() {
       <ScreenTopBar />
       <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backButton, isDark && { backgroundColor: k.surfaceSunken }]} onPress={() => router.back()}>
-          <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ChevronLeft size={24} color={isDark ? '#fff' : k.text} /></View>
+          <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ChevronLeft size={24} color={k.text} /></View>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#fff' : k.text }]}>{t.notifications}</Text>
+        <Text style={[styles.headerTitle, { color: k.text }]}>{t.notifications}</Text>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} style={styles.clearButton} onPress={clearAll}>
           <Trash2
             size={20}
@@ -403,8 +403,8 @@ export default function NotificationsScreen() {
           <View style={[styles.emptyIconCircle, isDark && { backgroundColor: k.surfaceSunken }]}>
             <Inbox size={48} color={k.border} />
           </View>
-          <Text style={[styles.emptyTitle, { color: isDark ? '#fff' : k.text }]}>{t.inboxEmpty}</Text>
-          <Text style={[styles.emptySubtitle, { color: isDark ? '#9BA1A6' : k.textMuted }]}>
+          <Text style={[styles.emptyTitle, { color: k.text }]}>{t.inboxEmpty}</Text>
+          <Text style={[styles.emptySubtitle, { color: k.textMuted }]}>
             {t.inboxSubtitle}
           </Text>
         </View>
@@ -433,13 +433,13 @@ export default function NotificationsScreen() {
         <View style={[styles.modalOverlay, directionAuto()]}>
           <View style={[styles.modalContent, isDark && { backgroundColor: k.surface }]}>
             <View style={[styles.modalHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-              <Text style={[styles.modalTitle, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}>{selected?.title}</Text>
+              <Text style={[styles.modalTitle, { color: k.text, textAlign: isRTL ? 'right' : 'left' }]}>{selected?.title}</Text>
               <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={() => setSelected(null)}>
-                <X size={24} color={isDark ? '#9BA1A6' : k.textMuted} />
+                <X size={24} color={k.textMuted} />
               </TouchableOpacity>
             </View>
             <ScrollView>
-              <Text style={[styles.modalBody, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{selected?.body}</Text>
+              <Text style={[styles.modalBody, { color: k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{selected?.body}</Text>
               {renderCardDetail()}
             </ScrollView>
           </View>

@@ -34,6 +34,7 @@ import { useTheme } from '../lib/ThemeContext';
 import { rowDir, txtAlign } from '../lib/rtl';
 import { PurchasesService, type SellablePackage } from '../lib/PurchasesService';
 import { FREE_LIMITS } from '../lib/freemium';
+import { useTokens } from '../constants/tokens';
 
 const TXT: Record<string, any> = {
   fr: {
@@ -130,6 +131,7 @@ export type PaywallViewProps = {
 };
 
 export default function PaywallView({ onDone, kcal = '', preview = false, context = 'onboarding' }: PaywallViewProps) {
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language as string] || TXT.en;
   const { colors, resolved } = useTheme();
@@ -145,11 +147,11 @@ export default function PaywallView({ onDone, kcal = '', preview = false, contex
   const leavingRef = useRef(false);
 
   const C = {
-    bg: isDark ? '#0f1419' : '#F8FAFC',
+    bg: k.surface,
     card: isDark ? colors.card : '#fff',
-    border: isDark ? '#2d3543' : '#E2E8F0',
-    title: isDark ? '#fff' : '#1E293B',
-    sub: isDark ? '#9BA1A6' : '#64748B',
+    border: k.border,
+    title: k.text,
+    sub: k.textMuted,
     accent: isDark ? '#4ade80' : colors.primary,
   };
 

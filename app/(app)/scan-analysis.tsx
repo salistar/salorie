@@ -762,13 +762,13 @@ ${langInstr}`;
   };
 
   // ----- Theme-aware styles -----
-  const bg = isDark ? '#0B0F14' : k.surface;
+  const bg = k.surface;
   const textPrimary = isDark ? colors.gray[900] : k.text;
   const textSecondary = isDark ? colors.gray[500] : k.textMuted;
   const textMuted = isDark ? colors.gray[400] : k.textMuted;
-  const cardBg = isDark ? '#161C23' : k.surfaceSunken;
+  const cardBg = k.surfaceSunken;
   const cardBorder = isDark ? colors.gray[200] : k.border;
-  const activeBg = isDark ? '#1F2833' : k.surface;
+  const activeBg = k.surface;
 
   if (!__gate.ok) return __gate.node;
 
@@ -1087,7 +1087,7 @@ ${langInstr}`;
                   label={t('scan.calories_short')}
                   value={macroTexte(aiResult.calories)}
                   unit="kcal"
-                  tileBg={isDark ? '#1F2833' : k.surface}
+                  tileBg={k.surface}
                   border={cardBorder}
                   textPrimary={textPrimary}
                   textMuted={textMuted}
@@ -1097,7 +1097,7 @@ ${langInstr}`;
                   label={t('scan.protein_short')}
                   value={macroTexte(aiResult.protein)}
                   unit="g"
-                  tileBg={isDark ? '#1F2833' : k.surface}
+                  tileBg={k.surface}
                   border={cardBorder}
                   textPrimary={textPrimary}
                   textMuted={textMuted}
@@ -1107,7 +1107,7 @@ ${langInstr}`;
                   label={t('scan.carbs_short')}
                   value={macroTexte(aiResult.carbs)}
                   unit="g"
-                  tileBg={isDark ? '#1F2833' : k.surface}
+                  tileBg={k.surface}
                   border={cardBorder}
                   textPrimary={textPrimary}
                   textMuted={textMuted}
@@ -1117,7 +1117,7 @@ ${langInstr}`;
                   label={t('scan.fat_short')}
                   value={macroTexte(aiResult.fat)}
                   unit="g"
-                  tileBg={isDark ? '#1F2833' : k.surface}
+                  tileBg={k.surface}
                   border={cardBorder}
                   textPrimary={textPrimary}
                   textMuted={textMuted}

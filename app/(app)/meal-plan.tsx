@@ -136,9 +136,9 @@ export default function MealPlanScreen() {
     }
   };
 
-  const text = isDark ? '#fff' : k.text;
-  const sub = isDark ? '#9BA1A6' : k.textMuted;
-  const card = isDark ? k.surface : '#fff';
+  const text = k.text;
+  const sub = k.textMuted;
+  const card = k.surface;
   const bg = isDark ? '#0f1419' : 'transparent';
 
   useEffect(() => {
@@ -238,7 +238,7 @@ export default function MealPlanScreen() {
               </View>
             </View>
 
-            <View style={[styles.stepsCard, { backgroundColor: card, borderColor: isDark ? '#283241' : k.border }]}>
+            <View style={[styles.stepsCard, { backgroundColor: card, borderColor: k.border }]}>
               <Text style={[styles.stepsTitle, { color: text, textAlign: txtAlign(isRTL) }]}>{L('how_title')}</Text>
               {[L('step1'), L('step2'), L('step3')].map((s, i) => (
                 <View key={i} style={[styles.stepRow, { flexDirection: rowDir(isRTL) }]}>

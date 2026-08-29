@@ -262,7 +262,7 @@ export default function AiCoachScreen() {
       </View>
       <ScrollView ref={scroll} contentContainerStyle={styles.body}>
         {msgs.map((m, i) => (
-          <View key={i} style={[styles.bubble, m.role === 'user' ? [styles.user, { backgroundColor: GREEN }] : [styles.coach, { backgroundColor: card, borderColor: isDark ? '#334155' : '#EEF2F6' }]]}>
+          <View key={i} style={[styles.bubble, m.role === 'user' ? [styles.user, { backgroundColor: GREEN }] : [styles.coach, { backgroundColor: card, borderColor: k.border }]]}>
             <Text style={[styles.bubbleTxt, { color: text }, align, m.role === 'user' && { color: '#fff' }]}>{m.text}</Text>
             {m.role === 'coach' && (
               <View style={[styles.msgActions, { flexDirection: rowDir(isRTL), alignSelf: isRTL ? 'flex-end' : 'flex-start' }]}>
@@ -281,11 +281,11 @@ export default function AiCoachScreen() {
             )}
           </View>
         ))}
-        {loading && <View style={[styles.bubble, styles.coach, { backgroundColor: card, borderColor: isDark ? '#334155' : '#EEF2F6' }]}><ActivityIndicator color={GREEN} /></View>}
+        {loading && <View style={[styles.bubble, styles.coach, { backgroundColor: card, borderColor: k.border }]}><ActivityIndicator color={GREEN} /></View>}
       </ScrollView>
-      <View style={[styles.inputRow, { flexDirection: rowDir(isRTL), backgroundColor: card, borderTopColor: isDark ? '#334155' : '#EEF2F6' }]}>
+      <View style={[styles.inputRow, { flexDirection: rowDir(isRTL), backgroundColor: card, borderTopColor: k.border }]}>
         <TextInput
-          style={[styles.input, { backgroundColor: isDark ? '#0f1419' : '#F1F5F9', color: text, borderWidth: 1.5, borderColor: isDark ? '#334155' : '#E2E8F0' }, align]}
+          style={[styles.input, { backgroundColor: k.surface, color: text, borderWidth: 1.5, borderColor: k.border }, align]}
           placeholder={t.placeholder}
           placeholderTextColor={sub}
           value={q}

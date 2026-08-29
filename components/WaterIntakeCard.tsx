@@ -29,8 +29,8 @@ export default function WaterIntakeCard({
   const k = useTokens();
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(k), [k]);
-  const cardBg = isDark ? '#161C23' : k.surface;
-  const titleColor = isDark ? '#f1f5f9' : k.text;
+  const cardBg = k.surface;
+  const titleColor = k.text;
   const borderColor = isDark ? 'rgba(255,255,255,0.08)' : k.surfaceSunken;
   // Logic: Scale goal to exactly 9 glasses if goal is defined.
   // Guard contre goalMl=0 (profil non configuré) → évite Infinity/NaN (verres tous pleins).

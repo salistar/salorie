@@ -113,7 +113,7 @@ export default function WorkoutResultScreen() {
   };
 
   return (
-    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: isDark ? '#0f1419' : k.surface }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: k.surface }]}>
       <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
       <View style={styles.content}>
@@ -127,24 +127,24 @@ export default function WorkoutResultScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(300).duration(600)} style={{ alignItems: 'center', alignSelf: 'stretch' }}>
-          <Text style={[styles.great, { color: isDark ? '#fff' : k.text }]}>{t.great}</Text>
-          <Text style={[styles.subtitle, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.burned}</Text>
-          <Text style={[styles.calories, { color: isDark ? '#fff' : k.text }]}>{fmtNum(calories) || '—'}<Text style={styles.calUnit}> {t.kcal}</Text></Text>
+          <Text style={[styles.great, { color: k.text }]}>{t.great}</Text>
+          <Text style={[styles.subtitle, { color: k.textMuted }]}>{t.burned}</Text>
+          <Text style={[styles.calories, { color: k.text }]}>{fmtNum(calories) || '—'}<Text style={styles.calUnit}> {t.kcal}</Text></Text>
 
           {/* Rangée de stats designée */}
-          <View style={[styles.statsRow, { backgroundColor: isDark ? '#161C23' : k.surfaceSunken }]}>
+          <View style={[styles.statsRow, { backgroundColor: k.surfaceSunken }]}>
             <View style={styles.stat}>
-              <Text style={[styles.statVal, { color: isDark ? '#fff' : k.text }]}>{fmtNum(duration) || '—'}</Text>
-              <Text style={[styles.statLbl, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.dur} ({t.min})</Text>
+              <Text style={[styles.statVal, { color: k.text }]}>{fmtNum(duration) || '—'}</Text>
+              <Text style={[styles.statLbl, { color: k.textMuted }]}>{t.dur} ({t.min})</Text>
             </View>
-            <View style={[styles.statDivider, { backgroundColor: isDark ? '#283241' : k.border }]} />
+            <View style={[styles.statDivider, { backgroundColor: k.border }]} />
             <View style={styles.stat}>
-              <Text style={[styles.statVal, { color: isDark ? '#fff' : k.text }]} numberOfLines={1}>{intensiteSeance || '—'}</Text>
-              <Text style={[styles.statLbl, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.intensity}</Text>
+              <Text style={[styles.statVal, { color: k.text }]} numberOfLines={1}>{intensiteSeance || '—'}</Text>
+              <Text style={[styles.statLbl, { color: k.textMuted }]}>{t.intensity}</Text>
             </View>
           </View>
 
-          <Text style={[styles.info, { color: isDark ? '#9BA1A6' : k.textMuted }]} numberOfLines={1}>{typeSeance}</Text>
+          <Text style={[styles.info, { color: k.textMuted }]} numberOfLines={1}>{typeSeance}</Text>
           <Text style={[styles.savedHint, { color: k.accent }]}>{t.saved}</Text>
         </Animated.View>
       </View>
@@ -153,7 +153,7 @@ export default function WorkoutResultScreen() {
         <TouchableOpacity
           style={[
             styles.shareBtn,
-            { flexDirection: isRTL ? 'row-reverse' : 'row', borderColor: isDark ? '#283241' : k.border },
+            { flexDirection: isRTL ? 'row-reverse' : 'row', borderColor: k.border },
           ]}
           onPress={handleShare}
           activeOpacity={0.85}

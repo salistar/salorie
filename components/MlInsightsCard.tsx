@@ -190,7 +190,7 @@ function MlInsightsCard({ weightHistory, remaining: propRemaining, goal: propGoa
               </View>
             )) : <Text style={[styles.muted, { color: subColor }]}>—</Text>}
           </View>
-          <Text style={[styles.footer, { color: isDark ? '#475569' : '#CBD5E1', textAlign: isRTL ? 'left' : 'right' }]}>{tx.footer}</Text>
+          <Text style={[styles.footer, { color: k.textFaint, textAlign: isRTL ? 'left' : 'right' }]}>{tx.footer}</Text>
         </>
       )}
     </View>

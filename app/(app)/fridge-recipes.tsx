@@ -97,7 +97,7 @@ export default function FridgeRecipesScreen() {
 
         {uri && <Image source={{ uri }} style={styles.preview} resizeMode="cover" />}
         {loading && <View style={styles.center}><ActivityIndicator color={accent} /><Text style={[styles.loadingTxt, { color: sub }]}>{t.analyzing}</Text></View>}
-        {!!result && <View style={[styles.resultCard, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? '#283241' : 'transparent' }, isDark && { shadowOpacity: 0, elevation: 0 }]}><Text style={[styles.resultTxt, { color: isDark ? '#e2e8f0' : '#1F2937' }, align]}>{result}</Text></View>}
+        {!!result && <View style={[styles.resultCard, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? '#283241' : 'transparent' }, isDark && { shadowOpacity: 0, elevation: 0 }]}><Text style={[styles.resultTxt, { color: k.text }, align]}>{result}</Text></View>}
         {/* FEATURE #103 : passe le résultat (ingrédients + recettes) au générateur de plan repas
             via le champ « ingrédients dispo » existant. Tronqué pour rester un param URL raisonnable. */}
         {!!result && !loading && (

@@ -169,7 +169,7 @@ export default function RepCounterScreen() {
 
         <Text style={[styles.note, { color: sub }]}>{t.note}</Text>
 
-        <View style={[styles.howCard, { backgroundColor: isDark ? '#1e293b' : '#ffffff', borderColor: isDark ? '#334155' : '#E2E8F0' }]}>
+        <View style={[styles.howCard, { backgroundColor: k.surface, borderColor: k.border }]}>
           <Text style={[styles.howTitle, { color: accent }]}>{t.howTitle}</Text>
           <Text style={[styles.howIntro, { color: sub }]}>{t.howIntro}</Text>
 
@@ -185,7 +185,7 @@ export default function RepCounterScreen() {
             </View>
           ))}
 
-          <View style={[styles.howSep, { backgroundColor: isDark ? '#334155' : '#EEF2F7' }]} />
+          <View style={[styles.howSep, { backgroundColor: k.surfaceSunken }]} />
           <Text style={[styles.howStepTitle, { color: text }]}>{t.readTitle}</Text>
           <Text style={[styles.howStepBody, { color: sub }]}>{t.readBig}</Text>
           <Text style={[styles.howStepBody, { color: sub }]}>{t.readMag}</Text>

@@ -135,12 +135,12 @@ export default function CalorieBudgetScreen() {
           <Line icon={Wallet} label={t.allowance} value={allowance} color="#0EA5E9" sign="" />
           <Line icon={ArrowDownCircle} label={t.spent} value={spent} color="#E11D48" sign="−" />
           <Line icon={ArrowUpCircle} label={t.earned} value={earned} color={GREEN} sign="+" />
-          <View style={[styles.sep, { backgroundColor: isDark ? '#334155' : '#EEF2F7' }]} />
+          <View style={[styles.sep, { backgroundColor: k.surfaceSunken }]} />
           <Line icon={PiggyBank} label={t.balance} value={Math.abs(balance)} color={balance >= 0 ? GREEN : '#E11D48'} sign={balance >= 0 ? '' : '−'} />
         </View>
 
-        <View style={[styles.barTrack, { backgroundColor: isDark ? '#334155' : '#E5E7EB' }]}><View style={[styles.barFill, { width: `${pct}%`, backgroundColor: pct > 100 ? '#E11D48' : GREEN }]} /></View>
-        <Text style={[styles.barLabel, { color: isDark ? '#64748b' : '#94A3B8' }]}>{fmtNum(pct)}% {t.used}</Text>
+        <View style={[styles.barTrack, { backgroundColor: k.surfaceSunken }]}><View style={[styles.barFill, { width: `${pct}%`, backgroundColor: pct > 100 ? '#E11D48' : GREEN }]} /></View>
+        <Text style={[styles.barLabel, { color: k.textFaint }]}>{fmtNum(pct)}% {t.used}</Text>
 
         <View style={[styles.howCard, { backgroundColor: card, borderWidth: 1, borderColor: border }, !isDark && styles.cardShadow]}>
           <Text style={[styles.howTitle, { color: GREEN }, align]}>{t.howTitle}</Text>

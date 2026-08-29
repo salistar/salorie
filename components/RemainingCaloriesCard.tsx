@@ -90,15 +90,15 @@ export default function RemainingCaloriesCard({
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(k), [k]);
   // Theme-aware surface so the card doesn't stay bright white on the dark home.
-  const cardBg = isDark ? '#161C23' : k.surface;
-  const titleColor = isDark ? '#f1f5f9' : k.text;
-  const subColor = isDark ? '#94a3b8' : k.textMuted;
-  const valueColor = isDark ? '#f1f5f9' : k.text;
-  const statValueColor = isDark ? '#e2e8f0' : k.text;
+  const cardBg = k.surface;
+  const titleColor = k.text;
+  const subColor = k.textMuted;
+  const valueColor = k.text;
+  const statValueColor = k.text;
   const macroBg = isDark ? 'rgba(46,139,87,0.15)' : k.accentSoft;
   const tok = useTokens();
   const macroIconBg = tok.bg;
-  const trackColor = isDark ? '#334155' : k.border;
+  const trackColor = k.border;
   const borderColor = isDark ? 'rgba(255,255,255,0.08)' : k.surfaceSunken;
   const [modalVisible, setModalVisible] = useState(false);
   const [inputs, setInputs] = useState({
@@ -229,8 +229,8 @@ export default function RemainingCaloriesCard({
           <View style={[styles.modalCard, isDark && { backgroundColor: k.surface }]}>
             <View style={[styles.modalHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
               <View>
-                <Text style={[styles.modalTitle, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}>{tx.dailyTargets}</Text>
-                <Text style={[styles.modalSubtitle, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.adjustGoals}</Text>
+                <Text style={[styles.modalTitle, { color: k.text, textAlign: isRTL ? 'right' : 'left' }]}>{tx.dailyTargets}</Text>
+                <Text style={[styles.modalSubtitle, { color: k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.adjustGoals}</Text>
               </View>
               <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={() => setModalVisible(false)} style={[styles.closeBtn, isDark && { backgroundColor: k.surfaceSunken }]}>
                 <X size={24} color={k.textMuted} />
@@ -244,11 +244,11 @@ export default function RemainingCaloriesCard({
                   <View style={[styles.miniIconCircle, { backgroundColor: 'rgba(41, 143, 80, 0.1)' }]}>
                     <Flame size={16} color={k.accent} />
                   </View>
-                  <Text style={[styles.inputLabel, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.dailyCalories}</Text>
+                  <Text style={[styles.inputLabel, { color: k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.dailyCalories}</Text>
                 </View>
                 <View style={[styles.textInputWrapper, isDark && { backgroundColor: k.surfaceSunken, borderColor: k.border }]}>
                   <TextInput
-                    style={[styles.textInput, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}
+                    style={[styles.textInput, { color: k.text, textAlign: isRTL ? 'right' : 'left' }]}
                     value={inputs.calories}
                     onChangeText={(v) => setInputs(prev => ({ ...prev, calories: v }))}
                     accessibilityLabel={tx.dailyCalories}
@@ -269,11 +269,11 @@ export default function RemainingCaloriesCard({
                     <View style={[styles.miniIconCircle, { backgroundColor: 'rgba(255, 92, 92, 0.1)' }]}>
                       <Beef size={14} color="#FF5C5C" />
                     </View>
-                    <Text style={[styles.inputLabel, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.protein}</Text>
+                    <Text style={[styles.inputLabel, { color: k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.protein}</Text>
                   </View>
                   <View style={[styles.textInputWrapper, isDark && { backgroundColor: k.surfaceSunken, borderColor: k.border }]}>
                     <TextInput
-                      style={[styles.textInput, { fontSize: 16, color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}
+                      style={[styles.textInput, { fontSize: 16, color: k.text, textAlign: isRTL ? 'right' : 'left' }]}
                       value={inputs.protein}
                       onChangeText={(v) => setInputs(prev => ({ ...prev, protein: v }))}
                       accessibilityLabel={tx.protein}
@@ -293,11 +293,11 @@ export default function RemainingCaloriesCard({
                     <View style={[styles.miniIconCircle, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
                       <Wheat size={14} color="#F59E0B" />
                     </View>
-                    <Text style={[styles.inputLabel, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.carbs}</Text>
+                    <Text style={[styles.inputLabel, { color: k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.carbs}</Text>
                   </View>
                   <View style={[styles.textInputWrapper, isDark && { backgroundColor: k.surfaceSunken, borderColor: k.border }]}>
                     <TextInput
-                      style={[styles.textInput, { fontSize: 16, color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}
+                      style={[styles.textInput, { fontSize: 16, color: k.text, textAlign: isRTL ? 'right' : 'left' }]}
                       value={inputs.carbs}
                       onChangeText={(v) => setInputs(prev => ({ ...prev, carbs: v }))}
                       accessibilityLabel={tx.carbs}
@@ -317,11 +317,11 @@ export default function RemainingCaloriesCard({
                     <View style={[styles.miniIconCircle, { backgroundColor: 'rgba(14, 165, 233, 0.1)' }]}>
                       <Droplets size={14} color="#0EA5E9" />
                     </View>
-                    <Text style={[styles.inputLabel, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.fats}</Text>
+                    <Text style={[styles.inputLabel, { color: k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.fats}</Text>
                   </View>
                   <View style={[styles.textInputWrapper, isDark && { backgroundColor: k.surfaceSunken, borderColor: k.border }]}>
                     <TextInput
-                      style={[styles.textInput, { fontSize: 16, color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}
+                      style={[styles.textInput, { fontSize: 16, color: k.text, textAlign: isRTL ? 'right' : 'left' }]}
                       value={inputs.fats}
                       onChangeText={(v) => setInputs(prev => ({ ...prev, fats: v }))}
                       accessibilityLabel={tx.fats}

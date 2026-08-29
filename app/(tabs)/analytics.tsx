@@ -81,9 +81,9 @@ export default function AnalyticsScreen() {
   // Premium + dark-aware palette (P2/P4): one accent (green) + neutral surfaces,
   // instead of the loud pink/blue/amber cards. All surfaces/text adapt to theme.
   const surface = isDark ? colors.card : '#fff';
-  const surfaceSoft = isDark ? '#161c23' : k.surfaceSunken;
-  const tPrimary = isDark ? '#fff' : k.text;
-  const tMuted = isDark ? '#9BA1A6' : k.textMuted;
+  const surfaceSoft = k.surfaceSunken;
+  const tPrimary = k.text;
+  const tMuted = k.textMuted;
   const greenSoft = isDark ? 'rgba(74,222,128,0.12)' : k.accentSoft;
   // Palette graphes premium : accent primary (consommé) + neutre gris (brûlé),
   // au lieu du violet/orange criards. rgb() extrait pour les fns chart-kit.
@@ -407,17 +407,17 @@ export default function AnalyticsScreen() {
               </View>
               <ChartMeta kind="computed" explainKey="expl_energy" />
 
-              <View style={[styles.energySummaryRow, { backgroundColor: isDark ? '#161C23' : k.surfaceSunken }]}>
+              <View style={[styles.energySummaryRow, { backgroundColor: k.surfaceSunken }]}>
                 <View style={styles.energyStat}>
                   <Text style={styles.energyStatLabel}>{t('analytics.consumed')}</Text>
                   <Text style={[styles.energyStatValue, { color: colors.primary }]}>{totalWeekConsumed.toLocaleString()}</Text>
                 </View>
-                <View style={[styles.energyStatDivider, { backgroundColor: isDark ? '#283241' : k.border }]} />
+                <View style={[styles.energyStatDivider, { backgroundColor: k.border }]} />
                 <View style={styles.energyStat}>
                   <Text style={styles.energyStatLabel}>{t('analytics.burned')}</Text>
                   <Text style={[styles.energyStatValue, { color: burnedHex }]}>{totalWeekBurned.toLocaleString()}</Text>
                 </View>
-                <View style={[styles.energyStatDivider, { backgroundColor: isDark ? '#283241' : k.border }]} />
+                <View style={[styles.energyStatDivider, { backgroundColor: k.border }]} />
                 <View style={styles.energyStat}>
                   <Text style={styles.energyStatLabel}>{t('analytics.net')}</Text>
                   <Text style={[styles.energyStatValue, { color: tPrimary }]}>{netEnergy.toLocaleString()}</Text>

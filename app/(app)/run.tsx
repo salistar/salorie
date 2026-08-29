@@ -358,9 +358,9 @@ export default function RunScreen() {
   const mmss = `${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`;
   const paceStr = paceMin > 0 ? `${Math.floor(paceMin)}'${String(Math.round((paceMin % 1) * 60)).padStart(2, '0')}"` : "--'--";
 
-  const text = isDark ? '#fff' : k.text;
-  const sub = isDark ? '#9BA1A6' : k.textMuted;
-  const card = isDark ? k.surface : '#fff';
+  const text = k.text;
+  const sub = k.textMuted;
+  const card = k.surface;
   const tok = useTokens();
   const bg = tok.bg;
 
@@ -413,7 +413,7 @@ export default function RunScreen() {
       <View style={[styles.panel, { backgroundColor: card }]}>
         {/* Mode switch (only before a run starts) */}
         {status === 'idle' && (
-          <View style={[styles.modeRow, { backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }]}>
+          <View style={[styles.modeRow, { backgroundColor: k.surface }]}>
             <TouchableOpacity
               style={[styles.modeBtn, mode === 'gps' && { backgroundColor: card, shadowOpacity: 0.12 }]}
               onPress={() => setMode('gps')}
@@ -476,13 +476,13 @@ export default function RunScreen() {
         {status === 'idle' && (
           <View style={[styles.idleBtnRow, isRTL && { flexDirection: 'row-reverse' }]}>
             <TouchableOpacity
-              style={[styles.ghostBtn, { flex: 1, marginTop: 0 }, { borderColor: isDark ? '#334155' : '#e2e8f0', backgroundColor: isDark ? '#1e293b' : '#f8fafc' }]}
+              style={[styles.ghostBtn, { flex: 1, marginTop: 0 }, { borderColor: k.border, backgroundColor: k.surface }]}
               onPress={() => router.push('/ar-ghost' as any)}
             >
               <Text style={[styles.ghostBtnTxt, { color: text }]} numberOfLines={1}>{t.ghost}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.ghostBtn, { flex: 1, marginTop: 0 }, { borderColor: isDark ? '#334155' : '#e2e8f0', backgroundColor: isDark ? '#1e293b' : '#f8fafc' }]}
+              style={[styles.ghostBtn, { flex: 1, marginTop: 0 }, { borderColor: k.border, backgroundColor: k.surface }]}
               onPress={() => router.push('/live-twin' as any)}
             >
               <Text style={[styles.ghostBtnTxt, { color: text }]} numberOfLines={1}>{t.liveTwin}</Text>
@@ -514,7 +514,7 @@ export default function RunScreen() {
             ) : (
               <ScrollView style={{ maxHeight: 168 }} showsVerticalScrollIndicator={false}>
                 {history.map((h, i) => (
-                  <View key={i} style={[styles.histRow, { borderTopColor: isDark ? '#1e293b' : '#f1f5f9' }]}>
+                  <View key={i} style={[styles.histRow, { borderTopColor: k.border }]}>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.histName, { color: text }]} numberOfLines={1}>{h.name}</Text>
                       <Text style={[styles.histDate, { color: sub }]}>{h.date}{h.duration ? ` · ${h.duration} min` : ''}</Text>

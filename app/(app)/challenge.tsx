@@ -734,14 +734,14 @@ export default function ChallengeScreen() {
     }
   };
 
-  const text = isDark ? '#fff' : k.text;
-  const sub = isDark ? '#9BA1A6' : k.textMuted;
-  const card = isDark ? k.surface : '#fff';
+  const text = k.text;
+  const sub = k.textMuted;
+  const card = k.surface;
   const tok = useTokens();
   const bg = tok.bg;
   // Accent thémé : vert clair en sombre (#4ade80) pour le contraste, vert marque en clair.
   const primary = k.accent;
-  const trackBg = isDark ? '#2a2a2a' : k.border;
+  const trackBg = k.border;
   const rtlRow = isRTL ? { flexDirection: 'row-reverse' as const } : undefined;
   const align = isRTL ? ({ textAlign: 'right' } as const) : ({ textAlign: 'left' } as const);
 

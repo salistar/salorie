@@ -91,14 +91,14 @@ export default function LogModal() {
   };
 
   // Dark-mode derived tokens (light path keeps the exact original Colors.light.* values)
-  const sheetBg = isDark ? '#161C23' : k.surface;
-  const inputCardBg = isDark ? '#1e293b' : k.surfaceSunken;
-  const inputBorder = isDark ? '#283241' : k.border;
-  const selectorBg = isDark ? '#0f1419' : k.border;
-  const textPrimary = isDark ? '#f1f5f9' : k.text;
-  const labelColor = isDark ? '#94a3b8' : k.textMuted;
-  const mutedColor = isDark ? '#94a3b8' : k.textMuted;
-  const typeTextColor = isDark ? '#94a3b8' : k.textMuted;
+  const sheetBg = k.surface;
+  const inputCardBg = k.surfaceSunken;
+  const inputBorder = k.border;
+  const selectorBg = k.border;
+  const textPrimary = k.text;
+  const labelColor = k.textMuted;
+  const mutedColor = k.textMuted;
+  const typeTextColor = k.textMuted;
   const placeholderColor = isDark ? '#64748b' : undefined;
 
   return (
@@ -127,21 +127,21 @@ export default function LogModal() {
                 style={[styles.typeBtn, type === 'meal' && styles.typeBtnActive]}
                 onPress={() => setType('meal')}
               >
-                <Utensils size={20} color={type === 'meal' ? k.surface : (isDark ? '#94a3b8' : k.textMuted)} />
+                <Utensils size={20} color={type === 'meal' ? k.surface : (k.textMuted)} />
                 <Text style={[styles.typeText, { color: typeTextColor }, type === 'meal' && styles.typeTextActive]}>{t('logmodal.meal')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.typeBtn, type === 'activity' && styles.typeBtnActive]}
                 onPress={() => setType('activity')}
               >
-                <Zap size={20} color={type === 'activity' ? k.surface : (isDark ? '#94a3b8' : k.textMuted)} />
+                <Zap size={20} color={type === 'activity' ? k.surface : (k.textMuted)} />
                 <Text style={[styles.typeText, { color: typeTextColor }, type === 'activity' && styles.typeTextActive]}>{t('logmodal.exercise')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.typeBtn, type === 'water' && styles.typeBtnActive]}
                 onPress={() => setType('water')}
               >
-                <Droplets size={20} color={type === 'water' ? k.surface : (isDark ? '#94a3b8' : k.textMuted)} />
+                <Droplets size={20} color={type === 'water' ? k.surface : (k.textMuted)} />
                 <Text style={[styles.typeText, { color: typeTextColor }, type === 'water' && styles.typeTextActive]}>{t('logmodal.water')}</Text>
               </TouchableOpacity>
             </View>

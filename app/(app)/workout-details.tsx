@@ -355,10 +355,10 @@ Output a single integer (e.g. 247). No explanation.`;
   };
 
   // Theme palette
-  const bg = isDark ? '#0B0F14' : k.surface;
+  const bg = k.surface;
   const textPrimary = isDark ? colors.gray[900] : k.text;
   const textMuted = isDark ? colors.gray[400] : k.textMuted;
-  const cardBg = isDark ? '#161C23' : k.surfaceSunken;
+  const cardBg = k.surfaceSunken;
   const cardBorder = isDark ? colors.gray[200] : k.border;
 
   return (
@@ -400,7 +400,7 @@ Output a single integer (e.g. 247). No explanation.`;
                     { backgroundColor: cardBg, borderColor: cardBorder },
                     isSelected && {
                       borderColor: k.accent,
-                      backgroundColor: isDark ? '#1F2833' : k.surface,
+                      backgroundColor: k.surface,
                     },
                   ]}
                   onPress={() => {
@@ -525,7 +525,7 @@ Output a single integer (e.g. 247). No explanation.`;
                     key={mKey}
                     style={[
                       styles.muscleBadge,
-                      { backgroundColor: isDark ? '#22303C' : '#FFEEED', borderColor: k.accent },
+                      { backgroundColor: k.surfaceSunken, borderColor: k.accent },
                     ]}
                   >
                     <Text style={[styles.muscleBadgeText, { color: k.accent }]}>
