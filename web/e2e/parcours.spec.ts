@@ -37,8 +37,36 @@ test.describe('landing — porte d entree', () => {
     await expect(admin).toBeVisible();
     await expect(admin).toHaveAttribute('href', '/login');
 
-    await expect(page.getByRole('link', { name: /Signaler un bug/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /^Versions$/i })).toBeVisible();
+    // ⚠ CE TEST A ETE RETOURNE LE 29/08/2026.
+    // Il exigeait la presence de « Signaler un bug » et « Versions » dans le
+    // pied de page. Ces liens — comme le bouton GitHub de l'en-tete — ont ete
+    // deplaces vers le back-office : le code source n'interesse pas un
+    // visiteur venu suivre ses calories, et l'afficher publiquement revenait a
+    // indiquer a tout le monde ou vit le depot.
+    //
+    // Le test verifie donc desormais leur ABSENCE. Le laisser exiger leur
+    // presence aurait fait echouer la CI sur une exigence perimee — et
+    // quelqu'un les aurait remis pour faire passer le test.
+    await expect(page.getByRole('link', { name: /Signaler un bug/i })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: /^Versions$/i })).toHaveCount(0);
+    // ⚠ ON NE PEUT PAS EXIGER ZERO LIEN GITHUB, et la premiere version de ce
+    // test le faisait — elle echouait sur quatre liens parfaitement legitimes.
+    // Les boutons de telechargement de l'APK et de l'AAB pointent vers les
+    // releases GitHub : ce sont des liens de FICHIER, pas de code source.
+    //
+    // Ce qui doit disparaitre, c'est le lien vers le DEPOT lui-meme.
+    for (const lien of await page.locator('a[href*="github.com"]').all()) {
+      const href = (await lien.getAttribute('href')) || '';
+      // Deux formes sont legitimes, et une seule ne l'est pas :
+      //   /releases/download/…  le fichier APK ou AAB
+      //   /releases/tag/…       les notes de version, EXIGEES par le cahier
+      //                         des charges a cote de chaque telechargement
+      // Tout autre chemin — la racine du depot, /issues, /blob — renverrait au
+      // CODE, et c'est cela qui doit rester dans le back-office.
+      expect(href, 'seuls les fichiers et les notes de version sont admis').toMatch(
+        /\/releases\/(download|tag)\//,
+      );
+    }
   });
 
   test('les liens de telechargement pointent vers un vrai fichier', async ({ page, request }) => {
