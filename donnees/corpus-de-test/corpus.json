@@ -1,0 +1,276 @@
+{
+  "_lisezMoi": "Corpus MODESTE, construit depuis les etiquettes de assets/images/photos. Ce n est PAS le corpus de 1 471 images annonce par le cahier des charges, qui est absent du depot. Il attrape une panne de la cascade, il ne mesure pas une precision. Regenerer : node scripts/corpus-de-test.js",
+  "genereDepuis": "assets/images/photos/_photos_manifest.json",
+  "total": 19,
+  "entrees": [
+    {
+      "image": "assets/images/photos/food_0.jpg",
+      "famille": "food",
+      "etiquette": "healthy food bowl",
+      "attenduParmi": [
+        "bol",
+        "salade",
+        "légume",
+        "legume",
+        "assiette",
+        "repas",
+        "plat",
+        "bowl",
+        "food"
+      ],
+      "source": "pixabay#1600003"
+    },
+    {
+      "image": "assets/images/photos/food_2.jpg",
+      "famille": "food",
+      "etiquette": "healthy food bowl",
+      "attenduParmi": [
+        "bol",
+        "salade",
+        "légume",
+        "legume",
+        "assiette",
+        "repas",
+        "plat",
+        "bowl",
+        "food"
+      ],
+      "source": "pixabay#1248955"
+    },
+    {
+      "image": "assets/images/photos/salad_0.jpg",
+      "famille": "salad",
+      "etiquette": "fresh salad",
+      "attenduParmi": [
+        "salade",
+        "légume",
+        "legume",
+        "verdure",
+        "laitue",
+        "salad"
+      ],
+      "source": "pixabay#3484159"
+    },
+    {
+      "image": "assets/images/photos/salad_2.jpg",
+      "famille": "salad",
+      "etiquette": "fresh salad",
+      "attenduParmi": [
+        "salade",
+        "légume",
+        "legume",
+        "verdure",
+        "laitue",
+        "salad"
+      ],
+      "source": "pixabay#2834549"
+    },
+    {
+      "image": "assets/images/photos/mealprep_2.jpg",
+      "famille": "mealprep",
+      "etiquette": "meal prep",
+      "attenduParmi": [
+        "boîte",
+        "boite",
+        "repas",
+        "préparation",
+        "preparation",
+        "portion"
+      ],
+      "source": "pixabay#933378"
+    },
+    {
+      "image": "assets/images/photos/fruits_0.jpg",
+      "famille": "fruits",
+      "etiquette": "fruits",
+      "attenduParmi": [
+        "fruit",
+        "pomme",
+        "banane",
+        "raisin",
+        "orange",
+        "baie"
+      ],
+      "source": "pixabay#1600003"
+    },
+    {
+      "image": "assets/images/photos/moroccan_0.jpg",
+      "famille": "moroccan",
+      "etiquette": "moroccan food",
+      "attenduParmi": [
+        "tajine",
+        "marocain",
+        "plat",
+        "couscous",
+        "ragoût",
+        "ragout"
+      ],
+      "source": "pixabay#5171733"
+    },
+    {
+      "image": "assets/images/photos/moroccan_1.jpg",
+      "famille": "moroccan",
+      "etiquette": "moroccan food",
+      "attenduParmi": [
+        "tajine",
+        "marocain",
+        "plat",
+        "couscous",
+        "ragoût",
+        "ragout"
+      ],
+      "source": "pixabay#4409009"
+    },
+    {
+      "image": "assets/images/photos/moroccan_2.jpg",
+      "famille": "moroccan",
+      "etiquette": "moroccan food",
+      "attenduParmi": [
+        "tajine",
+        "marocain",
+        "plat",
+        "couscous",
+        "ragoût",
+        "ragout"
+      ],
+      "source": "pixabay#7045206"
+    },
+    {
+      "image": "assets/images/photos/moroccan_3.jpg",
+      "famille": "moroccan",
+      "etiquette": "moroccan food",
+      "attenduParmi": [
+        "tajine",
+        "marocain",
+        "plat",
+        "couscous",
+        "ragoût",
+        "ragout"
+      ],
+      "source": "pixabay#3881560"
+    },
+    {
+      "image": "assets/images/photos/moroccan_4.jpg",
+      "famille": "moroccan",
+      "etiquette": "moroccan food",
+      "attenduParmi": [
+        "tajine",
+        "marocain",
+        "plat",
+        "couscous",
+        "ragoût",
+        "ragout"
+      ],
+      "source": "pixabay#1626976"
+    },
+    {
+      "image": "assets/images/photos/medfood_0.jpg",
+      "famille": "medfood",
+      "etiquette": "mediterranean food",
+      "attenduParmi": [
+        "méditerranéen",
+        "mediterraneen",
+        "plat",
+        "légume",
+        "legume",
+        "huile"
+      ],
+      "source": "pixabay#2378758"
+    },
+    {
+      "image": "assets/images/photos/medfood_1.jpg",
+      "famille": "medfood",
+      "etiquette": "mediterranean food",
+      "attenduParmi": [
+        "méditerranéen",
+        "mediterraneen",
+        "plat",
+        "légume",
+        "legume",
+        "huile"
+      ],
+      "source": "pixabay#5904093"
+    },
+    {
+      "image": "assets/images/photos/medfood_2.jpg",
+      "famille": "medfood",
+      "etiquette": "mediterranean food",
+      "attenduParmi": [
+        "méditerranéen",
+        "mediterraneen",
+        "plat",
+        "légume",
+        "legume",
+        "huile"
+      ],
+      "source": "pixabay#8266439"
+    },
+    {
+      "image": "assets/images/photos/running_2.jpg",
+      "famille": "running",
+      "etiquette": "running outdoor",
+      "attenduParmi": [
+        "course",
+        "coureur",
+        "piste",
+        "chaussure",
+        "running"
+      ],
+      "source": "pixabay#1201014"
+    },
+    {
+      "image": "assets/images/photos/gym_2.jpg",
+      "famille": "gym",
+      "etiquette": "gym workout",
+      "attenduParmi": [
+        "salle",
+        "sport",
+        "haltère",
+        "haltere",
+        "musculation",
+        "équipement",
+        "equipement"
+      ],
+      "source": "pixabay#1284616"
+    },
+    {
+      "image": "assets/images/photos/breakfast_0.jpg",
+      "famille": "breakfast",
+      "etiquette": "healthy breakfast",
+      "attenduParmi": [
+        "petit-déjeuner",
+        "petit déjeuner",
+        "déjeuner",
+        "café",
+        "tartine",
+        "oeuf",
+        "œuf",
+        "breakfast"
+      ],
+      "source": "pixabay#563796"
+    },
+    {
+      "image": "assets/images/photos/smoothie_0.jpg",
+      "famille": "smoothie",
+      "etiquette": "smoothie drink",
+      "attenduParmi": [
+        "smoothie",
+        "boisson",
+        "verre",
+        "jus"
+      ],
+      "source": "pixabay#7320560"
+    },
+    {
+      "image": "assets/images/photos/fish_0.jpg",
+      "famille": "fish",
+      "etiquette": "grilled fish",
+      "attenduParmi": [
+        "poisson",
+        "saumon",
+        "fish"
+      ],
+      "source": "pixabay#518032"
+    }
+  ]
+}
