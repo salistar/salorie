@@ -19,11 +19,37 @@ STD = np.array([0.229, 0.224, 0.225], np.float32)
 # devant un tagine et `cup_cakes` devant des kaab el ghazal. Le modele embarque dans
 # l'app, lui, connait 172 classes dont toute la cuisine locale.
 #
-# Mesure sur 50 photos de plats marocains, meme seuil de confiance 0,50 :
-#   ONNX 101 classes  ->  9/50 reponses directes (18%), confiance moyenne 0,287, 57,8 ms
-#   TFLite 172 classes-> 41/50 reponses directes (82%), confiance moyenne 0,736, 18,6 ms
-# Soit quatre fois plus de reponses gratuites, et trois fois plus vite. Chaque plat
-# reconnu ici est un appel VLM payant evite.
+# ⚠⚠ CE MODELE NE RECONNAIT RIEN. TIER-0 DESACTIVE LE 29/08/2026. ⚠⚠
+#
+# La mesure ci-dessous a servi a l'adopter, et elle ne mesurait PAS ce qu'on a
+# cru. La voici telle qu'elle etait ecrite :
+#   ONNX 101 classes  ->  9/50 reponses directes (18%), confiance moyenne 0,287
+#   TFLite 172 classes-> 41/50 reponses directes (82%), confiance moyenne 0,736
+#
+# « Reponses directes » = reponses AU-DESSUS DU SEUIL DE CONFIANCE. Pas reponses
+# JUSTES. Ces 82 % disaient seulement que le modele etait sur de lui plus souvent
+# que l'autre — jamais qu'il avait raison. Aucune ligne de cette mesure ne
+# comparait la prediction a la verite.
+#
+# Mesure de la JUSTESSE, faite le 29/08/2026 contre Food-101 (le jeu de reference
+# du domaine, dont les 101 classes sont incluses dans les 172 d'ici) :
+#   justesse globale                     0 / 101
+#   justesse de ce qui est SERVI         0 / 64   (reponses au-dessus du seuil)
+# Zero. Sur 172 classes, meme le hasard en donnerait une.
+#
+# Trois causes ecartees, mesures a l'appui (voir diagnostic_pretraitement.py) :
+#   - etiquettes : identiques et dans le meme ordre que celles du telephone (172/172) ;
+#   - pretraitement : dix variantes essayees (brut, /255, [-1,1], ImageNet, BGR,
+#     recadrage centre) — 0/60 pour CHACUNE ;
+#   - fichier : empreinte SHA-256 identique a la copie du telephone, non corrompu.
+# Le modele lui-meme ne discrimine pas. Il repond neanmoins avec 0,90 a 0,99 de
+# confiance, ce qui lui faisait court-circuiter toute la cascade en dessous.
+#
+# Le sidecar est laisse en place et fonctionnel : c'est le backend qui ne
+# l'appelle plus (FOOD4K_ENABLED doit valoir 'true' pour le reactiver). Avant de
+# le rebrancher, faire passer le modele candidat par :
+#     python valider_modele.py <modele.tflite> <etiquettes.json>
+# qui mesure la justesse, et rien d'autre.
 #
 # Pretraitement DIFFERENT de l'ONNX : resize direct 224x224 et pixels BRUTS 0..255
 # (le modele integre sa propre normalisation), exactement comme lib/onDeviceVision.ts.

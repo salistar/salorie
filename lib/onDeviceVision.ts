@@ -12,6 +12,33 @@ import { FOOD_SALORIE_LABELS as FOOD_LABELS } from './foodSalorieLabels';
 
 export type Pred = { label: string; score: number };
 
+/**
+ * ⚠ CE MODELE NE RECONNAIT RIEN — VERIFIE LE 29/08/2026.
+ *
+ * `food_salorie.tflite` est le MEME fichier ici et sur le serveur (meme
+ * empreinte SHA-256). Mesure contre Food-101, le jeu de reference du domaine,
+ * dont les 101 classes font partie de ses 172 : **0 bonne reponse sur 74**.
+ *
+ * Il ne se contente pas de se tromper : il annonce 0,90 a 0,99 de confiance. Or
+ * `scan-analysis` court-circuite toute la cascade des 0,85 — donc une fiche
+ * nutritionnelle fausse entrait dans le journal sans qu'aucun palier plus fiable
+ * ne soit consulte.
+ *
+ * Trois causes ecartees, mesures a l'appui (food4k/diagnostic_pretraitement.py) :
+ * les etiquettes (identiques et dans le meme ordre des deux cotes, 172/172), le
+ * pretraitement (dix variantes essayees, 0/60 pour chacune), le fichier lui-meme
+ * (non corrompu). Le modele ne discrimine pas.
+ *
+ * D'ou venait la confiance placee en lui : les « 41/50 (82%) » cites pour
+ * justifier son adoption comptaient les reponses AU-DESSUS DU SEUIL, pas les
+ * reponses JUSTES.
+ *
+ * Remettre a `true` seulement apres qu'un modele candidat ait passe
+ * `python food4k/valider_modele.py`.
+ */
+export const MODELE_ON_DEVICE_FIABLE = false;
+
+
 let modelPromise: Promise<any> | null = null;
 async function getModel() {
   if (!modelPromise) {
