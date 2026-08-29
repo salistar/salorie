@@ -108,6 +108,17 @@ async function main() {
   await cas('les cles des providers sont illisibles, meme connecte', () =>
     assertFails(getDoc(doc(alice, 'secrets/llm'))));
 
+  // ── LES JETONS STRAVA ────────────────────────────────────────────────────
+  // Un `refresh_token` Strava vaut un acces permanent au compte sportif. Meme
+  // le proprietaire n'a aucune raison de le lire depuis l'app : seul le serveur
+  // s'en sert. Un doc lisible, et le trousseau part avec tout ce qui peut lire
+  // le Firestore du telephone.
+  await semer('strava_tokens/' + ALICE, { refresh_token: 'r-interdit' });
+  await cas('nul ne lit ses propres jetons Strava, pas meme leur proprietaire', () =>
+    assertFails(getDoc(doc(alice, 'strava_tokens/' + ALICE))));
+  await cas('nul n ecrit dans les jetons Strava', () =>
+    assertFails(setDoc(doc(alice, 'strava_tokens/' + ALICE), { refresh_token: 'x' })));
+
   // ── LE CLASSEMENT HEBDOMADAIRE ───────────────────────────────────────────
   await semer('leagues/S35/members/' + ALICE, { uid: ALICE, xp: 100 });
   await cas('l XP ne se fixe pas a une valeur arbitraire', () =>

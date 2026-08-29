@@ -198,6 +198,16 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // JETONS STRAVA — TOTALEMENT fermes au client, comme `secrets`.
+    // Un `refresh_token` Strava vaut un acces PERMANENT au compte sportif de la
+    // personne. Meme le proprietaire n'a aucune raison de le lire depuis l'app :
+    // il ne s'en sert jamais, seul le serveur l'utilise. Le laisser lisible,
+    // c'etait offrir ce trousseau a tout ce qui peut lire le Firestore du
+    // telephone — une extension, un appareil compromis, un APK decompile.
+    match /strava_tokens/{uid} {
+      allow read, write: if false;
+    }
+
     // Feature flags (config/features) — lus par l'app (client), écrits uniquement
     // par l'admin (firebase-admin SDK, qui bypass les règles).
     match /config/{doc} {
