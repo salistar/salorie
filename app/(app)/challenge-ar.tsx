@@ -1,3 +1,9 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// Le noir de cet ecran n est PAS une couleur d interface : c est le fond
+// DERRIERE un flux camera ou une vue en realite augmentee — ce qu on voit la
+// ou rien n a ete dessine. Le teinter ferait apparaitre un cadre colore autour
+// de l image. Le marqueur ci-dessus est lu par les outils de migration.
 import BrandOverlay from '../../components/BrandOverlay';
 import { flipAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';

@@ -27,7 +27,6 @@ import { spacing, radius } from '../../constants/theme';
 // Clé Maps lue depuis l'env (EXPO_PUBLIC_GOOGLE_MAPS_KEY) — plus de clé en dur dans le
 // bundle. Clé publiable côté client : DOIT être restreinte dans GCP (package + SHA-1 + API).
 const GOOGLE_MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY ?? '';
-const ME_COLOR = '#22c55e';   // current user — green
 const OTHER_COLOR = '#3b82f6'; // others — blue
 
 const TXT: Record<string, any> = {
@@ -54,7 +53,7 @@ function haversine(a: LatLng, b: LatLng): number {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-function buildHtml(center: LatLng): string {
+function buildHtml(center: LatLng, k: Tokens): string {
   return `<!DOCTYPE html><html><head>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <style>html,body,#map{height:100%;width:100%;margin:0;padding:0;background:#e8f0e8}
@@ -62,7 +61,7 @@ function buildHtml(center: LatLng): string {
 </head><body><div id="map"></div>
 <script>
   var C = ${JSON.stringify(center)};
-  var ME = ${JSON.stringify(ME_COLOR)};
+  var ME = ${JSON.stringify(k.success)};
   var OTHER = ${JSON.stringify(OTHER_COLOR)};
   function initMap(){
     window._map = new google.maps.Map(document.getElementById('map'), {
@@ -277,7 +276,7 @@ export default function RaceLiveScreen() {
   const tok = useTokens();
   const bg = tok.bg;
 
-  const html = useMemo(() => (center ? buildHtml(center) : ''), [center]);
+  const html = useMemo(() => (center ? buildHtml(center, k) : ''), [center, k]);
 
   const sorted = useMemo(
     () => [...participants].sort((a, b) => (b.distanceM || 0) - (a.distanceM || 0)),
@@ -377,7 +376,7 @@ export default function RaceLiveScreen() {
                 return (
                   <View key={g.team || i} style={[styles.boardRow, mine && { backgroundColor: k.surface }, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                     <Text style={styles.boardRank}>{medals[i] || `${i + 1}`}</Text>
-                    <Text numberOfLines={1} style={[styles.boardName, { color: mine ? ME_COLOR : text, textAlign: isRTL ? 'right' : 'left' }]}>
+                    <Text numberOfLines={1} style={[styles.boardName, { color: mine ? k.success : text, textAlign: isRTL ? 'right' : 'left' }]}>
                       {g.team} · {g.members.length}👥
                     </Text>
                     <Text style={[styles.boardKm, { color: sub }]}>{g.totalKm.toFixed(2)} {t.km}</Text>
@@ -390,7 +389,7 @@ export default function RaceLiveScreen() {
                 return (
                   <View key={p.email || i} style={[styles.boardRow, mine && { backgroundColor: k.surface }, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                     <Text style={styles.boardRank}>{medals[i] || `${i + 1}`}</Text>
-                    <Text numberOfLines={1} style={[styles.boardName, { color: mine ? ME_COLOR : text, textAlign: isRTL ? 'right' : 'left' }]}>
+                    <Text numberOfLines={1} style={[styles.boardName, { color: mine ? k.success : text, textAlign: isRTL ? 'right' : 'left' }]}>
                       {mine ? t.you : (p.name || '—')}{tn ? ` · ${tn}` : ''}{p.finished ? ` · ${t.done}` : ''}
                     </Text>
                     <Text style={[styles.boardKm, { color: sub }]}>{((p.distanceM || 0) / 1000).toFixed(2)} {t.km}</Text>

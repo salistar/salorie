@@ -1002,7 +1002,7 @@ ${langInstr}`;
                 const remaining = Math.max(0, Math.round(target - eaten));
                 const foodKcal = Math.round(Number(aiResult?.calories) || 0);
                 const fits = foodKcal <= remaining;
-                const color = fits ? '#2E8B57' : '#DC2626';
+                const color = fits ? k.accent : k.danger;
                 const verdictTxt = fits
                   ? (language === 'fr' ? 'ça rentre' : language === 'ar' ? 'يدخل ضمن هدفك' : 'it fits')
                   : (language === 'fr' ? 'ça dépasse' : language === 'ar' ? 'يتجاوز هدفك' : 'over budget');

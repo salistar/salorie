@@ -301,7 +301,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   preview: { width: '100%', height: 200, borderRadius: 14, marginTop: 18, backgroundColor: k.surfaceSunken },
   warn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: k.warningSoft, borderRadius: 12, padding: 12, marginTop: 16 },
   warnTxt: { fontSize: 13, color: k.warningInk, flex: 1 },
-  parsedCard: { backgroundColor: k.surface, borderRadius: 16, padding: 16, marginTop: 18, borderWidth: 1, borderColor: '#D1FAE5' },
+  parsedCard: { backgroundColor: k.surface, borderRadius: 16, padding: 16, marginTop: 18, borderWidth: 1, borderColor: k.successSoft },
   parsedTitle: { fontSize: 14, fontWeight: '700', color: k.accent, marginBottom: 8 },
   parsedRow: { fontSize: 14, color: k.textMuted, paddingVertical: 3 },
   bold: { fontWeight: '800', color: k.text },

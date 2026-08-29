@@ -2,7 +2,7 @@
 // virtuelles/groupe, séances, pas du jour). Lecture 100% ON-DEVICE depuis le
 // cache local `logs_<docId>` (type 'activity'). Groupé par jour + stats en tête.
 import React, { useCallback, useState } from 'react';
-import { useTokens, type Tokens } from '../../constants/tokens';
+import { useTokens, pastilleCategorie, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -32,11 +32,11 @@ const TXT: any = {
 
 function iconFor(name: string, k: Tokens) {
   const n = (name || '').toLowerCase();
-  if (n.includes('pas') || n.includes('step') || n.includes('خطو')) return { Icon: Footprints, bg: '#EEF2FF', color: '#6366F1' };
+  if (n.includes('pas') || n.includes('step') || n.includes('خطو')) return { Icon: Footprints, ...pastilleCategorie('course', k.isDark) };
   if (n.includes('race') || n.includes('course') || n.includes('سباق')) return { Icon: Trophy, bg: k.warningSoft, color: k.warning };
   if (n.includes('run') || n.includes('جري') || n.includes('gps')) return { Icon: Flag, bg: k.accentSoft, color: k.accent }; // couleur de CATEGORIE, comme ses voisines : elle ne suit pas le theme
-  if (n.includes('lift') || n.includes('muscu') || n.includes('workout') || n.includes('séance') || n.includes('تمرين')) return { Icon: Dumbbell, bg: '#F5F3FF', color: '#8B5CF6' };
-  return { Icon: Flame, bg: '#FFF1F2', color: '#F43F5E' };
+  if (n.includes('lift') || n.includes('muscu') || n.includes('workout') || n.includes('séance') || n.includes('تمرين')) return { Icon: Dumbbell, ...pastilleCategorie('musculation', k.isDark) };
+  return { Icon: Flame, ...pastilleCategorie('activite', k.isDark) };
 }
 
 export default function ActivityScreen() {

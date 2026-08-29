@@ -140,7 +140,7 @@ export default function RestaurantModeScreen() {
           <>
             <Text style={[styles.forGoal, { color: text }, align]}>{`✨ ${t.forYourGoal} (${goal})`}</Text>
             {recos.map((r, i) => {
-              const vColor = r.verdict === 'great' ? accent : r.verdict === 'ok' ? '#D97706' : '#DC2626';
+              const vColor = r.verdict === 'great' ? accent : r.verdict === 'ok' ? k.warning : k.danger;
               const VIcon = r.verdict === 'great' ? CheckCircle2 : r.verdict === 'ok' ? Star : AlertTriangle;
               const vLabel = r.verdict === 'great' ? t.great : r.verdict === 'ok' ? t.ok : t.avoid;
               return (
@@ -159,7 +159,7 @@ export default function RestaurantModeScreen() {
                     // Contexte budget : ce plat rentre-t-il dans les kcal restantes du jour ?
                     const fits = Math.round(r.kcal) <= remaining;
                     const over = Math.round(r.kcal) - remaining;
-                    const bColor = remaining <= 0 ? '#DC2626' : fits ? accent: k.warning;
+                    const bColor = remaining <= 0 ? k.danger : fits ? accent: k.warning;
                     const label = remaining <= 0
                       ? t.budgetDone
                       : fits

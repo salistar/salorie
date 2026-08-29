@@ -571,7 +571,7 @@ export default function AnalyticsScreen() {
                   const tr = weightTrend;
                   const good = !tr || tr.good;
                   const Icon = !tr || tr.direction === 'stable' ? Minus : tr.direction === 'rising' ? TrendingUp : TrendingDown;
-                  const c = good ? '#22C55E' : '#F59E0B';
+                  const c = good ? k.success : k.warning;
                   const bgc = good ? '#F0FDF4' : '#FFFBEB';
                   const label = good ? t('analytics.on_track') : `${tr!.delta > 0 ? '+' : ''}${tr!.delta.toFixed(1)} kg`;
                   return (

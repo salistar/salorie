@@ -230,7 +230,7 @@ export default function CommunityRoutesScreen() {
   const statusLabel = (s: CommunityRoute['status']) =>
     s === 'approved' ? t.statusApproved : s === 'rejected' ? t.statusRejected : t.statusPending;
   const statusColor = (s: CommunityRoute['status']) =>
-    s === 'approved' ? '#22c55e' : s === 'rejected' ? '#ef4444' : k.warning;
+    s === 'approved' ? k.success : s === 'rejected' ? k.danger : k.warning;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>

@@ -316,7 +316,7 @@ export default function FastingScreen() {
                   <View key={i} style={[styles.pRow, { flexDirection: rowDir(isRTL) }]}>
                     <Text style={[styles.pName, { color: text, textAlign: txtAlign(isRTL) }]} numberOfLines={1}>{p.name}</Text>
                     <View style={[styles.pTrack, { backgroundColor: k.surface }]}>
-                      <View style={[styles.pFill, { width: `${pc}%`, backgroundColor: p.status === 'fasting' ? GREEN : '#94A3B8' }]} />
+                      <View style={[styles.pFill, { width: `${pc}%`, backgroundColor: p.status === 'fasting' ? GREEN : k.textFaint }]} />
                     </View>
                     <Text style={[styles.pPct, { color: sub }]}>{p.status === 'fasting' ? `${pc}%` : '—'}</Text>
                   </View>

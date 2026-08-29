@@ -85,7 +85,7 @@ export default function SportAgenda() {
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Bandeau héro visuel */}
-        <LinearGradient colors={[accent, '#1d6440']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.heroBanner}>
+        <LinearGradient colors={[accent, k.accentStrong]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.heroBanner}>
           <CalendarDays size={30} color={k.onAccent} />
           <View style={{ flex: 1 }}>
             <Text style={[s.heroTitle, align]}>{t.title}</Text>

@@ -327,7 +327,7 @@ const makeS = (k: Tokens) => StyleSheet.create({
   note: { fontSize: 12, color: k.textMuted, marginTop: 6, lineHeight: 18 },
   hint: { fontSize: 12, color: k.textFaint, marginTop: 10, lineHeight: 18 },
   applyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 14, marginTop: 16 },
-  applyBtnDone: { backgroundColor: '#94a3b8' },
+  applyBtnDone: { backgroundColor: k.textFaint },
   applyTxt: { color: k.onAccent, fontWeight: '800', fontSize: 15 },
   foot: { fontSize: 11, color: k.textFaint, marginTop: 16, lineHeight: 17, textAlign: 'center' },
   howCard: { backgroundColor: k.surface, borderRadius: 18, padding: 18, marginTop: 18, borderWidth: 1, borderColor: k.border },

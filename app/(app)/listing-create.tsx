@@ -226,7 +226,7 @@ export default function ListingCreateScreen() {
     l.status === 'sold' ? t.statusSold : l.status === 'removed' ? t.statusRemoved
       : !l.approved ? t.pending : t.statusActive;
   const statusColor = (l: MarketplaceListing) =>
-    l.status === 'sold' ? '#f59e0b' : l.status === 'removed' ? '#ef4444'
+    l.status === 'sold' ? k.warning : l.status === 'removed' ? k.danger
       : !l.approved ? k.warning: k.success;
 
   return (

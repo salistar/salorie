@@ -153,7 +153,7 @@ export default function PaywallView({ onDone, kcal = '', preview = false, contex
     border: k.border,
     title: k.text,
     sub: k.textMuted,
-    accent: isDark ? '#4ade80' : colors.primary,
+    accent: isDark ? k.accent : colors.primary,
   };
 
   const leave = useCallback(() => {
@@ -364,7 +364,7 @@ export default function PaywallView({ onDone, kcal = '', preview = false, contex
             accessibilityLabel={trialDays > 0 ? t.cta : t.ctaNoTrial}
           >
             <LinearGradient
-              colors={busy ? ['#94A3B8', '#94A3B8'] : [C.accent, isDark ? '#22c55e' : '#1f7a4d']}
+              colors={busy ? [k.textFaint, k.textFaint] : [C.accent, isDark ? k.success : '#1f7a4d']}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               style={styles.cta}
             >
