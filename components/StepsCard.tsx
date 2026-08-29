@@ -4,11 +4,11 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Footprints, Flame, ChevronRight } from 'lucide-react-native';
-import { Colors } from '../constants/Colors';
 import { useTranslation } from '../lib/i18n';
 import { isHealthAvailable, readToday } from '../lib/health';
 import { getStepsMode, getActivitySteps, getSimSteps, getNativeDeviceSteps, syncActivityFile, flushStepHistory } from '../lib/steps';
 import { rememberEmail, ensureNotifPermission } from '../lib/stepsNotif';
+import { useTokens, Tokens } from '../constants/tokens';
 
 const TXT: Record<string, { steps: string; today: string; kcal: string; goal: string; connect: string; real: string }> = {
   en: { steps: 'Steps', today: 'Today', kcal: 'kcal', goal: 'Goal 10,000', connect: 'Connect Health Connect →', real: 'REAL' },
@@ -18,6 +18,7 @@ const TXT: Record<string, { steps: string; today: string; kcal: string; goal: st
 const GOAL = 10000;
 
 export default function StepsCard() {
+  const k = useTokens();
   const router = useRouter();
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;
@@ -74,8 +75,8 @@ export default function StepsCard() {
   const row = (rev = false): any => ({ flexDirection: isRTL ? (rev ? 'row' : 'row-reverse') : (rev ? 'row-reverse' : 'row') });
 
   return (
-    <TouchableOpacity activeOpacity={0.9} onPress={() => router.push('/health' as any)} style={styles.wrap}>
-      <LinearGradient colors={[Colors.light.primary, Colors.light.primaryDark]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
+    <TouchableOpacity activeOpacity={0.9} onPress={() => router.push('/health' as any)} style={[styles.wrap, { shadowColor: k.accent }]}>
+      <LinearGradient colors={[k.accent, k.accentStrong]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
         {/* decorative blobs */}
         <View style={styles.blob1} />
         <View style={styles.blob2} />
@@ -122,7 +123,7 @@ export default function StepsCard() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginHorizontal: 20, marginBottom: 16, borderRadius: 26, shadowColor: Colors.light.primary, shadowOpacity: 0.3, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 6 },
+  wrap: { marginHorizontal: 20, marginBottom: 16, borderRadius: 26, shadowOpacity: 0.3, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 6 },
   card: { borderRadius: 26, padding: 20, overflow: 'hidden' },
   blob1: { position: 'absolute', top: -40, right: -30, width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(255,255,255,0.10)' },
   blob2: { position: 'absolute', bottom: -50, left: -20, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(255,255,255,0.07)' },

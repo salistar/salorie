@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useEspaceBas } from '../../lib/espaceBas';
 import { flipAuto, directionAuto } from '../../lib/rtl';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, Tokens } from '../../constants/tokens';
 import { a11y } from '../../lib/a11y';
 import {
   View,
@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TrendingUp, TrendingDown, Minus, Scale, Check, Circle, ChevronRight, X } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import { useAnalyticsData } from '../../hooks/useAnalyticsData';
 import { computeWeightTrend } from '../../lib/analyticsCompute';
 import { router, useFocusEffect } from 'expo-router';
@@ -75,16 +74,17 @@ export default function AnalyticsScreen() {
     return v && v !== k ? v : en;
   };
   const { resolved, colors } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const bgColor = isDark ? '#0f1419' : 'transparent';
   // Premium + dark-aware palette (P2/P4): one accent (green) + neutral surfaces,
   // instead of the loud pink/blue/amber cards. All surfaces/text adapt to theme.
   const surface = isDark ? colors.card : '#fff';
-  const surfaceSoft = isDark ? '#161c23' : Colors.light.gray[50];
-  const tPrimary = isDark ? '#fff' : Colors.light.gray[900];
-  const tMuted = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const greenSoft = isDark ? 'rgba(74,222,128,0.12)' : Colors.light.primaryLight;
+  const surfaceSoft = isDark ? '#161c23' : k.surfaceSunken;
+  const tPrimary = isDark ? '#fff' : k.text;
+  const tMuted = isDark ? '#9BA1A6' : k.textMuted;
+  const greenSoft = isDark ? 'rgba(74,222,128,0.12)' : k.accentSoft;
   // Palette graphes premium : accent primary (consommé) + neutre gris (brûlé),
   // au lieu du violet/orange criards. rgb() extrait pour les fns chart-kit.
   const primaryRgb = isDark ? '74,222,128' : '46,139,87';
@@ -263,7 +263,7 @@ export default function AnalyticsScreen() {
       <View style={{ marginTop: 8 }}>
         <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row' }}>
           <View style={{ backgroundColor: ai ? 'rgba(14,165,233,0.12)' : greenSoft, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 8 }}>
-            <Text style={{ fontSize: 9.5, fontWeight: '800', color: ai ? '#0EA5E9' : Colors.light.primary, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+            <Text style={{ fontSize: 9.5, fontWeight: '800', color: ai ? '#0EA5E9' : k.accent, textTransform: 'uppercase', letterSpacing: 0.4 }}>
               {A_(ai ? 'src_ai' : 'src_computed')}
             </Text>
           </View>
@@ -343,13 +343,13 @@ export default function AnalyticsScreen() {
 
           <View style={styles.bentoRow}>
              {/* Cell 3: Top Food */}
-             <Animated.View entering={FadeInDown.delay(200).duration(800)} style={[styles.bentoCommonCard, { backgroundColor: surfaceSoft, borderColor: isDark ? colors.gray[200] : Colors.light.gray[100] }]}>
+             <Animated.View entering={FadeInDown.delay(200).duration(800)} style={[styles.bentoCommonCard, { backgroundColor: surfaceSoft, borderColor: isDark ? colors.gray[200] : k.border }]}>
                 <Text style={styles.bentoLabel}>{t('analytics.top_logged')}</Text>
                 <Text style={[styles.bentoSmallValue, { color: tPrimary }]}>{ai('topFood') || '...'}</Text>
              </Animated.View>
 
              {/* Cell 4: Hydration */}
-             <Animated.View entering={FadeInDown.delay(300).duration(800)} style={[styles.bentoCommonCard, { backgroundColor: surfaceSoft, borderColor: isDark ? colors.gray[200] : Colors.light.gray[100] }]}>
+             <Animated.View entering={FadeInDown.delay(300).duration(800)} style={[styles.bentoCommonCard, { backgroundColor: surfaceSoft, borderColor: isDark ? colors.gray[200] : k.border }]}>
                 <Text style={[styles.bentoLabel, { color: colors.primary }]}>{t('analytics.hydration')}</Text>
                 <Text style={[styles.bentoSmallValue, { color: tPrimary }]}>{ai('hydrationStatus') || '...'}</Text>
              </Animated.View>
@@ -373,7 +373,7 @@ export default function AnalyticsScreen() {
           <>
             <CollapsibleSection title={A_('detailed_charts')}>
             {/* Calories Chart Card */}
-            <Animated.View entering={FadeInDown.duration(600)} style={[styles.chartCard, { backgroundColor: surface, borderColor: isDark ? colors.gray[200] : Colors.light.gray[50] }]}>
+            <Animated.View entering={FadeInDown.duration(600)} style={[styles.chartCard, { backgroundColor: surface, borderColor: isDark ? colors.gray[200] : k.surfaceSunken }]}>
               <View style={styles.chartHeader}>
                 <Text style={[styles.chartTitle, { color: tPrimary }]}>{t('analytics.weekly_calories')}</Text>
                 <Text style={[styles.chartSubtitle, { color: tMuted }]}>{t('analytics.daily_consumption')}</Text>
@@ -400,24 +400,24 @@ export default function AnalyticsScreen() {
             </Animated.View>
 
             {/* Weekly Energy Card */}
-            <Animated.View entering={FadeInDown.delay(100).duration(600)} style={[styles.chartCard, { backgroundColor: surface, borderColor: isDark ? colors.gray[200] : Colors.light.gray[50], marginBottom: 32 }]}>
+            <Animated.View entering={FadeInDown.delay(100).duration(600)} style={[styles.chartCard, { backgroundColor: surface, borderColor: isDark ? colors.gray[200] : k.surfaceSunken, marginBottom: 32 }]}>
               <View style={styles.chartHeader}>
                 <Text style={[styles.chartTitle, { color: tPrimary }]}>{t('analytics.weekly_energy')}</Text>
                 <Text style={[styles.chartSubtitle, { color: tMuted }]}>{t('analytics.calorie_balance')}</Text>
               </View>
               <ChartMeta kind="computed" explainKey="expl_energy" />
 
-              <View style={[styles.energySummaryRow, { backgroundColor: isDark ? '#161C23' : Colors.light.gray[50] }]}>
+              <View style={[styles.energySummaryRow, { backgroundColor: isDark ? '#161C23' : k.surfaceSunken }]}>
                 <View style={styles.energyStat}>
                   <Text style={styles.energyStatLabel}>{t('analytics.consumed')}</Text>
                   <Text style={[styles.energyStatValue, { color: colors.primary }]}>{totalWeekConsumed.toLocaleString()}</Text>
                 </View>
-                <View style={[styles.energyStatDivider, { backgroundColor: isDark ? '#283241' : Colors.light.gray[200] }]} />
+                <View style={[styles.energyStatDivider, { backgroundColor: isDark ? '#283241' : k.border }]} />
                 <View style={styles.energyStat}>
                   <Text style={styles.energyStatLabel}>{t('analytics.burned')}</Text>
                   <Text style={[styles.energyStatValue, { color: burnedHex }]}>{totalWeekBurned.toLocaleString()}</Text>
                 </View>
-                <View style={[styles.energyStatDivider, { backgroundColor: isDark ? '#283241' : Colors.light.gray[200] }]} />
+                <View style={[styles.energyStatDivider, { backgroundColor: isDark ? '#283241' : k.border }]} />
                 <View style={styles.energyStat}>
                   <Text style={styles.energyStatLabel}>{t('analytics.net')}</Text>
                   <Text style={[styles.energyStatValue, { color: tPrimary }]}>{netEnergy.toLocaleString()}</Text>
@@ -457,7 +457,7 @@ export default function AnalyticsScreen() {
             </Animated.View>
 
             {/* Water Intake Card */}
-            <Animated.View entering={FadeInDown.delay(200).duration(600)} style={[styles.chartCard, { backgroundColor: surface, borderColor: isDark ? colors.gray[200] : Colors.light.gray[50] }]}>
+            <Animated.View entering={FadeInDown.delay(200).duration(600)} style={[styles.chartCard, { backgroundColor: surface, borderColor: isDark ? colors.gray[200] : k.surfaceSunken }]}>
               <View style={styles.chartHeader}>
                 <Text style={[styles.chartTitle, { color: tPrimary }]}>{t('analytics.water_intake')}</Text>
                 <Text style={[styles.chartSubtitle, { color: tMuted }]}>{t('analytics.hydration_levels')}</Text>
@@ -516,7 +516,7 @@ export default function AnalyticsScreen() {
                 activeOpacity={0.8}
                 onPress={() => setIsStreakModalVisible(true)}
               >
-                <Animated.View entering={FadeInDown.duration(600)} style={[styles.statCard, { backgroundColor: surfaceSoft, borderColor: isDark ? colors.gray[200] : Colors.light.gray[100] }]}>
+                <Animated.View entering={FadeInDown.duration(600)} style={[styles.statCard, { backgroundColor: surfaceSoft, borderColor: isDark ? colors.gray[200] : k.border }]}>
                   <View style={[styles.streakIconContainer, isDark && { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
                     <Image
                       source={require('../../assets/images/fire.png')}
@@ -536,9 +536,9 @@ export default function AnalyticsScreen() {
                           day.hasActivity && styles.activeIndicator
                         ]}>
                           {day.hasActivity ? (
-                            <Check size={10} color={Colors.light.white} strokeWidth={4} />
+                            <Check size={10} color={k.surface} strokeWidth={4} />
                           ) : (
-                            <Circle size={10} color={isDark ? Colors.dark.gray[200] : Colors.light.gray[200]} />
+                            <Circle size={10} color={k.border} />
                           )}
                         </View>
                         <Text style={styles.dayName}>{translateDayShort(day.dayName)}</Text>
@@ -557,9 +557,9 @@ export default function AnalyticsScreen() {
                   params: { currentWeight: weight }
                 })}
               >
-                <Animated.View entering={FadeInDown.delay(200).duration(600)} style={[styles.statCard, styles.weightCard, { backgroundColor: surface, borderColor: isDark ? colors.gray[200] : Colors.light.gray[50] }]}>
+                <Animated.View entering={FadeInDown.delay(200).duration(600)} style={[styles.statCard, styles.weightCard, { backgroundColor: surface, borderColor: isDark ? colors.gray[200] : k.surfaceSunken }]}>
                 <View style={[styles.weightIconContainer, isDark && { backgroundColor: 'rgba(74,222,128,0.12)' }]}>
-                  <Scale size={24} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+                  <Scale size={24} color={k.accent} />
                 </View>
                 <View style={styles.weightValueRow}>
                   <Text style={[styles.weightValue, { color: tPrimary }]}>{weight || '--'}</Text>
@@ -583,7 +583,7 @@ export default function AnalyticsScreen() {
                 })()}
 
                 <View style={styles.nextIconContainer}>
-                  <View style={flipAuto()}><ChevronRight size={18} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} strokeWidth={3} /></View>
+                  <View style={flipAuto()}><ChevronRight size={18} color={k.textFaint} strokeWidth={3} /></View>
                 </View>
               </Animated.View>
             </TouchableOpacity>
@@ -615,7 +615,7 @@ export default function AnalyticsScreen() {
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: tPrimary }]}>{t('analytics.daily_streak')}</Text>
               <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={() => setIsStreakModalVisible(false)}>
-                <X size={24} color={isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} />
+                <X size={24} color={k.textMuted} />
               </TouchableOpacity>
             </View>
 
@@ -644,9 +644,9 @@ export default function AnalyticsScreen() {
                       day.hasActivity && styles.largeActiveIndicator
                     ]}>
                       {day.hasActivity ? (
-                        <Check size={16} color={Colors.light.white} strokeWidth={4} />
+                        <Check size={16} color={k.surface} strokeWidth={4} />
                       ) : (
-                        <Circle size={16} color={isDark ? Colors.dark.gray[200] : Colors.light.gray[200]} />
+                        <Circle size={16} color={k.border} />
                       )}
                     </View>
                     <Text style={styles.largeDayName}>{translateDayShort(day.dayName)}</Text>
@@ -671,7 +671,7 @@ export default function AnalyticsScreen() {
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: tPrimary }]}>{A_('score_info_title')}</Text>
               <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={() => setScoreInfoVisible(false)}>
-                <X size={24} color={isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} />
+                <X size={24} color={k.textMuted} />
               </TouchableOpacity>
             </View>
             <View style={styles.scoreInfoBig}>
@@ -691,7 +691,7 @@ export default function AnalyticsScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -733,7 +733,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   },
   bentoScoreCard: {
     flex: 1,
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     borderRadius: 24,
     padding: 16,
     justifyContent: 'center',
@@ -741,25 +741,25 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   },
   bentoCommonCard: {
     flex: 1,
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     borderRadius: 24,
     padding: 16,
     borderWidth: 1,
-    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderColor: k.border,
     minHeight: 100,
   },
   bentoFullCard: {
     // Défaut neutre : surchargé à l'usage par greenSoft + colors.primary (theme-aware).
-    backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight,
+    backgroundColor: k.accentSoft,
     borderRadius: radius.xl,
     padding: spacing.xl,
     borderWidth: 1,
-    borderColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight,
+    borderColor: k.accentSoft,
   },
   bentoLabel: {
     fontSize: 10,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 8,
@@ -767,18 +767,18 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   bentoValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.white,
+    color: k.surface,
     lineHeight: 24,
   },
   bentoSmallValue: {
     fontSize: 16,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
   },
   bentoScoreValue: {
     fontSize: 32,
     fontWeight: '900',
-    color: Colors.light.white,
+    color: k.surface,
   },
   scoreIndicator: {
     height: 4,
@@ -789,7 +789,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   },
   scoreFill: {
     height: '100%',
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     borderRadius: 2,
   },
   scoreHint: {
@@ -802,7 +802,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   exerciseCta: {
     marginTop: 12,
     alignSelf: 'flex-start',
-    backgroundColor: Colors.light.primaryDark,
+    backgroundColor: k.accentStrong,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: radius.sm,
@@ -822,23 +822,23 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   scoreInfoBigValue: {
     fontSize: 56,
     fontWeight: '900',
-    color: isDark ? Colors.dark.primary : Colors.light.primary,
+    color: k.accent,
   },
   scoreInfoBigMax: {
     fontSize: 18,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
   },
   scoreInfoBody: {
     fontSize: 15,
     fontWeight: '600',
-    color: isDark ? Colors.dark.gray[600] : Colors.light.gray[600],
+    color: k.textMuted,
     lineHeight: 22,
     textAlign: 'center',
     marginBottom: 20,
   },
   scoreInfoBtn: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: 'center',
@@ -851,14 +851,14 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   aiBadge: {
     // Défaut neutre : surchargé à l'usage par colors.primary (theme-aware).
     alignSelf: 'flex-start',
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
     marginBottom: 10,
   },
   aiBadgeText: {
-    color: Colors.light.white,
+    color: k.surface,
     fontSize: 8,
     fontWeight: '900',
   },
@@ -866,10 +866,10 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     // Défaut neutre : surchargé à l'usage par tPrimary (theme-aware).
     fontSize: 16,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   chartCard: {
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     borderRadius: 32,
     padding: 24,
     marginBottom: 24,
@@ -879,7 +879,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     shadowRadius: 24,
     elevation: 8,
     borderWidth: 1.5,
-    borderColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    borderColor: k.surfaceSunken,
     overflow: 'hidden', // zéro débordement : le graphe est clippé proprement au bord arrondi
   },
   chartHeader: {
@@ -888,11 +888,11 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   chartTitle: {
     fontSize: 20,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   chartSubtitle: {
     fontSize: 14,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     fontWeight: '600',
     marginTop: 2,
   },
@@ -911,7 +911,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   waterStatLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     marginBottom: 4,
   },
   waterStatValue: {
@@ -923,7 +923,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     padding: 16,
     borderRadius: 20,
     marginBottom: 20,
@@ -935,19 +935,19 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   energyStatDivider: {
     width: 1,
     height: 24,
-    backgroundColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
+    backgroundColor: k.border,
   },
   energyStatLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     textTransform: 'uppercase',
     marginBottom: 4,
   },
   energyStatValue: {
     fontSize: 16,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   legendRow: {
     flexDirection: 'row',
@@ -955,7 +955,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     gap: 24,
     marginTop: 16,
     borderTopWidth: 1,
-    borderTopColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    borderTopColor: k.surfaceSunken,
     paddingTop: 16,
   },
   legendItem: {
@@ -971,7 +971,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   legendText: {
     fontSize: 12,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
+    color: k.textMuted,
   },
   statsRow: {
     flexDirection: 'row',
@@ -979,16 +979,16 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     borderRadius: 32,
     padding: 20,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderColor: k.border,
   },
   weightCard: {
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
-    borderColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surface,
+    borderColor: k.surfaceSunken,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.05,
@@ -999,7 +999,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 20,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -1012,12 +1012,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   streakValue: {
     fontSize: 28,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   streakLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     marginTop: -2,
     marginBottom: 16,
   },
@@ -1035,20 +1035,20 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderColor: k.border,
   },
   activeIndicator: {
-    backgroundColor: Colors.light.primary,
-    borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
+    backgroundColor: k.accent,
+    borderColor: k.accent,
   },
   dayName: {
     fontSize: 8,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[300] : Colors.light.gray[300],
+    color: k.textFaint,
     textTransform: 'uppercase',
   },
   weightIconContainer: {
@@ -1068,17 +1068,17 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   weightValue: {
     fontSize: 32,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   weightUnit: {
     fontSize: 16,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
   },
   weightLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     marginBottom: 16,
   },
   trendBadge: {
@@ -1102,22 +1102,22 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   comingSoonCard: {
     marginTop: 24,
     padding: 32,
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     borderRadius: 32,
     borderWidth: 2,
-    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderColor: k.border,
     borderStyle: 'dashed',
     alignItems: 'center',
   },
   comingSoonTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     marginBottom: 8,
   },
   comingSoonDesc: {
     fontSize: 14,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -1132,7 +1132,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   },
   modalContent: {
     width: width - 40,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     borderRadius: 36,
     padding: 24,
     shadowColor: '#000',
@@ -1150,21 +1150,21 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   largeStreakCard: {
     alignItems: 'center',
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     borderRadius: 32,
     padding: 32,
     borderWidth: 2,
-    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderColor: k.border,
   },
   largeIconBox: {
     width: 80,
     height: 80,
     borderRadius: 28,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
@@ -1182,15 +1182,15 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   largeStreakValue: {
     fontSize: 48,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   streakChip: {
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 100,
     borderWidth: 1,
-    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderColor: k.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -1199,12 +1199,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   chipText: {
     fontSize: 12,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   largeStreakLabel: {
     fontSize: 18,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     marginBottom: 32,
   },
   largeWeekGrid: {
@@ -1221,20 +1221,20 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderColor: k.border,
   },
   largeActiveIndicator: {
-    backgroundColor: Colors.light.primary,
-    borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
+    backgroundColor: k.accent,
+    borderColor: k.accent,
   },
   largeDayName: {
     fontSize: 10,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     textTransform: 'uppercase',
   },
 });

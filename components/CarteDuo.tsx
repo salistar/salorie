@@ -54,6 +54,7 @@ function ecart(m: number, langue: string): string {
 }
 
 export default function CarteDuo({ moi, autre }: { moi: Point | null; autre: Point | null }) {
+  const k = useTokens();
   const tok = useTokens();
   const { language } = useTranslation() as any;
   const t = TXT[language] || TXT.fr;

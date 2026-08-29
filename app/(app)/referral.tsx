@@ -115,6 +115,7 @@ const TXT: Record<Lang, any> = {
 };
 
 export default function Referral() {
+  const k = useTokens();
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const lang: Lang = (language === 'fr' || language === 'ar' ? language : 'en');

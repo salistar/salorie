@@ -24,10 +24,10 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import * as AuthSession from 'expo-auth-session';
 import { saveUserToFirestore } from '../../lib/firebase';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { rowDir, txtAlign, flipAuto } from '../../lib/rtl';
 import { Input } from '../../components/ui';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 // Verification step strings (kept local — pas de clés dans lib/i18n.tsx)
 const TXT = {
@@ -61,8 +61,9 @@ WebBrowser.maybeCompleteAuthSession();
 export default function SignUpScreen() {
   const { t, language, setLanguage, isRTL } = useTranslation();
   const { colors, resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const tx = TXT[language as keyof typeof TXT] ?? TXT.en;
   const { isLoaded, signUp, setActive } = useSignUp();
   // Lu AU MOMENT du catch : `useAuth()` fermerait sur une valeur figee
@@ -274,12 +275,12 @@ export default function SignUpScreen() {
 
   // Couleurs dérivées du thème (l'écran était tout blanc en dur)
   const cardBg = isDark ? colors.card : '#fff';
-  const inputBg = isDark ? Colors.dark.gray[100] : Colors.light.gray[100];
-  const textPrimary = isDark ? '#fff' : Colors.light.gray[800];
-  const textMuted = isDark ? Colors.dark.gray[400] : Colors.light.gray[500];
-  const placeholderColor = isDark ? Colors.dark.gray[400] : '#666';
-  const iconColor = isDark ? Colors.dark.gray[400] : '#666';
-  const dividerColor = isDark ? Colors.dark.gray[200] : Colors.light.gray[200];
+  const inputBg = k.border;
+  const textPrimary = isDark ? '#fff' : k.text;
+  const textMuted = k.textMuted;
+  const placeholderColor = isDark ? k.textMuted : '#666';
+  const iconColor = isDark ? k.textMuted : '#666';
+  const dividerColor = k.border;
   const orLabel = language === 'fr' ? 'OU' : language === 'ar' ? 'أو' : 'OR';
 
   if (pendingVerification) {
@@ -456,7 +457,7 @@ export default function SignUpScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -473,11 +474,11 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     borderRadius: 14,
     backgroundColor: 'rgba(255,255,255,0.7)',
     borderWidth: 1,
-    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
+    borderColor: k.border,
   },
   langPillActive: {
-    backgroundColor: Colors.light.primary,
-    borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
+    backgroundColor: k.accent,
+    borderColor: k.accent,
   },
   langPillText: {
     fontSize: 14,
@@ -503,7 +504,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 16,
     borderWidth: 4,
-    borderColor: isDark ? Colors.dark.white : Colors.light.white,
+    borderColor: k.surface,
   },
   heroPhoto: {
     width: '100%',
@@ -515,19 +516,19 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   brandName: {
     fontSize: 28,
     fontWeight: '900',
-    color: isDark ? Colors.dark.primary : Colors.light.primary,
+    color: k.accent,
     letterSpacing: -0.5,
     marginBottom: 12,
   },
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
+    color: k.textMuted,
     marginTop: 8,
   },
   form: {
@@ -564,7 +565,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    backgroundColor: k.border,
     borderRadius: 16,
     paddingHorizontal: 16,
     marginBottom: 16,
@@ -576,17 +577,17 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
   },
   button: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     borderRadius: 16,
     height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -609,18 +610,18 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   divider: {
     flex: 1,
     height: 1,
-    backgroundColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
+    backgroundColor: k.border,
   },
   dividerText: {
     marginHorizontal: 12,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     fontSize: 12,
     fontWeight: '600',
   },
   googleButton: {
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
+    borderColor: k.border,
     borderRadius: 16,
     height: 56,
     flexDirection: 'row',
@@ -632,7 +633,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     gap: 12,
   },
   googleButtonText: {
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -642,11 +643,11 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     marginTop: 32,
   },
   footerText: {
-    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
+    color: k.textMuted,
     fontSize: 15,
   },
   linkText: {
-    color: isDark ? Colors.dark.primary : Colors.light.primary,
+    color: k.accent,
     fontSize: 15,
     fontWeight: '700',
   },

@@ -19,6 +19,7 @@ const TITRES: Record<string, string> = {
 };
 
 export default function EcranChatCourse() {
+  const k = useTokens();
   const tok = useTokens();
   const { language } = useTranslation();
   const { id } = useLocalSearchParams<{ id?: string }>();

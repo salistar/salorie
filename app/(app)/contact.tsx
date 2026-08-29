@@ -66,6 +66,7 @@ const TXT: any = {
 };
 
 export default function Contact() {
+  const k = useTokens();
   const { user } = useUser();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;

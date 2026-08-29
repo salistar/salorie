@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View, Text, Image, TouchableOpacity } from 'react-native';
-import { Colors } from '../constants/Colors';
 import { useTranslation } from '../lib/i18n';
+import { useTokens, Tokens } from '../constants/tokens';
 
 /**
  * Ce qu'on montre pendant que Clerk s'initialise.
@@ -48,6 +48,7 @@ const ATTENTE: Record<string, Record<string, string>> = {
 export const DELAI_EXPLICATION_MS = 7000;
 
 export default function AttenteConnexion({ onReessayer }: { onReessayer: () => void }) {
+  const k = useTokens();
   const { language, isRTL } = useTranslation();
   const m = ATTENTE[language] || ATTENTE.fr;
   const [tarde, setTarde] = useState(false);
@@ -75,7 +76,7 @@ export default function AttenteConnexion({ onReessayer }: { onReessayer: () => v
     <View
       style={{
         flex: 1,
-        backgroundColor: Colors.light.primary,
+        backgroundColor: k.accent,
         justifyContent: 'center',
         alignItems: 'center',
         gap: 20,

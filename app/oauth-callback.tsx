@@ -4,8 +4,8 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { useAuth, useSignIn, useSignUp } from '@clerk/clerk-expo';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
+import { useTokens, Tokens } from '../constants/tokens';
 
 // Complete any pending auth session at module load
 WebBrowser.maybeCompleteAuthSession();
@@ -28,6 +28,7 @@ function nonceFromUrl(url: string | null): string | null {
 export default function OAuthCallback() {
   // Écran de transition : sur fond sombre, gray[600] tombait à ~2,4:1 de contraste.
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
   const { isSignedIn, isLoaded } = useAuth();
   const { signIn, setActive } = useSignIn();
@@ -113,19 +114,19 @@ export default function OAuthCallback() {
       gap: 16,
       padding: 24,
     }}>
-      <ActivityIndicator size="large" color={isDark ? Colors.dark.primary : Colors.light.primary} />
-      <Text style={{ color: isDark ? Colors.dark.gray[600] : Colors.light.gray[600], fontSize: 14, fontWeight: '600', textAlign: 'center' }}>
+      <ActivityIndicator size="large" color={k.accent} />
+      <Text style={{ color: k.textMuted, fontSize: 14, fontWeight: '600', textAlign: 'center' }}>
         Signing you in...
       </Text>
       {showRetry && (
         <View style={{ alignItems: 'center', gap: 12, marginTop: 24 }}>
-          <Text style={{ color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500], fontSize: 13, textAlign: 'center' }}>
+          <Text style={{ color: k.textMuted, fontSize: 13, textAlign: 'center' }}>
             Connexion plus longue que prevu. Retour au sign-in ?
           </Text>
           <TouchableOpacity
             onPress={() => router.replace('/(auth)/sign-in' as any)}
             style={{
-              backgroundColor: Colors.light.primary,
+              backgroundColor: k.accent,
               paddingHorizontal: 24,
               paddingVertical: 12,
               borderRadius: 12,

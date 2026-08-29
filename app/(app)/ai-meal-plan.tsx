@@ -144,6 +144,7 @@ const TXT: any = {
 };
 
 export default function AiMealPlanScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('ai-meal-plan');
   const { user } = useUser();
   // FEATURE #103 : ingrédients transmis depuis « Frigo → recettes » (param URL).

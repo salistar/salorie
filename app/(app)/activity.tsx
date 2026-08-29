@@ -41,6 +41,7 @@ function iconFor(name: string) {
 }
 
 export default function ActivityScreen() {
+  const k = useTokens();
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const { resolved } = useTheme();

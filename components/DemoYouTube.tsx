@@ -57,6 +57,7 @@ export default function DemoYouTube({
   /** Le nom TRADUIT de l'exercice — c'est lui qu'on cherche, pas l'identifiant. */
   libelle: string;
 }) {
+  const k = useTokens();
   const tok = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.fr;

@@ -8,7 +8,6 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import { ArrowLeft, X, Navigation2, ChevronLeft, ChevronRight } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import { useTranslation } from '../../lib/i18n';
 import { getChallenge, Challenge, ChallengePOI } from '../../lib/races';
 import { poiPhoto } from '../../assets/challenges/registry';
@@ -16,8 +15,8 @@ import { Dimensions } from 'react-native';
 import Card from '../../components/ui/Card';
 import { PrimaryButton, SecondaryButton } from '../../components/ui/Button';
 import { spacing, type as typeTokens } from '../../constants/theme';
+import { useTokens, Tokens } from '../../constants/tokens';
 
-const PRIMARY = Colors.light.primary;
 const { width: W, height: H } = Dimensions.get('window');
 const FOV = 42; // half horizontal field of view (deg) a label is considered "in front"
 
@@ -76,6 +75,7 @@ function ArThumb({ challengeId, index }: { challengeId: string; index: number })
 }
 
 export default function ChallengeARScreen() {
+  const k = useTokens();
   const { id } = useLocalSearchParams<{ id: string }>();
   const challenge: Challenge | undefined = getChallenge(String(id || ''));
   const { language } = useTranslation() as any;
@@ -125,7 +125,7 @@ export default function ChallengeARScreen() {
     return (
       <View style={[styles.fill, styles.center, { backgroundColor: '#000', padding: spacing.xl }]}>
         <Card variant="flat" style={styles.permCard}>
-          <Navigation2 size={48} color={PRIMARY} />
+          <Navigation2 size={48} color={k.accent} />
           <Text style={styles.permTitle}>{t.title}</Text>
           <Text style={styles.permTxt}>{t.perm}</Text>
           <PrimaryButton title={t.grant} onPress={requestPermission} style={styles.permAction} />

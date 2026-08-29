@@ -16,7 +16,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Search, Plus, Utensils, ScanBarcode, Star, History, RotateCcw, Flame } from 'lucide-react-native';
 import PerfList from '../../components/PerfList';
-import { Colors } from '../../constants/Colors';
 import { searchFood } from '../../lib/fatsecret';
 import { useLogging } from '../../lib/LoggingContext';
 import { addNutritionLog } from '../../lib/firebase';
@@ -25,6 +24,7 @@ import { useUser } from '@clerk/clerk-expo';
 import { debounce } from 'lodash';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 /** « Per 100g » (FatSecret, toujours en anglais) → « Pour 100g » / « لكل 100g ».
  *  Seul le préfixe est traduit : la quantité et l'unité viennent de l'API et restent
@@ -152,8 +152,9 @@ export default function FoodDatabaseScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { user } = useUser();
   const { selectedDate, triggerRefresh } = useLogging();
   const [query, setQuery] = useState('');
@@ -279,16 +280,16 @@ export default function FoodDatabaseScreen() {
 
     return (
       <TouchableOpacity
-        style={[styles.card, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: isDark ? Colors.dark.card : Colors.light.white, borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[100] }]}
+        style={[styles.card, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: k.surface, borderColor: k.border }]}
         onPress={() => handleAddFood(item)}
         activeOpacity={0.7}
       >
         <View style={[styles.cardLeft, isRTL && { marginRight: 0, marginLeft: 12 }]}>
-          <Text numberOfLines={2} ellipsizeMode="tail" style={[styles.foodName, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{item.food_name}</Text>
-          <Text style={[styles.foodInfo, { color: isDark ? '#9BA1A6' : Colors.light.gray[400], textAlign: isRTL ? 'right' : 'left' }]}>{localizeServing(serving, language)} • {calories} kcal</Text>
+          <Text numberOfLines={2} ellipsizeMode="tail" style={[styles.foodName, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}>{item.food_name}</Text>
+          <Text style={[styles.foodInfo, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{localizeServing(serving, language)} • {calories} kcal</Text>
         </View>
         <View style={styles.addBtn}>
-          <Plus size={24} color={Colors.light.white} strokeWidth={3} />
+          <Plus size={24} color={k.surface} strokeWidth={3} />
         </View>
       </TouchableOpacity>
     );
@@ -298,30 +299,30 @@ export default function FoodDatabaseScreen() {
   const keyExtractor = useCallback((item: any) => item.food_id.toString(), []);
 
   return (
-    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: isDark ? '#0f1419' : Colors.light.white }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: isDark ? '#0f1419' : k.surface }]}>
       <ScreenTopBar />
       <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backBtn, { backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] }]} onPress={() => router.back()}>
-          <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ArrowLeft size={28} color={isDark ? '#fff' : Colors.light.gray[900]} strokeWidth={2.5} /></View>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backBtn, { backgroundColor: k.surfaceSunken }]} onPress={() => router.back()}>
+          <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ArrowLeft size={28} color={isDark ? '#fff' : k.text} strokeWidth={2.5} /></View>
         </TouchableOpacity>
-        <Text numberOfLines={1} style={[styles.headerTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{t.title}</Text>
+        <Text numberOfLines={1} style={[styles.headerTitle, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}>{t.title}</Text>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('scanner')} style={styles.scanBtn} onPress={() => router.push('/scan-barcode' as any)}>
-          <ScanBarcode size={24} color={isDark ? Colors.dark.primary : Colors.light.primary} strokeWidth={2.5} />
+          <ScanBarcode size={24} color={k.accent} strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
 
       <View style={[styles.searchContainer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-        <Search size={20} color={isDark ? '#9BA1A6' : Colors.light.gray[400]} style={[styles.searchIcon, isRTL ? { left: undefined, right: 36 } : undefined]} />
+        <Search size={20} color={isDark ? '#9BA1A6' : k.textMuted} style={[styles.searchIcon, isRTL ? { left: undefined, right: 36 } : undefined]} />
         <TextInput
-          style={[styles.input, { backgroundColor: isDark ? Colors.dark.card : Colors.light.gray[50], color: isDark ? '#fff' : Colors.light.gray[900], borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[100], textAlign: isRTL ? 'right' : 'left', paddingLeft: isRTL ? 48 : 52, paddingRight: isRTL ? 52 : 48 }]}
+          style={[styles.input, { backgroundColor: k.surfaceSunken, color: isDark ? '#fff' : k.text, borderColor: k.border, textAlign: isRTL ? 'right' : 'left', paddingLeft: isRTL ? 48 : 52, paddingRight: isRTL ? 52 : 48 }]}
           placeholder={t.searchPlaceholder}
           value={query}
           onChangeText={handleSearch}
-          placeholderTextColor={isDark ? '#9BA1A6' : Colors.light.gray[400]}
+          placeholderTextColor={isDark ? '#9BA1A6' : k.textMuted}
           returnKeyType="search"
           onSubmitEditing={() => performSearch(query)}
         />
-        {loading && <ActivityIndicator size="small" color={isDark ? Colors.dark.primary : Colors.light.primary} style={[styles.loader, isRTL ? { right: undefined, left: 36 } : undefined]} />}
+        {loading && <ActivityIndicator size="small" color={k.accent} style={[styles.loader, isRTL ? { right: undefined, left: 36 } : undefined]} />}
       </View>
 
       {/* La liste se re-rend à CHAQUE frappe dans la recherche sur 653+ aliments : c'est
@@ -338,7 +339,7 @@ export default function FoodDatabaseScreen() {
               {frequents.length > 0 && (
                 <>
                   <View style={[styles.quickHead, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                    <Flame size={16} color="#ef4444" /><Text style={[styles.quickTitle, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{t.frequents}</Text>
+                    <Flame size={16} color="#ef4444" /><Text style={[styles.quickTitle, { color: isDark ? '#fff' : k.text }]}>{t.frequents}</Text>
                   </View>
                   {frequents.map((f) => (
                     <React.Fragment key={`freq${f.food_id}`}>{renderItem({ item: f })}</React.Fragment>
@@ -348,7 +349,7 @@ export default function FoodDatabaseScreen() {
               {viewed.length > 0 && (
                 <>
                   <View style={[styles.quickHead, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                    <RotateCcw size={16} color={Colors.light.primary} /><Text style={[styles.quickTitle, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{t.viewed}</Text>
+                    <RotateCcw size={16} color={k.accent} /><Text style={[styles.quickTitle, { color: isDark ? '#fff' : k.text }]}>{t.viewed}</Text>
                   </View>
                   {viewed.map((f) => (
                     <React.Fragment key={`viewed${f.food_id}`}>{renderItem({ item: f })}</React.Fragment>
@@ -358,7 +359,7 @@ export default function FoodDatabaseScreen() {
               {favorites.length > 0 && (
                 <>
                   <View style={[styles.quickHead, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                    <Star size={16} color="#f59e0b" fill="#f59e0b" /><Text style={[styles.quickTitle, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{t.favorites}</Text>
+                    <Star size={16} color="#f59e0b" fill="#f59e0b" /><Text style={[styles.quickTitle, { color: isDark ? '#fff' : k.text }]}>{t.favorites}</Text>
                   </View>
                   {favorites.map((f, i) => (
                     <QuickRow key={`fav${i}`} f={f} fav onLog={quickLog} onFav={onToggleFav} isDark={isDark} isRTL={isRTL} km={t.km} language={language} />
@@ -368,7 +369,7 @@ export default function FoodDatabaseScreen() {
               {recents.length > 0 && (
                 <>
                   <View style={[styles.quickHead, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                    <History size={16} color={Colors.light.primary} /><Text style={[styles.quickTitle, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{t.recents}</Text>
+                    <History size={16} color={k.accent} /><Text style={[styles.quickTitle, { color: isDark ? '#fff' : k.text }]}>{t.recents}</Text>
                   </View>
                   {recents.map((f, i) => (
                     <QuickRow key={`rec${i}`} f={f} fav={favorites.some((x) => x.name === f.name)} onLog={quickLog} onFav={onToggleFav} isDark={isDark} isRTL={isRTL} km={t.km} language={language} />
@@ -381,12 +382,12 @@ export default function FoodDatabaseScreen() {
         ListEmptyComponent={() => (
           !loading && query.length >= 3 ? (
             <View style={styles.emptyState}>
-              <Utensils size={48} color={isDark ? Colors.dark.gray[200] : Colors.light.gray[200]} />
-              <Text style={[styles.emptyText, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>{t.noResults} {String.fromCharCode(8220)}{query}{String.fromCharCode(8221)}</Text>
+              <Utensils size={48} color={k.border} />
+              <Text style={[styles.emptyText, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.noResults} {String.fromCharCode(8220)}{query}{String.fromCharCode(8221)}</Text>
             </View>
           ) : query.length > 0 && query.length < 3 ? (
              <View style={styles.emptyState}>
-              <Text style={[styles.hintText, { color: isDark ? '#9BA1A6' : Colors.light.gray[300] }]}>{t.keepTyping}</Text>
+              <Text style={[styles.hintText, { color: isDark ? '#9BA1A6' : k.textFaint }]}>{t.keepTyping}</Text>
             </View>
           ) : null
         )}
@@ -397,31 +398,34 @@ export default function FoodDatabaseScreen() {
 
 // Ligne Récent/Favori : tap = re-log 1 tap ; étoile = (dé)favoriser.
 function QuickRow({ f, fav, onLog, onFav, isDark, isRTL, km, language }: any) {
+  // Ce composant recevait `isDark` en propriete et n avait acces a aucune
+  // couleur : il lit desormais les jetons lui-meme, comme son parent.
+  const k = useTokens();
   return (
     <TouchableOpacity activeOpacity={0.7} onPress={() => onLog(f)}
-      style={[qrStyles.row, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: isDark ? Colors.dark.card : Colors.light.white, borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[100] }]}>
+      style={[qrStyles.row, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: k.surface, borderColor: k.border }]}>
       <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('favori')} onPress={() => onFav(f)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
         <Star size={20} color="#f59e0b" fill={fav ? '#f59e0b' : 'transparent'} />
       </TouchableOpacity>
       <View style={{ flex: 1 }}>
-        <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '700', color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }}>{f.name}</Text>
-        <Text style={{ fontSize: 12.5, color: isDark ? '#9BA1A6' : Colors.light.gray[400], textAlign: isRTL ? 'right' : 'left' }}>{f.serving ? `${localizeServing(f.serving, language)} • ` : ''}{Math.round(f.calories)} {km === 'كلم' ? 'سعرة' : 'kcal'}</Text>
+        <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '700', color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }}>{f.name}</Text>
+        <Text style={{ fontSize: 12.5, color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }}>{f.serving ? `${localizeServing(f.serving, language)} • ` : ''}{Math.round(f.calories)} {km === 'كلم' ? 'سعرة' : 'kcal'}</Text>
       </View>
-      <View style={qrStyles.relog}><RotateCcw size={18} color="#fff" strokeWidth={2.5} /></View>
+      <View style={[qrStyles.relog, { backgroundColor: k.accent }]}><RotateCcw size={18} color="#fff" strokeWidth={2.5} /></View>
     </TouchableOpacity>
   );
 }
 const qrStyles = StyleSheet.create({
   row: { alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, borderWidth: 1, marginHorizontal: 20, marginBottom: 10 },
-  relog: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.light.primary, alignItems: 'center', justifyContent: 'center' },
+  relog: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
 });
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
   },
   quickHead: { alignItems: 'center', gap: 8, paddingHorizontal: 20, marginTop: 4, marginBottom: 10 },
   quickTitle: { fontSize: 16, fontWeight: '800' },
@@ -437,7 +441,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     flex: 1,
     fontSize: 24,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   scanBtn: {
     width: 48,
@@ -445,7 +449,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight,
+    backgroundColor: k.accentSoft,
   },
   backBtn: {
     width: 48,
@@ -453,7 +457,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
   },
   searchContainer: {
     paddingHorizontal: 20,
@@ -470,15 +474,15 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   input: {
     flex: 1,
     height: 56,
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     borderRadius: 16,
     paddingLeft: 52,
     paddingRight: 48,
     fontSize: 16,
     fontWeight: '600',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     borderWidth: 1.5,
-    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderColor: k.border,
   },
   loader: {
     position: 'absolute',
@@ -493,11 +497,11 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 18,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     borderRadius: 24,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderColor: k.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
@@ -511,22 +515,22 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   foodName: {
     fontSize: 17,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     marginBottom: 4,
   },
   foodInfo: {
     fontSize: 14,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     fontWeight: '600',
   },
   addBtn: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -540,13 +544,13 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     fontWeight: '600',
     textAlign: 'center',
   },
   hintText: {
     fontSize: 15,
-    color: isDark ? Colors.dark.gray[300] : Colors.light.gray[300],
+    color: k.textFaint,
     fontWeight: '500',
   },
 });

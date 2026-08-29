@@ -93,6 +93,7 @@ const TXT: any = {
 };
 
 export default function BattleScreen() {
+  const k = useTokens();
   const { user } = useUser();
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;

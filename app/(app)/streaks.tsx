@@ -33,6 +33,7 @@ const TXT: any = {
 };
 
 export default function StreaksScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('streaks');
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;

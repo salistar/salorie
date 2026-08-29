@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -13,7 +13,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Activity, Moon, HeartPulse, Minus, Plus } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenTopBar from '../../components/ScreenTopBar';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign } from '../../lib/rtl';
@@ -95,16 +94,17 @@ function verdictColor(score: number) {
 }
 
 export default function ReadinessScreen() {
+  const k = useTokens();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const tx = TXT[language] || TXT.en;
-  const accent = isDark ? Colors.dark.primary : Colors.light.primary;
+  const accent = k.accent;
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const bg = isDark ? '#0f1419' : 'transparent';
   const tok = useTokens();
   const border = tok.border;
@@ -225,7 +225,7 @@ export default function ReadinessScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 60 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },

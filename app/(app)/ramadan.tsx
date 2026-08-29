@@ -129,6 +129,7 @@ function fmtCountdown(ms: number): string {
 }
 
 export default function RamadanScreen() {
+  const k = useTokens();
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const { colors, resolved } = useTheme();

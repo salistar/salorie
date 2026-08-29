@@ -30,7 +30,6 @@ import {
   Activity,
   ArrowRight
 } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import { useTokens, CATEGORIES, type Tokens } from '../../constants/tokens';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { PurchasesService } from '../../lib/PurchasesService';
@@ -54,6 +53,7 @@ export default function ProfileScreen() {
   const { signOut } = useAuth();
   const { t, language } = useTranslation() as any;
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
   const tok = useTokens();
   const styles = useMemo(() => makeStyles(isDark, tok), [isDark, tok]);
@@ -237,7 +237,7 @@ export default function ProfileScreen() {
         <Text style={styles.menuLabel}>{label}</Text>
         {subtext && <Text style={styles.menuSubtext}>{subtext}</Text>}
       </View>
-      <View style={flipAuto()}><ChevronRight size={18} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} /></View>
+      <View style={flipAuto()}><ChevronRight size={18} color={k.textFaint} /></View>
     </TouchableOpacity>
   );
 
@@ -287,7 +287,7 @@ export default function ProfileScreen() {
               source={{ uri: user?.imageUrl }}
               style={styles.avatar}
             />
-            <View style={{ position: 'absolute', bottom: -2, right: -2, backgroundColor: Colors.light.primary, borderRadius: 12, padding: 5, borderWidth: 2, borderColor: tok.onAccent }}>
+            <View style={{ position: 'absolute', bottom: -2, right: -2, backgroundColor: k.accent, borderRadius: 12, padding: 5, borderWidth: 2, borderColor: tok.onAccent }}>
               <Camera size={12} color={tok.onAccent} />
             </View>
           </TouchableOpacity>
@@ -319,7 +319,7 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.trialButton}>
                 <Text style={styles.trialButtonText}>{t('profile.start')}</Text>
-                <View style={flipAuto()}><ArrowRight size={16} color={Colors.light.white} /></View>
+                <View style={flipAuto()}><ArrowRight size={16} color={k.surface} /></View>
               </View>
             </View>
           </TouchableOpacity>
@@ -334,7 +334,7 @@ export default function ProfileScreen() {
           <GridTile icon={Award} label={P_('my_medals')} color={CATEGORIES.medailles} onPress={() => router.push('/medals' as any)} />
           <GridTile icon={Trophy} label={P_('achievements')} color={CATEGORIES.succes} onPress={() => router.push('/social' as any)} />
           <GridTile icon={Flame} label={P_('streaks')} color={CATEGORIES.series} onPress={() => router.push('/streaks' as any)} />
-          <GridTile icon={Sparkles} label={P_('avatar')} color={isDark ? Colors.dark.primary : Colors.light.primary} onPress={() => router.push('/avatar' as any)} />
+          <GridTile icon={Sparkles} label={P_('avatar')} color={k.accent} onPress={() => router.push('/avatar' as any)} />
         </Animated.View>
 
         {/* Account Section */}
@@ -342,14 +342,14 @@ export default function ProfileScreen() {
           <Text style={[styles.sectionTitle, { color: tok.text }]}>{t('profile.account')}</Text>
         </View>
         <Animated.View entering={FadeInDown.delay(250).duration(600)} style={styles.grid}>
-          <GridTile icon={User} label={t('profile.personal_details')} color={isDark ? Colors.dark.primary : Colors.light.primary} onPress={() => router.push('/personal-details' as any)} />
+          <GridTile icon={User} label={t('profile.personal_details')} color={k.accent} onPress={() => router.push('/personal-details' as any)} />
           <GridTile icon={Users} label={P_('amis')} color={CATEGORIES.famille} onPress={() => router.push('/amis' as any)} />
           <GridTile icon={Users} label={P_('family')} color={CATEGORIES.famille} onPress={() => router.push('/family' as any)} />
           <GridTile icon={Users} label={P_('referral')} color={CATEGORIES.parrainage} onPress={() => router.push('/referral' as any)} />
           <GridTile icon={Heart} label={P_('nutrients')} color={CATEGORIES.nutriments} onPress={() => router.push('/nutrients' as any)} />
           <GridTile icon={Activity} label={P_('vitals')} color={CATEGORIES.constantes} onPress={() => router.push('/vitals' as any)} />
           <GridTile icon={HeartPulse} label={P_('doctor_report')} color={CATEGORIES.medical} onPress={() => router.push('/health-export' as any)} />
-          <GridTile icon={Bell} label={t('prefs.notifications')} color={isDark ? Colors.dark.primary : Colors.light.primary} onPress={() => router.push('/notifications' as any)} />
+          <GridTile icon={Bell} label={t('prefs.notifications')} color={k.accent} onPress={() => router.push('/notifications' as any)} />
           <GridTile icon={Settings} label={t('profile.preferences')} color={CATEGORIES.reglages} onPress={() => router.push('/preferences' as any)} />
           <GridTile icon={CreditCard} label={t('profile.upgrade')} color={CATEGORIES.abonnement} onPress={handleUpgrade} />
         </Animated.View>
@@ -362,8 +362,8 @@ export default function ProfileScreen() {
           <GridTile icon={Lightbulb} label={t('profile.feature_requests')} color={CATEGORIES.nutriments} onPress={() => router.push('/feature-requests' as any)} />
           <GridTile icon={MessagesSquare} label={t('profile.contact_us')} color={CATEGORIES.contact} onPress={() => router.push('/contact' as any)} />
           <GridTile icon={FileText} label={P_('send_logs')} color={CATEGORIES.journaux} onPress={sendLogs} />
-          <GridTile icon={FileText} label={t('profile.terms')} color={isDark ? Colors.dark.gray[500] : Colors.light.gray[500]} onPress={() => router.push('/terms' as any)} />
-          <GridTile icon={Shield} label={t('profile.privacy')} color={isDark ? Colors.dark.gray[500] : Colors.light.gray[500]} onPress={() => router.push('/privacy' as any)} />
+          <GridTile icon={FileText} label={t('profile.terms')} color={k.textMuted} onPress={() => router.push('/terms' as any)} />
+          <GridTile icon={Shield} label={t('profile.privacy')} color={k.textMuted} onPress={() => router.push('/privacy' as any)} />
         </Animated.View>
 
         {/* Developer-only tools — hidden in production builds */}
@@ -379,8 +379,8 @@ export default function ProfileScreen() {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight, marginBottom: 12 }]} onPress={handleSeedData}>
-              <Text style={[styles.logoutText, { color: isDark ? Colors.dark.primary : Colors.light.primary }]}>🌱 {t('common.seed_btn')}</Text>
+            <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: k.accentSoft, marginBottom: 12 }]} onPress={handleSeedData}>
+              <Text style={[styles.logoutText, { color: k.accent }]}>🌱 {t('common.seed_btn')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -395,7 +395,7 @@ export default function ProfileScreen() {
 
         {/* Logout Button */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <LogOut size={20} color={isDark ? Colors.dark.error : Colors.light.error} />
+          <LogOut size={20} color={k.danger} />
           <Text style={styles.logoutText}>{t('profile.logout')}</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -421,13 +421,13 @@ const makeStyles = (isDark: boolean, tok: Tokens) => StyleSheet.create({
   title: {
     fontSize: 36,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: tok.text,
     letterSpacing: -1,
   },
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    backgroundColor: tok.text,
     padding: 20,
     borderRadius: 32,
     marginBottom: 20,
@@ -451,7 +451,7 @@ const makeStyles = (isDark: boolean, tok: Tokens) => StyleSheet.create({
   userName: {
     fontSize: 20,
     fontWeight: '800',
-    color: Colors.light.white,
+    color: tok.surface,
   },
   userEmail: {
     fontSize: 14,
@@ -518,7 +518,7 @@ const makeStyles = (isDark: boolean, tok: Tokens) => StyleSheet.create({
     gap: 6,
   },
   trialButtonText: {
-    color: Colors.light.white,
+    color: tok.surface,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -529,17 +529,17 @@ const makeStyles = (isDark: boolean, tok: Tokens) => StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: tok.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1.5,
   },
   optionsCard: {
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: tok.surface,
     borderRadius: 32,
     paddingVertical: 10,
     marginBottom: 24,
     borderWidth: 1.5,
-    borderColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    borderColor: tok.surfaceSunken,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
@@ -549,13 +549,13 @@ const makeStyles = (isDark: boolean, tok: Tokens) => StyleSheet.create({
   // Grille compacte (allègement Profile) — 2 colonnes
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 16 },
   gridTile: {
-    width: '48%', alignItems: 'center', backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    width: '48%', alignItems: 'center', backgroundColor: tok.surface,
     borderRadius: 20, paddingVertical: 18, paddingHorizontal: 8, marginBottom: 12,
-    borderWidth: 1.5, borderColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    borderWidth: 1.5, borderColor: tok.surfaceSunken,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
   },
   gridIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
-  gridLabel: { fontSize: 13, fontWeight: '700', color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900], marginTop: 10, textAlign: 'center' },
+  gridLabel: { fontSize: 13, fontWeight: '700', color: tok.text, marginTop: 10, textAlign: 'center' },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -576,17 +576,17 @@ const makeStyles = (isDark: boolean, tok: Tokens) => StyleSheet.create({
   menuLabel: {
     fontSize: 16,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: tok.text,
   },
   menuSubtext: {
     fontSize: 12,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: tok.textMuted,
     fontWeight: '500',
     marginTop: 2,
   },
   separator: {
     height: 1,
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: tok.surfaceSunken,
     marginHorizontal: 20,
   },
   logoutBtn: {

@@ -40,6 +40,7 @@ const T: Record<string, Record<string, string>> = {
 };
 
 export default function RaceChat({ raceId }: { raceId: string }) {
+  const k = useTokens();
   const tok = useTokens();
   const { language, isRTL } = useTranslation();
   const t = T[String(language)] || T.fr;

@@ -2,9 +2,9 @@ import React, { useMemo } from 'react';
 import { a11y } from '../lib/a11y';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Pencil } from 'lucide-react-native';
-import { Colors } from '../constants/Colors';
 import { useTranslation } from '../lib/i18n';
 import { useTheme } from '../lib/ThemeContext';
+import { useTokens, Tokens } from '../constants/tokens';
 
 const { width } = Dimensions.get('window');
 const CARD_PADDING = 24;
@@ -26,11 +26,12 @@ export default function WaterIntakeCard({
 }: WaterIntakeCardProps) {
   const { t } = useTranslation();
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
-  const cardBg = isDark ? '#161C23' : Colors.light.white;
-  const titleColor = isDark ? '#f1f5f9' : Colors.light.gray[900];
-  const borderColor = isDark ? 'rgba(255,255,255,0.08)' : Colors.light.gray[50];
+  const styles = useMemo(() => makeStyles(k), [k]);
+  const cardBg = isDark ? '#161C23' : k.surface;
+  const titleColor = isDark ? '#f1f5f9' : k.text;
+  const borderColor = isDark ? 'rgba(255,255,255,0.08)' : k.surfaceSunken;
   // Logic: Scale goal to exactly 9 glasses if goal is defined.
   // Guard contre goalMl=0 (profil non configuré) → évite Infinity/NaN (verres tous pleins).
   const safeGoal = goalMl > 0 ? goalMl : 2000;
@@ -66,7 +67,7 @@ export default function WaterIntakeCard({
       <View style={styles.header}>
         <Text style={[styles.title, { color: titleColor }]}>{t('home.water')}</Text>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('modifier')} style={styles.editBtn} activeOpacity={0.6} onPress={onEditPress}>
-          <Pencil size={20} color={isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} strokeWidth={2.5} />
+          <Pencil size={20} color={k.textMuted} strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
 
@@ -85,12 +86,12 @@ export default function WaterIntakeCard({
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   card: {
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     borderRadius: 32,
     padding: CARD_PADDING,
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.08,
     shadowRadius: 24,
@@ -107,7 +108,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     letterSpacing: -0.5,
   },
   editBtn: {
@@ -139,13 +140,13 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     marginTop: 20,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    borderTopColor: k.surfaceSunken,
     alignItems: 'center',
   },
   footerText: {
     fontSize: 14,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
+    color: k.textMuted,
     fontStyle: 'italic',
   },
 });

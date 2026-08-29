@@ -6,7 +6,7 @@ import { flipAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
 import { verdictHalal, libelleStatut, libelleRaison, avertissementHalal, type VerdictHalal } from '../../lib/halal';
 import { getDietPrefs } from '../../lib/dietPrefs';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, Tokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image, ScrollView } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -16,7 +16,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import BrandOverlay from '../../components/BrandOverlay';
 import { ArrowLeft, ScanBarcode, RefreshCw, PlusCircle, Camera, Sparkles, AlertTriangle, Ban, History } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { Colors } from '../../constants/Colors';
 import { radius, elevation } from '../../constants/theme';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
@@ -189,12 +188,13 @@ export default function ScanBarcodeScreen() {
   const recentsLabel = language === 'fr' ? 'Scannés récemment' : language === 'ar' ? 'مُسح مؤخراً' : 'Recently scanned';
   const allergensLabel = language === 'fr' ? 'Allergènes' : language === 'ar' ? 'مسببات الحساسية' : 'Allergens';
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const tok = useTokens();
   const card = tok.surface;
-  const textCol = isDark ? '#f1f5f9' : Colors.light.gray[900];
-  const subCol = isDark ? '#94a3b8' : Colors.light.gray[500];
+  const textCol = isDark ? '#f1f5f9' : k.text;
+  const subCol = isDark ? '#94a3b8' : k.textMuted;
   const [permission, requestPermission] = useCameraPermissions();
   const [status, setStatus] = useState<'scanning' | 'loading' | 'found' | 'notedible' | 'notfound'>('scanning');
   const [found, setFound] = useState<Found | null>(null);
@@ -442,7 +442,7 @@ export default function ScanBarcodeScreen() {
   if (!permission.granted) {
     return (
       <View style={[styles.permWrap, isDark && { backgroundColor: '#0f172a' }]}>
-        <ScanBarcode size={56} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+        <ScanBarcode size={56} color={k.accent} />
         <Text style={[styles.permTitle, { color: textCol }]}>{t('barcode.perm_title')}</Text>
         <Text style={[styles.permText, { color: subCol }]}>{t('barcode.perm_text')}</Text>
         <TouchableOpacity style={styles.primaryBtn} onPress={requestPermission}>
@@ -490,7 +490,7 @@ export default function ScanBarcodeScreen() {
       {status === 'scanning' && recents.length > 0 && (
         <View style={[styles.recentsSheet, { backgroundColor: card }]}>
           <View style={styles.recentsHead}>
-            <History size={16} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+            <History size={16} color={k.accent} />
             <Text style={[styles.recentsTitle, { color: textCol }]}>{recentsLabel}</Text>
           </View>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
@@ -502,7 +502,7 @@ export default function ScanBarcodeScreen() {
                 activeOpacity={0.7}
               >
                 <View style={[styles.recentThumb, styles.thumbPh, isDark && { backgroundColor: '#334155' }]}>
-                  <ScanBarcode size={16} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+                  <ScanBarcode size={16} color={k.accent} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.recentName, { color: textCol }]} numberOfLines={1}>{r.name || r.barcode}</Text>
@@ -510,7 +510,7 @@ export default function ScanBarcodeScreen() {
                     {r.kcal && r.kcal !== '—' ? `${r.kcal} kcal / 100 g · ` : ''}{r.barcode}
                   </Text>
                 </View>
-                <RefreshCw size={15} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+                <RefreshCw size={15} color={k.accent} />
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -550,7 +550,7 @@ export default function ScanBarcodeScreen() {
                     <Image source={{ uri: `data:image/jpeg;base64,${pendingImg}` }} style={styles.labelPreview} />
                   ) : (
                     <View style={styles.labelPlaceholder}>
-                      <Camera size={28} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+                      <Camera size={28} color={k.accent} />
                       <Text style={[styles.labelPlaceholderTxt, { color: subCol }]}>{ox.snapLabel}</Text>
                     </View>
                   )}
@@ -580,14 +580,14 @@ export default function ScanBarcodeScreen() {
 
                 {/* Alternative : formulaire de saisie manuelle complet */}
                 <TouchableOpacity style={styles.ghostBtn} onPress={() => router.push(('/register-product?code=' + code) as any)}>
-                  <PlusCircle size={16} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+                  <PlusCircle size={16} color={k.accent} />
                   <Text style={styles.ghostBtnText}>{registerLabel}</Text>
                 </TouchableOpacity>
               </>
             )}
 
             <TouchableOpacity style={styles.ghostBtn} onPress={rescan}>
-              <RefreshCw size={16} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+              <RefreshCw size={16} color={k.accent} />
               <Text style={styles.ghostBtnText}>{t('barcode.scan_again')}</Text>
             </TouchableOpacity>
           </ScrollView>
@@ -609,7 +609,7 @@ export default function ScanBarcodeScreen() {
             <Text style={[styles.notEdibleTxt, { color: '#DC2626' }]}>{ox.notEdible}</Text>
           </View>
           <TouchableOpacity style={styles.ghostBtn} onPress={rescan}>
-            <RefreshCw size={16} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+            <RefreshCw size={16} color={k.accent} />
             <Text style={styles.ghostBtnText}>{t('barcode.scan_another')}</Text>
           </TouchableOpacity>
         </View>
@@ -620,7 +620,7 @@ export default function ScanBarcodeScreen() {
         <View style={[styles.sheet, { backgroundColor: card }]}>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 14 }}>
           <View style={styles.foundRow}>
-            {found.image ? <Image source={{ uri: found.image }} style={[styles.thumb, isDark && { backgroundColor: '#334155' }]} /> : <View style={[styles.thumb, styles.thumbPh, isDark && { backgroundColor: '#334155' }]}><ScanBarcode size={26} color={Colors.light.primary} /></View>}
+            {found.image ? <Image source={{ uri: found.image }} style={[styles.thumb, isDark && { backgroundColor: '#334155' }]} /> : <View style={[styles.thumb, styles.thumbPh, isDark && { backgroundColor: '#334155' }]}><ScanBarcode size={26} color={k.accent} /></View>}
             <View style={{ flex: 1 }}>
               <Text style={[styles.foundName, { color: textCol }]} numberOfLines={2}>{found.name}</Text>
               <Text style={[styles.foundMacros, { color: subCol }]}>{found.calories} kcal · P {found.protein}g · C {found.carbs}g · F {found.fat}g <Text style={[styles.per100, isDark && { color: '#64748b' }]}>/ 100 g</Text></Text>
@@ -742,7 +742,7 @@ export default function ScanBarcodeScreen() {
             <View style={{ gap: 8 }}>
               {alts == null ? (
                 <TouchableOpacity style={styles.altBtn} onPress={loadAlternatives} disabled={altsLoading}>
-                  {altsLoading ? <ActivityIndicator size="small" color={isDark ? Colors.dark.primary : Colors.light.primary} /> : <Sparkles size={16} color={isDark ? Colors.dark.primary : Colors.light.primary} />}
+                  {altsLoading ? <ActivityIndicator size="small" color={k.accent} /> : <Sparkles size={16} color={k.accent} />}
                   <Text style={styles.altBtnTxt}>{altsLoading ? ox.altLoading : ox.alternatives}</Text>
                 </TouchableOpacity>
               ) : alts.length === 0 ? (
@@ -752,7 +752,7 @@ export default function ScanBarcodeScreen() {
                   <Text style={[styles.objWhy, { color: subCol }]}>{ox.alternatives}</Text>
                   {alts.map((a, i) => (
                     <View key={i} style={[styles.altRow, isDark && { backgroundColor: '#0f172a', borderColor: '#334155' }]}>
-                      {a.image ? <Image source={{ uri: a.image }} style={styles.altThumb} /> : <View style={[styles.altThumb, styles.thumbPh]}><ScanBarcode size={18} color={isDark ? Colors.dark.primary : Colors.light.primary} /></View>}
+                      {a.image ? <Image source={{ uri: a.image }} style={styles.altThumb} /> : <View style={[styles.altThumb, styles.thumbPh]}><ScanBarcode size={18} color={k.accent} /></View>}
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.altName, { color: textCol }]} numberOfLines={2}>{[a.name, a.brand].filter(Boolean).join(' · ')}</Text>
                         {(a.fit != null || a.kcal != null) && (
@@ -772,7 +772,7 @@ export default function ScanBarcodeScreen() {
             <Text style={styles.primaryBtnText}>{t('barcode.log_food')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.ghostBtn} onPress={rescan}>
-            <RefreshCw size={16} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+            <RefreshCw size={16} color={k.accent} />
             <Text style={styles.ghostBtnText}>{t('barcode.scan_another')}</Text>
           </TouchableOpacity>
           </ScrollView>
@@ -784,7 +784,7 @@ export default function ScanBarcodeScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   black: { flex: 1, backgroundColor: '#000' },
   topBar: {
     position: 'absolute', top: 44, left: 0, right: 0, zIndex: 5,
@@ -815,20 +815,20 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     padding: 22, gap: 14, maxHeight: '78%',
     shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 10,
   },
-  sheetTitle: { fontSize: 20, fontWeight: '900', color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900] },
-  sheetSub: { fontSize: 14, color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500] },
+  sheetTitle: { fontSize: 20, fontWeight: '900', color: k.text },
+  sheetSub: { fontSize: 14, color: k.textMuted },
   foundRow: { flexDirection: 'row', gap: 14, alignItems: 'center' },
-  thumb: { width: 64, height: 64, borderRadius: 14, backgroundColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100] },
+  thumb: { width: 64, height: 64, borderRadius: 14, backgroundColor: k.border },
   thumbPh: { alignItems: 'center', justifyContent: 'center' },
-  foundName: { fontSize: 17, fontWeight: '800', color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900] },
-  foundMacros: { fontSize: 14, color: isDark ? Colors.dark.gray[600] : Colors.light.gray[600], marginTop: 4 },
+  foundName: { fontSize: 17, fontWeight: '800', color: k.text },
+  foundMacros: { fontSize: 14, color: k.textMuted, marginTop: 4 },
   healthBadge: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, borderWidth: 1.5, padding: 12 },
   healthGrade: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   healthGradeTxt: { color: '#fff', fontSize: 22, fontWeight: '900' },
   healthVerdict: { fontSize: 16, fontWeight: '800' },
   healthSub: { fontSize: 12, fontWeight: '600', marginTop: 1 },
   descTxt: { fontSize: 13, fontWeight: '600', lineHeight: 19 },
-  per100: { color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400] },
+  per100: { color: k.textMuted },
   // Verdict objectif
   objCard: { borderRadius: 16, borderWidth: 1.5, padding: 14 },
   objHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
@@ -838,18 +838,18 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   objWhy: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 2 },
   objReason: { fontSize: 13, fontWeight: '600', lineHeight: 19 },
   // Liste nutritionnelle
-  nutriBox: { borderRadius: 16, borderWidth: 1, borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200], padding: 14, backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] },
+  nutriBox: { borderRadius: 16, borderWidth: 1, borderColor: k.border, padding: 14, backgroundColor: k.surfaceSunken },
   nutriTitle: { fontSize: 14, fontWeight: '800', marginBottom: 8 },
   nutriRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 3 },
   nutriLabel: { fontSize: 13.5, fontWeight: '600' },
   nutriIndent: { paddingStart: 14, fontWeight: '500', fontStyle: 'italic' },
   nutriVal: { fontSize: 13.5, fontWeight: '800' },
   // Alternatives
-  altBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 14, borderWidth: 1.5, borderColor: isDark ? Colors.dark.primary : Colors.light.primary },
-  altBtnTxt: { color: isDark ? Colors.dark.primary : Colors.light.primary, fontSize: 15, fontWeight: '800' },
+  altBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 14, borderWidth: 1.5, borderColor: k.accent },
+  altBtnTxt: { color: k.accent, fontSize: 15, fontWeight: '800' },
   altNone: { fontSize: 13, fontWeight: '600', textAlign: 'center' },
-  altRow: { flexDirection: 'row', gap: 10, alignItems: 'center', borderRadius: 12, borderWidth: 1, borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200], padding: 8, backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] },
-  altThumb: { width: 40, height: 40, borderRadius: 10, backgroundColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100], alignItems: 'center', justifyContent: 'center' },
+  altRow: { flexDirection: 'row', gap: 10, alignItems: 'center', borderRadius: 12, borderWidth: 1, borderColor: k.border, padding: 8, backgroundColor: k.surfaceSunken },
+  altThumb: { width: 40, height: 40, borderRadius: 10, backgroundColor: k.border, alignItems: 'center', justifyContent: 'center' },
   altName: { fontSize: 14, fontWeight: '700' },
   altMeta: { fontSize: 12.5, fontWeight: '600', marginTop: 2 },
   // Alerte allergènes (couleur warning, alignée sur warnBanner)
@@ -864,7 +864,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   notEdibleBanner: { flexDirection: 'row', gap: 10, alignItems: 'center', borderRadius: 14, borderWidth: 1.5, padding: 14 },
   notEdibleTxt: { fontSize: 15, fontWeight: '800', flex: 1 },
   // Produit inconnu — capture étiquette
-  labelCapture: { height: 150, borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed', borderColor: isDark ? Colors.dark.gray[300] : Colors.light.gray[300], backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50], overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  labelCapture: { height: 150, borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed', borderColor: k.textFaint, backgroundColor: k.surfaceSunken, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   labelPreview: { width: '100%', height: '100%' },
   labelPlaceholder: { alignItems: 'center', gap: 8 },
   labelPlaceholderTxt: { fontSize: 14, fontWeight: '700' },
@@ -873,12 +873,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   sentBanner: { borderRadius: 14, borderWidth: 1.5, padding: 16, alignItems: 'center' },
   sentTxt: { fontSize: 15, fontWeight: '800' },
   primaryBtn: {
-    flexDirection: 'row', gap: 8, backgroundColor: Colors.light.primary,
+    flexDirection: 'row', gap: 8, backgroundColor: k.accent,
     paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center',
   },
   primaryBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
   ghostBtn: { flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', paddingVertical: 4 },
-  ghostBtnText: { color: isDark ? Colors.dark.primary : Colors.light.primary, fontSize: 15, fontWeight: '700' },
+  ghostBtnText: { color: k.accent, fontSize: 15, fontWeight: '700' },
   // Scannés récemment — carte flottante au repos, au-dessus de la barre de nav (~90px).
   recentsSheet: {
     position: 'absolute', left: 12, right: 12, bottom: 96,
@@ -889,14 +889,14 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   recentsTitle: { fontSize: 14, fontWeight: '800', letterSpacing: 0.2 },
   recentRow: {
     flexDirection: 'row', gap: 10, alignItems: 'center',
-    borderRadius: radius.sm, borderWidth: 1, borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
-    padding: 8, backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    borderRadius: radius.sm, borderWidth: 1, borderColor: k.border,
+    padding: 8, backgroundColor: k.surfaceSunken,
   },
-  recentThumb: { width: 34, height: 34, borderRadius: 10, backgroundColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100] },
+  recentThumb: { width: 34, height: 34, borderRadius: 10, backgroundColor: k.border },
   recentName: { fontSize: 14, fontWeight: '700' },
   recentMeta: { fontSize: 12, fontWeight: '600', marginTop: 1 },
   permWrap: { flex: 1, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', padding: 32, gap: 14 },
-  permTitle: { fontSize: 22, fontWeight: '900', color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900] },
-  permText: { fontSize: 15, color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500], textAlign: 'center' },
-  cancelText: { color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500], fontSize: 15, fontWeight: '600', marginTop: 4 },
+  permTitle: { fontSize: 22, fontWeight: '900', color: k.text },
+  permText: { fontSize: 15, color: k.textMuted, textAlign: 'center' },
+  cancelText: { color: k.textMuted, fontSize: 15, fontWeight: '600', marginTop: 4 },
 });

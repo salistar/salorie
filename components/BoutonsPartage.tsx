@@ -39,6 +39,7 @@ export default function BoutonsPartage({
   /** Sans le libellé « Partager », pour une carte déjà chargée. */
   compact?: boolean;
 }) {
+  const k = useTokens();
   const tok = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.fr;

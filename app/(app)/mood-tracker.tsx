@@ -31,6 +31,7 @@ const TXT: any = {
 };
 
 export default function MoodTrackerScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('mood-tracker');
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;

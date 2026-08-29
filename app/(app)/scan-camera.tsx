@@ -19,13 +19,13 @@ import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { X, Circle, RotateCw, Image as ImageIcon, ScanBarcode, UtensilsCrossed } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import { colorLog, explain } from '../../lib/LocalDataStore';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
 import { canUseFree, consume, freeLimit } from '../../lib/freemium';
 import { PurchasesService } from '../../lib/PurchasesService';
 import { useFlagsCtx } from '../../lib/FlagsContext';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 const PENDING_SCAN_KEY = 'pending_scan_v1';
 // FEATURE #152 : onboarding scan affiché UNE seule fois (1er lancement).
@@ -60,8 +60,9 @@ export default function ScanCameraScreen() {
   const t = TXT[language] || TXT.en;
   const { isPremium } = useFlagsCtx();
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
   const accent = isDark ? '#4ade80' : GREEN;
@@ -108,7 +109,7 @@ export default function ScanCameraScreen() {
   };
 
   if (!permission) {
-    return <View style={styles.loadingWrap}><ActivityIndicator size="large" color={isDark ? Colors.dark.primary : Colors.light.primary} /><Text style={styles.loadingText}>{t.loading}</Text></View>;
+    return <View style={styles.loadingWrap}><ActivityIndicator size="large" color={k.accent} /><Text style={styles.loadingText}>{t.loading}</Text></View>;
   }
   if (!permission.granted) {
     return (
@@ -309,7 +310,7 @@ export default function ScanCameraScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000' },
   camera: { flex: 1 },
   overlay: { flex: 1, justifyContent: 'space-between', backgroundColor: 'transparent' },
@@ -350,6 +351,6 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   permissionWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 16, backgroundColor: '#000' },
   permissionTitle: { color: '#fff', fontSize: 22, fontWeight: '800', textAlign: 'center' },
   permissionText: { color: '#ccc', fontSize: 14, textAlign: 'center', marginBottom: 12 },
-  permissionBtn: { backgroundColor: Colors.light.primary, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 16, minWidth: 200, alignItems: 'center' },
+  permissionBtn: { backgroundColor: k.accent, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 16, minWidth: 200, alignItems: 'center' },
   permissionBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 });

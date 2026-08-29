@@ -133,20 +133,21 @@ const timeBucket = (h: number): keyof typeof TIME_TIP =>
 const TIME_TIP_ICON = { morning: Coffee, midday: Sun, evening: Moon, late: Droplets } as const;
 
 import ScreenTopBar from '../../components/ScreenTopBar';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { loadEngagement, EngagementData } from '../../lib/engagement';
 import { publishStats } from '../../lib/social';
 import { useExperiment } from '../../lib/experiments';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 export default function CoachScreen() {
   const { user } = useUser();
   const espaceBas = useEspaceBas();
   const { resolved, colors } = useTheme();
+  const k = useTokens();
   const { t, language } = useTranslation();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const [data, setData] = useState<EngagementData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -208,9 +209,9 @@ export default function CoachScreen() {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const bg = isDark ? '#0f1419' : 'transparent';
 
   // !data couvre aussi le cas DÉCONNECTÉ (pas d'email → data jamais chargée) :
@@ -486,7 +487,7 @@ export default function CoachScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 130 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4, marginBottom: 18 },
@@ -514,7 +515,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   progressFill: { height: 8, borderRadius: 4, backgroundColor: '#fff' },
 
   mealCta: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, padding: 16, marginBottom: 14, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
-  mealCtaIcon: { width: 52, height: 52, borderRadius: radius.pill, backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center' },
+  mealCtaIcon: { width: 52, height: 52, borderRadius: radius.pill, backgroundColor: k.accentSoft, alignItems: 'center', justifyContent: 'center' },
   mealCtaTitle: { fontSize: 17, fontWeight: '800' },
   mealCtaSub: { fontSize: 13, marginTop: 3, lineHeight: 18 },
   // Grille compacte (Coach allégé) — 2 colonnes, sections
@@ -557,7 +558,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   modalHint: { fontSize: 13, marginTop: 14, textAlign: 'center', lineHeight: 18 },
 
   lessonCard: { borderRadius: 20, padding: 20, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
-  lessonIcon: { width: 44, height: 44, borderRadius: radius.pill, backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  lessonIcon: { width: 44, height: 44, borderRadius: radius.pill, backgroundColor: k.accentSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   lessonTitle: { fontSize: 18, fontWeight: '800' },
   lessonBody: { fontSize: 14, marginTop: 6, lineHeight: 21 },
 });

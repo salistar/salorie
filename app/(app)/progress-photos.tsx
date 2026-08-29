@@ -39,6 +39,7 @@ const TXT: any = {
 };
 
 export default function ProgressPhotosScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('progress-photos');
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;

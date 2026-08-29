@@ -18,7 +18,6 @@ import { ArrowLeft, Trophy, UserPlus, Flame, MoreVertical } from 'lucide-react-n
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useFormTheme } from '../../components/FormKit';
 import PerfList from '../../components/PerfList';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { loadEngagement } from '../../lib/engagement';
@@ -29,6 +28,7 @@ import { SkeletonCard, Skeleton } from '../../components/ui';
 import { useScreenGate } from '../../components/FeatureGate';
 import ModerationSheet from '../../components/ModerationSheet';
 import { getBlockedSet } from '../../lib/moderation';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 const MEDAL = ['🥇', '🥈', '🥉'];
 
@@ -76,9 +76,10 @@ function timeAgo(ms: number, lang: 'en' | 'fr' | 'ar'): string {
 export default function SocialScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
+  const k = useTokens();
   const { t, language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const th = useFormTheme(); // couleurs FormKit (bordure input harmonisée)
   const __gate = useScreenGate('social');
 
@@ -187,9 +188,9 @@ export default function SocialScreen() {
     }
   };
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const bg = isDark ? '#0f1419' : 'transparent';
 
   if (!__gate.ok) return __gate.node;
@@ -217,7 +218,7 @@ export default function SocialScreen() {
         </View>
 
         <View style={styles.titleRow}>
-          <Trophy size={26} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+          <Trophy size={26} color={k.accent} />
           <Text style={[styles.title, { color: text }]}>{t('social.title')}</Text>
         </View>
         <Text style={[styles.subtitle, { color: sub }]}>{t('social.subtitle')}</Text>
@@ -252,7 +253,7 @@ export default function SocialScreen() {
           </View>
         ) : rows.length <= 1 ? (
           <View style={[styles.emptyBox, { backgroundColor: card }]}>
-            <Trophy size={36} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} />
+            <Trophy size={36} color={k.textFaint} />
             <Text style={[styles.emptySub, { color: sub }]}>{t('social.empty')}</Text>
           </View>
         ) : (
@@ -295,7 +296,7 @@ export default function SocialScreen() {
           )
         }
         renderItem={({ item: it }: { item: FeedItem }) => {
-              const k = kudos[it.id] || { count: 0, mine: false };
+              const kd = kudos[it.id] || { count: 0, mine: false };
               const label = (FEED_STR.types[it.type] || FEED_STR.types.activity)[language as 'en' | 'fr' | 'ar'];
               const when = timeAgo(it.at, language as 'en' | 'fr' | 'ar');
               return (
@@ -312,12 +313,12 @@ export default function SocialScreen() {
                     {!!when && <Text style={[styles.feedTime, { color: sub, textAlign: txtAlign(isRTL) }]}>{when}</Text>}
                   </View>
                   <TouchableOpacity
-                    style={[styles.kudosBtn, { borderColor: k.mine ? Colors.light.primary : th.border, backgroundColor: k.mine ? Colors.light.primaryLight : 'transparent', flexDirection: rowDir(isRTL) }]}
+                    style={[styles.kudosBtn, { borderColor: kd.mine ? k.accent : th.border, backgroundColor: kd.mine ? k.accentSoft : 'transparent', flexDirection: rowDir(isRTL) }]}
                     onPress={() => onKudos(it)}
                     disabled={!!kudosBusy[it.id]}
                   >
                     <Text style={styles.kudosEmoji}>👏</Text>
-                    <Text style={[styles.kudosCount, { color: k.mine ? Colors.light.primary : sub }]}>{k.count}</Text>
+                    <Text style={[styles.kudosCount, { color: kd.mine ? k.accent : sub }]}>{kd.count}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => setModTarget(it)} hitSlop={8} style={{ paddingHorizontal: 4, paddingVertical: 6 }} accessibilityLabel="Signaler ou bloquer">
                     <MoreVertical size={18} color={sub} />
@@ -342,11 +343,11 @@ export default function SocialScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 60 },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] },
+  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: k.surfaceSunken },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 30, fontWeight: '900', letterSpacing: -1 },
   subtitle: { fontSize: 14, marginTop: 8, marginBottom: 14, lineHeight: 20 },
@@ -354,7 +355,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   section: { fontSize: 16, fontWeight: '800', marginBottom: 10 },
   addRow: { flexDirection: 'row', gap: 10 },
   input: { flex: 1, height: 50, borderRadius: 14, paddingHorizontal: 16, fontSize: 15, fontWeight: '600' },
-  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.light.primary, paddingHorizontal: 18, borderRadius: 14, justifyContent: 'center' },
+  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: k.accent, paddingHorizontal: 18, borderRadius: 14, justifyContent: 'center' },
   addBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
   msg: { fontSize: 13, marginTop: 8, fontWeight: '600' },
   code: { fontSize: 12, marginTop: 10, marginBottom: 18, lineHeight: 17 },
@@ -362,11 +363,11 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   emptyBox: { borderRadius: 18, padding: 26, alignItems: 'center', gap: 12 },
   emptySub: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, padding: 12, marginBottom: 10 },
-  rowMe: { borderWidth: 2, borderColor: isDark ? Colors.dark.primary : Colors.light.primary },
+  rowMe: { borderWidth: 2, borderColor: k.accent },
   rank: { width: 30, textAlign: 'center', fontSize: 18, fontWeight: '900', color: '#64748B' },
-  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100] },
-  avatarPh: { alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight },
-  avatarTxt: { fontSize: 18, fontWeight: '800', color: isDark ? Colors.dark.primary : Colors.light.primary },
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: k.border },
+  avatarPh: { alignItems: 'center', justifyContent: 'center', backgroundColor: k.accentSoft },
+  avatarTxt: { fontSize: 18, fontWeight: '800', color: k.accent },
   name: { fontSize: 16, fontWeight: '800' },
   daysTracked: { fontSize: 12, marginTop: 2 },
   streakWrap: { flexDirection: 'row', alignItems: 'center', gap: 4 },

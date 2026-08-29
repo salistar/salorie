@@ -15,7 +15,6 @@ import { useUser } from '@clerk/clerk-expo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ArrowLeft, RefreshCw, TrendingUp, AlertTriangle, Apple } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { emailToDocId } from '../../lib/firebase';
@@ -23,6 +22,7 @@ import { auth } from '../../lib/firebaseAuth';
 import { estimateMicros, MicroReport } from '../../lib/AiModel';
 import { getMicrosReport, saveMicrosReport } from '../../lib/aiStore';
 import { useScreenGate } from '../../components/FeatureGate';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 function todayStr() {
   const d = new Date();
@@ -33,9 +33,10 @@ export default function NutrientsScreen() {
   const __gate = useScreenGate('nutrients');
   const { user } = useUser();
   const { resolved } = useTheme();
+  const k = useTokens();
   const { t, language } = useTranslation() as any;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
 
   // i18n #90 — locale-aware number formatting (display only, no calc change).
   const numLocale = numLocaleFor(language);
@@ -48,9 +49,9 @@ export default function NutrientsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const bg = isDark ? '#0f1419' : 'transparent';
 
   const run = useCallback(async (force = false) => {
@@ -127,7 +128,7 @@ export default function NutrientsScreen() {
         <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
         <View style={styles.titleRow}>
-          <Apple size={26} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+          <Apple size={26} color={k.accent} />
           <Text style={[styles.title, { color: text }]}>{t('nutrients.title')}</Text>
         </View>
         <Text style={[styles.subtitle, { color: sub }]}>
@@ -137,14 +138,14 @@ export default function NutrientsScreen() {
 
         {loading && (
           <View style={styles.loadingBox}>
-            <ActivityIndicator size="large" color={isDark ? Colors.dark.primary : Colors.light.primary} />
+            <ActivityIndicator size="large" color={k.accent} />
             <Text style={[styles.loadingText, { color: sub }]}>{t('nutrients.analyzing')}</Text>
           </View>
         )}
 
         {!loading && foods.length === 0 && (
           <View style={[styles.emptyBox, { backgroundColor: card }]}>
-            <Apple size={40} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} />
+            <Apple size={40} color={k.textFaint} />
             <Text style={[styles.emptyTitle, { color: text }]}>{t('nutrients.empty_title')}</Text>
             <Text style={[styles.emptySub, { color: sub }]}>{t('nutrients.empty_sub')}</Text>
             <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/food-database' as any)}>
@@ -155,7 +156,7 @@ export default function NutrientsScreen() {
 
         {!loading && error && foods.length > 0 && (
           <View style={[styles.emptyBox, { backgroundColor: card }]}>
-            <Text style={{ color: isDark ? Colors.dark.error : Colors.light.error, fontWeight: '600', textAlign: 'center' }}>{t('nutrients.error')}</Text>
+            <Text style={{ color: k.danger, fontWeight: '600', textAlign: 'center' }}>{t('nutrients.error')}</Text>
             <TouchableOpacity style={styles.primaryBtn} onPress={() => run(true)}>
               <RefreshCw size={18} color="#fff" /><Text style={styles.primaryBtnText}>{t('nutrients.retry')}</Text>
             </TouchableOpacity>
@@ -171,7 +172,7 @@ export default function NutrientsScreen() {
                 <View key={i} style={styles.microRow}>
                   <Text style={[styles.microName, { color: text }]} numberOfLines={1}>{mi.name}</Text>
                   <View style={styles.microBarTrack}>
-                    <View style={[styles.microBarFill, { width: `${Math.min(100, Math.max(2, mi.pct))}%`, backgroundColor: mi.pct >= 90 ? '#10B981' : mi.pct >= 50 ? Colors.light.primary : '#f59e0b' }]} />
+                    <View style={[styles.microBarFill, { width: `${Math.min(100, Math.max(2, mi.pct))}%`, backgroundColor: mi.pct >= 90 ? '#10B981' : mi.pct >= 50 ? k.accent : '#f59e0b' }]} />
                   </View>
                   <Text style={[styles.microPct, { color: sub }]}>{fmtNum(mi.pct)}%</Text>
                 </View>
@@ -192,7 +193,7 @@ export default function NutrientsScreen() {
             )}
 
             <TouchableOpacity style={styles.regenBtn} onPress={() => run(true)}>
-              <RefreshCw size={18} color={isDark ? Colors.dark.primary : Colors.light.primary} /><Text style={styles.regenText}>{t('nutrients.recalculate')}</Text>
+              <RefreshCw size={18} color={k.accent} /><Text style={styles.regenText}>{t('nutrients.recalculate')}</Text>
             </TouchableOpacity>
             <Text style={[styles.disclaimer, { color: sub }]}>{t('nutrients.disclaimer')}</Text>
           </>
@@ -204,11 +205,11 @@ export default function NutrientsScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 60 },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] },
+  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: k.surfaceSunken },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 28, fontWeight: '900', letterSpacing: -1 },
   subtitle: { fontSize: 14, marginTop: 8, marginBottom: 14, lineHeight: 20 },
@@ -218,7 +219,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   emptyBox: { borderRadius: 20, padding: 28, alignItems: 'center', gap: 12, marginTop: 10 },
   emptyTitle: { fontSize: 18, fontWeight: '800' },
   emptySub: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
-  primaryBtn: { flexDirection: 'row', gap: 8, backgroundColor: Colors.light.primary, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14, alignItems: 'center', marginTop: 6 },
+  primaryBtn: { flexDirection: 'row', gap: 8, backgroundColor: k.accent, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14, alignItems: 'center', marginTop: 6 },
   primaryBtnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
   basedOn: { fontSize: 13, marginBottom: 14, lineHeight: 18 },
   microCard: { borderRadius: 18, padding: 16, marginBottom: 16, gap: 13 },
@@ -230,6 +231,6 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   insightCard: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', borderRadius: 16, padding: 16, marginBottom: 12 },
   insightText: { flex: 1, fontSize: 14, lineHeight: 20, fontWeight: '600' },
   regenBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', paddingVertical: 12, marginTop: 4 },
-  regenText: { color: isDark ? Colors.dark.primary : Colors.light.primary, fontSize: 15, fontWeight: '700' },
+  regenText: { color: k.accent, fontSize: 15, fontWeight: '700' },
   disclaimer: { fontSize: 11, textAlign: 'center', marginTop: 6 },
 });

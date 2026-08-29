@@ -77,6 +77,7 @@ const TXT: any = {
 };
 
 export default function RepCounterScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('rep-counter');
   const { language } = useTranslation() as any;
   const t = TXT[language] || TXT.en;

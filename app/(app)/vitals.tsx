@@ -95,6 +95,7 @@ function TrendIcon({ dir, color }: { dir: Trend['direction']; color: string }) {
 }
 
 export default function VitalsScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('vitals');
   const { resolved, colors } = useTheme();
   const { language, isRTL } = useTranslation() as any;

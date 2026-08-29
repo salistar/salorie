@@ -3,7 +3,7 @@ import { a11y } from '../../lib/a11y';
 import { recitTrajet } from '../../lib/partageTrajet';
 import BoutonsPartage from '../../components/BoutonsPartage';
 import { lienPartage } from '../../lib/partage';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
@@ -12,7 +12,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
 import { ArrowLeft, Play, Pause, Square, MapPin, Zap, Navigation, History } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { fetchRoutePolyline } from '../../lib/routes';
@@ -34,7 +33,6 @@ import { useScreenGate } from '../../components/FeatureGate';
 // Clé Maps lue depuis l'env (EXPO_PUBLIC_GOOGLE_MAPS_KEY) — plus de clé en dur dans le
 // bundle. Clé publiable côté client : DOIT être restreinte dans GCP (package + SHA-1 + API).
 const GOOGLE_MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY ?? '';
-const PRIMARY = Colors.light.primary;
 
 const TXT: Record<string, any> = {
   en: { title: 'Solo Run', perm: 'Location permission is required to track your run.', grant: 'Grant access', dist: 'Distance', time: 'Time', pace: 'Pace', kcal: 'Calories', start: 'Start', pause: 'Pause', resume: 'Resume', finish: 'Finish', saved: 'Run saved', savedMsg: 'kcal added to your activity for today.', saveFailed: 'Save failed', saveFailedMsg: 'Your run could not be saved. Please check your connection and try again.', waiting: 'Getting your location…', gps: 'GPS', sim: 'Simulation', history: 'Recent runs', noHistory: 'No runs yet — start one above.', routeAskTitle: 'Share this route?', routeAskBody: 'Turn your {km} km run into a community route others can follow. Your track is simplified to a few points.', routeYes: 'Share it', routeNo: 'Not now', routeSentTitle: 'Sent for review', routeSentBody: 'Your route will appear in the community list once approved.', ghost: '👻 AR Ghost Mode', liveTwin: '🎧 Live Twin' },
@@ -128,6 +126,8 @@ function pointAtDist(p: LatLng[], d: number): LatLng {
 }
 
 export default function RunScreen() {
+  const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('run');
   const { user } = useUser();
   const { resolved } = useTheme();
@@ -358,18 +358,18 @@ export default function RunScreen() {
   const mmss = `${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`;
   const paceStr = paceMin > 0 ? `${Math.floor(paceMin)}'${String(Math.round((paceMin % 1) * 60)).padStart(2, '0')}"` : "--'--";
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const tok = useTokens();
   const bg = tok.bg;
 
-  const html = useMemo(() => (center ? buildHtml(center, PRIMARY) : ''), [center]);
+  const html = useMemo(() => (center ? buildHtml(center, k.accent) : ''), [center]);
 
   if (perm === 'denied') {
     return (
       <View style={[styles.center, { backgroundColor: bg, padding: 32 }]}>
-        <MapPin size={48} color={PRIMARY} />
+        <MapPin size={48} color={k.accent} />
         <Text style={[styles.permTxt, { color: text }]}>{t.perm}</Text>
         <TouchableOpacity style={styles.primaryBtn} onPress={() => Location.requestForegroundPermissionsAsync().then((r) => r.status === 'granted' && setPerm('ok'))}>
           <Text style={styles.primaryBtnTxt}>{t.grant}</Text>
@@ -400,10 +400,10 @@ export default function RunScreen() {
           domStorageEnabled
           onMessage={(e) => { if (e.nativeEvent.data === 'ready') mapReady.current = true; }}
           startInLoadingState
-          renderLoading={() => <View style={[StyleSheet.absoluteFill, styles.center]}><ActivityIndicator size="large" color={PRIMARY} /></View>}
+          renderLoading={() => <View style={[StyleSheet.absoluteFill, styles.center]}><ActivityIndicator size="large" color={k.accent} /></View>}
         />
       ) : (
-        <View style={[StyleSheet.absoluteFill, styles.center]}><ActivityIndicator size="large" color={PRIMARY} /><Text style={{ color: sub, marginTop: 12 }}>{t.waiting}</Text></View>
+        <View style={[StyleSheet.absoluteFill, styles.center]}><ActivityIndicator size="large" color={k.accent} /><Text style={{ color: sub, marginTop: 12 }}>{t.waiting}</Text></View>
       )}
 
       <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.back, { backgroundColor: card }]} onPress={() => router.back()}>
@@ -418,8 +418,8 @@ export default function RunScreen() {
               style={[styles.modeBtn, mode === 'gps' && { backgroundColor: card, shadowOpacity: 0.12 }]}
               onPress={() => setMode('gps')}
             >
-              <Navigation size={16} color={mode === 'gps' ? PRIMARY : sub} />
-              <Text style={[styles.modeTxt, { color: mode === 'gps' ? PRIMARY : sub }]}>{t.gps}</Text>
+              <Navigation size={16} color={mode === 'gps' ? k.accent : sub} />
+              <Text style={[styles.modeTxt, { color: mode === 'gps' ? k.accent : sub }]}>{t.gps}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.modeBtn, mode === 'sim' && { backgroundColor: card, shadowOpacity: 0.12 }]}
@@ -459,7 +459,7 @@ export default function RunScreen() {
               <SecondaryButton
                 title={t.resume}
                 onPress={startTracking}
-                icon={<Play size={24} color={PRIMARY} fill={PRIMARY} />}
+                icon={<Play size={24} color={k.accent} fill={k.accent} />}
                 style={[styles.bigBtn, { flex: 1, backgroundColor: 'transparent' }] as any}
               />
               <PrimaryButton
@@ -519,7 +519,7 @@ export default function RunScreen() {
                       <Text style={[styles.histName, { color: text }]} numberOfLines={1}>{h.name}</Text>
                       <Text style={[styles.histDate, { color: sub }]}>{h.date}{h.duration ? ` · ${h.duration} min` : ''}</Text>
                     </View>
-                    <Text style={[styles.histKcal, { color: PRIMARY }]}>{h.calories} kcal</Text>
+                    <Text style={[styles.histKcal, { color: k.accent }]}>{h.calories} kcal</Text>
                   </View>
                 ))}
               </ScrollView>
@@ -532,6 +532,8 @@ export default function RunScreen() {
 }
 
 function Stat({ label, value, unit, text, sub }: any) {
+  const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   return (
     <View style={styles.stat}>
       <Text style={[styles.statVal, { color: text }]}>{value}</Text>
@@ -540,10 +542,13 @@ function Stat({ label, value, unit, text, sub }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   permTxt: { fontSize: 16, fontWeight: '600', textAlign: 'center', marginTop: 16, marginBottom: 20, lineHeight: 22 },
-  primaryBtn: { backgroundColor: PRIMARY, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
+  primaryBtn: { backgroundColor: k.accent, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
   primaryBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
   back: { position: 'absolute', top: 50, left: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
   panel: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 22, paddingBottom: 34, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: -6 }, elevation: 12 },
@@ -552,7 +557,7 @@ const styles = StyleSheet.create({
   statVal: { fontSize: 23, fontWeight: '900', letterSpacing: -1 },
   statLabel: { fontSize: 11, fontWeight: '600', marginTop: 3 },
   controls: { flexDirection: 'row', gap: 12 },
-  bigBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: PRIMARY, paddingVertical: 18, borderRadius: 18 },
+  bigBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: k.accent, paddingVertical: 18, borderRadius: 18 },
   bigBtnTxt: { color: '#fff', fontSize: 17, fontWeight: '800' },
   modeRow: { flexDirection: 'row', borderRadius: 14, padding: 4, marginBottom: 16, gap: 4 },
   modeBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 11, shadowColor: '#000', shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },

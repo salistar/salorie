@@ -1,7 +1,7 @@
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { directionAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, Tokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   View,
@@ -26,7 +26,6 @@ import { generateRoute, GeneratedRoute } from '../../lib/routeGen';
 
 // Thème de cadre médaille par défi (couleurs variées ; sinon l'id → palette défaut).
 const CH_FRAME: Record<string, string> = { 'casa-loop': 'casablanca', 'paris-marathon': 'rabat', 'great-wall': 'meknes', 'route66': 'merzouga' };
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import {
@@ -37,7 +36,6 @@ import {
 import { getActiveRaces } from '../../lib/racesApi';
 import { useScreenGate } from '../../components/FeatureGate';
 
-const PRIMARY = Colors.light.primary;
 
 const TXT: Record<string, any> = {
   en: {
@@ -139,12 +137,13 @@ const TXT: Record<string, any> = {
 };
 
 export default function RacesScreen() {
+  const k = useTokens();
   const { user } = useUser();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('races');
 
   const email = user?.primaryEmailAddress?.emailAddress || '';
@@ -250,12 +249,12 @@ export default function RacesScreen() {
     }
   };
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const tok = useTokens();
   const bg = tok.bg;
-  const track = isDark ? Colors.dark.gray[100] : Colors.light.gray[200];
+  const track = k.border;
   const rowDir = isRTL ? 'row-reverse' : 'row';
   const align: any = isRTL ? 'right' : 'left';
 
@@ -278,12 +277,12 @@ export default function RacesScreen() {
       {/* Tabs */}
       <View style={[styles.tabs, { flexDirection: rowDir }]}>
         <TouchableOpacity style={[styles.tab, tab === 'group' && styles.tabActive]} onPress={() => setTab('group')}>
-          <Users size={18} color={tab === 'group' ? PRIMARY : sub} />
-          <Text style={[styles.tabTxt, { color: tab === 'group' ? PRIMARY : sub }]} numberOfLines={1}>{t.tabGroup}</Text>
+          <Users size={18} color={tab === 'group' ? k.accent : sub} />
+          <Text style={[styles.tabTxt, { color: tab === 'group' ? k.accent : sub }]} numberOfLines={1}>{t.tabGroup}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.tab, tab === 'challenges' && styles.tabActive]} onPress={() => setTab('challenges')}>
-          <Trophy size={18} color={tab === 'challenges' ? PRIMARY : sub} />
-          <Text style={[styles.tabTxt, { color: tab === 'challenges' ? PRIMARY : sub }]} numberOfLines={1}>{t.tabChallenges}</Text>
+          <Trophy size={18} color={tab === 'challenges' ? k.accent : sub} />
+          <Text style={[styles.tabTxt, { color: tab === 'challenges' ? k.accent : sub }]} numberOfLines={1}>{t.tabChallenges}</Text>
         </TouchableOpacity>
       </View>
 
@@ -298,17 +297,17 @@ export default function RacesScreen() {
               activeOpacity={0.85}
               onPress={() => router.push('/community-routes')}
             >
-              <View style={styles.communityIcon}><RouteIcon size={20} color={PRIMARY} /></View>
+              <View style={styles.communityIcon}><RouteIcon size={20} color={k.accent} /></View>
               <Text style={[styles.communityTxt, { color: text, textAlign: align }]} numberOfLines={1}>{t.community}</Text>
               <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ChevronRight size={20} color={sub} /></View>
             </TouchableOpacity>
 
             {/* Race list */}
             {loadingRaces ? (
-              <View style={styles.loadingBox}><ActivityIndicator size="large" color={PRIMARY} /></View>
+              <View style={styles.loadingBox}><ActivityIndicator size="large" color={k.accent} /></View>
             ) : races.length === 0 ? (
               <View style={[styles.emptyBox, { backgroundColor: card }]}>
-                <Users size={36} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} />
+                <Users size={36} color={k.textFaint} />
                 <Text style={[styles.emptySub, { color: sub }]}>{t.emptyRaces}</Text>
               </View>
             ) : (
@@ -316,7 +315,7 @@ export default function RacesScreen() {
                 <TouchableOpacity key={r.id} style={[styles.raceRow, { backgroundColor: card, flexDirection: rowDir }]} onPress={() => onJoinRace(r)}>
                   {/* Visuel : pastille dégradée avec icône (cartes plus vivantes) */}
                   <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: r.status === 'live' ? '#dcfce7' : '#EAF4EE', alignItems: 'center', justifyContent: 'center' }}>
-                    <Users size={20} color={PRIMARY} />
+                    <Users size={20} color={k.accent} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.raceName, { color: text, textAlign: align }]} numberOfLines={1}>{r.name}</Text>
@@ -375,7 +374,7 @@ export default function RacesScreen() {
                 défis intégrés ont été MIGRÉS en base avec leurs médailles. */}
             {activeRaces.length === 0 && (
               <View style={[styles.emptyBox, { backgroundColor: card }]}>
-                <Trophy size={36} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} />
+                <Trophy size={36} color={k.textFaint} />
                 <Text style={[styles.emptySub, { color: sub }]}>{t.emptyChallenges}</Text>
               </View>
             )}
@@ -415,7 +414,7 @@ export default function RacesScreen() {
                     {joined && (
                       <View style={styles.progressWrap}>
                         <View style={[styles.progressTrack, { backgroundColor: track }]}>
-                          <View style={[styles.progressFill, { width: `${pct * 100}%`, backgroundColor: done ? '#22c55e' : PRIMARY }]} />
+                          <View style={[styles.progressFill, { width: `${pct * 100}%`, backgroundColor: done ? '#22c55e' : k.accent }]} />
                         </View>
                         <Text style={[styles.progressTxt, { color: sub, textAlign: align }]}>
                           {t.progress}: {(p as number).toFixed(1)} / {c.totalKm} {t.km} · {Math.round(pct * 100)}%
@@ -472,7 +471,7 @@ export default function RacesScreen() {
               {/* Aperçu du résultat — enveloppé dans une Card premium (design-only). */}
               {genResult && (
                 <Card variant="raised" style={styles.previewCard}>
-                  <SectionHeader eyebrow={t.genRouteReady} title={genResult.name} icon={<RouteIcon size={20} color={PRIMARY} />} />
+                  <SectionHeader eyebrow={t.genRouteReady} title={genResult.name} icon={<RouteIcon size={20} color={k.accent} />} />
 
                   <View style={styles.previewBody}>
                   {!!genResult.description && (
@@ -482,14 +481,14 @@ export default function RacesScreen() {
                   {/* Méta : distance + thème, joliment présentés avec icônes lucide. */}
                   <View style={[styles.metaRow, { flexDirection: rowDir }]}>
                     <View style={[styles.metaChip, { backgroundColor: track, flexDirection: rowDir }]}>
-                      <RouteIcon size={14} color={PRIMARY} />
+                      <RouteIcon size={14} color={k.accent} />
                       <Text style={[styles.metaChipTxt, { color: text }]} numberOfLines={1}>
                         {t.genDistance}: {genKm} {t.km}
                       </Text>
                     </View>
                     {!!genTheme.trim() && (
                       <View style={[styles.metaChip, { backgroundColor: track, flexDirection: rowDir }]}>
-                        <Flag size={14} color={PRIMARY} />
+                        <Flag size={14} color={k.accent} />
                         <Text style={[styles.metaChipTxt, { color: text }]} numberOfLines={1}>
                           {genTheme.trim()}
                         </Text>
@@ -502,7 +501,7 @@ export default function RacesScreen() {
                       <Text style={[styles.previewSection, { color: text, textAlign: align }]}>{t.genWaypoints}</Text>
                       {genResult.waypoints.map((w, i) => (
                         <View key={i} style={[styles.wpRow, { flexDirection: rowDir }]}>
-                          <View style={styles.wpDot}><MapPin size={13} color={PRIMARY} /></View>
+                          <View style={styles.wpDot}><MapPin size={13} color={k.accent} /></View>
                           <View style={{ flex: 1 }}>
                             <Text style={[styles.wpName, { color: text, textAlign: align }]} numberOfLines={1}>
                               {w.name} · {w.atKm} {t.km}
@@ -523,7 +522,7 @@ export default function RacesScreen() {
                     </>
                   )}
 
-                  <View style={[styles.noteBox, { backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight }]}>
+                  <View style={[styles.noteBox, { backgroundColor: k.accentSoft }]}>
                     <Text style={[styles.noteTxt, { textAlign: align }]}>{t.genPreviewNote}</Text>
                   </View>
 
@@ -547,28 +546,28 @@ export default function RacesScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   header: { alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 22, fontWeight: '900', letterSpacing: -0.5 },
   tabs: { paddingHorizontal: 16, gap: 10, marginBottom: 6 },
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 14, borderWidth: 2, borderColor: 'transparent' },
-  tabActive: { borderColor: PRIMARY, backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight },
+  tabActive: { borderColor: k.accent, backgroundColor: k.accentSoft },
   tabTxt: { fontSize: 13, fontWeight: '800' },
   content: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 60 },
   loadingBox: { paddingVertical: 50, alignItems: 'center' },
   emptyBox: { borderRadius: 18, padding: 28, alignItems: 'center', gap: 14, marginTop: 8 },
   emptySub: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
   communityBtn: { alignItems: 'center', gap: 12, borderRadius: 16, padding: 14, marginBottom: 14 },
-  communityIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center' },
+  communityIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: k.accentSoft, alignItems: 'center', justifyContent: 'center' },
   communityTxt: { flex: 1, fontSize: 16, fontWeight: '800' },
   raceRow: { alignItems: 'center', gap: 12, borderRadius: 16, padding: 14, marginBottom: 10 },
   raceName: { fontSize: 16, fontWeight: '800' },
   raceMeta: { fontSize: 12, marginTop: 3 },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight },
-  badgeLive: { backgroundColor: PRIMARY },
-  badgeTxt: { fontSize: 11, fontWeight: '800', color: PRIMARY },
+  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: k.accentSoft },
+  badgeLive: { backgroundColor: k.accent },
+  badgeTxt: { fontSize: 11, fontWeight: '800', color: k.accent },
   challengeCard: { borderRadius: 20, marginBottom: 14, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
   heroWrap: { height: 150, width: '100%', justifyContent: 'flex-end' },
   hero: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
@@ -585,18 +584,18 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   heroChips: { flexDirection: 'row', gap: 8, marginTop: 8 },
   heroChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.45)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
   heroChipTxt: { color: '#fff', fontSize: 12, fontWeight: '800' },
-  heroJoin: { position: 'absolute', top: 12, right: 12, backgroundColor: PRIMARY, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 12, minWidth: 64, alignItems: 'center', justifyContent: 'center' },
+  heroJoin: { position: 'absolute', top: 12, right: 12, backgroundColor: k.accent, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 12, minWidth: 64, alignItems: 'center', justifyContent: 'center' },
   emoji: { fontSize: 30 },
   challengeName: { fontSize: 16, fontWeight: '800' },
   challengeMeta: { fontSize: 12, marginTop: 3 },
-  joinBtn: { backgroundColor: PRIMARY, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 12, minWidth: 64, alignItems: 'center', justifyContent: 'center' },
+  joinBtn: { backgroundColor: k.accent, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 12, minWidth: 64, alignItems: 'center', justifyContent: 'center' },
   joinBtnTxt: { color: '#fff', fontSize: 14, fontWeight: '800' },
   progressWrap: { padding: 14, paddingTop: 12 },
   progressTrack: { height: 10, borderRadius: 5, overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: 5, backgroundColor: PRIMARY },
+  progressFill: { height: '100%', borderRadius: 5, backgroundColor: k.accent },
   progressTxt: { fontSize: 12, fontWeight: '700', marginTop: 6 },
   // Génération IA de parcours (#5)
-  genBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: PRIMARY, borderRadius: 14, paddingVertical: 14, marginBottom: 14 },
+  genBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 14, marginBottom: 14 },
   genBtnTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalCard: { borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 20, paddingBottom: 28, maxHeight: '88%' },
@@ -605,7 +604,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   modalClose: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   fieldLabel: { fontSize: 13, fontWeight: '700', marginBottom: 6, marginTop: 6 },
   input: { borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, marginBottom: 4 },
-  genGo: { backgroundColor: PRIMARY, borderRadius: 14, paddingVertical: 14, alignItems: 'center', justifyContent: 'center', marginTop: 14 },
+  genGo: { backgroundColor: k.accent, borderRadius: 14, paddingVertical: 14, alignItems: 'center', justifyContent: 'center', marginTop: 14 },
   genGoTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
   genErr: { color: '#ef4444', fontSize: 13, fontWeight: '700', marginTop: 12 },
   previewWrap: { marginTop: 18 },
@@ -619,9 +618,9 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   previewDesc: { fontSize: 14, lineHeight: 20, marginTop: 6 },
   previewSection: { fontSize: 14, fontWeight: '800', marginTop: 16, marginBottom: 8 },
   wpRow: { alignItems: 'flex-start', gap: 10, marginBottom: 10 },
-  wpDot: { width: 26, height: 26, borderRadius: 13, backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  wpDot: { width: 26, height: 26, borderRadius: 13, backgroundColor: k.accentSoft, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
   wpName: { fontSize: 14, fontWeight: '800' },
   wpDesc: { fontSize: 13, lineHeight: 18, marginTop: 2 },
   noteBox: { borderRadius: 12, padding: 12, marginTop: 18 },
-  noteTxt: { fontSize: 12, fontWeight: '700', color: PRIMARY, lineHeight: 17 },
+  noteTxt: { fontSize: 12, fontWeight: '700', color: k.accent, lineHeight: 17 },
 });

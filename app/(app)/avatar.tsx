@@ -58,6 +58,7 @@ const GEAR_EMOJI: Record<string, string> = {
 };
 
 export default function AvatarScreen() {
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const titleMap = TITLES[language] || TITLES.en;

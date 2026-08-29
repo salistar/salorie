@@ -57,6 +57,7 @@ const TXT: any = {
 };
 
 export default function VoiceLog() {
+  const k = useTokens();
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;

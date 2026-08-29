@@ -39,6 +39,7 @@ const Q = [
 ];
 
 export default function MicrobiomeScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('microbiome');
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;

@@ -45,6 +45,7 @@ const TXT: any = {
 };
 
 export default function ShoppingListScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('shopping-list');
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;

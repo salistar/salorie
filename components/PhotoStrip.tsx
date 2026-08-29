@@ -52,6 +52,7 @@ const TITLES: Record<string, Record<string, string>> = {
 };
 
 function PhotoStrip({ category = 'food', showTitle = true }: { category?: keyof typeof SETS; showTitle?: boolean }) {
+  const k = useTokens();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { directionAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView,
   Image, Modal, Dimensions, Alert,
@@ -18,7 +18,6 @@ import { addNutritionLog, emailToDocId } from '../../lib/firebase';
 import { fetchRoutePolyline } from '../../lib/routes';
 import { addActivitySteps } from '../../lib/steps';
 import { refreshStepsNotification } from '../../lib/stepsNotif';
-import { Colors } from '../../constants/Colors';
 import { elevation } from '../../constants/theme';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -47,7 +46,6 @@ const CHALLENGE_FRAME: Record<string, string> = { 'casa-loop': 'casablanca' };
 // Clé Maps lue depuis l'env (EXPO_PUBLIC_GOOGLE_MAPS_KEY) — plus de clé en dur dans le
 // bundle. Clé publiable côté client : DOIT être restreinte dans GCP (package + SHA-1 + API).
 const GOOGLE_MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY ?? '';
-const PRIMARY = Colors.light.primary;
 const { width: SCREEN_W } = Dimensions.get('window');
 
 const TXT: Record<string, any> = {
@@ -309,6 +307,8 @@ export default function ChallengeScreen() {
   const [mongoSpec, setMongoSpec] = useState<any>(null);
   const { user } = useUser();
   const { resolved } = useTheme();
+  const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
@@ -521,7 +521,7 @@ export default function ChallengeScreen() {
   }, [challenge, effectiveRoute, fraction]);
 
   const html = useMemo(
-    () => (challenge ? buildHtml(challenge.route as LatLng[], mePoint, PRIMARY) : ''),
+    () => (challenge ? buildHtml(challenge.route as LatLng[], mePoint, k.accent) : ''),
     [challengeId, challenge?.id] // inclut challenge?.id : recalcule quand la course Mongo (async) se charge
   );
 
@@ -734,14 +734,14 @@ export default function ChallengeScreen() {
     }
   };
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const tok = useTokens();
   const bg = tok.bg;
   // Accent thémé : vert clair en sombre (#4ade80) pour le contraste, vert marque en clair.
-  const primary = isDark ? Colors.dark.primary : Colors.light.primary;
-  const trackBg = isDark ? '#2a2a2a' : Colors.light.gray[200];
+  const primary = k.accent;
+  const trackBg = isDark ? '#2a2a2a' : k.border;
   const rtlRow = isRTL ? { flexDirection: 'row-reverse' as const } : undefined;
   const align = isRTL ? ({ textAlign: 'right' } as const) : ({ textAlign: 'left' } as const);
 
@@ -782,7 +782,7 @@ export default function ChallengeScreen() {
           startInLoadingState
           renderLoading={() => (
             <View style={[StyleSheet.absoluteFill, styles.center]}>
-              <ActivityIndicator size="large" color={PRIMARY} />
+              <ActivityIndicator size="large" color={k.accent} />
             </View>
           )}
         />
@@ -1116,10 +1116,13 @@ export default function ChallengeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   notFound: { fontSize: 17, fontWeight: '700', textAlign: 'center', marginTop: 16, marginBottom: 20 },
-  primaryBtn: { backgroundColor: PRIMARY, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
+  primaryBtn: { backgroundColor: k.accent, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
   primaryBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
   mapWrap: { width: '100%' },
   back: { position: 'absolute', top: 50, left: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', ...elevation.sm },
@@ -1131,7 +1134,7 @@ const styles = StyleSheet.create({
   navCardBody: { flex: 1, padding: 12, justifyContent: 'center' },
   navCardKicker: { fontSize: 11, fontWeight: '800', color: '#0ea5e9' },
   navCardName: { fontSize: 16, fontWeight: '900', color: '#111', marginTop: 2 },
-  navCardView: { fontSize: 12, fontWeight: '700', color: PRIMARY, marginTop: 4 },
+  navCardView: { fontSize: 12, fontWeight: '700', color: k.accent, marginTop: 4 },
 
   header: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18, marginHorizontal: 16, marginTop: -20, borderRadius: 22, ...elevation.md },
   emoji: { fontSize: 40 },
@@ -1139,7 +1142,7 @@ const styles = StyleSheet.create({
   bigKm: { fontSize: 30, fontWeight: '900', letterSpacing: -1, marginTop: 2 },
   bigKmSub: { fontSize: 15, fontWeight: '700', letterSpacing: 0 },
   track: { height: 10, borderRadius: 5, overflow: 'hidden', marginTop: 10 },
-  fill: { height: 10, borderRadius: 5, backgroundColor: PRIMARY },
+  fill: { height: 10, borderRadius: 5, backgroundColor: k.accent },
   pctTxt: { fontSize: 12, fontWeight: '600', marginTop: 6 },
   nextStopCard: { marginHorizontal: 16, marginTop: 10, borderRadius: 16, padding: 14 },
   nextStopKicker: { fontSize: 11.5, fontWeight: '900', letterSpacing: 0.4, textTransform: 'uppercase' },
@@ -1165,7 +1168,7 @@ const styles = StyleSheet.create({
   windGoal: { fontSize: 13, fontWeight: '800', marginTop: 10 },
   windHint: { fontSize: 11.5, fontWeight: '500', marginTop: 4, lineHeight: 16 },
 
-  joinBtn: { backgroundColor: PRIMARY, marginHorizontal: 16, marginTop: 16, paddingVertical: 16, borderRadius: 16, alignItems: 'center' },
+  joinBtn: { backgroundColor: k.accent, marginHorizontal: 16, marginTop: 16, paddingVertical: 16, borderRadius: 16, alignItems: 'center' },
   joinBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
 
   actionRow: { flexDirection: 'row', gap: 10, marginHorizontal: 16, marginTop: 16 },

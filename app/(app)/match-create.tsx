@@ -3,7 +3,7 @@
 // autres formulaires de l'app. Firestore best-effort.
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, Tokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   View,
@@ -20,13 +20,11 @@ import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, Send, MapPin, Hash, Calendar, Clock, Timer, Users } from 'lucide-react-native';
 import { Input } from '../../components/ui';
 import { spacing, radius } from '../../constants/theme';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign, flipForRTL } from '../../lib/rtl';
 import { createMatch, listFields, Sport, SPORTS, SportField } from '../../lib/groupSports';
 
-const PRIMARY = Colors.light.primary;
 
 const SPORT_EMOJI: Record<Sport, string> = {
   football: '⚽', tennis: '🎾', basketball: '🏀', volleyball: '🏐',
@@ -105,10 +103,11 @@ function parseDateTime(dateStr: string, timeStr: string): number | null {
 export default function MatchCreateScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const params = useLocalSearchParams<{ fieldId?: string }>();
 
   const email = user?.primaryEmailAddress?.emailAddress || '';
@@ -128,12 +127,12 @@ export default function MatchCreateScreen() {
   const align = txtAlign(isRTL);
   const dir = rowDir(isRTL);
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const tok = useTokens();
   const bg = tok.bg;
-  const field = isDark ? Colors.dark.gray[100] : Colors.light.gray[100];
+  const field = k.border;
 
   // Charge les terrains approuvés du sport sélectionné (pour le sélecteur optionnel).
   const loadFields = useCallback(async (sp: Sport) => {
@@ -207,7 +206,7 @@ export default function MatchCreateScreen() {
             return (
               <TouchableOpacity
                 key={sp}
-                style={[styles.chip, { backgroundColor: active ? PRIMARY : field }]}
+                style={[styles.chip, { backgroundColor: active ? k.accent : field }]}
                 activeOpacity={0.85}
                 onPress={() => setSport(sp)}
               >
@@ -233,7 +232,7 @@ export default function MatchCreateScreen() {
             <Text style={[styles.label, { color: sub, textAlign: align }]}>{t.fieldOptional}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
               <TouchableOpacity
-                style={[styles.chip, { backgroundColor: !fieldId ? PRIMARY : field }]}
+                style={[styles.chip, { backgroundColor: !fieldId ? k.accent : field }]}
                 activeOpacity={0.85}
                 onPress={() => setFieldId(undefined)}
               >
@@ -244,11 +243,11 @@ export default function MatchCreateScreen() {
                 return (
                   <TouchableOpacity
                     key={f.id}
-                    style={[styles.chip, { flexDirection: dir, gap: 5, backgroundColor: active ? PRIMARY : field }]}
+                    style={[styles.chip, { flexDirection: dir, gap: 5, backgroundColor: active ? k.accent : field }]}
                     activeOpacity={0.85}
                     onPress={() => setFieldId(f.id)}
                   >
-                    <MapPin size={13} color={active ? '#fff' : PRIMARY} />
+                    <MapPin size={13} color={active ? '#fff' : k.accent} />
                     <Text style={[styles.chipTxt, { color: active ? '#fff' : text }]} numberOfLines={1}>{f.name}</Text>
                   </TouchableOpacity>
                 );
@@ -331,7 +330,7 @@ const CHIP: ViewStyle = {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   header: { alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
@@ -345,6 +344,6 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   twoCol: { gap: 12 },
   col: { flex: 1 },
   errTxt: { color: '#ef4444', fontSize: 13, fontWeight: '700', marginTop: 14 },
-  submitBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: PRIMARY, borderRadius: 14, paddingVertical: 14, marginTop: 20 },
+  submitBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 14, marginTop: 20 },
   submitTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
 });

@@ -126,6 +126,7 @@ const T: Record<string, Record<string, string>> = {
 };
 
 export default function MesAmis() {
+  const k = useTokens();
   const tok = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = T[String(language)] || T.fr;

@@ -17,7 +17,6 @@ import { ArrowLeft, Footprints, Flame, Scale, RefreshCw, HeartPulse, Plus, Zap, 
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useScreenGate } from '../../components/FeatureGate';
 import { SkeletonCard } from '../../components/ui';
-import { Colors } from '../../constants/Colors';
 import { type as typo } from '../../constants/theme';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -25,6 +24,7 @@ import { rowDir, txtAlign } from '../../lib/rtl';
 import { isHealthAvailable, connectHealthStatus, openHealthConnectInstall, openHealthSettings, hasStepsPermission, readToday, HealthToday } from '../../lib/health';
 import { addNutritionLog } from '../../lib/firebase';
 import { getStepsMode, setStepsMode, getSimSteps, addSimSteps, resetSimSteps, getActivitySteps } from '../../lib/steps';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 const TXT: any = {
   en: {
@@ -93,11 +93,12 @@ export default function HealthScreen() {
   const __gate = useScreenGate('health');
   const { user } = useUser();
   const { resolved } = useTheme();
+  const k = useTokens();
   const { t, language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const tx = TXT[language] || TXT.en;
-  const accent = isDark ? Colors.dark.primary : Colors.light.primary;
+  const accent = k.accent;
 
   // i18n #90 — locale-aware number formatting (display only, no calc change).
   const numLocale = numLocaleFor(language);
@@ -163,9 +164,9 @@ export default function HealthScreen() {
   const addChunk = async () => { setSimSteps(await addSimSteps(email, 1000)); };
   const resetWalk = async () => { await resetSimSteps(email); setSimSteps(0); };
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const bg = isDark ? '#0f1419' : 'transparent';
 
   const connect = useCallback(async () => {
@@ -271,7 +272,7 @@ export default function HealthScreen() {
         </TouchableOpacity>
 
         {/* Steps mode: Real (Health Connect) vs Simulation */}
-        <View style={[styles.modeRow, { backgroundColor: isDark ? Colors.dark.gray[100] : '#f1f5f9', flexDirection: rowDir(isRTL) }]}>
+        <View style={[styles.modeRow, { backgroundColor: isDark ? k.border : '#f1f5f9', flexDirection: rowDir(isRTL) }]}>
           <TouchableOpacity style={[styles.modeBtn, mode === 'real' && { backgroundColor: card }]} onPress={() => switchMode('real')}>
             <Navigation size={16} color={mode === 'real' ? accent : sub} />
             <Text style={[styles.modeTxt, { color: mode === 'real' ? accent : sub }]}>{tx.real}</Text>
@@ -399,18 +400,18 @@ export default function HealthScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 60 },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] },
+  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: k.surfaceSunken },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 28, fontWeight: '900', letterSpacing: -1 },
   subtitle: { fontSize: 14, marginTop: 8, marginBottom: 14, lineHeight: 20 },
   hero: { width: '100%', height: 130, borderRadius: 18, marginBottom: 18 },
   box: { borderRadius: 16, padding: 20 },
   boxText: { fontSize: 14, lineHeight: 20 },
-  primaryBtn: { flexDirection: 'row', gap: 8, backgroundColor: Colors.light.primary, paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
+  primaryBtn: { flexDirection: 'row', gap: 8, backgroundColor: k.accent, paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   primaryBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
   connected: { fontSize: 14, fontWeight: '800', marginBottom: 14 },
   statsRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
@@ -421,7 +422,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   statLabel: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
   noData: { fontSize: 14, textAlign: 'center', marginVertical: 16, lineHeight: 20 },
   ghostBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', paddingVertical: 12, marginTop: 4 },
-  ghostText: { color: isDark ? Colors.dark.primary : Colors.light.primary, fontSize: 15, fontWeight: '700' },
+  ghostText: { color: k.accent, fontSize: 15, fontWeight: '700' },
   msg: { fontSize: 13, textAlign: 'center', fontWeight: '600', marginTop: 6 },
   modeRow: { flexDirection: 'row', borderRadius: 14, padding: 4, gap: 4, marginBottom: 14 },
   modeBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 11, borderRadius: 11 },

@@ -1,6 +1,6 @@
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, Tokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   View,
@@ -17,7 +17,6 @@ import { useUser } from '@clerk/clerk-expo';
 import {
   ArrowLeft, Trophy, MapPin, Plus, Send, Users, Swords,
 } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign, flipForRTL } from '../../lib/rtl';
@@ -27,7 +26,6 @@ import {
 } from '../../lib/cityChallenges';
 import { SkeletonCard, Skeleton, EmptyState } from '../../components/ui';
 
-const PRIMARY = Colors.light.primary;
 
 // NOUVELLES chaînes = objet LOCAL trilingue {en,fr,ar}.
 const TXT: Record<string, any> = {
@@ -99,10 +97,11 @@ const TXT: Record<string, any> = {
 export default function CityChallengesScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
 
   const email = user?.primaryEmailAddress?.emailAddress || '';
 
@@ -116,12 +115,12 @@ export default function CityChallengesScreen() {
   const align = txtAlign(isRTL);
   const dir = rowDir(isRTL);
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const tok = useTokens();
   const bg = tok.bg;
-  const field = isDark ? Colors.dark.gray[100] : Colors.light.gray[100];
+  const field = k.border;
 
   const metricLabel = (m: CityMetric) =>
     m === 'workouts' ? t.metricWorkouts : m === 'logs' ? t.metricLogs : t.metricKm;
@@ -247,7 +246,7 @@ export default function CityChallengesScreen() {
           </View>
         ) : challenges.length === 0 ? (
           <EmptyState
-            icon={<Swords size={26} color={PRIMARY} />}
+            icon={<Swords size={26} color={k.accent} />}
             title={t.emptyTitle}
             subtitle={t.emptySub}
           />
@@ -270,7 +269,7 @@ export default function CityChallengesScreen() {
                 {/* Titre + métrique */}
                 <View style={[styles.cardHead, { flexDirection: dir }]}>
                   <View style={styles.cardIcon}>
-                    <Trophy size={18} color={PRIMARY} />
+                    <Trophy size={18} color={k.accent} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.cardTitle, { color: text, textAlign: align }]} numberOfLines={2}>{c.title}</Text>
@@ -286,10 +285,10 @@ export default function CityChallengesScreen() {
                 {/* Scores Ville A vs Ville B */}
                 <View style={[styles.scoreRow, { flexDirection: dir }]}>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.cityName, { color: leadA ? PRIMARY : text, textAlign: isRTL ? 'right' : 'left' }]} numberOfLines={1}>
+                    <Text style={[styles.cityName, { color: leadA ? k.accent : text, textAlign: isRTL ? 'right' : 'left' }]} numberOfLines={1}>
                       {c.cityA}
                     </Text>
-                    <Text style={[styles.cityScore, { color: leadA ? PRIMARY : text, textAlign: isRTL ? 'right' : 'left' }]}>
+                    <Text style={[styles.cityScore, { color: leadA ? k.accent : text, textAlign: isRTL ? 'right' : 'left' }]}>
                       {totalA} {unit}
                     </Text>
                   </View>
@@ -297,18 +296,18 @@ export default function CityChallengesScreen() {
                     {leadA ? t.leading : leadB ? '' : t.tie}
                   </Text>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.cityName, { color: leadB ? Colors.light.secondary : text, textAlign: isRTL ? 'left' : 'right' }]} numberOfLines={1}>
+                    <Text style={[styles.cityName, { color: leadB ? k.warning : text, textAlign: isRTL ? 'left' : 'right' }]} numberOfLines={1}>
                       {c.cityB}
                     </Text>
-                    <Text style={[styles.cityScore, { color: leadB ? Colors.light.secondary : text, textAlign: isRTL ? 'left' : 'right' }]}>
+                    <Text style={[styles.cityScore, { color: leadB ? k.warning : text, textAlign: isRTL ? 'left' : 'right' }]}>
                       {totalB} {unit}
                     </Text>
                   </View>
                 </View>
 
                 {/* Barre de score A vs B */}
-                <View style={[styles.barTrack, { backgroundColor: isDark ? Colors.dark.secondary : Colors.light.secondary + '33' }]}>
-                  <View style={[styles.barFill, { width: `${pctA}%`, backgroundColor: PRIMARY }]} />
+                <View style={[styles.barTrack, { backgroundColor: k.warning + '33' }]}>
+                  <View style={[styles.barFill, { width: `${pctA}%`, backgroundColor: k.accent }]} />
                 </View>
 
                 {/* Rejoindre : deux boutons de camp (ou badge "rejoint") */}
@@ -322,16 +321,16 @@ export default function CityChallengesScreen() {
                           styles.joinBtn,
                           { flexDirection: dir },
                           mine
-                            ? { backgroundColor: PRIMARY }
-                            : { borderWidth: 1.5, borderColor: PRIMARY },
+                            ? { backgroundColor: k.accent }
+                            : { borderWidth: 1.5, borderColor: k.accent },
                           rowBusy && { opacity: 0.5 },
                         ]}
                         onPress={() => onJoin(c, city)}
                         disabled={rowBusy}
                         activeOpacity={0.85}
                       >
-                        <MapPin size={14} color={mine ? '#fff' : PRIMARY} />
-                        <Text style={[styles.joinTxt, { color: mine ? '#fff' : PRIMARY }]} numberOfLines={1}>
+                        <MapPin size={14} color={mine ? '#fff' : k.accent} />
+                        <Text style={[styles.joinTxt, { color: mine ? '#fff' : k.accent }]} numberOfLines={1}>
                           {mine ? t.joined : `${t.join} ${city}`}
                         </Text>
                       </TouchableOpacity>
@@ -380,7 +379,7 @@ export default function CityChallengesScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   header: { alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
@@ -390,7 +389,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   skeletonWrap: {},
   card: { borderRadius: 18, padding: 16, marginBottom: 16 },
   cardHead: { alignItems: 'center', gap: 12, marginBottom: 14 },
-  cardIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center' },
+  cardIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: k.accentSoft, alignItems: 'center', justifyContent: 'center' },
   cardTitle: { fontSize: 16, fontWeight: '800', letterSpacing: -0.3 },
   metaRow: { alignItems: 'center', gap: 5, marginTop: 4 },
   metaTxt: { fontSize: 12, fontWeight: '600' },
@@ -407,7 +406,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   contribLabel: { fontSize: 13, fontWeight: '700', marginBottom: 8 },
   addRow: { gap: 10, alignItems: 'center' },
   addInput: { flex: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15 },
-  addBtn: { alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: PRIMARY, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 18 },
+  addBtn: { alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: k.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 18 },
   addBtnTxt: { color: '#fff', fontSize: 14, fontWeight: '800' },
   errTxt: { color: '#ef4444', fontSize: 13, fontWeight: '700', marginTop: 12 },
 });

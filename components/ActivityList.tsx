@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Utensils, Zap, Droplets, ClipboardList, Check, Footprints, Weight, Flame } from 'lucide-react-native';
-import { Colors } from '../constants/Colors';
 import { NutritionLog } from '../lib/firebase';
 import { useTranslation } from '../lib/i18n';
 import { translate } from '../lib/translator';
 import { useTheme } from '../lib/ThemeContext';
+import { useTokens, Tokens } from '../constants/tokens';
 
 interface ActivityListProps {
   logs: NutritionLog[];
@@ -15,16 +15,17 @@ interface ActivityListProps {
 function ActivityList({ logs, onAddPress }: ActivityListProps) {
   const { t, language } = useTranslation();
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
-  const titleColor = isDark ? '#f1f5f9' : Colors.light.gray[900];
-  const itemBg = isDark ? '#161C23' : Colors.light.white;
-  const itemBorder = isDark ? 'rgba(255,255,255,0.08)' : Colors.light.gray[50];
-  const nameColor = isDark ? '#f1f5f9' : Colors.light.gray[900];
-  const valueColor = isDark ? '#f1f5f9' : Colors.light.gray[900];
-  const emptyBg = isDark ? 'rgba(255,255,255,0.04)' : Colors.light.gray[50];
-  const subColor = isDark ? '#94a3b8' : Colors.light.gray[400];
-  const tsColor = isDark ? '#64748b' : Colors.light.gray[300];
+  const styles = useMemo(() => makeStyles(k), [k]);
+  const titleColor = isDark ? '#f1f5f9' : k.text;
+  const itemBg = isDark ? '#161C23' : k.surface;
+  const itemBorder = isDark ? 'rgba(255,255,255,0.08)' : k.surfaceSunken;
+  const nameColor = isDark ? '#f1f5f9' : k.text;
+  const valueColor = isDark ? '#f1f5f9' : k.text;
+  const emptyBg = isDark ? 'rgba(255,255,255,0.04)' : k.surfaceSunken;
+  const subColor = isDark ? '#94a3b8' : k.textMuted;
+  const tsColor = isDark ? '#64748b' : k.textFaint;
   // Perf : on est DANS le ScrollView du Home (FlatList imbriquée interdite) →
   // rendu plafonné + « voir plus » incrémental pour éviter 100+ items montés.
   const [visibleCount, setVisibleCount] = useState(30);
@@ -107,13 +108,13 @@ function ActivityList({ logs, onAddPress }: ActivityListProps) {
   const renderEmptyState = () => (
     <View style={[styles.emptyState, { backgroundColor: emptyBg }]}>
       <View style={styles.emptyIconWrapper}>
-        <ClipboardList size={40} color={isDark ? Colors.dark.primary : Colors.light.primary} strokeWidth={2} />
+        <ClipboardList size={40} color={k.accent} strokeWidth={2} />
       </View>
-      <Text style={[styles.emptyTitle, { color: isDark ? '#f1f5f9' : Colors.light.gray[800] }]}>{t('home.no_activity')}</Text>
+      <Text style={[styles.emptyTitle, { color: isDark ? '#f1f5f9' : k.text }]}>{t('home.no_activity')}</Text>
       <Text style={styles.emptySub}>{t('home.add_first')}</Text>
 
       <TouchableOpacity style={styles.addCta} onPress={onAddPress} activeOpacity={0.8}>
-        <Check size={18} color={Colors.light.white} strokeWidth={3} />
+        <Check size={18} color={k.surface} strokeWidth={3} />
         <Text style={styles.addCtaText}>+</Text>
       </TouchableOpacity>
     </View>
@@ -177,7 +178,7 @@ function ActivityList({ logs, onAddPress }: ActivityListProps) {
           ))}
           {logs.length > visibleCount && (
             <TouchableOpacity onPress={() => setVisibleCount((c) => c + 30)} style={{ paddingVertical: 12, alignItems: 'center' }}>
-              <Text style={{ color: isDark ? Colors.dark.primary : Colors.light.primary, fontWeight: '700', fontSize: 13 }}>
+              <Text style={{ color: k.accent, fontWeight: '700', fontSize: 13 }}>
                 + {Math.min(30, logs.length - visibleCount)} {language === 'fr' ? 'de plus' : language === 'ar' ? 'المزيد' : 'more'}
               </Text>
             </TouchableOpacity>
@@ -198,7 +199,7 @@ export default React.memo(ActivityList);
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: {
     marginTop: 10,
     marginBottom: 40,
@@ -206,7 +207,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     letterSpacing: -0.5,
     marginBottom: 20,
     paddingHorizontal: 2,
@@ -218,7 +219,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     padding: 18,
     borderRadius: 28,
     shadowColor: '#000',
@@ -228,7 +229,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     elevation: 2,
     position: 'relative',
     borderWidth: 1,
-    borderColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    borderColor: k.surfaceSunken,
   },
   itemTimestamp: {
     position: 'absolute',
@@ -236,7 +237,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     right: 18,
     fontSize: 11,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[300] : Colors.light.gray[300],
+    color: k.textFaint,
     textTransform: 'uppercase',
   },
   left: {
@@ -249,7 +250,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 18,
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -259,12 +260,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   name: {
     fontSize: 17,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     marginBottom: 4,
   },
   subtext: {
     fontSize: 13,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     fontWeight: '600',
   },
   gradeBadge: { width: 24, height: 24, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
@@ -278,7 +279,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   value: {
     fontSize: 17,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     letterSpacing: -0.5,
   },
   activityValue: {
@@ -286,14 +287,14 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   },
   macrosPreview: {
     fontSize: 12,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     fontWeight: '600',
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 60,
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     borderRadius: 32,
     borderWidth: 2,
     borderColor: 'transparent',
@@ -303,11 +304,11 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
-    shadowColor: isDark ? 'transparent' : Colors.light.gray[400],
+    shadowColor: k.isDark ? 'transparent' : k.textMuted,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
     shadowRadius: 20,
@@ -316,12 +317,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
     marginBottom: 8,
   },
   emptySub: {
     fontSize: 14,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     textAlign: 'center',
     paddingHorizontal: 40,
     lineHeight: 20,
@@ -329,21 +330,21 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   },
   addCta: {
     marginTop: 24,
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 16,
     gap: 8,
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   addCtaText: {
-    color: Colors.light.white,
+    color: k.surface,
     fontSize: 15,
     fontWeight: '800',
   },

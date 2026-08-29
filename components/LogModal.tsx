@@ -20,6 +20,7 @@ import { useUser } from '@clerk/clerk-expo';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
 import { rowDir, txtAlign, directionAuto } from '../lib/rtl';
+import { useTokens, Tokens } from '../constants/tokens';
 
 export default function LogModal() {
   const { user } = useUser();
@@ -27,8 +28,9 @@ export default function LogModal() {
   // codé en dur faisait basculer de langue au geste le plus fréquent de l'app.
   const { t, isRTL } = useTranslation() as any;
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { isLogModalVisible, hideLogModal, triggerRefresh, selectedDate, initialLogType } = useLogging();
 
   const [type, setType] = useState<'meal' | 'activity' | 'water'>(initialLogType);
@@ -89,14 +91,14 @@ export default function LogModal() {
   };
 
   // Dark-mode derived tokens (light path keeps the exact original Colors.light.* values)
-  const sheetBg = isDark ? '#161C23' : Colors.light.white;
-  const inputCardBg = isDark ? '#1e293b' : Colors.light.gray[50];
-  const inputBorder = isDark ? '#283241' : Colors.light.gray[200];
-  const selectorBg = isDark ? '#0f1419' : Colors.light.gray[100];
-  const textPrimary = isDark ? '#f1f5f9' : Colors.light.gray[800];
-  const labelColor = isDark ? '#94a3b8' : Colors.light.gray[600];
-  const mutedColor = isDark ? '#94a3b8' : Colors.light.gray[400];
-  const typeTextColor = isDark ? '#94a3b8' : Colors.light.gray[500];
+  const sheetBg = isDark ? '#161C23' : k.surface;
+  const inputCardBg = isDark ? '#1e293b' : k.surfaceSunken;
+  const inputBorder = isDark ? '#283241' : k.border;
+  const selectorBg = isDark ? '#0f1419' : k.border;
+  const textPrimary = isDark ? '#f1f5f9' : k.text;
+  const labelColor = isDark ? '#94a3b8' : k.textMuted;
+  const mutedColor = isDark ? '#94a3b8' : k.textMuted;
+  const typeTextColor = isDark ? '#94a3b8' : k.textMuted;
   const placeholderColor = isDark ? '#64748b' : undefined;
 
   return (
@@ -114,7 +116,7 @@ export default function LogModal() {
           <View style={styles.header}>
             <Text style={[styles.title, { color: textPrimary }]}>{t('logmodal.title')}</Text>
             <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={hideLogModal} style={styles.closeBtn}>
-              <X size={24} color={isDark ? Colors.dark.gray[500] : Colors.light.gray[500]} />
+              <X size={24} color={k.textMuted} />
             </TouchableOpacity>
           </View>
 
@@ -125,21 +127,21 @@ export default function LogModal() {
                 style={[styles.typeBtn, type === 'meal' && styles.typeBtnActive]}
                 onPress={() => setType('meal')}
               >
-                <Utensils size={20} color={type === 'meal' ? Colors.light.white : (isDark ? '#94a3b8' : Colors.light.gray[400])} />
+                <Utensils size={20} color={type === 'meal' ? k.surface : (isDark ? '#94a3b8' : k.textMuted)} />
                 <Text style={[styles.typeText, { color: typeTextColor }, type === 'meal' && styles.typeTextActive]}>{t('logmodal.meal')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.typeBtn, type === 'activity' && styles.typeBtnActive]}
                 onPress={() => setType('activity')}
               >
-                <Zap size={20} color={type === 'activity' ? Colors.light.white : (isDark ? '#94a3b8' : Colors.light.gray[400])} />
+                <Zap size={20} color={type === 'activity' ? k.surface : (isDark ? '#94a3b8' : k.textMuted)} />
                 <Text style={[styles.typeText, { color: typeTextColor }, type === 'activity' && styles.typeTextActive]}>{t('logmodal.exercise')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.typeBtn, type === 'water' && styles.typeBtnActive]}
                 onPress={() => setType('water')}
               >
-                <Droplets size={20} color={type === 'water' ? Colors.light.white : (isDark ? '#94a3b8' : Colors.light.gray[400])} />
+                <Droplets size={20} color={type === 'water' ? k.surface : (isDark ? '#94a3b8' : k.textMuted)} />
                 <Text style={[styles.typeText, { color: typeTextColor }, type === 'water' && styles.typeTextActive]}>{t('logmodal.water')}</Text>
               </TouchableOpacity>
             </View>
@@ -269,7 +271,7 @@ export default function LogModal() {
                 <Text style={styles.saveBtnText}>{t('logmodal.saving')}</Text>
               ) : (
                 <>
-                  <Check size={20} color={Colors.light.white} strokeWidth={3} />
+                  <Check size={20} color={k.surface} strokeWidth={3} />
                   <Text style={styles.saveBtnText}>{t('logmodal.save')}</Text>
                 </>
               )}
@@ -283,14 +285,14 @@ export default function LogModal() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
   content: {
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     padding: 24,
@@ -305,14 +307,14 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
   },
   closeBtn: {
     padding: 4,
   },
   typeSelector: {
     flexDirection: 'row',
-    backgroundColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    backgroundColor: k.border,
     borderRadius: 16,
     padding: 6,
     marginBottom: 24,
@@ -327,15 +329,15 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     gap: 8,
   },
   typeBtnActive: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
   },
   typeText: {
     fontSize: 14,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
+    color: k.textMuted,
   },
   typeTextActive: {
-    color: Colors.light.white,
+    color: k.surface,
   },
   inputGroup: {
     marginBottom: 16,
@@ -343,24 +345,24 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: isDark ? Colors.dark.gray[600] : Colors.light.gray[600],
+    color: k.textMuted,
     marginBottom: 8,
     marginLeft: 4,
   },
   input: {
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     borderWidth: 1.5,
-    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
+    borderColor: k.border,
     borderRadius: 16,
     padding: 16,
     fontSize: 16,
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
     fontWeight: '600',
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
     marginTop: 8,
     marginBottom: 16,
   },
@@ -373,9 +375,9 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     borderWidth: 1.5,
-    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
+    borderColor: k.border,
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 10,
@@ -392,12 +394,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
     padding: 0,
   },
   unit: {
     fontSize: 12,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     fontWeight: '600',
   },
   dateTag: {
@@ -406,12 +408,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   },
   dateTagText: {
     fontSize: 13,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     fontWeight: '500',
     fontStyle: 'italic',
   },
   saveBtn: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     flexDirection: 'row',
     height: 64,
     borderRadius: 20,
@@ -419,17 +421,17 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
     gap: 12,
     marginBottom: 32,
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
   saveBtnDisabled: {
-    backgroundColor: isDark ? Colors.dark.gray[300] : Colors.light.gray[300],
+    backgroundColor: k.textFaint,
   },
   saveBtnText: {
-    color: Colors.light.white,
+    color: k.surface,
     fontSize: 18,
     fontWeight: '800',
   },

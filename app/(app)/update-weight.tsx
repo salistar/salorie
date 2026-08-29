@@ -11,13 +11,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ArrowLeft, Check, Scale } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
-import { Colors } from '../../constants/Colors';
 import { RulerPicker } from 'react-native-ruler-picker';
 import { useUser } from '@clerk/clerk-expo';
 import { saveUserToFirestore, addWeightLog } from '../../lib/firebase';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 const TXT: Record<string, {
   title: string;
@@ -61,13 +61,14 @@ export default function UpdateWeightScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
 
-  const pageBg = isDark ? '#0f1419' : Colors.light.white;
-  const cardBg = isDark ? Colors.dark.card : Colors.light.gray[50];
-  const primaryText = isDark ? '#fff' : Colors.light.gray[900];
-  const secondaryText = isDark ? '#9BA1A6' : Colors.light.gray[400];
+  const pageBg = isDark ? '#0f1419' : k.surface;
+  const cardBg = k.surfaceSunken;
+  const primaryText = isDark ? '#fff' : k.text;
+  const secondaryText = isDark ? '#9BA1A6' : k.textMuted;
 
   const { user } = useUser();
   const params = useLocalSearchParams();
@@ -114,7 +115,7 @@ export default function UpdateWeightScreen() {
       <View style={styles.content}>
         <Animated.View entering={FadeInDown.duration(800)} style={styles.pickerContainer}>
           <View style={[styles.iconContainer, isDark ? { backgroundColor: cardBg } : null]}>
-            <Scale size={32} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+            <Scale size={32} color={k.accent} />
           </View>
           
           <RulerPicker
@@ -127,7 +128,7 @@ export default function UpdateWeightScreen() {
             unit="kg"
             width={300}
             height={150}
-            indicatorColor={isDark ? Colors.dark.primary : Colors.light.primary}
+            indicatorColor={k.accent}
             valueTextStyle={StyleSheet.flatten([styles.rulerValueText, { color: primaryText }])}
             unitTextStyle={StyleSheet.flatten([styles.rulerUnitText, { color: secondaryText }])}
           />
@@ -141,10 +142,10 @@ export default function UpdateWeightScreen() {
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color={Colors.light.white} />
+            <ActivityIndicator color={k.surface} />
           ) : (
             <>
-              <Check size={24} color={Colors.light.white} strokeWidth={3} />
+              <Check size={24} color={k.surface} strokeWidth={3} />
               <Text style={styles.updateText}>{t.updateWeight}</Text>
             </>
           )}
@@ -156,10 +157,10 @@ export default function UpdateWeightScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
   },
   header: {
     flexDirection: 'row',
@@ -175,7 +176,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
   },
   titleSection: {
     paddingHorizontal: 24,
@@ -184,12 +185,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     letterSpacing: -1,
   },
   subtitle: {
     fontSize: 16,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     fontWeight: '600',
     marginTop: 4,
   },
@@ -215,12 +216,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   rulerValueText: {
     fontSize: 64,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   rulerUnitText: {
     fontSize: 20,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     marginTop: 10,
   },
   footer: {
@@ -228,27 +229,27 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     paddingBottom: 40,
   },
   updateBtn: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     height: 64,
     borderRadius: 24,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
   },
   disabledBtn: {
-    backgroundColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
+    backgroundColor: k.border,
     shadowOpacity: 0,
     elevation: 0,
   },
   updateText: {
     fontSize: 20,
     fontWeight: '800',
-    color: Colors.light.white,
+    color: k.surface,
   },
 });

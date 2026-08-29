@@ -22,7 +22,6 @@ import {
   Lightbulb,
   X
 } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { FormInput, SubmitBar } from '../../components/FormKit';
 import { useTheme } from '../../lib/ThemeContext';
@@ -42,6 +41,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 const { width, height } = Dimensions.get('window');
 
@@ -58,14 +58,15 @@ interface FeatureRequest {
 export default function FeatureRequestsScreen() {
   const { user } = useUser();
   const { colors, resolved } = useTheme();
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
-  const tPrimary = isDark ? '#fff' : Colors.light.gray[900];
-  const tMuted = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const cardBg = isDark ? '#161C23' : Colors.light.gray[50];
-  const cardBorder = isDark ? '#283241' : Colors.light.gray[100];
-  const upvoteBg = isDark ? '#0f1419' : Colors.light.white;
+  const styles = useMemo(() => makeStyles(k), [k]);
+  const tPrimary = isDark ? '#fff' : k.text;
+  const tMuted = isDark ? '#9BA1A6' : k.textMuted;
+  const cardBg = isDark ? '#161C23' : k.surfaceSunken;
+  const cardBorder = isDark ? '#283241' : k.border;
+  const upvoteBg = isDark ? '#0f1419' : k.surface;
   const FL = ({
     en: { board: 'Feature Board', shape: 'Shape the Future', vote: 'Vote for features you want to see or suggest your own.', empty: 'No requests yet. Be the first!', by: 'by', newTitle: 'New idea', fTitle: 'Title', fTitlePh: "What's your idea?", fDesc: 'Description', fDescPh: 'How would it work?', submit: 'Submit Request', okTitle: 'Thank you!', okMsg: 'Your idea was added. The community can now upvote it.' },
     fr: { board: 'Idées & votes', shape: 'Façonnez le futur', vote: 'Votez pour les fonctionnalités souhaitées ou proposez les vôtres.', empty: "Aucune demande pour l'instant. Soyez le premier !", by: 'par', newTitle: 'Nouvelle idée', fTitle: 'Titre', fTitlePh: 'Quelle est votre idée ?', fDesc: 'Description', fDescPh: 'Comment ça marcherait ?', submit: 'Envoyer la demande', okTitle: 'Merci !', okMsg: 'Votre idée a été ajoutée. La communauté peut maintenant voter pour elle.' },
@@ -187,7 +188,7 @@ export default function FeatureRequestsScreen() {
           ]}
           onPress={() => toggleUpvote(item.id, item.upvotes)}
         >
-          {hasUpvoted ? <ArrowBigUpDash size={28} color={Colors.light.white} /> : <ArrowBigUp size={28} color={colors.primary} />}
+          {hasUpvoted ? <ArrowBigUpDash size={28} color={k.surface} /> : <ArrowBigUp size={28} color={colors.primary} />}
           <Text style={[styles.upvoteCount, { color: colors.primary }, hasUpvoted && styles.upvoteCountActive]}>{item.upvotes.length}</Text>
         </TouchableOpacity>
       </Animated.View>
@@ -195,7 +196,7 @@ export default function FeatureRequestsScreen() {
   };
 
   return (
-    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: resolved === 'dark' ? '#0f1419' : Colors.light.white }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: resolved === 'dark' ? '#0f1419' : k.surface }]}>
       <ScreenTopBar showBack title={FL.board} showBrand={false} showNotif={false} />
 
       <View style={styles.topInfo}>
@@ -215,7 +216,7 @@ export default function FeatureRequestsScreen() {
           
           {requests.length === 0 && (
             <View style={styles.emptyState}>
-              <Lightbulb size={48} color={isDark ? '#283241' : Colors.light.gray[200]} />
+              <Lightbulb size={48} color={isDark ? '#283241' : k.border} />
               <Text style={[styles.emptyText, { color: tMuted }]}>{FL.empty}</Text>
             </View>
           )}
@@ -231,7 +232,7 @@ export default function FeatureRequestsScreen() {
         ]}
         onPress={() => setIsModalVisible(true)}
       >
-        <Plus color={Colors.light.white} size={32} />
+        <Plus color={k.surface} size={32} />
       </TouchableOpacity>
 
       {/* Add Feature Modal */}
@@ -242,11 +243,11 @@ export default function FeatureRequestsScreen() {
         onRequestClose={() => setIsModalVisible(false)}
       >
         <View style={[styles.modalOverlay, directionAuto()]}>
-          <Animated.View entering={FadeInUp.duration(400)} style={[styles.modalContent, { backgroundColor: isDark ? '#161C23' : Colors.light.white }]}>
+          <Animated.View entering={FadeInUp.duration(400)} style={[styles.modalContent, { backgroundColor: isDark ? '#161C23' : k.surface }]}>
             <View style={[styles.modalHeader, { flexDirection: rowDir(isRTL) }]}>
               <Text style={[styles.modalTitle, { color: tPrimary }]}>{FL.newTitle}</Text>
               <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={() => setIsModalVisible(false)}>
-                <X size={24} color={isDark ? '#9BA1A6' : Colors.light.gray[400]} />
+                <X size={24} color={isDark ? '#9BA1A6' : k.textMuted} />
               </TouchableOpacity>
             </View>
 
@@ -281,10 +282,10 @@ export default function FeatureRequestsScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
   },
   header: {
     flexDirection: 'row',
@@ -297,14 +298,14 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   topInfo: {
     padding: 24,
@@ -313,12 +314,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     letterSpacing: -1,
   },
   subtitle: {
     fontSize: 16,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     fontWeight: '500',
     marginTop: 8,
     lineHeight: 22,
@@ -334,12 +335,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     borderRadius: 28,
     padding: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderColor: k.border,
   },
   cardMain: {
     flex: 1,
@@ -347,12 +348,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     marginBottom: 8,
   },
   cardDesc: {
     fontSize: 14,
-    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
+    color: k.textMuted,
     lineHeight: 20,
     fontWeight: '500',
   },
@@ -361,32 +362,32 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   },
   authorText: {
     fontSize: 12,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     fontWeight: '600',
   },
   upvoteSection: {
     width: 60,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 12,
     marginLeft: 16,
     borderWidth: 1,
-    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderColor: k.border,
   },
   upvoteActive: {
-    backgroundColor: Colors.light.primary,
-    borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
+    backgroundColor: k.accent,
+    borderColor: k.accent,
   },
   upvoteCount: {
     fontSize: 16,
     fontWeight: '900',
-    color: isDark ? Colors.dark.primary : Colors.light.primary,
+    color: k.accent,
     marginTop: 4,
   },
   upvoteCountActive: {
-    color: Colors.light.white,
+    color: k.surface,
   },
   fab: {
     position: 'absolute',
@@ -395,10 +396,10 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 15,
@@ -410,7 +411,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: isDark ? Colors.dark.gray[300] : Colors.light.gray[300],
+    color: k.textFaint,
     fontWeight: '600',
     marginTop: 16,
   },
@@ -420,7 +421,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
     padding: 24,
@@ -435,7 +436,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   modalBody: {
     gap: 2,
@@ -443,25 +444,25 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     marginLeft: 4,
   },
   input: {
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     borderRadius: 20,
     padding: 18,
     fontSize: 16,
     fontWeight: '600',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     borderWidth: 1.5,
-    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderColor: k.border,
   },
   textArea: {
     height: 120,
     textAlignVertical: 'top',
   },
   submitBtn: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     height: 60,
     borderRadius: 24,
     flexDirection: 'row',
@@ -473,6 +474,6 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   submitBtnText: {
     fontSize: 18,
     fontWeight: '800',
-    color: Colors.light.white,
+    color: k.surface,
   },
 });

@@ -2,7 +2,7 @@
 // nutrition the user enters + a product photo + a barcode photo to the shared
 // custom_products collection, so the next scan of this barcode resolves instantly.
 import React, { useRef, useState, useMemo } from 'react';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -22,7 +22,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { Camera, ScanBarcode } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { FormCard, FormInput, Stepper, SubmitBar } from '../../components/FormKit';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { txtAlign } from '../../lib/rtl';
@@ -74,13 +73,14 @@ const TXT: any = {
 };
 
 export default function RegisterProductScreen() {
+  const k = useTokens();
   const { code } = useLocalSearchParams<{ code: string }>();
   const barcode = String(code || '');
   const { user } = useUser();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const tx = TXT[language] || TXT.en;
   const newProductTitle = tx.title;
   const [permission, requestPermission] = useCameraPermissions();
@@ -97,9 +97,9 @@ export default function RegisterProductScreen() {
   const [saving, setSaving] = useState(false);
   const camRef = useRef<CameraView>(null);
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const bg = isDark ? '#0f1419' : 'transparent';
   const tok = useTokens();
   const inputBg = tok.surfaceSunken;
@@ -210,11 +210,11 @@ export default function RegisterProductScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 60 },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
-  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] },
+  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: k.surfaceSunken },
   title: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5 },
   codeLine: { fontSize: 13, fontWeight: '700', marginTop: 10, marginBottom: 16 },
   photoRow: { flexDirection: 'row', gap: 12, marginBottom: 18 },

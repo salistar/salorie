@@ -137,6 +137,7 @@ async function buildContext(goals: any, consumed: any): Promise<string> {
 }
 
 export default function AiCoachScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('ai-coach');
   const data: any = useNutritionData(new Date().toISOString().split('T')[0]);
   const { colors, resolved } = useTheme();

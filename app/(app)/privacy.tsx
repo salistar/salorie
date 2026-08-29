@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -13,7 +13,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ShieldCheck, Fingerprint, Trash2 } from 'lucide-react-native';
 import { useUser, useAuth } from '@clerk/clerk-expo';
-import { Colors } from '../../constants/Colors';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -158,10 +157,11 @@ const TXT = {
 };
 
 export default function PrivacyScreen() {
+  const k = useTokens();
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const tx = TXT[language as keyof typeof TXT] ?? TXT.en;
   const { user } = useUser();
   const { signOut } = useAuth();
@@ -195,11 +195,11 @@ export default function PrivacyScreen() {
 
   const tok = useTokens();
   const bg = tok.bg;
-  const tPrimary = isDark ? '#fff' : Colors.light.gray[900];
-  const tMuted = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const infoBoxBg = isDark ? Colors.dark.primaryLight : '#ECFDF5';
+  const tPrimary = isDark ? '#fff' : k.text;
+  const tMuted = isDark ? '#9BA1A6' : k.textMuted;
+  const infoBoxBg = isDark ? k.accentSoft : '#ECFDF5';
   const infoBoxBorder = isDark ? '#283241' : '#D1FAE5';
-  const infoBoxText = isDark ? Colors.dark.primaryDark : '#065F46';
+  const infoBoxText = isDark ? k.accentStrong : '#065F46';
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
       <ScreenTopBar showBack title={tx.title} showBrand={false} showNotif={false} />
@@ -282,10 +282,10 @@ export default function PrivacyScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
   },
   header: {
     flexDirection: 'row',
@@ -298,14 +298,14 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   content: {
     padding: 24,
@@ -319,12 +319,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     textAlign: 'center',
   },
   date: {
     fontSize: 14,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     textAlign: 'center',
     marginBottom: 32,
     fontWeight: '600',
@@ -350,13 +350,13 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   subTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
     marginTop: 24,
     marginBottom: 10,
   },
   paragraph: {
     fontSize: 16,
-    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
+    color: k.textMuted,
     lineHeight: 24,
     fontWeight: '500',
   },

@@ -18,7 +18,6 @@ import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, Users, Home, LogIn, Share2, UserPlus, Target } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useFormTheme } from '../../components/FormKit';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign } from '../../lib/rtl';
@@ -33,6 +32,7 @@ import {
   familyWeeklyKm,
 } from '../../lib/family';
 
+import { useTokens, Tokens } from '../../constants/tokens';
 type Lang = 'en' | 'fr' | 'ar';
 
 // Chaînes LOCALES trilingues (convention : pas de clés i18n.tsx pour les NOUVELLES strings).
@@ -99,10 +99,11 @@ const ROLE_COLOR: Record<FamilyRole, string> = {
 export default function FamilyScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const lang: Lang = (['en', 'fr', 'ar'].includes(language) ? language : 'en') as Lang;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const th = useFormTheme();
 
   const email = user?.primaryEmailAddress?.emailAddress || '';
@@ -122,9 +123,9 @@ export default function FamilyScreen() {
   const [memberRole, setMemberRole] = useState<FamilyRole>('enfant');
   const [addingMember, setAddingMember] = useState(false);
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const bg = isDark ? '#0f1419' : 'transparent';
 
   const refreshWeekly = useCallback(async (fam: Family) => {
@@ -222,20 +223,20 @@ export default function FamilyScreen() {
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.topRow}>
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backBtn, { backgroundColor: isDark ? 'rgba(40,50,60,0.6)' : Colors.light.gray[50] }]} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backBtn, { backgroundColor: isDark ? 'rgba(40,50,60,0.6)' : k.surfaceSunken }]} onPress={() => router.back()}>
             <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ArrowLeft size={22} color={text} /></View>
           </TouchableOpacity>
           <View style={{ flex: 1 }}><ScreenTopBar showBrand={false} showNotif={false} /></View>
         </View>
 
         <View style={[styles.titleRow, { flexDirection: rowDir(isRTL) }]}>
-          <Users size={26} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+          <Users size={26} color={k.accent} />
           <Text style={[styles.title, { color: text }]}>{S.title[lang]}</Text>
         </View>
         <Text style={[styles.subtitle, { color: sub, textAlign: txtAlign(isRTL) }]}>{S.subtitle[lang]}</Text>
 
         {loading ? (
-          <View style={styles.loadingBox}><ActivityIndicator size="large" color={isDark ? Colors.dark.primary : Colors.light.primary} /></View>
+          <View style={styles.loadingBox}><ActivityIndicator size="large" color={k.accent} /></View>
         ) : !family ? (
           // ============ EMPTY STATE : créer ou rejoindre ============
           <View>
@@ -246,7 +247,7 @@ export default function FamilyScreen() {
             {/* Créer */}
             <View style={[styles.cardBlock, { backgroundColor: card }]}>
               <View style={[styles.blockHead, { flexDirection: rowDir(isRTL) }]}>
-                <Home size={18} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+                <Home size={18} color={k.accent} />
                 <Text style={[styles.blockTitle, { color: text }]}>{S.createTitle[lang]}</Text>
               </View>
               <TextInput
@@ -271,7 +272,7 @@ export default function FamilyScreen() {
             {/* Rejoindre */}
             <View style={[styles.cardBlock, { backgroundColor: card }]}>
               <View style={[styles.blockHead, { flexDirection: rowDir(isRTL) }]}>
-                <LogIn size={18} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+                <LogIn size={18} color={k.accent} />
                 <Text style={[styles.blockTitle, { color: text }]}>{S.joinTitle[lang]}</Text>
               </View>
               <TextInput
@@ -303,7 +304,7 @@ export default function FamilyScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.familyName, { color: text, textAlign: txtAlign(isRTL) }]} numberOfLines={1}>{family.name}</Text>
                 <Text style={[styles.familyCode, { color: sub, textAlign: txtAlign(isRTL) }]}>
-                  {S.inviteCode[lang]}: <Text style={{ color: isDark ? Colors.dark.primary : Colors.light.primary, fontWeight: '900' }}>{family.code}</Text>
+                  {S.inviteCode[lang]}: <Text style={{ color: k.accent, fontWeight: '900' }}>{family.code}</Text>
                 </Text>
               </View>
               <TouchableOpacity style={[styles.inviteBtn, { flexDirection: rowDir(isRTL) }]} onPress={onShareInvite}>
@@ -315,7 +316,7 @@ export default function FamilyScreen() {
             {/* Défi familial — barre cumulée */}
             <View style={[styles.cardBlock, { backgroundColor: card }]}>
               <View style={[styles.blockHead, { flexDirection: rowDir(isRTL) }]}>
-                <Target size={18} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+                <Target size={18} color={k.accent} />
                 <Text style={[styles.blockTitle, { color: text }]}>{S.challengeTitle[lang]}</Text>
               </View>
               <Text style={[styles.challengeSub, { color: sub, textAlign: txtAlign(isRTL) }]}>{S.challengeSub[lang]}</Text>
@@ -323,8 +324,8 @@ export default function FamilyScreen() {
                 <Text style={[styles.bigKm, { color: text }]}>{weekly.totalKm}</Text>
                 <Text style={[styles.bigKmUnit, { color: sub }]}> / {WEEKLY_GOAL_KM} {S.km[lang]}</Text>
               </View>
-              <View style={[styles.progressTrack, { backgroundColor: isDark ? '#222' : Colors.light.gray[100] }]}>
-                <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: goalReached ? '#22C55E' : Colors.light.primary }]} />
+              <View style={[styles.progressTrack, { backgroundColor: isDark ? '#222' : k.border }]}>
+                <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: goalReached ? '#22C55E' : k.accent }]} />
               </View>
               {goalReached && <Text style={[styles.reachedTxt, { textAlign: txtAlign(isRTL) }]}>{S.reached[lang]}</Text>}
 
@@ -340,7 +341,7 @@ export default function FamilyScreen() {
                         </Text>
                         <Text style={[styles.memberKmVal, { color: sub }]}>{r.km} {S.km[lang]}</Text>
                       </View>
-                      <View style={[styles.progressTrackSm, { backgroundColor: isDark ? '#222' : Colors.light.gray[100] }]}>
+                      <View style={[styles.progressTrackSm, { backgroundColor: isDark ? '#222' : k.border }]}>
                         <View style={[styles.progressFill, { width: `${share * 100}%`, backgroundColor: ROLE_COLOR[r.role] }]} />
                       </View>
                     </View>
@@ -352,12 +353,12 @@ export default function FamilyScreen() {
             {/* Membres */}
             <View style={[styles.cardBlock, { backgroundColor: card }]}>
               <View style={[styles.blockHead, { flexDirection: rowDir(isRTL) }]}>
-                <Users size={18} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+                <Users size={18} color={k.accent} />
                 <Text style={[styles.blockTitle, { color: text }]}>{S.members[lang]} ({family.members.length})</Text>
               </View>
               {family.members.map((m) => (
                 <View key={m.uid} style={[styles.memberRow, { flexDirection: rowDir(isRTL) }]}>
-                  <View style={[styles.memberAvatar, { backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight }]}>
+                  <View style={[styles.memberAvatar, { backgroundColor: k.accentSoft }]}>
                     <Text style={styles.memberAvatarTxt}>{(m.name || '?').charAt(0).toUpperCase()}</Text>
                   </View>
                   <Text style={[styles.memberName, { color: text, textAlign: txtAlign(isRTL) }]} numberOfLines={1}>{m.name}</Text>
@@ -408,7 +409,7 @@ export default function FamilyScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 80 },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -426,7 +427,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   blockTitle: { fontSize: 16, fontWeight: '800' },
 
   input: { height: 50, borderRadius: 14, paddingHorizontal: 16, fontSize: 15, fontWeight: '600', borderWidth: 1.5, marginBottom: 12 },
-  primaryBtn: { backgroundColor: Colors.light.primary, height: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  primaryBtn: { backgroundColor: k.accent, height: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   btnInner: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   primaryBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
   orTxt: { textAlign: 'center', fontSize: 13, fontWeight: '700', marginVertical: 6, textTransform: 'uppercase', letterSpacing: 1 },
@@ -435,7 +436,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   familyHeader: { alignItems: 'center', gap: 12, borderRadius: 18, padding: 16, marginBottom: 14 },
   familyName: { fontSize: 20, fontWeight: '900' },
   familyCode: { fontSize: 13, marginTop: 4, fontWeight: '600' },
-  inviteBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.light.primary, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 14 },
+  inviteBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: k.accent, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 14 },
   inviteBtnTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
 
   challengeSub: { fontSize: 13, marginBottom: 10, lineHeight: 18 },
@@ -452,7 +453,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
 
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
   memberAvatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  memberAvatarTxt: { fontSize: 17, fontWeight: '800', color: isDark ? Colors.dark.primary : Colors.light.primary },
+  memberAvatarTxt: { fontSize: 17, fontWeight: '800', color: k.accent },
   memberName: { fontSize: 15, fontWeight: '700', flex: 1 },
   roleBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
   roleBadgeTxt: { fontSize: 12, fontWeight: '800' },

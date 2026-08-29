@@ -6,7 +6,6 @@ import { useEffect, useMemo, useRef, useState, Component, type ErrorInfo } from 
 import { ActivityIndicator, View, Text, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CONFIG } from '../constants/config';
-import { Colors } from '../constants/Colors';
 import {
   getUserFromFirestore,
   saveUserToFirestore,
@@ -64,6 +63,7 @@ import ActionMenu from '../components/ActionMenu';
 import SplashIntro from '../components/SplashIntro';
 import AttenteConnexion from '../components/AttenteConnexion';
 import * as SplashScreen from 'expo-splash-screen';
+import { useTokens, Tokens } from '../constants/tokens';
 
 const tokenCache = {
   async getToken(key: string) {
@@ -152,6 +152,7 @@ function InitialLayout() {
   const router = useRouter();
   const rootNavState = useRootNavigationState();
   const { resolved } = useTheme();
+  const k = useTokens();
   const { language, setLanguage, isRTL } = useTranslation();
   // Single source of truth for routing. `not-onboarded` is NEVER set without
   // an explicit confirmation from Firebase — this prevents the brief flash of
@@ -646,7 +647,7 @@ function InitialLayout() {
   // onboarding, et les ecrans sont transparents le temps de la resolution.
   const showLoading = false;
 
-  const bgColor = resolved === 'dark' ? '#000000' : Colors.light.white;
+  const bgColor = resolved === 'dark' ? '#000000' : k.surface;
 
   // FIX DÉFINITIF boucle d'amplification (« Maximum update depth ») : InitialLayout est
   // abonné à useSegments + useRootNavigationState → il re-rend à CHAQUE tick du store de
@@ -681,7 +682,7 @@ function InitialLayout() {
           top: 0, left: 0, right: 0, bottom: 0,
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: Colors.light.primary,
+          backgroundColor: k.accent,
           zIndex: 9999,
           gap: 20,
         }}>

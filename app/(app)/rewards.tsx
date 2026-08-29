@@ -58,6 +58,7 @@ const TXT: any = {
 const CAT_ICON: Record<Reward['category'], any> = { cafe: Coffee, gym: Dumbbell, grocery: ShoppingBasket };
 
 export default function Rewards() {
+  const k = useTokens();
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
