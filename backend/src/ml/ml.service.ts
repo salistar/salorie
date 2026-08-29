@@ -638,31 +638,25 @@ export class MlService {
     // et on retombe naturellement sur Cloudflare/Groq/Ollama/Gemini (plats hors Food-101,
     // notamment MENA, qui obtiennent une confiance basse et ne déclenchent donc PAS le tier-0).
     const tryFood4k = async (): Promise<{ text: string; engine: string } | null> => {
-      // ⚠ TIER-0 DESACTIVE PAR DEFAUT DEPUIS LE 29/08/2026 — LE MODELE NE RECONNAIT RIEN.
+      // #150 kill-switch : FOOD4K_ENABLED=false court-circuite tout le tier-0
+      // (retour null → la cascade continue normalement). Défaut 'true'.
       //
-      // Mesure sur Food-101 (1 414 photos, le jeu de reference du domaine, dont
-      // les 101 classes font partie des 172 de ce modele) : 0 bonne reponse sur
-      // 74. Et il repond avec une confiance de 0,90 a 0,99 — donc il court-circuite
-      // TOUTE la cascade en dessous, et une fiche nutritionnelle fausse entre dans
-      // le journal de l'utilisateur comme une donnee mesuree.
+      // ⚠ CE PALIER A ETE DEBRANCHE A TORT LE 29/08/2026, PUIS REMIS.
+      // Un banc de mesure maison avait conclu « 0 bonne reponse sur 74 ». Son
+      // corpus DEDUISAIT l'etiquette de chaque photo de sa position dans le jeu
+      // de donnees au lieu de LIRE le champ `label` fourni a cote. L'hypothese
+      // — « trie par classe, 250 par classe » — etait fausse : la photo comptee
+      // comme « pizza » etait un plat de nachos, et le classifieur qui repondait
+      // « Nachos » avait raison.
       //
-      // Trois causes ont ete ecartees, mesures a l'appui (food4k/diagnostic_pretraitement.py) :
-      //   - les etiquettes : identiques et dans le meme ordre cote serveur et
-      //     cote telephone (172/172) ;
-      //   - le pretraitement : dix variantes essayees (brut, /255, [-1,1],
-      //     ImageNet, BGR, recadrage centre) — 0/60 pour CHACUNE ;
-      //   - le fichier : empreinte identique a la copie du telephone, non corrompu.
-      // Le modele lui-meme ne discrimine pas.
+      // Mesure refaite avec les vraies etiquettes (food4k/valider_modele.py) :
+      //   justesse globale                57,4 %
+      //   justesse de ce qui est SERVI    71,9 %  (46 sur 64)
+      // Le palier tient largement sa place en tete de cascade.
       //
-      // D'ou venait la confiance placee en lui : le commentaire d'origine de
-      // food4k/app.py citait « 41/50 (82%) » — c'etait le nombre de reponses
-      // AU-DESSUS DU SEUIL DE CONFIANCE, pas le nombre de reponses JUSTES. La
-      // mesure qui a justifie son adoption ne verifiait pas qu'il avait raison.
-      //
-      // Pour le reactiver : faire passer un modele candidat par
-      // `python food4k/valider_modele.py`, qui exige un taux minimal reel, puis
-      // poser FOOD4K_ENABLED=true.
-      if (process.env.FOOD4K_ENABLED !== 'true') return null;
+      // La lecon vaut plus que l'incident : une mesure qui deduit sa verite au
+      // lieu de la lire n'evalue pas le systeme, elle evalue son propre calcul.
+      if (process.env.FOOD4K_ENABLED === 'false') return null;
       const url = process.env.FOOD4K_URL;
       if (!url) return null;
       const minConf = parseFloat(process.env.FOOD4K_MIN_CONF || '0.6');

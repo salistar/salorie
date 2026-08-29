@@ -391,11 +391,12 @@ export default function ScanAnalysisScreen() {
             // MOBILE forcé = 100% ON-DEVICE : on rend TOUJOURS le résultat local,
             // JAMAIS de bascule cloud (exigence utilisateur).
             if (forceModel === 'device') {
-              // ⚠ ON NE NOMME PLUS L'ALIMENT QUAND LE MODELE N'EST PAS FIABLE.
-              // Le choix « MOBILE » de l'utilisateur est respecte — aucun appel
-              // cloud, comme promis. Mais lui rendre « Lasagna » devant un beignet
-              // est pire que lui rendre « Aliment » : il enregistre du faux en
-              // croyant enregistrer du mesure. La saisie manuelle reste ouverte.
+              // ⚠ SI LE MODELE EST DECLARE NON FIABLE, ON NE NOMME PAS L'ALIMENT.
+              // Le choix « MOBILE » de l'utilisateur reste respecte — aucun appel
+              // cloud, comme promis. Mais rendre un nom tire d'un classifieur
+              // qu'on sait faux ferait enregistrer du faux en croyant enregistrer
+              // du mesure. Aujourd'hui le drapeau est a `true` (72 % de justesse
+              // sur ce qui est servi) : ce chemin ne se declenche pas.
               const m = (MODELE_ON_DEVICE_FIABLE && macro && macro.kcal > 0)
                 ? macro
                 : { name: MODELE_ON_DEVICE_FIABLE ? (top.label.replace(/_/g, ' ') || 'Aliment') : 'Aliment', kcal: 0, protein: 0, carbs: 0, fat: 0 };
@@ -407,13 +408,16 @@ export default function ScanAnalysisScreen() {
             }
             // Cascade auto : on-device si confiant, sinon cloud.
             //
-            // ⚠ LE SEUIL NE SUFFIT PAS QUAND LA CONFIANCE MENT.
-            // Mesure du 29/08/2026 : ce modele donne 0 bonne reponse sur 74 plats
-            // Food-101 en annoncant 0,90 a 0,99. Un seuil a 0,85 le laissait donc
-            // passer PRESQUE TOUJOURS, et c'est justement quand il se trompe qu'il
-            // est le plus sur de lui. Tant que `MODELE_ON_DEVICE_FIABLE` est faux,
-            // on descend a la vision cloud, qui est le palier suivant de la cascade
-            // voulue : telephone -> serveur -> Cloudflare -> les autres fournisseurs.
+            // Le seuil de 0,85 est haut exprès. Mesure du 29/08/2026 sur les
+            // 101 plats de Food-101 : le classifieur embarque est juste a 57 %
+            // dans l'absolu, mais a 72 % sur les seules reponses qu'il rend
+            // au-dessus du seuil. C'est ce que le seuil achete — il echange de
+            // la couverture contre de la justesse, et laisse le reste descendre
+            // vers le cloud.
+            //
+            // `MODELE_ON_DEVICE_FIABLE` (lib/onDeviceVision.ts) permet de couper
+            // ce raccourci d'un seul endroit si un futur modele se degrade ;
+            // `food4k/valider_modele.py` dit quand il le faut.
             if (MODELE_ON_DEVICE_FIABLE && top.score >= 0.85 && macro && macro.kcal > 0) {
               explain('Cascade auto : on-device confiant (≥85%), aucun appel cloud');
               finishWith({ name: macro.name, description: '', calories: Math.round(macro.kcal), protein: macro.protein, carbs: macro.carbs, fat: macro.fat, quantity: 100, unit: 'g', serving: '100 g' }, 'device');
