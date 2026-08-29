@@ -21,7 +21,8 @@
     "deploy:phone:clean": "powershell -ExecutionPolicy Bypass -File ./deploy-to-phone.ps1 -Clean",
     "sync:medals": "node scripts/sync-medal-frames.js",
     "test": "jest",
-    "sync:partage": "node scripts/sync-partage.mjs"
+    "sync:partage": "node scripts/sync-partage.mjs",
+    "test:regles": "npx -y firebase-tools@13.35.1 emulators:exec --only firestore --project salorie-regles \"node tests/regles-firestore.js\""
   },
   "dependencies": {
     "@clerk/clerk-expo": "^2.19.31",
@@ -89,6 +90,7 @@
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@testing-library/react-native": "^13.3.3",
     "@types/jest": "^29.5.14",
     "@types/react": "~19.1.10",
