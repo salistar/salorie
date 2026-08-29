@@ -79,6 +79,19 @@ jobs:
         # consigne d'audit demandait explicitement de ne pas tout refactoriser.
         run: node scripts/couleurs-en-dur.js
 
+      - name: Aucun jeton fige, aucun crochet dans une classe
+        # Deux defauts que ni TypeScript ni les tests ne voient :
+        #  · un jeton lu dans un StyleSheet evalue a l importation garde la
+        #    valeur du theme par defaut A VIE, sans qu aucune erreur ne le dise ;
+        #  · un crochet React pose dans une methode de classe compile, puis
+        #    plante a l execution — celui-ci avait atterri dans l ErrorBoundary,
+        #    donc au moment precis ou une autre erreur venait de survenir.
+        # Les deux ont ete trouves a la main pendant la migration des themes.
+        run: node scripts/verifier-jetons.js
+
+      - name: Le compteur de couleurs en dur ne remonte pas
+        run: node scripts/couleurs-en-dur.js
+
       - name: Aucune image hors manifeste
         run: node scripts/manifeste-images.js --verifier
 
