@@ -110,7 +110,11 @@ const tmpHtml = path.join(path.dirname(OUT), '.audit-tmp.html');
 fs.writeFileSync(tmpHtml, page, 'utf8');
 
 (async () => {
-  const { chromium } = require('playwright');
+  // Playwright n'existe que dans `web/` : ce script vit a la racine et ne
+  // justifie pas une seconde copie de 300 Mo.
+  const { chromium } = require(require.resolve('playwright', {
+    paths: [path.join(__dirname, '..', 'web')],
+  }));
   const nav = await chromium.launch();
   const p = await nav.newPage();
   await p.goto('file:///' + tmpHtml.replace(/\\/g, '/'), { waitUntil: 'load' });
