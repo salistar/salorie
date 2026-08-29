@@ -134,7 +134,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   title: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5 },
   empty: { fontSize: 14, lineHeight: 20, marginTop: 30, textAlign: 'center' },
-  planCard: { borderRadius: 18, padding: 16, marginTop: 14, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
+  planCard: { borderRadius: 18, padding: 16, marginTop: 14, shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
   planHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   planDate: { fontSize: 15, fontWeight: '800' },
   planTotals: { fontSize: 13, fontWeight: '700', marginTop: 3 },

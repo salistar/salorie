@@ -238,7 +238,7 @@ export default function SocialScreen() {
             onSubmitEditing={onAdd}
           />
           <TouchableOpacity style={styles.addBtn} onPress={onAdd} disabled={adding}>
-            {adding ? <ActivityIndicator size="small" color="#fff" /> : <><UserPlus size={18} color="#fff" /><Text style={styles.addBtnText}>{t('social.add')}</Text></>}
+            {adding ? <ActivityIndicator size="small" color={k.onAccent} /> : <><UserPlus size={18} color={k.onAccent} /><Text style={styles.addBtnText}>{t('social.add')}</Text></>}
           </TouchableOpacity>
         </View>
         {!!msg && <Text style={[styles.msg, { color: sub }]}>{msg}</Text>}
@@ -271,7 +271,7 @@ export default function SocialScreen() {
                   <Text style={[styles.daysTracked, { color: sub }]}>{r.daysTracked} {t('coach.days_tracked')}</Text>
                 </View>
                 <View style={styles.streakWrap}>
-                  <Flame size={18} color="#f59e0b" />
+                  <Flame size={18} color={k.warning} />
                   <Text style={[styles.streakNum, { color: text }]}>{r.streak}</Text>
                 </View>
               </View>
@@ -356,7 +356,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   addRow: { flexDirection: 'row', gap: 10 },
   input: { flex: 1, height: 50, borderRadius: 14, paddingHorizontal: 16, fontSize: 15, fontWeight: '600' },
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: k.accent, paddingHorizontal: 18, borderRadius: 14, justifyContent: 'center' },
-  addBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  addBtnText: { color: k.onAccent, fontWeight: '800', fontSize: 15 },
   msg: { fontSize: 13, marginTop: 8, fontWeight: '600' },
   code: { fontSize: 12, marginTop: 10, marginBottom: 18, lineHeight: 17 },
   loadingBox: { paddingVertical: 50, alignItems: 'center' },
@@ -364,7 +364,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   emptySub: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, padding: 12, marginBottom: 10 },
   rowMe: { borderWidth: 2, borderColor: k.accent },
-  rank: { width: 30, textAlign: 'center', fontSize: 18, fontWeight: '900', color: '#64748B' },
+  rank: { width: 30, textAlign: 'center', fontSize: 18, fontWeight: '900', color: k.textMuted },
   avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: k.border },
   avatarPh: { alignItems: 'center', justifyContent: 'center', backgroundColor: k.accentSoft },
   avatarTxt: { fontSize: 18, fontWeight: '800', color: k.accent },

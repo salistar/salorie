@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../lib/ThemeContext';
 import { radius, spacing, type } from '../../constants/theme';
 
+import { useTokens } from '../../constants/tokens';
 type Size = 'sm' | 'md';
 interface Props {
   title: string;
@@ -27,6 +28,7 @@ function haptic() {
 }
 
 export function PrimaryButton({ title, onPress, icon, size = 'md', disabled, loading, full = true, style }: Props) {
+  const k = useTokens();
   const { colors } = useTheme();
   return (
     <Pressable
@@ -38,8 +40,8 @@ export function PrimaryButton({ title, onPress, icon, size = 'md', disabled, loa
         opacity: disabled ? 0.5 : pressed ? 0.88 : 1,
       }, style as any]}
     >
-      {loading ? <ActivityIndicator color="#fff" size="small" /> : icon}
-      <Text style={{ ...(type.cardTitle as TextStyle), color: '#fff', fontSize: size === 'sm' ? 14 : 15.5 }} numberOfLines={1} adjustsFontSizeToFit>
+      {loading ? <ActivityIndicator color={k.onAccent} size="small" /> : icon}
+      <Text style={{ ...(type.cardTitle as TextStyle), color: k.onAccent, fontSize: size === 'sm' ? 14 : 15.5 }} numberOfLines={1} adjustsFontSizeToFit>
         {title}
       </Text>
     </Pressable>

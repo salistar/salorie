@@ -158,8 +158,8 @@ export default function ShoppingListScreen() {
         </TouchableOpacity>
 
         <View style={styles.addRow}>
-          <TextInput style={[styles.input, { backgroundColor: card, color: textCol, borderColor: k.border }, align]} placeholder={t.placeholder} placeholderTextColor={isDark ? '#64748b' : '#94A3B8'} value={text} onChangeText={setText} onSubmitEditing={add} returnKeyType="done" />
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('ajouter')} style={styles.addBtn} onPress={add}><Plus size={22} color="#fff" /></TouchableOpacity>
+          <TextInput style={[styles.input, { backgroundColor: card, color: textCol, borderColor: k.border }, align]} placeholder={t.placeholder} placeholderTextColor={isDark ? k.textMuted : k.textFaint} value={text} onChangeText={setText} onSubmitEditing={add} returnKeyType="done" />
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('ajouter')} style={styles.addBtn} onPress={add}><Plus size={22} color={k.onAccent} /></TouchableOpacity>
         </View>
 
         {affiches.length === 0 ? (
@@ -167,10 +167,10 @@ export default function ShoppingListScreen() {
         ) : affiches.map((i) => (
           <View key={i.id} style={[styles.item, { backgroundColor: card }]}>
             <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('valider')} style={[styles.check, i.done && styles.checkDone]} onPress={() => toggle(i.id)}>
-              {i.done && <Check size={16} color="#fff" />}
+              {i.done && <Check size={16} color={k.onAccent} />}
             </TouchableOpacity>
             <Text style={[styles.itemName, { color: textCol }, i.done && styles.itemDone]}>{i.name}</Text>
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} onPress={() => remove(i.id)} hitSlop={8}><Trash2 size={18} color={isDark ? '#475569' : '#CBD5E1'} /></TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} onPress={() => remove(i.id)} hitSlop={8}><Trash2 size={18} color={isDark ? k.textMuted : k.textFaint} /></TouchableOpacity>
           </View>
         ))}
 
@@ -184,21 +184,21 @@ export default function ShoppingListScreen() {
 // évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 26, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', marginBottom: 6 },
+  title: { fontSize: 26, fontWeight: '900', color: k.text, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: k.textMuted, marginBottom: 6 },
   etatRow: { alignItems: 'center', gap: 6, marginBottom: 16 },
   etatTxt: { fontSize: 12.5 },
   addRow: { flexDirection: 'row', gap: 10, marginBottom: 18 },
-  input: { flex: 1, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: '#0F172A', borderWidth: 1.5, borderColor: '#E2E8F0' },
+  input: { flex: 1, backgroundColor: k.surface, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: k.text, borderWidth: 1.5, borderColor: k.border },
   addBtn: { width: 52, height: 52, borderRadius: 14, backgroundColor: k.accent, alignItems: 'center', justifyContent: 'center' },
-  item: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 10 },
-  check: { width: 26, height: 26, borderRadius: 8, borderWidth: 2, borderColor: '#CBD5E1', alignItems: 'center', justifyContent: 'center' },
+  item: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: k.surface, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 10 },
+  check: { width: 26, height: 26, borderRadius: 8, borderWidth: 2, borderColor: k.borderStrong, alignItems: 'center', justifyContent: 'center' },
   checkDone: { backgroundColor: k.accent, borderColor: k.accent },
-  itemName: { flex: 1, fontSize: 15, fontWeight: '600', color: '#0F172A' },
-  itemDone: { textDecorationLine: 'line-through', color: '#94A3B8' },
+  itemName: { flex: 1, fontSize: 15, fontWeight: '600', color: k.text },
+  itemDone: { textDecorationLine: 'line-through', color: k.textFaint },
   clearBtn: { marginTop: 8, alignItems: 'center', paddingVertical: 12 },
-  clearTxt: { color: '#E11D48', fontWeight: '700', fontSize: 14 },
+  clearTxt: { color: k.danger, fontWeight: '700', fontSize: 14 },
 });

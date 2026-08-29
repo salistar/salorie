@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { useTokens } from '../constants/tokens';
+import { useTokens, type Tokens } from '../constants/tokens';
 import { useTranslation } from '../lib/i18n';
 
 /**
@@ -55,6 +55,7 @@ function ecart(m: number, langue: string): string {
 
 export default function CarteDuo({ moi, autre }: { moi: Point | null; autre: Point | null }) {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const tok = useTokens();
   const { language } = useTranslation() as any;
   const t = TXT[language] || TXT.fr;
@@ -75,10 +76,10 @@ function init(){
     center:moi, zoom:14, disableDefaultUI:true, gestureHandling:'greedy'});
   // Deux pastilles, pas des epingles d'adresse : on montre une presence, pas un lieu.
   new google.maps.Marker({position:moi,map:m,icon:{path:google.maps.SymbolPath.CIRCLE,
-    scale:8,fillColor:'#2e8b57',fillOpacity:1,strokeColor:'#fff',strokeWeight:2}});
+    scale:8,fillColor: k.accent,fillOpacity:1,strokeColor: k.onAccent,strokeWeight:2}});
   if(autre){
     new google.maps.Marker({position:autre,map:m,icon:{path:google.maps.SymbolPath.CIRCLE,
-      scale:8,fillColor:'#0ea5e9',fillOpacity:1,strokeColor:'#fff',strokeWeight:2}});
+      scale:8,fillColor: k.info,fillOpacity:1,strokeColor: k.onAccent,strokeWeight:2}});
     // Cadrer sur les DEUX : centrer sur soi laisserait l'autre hors de l'ecran
     // des qu'il s'eloigne un peu, et la carte perdrait tout son interet.
     var b2=new google.maps.LatLngBounds(); b2.extend(moi); b2.extend(autre);
@@ -116,9 +117,12 @@ function init(){
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   cadre: { marginTop: 12, borderRadius: 16, overflow: 'hidden', height: 220 },
   carte: { flex: 1, backgroundColor: '#e8eef0' },
   bandeau: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingVertical: 7, paddingHorizontal: 12 },
-  bandeauTxt: { color: '#fff', fontSize: 13, fontWeight: '700', textAlign: 'center' },
+  bandeauTxt: { color: k.onAccent, fontSize: 13, fontWeight: '700', textAlign: 'center' },
 });

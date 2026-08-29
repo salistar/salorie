@@ -187,7 +187,7 @@ export default function RemainingCaloriesCard({
 
           <View style={[styles.macroBox, { backgroundColor: macroBg }]}>
             <View style={[styles.macroIconCircle, { backgroundColor: macroIconBg }]}>
-              <Wheat size={22} color="#F59E0B" />
+              <Wheat size={22} color={k.warning} />
             </View>
             <Text style={[styles.macroValue, { color: valueColor }]}>{Math.max(0, carbsGoal - carbs)}g</Text>
             <Text style={[styles.macroName, { color: subColor }]}>{t('home.carbs_left')}</Text>
@@ -195,7 +195,7 @@ export default function RemainingCaloriesCard({
 
           <View style={[styles.macroBox, { backgroundColor: macroBg }]}>
             <View style={[styles.macroIconCircle, { backgroundColor: macroIconBg }]}>
-              <Droplets size={22} color="#0EA5E9" />
+              <Droplets size={22} color={k.info} />
             </View>
             <Text style={[styles.macroValue, { color: valueColor }]}>{Math.max(0, fatGoal - fat)}g</Text>
             <Text style={[styles.macroName, { color: subColor }]}>{t('home.fat_left')}</Text>
@@ -256,7 +256,7 @@ export default function RemainingCaloriesCard({
                     returnKeyType="done"
                     maxLength={5}
                     placeholder="2000"
-                    placeholderTextColor={isDark ? '#9BA1A6' : undefined}
+                    placeholderTextColor={isDark ? k.textMuted : undefined}
                   />
                   <Text style={styles.unitText}>kcal</Text>
                 </View>
@@ -281,7 +281,7 @@ export default function RemainingCaloriesCard({
                       returnKeyType="done"
                       maxLength={4}
                       placeholder="g"
-                      placeholderTextColor={isDark ? '#9BA1A6' : undefined}
+                      placeholderTextColor={isDark ? k.textMuted : undefined}
                     />
                     <Text style={styles.unitText}>g</Text>
                   </View>
@@ -291,7 +291,7 @@ export default function RemainingCaloriesCard({
                 <View style={[styles.inputGroup, { flex: 1 }]}>
                   <View style={[styles.labelRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                     <View style={[styles.miniIconCircle, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
-                      <Wheat size={14} color="#F59E0B" />
+                      <Wheat size={14} color={k.warning} />
                     </View>
                     <Text style={[styles.inputLabel, { color: k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.carbs}</Text>
                   </View>
@@ -305,7 +305,7 @@ export default function RemainingCaloriesCard({
                       returnKeyType="done"
                       maxLength={4}
                       placeholder="g"
-                      placeholderTextColor={isDark ? '#9BA1A6' : undefined}
+                      placeholderTextColor={isDark ? k.textMuted : undefined}
                     />
                     <Text style={styles.unitText}>g</Text>
                   </View>
@@ -315,7 +315,7 @@ export default function RemainingCaloriesCard({
                 <View style={[styles.inputGroup, { flex: 1 }]}>
                   <View style={[styles.labelRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                     <View style={[styles.miniIconCircle, { backgroundColor: 'rgba(14, 165, 233, 0.1)' }]}>
-                      <Droplets size={14} color="#0EA5E9" />
+                      <Droplets size={14} color={k.info} />
                     </View>
                     <Text style={[styles.inputLabel, { color: k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.fats}</Text>
                   </View>
@@ -329,7 +329,7 @@ export default function RemainingCaloriesCard({
                       returnKeyType="done"
                       maxLength={4}
                       placeholder="g"
-                      placeholderTextColor={isDark ? '#9BA1A6' : undefined}
+                      placeholderTextColor={isDark ? k.textMuted : undefined}
                     />
                     <Text style={styles.unitText}>g</Text>
                   </View>
@@ -338,7 +338,7 @@ export default function RemainingCaloriesCard({
             </View>
 
             <TouchableOpacity style={[styles.saveBtn, { flexDirection: isRTL ? 'row-reverse' : 'row' }]} onPress={handleSave} activeOpacity={0.8}>
-              <Check size={20} color="#fff" strokeWidth={3} />
+              <Check size={20} color={k.onAccent} strokeWidth={3} />
               <Text style={styles.saveBtnText}>{tx.updateGoals}</Text>
             </TouchableOpacity>
           </View>
@@ -424,7 +424,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
-    shadowColor: '#000',
+    shadowColor: k.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -575,6 +575,6 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   saveBtnText: {
     fontSize: 17,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: k.onAccent,
   },
 });

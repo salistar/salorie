@@ -98,11 +98,11 @@ export default function AttenteConnexion({ onReessayer }: { onReessayer: () => v
       >
         <Image source={require('../assets/images/fire.png')} style={{ width: 80, height: 80 }} resizeMode="contain" />
       </View>
-      <Text style={{ fontSize: 36, fontWeight: '900', color: '#fff', letterSpacing: -1 }}>Salorie</Text>
-      <ActivityIndicator size="large" color="#ffffff" />
+      <Text style={{ fontSize: 36, fontWeight: '900', color: k.onAccent, letterSpacing: -1 }}>Salorie</Text>
+      <ActivityIndicator size="large" color={k.onAccent} />
       {tarde && (
         <>
-          <Text style={{ fontSize: 17, fontWeight: '800', color: '#fff', textAlign: 'center' }}>
+          <Text style={{ fontSize: 17, fontWeight: '800', color: k.onAccent, textAlign: 'center' }}>
             {horsLigne ? m.horsLigne : m.lent}
           </Text>
           <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.85)', textAlign: 'center', lineHeight: 20 }}>
@@ -123,7 +123,7 @@ export default function AttenteConnexion({ onReessayer }: { onReessayer: () => v
                 borderColor: 'rgba(255,255,255,0.4)',
               }}
             >
-              <Text style={{ fontSize: 15, fontWeight: '800', color: '#fff' }}>{m.reessayer}</Text>
+              <Text style={{ fontSize: 15, fontWeight: '800', color: k.onAccent }}>{m.reessayer}</Text>
             </TouchableOpacity>
           )}
         </>

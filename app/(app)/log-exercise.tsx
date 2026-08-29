@@ -39,7 +39,7 @@ export default function LogExerciseScreen() {
       title: t('logex.run'),
       desc: t('logex.run_desc'),
       icon: <Footprints size={26} color="#FF5C5C" />,
-      bg: '#FFEEED',
+      bg: k.dangerSoft,
       onPress: () => {
         router.push({
           pathname: '/workout-details' as any,
@@ -51,8 +51,8 @@ export default function LogExerciseScreen() {
       id: 'lifting',
       title: t('logex.lifting'),
       desc: t('logex.lifting_desc'),
-      icon: <Weight size={26} color="#0EA5E9" />,
-      bg: '#E0F2FE',
+      icon: <Weight size={26} color={k.info} />,
+      bg: k.infoSoft,
       onPress: () => {
         router.push({
           pathname: '/workout-details' as any,
@@ -64,7 +64,7 @@ export default function LogExerciseScreen() {
       id: 'manual',
       title: t('logex.manual'),
       desc: t('logex.manual_desc'),
-      icon: <Settings2 size={26} color="#F59E0B" />,
+      icon: <Settings2 size={26} color={k.warning} />,
       bg: '#FFF9EB',
       onPress: () => router.push('/log-manual' as any),
     },
@@ -138,7 +138,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1.5,
     gap: 14,
-    shadowColor: '#000',
+    shadowColor: k.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 10,

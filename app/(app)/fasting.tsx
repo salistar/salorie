@@ -1,7 +1,7 @@
 // Jeûne intermittent — minuteur on-device. Protocoles 16:8 / 18:6 / 20:4 / OMAD.
 // Persiste l'heure de début (AsyncStorage) → survit au redémarrage de l'app.
-import React, { useEffect, useRef, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   Image,
   View,
@@ -97,6 +97,7 @@ function fmt(ms: number) {
 
 export default function FastingScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('fasting');
   const { user } = useUser();
   const { colors, resolved } = useTheme();
@@ -274,11 +275,11 @@ export default function FastingScreen() {
 
             {startTs ? (
               <TouchableOpacity style={[styles.btn, styles.stop, { flexDirection: rowDir(isRTL) }]} onPress={stop}>
-                <Square size={18} color="#fff" /><Text style={styles.btnTxt}>{t.stop}</Text>
+                <Square size={18} color={k.onAccent} /><Text style={styles.btnTxt}>{t.stop}</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity style={[styles.btn, { backgroundColor: GREEN, flexDirection: rowDir(isRTL) }]} onPress={start}>
-                <Play size={18} color="#fff" /><Text style={styles.btnTxt}>{t.start} ({proto.label})</Text>
+                <Play size={18} color={k.onAccent} /><Text style={styles.btnTxt}>{t.start} ({proto.label})</Text>
               </TouchableOpacity>
             )}
           </>
@@ -296,7 +297,7 @@ export default function FastingScreen() {
                 placeholder={t.codePh} placeholderTextColor={sub} value={code} onChangeText={setCode} autoCapitalize="none"
               />
               <TouchableOpacity style={[styles.joinBtn, { backgroundColor: GREEN }, (!code.trim() || connecting) && { opacity: 0.6 }]} onPress={joinChallenge} disabled={connecting || !code.trim()}>
-                {connecting ? <ActivityIndicator color="#fff" /> : <Text style={styles.joinTxt}>{t.joinBtn}</Text>}
+                {connecting ? <ActivityIndicator color={k.onAccent} /> : <Text style={styles.joinTxt}>{t.joinBtn}</Text>}
               </TouchableOpacity>
             </View>
           ) : (
@@ -331,40 +332,43 @@ export default function FastingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8FAFC' },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, alignItems: 'center' },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, alignSelf: 'flex-start' },
-  title: { fontSize: 22, fontWeight: '800', color: '#0F172A' },
+  title: { fontSize: 22, fontWeight: '800', color: k.text },
   section: { width: '100%' },
   protoCard: { width: '100%' },
   protoRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap', justifyContent: 'center' },
-  proto: { paddingVertical: 10, paddingHorizontal: 18, borderRadius: 12, backgroundColor: '#E2E8F0' },
-  protoTxt: { fontWeight: '700', color: '#475569' },
-  protoTxtActive: { color: '#fff' },
-  cardShadow: { shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  timerCard: { width: '100%', backgroundColor: '#fff', borderRadius: 20, padding: 24, marginTop: 28, alignItems: 'center' },
-  timerLabel: { fontSize: 13, color: '#64748B' },
-  timer: { fontSize: 52, fontWeight: '900', color: '#0F172A', marginVertical: 8, fontVariant: ['tabular-nums'] },
-  track: { width: '100%', height: 10, borderRadius: 6, backgroundColor: '#F1F5F9', overflow: 'hidden', marginTop: 8 },
+  proto: { paddingVertical: 10, paddingHorizontal: 18, borderRadius: 12, backgroundColor: k.surfaceSunken },
+  protoTxt: { fontWeight: '700', color: k.textMuted },
+  protoTxtActive: { color: k.onAccent },
+  cardShadow: { shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  timerCard: { width: '100%', backgroundColor: k.surface, borderRadius: 20, padding: 24, marginTop: 28, alignItems: 'center' },
+  timerLabel: { fontSize: 13, color: k.textMuted },
+  timer: { fontSize: 52, fontWeight: '900', color: k.text, marginVertical: 8, fontVariant: ['tabular-nums'] },
+  track: { width: '100%', height: 10, borderRadius: 6, backgroundColor: k.surfaceSunken, overflow: 'hidden', marginTop: 8 },
   fill: { height: 10, borderRadius: 6 },
-  sub: { fontSize: 13, color: '#64748B', marginTop: 10 },
+  sub: { fontSize: 13, color: k.textMuted, marginTop: 10 },
   eatRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16 },
-  eatTxt: { fontSize: 13, color: '#64748B' },
+  eatTxt: { fontSize: 13, color: k.textMuted },
   btn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 16, marginTop: 28, width: '100%' },
-  stop: { backgroundColor: '#E11D48' },
-  btnTxt: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  note: { fontSize: 11, color: '#94A3B8', textAlign: 'center', marginTop: 20 },
+  stop: { backgroundColor: k.danger },
+  btnTxt: { color: k.onAccent, fontWeight: '700', fontSize: 16 },
+  note: { fontSize: 11, color: k.textFaint, textAlign: 'center', marginTop: 20 },
   challengeCard: { width: '100%', borderRadius: 20, padding: 18, marginTop: 24, gap: 12 },
   cHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   cTitle: { fontSize: 16, fontWeight: '800' },
   cJoinRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   codeInput: { flex: 1, borderRadius: 12, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14 },
   joinBtn: { borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
-  joinTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  joinTxt: { color: k.onAccent, fontWeight: '800', fontSize: 14 },
   codeBadge: { flex: 1, fontSize: 16, fontWeight: '900' },
-  leaveBtn: { backgroundColor: '#FEE2E2', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 9 },
-  leaveTxt: { color: '#E11D48', fontWeight: '800', fontSize: 13 },
+  leaveBtn: { backgroundColor: k.dangerSoft, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 9 },
+  leaveTxt: { color: k.danger, fontWeight: '800', fontSize: 13 },
   liveLabel: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
   pRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   pName: { width: 90, fontSize: 13, fontWeight: '700' },

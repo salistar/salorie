@@ -227,7 +227,7 @@ export default function ListingCreateScreen() {
       : !l.approved ? t.pending : t.statusActive;
   const statusColor = (l: MarketplaceListing) =>
     l.status === 'sold' ? '#f59e0b' : l.status === 'removed' ? '#ef4444'
-      : !l.approved ? k.warning : '#22c55e';
+      : !l.approved ? k.warning: k.success;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
@@ -277,7 +277,7 @@ export default function ListingCreateScreen() {
                   activeOpacity={0.85}
                   onPress={() => setCategory(c)}
                 >
-                  <Text style={[styles.chipTxt, { color: active ? '#fff' : text }]}>
+                  <Text style={[styles.chipTxt, { color: active ? k.onAccent : text }]}>
                     {CAT_EMOJI[c]} {t.cats[c]}
                   </Text>
                 </TouchableOpacity>
@@ -316,7 +316,7 @@ export default function ListingCreateScreen() {
                   <Text style={[styles.photoBtnTxt, { color: text }]}>{t.changePhoto}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.photoBtn, { flexDirection: dir, backgroundColor: field }]} onPress={() => setImageUrl(undefined)} activeOpacity={0.85}>
-                  <X size={16} color="#ef4444" />
+                  <X size={16} color={k.danger} />
                   <Text style={[styles.photoBtnTxt, { color: text }]}>{t.removePhoto}</Text>
                 </TouchableOpacity>
               </View>
@@ -338,8 +338,8 @@ export default function ListingCreateScreen() {
 
           <TouchableOpacity style={[styles.submitBtn, { flexDirection: dir }]} onPress={onSubmit} disabled={submitting} activeOpacity={0.85}>
             {submitting
-              ? <ActivityIndicator size="small" color="#fff" />
-              : (<><Send size={18} color="#fff" /><Text style={styles.submitTxt}>{t.submit}</Text></>)}
+              ? <ActivityIndicator size="small" color={k.onAccent} />
+              : (<><Send size={18} color={k.onAccent} /><Text style={styles.submitTxt}>{t.submit}</Text></>)}
           </TouchableOpacity>
         </View>
 
@@ -378,7 +378,7 @@ export default function ListingCreateScreen() {
                     onPress={() => onMarkSold(l.id)}
                     activeOpacity={0.85}
                   >
-                    <CheckCircle2 size={15} color="#f59e0b" />
+                    <CheckCircle2 size={15} color={k.warning} />
                     <Text style={[styles.mineActTxt, { color: text }]}>{t.markSold}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -387,7 +387,7 @@ export default function ListingCreateScreen() {
                     onPress={() => onRemove(l.id)}
                     activeOpacity={0.85}
                   >
-                    <Trash2 size={15} color="#ef4444" />
+                    <Trash2 size={15} color={k.danger} />
                     <Text style={[styles.mineActTxt, { color: text }]}>{t.remove}</Text>
                   </TouchableOpacity>
                 </View>
@@ -425,11 +425,11 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   photoBtnTxt: { fontSize: 13, fontWeight: '700' },
   addPhotoBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderRadius: 12, paddingVertical: 14 },
   addPhotoTxt: { color: k.accent, fontSize: 14, fontWeight: '800' },
-  errTxt: { color: '#ef4444', fontSize: 13, fontWeight: '700', marginTop: 12 },
+  errTxt: { color: k.danger, fontSize: 13, fontWeight: '700', marginTop: 12 },
   okBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, padding: 12, marginTop: 12 },
   okTxt: { flex: 1, color: k.accent, fontSize: 13, fontWeight: '700', lineHeight: 18 },
   submitBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 14, marginTop: 16 },
-  submitTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  submitTxt: { color: k.onAccent, fontSize: 15, fontWeight: '800' },
   listTitle: { fontSize: 17, fontWeight: '900', letterSpacing: -0.3, marginTop: 4, marginBottom: 10 },
   loadingBox: { paddingVertical: 30, alignItems: 'center' },
   emptySub: { fontSize: 14, lineHeight: 20, paddingVertical: 8 },

@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Image, StyleSheet, ImageStyle } from 'react-native';
 
+import { useTokens, type Tokens } from '../constants/tokens';
 /**
  * Floating brand mark for full-screen immersive screens (camera / map / GPS)
  * that have no standard header. Flame tile + "Salorie" (vert) comme sur Home.
  * `pointerEvents="none"` so it NEVER intercepts taps on the camera/map below.
  */
 export default function BrandOverlay({ top = 50 }: { top?: number }) {
+  const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   return (
     <View pointerEvents="none" style={[styles.wrap, { top }]}>
       <View style={styles.pill}>
@@ -19,7 +22,10 @@ export default function BrandOverlay({ top = 50 }: { top?: number }) {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   wrap: { position: 'absolute', alignSelf: 'center', zIndex: 9999, elevation: 9999 },
   pill: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
@@ -30,9 +36,9 @@ const styles = StyleSheet.create({
   },
   tile: {
     width: 34, height: 34, borderRadius: 11,
-    backgroundColor: '#EAF4EE',
+    backgroundColor: k.accentSoft,
     alignItems: 'center', justifyContent: 'center',
   },
   logo: { width: 22, height: 22 },
-  brand: { fontSize: 17, fontWeight: '900', letterSpacing: -0.5, color: '#2E8B57' },
+  brand: { fontSize: 17, fontWeight: '900', letterSpacing: -0.5, color: k.accent },
 });

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Share2, MessageCircle, Globe } from 'lucide-react-native';
-import { useTokens } from '../constants/tokens';
+import { useTokens, type Tokens } from '../constants/tokens';
 import { useTranslation } from '../lib/i18n';
 import { partager, reseauxInstalles, type Reseau } from '../lib/partage';
 import { rowDir } from '../lib/rtl';
@@ -40,6 +40,7 @@ export default function BoutonsPartage({
   compact?: boolean;
 }) {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const tok = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.fr;
@@ -74,7 +75,7 @@ export default function BoutonsPartage({
           {/* Aucun logo de marque : lucide les a d'ailleurs tous retirés de cette
               version, et reproduire une marque déposée dans une app qu'on publie
               serait un risque inutile. Le mot et la couleur suffisent. */}
-          <MessageCircle size={16} color="#fff" />
+          <MessageCircle size={16} color={k.onAccent} />
           <Text style={styles.boutonTexte}>{t.whatsapp}</Text>
         </TouchableOpacity>
       )}
@@ -87,7 +88,7 @@ export default function BoutonsPartage({
           accessibilityLabel={`${t.partager} — Facebook`}
           activeOpacity={0.85}
         >
-          <Globe size={16} color="#fff" />
+          <Globe size={16} color={k.onAccent} />
           <Text style={styles.boutonTexte}>Facebook</Text>
         </TouchableOpacity>
       )}
@@ -106,7 +107,10 @@ export default function BoutonsPartage({
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   rangee: { alignItems: 'center', gap: 8, marginTop: 12 },
   libelle: { fontSize: 13, fontWeight: '700', flex: 1 },
   bouton: {
@@ -116,5 +120,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 12,
   },
-  boutonTexte: { fontSize: 13, fontWeight: '800', color: '#fff' },
+  boutonTexte: { fontSize: 13, fontWeight: '800', color: k.onAccent },
 });

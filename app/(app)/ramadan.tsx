@@ -13,7 +13,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { suggererSuhoor, suggererIftar, nomAliment, type Aliment } from '../../lib/ramadanAssiettes';
 import BASE_LOCALE from '../../assets/data/local-foods.json';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -130,6 +130,7 @@ function fmtCountdown(ms: number): string {
 
 export default function RamadanScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const { colors, resolved } = useTheme();
@@ -312,7 +313,7 @@ export default function RamadanScreen() {
         <Text style={[styles.splitPct, { color: sub }]}>{share.suhoor}% · {share.iftar}%</Text>
       </View>
       <View style={[styles.splitTrack, { backgroundColor: k.surfaceSunken, flexDirection: rowDir(isRTL) }]}>
-        <View style={{ width: `${share.suhoor}%`, backgroundColor: '#F59E0B', height: '100%' }} />
+        <View style={{ width: `${share.suhoor}%`, backgroundColor: k.warning, height: '100%' }} />
         <View style={{ width: `${share.iftar}%`, backgroundColor: GREEN, height: '100%' }} />
       </View>
     </View>
@@ -428,7 +429,7 @@ export default function RamadanScreen() {
           <Text style={[styles.sub, { color: sub, marginBottom: 10, textAlign: txtAlign(isRTL) }]}>{t.macroSplitSub}</Text>
           <View style={[styles.splitLegend, { flexDirection: rowDir(isRTL) }]}>
             <View style={[styles.legendItem, { flexDirection: rowDir(isRTL) }]}>
-              <View style={[styles.legendDot, { backgroundColor: '#F59E0B' }]} />
+              <View style={[styles.legendDot, { backgroundColor: k.warning }]} />
               <Text style={[styles.legendTxt, { color: sub }]}>{t.suhoor}</Text>
             </View>
             <View style={[styles.legendItem, { flexDirection: rowDir(isRTL) }]}>
@@ -471,13 +472,13 @@ export default function RamadanScreen() {
           <Text style={[styles.hydroCount, { color: GREEN, textAlign: 'center' }]}>{glasses} / {HYDRATION_TARGET_GLASSES}</Text>
           <View style={[styles.glassRow, { flexDirection: rowDir(isRTL) }]}>
             {Array.from({ length: HYDRATION_TARGET_GLASSES }).map((_, i) => (
-              <Droplets key={i} size={22} color={i < glasses ? GREEN : (isDark ? '#334155' : '#CBD5E1')} fill={i < glasses ? GREEN : 'transparent'} />
+              <Droplets key={i} size={22} color={i < glasses ? GREEN : (isDark ? k.textMuted : k.textFaint)} fill={i < glasses ? GREEN : 'transparent'} />
             ))}
           </View>
           <View style={[styles.hydroBtns, { flexDirection: rowDir(isRTL) }]}>
             <PrimaryButton
               title={t.addGlass}
-              icon={<Droplets size={18} color="#fff" />}
+              icon={<Droplets size={18} color={k.onAccent} />}
               onPress={() => setGlasses((g) => Math.min(HYDRATION_TARGET_GLASSES, g + 1))}
               style={{ flex: 1 }}
             />
@@ -513,14 +514,14 @@ export default function RamadanScreen() {
             </View>
           </View>
           <TouchableOpacity
-            style={[styles.fastBtn, { backgroundColor: fastedToday ? (isDark ? '#334155' : '#E2E8F0') : GREEN, flexDirection: rowDir(isRTL) }, (logging || !email) && { opacity: 0.6 }]}
+            style={[styles.fastBtn, { backgroundColor: fastedToday ? (isDark ? '#334155' : k.surfaceSunken) : GREEN, flexDirection: rowDir(isRTL) }, (logging || !email) && { opacity: 0.6 }]}
             onPress={logToday}
             disabled={fastedToday || logging || !email}
           >
-            {logging ? <ActivityIndicator color="#fff" /> : (
+            {logging ? <ActivityIndicator color={k.onAccent} /> : (
               <>
-                <CheckCircle2 size={18} color={fastedToday ? sub : '#fff'} />
-                <Text style={[styles.fastBtnTxt, { color: fastedToday ? sub : '#fff' }]}>{fastedToday ? t.fastedDone : t.fastedToday}</Text>
+                <CheckCircle2 size={18} color={fastedToday ? sub : k.onAccent} />
+                <Text style={[styles.fastBtnTxt, { color: fastedToday ? sub : k.onAccent }]}>{fastedToday ? t.fastedDone : t.fastedToday}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -530,7 +531,10 @@ export default function RamadanScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1 },
   body: { padding: 18, paddingBottom: 130 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -546,7 +550,7 @@ const styles = StyleSheet.create({
   toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 },
   toggleLbl: { flex: 1, fontSize: 14.5, fontWeight: '700' },
   saveBtn: { borderRadius: 14, paddingVertical: 13, alignItems: 'center', marginTop: 14 },
-  saveTxt: { color: '#fff', fontWeight: '800', fontSize: 14.5 },
+  saveTxt: { color: k.onAccent, fontWeight: '800', fontSize: 14.5 },
 
   timesRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 8 },
   timesTxt: { fontSize: 13, fontWeight: '600' },
@@ -584,7 +588,7 @@ const styles = StyleSheet.create({
   glassRow: { flexDirection: 'row', justifyContent: 'center', gap: 4, marginTop: 8, flexWrap: 'wrap' },
   hydroBtns: { flexDirection: 'row', gap: 10, marginTop: 14 },
   hydroAdd: { flex: 1, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
-  hydroAddTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  hydroAddTxt: { color: k.onAccent, fontWeight: '800', fontSize: 14 },
   hydroReset: { borderRadius: 12, paddingVertical: 12, paddingHorizontal: 18, alignItems: 'center', borderWidth: 1.5 },
   hydroResetTxt: { fontWeight: '800', fontSize: 14 },
   slotsLbl: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 16 },
@@ -594,7 +598,7 @@ const styles = StyleSheet.create({
   slotLbl: { fontSize: 10.5, marginTop: 2 },
 
   streakRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 14 },
-  streakNum: { fontSize: 44, fontWeight: '900', color: '#F59E0B' },
+  streakNum: { fontSize: 44, fontWeight: '900', color: k.warning },
   streakLbl: { fontSize: 15, fontWeight: '800' },
   streakDays: { fontSize: 13, marginTop: 2 },
   fastBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 14, marginTop: 16 },

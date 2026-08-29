@@ -128,7 +128,7 @@ export default function DemoYouTube({
         // Rien d'autre que YouTube ne doit s'ouvrir ici : une redirection vers un
         // domaine tiers partirait dans le navigateur, hors de l'app.
         onShouldStartLoadWithRequest={(r) => /(^|\.)youtube(-nocookie)?\.com/.test(String(r.url).replace(/^https?:\/\//, '').split('/')[0])}
-        renderLoading={() => <ActivityIndicator style={styles.chargement} color="#fff" />}
+        renderLoading={() => <ActivityIndicator style={styles.chargement} color={k.onAccent} />}
         startInLoadingState
       />
     </View>

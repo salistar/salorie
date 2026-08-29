@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -59,6 +59,7 @@ const CAT_ICON: Record<Reward['category'], any> = { cafe: Coffee, gym: Dumbbell,
 
 export default function Rewards() {
   const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -123,7 +124,7 @@ export default function Rewards() {
               return (
                 <View key={r.id} style={[s.card, { backgroundColor: card, opacity: open ? 1 : 0.92 }]}>
                   <View style={[s.rewardTop, { flexDirection: rowDir(isRTL) }]}>
-                    <View style={[s.iconWrap, { backgroundColor: open ? 'rgba(46,139,87,0.12)' : (isDark ? '#0f1419' : '#f1f5f9') }]}>
+                    <View style={[s.iconWrap, { backgroundColor: open ? 'rgba(46,139,87,0.12)' : (isDark ? '#0f1419' : k.surfaceSunken) }]}>
                       <Icon size={22} color={open ? GREEN : lockTint} />
                     </View>
                     <View style={s.rewardInfo}>
@@ -167,7 +168,7 @@ export default function Rewards() {
                         activeOpacity={0.85}
                         onPress={() => onGetCode(r.id)}
                       >
-                        <Ticket size={18} color="#fff" />
+                        <Ticket size={18} color={k.onAccent} />
                         <Text style={s.getTxt}>{t.getCode}</Text>
                       </TouchableOpacity>
                     )
@@ -182,12 +183,15 @@ export default function Rewards() {
   );
 }
 
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f3f6f4' },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeS = (k: Tokens) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 18, paddingBottom: 90 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 26, fontWeight: '800', color: '#1B2A33' },
-  sub: { fontSize: 13, color: '#667085', marginTop: 6, lineHeight: 19 },
+  sub: { fontSize: 13, color: k.textMuted, marginTop: 6, lineHeight: 19 },
   card: { borderRadius: 16, padding: 16, marginTop: 14 },
   kmLabel: { fontSize: 13, fontWeight: '600' },
   kmRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 6 },
@@ -203,7 +207,7 @@ const s = StyleSheet.create({
   badgeTxt: { fontSize: 12, fontWeight: '800' },
   remain: { fontSize: 12.5, fontWeight: '600', flexShrink: 1 },
   getBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 13, marginTop: 14 },
-  getTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  getTxt: { color: k.onAccent, fontSize: 15, fontWeight: '800' },
   codeBox: { borderRadius: 14, padding: 14, marginTop: 14 },
   codeHead: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   codeLabel: { fontSize: 12.5, fontWeight: '800' },

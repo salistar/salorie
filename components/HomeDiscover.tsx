@@ -1,7 +1,7 @@
 // Rangée « Découvrir » du Home : cartes VISUELLES (vraies photos) qui mènent aux
 // univers clés — courses virtuelles (photo Street View live), défi Casablanca
 // (photo bundlée), manger sain (photo bundlée). Composant autonome, trilingue + dark.
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ImageBackground } from 'react-native';
 import { router } from 'expo-router';
 import { Compass } from 'lucide-react-native';
@@ -10,7 +10,7 @@ import { streetViewUrl } from '../lib/races';
 import { poiPhoto } from '../assets/challenges/registry';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
-import { useTokens } from '../constants/tokens';
+import { useTokens, type Tokens } from '../constants/tokens';
 
 
 const TXT: any = {
@@ -22,6 +22,7 @@ const TXT: any = {
 export default function HomeDiscover() {
   const { resolved } = useTheme();
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { language } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
@@ -70,7 +71,10 @@ export default function HomeDiscover() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   wrap: { marginHorizontal: 16, marginVertical: 8 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   title: { fontSize: 15, fontWeight: '700' },
@@ -78,5 +82,5 @@ const styles = StyleSheet.create({
   card: { width: 150, height: 100, justifyContent: 'flex-end', padding: 10 },
   cardImg: { borderRadius: 16 },
   shade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.30)', borderRadius: 16 },
-  cardTxt: { color: '#fff', fontWeight: '800', fontSize: 13.5, textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 4 },
+  cardTxt: { color: k.onAccent, fontWeight: '800', fontSize: 13.5, textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 4 },
 });

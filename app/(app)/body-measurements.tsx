@@ -1,6 +1,6 @@
 // Mesures corporelles — tour de taille/hanches/bras/poitrine + historique.
-import React, { useEffect, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -51,6 +51,7 @@ const TXT: any = {
 
 export default function BodyMeasurementsScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('body-measurements');
   const { user } = useUser();
   const { resolved } = useTheme();
@@ -120,11 +121,14 @@ export default function BodyMeasurementsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 24, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', marginBottom: 20 },
-  lastNote: { fontSize: 13, color: '#64748B', marginTop: 16, lineHeight: 19 },
+  title: { fontSize: 24, fontWeight: '900', color: k.text, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: k.textMuted, marginBottom: 20 },
+  lastNote: { fontSize: 13, color: k.textMuted, marginTop: 16, lineHeight: 19 },
 });

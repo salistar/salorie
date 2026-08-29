@@ -147,23 +147,23 @@ export default function RepCounterScreen() {
         </View>
 
         <View style={styles.magRow}>
-          <Activity size={16} color={running ? accent : '#CBD5E1'} />
+          <Activity size={16} color={running ? accent : k.textFaint} />
           <Text style={[styles.magTxt, { color: sub }]}>{mag.toFixed(2)} g {running ? t.running : t.stopped}</Text>
         </View>
 
         <View style={styles.actions}>
           <TouchableOpacity style={[styles.btn, styles.secondary, isDark && { backgroundColor: '#334155' }]} onPress={reset}>
-            <RotateCcw size={20} color={isDark ? '#cbd5e1' : '#475569'} />
-            <Text style={[styles.btnTxtDark, isDark && { color: '#cbd5e1' }]}>{t.reset}</Text>
+            <RotateCcw size={20} color={isDark ? k.textFaint : k.textMuted} />
+            <Text style={[styles.btnTxtDark, isDark && { color: k.textFaint }]}>{t.reset}</Text>
           </TouchableOpacity>
           {running ? (
             <TouchableOpacity style={[styles.btn, styles.primary]} onPress={stop}>
-              <Pause size={20} color="#fff" />
+              <Pause size={20} color={k.onAccent} />
               <Text style={styles.btnTxt}>{t.pause}</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={[styles.btn, styles.primary]} onPress={start}>
-              <Play size={20} color="#fff" />
+              <Play size={20} color={k.onAccent} />
               <Text style={styles.btnTxt}>{t.start}</Text>
             </TouchableOpacity>
           )}
@@ -201,22 +201,22 @@ export default function RepCounterScreen() {
 // évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8FAFC' },
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 24, alignItems: 'center', paddingBottom: 60 },
-  title: { fontSize: 22, fontWeight: '800', color: '#0F172A', marginTop: 8 },
-  sub: { fontSize: 13, color: '#64748B', textAlign: 'center', marginTop: 8 },
+  title: { fontSize: 22, fontWeight: '800', color: k.text, marginTop: 8 },
+  sub: { fontSize: 13, color: k.textMuted, textAlign: 'center', marginTop: 8 },
   counterWrap: { marginTop: 48, alignItems: 'center' },
   count: { fontSize: 96, fontWeight: '900', color: k.accent, lineHeight: 100 },
-  countLabel: { fontSize: 16, color: '#94A3B8', marginTop: -6 },
+  countLabel: { fontSize: 16, color: k.textFaint, marginTop: -6 },
   magRow: { flexDirection: 'row', alignItems: 'center', marginTop: 24 },
-  magTxt: { fontSize: 13, color: '#64748B', marginStart: 6 },
+  magTxt: { fontSize: 13, color: k.textMuted, marginStart: 6 },
   actions: { flexDirection: 'row', gap: 14, marginTop: 48 },
   btn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 26, borderRadius: 16, gap: 8 },
   primary: { backgroundColor: k.accent },
-  secondary: { backgroundColor: '#E2E8F0' },
-  btnTxt: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  btnTxtDark: { color: '#475569', fontWeight: '700', fontSize: 16 },
-  note: { fontSize: 11, color: '#94A3B8', textAlign: 'center', marginTop: 32, marginBottom: 8 },
+  secondary: { backgroundColor: k.surfaceSunken },
+  btnTxt: { color: k.onAccent, fontWeight: '700', fontSize: 16 },
+  btnTxtDark: { color: k.textMuted, fontWeight: '700', fontSize: 16 },
+  note: { fontSize: 11, color: k.textFaint, textAlign: 'center', marginTop: 32, marginBottom: 8 },
   howCard: { alignSelf: 'stretch', borderRadius: 18, borderWidth: 1, padding: 18, marginTop: 12 },
   howTitle: { fontSize: 16, fontWeight: '900', marginBottom: 6 },
   howIntro: { fontSize: 13, lineHeight: 19, marginBottom: 12 },

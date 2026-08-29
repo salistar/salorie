@@ -339,7 +339,7 @@ export default function FoodDatabaseScreen() {
               {frequents.length > 0 && (
                 <>
                   <View style={[styles.quickHead, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                    <Flame size={16} color="#ef4444" /><Text style={[styles.quickTitle, { color: k.text }]}>{t.frequents}</Text>
+                    <Flame size={16} color={k.danger} /><Text style={[styles.quickTitle, { color: k.text }]}>{t.frequents}</Text>
                   </View>
                   {frequents.map((f) => (
                     <React.Fragment key={`freq${f.food_id}`}>{renderItem({ item: f })}</React.Fragment>
@@ -359,7 +359,7 @@ export default function FoodDatabaseScreen() {
               {favorites.length > 0 && (
                 <>
                   <View style={[styles.quickHead, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                    <Star size={16} color="#f59e0b" fill="#f59e0b" /><Text style={[styles.quickTitle, { color: k.text }]}>{t.favorites}</Text>
+                    <Star size={16} color={k.warning} fill={k.warning} /><Text style={[styles.quickTitle, { color: k.text }]}>{t.favorites}</Text>
                   </View>
                   {favorites.map((f, i) => (
                     <QuickRow key={`fav${i}`} f={f} fav onLog={quickLog} onFav={onToggleFav} isDark={isDark} isRTL={isRTL} km={t.km} language={language} />
@@ -405,13 +405,13 @@ function QuickRow({ f, fav, onLog, onFav, isDark, isRTL, km, language }: any) {
     <TouchableOpacity activeOpacity={0.7} onPress={() => onLog(f)}
       style={[qrStyles.row, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: k.surface, borderColor: k.border }]}>
       <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('favori')} onPress={() => onFav(f)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-        <Star size={20} color="#f59e0b" fill={fav ? '#f59e0b' : 'transparent'} />
+        <Star size={20} color={k.warning} fill={fav ? '#f59e0b' : 'transparent'} />
       </TouchableOpacity>
       <View style={{ flex: 1 }}>
         <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '700', color: k.text, textAlign: isRTL ? 'right' : 'left' }}>{f.name}</Text>
         <Text style={{ fontSize: 12.5, color: k.textMuted, textAlign: isRTL ? 'right' : 'left' }}>{f.serving ? `${localizeServing(f.serving, language)} • ` : ''}{Math.round(f.calories)} {km === 'كلم' ? 'سعرة' : 'kcal'}</Text>
       </View>
-      <View style={[qrStyles.relog, { backgroundColor: k.accent }]}><RotateCcw size={18} color="#fff" strokeWidth={2.5} /></View>
+      <View style={[qrStyles.relog, { backgroundColor: k.accent }]}><RotateCcw size={18} color={k.onAccent} strokeWidth={2.5} /></View>
     </TouchableOpacity>
   );
 }
@@ -502,7 +502,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: k.border,
-    shadowColor: '#000',
+    shadowColor: k.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,

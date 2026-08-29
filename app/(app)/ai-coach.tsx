@@ -1,9 +1,9 @@
 // Coach IA CONTEXTUEL — utilise le proxy /ai (Gemini serveur) en lui passant le
 // contexte réel de l'utilisateur (objectif, calories/macros du jour, tendance poids).
 // Conseils auto au chargement + question libre. 100% via backend (clé Gemini serveur).
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -138,6 +138,7 @@ async function buildContext(goals: any, consumed: any): Promise<string> {
 
 export default function AiCoachScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('ai-coach');
   const data: any = useNutritionData(new Date().toISOString().split('T')[0]);
   const { colors, resolved } = useTheme();
@@ -254,8 +255,8 @@ export default function AiCoachScreen() {
           const on = personaId === p.id;
           return (
             <TouchableOpacity key={p.id} onPress={() => changePersona(p.id)} disabled={loading}
-              style={[styles.personaChip, { backgroundColor: on ? GREEN : (isDark ? '#1e293b' : '#E2E8F0') }, loading && { opacity: 0.6 }]}>
-              <Text style={[styles.personaTxt, { color: on ? '#fff' : (isDark ? '#cbd5e1' : '#475569') }]}>{(p.label as any)[language] || p.label.en}</Text>
+              style={[styles.personaChip, { backgroundColor: on ? GREEN : (isDark ? '#1e293b' : k.surfaceSunken) }, loading && { opacity: 0.6 }]}>
+              <Text style={[styles.personaTxt, { color: on ? k.onAccent : (isDark ? k.textFaint : k.textMuted) }]}>{(p.label as any)[language] || p.label.en}</Text>
             </TouchableOpacity>
           );
         })}
@@ -263,7 +264,7 @@ export default function AiCoachScreen() {
       <ScrollView ref={scroll} contentContainerStyle={styles.body}>
         {msgs.map((m, i) => (
           <View key={i} style={[styles.bubble, m.role === 'user' ? [styles.user, { backgroundColor: GREEN }] : [styles.coach, { backgroundColor: card, borderColor: k.border }]]}>
-            <Text style={[styles.bubbleTxt, { color: text }, align, m.role === 'user' && { color: '#fff' }]}>{m.text}</Text>
+            <Text style={[styles.bubbleTxt, { color: text }, align, m.role === 'user' && { color: k.onAccent }]}>{m.text}</Text>
             {m.role === 'coach' && (
               <View style={[styles.msgActions, { flexDirection: rowDir(isRTL), alignSelf: isRTL ? 'flex-end' : 'flex-start' }]}>
                 <TouchableOpacity onPress={() => speakMsg(m.text)} style={styles.speakBtn} hitSlop={8}
@@ -293,10 +294,10 @@ export default function AiCoachScreen() {
           onSubmitEditing={send}
           returnKeyType="send"
         />
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('arreter')} style={[styles.micBtn, recording && { backgroundColor: '#DC2626' }]} onPress={micPress} disabled={loading && !recording}>
-          {recording ? <Square size={18} color="#fff" /> : <Mic size={20} color="#fff" />}
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('arreter')} style={[styles.micBtn, recording && { backgroundColor: k.danger }]} onPress={micPress} disabled={loading && !recording}>
+          {recording ? <Square size={18} color={k.onAccent} /> : <Mic size={20} color={k.onAccent} />}
         </TouchableOpacity>
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('envoyer')} style={[styles.sendBtn, { backgroundColor: GREEN }]} onPress={send} disabled={loading}><Send size={20} color="#fff" /></TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('envoyer')} style={[styles.sendBtn, { backgroundColor: GREEN }]} onPress={send} disabled={loading}><Send size={20} color={k.onAccent} /></TouchableOpacity>
       </View>
     {/* Signalement d'une reponse du coach — exigence de la politique Google Play
         sur le contenu genere par IA. Aucun proprietaire n'est passe : on ne
@@ -316,19 +317,22 @@ export default function AiCoachScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8FAFC' },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 8 },
-  title: { fontSize: 22, fontWeight: '800', color: '#0F172A' },
+  title: { fontSize: 22, fontWeight: '800', color: k.text },
   body: { padding: 16, gap: 10 },
   bubble: { maxWidth: '88%', borderRadius: 16, padding: 13 },
-  coach: { backgroundColor: '#fff', alignSelf: 'flex-start', borderWidth: 1, borderColor: '#EEF2F6' },
+  coach: { backgroundColor: k.surface, alignSelf: 'flex-start', borderWidth: 1, borderColor: k.border },
   user: { alignSelf: 'flex-end' },
-  bubbleTxt: { fontSize: 14, lineHeight: 20, color: '#1F2937' },
-  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderTopWidth: 1, borderTopColor: '#EEF2F6', backgroundColor: '#fff' },
-  input: { flex: 1, backgroundColor: '#F1F5F9', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 11, fontSize: 14 },
+  bubbleTxt: { fontSize: 14, lineHeight: 20, color: k.text },
+  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderTopWidth: 1, borderTopColor: k.border, backgroundColor: k.surface },
+  input: { flex: 1, backgroundColor: k.surfaceSunken, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 11, fontSize: 14 },
   sendBtn: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  micBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#0EA5E9', alignItems: 'center', justifyContent: 'center' },
+  micBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: k.info, alignItems: 'center', justifyContent: 'center' },
   speakBtn: { marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 4 },
   msgActions: { alignItems: 'center', gap: 14 },
   personaRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 20, paddingBottom: 8, flexWrap: 'wrap' },

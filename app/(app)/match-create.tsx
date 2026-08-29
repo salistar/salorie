@@ -210,7 +210,7 @@ export default function MatchCreateScreen() {
                 activeOpacity={0.85}
                 onPress={() => setSport(sp)}
               >
-                <Text style={[styles.chipTxt, { color: active ? '#fff' : text }]}>
+                <Text style={[styles.chipTxt, { color: active ? k.onAccent : text }]}>
                   {SPORT_EMOJI[sp]} {t.sports[sp]}
                 </Text>
               </TouchableOpacity>
@@ -236,7 +236,7 @@ export default function MatchCreateScreen() {
                 activeOpacity={0.85}
                 onPress={() => setFieldId(undefined)}
               >
-                <Text style={[styles.chipTxt, { color: !fieldId ? '#fff' : text }]}>{t.noField}</Text>
+                <Text style={[styles.chipTxt, { color: !fieldId ? k.onAccent : text }]}>{t.noField}</Text>
               </TouchableOpacity>
               {fields.map((f) => {
                 const active = fieldId === f.id;
@@ -247,8 +247,8 @@ export default function MatchCreateScreen() {
                     activeOpacity={0.85}
                     onPress={() => setFieldId(f.id)}
                   >
-                    <MapPin size={13} color={active ? '#fff' : k.accent} />
-                    <Text style={[styles.chipTxt, { color: active ? '#fff' : text }]} numberOfLines={1}>{f.name}</Text>
+                    <MapPin size={13} color={active ? k.onAccent : k.accent} />
+                    <Text style={[styles.chipTxt, { color: active ? k.onAccent : text }]} numberOfLines={1}>{f.name}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -308,8 +308,8 @@ export default function MatchCreateScreen() {
 
         <TouchableOpacity style={[styles.submitBtn, { flexDirection: dir }]} onPress={onSubmit} disabled={submitting} activeOpacity={0.85}>
           {submitting
-            ? <ActivityIndicator size="small" color="#fff" />
-            : (<><Send size={18} color="#fff" /><Text style={styles.submitTxt}>{t.submit}</Text></>)}
+            ? <ActivityIndicator size="small" color={k.onAccent} />
+            : (<><Send size={18} color={k.onAccent} /><Text style={styles.submitTxt}>{t.submit}</Text></>)}
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -343,7 +343,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   chipTxt: { fontSize: 13, fontWeight: '800' },
   twoCol: { gap: 12 },
   col: { flex: 1 },
-  errTxt: { color: '#ef4444', fontSize: 13, fontWeight: '700', marginTop: 14 },
+  errTxt: { color: k.danger, fontSize: 13, fontWeight: '700', marginTop: 14 },
   submitBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 14, marginTop: 20 },
-  submitTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  submitTxt: { color: k.onAccent, fontSize: 15, fontWeight: '800' },
 });

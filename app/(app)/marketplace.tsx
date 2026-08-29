@@ -143,7 +143,7 @@ export default function MarketplaceScreen() {
             activeOpacity={0.85}
             onPress={() => router.push('/listing-create' as any)}
           >
-            <Plus size={18} color="#fff" />
+            <Plus size={18} color={k.onAccent} />
             <Text style={styles.publishTxt}>{t.publish}</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -163,7 +163,7 @@ export default function MarketplaceScreen() {
             activeOpacity={0.85}
             onPress={() => setCategory(null)}
           >
-            <Text style={[styles.chipTxt, { color: !category ? '#fff' : text }]}>{t.all}</Text>
+            <Text style={[styles.chipTxt, { color: !category ? k.onAccent : text }]}>{t.all}</Text>
           </TouchableOpacity>
           {LISTING_CATEGORIES.map((c) => {
             const active = category === c;
@@ -174,7 +174,7 @@ export default function MarketplaceScreen() {
                 activeOpacity={0.85}
                 onPress={() => setCategory(c)}
               >
-                <Text style={[styles.chipTxt, { color: active ? '#fff' : text }]}>
+                <Text style={[styles.chipTxt, { color: active ? k.onAccent : text }]}>
                   {CAT_EMOJI[c]} {t.cats[c]}
                 </Text>
               </TouchableOpacity>
@@ -213,7 +213,7 @@ export default function MarketplaceScreen() {
                 onPress={() => router.push(('/listing-detail?id=' + l.id) as any)}
               >
                 <TouchableOpacity onPress={() => setModTarget(l)} hitSlop={8} style={[styles.modBtn, isRTL ? { left: 6 } : { right: 6 }]} accessibilityLabel="Signaler ou bloquer">
-                  <MoreVertical size={16} color="#fff" />
+                  <MoreVertical size={16} color={k.onAccent} />
                 </TouchableOpacity>
                 {l.imageUrl ? (
                   <Image source={{ uri: l.imageUrl }} style={styles.gridImg} resizeMode="cover" />
@@ -264,7 +264,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   sub: { fontSize: 13, lineHeight: 18, marginBottom: 14 },
   actionsRow: { gap: 10, marginBottom: 14 },
   publishBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 13 },
-  publishTxt: { color: '#fff', fontSize: 14.5, fontWeight: '800' },
+  publishTxt: { color: k.onAccent, fontSize: 14.5, fontWeight: '800' },
   mineBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 13 },
   mineTxt: { fontSize: 14.5, fontWeight: '800' },
   chipsRow: { gap: 8, paddingVertical: 2, paddingBottom: 8 },

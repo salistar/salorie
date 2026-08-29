@@ -218,9 +218,9 @@ export default function ScanCameraScreen() {
         <View style={styles.overlay}>
           {/* Top bar */}
           <View style={[styles.topBar, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()} disabled={capturing} accessibilityRole="button" accessibilityLabel={t.a11yClose}><X size={26} color="#fff" /></TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()} disabled={capturing} accessibilityRole="button" accessibilityLabel={t.a11yClose}><X size={26} color={k.onAccent} /></TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn} onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))} disabled={capturing} accessibilityRole="button" accessibilityLabel={t.a11yFlip}>
-              <RotateCw size={22} color="#fff" />
+              <RotateCw size={22} color={k.onAccent} />
             </TouchableOpacity>
           </View>
 
@@ -232,8 +232,8 @@ export default function ScanCameraScreen() {
                 const Icon = m === 'dish' ? UtensilsCrossed : ScanBarcode;
                 return (
                   <TouchableOpacity key={m} style={[styles.segBtn, active && styles.segBtnActive]} onPress={() => { barcodeLock.current = false; setMode(m); }} activeOpacity={0.85} accessibilityRole="tab" accessibilityState={{ selected: active }} accessibilityLabel={m === 'dish' ? t.dish : t.barcode}>
-                    <Icon size={16} color={active ? '#fff' : '#cbd5e1'} />
-                    <Text style={[styles.segTxt, { color: active ? '#fff' : '#cbd5e1' }]}>{m === 'dish' ? t.dish : t.barcode}</Text>
+                    <Icon size={16} color={active ? k.onAccent : k.textFaint} />
+                    <Text style={[styles.segTxt, { color: active ? k.onAccent : k.textFaint }]}>{m === 'dish' ? t.dish : t.barcode}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -256,7 +256,7 @@ export default function ScanCameraScreen() {
                   const active = model === mm.k;
                   return (
                     <TouchableOpacity key={mm.k} style={[styles.modelChip, active && styles.modelChipActive]} onPress={() => setModel(mm.k)} activeOpacity={0.85}>
-                      <Text style={[styles.modelTxt, { color: active ? '#fff' : '#cbd5e1' }]}>{mm.label}</Text>
+                      <Text style={[styles.modelTxt, { color: active ? k.onAccent : k.textFaint }]}>{mm.label}</Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -266,7 +266,7 @@ export default function ScanCameraScreen() {
             <View style={[styles.controls, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
               {/* Galerie */}
               <TouchableOpacity style={styles.galleryBtn} onPress={pickGallery} disabled={capturing} accessibilityRole="button" accessibilityLabel={t.gallery}>
-                <ImageIcon size={24} color="#fff" />
+                <ImageIcon size={24} color={k.onAccent} />
                 <Text style={styles.galleryTxt}>{t.gallery}</Text>
               </TouchableOpacity>
 
@@ -289,7 +289,7 @@ export default function ScanCameraScreen() {
           {showDemo && (
             <View style={styles.demoWrap} pointerEvents="box-none">
               <View style={[styles.demoCard, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                <View style={styles.demoIcon}><UtensilsCrossed size={22} color="#fff" /></View>
+                <View style={styles.demoIcon}><UtensilsCrossed size={22} color={k.onAccent} /></View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.demoTitle, { textAlign: isRTL ? 'right' : 'left' }]}>{t.demoTitle}</Text>
                   <Text style={[styles.demoBody, { textAlign: isRTL ? 'right' : 'left' }]}>{t.demoBody}</Text>
@@ -298,7 +298,7 @@ export default function ScanCameraScreen() {
                   </TouchableOpacity>
                 </View>
                 <TouchableOpacity style={styles.demoClose} onPress={dismissDemo} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t.a11yDemoClose}>
-                  <X size={18} color="#cbd5e1" />
+                  <X size={18} color={k.textFaint} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -323,8 +323,8 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   segBtnActive: { backgroundColor: k.accent },
   segTxt: { fontSize: 14, fontWeight: '800' },
   viewfinder: { alignItems: 'center', justifyContent: 'center', gap: 14 },
-  bcFrame: { width: 270, height: 160, borderRadius: 18, borderWidth: 3, borderColor: '#4ade80', backgroundColor: 'rgba(255,255,255,0.04)' },
-  hint: { color: '#fff', fontSize: 14, fontWeight: '700', textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 4 },
+  bcFrame: { width: 270, height: 160, borderRadius: 18, borderWidth: 3, borderColor: k.accent, backgroundColor: 'rgba(255,255,255,0.04)' },
+  hint: { color: k.onAccent, fontSize: 14, fontWeight: '700', textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 4 },
   bottomBar: { paddingBottom: 34, paddingTop: 14, backgroundColor: 'rgba(0,0,0,0.35)' },
   modelRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 16 },
   modelChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.3)' },
@@ -332,26 +332,26 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   modelTxt: { fontSize: 13, fontWeight: '800' },
   controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 28 },
   galleryBtn: { width: 72, alignItems: 'center', gap: 4 },
-  galleryTxt: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  shutter: { width: 82, height: 82, borderRadius: 41, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: 'rgba(255,255,255,0.35)' },
+  galleryTxt: { color: k.onAccent, fontSize: 11, fontWeight: '700' },
+  shutter: { width: 82, height: 82, borderRadius: 41, backgroundColor: k.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: 'rgba(255,255,255,0.35)' },
   shutterDisabled: { opacity: 0.5 },
   shutterInner: { width: 66, height: 66, borderRadius: 33, backgroundColor: k.accent },
   shutterPlaceholder: { width: 82, height: 82 },
-  hintBottom: { color: '#fff', textAlign: 'center', marginTop: 12, fontSize: 13, fontWeight: '600' },
+  hintBottom: { color: k.onAccent, textAlign: 'center', marginTop: 12, fontSize: 13, fontWeight: '600' },
   // FEATURE #152 : overlay d'onboarding scan (non bloquant).
   demoWrap: { position: 'absolute', left: 0, right: 0, top: '32%', alignItems: 'center', paddingHorizontal: 20 },
   demoCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, maxWidth: 420, backgroundColor: 'rgba(15,23,42,0.92)', borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)', padding: 16 },
   demoIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: k.accent, alignItems: 'center', justifyContent: 'center' },
-  demoTitle: { color: '#fff', fontSize: 15, fontWeight: '800', marginBottom: 4 },
-  demoBody: { color: '#cbd5e1', fontSize: 13, fontWeight: '500', lineHeight: 18 },
+  demoTitle: { color: k.onAccent, fontSize: 15, fontWeight: '800', marginBottom: 4 },
+  demoBody: { color: k.textFaint, fontSize: 13, fontWeight: '500', lineHeight: 18 },
   demoBtn: { alignSelf: 'flex-start', marginTop: 12, backgroundColor: k.accent, paddingHorizontal: 18, paddingVertical: 8, borderRadius: 999 },
-  demoBtnTxt: { color: '#fff', fontSize: 13, fontWeight: '800' },
+  demoBtnTxt: { color: k.onAccent, fontSize: 13, fontWeight: '800' },
   demoClose: { padding: 2 },
   loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, backgroundColor: '#000' },
-  loadingText: { color: '#fff', fontSize: 14 },
+  loadingText: { color: k.onAccent, fontSize: 14 },
   permissionWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 16, backgroundColor: '#000' },
-  permissionTitle: { color: '#fff', fontSize: 22, fontWeight: '800', textAlign: 'center' },
+  permissionTitle: { color: k.onAccent, fontSize: 22, fontWeight: '800', textAlign: 'center' },
   permissionText: { color: '#ccc', fontSize: 14, textAlign: 'center', marginBottom: 12 },
   permissionBtn: { backgroundColor: k.accent, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 16, minWidth: 200, alignItems: 'center' },
-  permissionBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  permissionBtnText: { color: k.onAccent, fontSize: 15, fontWeight: '700' },
 });

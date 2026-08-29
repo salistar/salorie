@@ -314,7 +314,7 @@ export default function RacesScreen() {
               races.map((r) => (
                 <TouchableOpacity key={r.id} style={[styles.raceRow, { backgroundColor: card, flexDirection: rowDir }]} onPress={() => onJoinRace(r)}>
                   {/* Visuel : pastille dégradée avec icône (cartes plus vivantes) */}
-                  <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: r.status === 'live' ? '#dcfce7' : '#EAF4EE', alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: r.status === 'live' ? k.successSoft : k.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
                     <Users size={20} color={k.accent} />
                   </View>
                   <View style={{ flex: 1 }}>
@@ -324,7 +324,7 @@ export default function RacesScreen() {
                     </Text>
                   </View>
                   <View style={[styles.badge, r.status === 'live' && styles.badgeLive]}>
-                    <Text style={[styles.badgeTxt, r.status === 'live' && { color: '#fff' }]}>{statusLabel(r.status)}</Text>
+                    <Text style={[styles.badgeTxt, r.status === 'live' && { color: k.onAccent }]}>{statusLabel(r.status)}</Text>
                   </View>
                   <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ChevronRight size={20} color={sub} /></View>
                 </TouchableOpacity>
@@ -339,7 +339,7 @@ export default function RacesScreen() {
               activeOpacity={0.85}
               onPress={() => { setGenErr(false); setGenResult(null); setGenOpen(true); }}
             >
-              <Sparkles size={18} color="#fff" />
+              <Sparkles size={18} color={k.onAccent} />
               <Text style={styles.genBtnTxt} numberOfLines={1}>{t.genBtn}</Text>
             </TouchableOpacity>
 
@@ -362,7 +362,7 @@ export default function RacesScreen() {
                         <Text style={styles.heroName} numberOfLines={1}>{r.name}</Text>
                         <View style={styles.heroChips}>
                           <View style={styles.heroChip}><Text style={styles.heroChipTxt}>{r.totalKm} {t.km}</Text></View>
-                          {stops > 0 && (<View style={styles.heroChip}><MapPin size={11} color="#fff" /><Text style={styles.heroChipTxt}> {stops}</Text></View>)}
+                          {stops > 0 && (<View style={styles.heroChip}><MapPin size={11} color={k.onAccent} /><Text style={styles.heroChipTxt}> {stops}</Text></View>)}
                         </View>
                       </View>
                     </View>
@@ -400,13 +400,13 @@ export default function RacesScreen() {
                           <Text style={styles.heroName} numberOfLines={1}>{c.name}</Text>
                           <View style={styles.heroChips}>
                             <View style={styles.heroChip}><Text style={styles.heroChipTxt}>{c.totalKm} {t.km}</Text></View>
-                            {stops > 0 && (<View style={styles.heroChip}><MapPin size={11} color="#fff" /><Text style={styles.heroChipTxt}> {stops}</Text></View>)}
-                            {done && (<View style={[styles.heroChip, { backgroundColor: 'rgba(34,197,94,0.9)' }]}><CheckCircle2 size={11} color="#fff" /><Text style={styles.heroChipTxt}> 100%</Text></View>)}
+                            {stops > 0 && (<View style={styles.heroChip}><MapPin size={11} color={k.onAccent} /><Text style={styles.heroChipTxt}> {stops}</Text></View>)}
+                            {done && (<View style={[styles.heroChip, { backgroundColor: 'rgba(34,197,94,0.9)' }]}><CheckCircle2 size={11} color={k.onAccent} /><Text style={styles.heroChipTxt}> 100%</Text></View>)}
                           </View>
                         </View>
                       {!joined && (
                         <TouchableOpacity style={styles.joinSmall} onPress={(e) => { e.stopPropagation?.(); onJoinChallenge(c.id); }} disabled={!!busy[c.id]}>
-                          {busy[c.id] ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.joinBtnTxt}>{t.join}</Text>}
+                          {busy[c.id] ? <ActivityIndicator size="small" color={k.onAccent} /> : <Text style={styles.joinBtnTxt}>{t.join}</Text>}
                         </TouchableOpacity>
                       )}
                       </View>
@@ -414,7 +414,7 @@ export default function RacesScreen() {
                     {joined && (
                       <View style={styles.progressWrap}>
                         <View style={[styles.progressTrack, { backgroundColor: track }]}>
-                          <View style={[styles.progressFill, { width: `${pct * 100}%`, backgroundColor: done ? '#22c55e' : k.accent }]} />
+                          <View style={[styles.progressFill, { width: `${pct * 100}%`, backgroundColor: done ? k.success : k.accent }]} />
                         </View>
                         <Text style={[styles.progressTxt, { color: sub, textAlign: align }]}>
                           {t.progress}: {(p as number).toFixed(1)} / {c.totalKm} {t.km} · {Math.round(pct * 100)}%
@@ -462,7 +462,7 @@ export default function RacesScreen() {
 
               <TouchableOpacity style={styles.genGo} activeOpacity={0.85} onPress={onGenerate} disabled={genLoading}>
                 {genLoading
-                  ? <ActivityIndicator size="small" color="#fff" />
+                  ? <ActivityIndicator size="small" color={k.onAccent} />
                   : <Text style={styles.genGoTxt}>{t.genGo}</Text>}
               </TouchableOpacity>
 
@@ -530,7 +530,7 @@ export default function RacesScreen() {
                   <PrimaryButton
                     title={t.genUseRoute}
                     onPress={closeGen}
-                    icon={<CheckCircle2 size={18} color="#fff" />}
+                    icon={<CheckCircle2 size={18} color={k.onAccent} />}
                     style={styles.previewCta}
                   />
                   </View>
@@ -568,35 +568,35 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: k.accentSoft },
   badgeLive: { backgroundColor: k.accent },
   badgeTxt: { fontSize: 11, fontWeight: '800', color: k.accent },
-  challengeCard: { borderRadius: 20, marginBottom: 14, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
+  challengeCard: { borderRadius: 20, marginBottom: 14, overflow: 'hidden', shadowColor: k.shadow, shadowOpacity: 0.1, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
   heroWrap: { height: 150, width: '100%', justifyContent: 'flex-end' },
   hero: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
   heroShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.28)' },
   heroEmoji: { position: 'absolute', top: 12, left: 12, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.92)', alignItems: 'center', justifyContent: 'center' },
   heroBottom: { padding: 14 },
-  heroMedalWrap: { alignItems: 'center', paddingVertical: 14, backgroundColor: '#EAF4EE' },
+  heroMedalWrap: { alignItems: 'center', paddingVertical: 14, backgroundColor: k.accentSoft },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
   infoName: { fontSize: 16, fontWeight: '800' },
   chipLite: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eef2f7', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  chipLiteTxt: { fontSize: 12, fontWeight: '700', color: '#475569' },
-  joinSmall: { backgroundColor: '#2E8B57', borderRadius: 12, paddingHorizontal: 18, paddingVertical: 10 },
-  heroName: { color: '#fff', fontSize: 19, fontWeight: '900', letterSpacing: -0.3, textShadowColor: 'rgba(0,0,0,0.4)', textShadowRadius: 6 },
+  chipLiteTxt: { fontSize: 12, fontWeight: '700', color: k.textMuted },
+  joinSmall: { backgroundColor: k.accent, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 10 },
+  heroName: { color: k.onAccent, fontSize: 19, fontWeight: '900', letterSpacing: -0.3, textShadowColor: 'rgba(0,0,0,0.4)', textShadowRadius: 6 },
   heroChips: { flexDirection: 'row', gap: 8, marginTop: 8 },
   heroChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.45)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
-  heroChipTxt: { color: '#fff', fontSize: 12, fontWeight: '800' },
+  heroChipTxt: { color: k.onAccent, fontSize: 12, fontWeight: '800' },
   heroJoin: { position: 'absolute', top: 12, right: 12, backgroundColor: k.accent, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 12, minWidth: 64, alignItems: 'center', justifyContent: 'center' },
   emoji: { fontSize: 30 },
   challengeName: { fontSize: 16, fontWeight: '800' },
   challengeMeta: { fontSize: 12, marginTop: 3 },
   joinBtn: { backgroundColor: k.accent, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 12, minWidth: 64, alignItems: 'center', justifyContent: 'center' },
-  joinBtnTxt: { color: '#fff', fontSize: 14, fontWeight: '800' },
+  joinBtnTxt: { color: k.onAccent, fontSize: 14, fontWeight: '800' },
   progressWrap: { padding: 14, paddingTop: 12 },
   progressTrack: { height: 10, borderRadius: 5, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 5, backgroundColor: k.accent },
   progressTxt: { fontSize: 12, fontWeight: '700', marginTop: 6 },
   // Génération IA de parcours (#5)
   genBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 14, marginBottom: 14 },
-  genBtnTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  genBtnTxt: { color: k.onAccent, fontSize: 15, fontWeight: '800' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalCard: { borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 20, paddingBottom: 28, maxHeight: '88%' },
   modalHeader: { alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
@@ -605,8 +605,8 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   fieldLabel: { fontSize: 13, fontWeight: '700', marginBottom: 6, marginTop: 6 },
   input: { borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, marginBottom: 4 },
   genGo: { backgroundColor: k.accent, borderRadius: 14, paddingVertical: 14, alignItems: 'center', justifyContent: 'center', marginTop: 14 },
-  genGoTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
-  genErr: { color: '#ef4444', fontSize: 13, fontWeight: '700', marginTop: 12 },
+  genGoTxt: { color: k.onAccent, fontSize: 15, fontWeight: '800' },
+  genErr: { color: k.danger, fontSize: 13, fontWeight: '700', marginTop: 12 },
   previewWrap: { marginTop: 18 },
   previewName: { fontSize: 18, fontWeight: '900', letterSpacing: -0.3 },
   previewCard: { marginTop: spacing.lg },

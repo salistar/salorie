@@ -224,9 +224,9 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   per100: { fontSize: 12, fontWeight: '700', marginBottom: 10 },
   black: { flex: 1, backgroundColor: '#000' },
   camTop: { position: 'absolute', top: 60, left: 0, right: 0, alignItems: 'center' },
-  camTitle: { color: '#fff', fontSize: 16, fontWeight: '800', backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 },
+  camTitle: { color: k.onAccent, fontSize: 16, fontWeight: '800', backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 },
   camBottom: { position: 'absolute', bottom: 50, left: 0, right: 0, alignItems: 'center', gap: 16 },
   shutter: { width: 74, height: 74, borderRadius: 37, borderWidth: 5, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  shutterInner: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#fff' },
-  camCancel: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  shutterInner: { width: 56, height: 56, borderRadius: 28, backgroundColor: k.surface },
+  camCancel: { color: k.onAccent, fontSize: 15, fontWeight: '700' },
 });

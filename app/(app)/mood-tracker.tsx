@@ -87,12 +87,12 @@ export default function MoodTrackerScreen() {
         <Text style={[styles.label, { color: sub }, align]}><Zap size={13} color={sub} /> {t.energy}</Text>
         <View style={[styles.row, { flexDirection: rowDir(isRTL) }]}>
           {[1, 2, 3, 4, 5].map((n) => (
-            <TouchableOpacity key={n} style={[styles.lvl, { backgroundColor: card }, energy >= n && { backgroundColor: accent }]} onPress={() => setEnergy(n)}><Text style={[styles.lvlTxt, energy >= n && { color: '#fff' }]}>{n}</Text></TouchableOpacity>
+            <TouchableOpacity key={n} style={[styles.lvl, { backgroundColor: card }, energy >= n && { backgroundColor: accent }]} onPress={() => setEnergy(n)}><Text style={[styles.lvlTxt, energy >= n && { color: k.onAccent }]}>{n}</Text></TouchableOpacity>
           ))}
         </View>
 
         <TouchableOpacity style={[styles.saveBtn, { backgroundColor: accent }]} onPress={save} disabled={saving}>
-          {saving ? <ActivityIndicator color="#fff" /> : <><Check size={20} color="#fff" /><Text style={styles.saveTxt}>{t.save}</Text></>}
+          {saving ? <ActivityIndicator color={k.onAccent} /> : <><Check size={20} color={k.onAccent} /><Text style={styles.saveTxt}>{t.save}</Text></>}
         </TouchableOpacity>
 
         <Text style={[styles.label, { color: sub }, align]}>{t.last7}</Text>
@@ -121,23 +121,23 @@ export default function MoodTrackerScreen() {
 // évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 24, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', marginBottom: 20 },
-  label: { fontSize: 13, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10, marginTop: 8 },
+  title: { fontSize: 24, fontWeight: '900', color: k.text, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: k.textMuted, marginBottom: 20 },
+  label: { fontSize: 13, fontWeight: '700', color: k.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10, marginTop: 8 },
   row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 18 },
-  btn: { width: 56, height: 56, borderRadius: 16, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent' },
+  btn: { width: 56, height: 56, borderRadius: 16, backgroundColor: k.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent' },
   emoji: { fontSize: 26 },
-  lvl: { width: 56, height: 48, borderRadius: 14, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  lvlTxt: { fontSize: 16, fontWeight: '800', color: '#94A3B8' },
+  lvl: { width: 56, height: 48, borderRadius: 14, backgroundColor: k.surface, alignItems: 'center', justifyContent: 'center' },
+  lvlTxt: { fontSize: 16, fontWeight: '800', color: k.textFaint },
   saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 16, paddingVertical: 15, marginBottom: 8 },
-  saveTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
-  empty: { color: '#94A3B8', fontSize: 14 },
-  histRow: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 8 },
-  histDate: { fontSize: 13, color: '#64748B' },
-  histVal: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
+  saveTxt: { color: k.onAccent, fontWeight: '800', fontSize: 15 },
+  empty: { color: k.textFaint, fontSize: 14 },
+  histRow: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: k.surface, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 8 },
+  histDate: { fontSize: 13, color: k.textMuted },
+  histVal: { fontSize: 15, fontWeight: '700', color: k.text },
   insightCard: { marginTop: 16 },
   insightHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   insightTitle: { fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },

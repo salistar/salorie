@@ -161,8 +161,8 @@ export default function ActionMenu() {
     {
       id: 'exercise',
       title: t('menu.log_exercise'),
-      icon: <Zap size={24} color="#0EA5E9" />,
-      bg: '#E0F2FE',
+      icon: <Zap size={24} color={k.info} />,
+      bg: k.infoSoft,
       onPress: () => {
         hideActionMenu();
         router.push('/log-exercise' as any);
@@ -171,8 +171,8 @@ export default function ActionMenu() {
     {
       id: 'water',
       title: t('menu.add_water'),
-      icon: <Droplets size={24} color="#22C55E" />,
-      bg: '#F0FDF4',
+      icon: <Droplets size={24} color={k.success} />,
+      bg: k.successSoft,
       onPress: () => {
         hideActionMenu();
         router.push('/add-water' as any);
@@ -181,7 +181,7 @@ export default function ActionMenu() {
     {
       id: 'database',
       title: t('menu.food_database'),
-      icon: <Database size={24} color="#F59E0B" />,
+      icon: <Database size={24} color={k.warning} />,
       bg: '#FFF9EB',
       onPress: () => {
         hideActionMenu();
@@ -194,7 +194,7 @@ export default function ActionMenu() {
       id: 'scan',
       title: lx.scan,
       icon: <Scan size={24} color="#FF5C5C" />,
-      bg: '#FFEEED',
+      bg: k.dangerSoft,
       premium: true,
       flag: 'food-recognition',
       onPress: handleScanFood,
@@ -240,22 +240,22 @@ export default function ActionMenu() {
           {scanChoice ? (
             /* Étape 2 du Scan Food : choix Caméra / Galerie en cartes (même design que le menu) */
             <View style={styles.grid}>
-              <TouchableOpacity style={[styles.card, isDark && { backgroundColor: '#161C23' }]} activeOpacity={0.7} onPress={goCamera}>
-                <View style={[styles.iconBox, { backgroundColor: '#FFEEED' }]}>
+              <TouchableOpacity style={[styles.card, isDark && { backgroundColor: k.surface }]} activeOpacity={0.7} onPress={goCamera}>
+                <View style={[styles.iconBox, { backgroundColor: k.dangerSoft }]}>
                   <Camera size={24} color="#FF5C5C" />
                 </View>
                 <Text style={[styles.actionTitle, isDark && { color: '#f1f5f9' }]}>{t('menu.take_photo')}</Text>
-                <Text style={[styles.cardHint, isDark && { color: '#94a3b8' }]}>{lx.camHint}</Text>
+                <Text style={[styles.cardHint, isDark && { color: k.textFaint }]}>{lx.camHint}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.card, isDark && { backgroundColor: '#161C23' }]} activeOpacity={0.7} onPress={() => { setScanChoice(false); handleGalleryAction(); }}>
-                <View style={[styles.iconBox, { backgroundColor: '#E0F2FE' }]}>
-                  <ImageIcon size={24} color="#0EA5E9" />
+              <TouchableOpacity style={[styles.card, isDark && { backgroundColor: k.surface }]} activeOpacity={0.7} onPress={() => { setScanChoice(false); handleGalleryAction(); }}>
+                <View style={[styles.iconBox, { backgroundColor: k.infoSoft }]}>
+                  <ImageIcon size={24} color={k.info} />
                 </View>
                 <Text style={[styles.actionTitle, isDark && { color: '#f1f5f9' }]}>{t('menu.gallery')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.card, isDark && { backgroundColor: '#161C23' }]} activeOpacity={0.7} onPress={() => setScanChoice(false)}>
-                <View style={[styles.iconBox, { backgroundColor: '#F1F5F9' }]}>
-                  <X size={24} color="#64748B" />
+              <TouchableOpacity style={[styles.card, isDark && { backgroundColor: k.surface }]} activeOpacity={0.7} onPress={() => setScanChoice(false)}>
+                <View style={[styles.iconBox, { backgroundColor: k.surfaceSunken }]}>
+                  <X size={24} color={k.textMuted} />
                 </View>
                 <Text style={[styles.actionTitle, isDark && { color: '#f1f5f9' }]}>{t('menu.cancel')}</Text>
               </TouchableOpacity>
@@ -265,7 +265,7 @@ export default function ActionMenu() {
               {visibleActions.map((action) => (
                 <TouchableOpacity
                   key={action.id}
-                  style={[styles.card, isDark && { backgroundColor: '#161C23' }]}
+                  style={[styles.card, isDark && { backgroundColor: k.surface }]}
                   activeOpacity={0.7}
                   onPress={action.onPress}
                 >
@@ -336,7 +336,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: '#F59E0B',
+    backgroundColor: k.warning,
     padding: 4,
     borderRadius: 10,
     borderWidth: 2,

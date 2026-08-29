@@ -2,7 +2,7 @@
 // virtuelles/groupe, séances, pas du jour). Lecture 100% ON-DEVICE depuis le
 // cache local `logs_<docId>` (type 'activity'). Groupé par jour + stats en tête.
 import React, { useCallback, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -30,11 +30,11 @@ const TXT: any = {
     sessions: 'حصص', burned: 'محروقة', week: 'هذا الأسبوع', kcal: 'سعرة', min: 'د', today: 'اليوم', yesterday: 'أمس' },
 };
 
-function iconFor(name: string) {
+function iconFor(name: string, k: Tokens) {
   const n = (name || '').toLowerCase();
   if (n.includes('pas') || n.includes('step') || n.includes('خطو')) return { Icon: Footprints, bg: '#EEF2FF', color: '#6366F1' };
-  if (n.includes('race') || n.includes('course') || n.includes('سباق')) return { Icon: Trophy, bg: '#FEF3E0', color: '#F59E0B' };
-  if (n.includes('run') || n.includes('جري') || n.includes('gps')) return { Icon: Flag, bg: '#EAF4EE', color: '#2E8B57' }; // couleur de CATEGORIE, comme ses voisines : elle ne suit pas le theme
+  if (n.includes('race') || n.includes('course') || n.includes('سباق')) return { Icon: Trophy, bg: '#FEF3E0', color: k.warning };
+  if (n.includes('run') || n.includes('جري') || n.includes('gps')) return { Icon: Flag, bg: k.accentSoft, color: k.accent }; // couleur de CATEGORIE, comme ses voisines : elle ne suit pas le theme
   if (n.includes('lift') || n.includes('muscu') || n.includes('workout') || n.includes('séance') || n.includes('تمرين')) return { Icon: Dumbbell, bg: '#F5F3FF', color: '#8B5CF6' };
   return { Icon: Flame, bg: '#FFF1F2', color: '#F43F5E' };
 }
@@ -142,7 +142,7 @@ export default function ActivityScreen() {
             <View key={g.date} style={{ marginTop: 18 }}>
               <Text style={[s.dayLabel, { color: sub }, align]}>{g.label}</Text>
               {g.logs.map((l, i) => {
-                const { Icon, bg: ibg, color } = iconFor(l.name);
+                const { Icon, bg: ibg, color } = iconFor(l.name, k);
                 const meta = [l.intensity, l.duration ? `${l.duration} ${t.min}` : null].filter(Boolean).join(' • ');
                 return (
                   <View key={(l.id || '') + i} style={[s.item, { backgroundColor: card, borderColor: border }, rowDir]}>

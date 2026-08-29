@@ -126,12 +126,12 @@ export default function MealBuilderScreen() {
       />
 
       {results.length > 0 && (
-        <View style={[styles.resultsBox, { backgroundColor: card }, isDark && { borderColor: '#334155' }]}>
+        <View style={[styles.resultsBox, { backgroundColor: card }, isDark && { borderColor: k.borderStrong }]}>
           <FlatList data={results.slice(0, 8)} keyExtractor={(r) => String(r.food_id)} keyboardShouldPersistTaps="handled"
             renderItem={({ item: r }) => {
               const m = parseDescription(r.food_description);
               return (
-                <TouchableOpacity style={[styles.resRow, row, isDark && { borderBottomColor: '#334155' }]} onPress={() => add(r)}>
+                <TouchableOpacity style={[styles.resRow, row, isDark && { borderBottomColor: k.borderStrong }]} onPress={() => add(r)}>
                   <Text style={[styles.resName, { color: k.text }, align]} numberOfLines={1}>{r.food_name}</Text>
                   <Text style={[styles.resMacro, { color: sub }, align]}>{m.calories} kcal</Text>
                   <Plus size={18} color={accent} />
@@ -153,10 +153,10 @@ export default function MealBuilderScreen() {
               <Text style={[styles.itemName, { color: text }, align]} numberOfLines={1}>{x.name}</Text>
               <Text style={[styles.itemMacro, { color: sub }, align]}>{Math.round(x.calories * x.qty)} kcal · {Math.round(x.protein * x.qty)}g {t.p} · {Math.round(x.carbs * x.qty)}g {t.c} · {Math.round(x.fat * x.qty)}g {t.f}</Text>
             </View>
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retirer')} onPress={() => setQty(x.id, -1)} style={[styles.qtyBtn, isDark && { backgroundColor: '#334155' }]}><Minus size={16} color={isDark ? '#cbd5e1' : '#475569'} /></TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retirer')} onPress={() => setQty(x.id, -1)} style={[styles.qtyBtn, isDark && { backgroundColor: '#334155' }]}><Minus size={16} color={isDark ? k.textFaint : k.textMuted} /></TouchableOpacity>
             <Text style={[styles.qty, { color: text }]}>{x.qty}</Text>
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('ajouter')} onPress={() => setQty(x.id, 1)} style={[styles.qtyBtn, isDark && { backgroundColor: '#334155' }]}><Plus size={16} color={isDark ? '#cbd5e1' : '#475569'} /></TouchableOpacity>
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} onPress={() => remove(x.id)} style={{ marginHorizontal: 8 }}><Trash2 size={18} color="#E11D48" /></TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('ajouter')} onPress={() => setQty(x.id, 1)} style={[styles.qtyBtn, isDark && { backgroundColor: '#334155' }]}><Plus size={16} color={isDark ? k.textFaint : k.textMuted} /></TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} onPress={() => remove(x.id)} style={{ marginHorizontal: 8 }}><Trash2 size={18} color={k.danger} /></TouchableOpacity>
           </View>
         ))}
       </ScrollView>
@@ -180,23 +180,23 @@ export default function MealBuilderScreen() {
 // évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8FAFC' },
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 8 },
-  title: { fontSize: 22, fontWeight: '800', color: '#0F172A' },
-  resultsBox: { maxHeight: 260, backgroundColor: '#fff', marginHorizontal: 16, marginTop: 6, borderRadius: 14, borderWidth: 1, borderColor: '#EEF2F6' },
+  title: { fontSize: 22, fontWeight: '800', color: k.text },
+  resultsBox: { maxHeight: 260, backgroundColor: k.surface, marginHorizontal: 16, marginTop: 6, borderRadius: 14, borderWidth: 1, borderColor: k.border },
   resRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderBottomWidth: 1, borderBottomColor: '#F5F7FA' },
-  resName: { flex: 1, fontSize: 14, color: '#1F2937' },
-  resMacro: { fontSize: 12, color: '#64748B' },
+  resName: { flex: 1, fontSize: 14, color: k.text },
+  resMacro: { fontSize: 12, color: k.textMuted },
   body: { padding: 16, gap: 10 },
   emptyWrap: { marginTop: 30, alignItems: 'stretch', justifyContent: 'center' },
-  item: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, padding: 12, gap: 8 },
-  itemName: { fontSize: 14, fontWeight: '600', color: '#0F172A' },
-  itemMacro: { fontSize: 11, color: '#64748B', marginTop: 2 },
-  qtyBtn: { width: 30, height: 30, borderRadius: 8, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' },
-  qty: { fontSize: 14, fontWeight: '700', color: '#0F172A', minWidth: 18, textAlign: 'center' },
+  item: { flexDirection: 'row', alignItems: 'center', backgroundColor: k.surface, borderRadius: 14, padding: 12, gap: 8 },
+  itemName: { fontSize: 14, fontWeight: '600', color: k.text },
+  itemMacro: { fontSize: 11, color: k.textMuted, marginTop: 2 },
+  qtyBtn: { width: 30, height: 30, borderRadius: 8, backgroundColor: k.surfaceSunken, alignItems: 'center', justifyContent: 'center' },
+  qty: { fontSize: 14, fontWeight: '700', color: k.text, minWidth: 18, textAlign: 'center' },
   totalBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: k.accent, padding: 18, paddingBottom: 28, gap: 12 },
-  totalKcal: { fontSize: 22, fontWeight: '900', color: '#fff' },
-  totalMacro: { fontSize: 14, color: '#E7F5EC', fontWeight: '600' },
-  logBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fff', borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16 },
+  totalKcal: { fontSize: 22, fontWeight: '900', color: k.onAccent },
+  totalMacro: { fontSize: 14, color: k.accentSoft, fontWeight: '600' },
+  logBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: k.surface, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16 },
   logBtnTxt: { color: k.accent, fontWeight: '800', fontSize: 14 },
 });

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -70,6 +70,7 @@ const TXT: any = {
 
 export default function Sadaqa() {
   const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -164,7 +165,7 @@ export default function Sadaqa() {
               title={t.donate}
               onPress={openDonate}
               style={s.donate}
-              icon={<View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ExternalLink size={18} color="#fff" /></View>}
+              icon={<View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ExternalLink size={18} color={k.onAccent} /></View>}
             />
           </>
         )}
@@ -173,12 +174,15 @@ export default function Sadaqa() {
   );
 }
 
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f3f6f4' },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeS = (k: Tokens) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 18, paddingBottom: 90 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 26, fontWeight: '800', color: '#1B2A33' },
-  sub: { fontSize: 13, color: '#667085', marginTop: 6, lineHeight: 19 },
+  sub: { fontSize: 13, color: k.textMuted, marginTop: 6, lineHeight: 19 },
   card: { borderRadius: 16, padding: 16, marginTop: 14 },
   kmLabel: { fontSize: 13, fontWeight: '600' },
   kmRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 6 },

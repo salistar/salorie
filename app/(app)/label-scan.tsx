@@ -30,7 +30,7 @@ import { useNutritionData } from '../../hooks/useNutritionData';
 import { useScreenGate } from '../../components/FeatureGate';
 
 // Verdict objectif (couleur + emoji + libellé i18n).
-const OBJ_VERDICT_COLOR: Record<FoodScore['verdict'], string> = { great: '#16A34A', ok: '#D97706', avoid: '#DC2626' };
+const obj_verdict_color = (k: Tokens): Record<FoodScore['verdict'], string> => ({ great: k.success, ok: k.warning, avoid: k.danger });
 const OBJ_VERDICT_EMOJI: Record<FoodScore['verdict'], string> = { great: '✅', ok: '⚠️', avoid: '🚫' };
 const OBJ_VERDICT_TXT: Record<string, Record<FoodScore['verdict'], string>> = {
   en: { great: 'On point for your goal', ok: 'OK for your goal', avoid: 'Avoid for your goal' },
@@ -202,10 +202,10 @@ export default function LabelScanScreen() {
 
         <View style={[styles.actions, { flexDirection: rowDir(isRTL) }]}>
           <TouchableOpacity style={[styles.btn, styles.primary, { backgroundColor: accent }]} onPress={() => run(true)}>
-            <Camera size={20} color="#fff" /><Text style={styles.btnTxt}>{t.camera}</Text>
+            <Camera size={20} color={k.onAccent} /><Text style={styles.btnTxt}>{t.camera}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.btn, styles.secondary, isDark && { backgroundColor: '#334155' }]} onPress={() => run(false)}>
-            <Images size={20} color={isDark ? '#cbd5e1' : '#475569'} /><Text style={[styles.btnTxtDark, isDark && { color: '#cbd5e1' }]}>{t.gallery}</Text>
+            <Images size={20} color={isDark ? k.textFaint : k.textMuted} /><Text style={[styles.btnTxtDark, isDark && { color: k.textFaint }]}>{t.gallery}</Text>
           </TouchableOpacity>
         </View>
 
@@ -221,7 +221,7 @@ export default function LabelScanScreen() {
 
         <Animated.View style={resultAnimStyle}>
         {hasParsed ? (
-          <View style={[styles.parsedCard, { backgroundColor: card }, isDark && { borderColor: '#334155' }]}>
+          <View style={[styles.parsedCard, { backgroundColor: card }, isDark && { borderColor: k.borderStrong }]}>
             <Text style={[styles.parsedTitle, { color: accent }, align]}>{t.detected}</Text>
             {parsed.calories != null && <Text style={[styles.parsedRow, { color: k.text }, align]}>{t.calories} : <Text style={[styles.bold, { color: fg }]}>{parsed.calories} kcal</Text></Text>}
             {parsed.protein != null && <Text style={[styles.parsedRow, { color: k.text }, align]}>{t.protein} : <Text style={[styles.bold, { color: fg }]}>{parsed.protein} g</Text></Text>}
@@ -248,11 +248,11 @@ export default function LabelScanScreen() {
         })() : null}
 
         {objScore ? (
-          <View style={[styles.objCard, { backgroundColor: card, borderColor: OBJ_VERDICT_COLOR[objScore.verdict] }]}>
+          <View style={[styles.objCard, { backgroundColor: card, borderColor: obj_verdict_color(k)[objScore.verdict] }]}>
             <View style={[styles.objHead, { flexDirection: rowDir(isRTL) }]}>
               <Text style={styles.objEmoji}>{OBJ_VERDICT_EMOJI[objScore.verdict]}</Text>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.objVerdict, { color: OBJ_VERDICT_COLOR[objScore.verdict] }, align]}>
+                <Text style={[styles.objVerdict, { color: obj_verdict_color(k)[objScore.verdict] }, align]}>
                   {(OBJ_VERDICT_TXT[language] || OBJ_VERDICT_TXT.en)[objScore.verdict]}
                 </Text>
                 <Text style={[styles.objSub, { color: sub }, align]}>{objScore.fit}/100 · {t.verdictScore}</Text>
@@ -287,27 +287,27 @@ export default function LabelScanScreen() {
 // évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8FAFC' },
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 40 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
-  title: { fontSize: 22, fontWeight: '800', color: '#0F172A' },
-  sub: { fontSize: 13, color: '#64748B', marginTop: 8 },
+  title: { fontSize: 22, fontWeight: '800', color: k.text },
+  sub: { fontSize: 13, color: k.textMuted, marginTop: 8 },
   actions: { flexDirection: 'row', gap: 12, marginTop: 20 },
   btn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14, gap: 8 },
   primary: { backgroundColor: k.accent },
-  secondary: { backgroundColor: '#E2E8F0' },
-  btnTxt: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  btnTxtDark: { color: '#475569', fontWeight: '700', fontSize: 15 },
-  preview: { width: '100%', height: 200, borderRadius: 14, marginTop: 18, backgroundColor: '#E2E8F0' },
-  warn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FEF3C7', borderRadius: 12, padding: 12, marginTop: 16 },
-  warnTxt: { fontSize: 13, color: '#92400E', flex: 1 },
-  parsedCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginTop: 18, borderWidth: 1, borderColor: '#D1FAE5' },
+  secondary: { backgroundColor: k.surfaceSunken },
+  btnTxt: { color: k.onAccent, fontWeight: '700', fontSize: 15 },
+  btnTxtDark: { color: k.textMuted, fontWeight: '700', fontSize: 15 },
+  preview: { width: '100%', height: 200, borderRadius: 14, marginTop: 18, backgroundColor: k.surfaceSunken },
+  warn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: k.warningSoft, borderRadius: 12, padding: 12, marginTop: 16 },
+  warnTxt: { fontSize: 13, color: k.warningInk, flex: 1 },
+  parsedCard: { backgroundColor: k.surface, borderRadius: 16, padding: 16, marginTop: 18, borderWidth: 1, borderColor: '#D1FAE5' },
   parsedTitle: { fontSize: 14, fontWeight: '700', color: k.accent, marginBottom: 8 },
-  parsedRow: { fontSize: 14, color: '#334155', paddingVertical: 3 },
-  bold: { fontWeight: '800', color: '#0F172A' },
+  parsedRow: { fontSize: 14, color: k.textMuted, paddingVertical: 3 },
+  bold: { fontWeight: '800', color: k.text },
   healthBadge: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, borderWidth: 1.5, padding: 12, marginTop: 14 },
   healthGrade: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  healthGradeTxt: { color: '#fff', fontSize: 22, fontWeight: '900' },
+  healthGradeTxt: { color: k.onAccent, fontSize: 22, fontWeight: '900' },
   healthVerdict: { fontSize: 16, fontWeight: '800' },
   healthSub: { fontSize: 12, fontWeight: '600', marginTop: 1 },
   objCard: { borderRadius: 16, padding: 16, marginTop: 14, borderWidth: 1.5 },
@@ -318,8 +318,8 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   objReasons: { marginTop: 10, gap: 3 },
   objWhy: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 2 },
   objReason: { fontSize: 13, fontWeight: '600', lineHeight: 19 },
-  textCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginTop: 14 },
-  textTitle: { fontSize: 13, fontWeight: '700', color: '#334155', marginBottom: 6 },
-  rawText: { fontSize: 12, color: '#64748B', lineHeight: 18 },
-  note: { fontSize: 11, color: '#94A3B8', textAlign: 'center', marginTop: 24 },
+  textCard: { backgroundColor: k.surface, borderRadius: 16, padding: 16, marginTop: 14 },
+  textTitle: { fontSize: 13, fontWeight: '700', color: k.textMuted, marginBottom: 6 },
+  rawText: { fontSize: 12, color: k.textMuted, lineHeight: 18 },
+  note: { fontSize: 11, color: k.textFaint, textAlign: 'center', marginTop: 24 },
 });

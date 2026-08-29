@@ -158,7 +158,7 @@ export default function NutrientsScreen() {
           <View style={[styles.emptyBox, { backgroundColor: card }]}>
             <Text style={{ color: k.danger, fontWeight: '600', textAlign: 'center' }}>{t('nutrients.error')}</Text>
             <TouchableOpacity style={styles.primaryBtn} onPress={() => run(true)}>
-              <RefreshCw size={18} color="#fff" /><Text style={styles.primaryBtnText}>{t('nutrients.retry')}</Text>
+              <RefreshCw size={18} color={k.onAccent} /><Text style={styles.primaryBtnText}>{t('nutrients.retry')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -172,7 +172,7 @@ export default function NutrientsScreen() {
                 <View key={i} style={styles.microRow}>
                   <Text style={[styles.microName, { color: text }]} numberOfLines={1}>{mi.name}</Text>
                   <View style={styles.microBarTrack}>
-                    <View style={[styles.microBarFill, { width: `${Math.min(100, Math.max(2, mi.pct))}%`, backgroundColor: mi.pct >= 90 ? '#10B981' : mi.pct >= 50 ? k.accent : '#f59e0b' }]} />
+                    <View style={[styles.microBarFill, { width: `${Math.min(100, Math.max(2, mi.pct))}%`, backgroundColor: mi.pct >= 90 ? k.success : mi.pct >= 50 ? k.accent: k.warning }]} />
                   </View>
                   <Text style={[styles.microPct, { color: sub }]}>{fmtNum(mi.pct)}%</Text>
                 </View>
@@ -180,15 +180,15 @@ export default function NutrientsScreen() {
             </View>
 
             {!!report.highlight && (
-              <View style={[styles.insightCard, { backgroundColor: '#ecfdf3' }]}>
-                <TrendingUp size={20} color="#10B981" />
-                <Text style={[styles.insightText, { color: '#065f46' }]}>{report.highlight}</Text>
+              <View style={[styles.insightCard, { backgroundColor: k.successSoft }]}>
+                <TrendingUp size={20} color={k.success} />
+                <Text style={[styles.insightText, { color: k.successInk }]}>{report.highlight}</Text>
               </View>
             )}
             {!!report.gap && (
-              <View style={[styles.insightCard, { backgroundColor: '#fffbeb' }]}>
-                <AlertTriangle size={20} color="#d97706" />
-                <Text style={[styles.insightText, { color: '#92400e' }]}>{report.gap}</Text>
+              <View style={[styles.insightCard, { backgroundColor: k.warningSoft }]}>
+                <AlertTriangle size={20} color={k.warning} />
+                <Text style={[styles.insightText, { color: k.warningInk }]}>{report.gap}</Text>
               </View>
             )}
 
@@ -220,7 +220,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   emptyTitle: { fontSize: 18, fontWeight: '800' },
   emptySub: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
   primaryBtn: { flexDirection: 'row', gap: 8, backgroundColor: k.accent, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14, alignItems: 'center', marginTop: 6 },
-  primaryBtnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  primaryBtnText: { color: k.onAccent, fontSize: 15, fontWeight: '800' },
   basedOn: { fontSize: 13, marginBottom: 14, lineHeight: 18 },
   microCard: { borderRadius: 18, padding: 16, marginBottom: 16, gap: 13 },
   microRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -30,6 +30,7 @@ const TXT: any = {
 
 export default function EquipmentScan() {
   const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -74,7 +75,7 @@ export default function EquipmentScan() {
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
         <LinearGradient colors={[accent, '#1d6440']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.heroBanner}>
-          <Dumbbell size={30} color="#fff" />
+          <Dumbbell size={30} color={k.onAccent} />
           <View style={{ flex: 1 }}>
             <Text style={[s.heroTitle, align]}>{t.title}</Text>
             <Text style={[s.heroSub, align]}>{t.sub}</Text>
@@ -83,10 +84,10 @@ export default function EquipmentScan() {
 
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 18 }}>
           <TouchableOpacity style={[s.btn, { backgroundColor: accent }]} onPress={() => pick(true)} disabled={busy}>
-            <Camera size={18} color="#fff" /><Text style={s.btnTxt} numberOfLines={1}>{t.cam}</Text>
+            <Camera size={18} color={k.onAccent} /><Text style={s.btnTxt} numberOfLines={1}>{t.cam}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[s.btn, { backgroundColor: k.surfaceSunken }]} onPress={() => pick(false)} disabled={busy}>
-            <ImageIcon size={18} color={isDark ? '#fff' : '#0f172a'} /><Text style={[s.btnTxt, { color: k.text }]} numberOfLines={1}>{t.lib}</Text>
+            <ImageIcon size={18} color={isDark ? k.onAccent : k.text} /><Text style={[s.btnTxt, { color: k.text }]} numberOfLines={1}>{t.lib}</Text>
           </TouchableOpacity>
         </View>
 
@@ -120,17 +121,20 @@ export default function EquipmentScan() {
   );
 }
 
-const s = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeS = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1 },
   body: { padding: 18, paddingBottom: 40 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   title: { fontSize: 24, fontWeight: '900', letterSpacing: -0.4 },
   sub: { fontSize: 13.5, marginTop: 6, lineHeight: 19 },
   heroBanner: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, padding: 18 },
-  heroTitle: { color: '#fff', fontSize: 21, fontWeight: '900', letterSpacing: -0.3 },
+  heroTitle: { color: k.onAccent, fontSize: 21, fontWeight: '900', letterSpacing: -0.3 },
   heroSub: { color: 'rgba(255,255,255,0.85)', fontSize: 12.5, marginTop: 4, lineHeight: 17 },
   btn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 13, borderRadius: 14 },
-  btnTxt: { color: '#fff', fontWeight: '800', fontSize: 14, flexShrink: 1 },
+  btnTxt: { color: k.onAccent, fontWeight: '800', fontSize: 14, flexShrink: 1 },
   photo: { width: '100%', height: 220, borderRadius: 18, marginTop: 16 },
   card: { borderRadius: 18, padding: 16, marginTop: 16, gap: 10 },
   resName: { fontSize: 18, fontWeight: '900' },

@@ -283,7 +283,7 @@ export default function LogFoodDetailsScreen() {
                 return (
                   <TouchableOpacity key={q.k} onPress={() => updateQuantity(String(+(baseData.quantity * q.m).toFixed(2)))}
                     style={{ paddingHorizontal: 18, paddingVertical: 9, borderRadius: 999, borderWidth: 1.5, backgroundColor: active ? accent : 'transparent', borderColor: active ? accent : inputBorder }}>
-                    <Text style={{ fontWeight: '800', fontSize: 14, color: active ? '#fff' : textSecondary }}>{q.k}</Text>
+                    <Text style={{ fontWeight: '800', fontSize: 14, color: active ? k.onAccent : textSecondary }}>{q.k}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -363,7 +363,7 @@ export default function LogFoodDetailsScreen() {
               entering={FadeInDown.delay(200).duration(600)}
               style={[styles.macroCard, { backgroundColor: k.surface, borderColor: cardBorder }]}
             >
-              <View style={[styles.macroIcon, { backgroundColor: '#FFEEED' }]}>
+              <View style={[styles.macroIcon, { backgroundColor: k.dangerSoft }]}>
                 <Beef size={20} color="#FF5C5C" />
               </View>
               <Text style={[styles.macroLabel, { color: textMuted }]}>{t('logfood.protein')}</Text>
@@ -383,7 +383,7 @@ export default function LogFoodDetailsScreen() {
               style={[styles.macroCard, { backgroundColor: k.surface, borderColor: cardBorder }]}
             >
               <View style={[styles.macroIcon, { backgroundColor: '#FFF9EB' }]}>
-                <Wheat size={20} color="#F59E0B" />
+                <Wheat size={20} color={k.warning} />
               </View>
               <Text style={[styles.macroLabel, { color: textMuted }]}>{t('logfood.carbs')}</Text>
               <View style={styles.macroInputRow}>
@@ -401,8 +401,8 @@ export default function LogFoodDetailsScreen() {
               entering={FadeInDown.delay(400).duration(600)}
               style={[styles.macroCard, { backgroundColor: k.surface, borderColor: cardBorder }]}
             >
-              <View style={[styles.macroIcon, { backgroundColor: '#E0F2FE' }]}>
-                <Droplets size={20} color="#0EA5E9" />
+              <View style={[styles.macroIcon, { backgroundColor: k.infoSoft }]}>
+                <Droplets size={20} color={k.info} />
               </View>
               <Text style={[styles.macroLabel, { color: textMuted }]}>{t('logfood.fat')}</Text>
               <View style={styles.macroInputRow}>
@@ -427,11 +427,11 @@ export default function LogFoodDetailsScreen() {
                 backgroundColor: fits
                   ? (isDark ? '#12241A' : '#ECFDF5')
                   : (isDark ? '#2A1518' : '#FEF2F2'),
-                borderColor: fits ? '#10B981' : '#EF4444',
+                borderColor: fits ? k.accent : k.danger,
               },
             ]}
           >
-            <Flame size={15} color={fits ? '#10B981' : '#EF4444'} />
+            <Flame size={15} color={fits ? k.success : k.danger} />
             <Text
               style={[
                 styles.budgetContextText,
@@ -477,7 +477,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 20,
     backgroundColor: '#00000010',
-    shadowColor: '#000',
+    shadowColor: k.shadow,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
     shadowRadius: 16,

@@ -1,6 +1,6 @@
 // Budget calories — tes calories comme un compte en banque.
-import React from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import { numLocaleFor } from '../../lib/format';
 import {
   Image,
@@ -81,6 +81,7 @@ const TXT: any = {
 
 export default function CalorieBudgetScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('calorie-budget');
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
@@ -125,21 +126,21 @@ export default function CalorieBudgetScreen() {
         <Image source={require('../../assets/images/illustrations/dashboard_bg.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
         <ScreenTitle title={t.title} icon={<Wallet size={26} color={GREEN} />} subtitle={t.sub} />
 
-        <View style={[styles.hero, { backgroundColor: balance >= 0 ? GREEN : '#E11D48' }]}>
+        <View style={[styles.hero, { backgroundColor: balance >= 0 ? GREEN: k.danger }]}>
           <Text style={styles.heroLabel}>{t.heroLabel}</Text>
           <Text style={styles.heroValue}>{balance >= 0 ? '' : '−'}{fmtNum(Math.abs(balance))}<Text style={styles.heroUnit}> kcal</Text></Text>
           <Text style={styles.heroNote}>{balance >= 0 ? t.margin : t.over}</Text>
         </View>
 
         <View style={[styles.card, { backgroundColor: card, borderWidth: 1, borderColor: border }, !isDark && styles.cardShadow]}>
-          <Line icon={Wallet} label={t.allowance} value={allowance} color="#0EA5E9" sign="" />
-          <Line icon={ArrowDownCircle} label={t.spent} value={spent} color="#E11D48" sign="−" />
+          <Line icon={Wallet} label={t.allowance} value={allowance} color={k.info} sign="" />
+          <Line icon={ArrowDownCircle} label={t.spent} value={spent} color={k.danger} sign="−" />
           <Line icon={ArrowUpCircle} label={t.earned} value={earned} color={GREEN} sign="+" />
           <View style={[styles.sep, { backgroundColor: k.surfaceSunken }]} />
-          <Line icon={PiggyBank} label={t.balance} value={Math.abs(balance)} color={balance >= 0 ? GREEN : '#E11D48'} sign={balance >= 0 ? '' : '−'} />
+          <Line icon={PiggyBank} label={t.balance} value={Math.abs(balance)} color={balance >= 0 ? GREEN: k.danger} sign={balance >= 0 ? '' : '−'} />
         </View>
 
-        <View style={[styles.barTrack, { backgroundColor: k.surfaceSunken }]}><View style={[styles.barFill, { width: `${pct}%`, backgroundColor: pct > 100 ? '#E11D48' : GREEN }]} /></View>
+        <View style={[styles.barTrack, { backgroundColor: k.surfaceSunken }]}><View style={[styles.barFill, { width: `${pct}%`, backgroundColor: pct > 100 ? k.danger : GREEN }]} /></View>
         <Text style={[styles.barLabel, { color: k.textFaint }]}>{fmtNum(pct)}% {t.used}</Text>
 
         <View style={[styles.howCard, { backgroundColor: card, borderWidth: 1, borderColor: border }, !isDark && styles.cardShadow]}>
@@ -158,25 +159,28 @@ export default function CalorieBudgetScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   hero: { borderRadius: 24, padding: 24, alignItems: 'center', marginBottom: 18 },
-  heroLabel: { color: '#fff', opacity: 0.9, fontSize: 13, fontWeight: '600' },
-  heroValue: { color: '#fff', fontSize: 46, fontWeight: '900', letterSpacing: -2, marginTop: 4 },
+  heroLabel: { color: k.onAccent, opacity: 0.9, fontSize: 13, fontWeight: '600' },
+  heroValue: { color: k.onAccent, fontSize: 46, fontWeight: '900', letterSpacing: -2, marginTop: 4 },
   heroUnit: { fontSize: 18, fontWeight: '700' },
-  heroNote: { color: '#fff', opacity: 0.9, fontSize: 13, fontWeight: '600', marginTop: 2 },
-  card: { backgroundColor: '#fff', borderRadius: 20, padding: 8, marginBottom: 18 },
-  cardShadow: { shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  heroNote: { color: k.onAccent, opacity: 0.9, fontSize: 13, fontWeight: '600', marginTop: 2 },
+  card: { backgroundColor: k.surface, borderRadius: 20, padding: 8, marginBottom: 18 },
+  cardShadow: { shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   line: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 10 },
   lineIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  lineLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: '#0F172A' },
+  lineLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: k.text },
   lineValue: { fontSize: 15, fontWeight: '800' },
   sep: { height: 1, backgroundColor: '#EEF2F7', marginHorizontal: 10 },
   barTrack: { height: 12, borderRadius: 6, backgroundColor: '#E5E7EB', overflow: 'hidden' },
   barFill: { height: '100%', borderRadius: 6 },
-  barLabel: { fontSize: 12, color: '#94A3B8', marginTop: 6, textAlign: 'center' },
-  howCard: { backgroundColor: '#fff', borderRadius: 20, padding: 18, marginTop: 22 },
+  barLabel: { fontSize: 12, color: k.textFaint, marginTop: 6, textAlign: 'center' },
+  howCard: { backgroundColor: k.surface, borderRadius: 20, padding: 18, marginTop: 22 },
   howTitle: { fontSize: 18, fontWeight: '900', marginBottom: 10 },
   howBody: { fontSize: 14, lineHeight: 21, marginBottom: 10 },
   formulaBox: { borderRadius: 14, padding: 14, marginVertical: 4, marginBottom: 12 },

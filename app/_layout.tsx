@@ -702,10 +702,10 @@ function InitialLayout() {
               resizeMode="contain"
             />
           </View>
-          <Text style={{ fontSize: 36, fontWeight: '900', color: '#fff', letterSpacing: -1 }}>
+          <Text style={{ fontSize: 36, fontWeight: '900', color: k.onAccent, letterSpacing: -1 }}>
             Salorie
           </Text>
-          <ActivityIndicator size="large" color="#ffffff" />
+          <ActivityIndicator size="large" color={k.onAccent} />
         </View>
       )}
     </View>
@@ -744,9 +744,10 @@ class ErrorBoundary extends Component<{ children: any }, { error: Error | null }
   }
   render() {
     if (this.state.error) {
+  const k = useTokens();
       return (
         <View style={{ flex: 1, backgroundColor: '#0f3a22', padding: 24, justifyContent: 'center' }}>
-          <Text style={{ color: '#fff', fontSize: 18, fontWeight: '800', marginBottom: 12 }}>Salorie — erreur de démarrage</Text>
+          <Text style={{ color: k.onAccent, fontSize: 18, fontWeight: '800', marginBottom: 12 }}>Salorie — erreur de démarrage</Text>
           <Text style={{ color: '#ffe08a', fontSize: 13 }} selectable>{String(this.state.error?.message || this.state.error)}</Text>
           <Text style={{ color: '#9fe0b8', fontSize: 10, marginTop: 12 }} selectable>{String(this.state.error?.stack || '').slice(0, 1000)}</Text>
         </View>

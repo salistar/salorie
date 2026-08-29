@@ -171,7 +171,7 @@ export default function AnnualChallenge() {
             <Text style={[s.bigKm, { color: accent }]}>{km}</Text>
             <Text style={[s.bigUnit, { color: sub }]}>/ {goalKm} {t.km}</Text>
             <View style={{ flex: 1 }} />
-            <Text style={[s.pctBadge, { color: accent, backgroundColor: isDark ? 'rgba(74,222,128,0.14)' : '#eaf4ee' }]}>{pct}%</Text>
+            <Text style={[s.pctBadge, { color: accent, backgroundColor: isDark ? 'rgba(74,222,128,0.14)' : k.accentSoft }]}>{pct}%</Text>
           </View>
           <Text style={[s.cumLabel, { color: sub }, align]}>{t.cumulated}</Text>
 
@@ -185,7 +185,7 @@ export default function AnnualChallenge() {
         </View>
 
         {/* Message d'encouragement par palier */}
-        <View style={[s.encourage, { backgroundColor: isDark ? 'rgba(74,222,128,0.10)' : '#eaf4ee' }]}>
+        <View style={[s.encourage, { backgroundColor: isDark ? 'rgba(74,222,128,0.10)' : k.accentSoft }]}>
           <Flag size={18} color={accent} />
           <Text style={[s.encourageTxt, { color: k.text }, align]}>{encourage(t, pct)}</Text>
         </View>

@@ -22,6 +22,11 @@ export type HealthScore = {
   approx: boolean;      // true si calculé sans sucres/satFat/sel
 };
 
+// ⚠ ECHELLE D'IDENTITE — elle ne suit PAS le theme, et ce module n'a pas a le
+// connaitre. A -> E est un degrade continu du vert au rouge, comme le
+// Nutri-Score : le rendre thematique casserait la PROGRESSION, puisque seuls
+// A, C et E auraient un jeton et B, D resteraient fixes. Et healthScore.ts est
+// un module de calcul : y faire entrer le theme melangerait deux domaines.
 const GRADE_COLOR: Record<Grade, string> = {
   A: '#16A34A', B: '#65A30D', C: '#D97706', D: '#EA580C', E: '#DC2626',
 };

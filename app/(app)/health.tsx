@@ -236,7 +236,7 @@ export default function HealthScreen() {
   };
 
   const Stat = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
-    <View style={[styles.stat, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? '#283241' : 'transparent' }, !isDark && styles.cardShadow]}>
+    <View style={[styles.stat, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? k.border : 'transparent' }, !isDark && styles.cardShadow]}>
       <View style={styles.statIcon}>{icon}</View>
       <Text style={[styles.statValue, { color: text }]}>{value}</Text>
       <Text style={[styles.statLabel, { color: sub }]}>{label}</Text>
@@ -259,7 +259,7 @@ export default function HealthScreen() {
 
         {/* Lien vers l'écran "Forme du jour" (score de récupération) */}
         <TouchableOpacity
-          style={[styles.readinessTile, { backgroundColor: card, borderColor: isDark ? '#283241' : 'transparent', flexDirection: rowDir(isRTL) }, !isDark && styles.cardShadow]}
+          style={[styles.readinessTile, { backgroundColor: card, borderColor: isDark ? k.border : 'transparent', flexDirection: rowDir(isRTL) }, !isDark && styles.cardShadow]}
           activeOpacity={0.85}
           onPress={() => router.push('/readiness' as any)}
         >
@@ -278,13 +278,13 @@ export default function HealthScreen() {
             <Text style={[styles.modeTxt, { color: mode === 'real' ? accent : sub }]}>{tx.real}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.modeBtn, mode === 'sim' && { backgroundColor: card }]} onPress={() => switchMode('sim')}>
-            <Zap size={16} color={mode === 'sim' ? '#0ea5e9' : sub} />
-            <Text style={[styles.modeTxt, { color: mode === 'sim' ? '#0ea5e9' : sub }]}>{tx.simulation}</Text>
+            <Zap size={16} color={mode === 'sim' ? k.info : sub} />
+            <Text style={[styles.modeTxt, { color: mode === 'sim' ? k.info : sub }]}>{tx.simulation}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Combined steps banner (mode base + activity steps from runs/challenges) */}
-        <View style={[styles.totalCard, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? '#283241' : 'transparent' }, !isDark && styles.cardShadow]}>
+        <View style={[styles.totalCard, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? k.border : 'transparent' }, !isDark && styles.cardShadow]}>
           <Footprints size={22} color={accent} />
           <Text style={[styles.totalSteps, { color: text }]}>
             {fmtNum((mode === 'sim' ? simSteps : (data?.steps || 0)) + activitySteps)}
@@ -294,15 +294,15 @@ export default function HealthScreen() {
 
         {/* Simulation controls */}
         {mode === 'sim' && (
-          <View style={[styles.simCard, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? '#283241' : 'transparent' }]}>
+          <View style={[styles.simCard, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? k.border : 'transparent' }]}>
             <Text style={[styles.simHint, { color: sub, textAlign: txtAlign(isRTL) }]}>{tx.simHint}</Text>
             <View style={[styles.simBtns, { flexDirection: rowDir(isRTL) }]}>
-              <TouchableOpacity style={[styles.simBtn, { backgroundColor: walking ? '#ef4444' : '#0ea5e9' }]} onPress={toggleWalk}>
-                <Zap size={16} color="#fff" />
+              <TouchableOpacity style={[styles.simBtn, { backgroundColor: walking ? k.danger : k.info }]} onPress={toggleWalk}>
+                <Zap size={16} color={k.onAccent} />
                 <Text style={styles.simBtnTxt}>{walking ? tx.stop : tx.walk}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.simBtn, { backgroundColor: accent }]} onPress={addChunk}>
-                <Plus size={16} color="#fff" />
+                <Plus size={16} color={k.onAccent} />
                 <Text style={styles.simBtnTxt}>+1 000</Text>
               </TouchableOpacity>
               <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('recommencer')} style={[styles.simBtnGhost, { borderColor: k.border }]} onPress={resetWalk}>
@@ -344,7 +344,7 @@ export default function HealthScreen() {
         {mode === 'real' && available === true && !connected && (
           <>
             <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: accent }]} onPress={connect} disabled={busy}>
-              {busy ? <ActivityIndicator color="#fff" /> : <><HeartPulse size={20} color="#fff" /><Text style={styles.primaryBtnText}>{t('health.connect')}</Text></>}
+              {busy ? <ActivityIndicator color={k.onAccent} /> : <><HeartPulse size={20} color={k.onAccent} /><Text style={styles.primaryBtnText}>{t('health.connect')}</Text></>}
             </TouchableOpacity>
             {!!msg && <Text style={[styles.msg, { color: sub }]}>{msg}</Text>}
             <TouchableOpacity style={[styles.ghostBtn, { flexDirection: rowDir(isRTL) }]} onPress={openHealthSettings}>
@@ -365,7 +365,7 @@ export default function HealthScreen() {
             <Text style={[styles.connected, { color: accent, textAlign: txtAlign(isRTL) }]}>{t('health.connected')}</Text>
             <View style={[styles.statsRow, { flexDirection: rowDir(isRTL) }]}>
               <Stat icon={<Footprints size={22} color={accent} />} label={t('health.steps')} value={data ? fmtNum(data.steps) : '—'} />
-              <Stat icon={<Flame size={22} color="#f59e0b" />} label={t('health.active_kcal')} value={data ? fmtNum(data.activeKcal) : '—'} />
+              <Stat icon={<Flame size={22} color={k.warning} />} label={t('health.active_kcal')} value={data ? fmtNum(data.activeKcal) : '—'} />
               <Stat icon={<Scale size={22} color={accent} />} label={t('health.weight')} value={data?.weightKg != null ? `${fmtNum(data.weightKg)} kg` : '—'} />
             </View>
 
@@ -375,13 +375,13 @@ export default function HealthScreen() {
 
             {data && data.activeKcal > 0 && (
               <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: accent }]} onPress={logActivity}>
-                <Plus size={18} color="#fff" /><Text style={styles.primaryBtnText}>{t('health.log_activity')}</Text>
+                <Plus size={18} color={k.onAccent} /><Text style={styles.primaryBtnText}>{t('health.log_activity')}</Text>
               </TouchableOpacity>
             )}
 
             {/* Import séances (montre) + poids depuis Health Connect */}
-            <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: '#0EA5E9' }]} onPress={syncSessions} disabled={busy}>
-              <RefreshCw size={18} color="#fff" /><Text style={styles.primaryBtnText}>{syncLabel}</Text>
+            <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: k.info }]} onPress={syncSessions} disabled={busy}>
+              <RefreshCw size={18} color={k.onAccent} /><Text style={styles.primaryBtnText}>{syncLabel}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.ghostBtn, { flexDirection: rowDir(isRTL) }]} onPress={refresh} disabled={busy}>
@@ -412,11 +412,11 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   box: { borderRadius: 16, padding: 20 },
   boxText: { fontSize: 14, lineHeight: 20 },
   primaryBtn: { flexDirection: 'row', gap: 8, backgroundColor: k.accent, paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
-  primaryBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  primaryBtnText: { color: k.onAccent, fontSize: 16, fontWeight: '800' },
   connected: { fontSize: 14, fontWeight: '800', marginBottom: 14 },
   statsRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
   stat: { flex: 1, borderRadius: 18, padding: 16, alignItems: 'center', gap: 6 },
-  cardShadow: { shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
+  cardShadow: { shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
   statIcon: { marginBottom: 2 },
   statValue: { fontSize: 22, fontWeight: '900' },
   statLabel: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
@@ -434,8 +434,8 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   simHint: { fontSize: 13, fontWeight: '500', lineHeight: 18, marginBottom: 12 },
   simBtns: { flexDirection: 'row', gap: 10 },
   simBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingVertical: 13, borderRadius: 13 },
-  simBtnTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
-  simBtnGhost: { width: 50, alignItems: 'center', justifyContent: 'center', borderRadius: 13, borderWidth: 1.5, borderColor: '#cbd5e1' },
+  simBtnTxt: { color: k.onAccent, fontSize: 15, fontWeight: '800' },
+  simBtnGhost: { width: 50, alignItems: 'center', justifyContent: 'center', borderRadius: 13, borderWidth: 1.5, borderColor: k.borderStrong },
   readinessTile: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 18, padding: 16, borderWidth: 1, marginBottom: 14 },
   readinessIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(46,139,87,0.12)', alignItems: 'center', justifyContent: 'center' },
   readinessTitle: { fontSize: 15.5, fontWeight: '800' },

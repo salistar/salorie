@@ -4,8 +4,8 @@
 // (allure m:ss/km, km). Push-to-talk : on maintient le bouton, on enregistre,
 // on relâche → l'audio est envoyé à la room et joué chez le jumeau.
 // Trilingue (en/fr/ar), dark-aware, RTL, ScreenTopBar.
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -90,6 +90,7 @@ const MAX_REC_MS = 20000; // auto-stop à ~20 s
 
 export default function LiveTwinScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { user } = useUser();
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
@@ -100,8 +101,8 @@ export default function LiveTwinScreen() {
   const tok = useTokens();
   const bg = tok.bg;
   const card = isDark ? colors.card : '#fff';
-  const text = isDark ? '#fff' : Colors.gray900;
-  const sub = isDark ? '#9BA1A6' : Colors.gray500;
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
   const border = isDark ? colors.gray[200] : '#e2e8f0';
 
   const myName = user?.firstName || user?.primaryEmailAddress?.emailAddress?.split('@')[0] || (t.you as string);
@@ -286,7 +287,7 @@ export default function LiveTwinScreen() {
         <Text style={[styles.intro, { color: sub, textAlign: txtAlign(isRTL) }]}>{t.intro}</Text>
       </View>
 
-      <PrimaryButton title={t.create} onPress={onCreate} icon={<Radio size={20} color="#fff" />} />
+      <PrimaryButton title={t.create} onPress={onCreate} icon={<Radio size={20} color={k.onAccent} />} />
 
       <View style={[styles.joinRow, { flexDirection: rowDir(isRTL) }]}>
         <TextInput
@@ -319,7 +320,7 @@ export default function LiveTwinScreen() {
               </Text>
             </View>
             <TouchableOpacity style={[styles.leaveBtn, { flexDirection: rowDir(isRTL) }]} onPress={leaveCurrent}>
-              <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><LogOut size={15} color={Colors.red} /></View>
+              <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><LogOut size={15} color={k.danger} /></View>
               <Text style={styles.leaveTxt}>{t.leave}</Text>
             </TouchableOpacity>
           </View>
@@ -366,9 +367,9 @@ export default function LiveTwinScreen() {
             onPressIn={startRec}
             onPressOut={stopRec}
             disabled={!online}
-            style={[styles.pttBtn, { backgroundColor: recording ? Colors.red : GREEN, opacity: online ? 1 : 0.5 }]}
+            style={[styles.pttBtn, { backgroundColor: recording ? k.danger : GREEN, opacity: online ? 1 : 0.5 }]}
           >
-            <Mic size={30} color="#fff" />
+            <Mic size={30} color={k.onAccent} />
             <Text style={styles.pttTxt}>{recording ? t.recording : t.hold}</Text>
           </TouchableOpacity>
         </View>
@@ -392,6 +393,8 @@ export default function LiveTwinScreen() {
 
 // Une ligne de roster (membre + son état à droite).
 function RosterRow({ icon, name, right, rightTxt, card, border, text, sub, isRTL }: any) {
+  const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   return (
     <View style={[styles.rosterRow, { backgroundColor: card, borderColor: border, flexDirection: rowDir(isRTL) }]}>
       <View style={[styles.rosterLeft, { flexDirection: rowDir(isRTL) }]}>
@@ -407,9 +410,12 @@ function RosterRow({ icon, name, right, rightTxt, card, border, text, sub, isRTL
 }
 
 // Couleurs dérivées (les palettes vivent dans constants/Colors via useTheme).
-const Colors = { gray900: '#0F172A', gray500: '#64748B', red: '#EF4444' };
 
-const styles = StyleSheet.create({
+
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1 },
   scroll: { padding: 16, paddingBottom: 48 },
   heroCard: { borderRadius: 18, borderWidth: 1, padding: 18, alignItems: 'center', gap: 12 },
@@ -420,7 +426,7 @@ const styles = StyleSheet.create({
   connPill: { alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
   connTxt: { fontSize: 12, fontWeight: '800' },
   leaveBtn: { alignItems: 'center', gap: 5, paddingHorizontal: 6, paddingVertical: 5 },
-  leaveTxt: { color: '#EF4444', fontSize: 13, fontWeight: '800' },
+  leaveTxt: { color: k.danger, fontSize: 13, fontWeight: '800' },
   bigCode: { fontSize: 40, fontWeight: '900', letterSpacing: 8, textAlign: 'center', marginTop: 4 },
   copyHint: { fontSize: 12, fontWeight: '500' },
   shareBtn: { alignSelf: 'center', alignItems: 'center', gap: 8, borderWidth: 1.5, paddingHorizontal: 22, paddingVertical: 11, borderRadius: 14, marginTop: 4 },
@@ -437,7 +443,7 @@ const styles = StyleSheet.create({
   speakingTxt: { fontSize: 14, fontWeight: '800' },
   pttWrap: { alignItems: 'center', justifyContent: 'center', marginTop: 18, height: 180 },
   halo: { position: 'absolute', width: 150, height: 150, borderRadius: 75 },
-  pttBtn: { width: 150, height: 150, borderRadius: 75, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 12, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 8 },
-  pttTxt: { color: '#fff', fontSize: 13, fontWeight: '800', textAlign: 'center' },
+  pttBtn: { width: 150, height: 150, borderRadius: 75, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 12, shadowColor: k.shadow, shadowOpacity: 0.2, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 8 },
+  pttTxt: { color: k.onAccent, fontSize: 13, fontWeight: '800', textAlign: 'center' },
   disclaimer: { marginTop: 22, lineHeight: 17, opacity: 0.9 },
 });

@@ -859,10 +859,10 @@ ${langInstr}`;
                 </Text>
                 {source && (() => {
                   const cfg = source === 'device'
-                    ? { bg: '#EAF4EE', fg: '#2E8B57', label: language === 'fr' ? "Sur l'appareil" : language === 'ar' ? 'على الجهاز' : 'On-device' }
+                    ? { bg: k.accentSoft, fg: k.accent, label: language === 'fr' ? "Sur l'appareil" : language === 'ar' ? 'على الجهاز' : 'On-device' }
                     : source === 'backend'
                     ? { bg: 'rgba(99,102,241,0.12)', fg: '#6366F1', label: language === 'fr' ? 'Backend' : language === 'ar' ? 'الخادم' : 'Backend' }
-                    : { bg: 'rgba(14,165,233,0.12)', fg: '#0EA5E9', label: language === 'fr' ? 'IA · Gemini' : language === 'ar' ? 'ذكاء · Gemini' : 'AI · Gemini' };
+                    : { bg: 'rgba(14,165,233,0.12)', fg: k.info, label: language === 'fr' ? 'IA · Gemini' : language === 'ar' ? 'ذكاء · Gemini' : 'AI · Gemini' };
                   return (
                     <View style={{ backgroundColor: cfg.bg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
                       <Text style={{ fontSize: 9, fontWeight: '800', color: cfg.fg, textTransform: 'uppercase', letterSpacing: 0.3 }}>{cfg.label}</Text>
@@ -880,10 +880,10 @@ ${langInstr}`;
                 const step = Math.max(5, Math.round(baseQ * 0.1));
                 const conf = String(aiResult.portionConfidence || 'low');
                 const confCfg = conf === 'high'
-                  ? { c: '#2E8B57', l: language === 'fr' ? 'confiance élevée' : language === 'ar' ? 'ثقة عالية' : 'high confidence' }
+                  ? { c: k.accent, l: language === 'fr' ? 'confiance élevée' : language === 'ar' ? 'ثقة عالية' : 'high confidence' }
                   : conf === 'medium'
-                  ? { c: '#D97706', l: language === 'fr' ? 'confiance moyenne' : language === 'ar' ? 'ثقة متوسطة' : 'medium confidence' }
-                  : { c: '#DC2626', l: language === 'fr' ? 'à vérifier' : language === 'ar' ? 'يُنصح بالمراجعة' : 'please check' };
+                  ? { c: k.warning, l: language === 'fr' ? 'confiance moyenne' : language === 'ar' ? 'ثقة متوسطة' : 'medium confidence' }
+                  : { c: k.danger, l: language === 'fr' ? 'à vérifier' : language === 'ar' ? 'يُنصح بالمراجعة' : 'please check' };
                 return (
                   <View style={styles.portionBox}>
                     <View style={[styles.portionRow, isRTL && { flexDirection: 'row-reverse' }]}>
@@ -964,10 +964,10 @@ ${langInstr}`;
               {/* Verdict objectif (calculé on-device via scoreFood, AUCUN appel IA) */}
               {objScore && (() => {
                 const cfg = objScore.verdict === 'great'
-                  ? { color: '#2E8B57', icon: '✅', title: t('scan.objective_great') }
+                  ? { color: k.accent, icon: '✅', title: t('scan.objective_great') }
                   : objScore.verdict === 'ok'
-                  ? { color: '#D97706', icon: '⚠️', title: t('scan.objective_ok') }
-                  : { color: '#DC2626', icon: '🚫', title: t('scan.objective_avoid') };
+                  ? { color: k.warning, icon: '⚠️', title: t('scan.objective_ok') }
+                  : { color: k.danger, icon: '🚫', title: t('scan.objective_avoid') };
                 return (
                   <View style={[styles.objCard, { backgroundColor: cfg.color + '1A', borderColor: cfg.color }]}>
                     <View style={[styles.objHead, isRTL && { flexDirection: 'row-reverse' }]}>
@@ -1044,12 +1044,12 @@ ${langInstr}`;
                   </TouchableOpacity>
                 )
               ) : (
-                <Text style={[styles.correctDoneTxt, { color: '#2E8B57' }]}>
+                <Text style={[styles.correctDoneTxt, { color: k.accent }]}>
                   {language === 'fr' ? '✓ Merci, ça améliorera la reco !' : language === 'ar' ? '✓ شكرًا، سيحسّن هذا التعرّف!' : '✓ Thanks, this improves recognition!'}
                 </Text>
               )}
               {correctError ? (
-                <Text style={[styles.correctDoneTxt, { color: '#DC2626' }]}>{correctError}</Text>
+                <Text style={[styles.correctDoneTxt, { color: k.danger }]}>{correctError}</Text>
               ) : null}
 
               {/* Qualités (vert) & Risques (ambre) */}
@@ -1058,8 +1058,8 @@ ${langInstr}`;
                   {aiResult.qualities?.length ? (
                     <View style={styles.qrBlock}>
                       <View style={[styles.qrHead, isRTL && { flexDirection: 'row-reverse' }]}>
-                        <CheckCircle2 size={14} color="#2E8B57" strokeWidth={2.5} />
-                        <Text style={[styles.qrTitle, { color: '#2E8B57' }]}>{(QR_LABELS[language] || QR_LABELS.en).qualities}</Text>
+                        <CheckCircle2 size={14} color={k.accent} strokeWidth={2.5} />
+                        <Text style={[styles.qrTitle, { color: k.accent }]}>{(QR_LABELS[language] || QR_LABELS.en).qualities}</Text>
                       </View>
                       {aiResult.qualities.map((q: string, i: number) => (
                         <Text key={'q' + i} style={[styles.qrItem, { color: textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>• {q}</Text>
@@ -1069,8 +1069,8 @@ ${langInstr}`;
                   {aiResult.risks?.length ? (
                     <View style={styles.qrBlock}>
                       <View style={[styles.qrHead, isRTL && { flexDirection: 'row-reverse' }]}>
-                        <AlertTriangle size={14} color="#D97706" strokeWidth={2.5} />
-                        <Text style={[styles.qrTitle, { color: '#D97706' }]}>{(QR_LABELS[language] || QR_LABELS.en).risks}</Text>
+                        <AlertTriangle size={14} color={k.warning} strokeWidth={2.5} />
+                        <Text style={[styles.qrTitle, { color: k.warning }]}>{(QR_LABELS[language] || QR_LABELS.en).risks}</Text>
                       </View>
                       {aiResult.risks.map((r: string, i: number) => (
                         <Text key={'r' + i} style={[styles.qrItem, { color: textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>• {r}</Text>
@@ -1103,7 +1103,7 @@ ${langInstr}`;
                   textMuted={textMuted}
                 />
                 <MacroTile
-                  icon={<Wheat size={18} color="#F59E0B" />}
+                  icon={<Wheat size={18} color={k.warning} />}
                   label={t('scan.carbs_short')}
                   value={macroTexte(aiResult.carbs)}
                   unit="g"
@@ -1113,7 +1113,7 @@ ${langInstr}`;
                   textMuted={textMuted}
                 />
                 <MacroTile
-                  icon={<Droplets size={18} color="#0EA5E9" />}
+                  icon={<Droplets size={18} color={k.info} />}
                   label={t('scan.fat_short')}
                   value={macroTexte(aiResult.fat)}
                   unit="g"
@@ -1239,7 +1239,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     marginBottom: 28,
     borderWidth: 4,
     position: 'relative',
-    shadowColor: '#000',
+    shadowColor: k.shadow,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.1,
     shadowRadius: 20,
@@ -1326,9 +1326,9 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   stepBtn: {
     width: 44, height: 44, borderRadius: 14,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#2E8B57',
+    backgroundColor: k.accent,
   },
-  stepBtnTxt: { color: '#fff', fontSize: 24, fontWeight: '900', lineHeight: 26 },
+  stepBtnTxt: { color: k.onAccent, fontSize: 24, fontWeight: '900', lineHeight: 26 },
   descBlock: { gap: 6, marginTop: 4 },
   descHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   descLabel: {
@@ -1340,7 +1340,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   descText: { fontSize: 14, lineHeight: 20, fontWeight: '500' },
   healthBadge: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, borderWidth: 1.5, padding: 12, marginTop: 4 },
   healthGrade: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  healthGradeTxt: { color: '#fff', fontSize: 22, fontWeight: '900' },
+  healthGradeTxt: { color: k.onAccent, fontSize: 22, fontWeight: '900' },
   healthVerdict: { fontSize: 16, fontWeight: '800' },
   healthSub: { fontSize: 11, fontWeight: '600', marginTop: 1 },
   objCard: { borderRadius: 16, borderWidth: 1.5, padding: 12, gap: 6, marginTop: 4 },
@@ -1358,8 +1358,8 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   correctLinkTxt: { fontSize: 12.5, fontWeight: '600', textDecorationLine: 'underline' },
   correctBox: { flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'center' },
   correctInput: { flex: 1, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14 },
-  correctSend: { backgroundColor: '#2E8B57', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10 },
-  correctSendTxt: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  correctSend: { backgroundColor: k.accent, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10 },
+  correctSendTxt: { color: k.onAccent, fontWeight: '700', fontSize: 13 },
   correctDoneTxt: { fontSize: 13, fontWeight: '600', textAlign: 'center', marginTop: 8 },
   qrWrap: { flexDirection: 'row', gap: 12, marginTop: 4 },
   qrBlock: { flex: 1, gap: 3 },
@@ -1411,7 +1411,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   },
   continueText: { fontSize: 17, fontWeight: '800', color: k.surface },
   errorText: {
-    color: '#FF5C5C',
+    color: k.danger,
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',

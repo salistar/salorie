@@ -1,6 +1,6 @@
 // Battle nutrition 1v1 — compare ton score d'assiduité hebdo avec un ami.
-import React, { useEffect, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import { ymd } from '../../lib/format';
 import {
   View,
@@ -94,6 +94,7 @@ const TXT: any = {
 
 export default function BattleScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { user } = useUser();
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
@@ -206,7 +207,7 @@ export default function BattleScreen() {
             </View>
 
             {result && (
-              <View style={[styles.vsCard, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? '#283241' : 'transparent' }, !isDark && { shadowColor: '#000' }]}>
+              <View style={[styles.vsCard, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? k.border : 'transparent' }, !isDark && { shadowColor: k.shadow }]}>
                 <View style={[styles.vsRow, { flexDirection: rowDir(isRTL) }]}>
                   <View style={styles.vsP}><Text style={[styles.vsName, { color: text }]}>{t.you}</Text><Text style={[styles.vsScore, { color: GREEN }]}>{myScore}</Text></View>
                   <Text style={styles.vsX}>VS</Text>
@@ -237,22 +238,25 @@ export default function BattleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1 },
   body: { padding: spacing.xl, paddingBottom: 100 },
   hero: { marginBottom: spacing.lg },
   head: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.xl },
   sub: { ...type.body, lineHeight: 20 },
   myCard: { borderRadius: radius.xl, padding: spacing.xxl, alignItems: 'center', marginBottom: spacing.lg },
-  myLabel: { color: '#E7F5EC', ...type.sub },
-  myScore: { color: '#fff', ...type.hero, fontSize: 48, letterSpacing: -2, marginTop: spacing.xs / 2 },
+  myLabel: { color: k.accentSoft, ...type.sub },
+  myScore: { color: k.onAccent, ...type.hero, fontSize: 48, letterSpacing: -2, marginTop: spacing.xs / 2 },
   myMax: { fontSize: 22, fontWeight: '700' },
   vsCard: { borderRadius: radius.xl, padding: spacing.xl, marginTop: spacing.lg, ...elevation.sm },
   vsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   vsP: { alignItems: 'center', flex: 1 },
   vsName: { ...type.body, fontWeight: '700' },
-  vsScore: { fontSize: 38, fontWeight: '900', color: '#94A3B8', marginTop: spacing.xs },
-  vsX: { fontSize: 16, fontWeight: '900', color: '#CBD5E1' },
+  vsScore: { fontSize: 38, fontWeight: '900', color: k.textFaint, marginTop: spacing.xs },
+  vsX: { fontSize: 16, fontWeight: '900', color: k.textFaint },
   verdict: { textAlign: 'center', fontSize: 15, fontWeight: '800', marginTop: spacing.md },
   gageBox: { borderRadius: radius.md, borderWidth: 1, padding: spacing.md, marginTop: spacing.md },
   gageTitle: { ...type.sub, fontWeight: '900', marginBottom: spacing.xs },

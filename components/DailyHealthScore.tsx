@@ -1,8 +1,8 @@
 // Score santé QUOTIDIEN (0-100) — hook de rétention. Calculé client-side depuis
 // les objectifs vs consommé du jour (calories, protéines, eau). Distinct du score
 // hebdomadaire des insights. Réutilise le hook useNutritionData (mêmes données que Home).
-import React from 'react';
-import { useTokens } from '../constants/tokens';
+import React, { useMemo } from 'react';
+import { useTokens, type Tokens } from '../constants/tokens';
 import { View, Text, StyleSheet } from 'react-native';
 import { Heart } from 'lucide-react-native';
 import { useNutritionData } from '../hooks/useNutritionData';
@@ -20,6 +20,7 @@ function clamp01(x: number) { return Math.max(0, Math.min(1, x)); }
 
 export default function DailyHealthScore() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { language, isRTL } = useTranslation() as any;
   const { resolved } = useTheme();
   const tx = TXT[language] || TXT.en;
@@ -78,16 +79,19 @@ export default function DailyHealthScore() {
   );
 }
 
-const styles = StyleSheet.create({
-  card: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 18, padding: 16, marginHorizontal: 16, marginVertical: 8,
-    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  left: { width: 110, alignItems: 'center', justifyContent: 'center', borderRightWidth: 1, borderRightColor: '#F1F5F9' },
-  scoreNum: { fontSize: 40, fontWeight: '900', color: '#0F172A', lineHeight: 44 },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
+  card: { flexDirection: 'row', backgroundColor: k.surface, borderRadius: 18, padding: 16, marginHorizontal: 16, marginVertical: 8,
+    shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  left: { width: 110, alignItems: 'center', justifyContent: 'center', borderRightWidth: 1, borderRightColor: k.border },
+  scoreNum: { fontSize: 40, fontWeight: '900', color: k.text, lineHeight: 44 },
   label: { fontSize: 13, fontWeight: '700' },
-  caption: { fontSize: 10, color: '#94A3B8', marginTop: 2, textAlign: 'center' },
+  caption: { fontSize: 10, color: k.textFaint, marginTop: 2, textAlign: 'center' },
   right: { flex: 1, justifyContent: 'center', paddingStart: 16, gap: 8 },
   barRow: { },
-  barLabel: { fontSize: 11, color: '#64748B', marginBottom: 3 },
-  barTrack: { height: 7, borderRadius: 4, backgroundColor: '#F1F5F9', overflow: 'hidden' },
+  barLabel: { fontSize: 11, color: k.textMuted, marginBottom: 3 },
+  barTrack: { height: 7, borderRadius: 4, backgroundColor: k.surfaceSunken, overflow: 'hidden' },
   barFill: { height: 7, borderRadius: 4 },
 });

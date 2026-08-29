@@ -65,7 +65,7 @@ function buildHtml(center: LatLng, color: string): string {
       center: C, zoom: 16, disableDefaultUI: true, clickableIcons: false, gestureHandling: 'greedy'
     });
     window._me = new google.maps.Marker({ position: C, map: window._map,
-      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '${color}', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3 } });
+      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '${color}', fillOpacity: 1, strokeColor: k.onAccent, strokeWeight: 3 } });
     window._poly = new google.maps.Polyline({ map: window._map, path: window._path, geodesic: true, strokeColor: '${color}', strokeOpacity: 1, strokeWeight: 7 });
     window.addPoint = function(lat,lng){ var p={lat:lat,lng:lng}; window._path.push(p); window._poly.setPath(window._path); window._me.setPosition(p); window._map.panTo(p); };
     window.recenter = function(lat,lng){ window._map.setCenter({lat:lat,lng:lng}); };
@@ -425,8 +425,8 @@ export default function RunScreen() {
               style={[styles.modeBtn, mode === 'sim' && { backgroundColor: card, shadowOpacity: 0.12 }]}
               onPress={() => setMode('sim')}
             >
-              <Zap size={16} color={mode === 'sim' ? '#0ea5e9' : sub} />
-              <Text style={[styles.modeTxt, { color: mode === 'sim' ? '#0ea5e9' : sub }]}>{t.sim}</Text>
+              <Zap size={16} color={mode === 'sim' ? k.info : sub} />
+              <Text style={[styles.modeTxt, { color: mode === 'sim' ? k.info : sub }]}>{t.sim}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -442,16 +442,16 @@ export default function RunScreen() {
             <PrimaryButton
               title={mode === 'sim' ? `${t.start} · ${t.sim}` : t.start}
               onPress={startTracking}
-              icon={mode === 'sim' ? <Zap size={24} color="#fff" fill="#fff" /> : <Play size={26} color="#fff" fill="#fff" />}
-              style={[styles.bigBtn, mode === 'sim' && { backgroundColor: '#0ea5e9' }] as any}
+              icon={mode === 'sim' ? <Zap size={24} color={k.onAccent} fill={k.surface} /> : <Play size={26} color={k.onAccent} fill={k.surface} />}
+              style={[styles.bigBtn, mode === 'sim' && { backgroundColor: k.info }] as any}
             />
           )}
           {status === 'running' && (
             <SecondaryButton
               title={t.pause}
               onPress={pause}
-              icon={<Pause size={26} color="#f59e0b" fill="#f59e0b" />}
-              style={[styles.bigBtn, { backgroundColor: 'transparent', borderColor: '#f59e0b' }] as any}
+              icon={<Pause size={26} color={k.warning} fill={k.warning} />}
+              style={[styles.bigBtn, { backgroundColor: 'transparent', borderColor: k.warning }] as any}
             />
           )}
           {status === 'paused' && (
@@ -465,8 +465,8 @@ export default function RunScreen() {
               <PrimaryButton
                 title={t.finish}
                 onPress={finish}
-                icon={<Square size={22} color="#fff" fill="#fff" />}
-                style={[styles.bigBtn, { flex: 1, backgroundColor: '#ef4444' }] as any}
+                icon={<Square size={22} color={k.onAccent} fill={k.surface} />}
+                style={[styles.bigBtn, { flex: 1, backgroundColor: k.danger }] as any}
               />
             </>
           )}
@@ -549,18 +549,18 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   permTxt: { fontSize: 16, fontWeight: '600', textAlign: 'center', marginTop: 16, marginBottom: 20, lineHeight: 22 },
   primaryBtn: { backgroundColor: k.accent, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
-  primaryBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
-  back: { position: 'absolute', top: 50, left: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
-  panel: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 22, paddingBottom: 34, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: -6 }, elevation: 12 },
+  primaryBtnTxt: { color: k.onAccent, fontSize: 16, fontWeight: '800' },
+  back: { position: 'absolute', top: 50, left: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: k.shadow, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
+  panel: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 22, paddingBottom: 34, shadowColor: k.shadow, shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: -6 }, elevation: 12 },
   statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
   stat: { alignItems: 'center', flex: 1 },
   statVal: { fontSize: 23, fontWeight: '900', letterSpacing: -1 },
   statLabel: { fontSize: 11, fontWeight: '600', marginTop: 3 },
   controls: { flexDirection: 'row', gap: 12 },
   bigBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: k.accent, paddingVertical: 18, borderRadius: 18 },
-  bigBtnTxt: { color: '#fff', fontSize: 17, fontWeight: '800' },
+  bigBtnTxt: { color: k.onAccent, fontSize: 17, fontWeight: '800' },
   modeRow: { flexDirection: 'row', borderRadius: 14, padding: 4, marginBottom: 16, gap: 4 },
-  modeBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 11, shadowColor: '#000', shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
+  modeBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 11, shadowColor: k.shadow, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
   modeTxt: { fontSize: 14, fontWeight: '800' },
   idleBtnRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
   ghostBtn: { marginTop: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14, borderWidth: 1.5 },

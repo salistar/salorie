@@ -142,9 +142,9 @@ export default function VoiceLog() {
               onPress={phase === 'recording' ? stop : start}
               disabled={phase === 'analyzing'}
             >
-              {phase === 'analyzing' ? <ActivityIndicator color="#fff" size="large" />
-                : phase === 'recording' ? <Square size={42} color="#fff" fill="#fff" />
-                : <Mic size={48} color="#fff" />}
+              {phase === 'analyzing' ? <ActivityIndicator color={k.onAccent} size="large" />
+                : phase === 'recording' ? <Square size={42} color={k.onAccent} fill={k.surface} />
+                : <Mic size={48} color={k.onAccent} />}
             </TouchableOpacity>
             <Text style={[s.micLabel, { color: sub }]}>
               {phase === 'recording' ? t.recording
@@ -157,7 +157,7 @@ export default function VoiceLog() {
         {!!err && <Text style={s.err}>{err}</Text>}
 
         {phase === 'preview' && meal && (
-          <View style={[s.card, { backgroundColor: cardBg }, isDark && { borderColor: '#334155' }]}>
+          <View style={[s.card, { backgroundColor: cardBg }, isDark && { borderColor: k.borderStrong }]}>
             <Text style={[s.mealName, { color: text }]}>{meal.name}</Text>
             <Text style={s.kcal}>{meal.calories} kcal</Text>
             <View style={s.macros}>
@@ -167,16 +167,16 @@ export default function VoiceLog() {
             </View>
             <View style={s.actions}>
               <TouchableOpacity style={s.retry} onPress={reset}><RotateCcw size={15} color={accent} /><Text style={s.retryTxt} numberOfLines={1}>{t.retry}</Text></TouchableOpacity>
-              <TouchableOpacity style={s.add} onPress={save}><Check size={17} color="#fff" /><Text style={s.addTxt} numberOfLines={1}>{t.add}</Text></TouchableOpacity>
+              <TouchableOpacity style={s.add} onPress={save}><Check size={17} color={k.onAccent} /><Text style={s.addTxt} numberOfLines={1}>{t.add}</Text></TouchableOpacity>
             </View>
           </View>
         )}
 
         {phase === 'saved' && meal && (
-          <View style={[s.card, { backgroundColor: cardBg }, isDark && { borderColor: '#334155' }]}>
+          <View style={[s.card, { backgroundColor: cardBg }, isDark && { borderColor: k.borderStrong }]}>
             <Check size={40} color={accent} style={{ alignSelf: 'center' }} />
             <Text style={[s.savedTxt, { color: text }]}>« {meal.name} » {t.added_b} ({meal.calories} {t.kcal}) ✅</Text>
-            <TouchableOpacity style={s.add} onPress={reset}><Mic size={18} color="#fff" /><Text style={s.addTxt}>{t.log_another}</Text></TouchableOpacity>
+            <TouchableOpacity style={s.add} onPress={reset}><Mic size={18} color={k.onAccent} /><Text style={s.addTxt}>{t.log_another}</Text></TouchableOpacity>
           </View>
         )}
       </ScrollView>
@@ -187,27 +187,27 @@ export default function VoiceLog() {
 // Fabrique themee : cette feuille lisait des jetons alors qu elle etait
 // evaluee UNE FOIS a l importation.
 const makeS = (k: Tokens) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f3f6f4' },
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 18, paddingBottom: 90 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 26, fontWeight: '800', color: '#1B2A33' },
-  sub: { fontSize: 13, color: '#667085', marginTop: 6, lineHeight: 19 },
+  sub: { fontSize: 13, color: k.textMuted, marginTop: 6, lineHeight: 19 },
   micWrap: { alignItems: 'center', marginTop: 50 },
   micBtn: { width: 130, height: 130, borderRadius: 65, backgroundColor: k.accent, alignItems: 'center', justifyContent: 'center', elevation: 4, shadowColor: k.accent, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } },
-  micBtnRec: { backgroundColor: '#e11d48' },
-  micLabel: { marginTop: 20, fontSize: 14, color: '#667085', fontWeight: '600' },
-  err: { color: '#e11d48', fontSize: 13, marginTop: 18, textAlign: 'center' },
-  card: { backgroundColor: '#fff', borderRadius: 20, padding: 22, marginTop: 28, borderWidth: 1, borderColor: '#e6ece8' },
+  micBtnRec: { backgroundColor: k.danger },
+  micLabel: { marginTop: 20, fontSize: 14, color: k.textMuted, fontWeight: '600' },
+  err: { color: k.danger, fontSize: 13, marginTop: 18, textAlign: 'center' },
+  card: { backgroundColor: k.surface, borderRadius: 20, padding: 22, marginTop: 28, borderWidth: 1, borderColor: k.border },
   mealName: { fontSize: 20, fontWeight: '800', color: '#1B2A33', textAlign: 'center' },
   kcal: { fontSize: 40, fontWeight: '900', color: k.accent, textAlign: 'center', marginTop: 4 },
   macros: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 18 },
   macro: { alignItems: 'center' },
   mVal: { fontSize: 18, fontWeight: '800', color: '#1B2A33' },
-  mLbl: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
+  mLbl: { fontSize: 11, color: k.textFaint, marginTop: 2 },
   actions: { flexDirection: 'row', gap: 10, marginTop: 22 },
   retry: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 14, borderWidth: 1.5, borderColor: k.accent },
   retryTxt: { color: k.accent, fontWeight: '700', fontSize: 14.5, flexShrink: 1 },
   add: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, flex: 1, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 14, backgroundColor: k.accent },
-  addTxt: { color: '#fff', fontWeight: '800', fontSize: 14.5, flexShrink: 1 },
+  addTxt: { color: k.onAccent, fontWeight: '800', fontSize: 14.5, flexShrink: 1 },
   savedTxt: { fontSize: 16, fontWeight: '700', color: '#1B2A33', textAlign: 'center', marginVertical: 16 },
 });

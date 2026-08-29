@@ -171,7 +171,7 @@ export default function Diary() {
                     <View style={{ flex: 1 }} />
                     <Text style={[s.slotKcal, { color: slotKcal ? accent : sub }]}>{fmt(slotKcal)} {t.kcal}</Text>
                     <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('ajouter')} style={s.addBtn} onPress={() => router.push({ pathname: '/food-database', params: { slot: key } } as any)}>
-                      <Plus size={15} color="#fff" />
+                      <Plus size={15} color={k.onAccent} />
                     </TouchableOpacity>
                   </View>
                   {items.length === 0 ? (
@@ -194,7 +194,7 @@ export default function Diary() {
                         ) : null}
                       </View>
                       <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} onPress={() => removeLog(l)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                        <Trash2 size={16} color="#e11d48" />
+                        <Trash2 size={16} color={k.danger} />
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -206,7 +206,7 @@ export default function Diary() {
             {others.length > 0 && (
               <View style={[s.slotCard, { backgroundColor: card }]}>
                 <View style={[s.slotHead, rowDir]}>
-                  <Flame size={17} color="#0ea5e9" />
+                  <Flame size={17} color={k.info} />
                   <Text style={[s.slotTitle, { color: text }]}>{t.other}</Text>
                 </View>
                 {others.map((l) => (
@@ -216,7 +216,7 @@ export default function Diary() {
                       <Text style={[{ color: sub, fontSize: 11.5 }, align]}>{l.type === 'water' ? `${Math.round(l.calories)} ml` : `-${Math.round(l.calories)} ${t.kcal}`}</Text>
                     </View>
                     <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} onPress={() => removeLog(l)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                      <Trash2 size={16} color="#e11d48" />
+                      <Trash2 size={16} color={k.danger} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -249,5 +249,5 @@ const makeS = (k: Tokens) => StyleSheet.create({
   addBtn: { backgroundColor: k.accent, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   itemRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(148,163,184,0.25)' },
   gradeBadge: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  gradeTxt: { color: '#fff', fontSize: 14, fontWeight: '900' },
+  gradeTxt: { color: k.onAccent, fontSize: 14, fontWeight: '900' },
 });

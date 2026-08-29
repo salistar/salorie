@@ -264,7 +264,7 @@ export default function CoachScreen() {
           return (
             <Card style={tipCardStyle}>
               <View style={[styles.timeTipIcon, { backgroundColor: accent ? colors.primary : colors.primaryLight }]}>
-                <TipIcon size={22} color={accent ? '#fff' : colors.primary} />
+                <TipIcon size={22} color={accent ? k.onAccent : colors.primary} />
               </View>
               <View style={styles.timeTipBody}>
                 <Text style={[styles.timeTipEyebrow, { color: colors.primary }]}>{tip.eyebrow}</Text>
@@ -295,7 +295,7 @@ export default function CoachScreen() {
                   <View style={styles.heroStat}>
                     <Text style={styles.heroStatLabel}>{t('coach.weight_trend')}</Text>
                     <View style={styles.trendRow}>
-                      <TrendIcon size={16} color="#fff" />
+                      <TrendIcon size={16} color={k.onAccent} />
                       <Text style={styles.heroStatValue}>{trend != null ? `${trend > 0 ? '+' : ''}${trend} kg/wk` : '—'}</Text>
                     </View>
                   </View>
@@ -418,7 +418,7 @@ export default function CoachScreen() {
 
         {/* ── Streak ── */}
         <View style={[styles.streakCard, { backgroundColor: card }]}>
-          <View style={styles.streakIcon}><Flame size={28} color="#f59e0b" /></View>
+          <View style={styles.streakIcon}><Flame size={28} color={k.warning} /></View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.streakValue, { color: text }]}>{d.streak} {t('coach.streak_suffix')}</Text>
             <Text style={[styles.streakSub, { color: sub }]}>
@@ -505,31 +505,31 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   heroStat: { flex: 1 },
   heroDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.25)' },
   heroStatLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: '600' },
-  heroStatValue: { color: '#fff', fontSize: 17, fontWeight: '800', marginTop: 2 },
+  heroStatValue: { color: k.onAccent, fontSize: 17, fontWeight: '800', marginTop: 2 },
   trendRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   confChip: { alignSelf: 'flex-start', marginTop: 14, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20 },
-  confText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  heroBuilding: { color: '#fff', fontSize: 24, fontWeight: '900', marginTop: 6 },
+  confText: { color: k.onAccent, fontSize: 12, fontWeight: '700' },
+  heroBuilding: { color: k.onAccent, fontSize: 24, fontWeight: '900', marginTop: 6 },
   heroBuildingSub: { color: 'rgba(255,255,255,0.9)', fontSize: 14, marginTop: 8, lineHeight: 20 },
   progressTrack: { height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.25)', marginTop: 14, overflow: 'hidden' },
-  progressFill: { height: 8, borderRadius: 4, backgroundColor: '#fff' },
+  progressFill: { height: 8, borderRadius: 4, backgroundColor: k.surface },
 
-  mealCta: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, padding: 16, marginBottom: 14, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  mealCta: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, padding: 16, marginBottom: 14, shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
   mealCtaIcon: { width: 52, height: 52, borderRadius: radius.pill, backgroundColor: k.accentSoft, alignItems: 'center', justifyContent: 'center' },
   mealCtaTitle: { fontSize: 17, fontWeight: '800' },
   mealCtaSub: { fontSize: 13, marginTop: 3, lineHeight: 18 },
   // Grille compacte (Coach allégé) — 2 colonnes, sections
   gridSection: { fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 14, marginBottom: 8, opacity: 0.7 },
-  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 4, marginTop: 16, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
+  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 4, marginTop: 16, shadowColor: k.shadow, shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
   searchInput: { flex: 1, fontSize: 14, paddingVertical: 10 },
   secHeadRow: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 18, marginBottom: 10 },
   recentChip: { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 999, paddingHorizontal: 13, paddingVertical: 9, maxWidth: 190 },
   recentTxt: { fontSize: 12.5, fontWeight: '700', flexShrink: 1 },
   seeAllBtn: { alignItems: 'center', paddingVertical: 4, marginBottom: 6 },
   featGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  featCard: { width: '48%', alignItems: 'center', borderRadius: 16, paddingVertical: 16, paddingHorizontal: 8, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  featCard: { width: '48%', alignItems: 'center', borderRadius: 16, paddingVertical: 16, paddingHorizontal: 8, marginBottom: 12, shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   featLabel: { fontSize: 13, fontWeight: '700', marginTop: 8, textAlign: 'center' },
-  streakCard: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, padding: 18, marginBottom: 22, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  streakCard: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, padding: 18, marginBottom: 22, shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
   streakIcon: { width: 52, height: 52, borderRadius: radius.pill, backgroundColor: '#FEF3E0', alignItems: 'center', justifyContent: 'center' },
   streakValue: { fontSize: 20, fontWeight: '900' },
   streakSub: { fontSize: 13, marginTop: 3, lineHeight: 18 },
@@ -539,7 +539,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   sectionCount: { fontSize: 14, fontWeight: '700' },
   achHint: { fontSize: 12.5, fontWeight: '600', marginTop: -4, marginBottom: 12 },
   badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
-  badge: { width: '47%', borderRadius: 18, padding: 14, position: 'relative', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 1 },
+  badge: { width: '47%', borderRadius: 18, padding: 14, position: 'relative', shadowColor: k.shadow, shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 1 },
   badgeLocked: { opacity: 0.6 },
   badgeCorner: { position: 'absolute', top: 10, right: 10 },
   badgeIcon: { fontSize: 28 },
@@ -557,7 +557,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   statusText: { fontSize: 14, fontWeight: '800' },
   modalHint: { fontSize: 13, marginTop: 14, textAlign: 'center', lineHeight: 18 },
 
-  lessonCard: { borderRadius: 20, padding: 20, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  lessonCard: { borderRadius: 20, padding: 20, shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
   lessonIcon: { width: 44, height: 44, borderRadius: radius.pill, backgroundColor: k.accentSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   lessonTitle: { fontSize: 18, fontWeight: '800' },
   lessonBody: { fontSize: 14, marginTop: 6, lineHeight: 21 },

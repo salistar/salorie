@@ -294,7 +294,7 @@ export default function CommunityRoutesScreen() {
                 </View>
                 {stops.length > 1 && (
                   <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} onPress={() => removeStop(i)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Trash2 size={18} color="#ef4444" />
+                    <Trash2 size={18} color={k.danger} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -338,8 +338,8 @@ export default function CommunityRoutesScreen() {
 
           <TouchableOpacity style={[styles.submitBtn, { flexDirection: dir }]} onPress={onSubmit} disabled={submitting} activeOpacity={0.85}>
             {submitting
-              ? <ActivityIndicator size="small" color="#fff" />
-              : (<><Send size={18} color="#fff" /><Text style={styles.submitTxt}>{t.submit}</Text></>)}
+              ? <ActivityIndicator size="small" color={k.onAccent} />
+              : (<><Send size={18} color={k.onAccent} /><Text style={styles.submitTxt}>{t.submit}</Text></>)}
           </TouchableOpacity>
         </View>
 
@@ -469,11 +469,11 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   stopInputHalf: { flex: 1 },
   addStopBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderRadius: 12, paddingVertical: 12, marginTop: 2 },
   addStopTxt: { color: k.accent, fontSize: 14, fontWeight: '800' },
-  errTxt: { color: '#ef4444', fontSize: 13, fontWeight: '700', marginTop: 12 },
+  errTxt: { color: k.danger, fontSize: 13, fontWeight: '700', marginTop: 12 },
   okBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, padding: 12, marginTop: 12 },
   okTxt: { flex: 1, color: k.accent, fontSize: 13, fontWeight: '700', lineHeight: 18 },
   submitBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 14, marginTop: 14 },
-  submitTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  submitTxt: { color: k.onAccent, fontSize: 15, fontWeight: '800' },
   listTitle: { fontSize: 17, fontWeight: '900', letterSpacing: -0.3, marginTop: 6, marginBottom: 10 },
   loadingBox: { paddingVertical: 40, alignItems: 'center' },
   emptyBox: { borderRadius: 18, padding: 26, alignItems: 'center', gap: 12 },

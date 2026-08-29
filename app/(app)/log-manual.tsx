@@ -181,7 +181,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   },
   caloriesWrapper: { flexDirection: 'row', alignItems: 'center' },
   input: { fontSize: 16, fontWeight: '700' },
-  caloriesInput: { flex: 1, fontSize: 22, color: '#FF5C5C' },
+  caloriesInput: { flex: 1, fontSize: 22, color: k.danger },
   unit: { fontSize: 15, fontWeight: '800', marginEnd: 10 },
   spacer: { height: 22 },
   footer: { padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24 },
