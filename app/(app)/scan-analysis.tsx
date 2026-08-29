@@ -34,7 +34,7 @@ import { useLogging } from '../../lib/LoggingContext';
 import { colorLog, explain } from '../../lib/LocalDataStore';
 import { geminiShim, aiVisionLocal } from '../../lib/aiProxy';
 import { sendFeedback } from '../../lib/feedback';
-import { classifyOnDevice, localMacroForLabel } from '../../lib/onDeviceVision';
+import { classifyOnDevice, localMacroForLabel, MODELE_ON_DEVICE_FIABLE } from '../../lib/onDeviceVision';
 import { computeHealthScore, VERDICT_TXT, HealthScore } from '../../lib/healthScore';
 import { translate } from '../../lib/translator';
 import { CheckCircle2, AlertTriangle } from 'lucide-react-native';
@@ -391,13 +391,30 @@ export default function ScanAnalysisScreen() {
             // MOBILE forcé = 100% ON-DEVICE : on rend TOUJOURS le résultat local,
             // JAMAIS de bascule cloud (exigence utilisateur).
             if (forceModel === 'device') {
-              const m = (macro && macro.kcal > 0) ? macro : { name: top.label.replace(/_/g, ' ') || 'Aliment', kcal: 0, protein: 0, carbs: 0, fat: 0 };
-              explain('Modèle MOBILE (TFLite on-device) — aucun appel cloud, jamais');
+              // ⚠ ON NE NOMME PLUS L'ALIMENT QUAND LE MODELE N'EST PAS FIABLE.
+              // Le choix « MOBILE » de l'utilisateur est respecte — aucun appel
+              // cloud, comme promis. Mais lui rendre « Lasagna » devant un beignet
+              // est pire que lui rendre « Aliment » : il enregistre du faux en
+              // croyant enregistrer du mesure. La saisie manuelle reste ouverte.
+              const m = (MODELE_ON_DEVICE_FIABLE && macro && macro.kcal > 0)
+                ? macro
+                : { name: MODELE_ON_DEVICE_FIABLE ? (top.label.replace(/_/g, ' ') || 'Aliment') : 'Aliment', kcal: 0, protein: 0, carbs: 0, fat: 0 };
+              explain(MODELE_ON_DEVICE_FIABLE
+                ? 'Modèle MOBILE (TFLite on-device) — aucun appel cloud, jamais'
+                : 'Modèle MOBILE indisponible (classifieur non fiable) — saisis le nom à la main');
               finishWith({ name: m.name, description: '', calories: Math.round(m.kcal), protein: m.protein, carbs: m.carbs, fat: m.fat, quantity: 100, unit: 'g', serving: '100 g' }, 'device');
               return;
             }
-            // Cascade auto (aucun modèle forcé) : on-device si confiant, sinon cloud.
-            if (top.score >= 0.85 && macro && macro.kcal > 0) {
+            // Cascade auto : on-device si confiant, sinon cloud.
+            //
+            // ⚠ LE SEUIL NE SUFFIT PAS QUAND LA CONFIANCE MENT.
+            // Mesure du 29/08/2026 : ce modele donne 0 bonne reponse sur 74 plats
+            // Food-101 en annoncant 0,90 a 0,99. Un seuil a 0,85 le laissait donc
+            // passer PRESQUE TOUJOURS, et c'est justement quand il se trompe qu'il
+            // est le plus sur de lui. Tant que `MODELE_ON_DEVICE_FIABLE` est faux,
+            // on descend a la vision cloud, qui est le palier suivant de la cascade
+            // voulue : telephone -> serveur -> Cloudflare -> les autres fournisseurs.
+            if (MODELE_ON_DEVICE_FIABLE && top.score >= 0.85 && macro && macro.kcal > 0) {
               explain('Cascade auto : on-device confiant (≥85%), aucun appel cloud');
               finishWith({ name: macro.name, description: '', calories: Math.round(macro.kcal), protein: macro.protein, carbs: macro.carbs, fat: macro.fat, quantity: 100, unit: 'g', serving: '100 g' }, 'device');
               return;
