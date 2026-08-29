@@ -88,7 +88,7 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
             mange la largeur et tronque le titre type « Sa… »). Sur les sous-écrans,
             back + titre suffisent comme en-tête. */}
         {!title && (
-          <View style={[styles.brandLogoWrap, { backgroundColor: resolved === 'dark' ? colors.card : '#fff', borderColor: resolved === 'dark' ? colors.gray[200] : k.border }]}>
+          <View style={[styles.brandLogoWrap, { backgroundColor: resolved === 'dark' ? colors.card : k.surface, borderColor: resolved === 'dark' ? colors.gray[200] : k.border }]}>
             <Image source={require('../assets/images/fire.png')} style={styles.brandLogo} resizeMode="contain" />
           </View>
         )}
@@ -310,7 +310,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     padding: 8,
     gap: 4,
     minWidth: 180,
-    shadowColor: '#000',
+    shadowColor: k.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,

@@ -295,10 +295,10 @@ export default function HealthExportScreen() {
               disabled={generating}
             >
               {generating ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={k.onAccent} />
               ) : (
                 <>
-                  <Share2 size={20} color="#fff" />
+                  <Share2 size={20} color={k.onAccent} />
                   <Text style={styles.btnTxt}>{t.generate}</Text>
                 </>
               )}
@@ -325,18 +325,18 @@ export default function HealthExportScreen() {
 // évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   cover: { width: '100%', height: 110, borderRadius: 18, marginBottom: 14 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 24, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5, flexShrink: 1 },
-  sub: { fontSize: 14, color: '#64748B', marginBottom: 20, lineHeight: 20 },
+  title: { fontSize: 24, fontWeight: '900', color: k.text, letterSpacing: -0.5, flexShrink: 1 },
+  sub: { fontSize: 14, color: k.textMuted, marginBottom: 20, lineHeight: 20 },
   h2: { fontSize: 15, fontWeight: '800', marginBottom: 10 },
   secRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#fff',
+    backgroundColor: k.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
@@ -351,7 +351,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   },
   secTxt: { fontSize: 13.5, fontWeight: '600', flexShrink: 1 },
   building: { alignItems: 'center', gap: 10, marginTop: 14 },
-  buildingTxt: { fontSize: 13, color: '#94A3B8', textAlign: 'center' },
+  buildingTxt: { fontSize: 13, color: k.textFaint, textAlign: 'center' },
   btn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -362,7 +362,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     paddingVertical: 15,
     marginTop: 16,
   },
-  btnTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  btnTxt: { color: k.onAccent, fontWeight: '800', fontSize: 15 },
   disc: {
     flexDirection: 'row',
     alignItems: 'flex-start',

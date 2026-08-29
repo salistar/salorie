@@ -1,7 +1,7 @@
 // Section "Lance-toi" en haut du Home : LES 5 actions clés à 1 tap (pattern leaders :
 // le logging atteignable depuis la home), trilingue + theme-aware. Composant autonome.
-import React from 'react';
-import { useTokens } from '../constants/tokens';
+import React, { useMemo } from 'react';
+import { useTokens, type Tokens } from '../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Bell, UtensilsCrossed, Dumbbell, Trophy, Newspaper, Sparkles } from 'lucide-react-native';
@@ -18,6 +18,7 @@ const TXT: any = {
 export default function HomeQuickActions({ onLog }: { onLog?: () => void }) {
   const { resolved } = useTheme();
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { language } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
@@ -63,14 +64,17 @@ export default function HomeQuickActions({ onLog }: { onLog?: () => void }) {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   // Rembourrages LOGIQUES (start/end) et non physiques (left/right) : sous la
   // racine `direction: rtl`, un `paddingLeft` reste à gauche et se retrouve donc
   // du mauvais côté en arabe. Constaté le 16 août 2026 sur R83L20HWJTE : le titre
   // collait au bord droit de la carte. Le couple start/end suit le sens de lecture
   // et laisse le carrousel déborder du bon côté dans les deux langues.
   card: { borderRadius: 18, paddingVertical: 14, paddingStart: 16, marginHorizontal: 16, marginVertical: 8,
-    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+    shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   // `gap` : le titre porte `flex: 1` et son texte se cale sur le bord de fin de sa
   // boîte — en arabe il venait buter contre le lien, sans un espace entre les deux.
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, paddingEnd: 16, gap: 8 },

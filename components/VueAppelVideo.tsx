@@ -75,6 +75,7 @@ export default function VueAppelVideo({
   onCouperCamera: () => void;
   onBasculerCamera: () => void;
 }) {
+  const k = useTokens();
   const tok = useTokens();
   const { language } = useTranslation() as any;
   const t = TXT[language] || TXT.fr;
@@ -113,7 +114,7 @@ export default function VueAppelVideo({
           accessibilityRole="button"
           accessibilityLabel={t.basculer}
         >
-          <SwitchCamera size={20} color="#fff" />
+          <SwitchCamera size={20} color={k.onAccent} />
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.rond, { backgroundColor: cameraCoupee ? tok.danger : tok.scrim }]}
@@ -121,7 +122,7 @@ export default function VueAppelVideo({
           accessibilityRole="button"
           accessibilityLabel={cameraCoupee ? t.reprendre : t.couper}
         >
-          {cameraCoupee ? <VideoOff size={20} color="#fff" /> : <VideoIcon size={20} color="#fff" />}
+          {cameraCoupee ? <VideoOff size={20} color={k.onAccent} /> : <VideoIcon size={20} color={k.onAccent} />}
         </TouchableOpacity>
       </View>
     </View>

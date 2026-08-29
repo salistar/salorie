@@ -394,7 +394,7 @@ const styles = (tok: any) =>
     ligneAjout: { alignItems: 'center', gap: 8 },
     champ: { flex: 1 },
     bouton: { paddingVertical: 12, paddingHorizontal: 18, borderRadius: 12 },
-    boutonTxt: { color: '#fff', fontSize: 14, fontWeight: '800' },
+    boutonTxt: { color: tok.onAccent, fontSize: 14, fontWeight: '800' },
     message: { fontSize: 13, fontWeight: '700' },
     aide: { color: tok.textFaint, fontSize: 12.5, lineHeight: 18 },
     vide: { alignItems: 'center', gap: 10, marginTop: 34 },

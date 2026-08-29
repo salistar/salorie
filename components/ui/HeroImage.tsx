@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from '../../lib/i18n';
 import { radius, spacing, type, heroScrim } from '../../constants/theme';
 
+import { useTokens } from '../../constants/tokens';
 interface Props {
   source: ImageSourcePropType;
   height?: number;
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export default function HeroImage({ source, height = 150, eyebrow, title, value, valueUnit, rounded = true, children }: Props) {
+  const k = useTokens();
   const { isRTL } = useTranslation() as any;
   const align: TextStyle = { textAlign: isRTL ? 'right' : 'left' };
   return (
@@ -28,11 +30,11 @@ export default function HeroImage({ source, height = 150, eyebrow, title, value,
         <View style={{ flex: 1, justifyContent: 'flex-end', padding: spacing.xl }}>
           {!!eyebrow && <Text style={{ ...(type.eyebrow as TextStyle), color: 'rgba(255,255,255,0.9)', ...align }}>{eyebrow}</Text>}
           {!!value && (
-            <Text style={{ ...(type.hero as TextStyle), color: '#fff', ...align }}>
+            <Text style={{ ...(type.hero as TextStyle), color: k.onAccent, ...align }}>
               {value}{!!valueUnit && <Text style={{ ...(type.h2 as TextStyle), color: 'rgba(255,255,255,0.9)' }}> {valueUnit}</Text>}
             </Text>
           )}
-          {!!title && <Text style={{ ...(type.h1 as TextStyle), color: '#fff', ...align }} numberOfLines={2}>{title}</Text>}
+          {!!title && <Text style={{ ...(type.h1 as TextStyle), color: k.onAccent, ...align }} numberOfLines={2}>{title}</Text>}
           {children}
         </View>
       </ImageBackground>

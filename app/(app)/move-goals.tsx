@@ -1,9 +1,9 @@
 // Objectifs de MOUVEMENT du jour (style "daily moves") : pompes, squats, abdos,
 // gainage, fentes — chaque exo a un objectif quotidien ; tu incrémentes par séries,
 // l'anneau se remplit. Stocké localement par jour. Trilingue + dark + RTL.
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -64,6 +64,7 @@ const MOVES = [
 
 export default function MoveGoals() {
   const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const { resolved } = useTheme();
@@ -139,8 +140,8 @@ export default function MoveGoals() {
                   <Text style={[s.moveMeta, { color: done ? accent : sub }, align]}>{c} / {m.goal}{done ? ` · ${t.done}` : ''}</Text>
                 </View>
                 <TouchableOpacity style={[s.addBtn, { backgroundColor: done ? accent : '#eef2f7' }]} onPress={() => addSet(m)}>
-                  {done ? <Check size={16} color="#fff" /> : <Plus size={16} color={accent} />}
-                  <Text style={[s.addTxt, { color: done ? '#fff' : accent }]}>{m.per}</Text>
+                  {done ? <Check size={16} color={k.onAccent} /> : <Plus size={16} color={accent} />}
+                  <Text style={[s.addTxt, { color: done ? k.onAccent : accent }]}>{m.per}</Text>
                 </TouchableOpacity>
               </View>
               <Text style={[s.moveDesc, { color: sub }, align]}>{language === 'fr' ? m.descFr : language === 'ar' ? m.descAr : m.descEn}</Text>
@@ -157,7 +158,10 @@ export default function MoveGoals() {
   );
 }
 
-const s = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeS = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1 },
   body: { padding: 18, paddingBottom: 40 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -168,7 +172,7 @@ const s = StyleSheet.create({
   summaryLabel: { fontSize: 15, fontWeight: '800' },
   summaryKcal: { fontSize: 12.5, marginTop: 2 },
   moveCard: { borderRadius: 18, padding: 15, marginTop: 12 },
-  moveImg: { width: 58, height: 58, borderRadius: 14, backgroundColor: '#e2e8f0' },
+  moveImg: { width: 58, height: 58, borderRadius: 14, backgroundColor: k.surfaceSunken },
   moveDesc: { fontSize: 12.5, lineHeight: 18, marginTop: 11 },
   moveName: { fontSize: 15.5, fontWeight: '800' },
   moveMeta: { fontSize: 12.5, marginTop: 2, fontWeight: '600' },

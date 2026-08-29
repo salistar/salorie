@@ -2,7 +2,7 @@
 // leaders : Yazio→Jeûne, NRC→Plans). Hub qui PRÉVISUALISE et renvoie vers les
 // écrans existants (zéro duplication de logique) : courses virtuelles (photos),
 // mes médailles, journal/actus, agenda. Trilingue + dark + RTL.
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -28,6 +28,7 @@ import { Card, PrimaryButton, SecondaryButton, SectionHeader, EmptyState, Skelet
 import { spacing, radius, type } from '../../constants/theme';
 import { HERO } from '../../constants/heroImages';
 
+import { useTokens, type Tokens } from '../../constants/tokens';
 const TXT: any = {
   en: { title: 'Challenges', sub: 'Virtual races, medals and news.', league: 'League', races: 'Virtual races', medals: 'My medals', news: 'News', agenda: 'Sport agenda', solo: 'Solo run (GPS)', annual: 'Annual challenge', journal: 'Journal & news', social: 'Social & friends', activity: 'Activity', seeAll: 'See all', km: 'km', noMedals: 'Finish a race to earn your first medal!', join: 'Open', community: 'Community routes', ghost: 'AR ghost run', twin: 'Live twin', fasting: 'Intermittent fasting', groupSports: 'Group sports', marketplace: 'Marketplace', ramadan: 'Ramadan mode', cityChallenges: 'City vs city challenges', more: 'More' },
   fr: { title: 'Défis', sub: 'Courses virtuelles, médailles et actus.', league: 'Ligue', races: 'Courses virtuelles', medals: 'Mes médailles', news: 'Actualités', agenda: 'Agenda sport', solo: 'Course solo (GPS)', annual: 'Défi annuel', journal: 'Journal & actus', social: 'Social & amis', activity: 'Activité', seeAll: 'Voir tout', km: 'km', noMedals: 'Termine une course pour gagner ta première médaille !', join: 'Ouvrir', community: 'Parcours communautaires', ghost: 'Course fantôme AR', twin: 'Jumeau live', fasting: 'Jeûne intermittent', groupSports: 'Sports de groupe', marketplace: 'Marketplace', ramadan: 'Mode Ramadan', cityChallenges: 'Défis inter-villes', more: 'Plus' },
@@ -35,6 +36,8 @@ const TXT: any = {
 };
 
 export default function DefisTab() {
+  const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const { colors, resolved } = useTheme();
@@ -126,7 +129,7 @@ export default function DefisTab() {
             {/* CTA phares : Ligue (rétention → flag 'social') + Course solo (sport → flag 'run') */}
             {(routeOn('/leagues') || routeOn('/run')) && (
               <View style={{ paddingHorizontal: spacing.xl, marginTop: spacing.xl, gap: spacing.md }}>
-                {routeOn('/leagues') && <PrimaryButton title={t.league} icon={<Trophy size={20} color="#fff" />} onPress={() => router.push('/leagues' as any)} />}
+                {routeOn('/leagues') && <PrimaryButton title={t.league} icon={<Trophy size={20} color={k.onAccent} />} onPress={() => router.push('/leagues' as any)} />}
                 {routeOn('/run') && <SecondaryButton title={t.solo} icon={<MapPin size={20} color={colors.primary} />} onPress={() => router.push('/run' as any)} />}
               </View>
             )}
@@ -228,7 +231,10 @@ export default function DefisTab() {
   );
 }
 
-const s = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeS = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1 },
   body: { paddingTop: spacing.md, paddingBottom: 130 },
   tileRow: { flexDirection: 'row', gap: spacing.md },
@@ -236,7 +242,7 @@ const s = StyleSheet.create({
   raceImg: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
   raceShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.30)' },
   raceTxtWrap: { position: 'absolute', left: 10, right: 10, bottom: 8 },
-  raceName: { color: '#fff', fontWeight: '900', fontSize: 13.5, textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 4 },
+  raceName: { color: k.onAccent, fontWeight: '900', fontSize: 13.5, textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 4 },
   raceMeta: { color: 'rgba(255,255,255,0.9)', fontWeight: '700', fontSize: 11.5, marginTop: 1 },
   newsThumb: { width: 44, height: 44, borderRadius: radius.sm },
 });

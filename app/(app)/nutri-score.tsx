@@ -1,7 +1,7 @@
 // Nutri-Score — note nutritionnelle A→E d'un aliment (pour 100 g).
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { partager, lienPartage } from '../../lib/partage';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   Image,
   View,
@@ -68,6 +68,7 @@ const TXT: any = {
 
 export default function NutriScoreScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
@@ -184,26 +185,29 @@ export default function NutriScoreScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 26, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', marginBottom: 20 },
+  title: { fontSize: 26, fontWeight: '900', color: k.text, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: k.textMuted, marginBottom: 20 },
   scaleRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 8 },
   scaleItem: { width: 52, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center', opacity: 0.4 },
-  scaleActive: { opacity: 1, transform: [{ scale: 1.18 }], shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 6, elevation: 4 },
-  scaleTxt: { color: '#fff', fontSize: 22, fontWeight: '900' },
+  scaleActive: { opacity: 1, transform: [{ scale: 1.18 }], shadowColor: k.shadow, shadowOpacity: 0.2, shadowRadius: 6, elevation: 4 },
+  scaleTxt: { color: k.onAccent, fontSize: 22, fontWeight: '900' },
   legendRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 12, flexWrap: 'wrap' },
   legendGrade: { fontSize: 15, fontWeight: '900' },
   legendArrow: { fontSize: 13, fontWeight: '700' },
   legendHint: { flexShrink: 1, fontSize: 12, lineHeight: 17, fontWeight: '500', maxWidth: 260 },
-  scoreNote: { textAlign: 'center', fontSize: 15, color: '#64748B', marginBottom: 10, fontWeight: '600' },
+  scoreNote: { textAlign: 'center', fontSize: 15, color: k.textMuted, marginBottom: 10, fontWeight: '600' },
   shareRow: { flexDirection: 'row', justifyContent: 'center', marginBottom: 18 },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 4, marginBottom: 10 },
-  label: { fontSize: 15, fontWeight: '600', color: '#0F172A' },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: k.surface, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 4, marginBottom: 10 },
+  label: { fontSize: 15, fontWeight: '600', color: k.text },
   inputWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  input: { fontSize: 17, fontWeight: '800', color: '#0F172A', minWidth: 64, textAlign: 'right', paddingVertical: 12 },
-  unit: { fontSize: 13, color: '#94A3B8', fontWeight: '700', width: 34 },
-  tip: { fontSize: 13, color: '#94A3B8', marginTop: 14, lineHeight: 19 },
+  input: { fontSize: 17, fontWeight: '800', color: k.text, minWidth: 64, textAlign: 'right', paddingVertical: 12 },
+  unit: { fontSize: 13, color: k.textFaint, fontWeight: '700', width: 34 },
+  tip: { fontSize: 13, color: k.textFaint, marginTop: 14, lineHeight: 19 },
 });

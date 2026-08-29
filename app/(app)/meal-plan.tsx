@@ -224,15 +224,15 @@ export default function MealPlanScreen() {
                   <Text style={styles.targetLbl}>kcal</Text>
                 </View>
                 <View style={styles.targetTile}>
-                  <Text style={[styles.targetVal, { color: '#0ea5e9' }]}>{fmtNum(targets.protein)}g</Text>
+                  <Text style={[styles.targetVal, { color: k.info }]}>{fmtNum(targets.protein)}g</Text>
                   <Text style={styles.targetLbl}>{L('protein')}</Text>
                 </View>
                 <View style={styles.targetTile}>
-                  <Text style={[styles.targetVal, { color: '#f59e0b' }]}>{fmtNum(targets.carbs)}g</Text>
+                  <Text style={[styles.targetVal, { color: k.warning }]}>{fmtNum(targets.carbs)}g</Text>
                   <Text style={styles.targetLbl}>{L('carbs')}</Text>
                 </View>
                 <View style={styles.targetTile}>
-                  <Text style={[styles.targetVal, { color: '#ef4444' }]}>{fmtNum(targets.fat)}g</Text>
+                  <Text style={[styles.targetVal, { color: k.danger }]}>{fmtNum(targets.fat)}g</Text>
                   <Text style={styles.targetLbl}>{L('fat')}</Text>
                 </View>
               </View>
@@ -249,7 +249,7 @@ export default function MealPlanScreen() {
             </View>
 
             <TouchableOpacity style={[styles.generateBtn, { backgroundColor: colors.primary, flexDirection: rowDir(isRTL) }]} onPress={generate}>
-              <Sparkles size={20} color="#fff" />
+              <Sparkles size={20} color={k.onAccent} />
               <Text style={styles.generateText}>{t('mealplan.generate')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.histLink, { flexDirection: rowDir(isRTL) }]} onPress={() => router.push('/meal-plan-history' as any)}>
@@ -274,7 +274,7 @@ export default function MealPlanScreen() {
           <View style={[styles.errorBox, { backgroundColor: card }]}>
             <Text style={{ color: k.danger, fontWeight: '600', textAlign: txtAlign(isRTL) }}>{t('mealplan.error')}</Text>
             <TouchableOpacity style={[styles.generateBtn, { backgroundColor: colors.primary, flexDirection: rowDir(isRTL) }]} onPress={generate}>
-              <RefreshCw size={18} color="#fff" /><Text style={styles.generateText}>{t('mealplan.retry')}</Text>
+              <RefreshCw size={18} color={k.onAccent} /><Text style={styles.generateText}>{t('mealplan.retry')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -282,7 +282,7 @@ export default function MealPlanScreen() {
         {plan && !loading && (
           <>
             {plan.meals.map((m, i) => (
-              <View key={i} style={[styles.mealCard, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? '#283241' : 'transparent', shadowColor: isDark ? 'transparent' : '#000' }]}>
+              <View key={i} style={[styles.mealCard, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? k.border : 'transparent', shadowColor: isDark ? 'transparent' : k.shadow }]}>
                 <View style={[styles.mealHead, { flexDirection: rowDir(isRTL) }]}>
                   <Text style={[styles.mealType, { textAlign: txtAlign(isRTL) }]}>{m.type}</Text>
                   <Text style={[styles.mealKcal, { color: colors.primary }]}>{fmtNum(Math.round(m.calories))} kcal</Text>
@@ -295,7 +295,7 @@ export default function MealPlanScreen() {
                   <Text style={[styles.macro, { color: sub }]}>F {fmtNum(Math.round(m.fat))}g</Text>
                   <View style={{ flex: 1 }} />
                   <TouchableOpacity style={[styles.logBtn, { backgroundColor: colors.primary, flexDirection: rowDir(isRTL) }]} onPress={() => logMeal(m)}>
-                    <Plus size={16} color="#fff" /><Text style={styles.logBtnText}>{t('mealplan.log')}</Text>
+                    <Plus size={16} color={k.onAccent} /><Text style={styles.logBtnText}>{t('mealplan.log')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -313,12 +313,12 @@ export default function MealPlanScreen() {
             {!!plan.micros?.length && (
               <>
                 <Text style={[styles.section, { color: text, textAlign: txtAlign(isRTL) }]}>{t('mealplan.micros')}</Text>
-                <View style={[styles.microCard, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? '#283241' : 'transparent' }]}>
+                <View style={[styles.microCard, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? k.border : 'transparent' }]}>
                   {plan.micros.map((mi, i) => (
                     <View key={i} style={[styles.microRow, { flexDirection: rowDir(isRTL) }]}>
                       <Text style={[styles.microName, { color: text, textAlign: txtAlign(isRTL) }]}>{mi.name}</Text>
                       <View style={styles.microBarTrack}>
-                        <View style={[styles.microBarFill, { width: `${Math.min(100, Math.max(2, mi.pct))}%`, backgroundColor: mi.pct >= 90 ? '#10B981' : mi.pct >= 50 ? colors.primary : '#f59e0b' }]} />
+                        <View style={[styles.microBarFill, { width: `${Math.min(100, Math.max(2, mi.pct))}%`, backgroundColor: mi.pct >= 90 ? k.success : mi.pct >= 50 ? colors.primary: k.warning }]} />
                       </View>
                       <Text style={[styles.microPct, { color: sub, textAlign: isRTL ? 'left' : 'right' }]}>{mi.amount}</Text>
                     </View>
@@ -329,14 +329,14 @@ export default function MealPlanScreen() {
 
             {/* Tip */}
             {!!plan.tip && (
-              <View style={[styles.tipCard, { backgroundColor: card, flexDirection: rowDir(isRTL), borderWidth: 1, borderColor: isDark ? '#283241' : 'transparent' }]}>
+              <View style={[styles.tipCard, { backgroundColor: card, flexDirection: rowDir(isRTL), borderWidth: 1, borderColor: isDark ? k.border : 'transparent' }]}>
                 <Lightbulb size={20} color={colors.primary} />
                 <Text style={[styles.tipText, { color: text, textAlign: txtAlign(isRTL) }]}>{plan.tip}</Text>
               </View>
             )}
 
-            <TouchableOpacity style={[styles.saveAllBtn, { backgroundColor: colors.primary, flexDirection: rowDir(isRTL) }, saved && { backgroundColor: '#16a34a' }]} onPress={saveAll} disabled={saving || saved}>
-              {saving ? <ActivityIndicator color="#fff" /> : (saved ? <Check size={18} color="#fff" /> : <Save size={18} color="#fff" />)}
+            <TouchableOpacity style={[styles.saveAllBtn, { backgroundColor: colors.primary, flexDirection: rowDir(isRTL) }, saved && { backgroundColor: k.success }]} onPress={saveAll} disabled={saving || saved}>
+              {saving ? <ActivityIndicator color={k.onAccent} /> : (saved ? <Check size={18} color={k.onAccent} /> : <Save size={18} color={k.onAccent} />)}
               <Text style={styles.saveAllText}>{saved ? L('plan_saved') : L('save_all')}</Text>
             </TouchableOpacity>
 
@@ -388,20 +388,20 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   stepNumTxt: { color: k.accent, fontWeight: '900', fontSize: 13 },
   stepTxt: { flex: 1, fontSize: 13, fontWeight: '600', lineHeight: 18 },
   generateBtn: { flexDirection: 'row', gap: 8, backgroundColor: k.accent, paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
-  generateText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  generateText: { color: k.onAccent, fontSize: 16, fontWeight: '800' },
   loadingBox: { alignItems: 'center', gap: 12, paddingVertical: 60 },
   loadingText: { fontSize: 15, fontWeight: '600' },
   errorBox: { borderRadius: 16, padding: 20, gap: 14, marginTop: 10 },
-  mealCard: { borderRadius: 18, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
+  mealCard: { borderRadius: 18, padding: 16, marginBottom: 12, shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
   mealHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  mealType: { fontSize: 12, fontWeight: '800', color: '#94A3B8', letterSpacing: 1, textTransform: 'uppercase' },
+  mealType: { fontSize: 12, fontWeight: '800', color: k.textFaint, letterSpacing: 1, textTransform: 'uppercase' },
   mealKcal: { fontSize: 15, fontWeight: '800' },
   mealTitle: { fontSize: 18, fontWeight: '800', marginTop: 4 },
   mealItems: { fontSize: 13, marginTop: 4, lineHeight: 18 },
   macroRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
   macro: { fontSize: 13, fontWeight: '700' },
   logBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: k.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
-  logBtnText: { color: '#fff', fontWeight: '800', fontSize: 13 },
+  logBtnText: { color: k.onAccent, fontWeight: '800', fontSize: 13 },
   totalsCard: { borderRadius: 16, padding: 16, marginTop: 4, marginBottom: 22 },
   totalsTitle: { fontSize: 12, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase' },
   totalsValue: { fontSize: 16, fontWeight: '800', marginTop: 4 },
@@ -419,6 +419,6 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   histLink: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', paddingVertical: 14, marginTop: 6 },
   histLinkTxt: { color: k.accent, fontSize: 15, fontWeight: '800' },
   saveAllBtn: { flexDirection: 'row', gap: 8, backgroundColor: k.accent, paddingVertical: 15, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
-  saveAllText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  saveAllText: { color: k.onAccent, fontSize: 15, fontWeight: '800' },
   rowBtns: { flexDirection: 'row', gap: 8, marginTop: 4 },
 });

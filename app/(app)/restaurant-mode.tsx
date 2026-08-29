@@ -129,7 +129,7 @@ export default function RestaurantModeScreen() {
         <PhotoStrip category="food" />
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub} ({goal}).</Text>
         <View style={styles.btnRow}>
-          <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={() => run(true)} disabled={loading}><Camera size={20} color="#fff" /><Text style={styles.btnPrimaryTxt}>{t.menu_photo}</Text></TouchableOpacity>
+          <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={() => run(true)} disabled={loading}><Camera size={20} color={k.onAccent} /><Text style={styles.btnPrimaryTxt}>{t.menu_photo}</Text></TouchableOpacity>
           <TouchableOpacity style={[styles.btn, styles.btnGhost]} onPress={() => run(false)} disabled={loading}><ImageIcon size={20} color={accent} /><Text style={styles.btnGhostTxt}>{t.gallery}</Text></TouchableOpacity>
         </View>
         {uri && <Image source={{ uri }} style={styles.preview} resizeMode="cover" />}
@@ -159,7 +159,7 @@ export default function RestaurantModeScreen() {
                     // Contexte budget : ce plat rentre-t-il dans les kcal restantes du jour ?
                     const fits = Math.round(r.kcal) <= remaining;
                     const over = Math.round(r.kcal) - remaining;
-                    const bColor = remaining <= 0 ? '#DC2626' : fits ? accent : '#D97706';
+                    const bColor = remaining <= 0 ? '#DC2626' : fits ? accent: k.warning;
                     const label = remaining <= 0
                       ? t.budgetDone
                       : fits
@@ -210,21 +210,21 @@ export default function RestaurantModeScreen() {
 // évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 26, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', lineHeight: 20, marginBottom: 20 },
+  title: { fontSize: 26, fontWeight: '900', color: k.text, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: k.textMuted, lineHeight: 20, marginBottom: 20 },
   btnRow: { flexDirection: 'row', gap: 12, marginBottom: 18 },
   btn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 16 },
-  btnPrimary: { backgroundColor: k.accent }, btnPrimaryTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
-  btnGhost: { backgroundColor: '#EAF4EE' }, btnGhostTxt: { color: k.accent, fontWeight: '800', fontSize: 14 },
+  btnPrimary: { backgroundColor: k.accent }, btnPrimaryTxt: { color: k.onAccent, fontWeight: '800', fontSize: 14 },
+  btnGhost: { backgroundColor: k.accentSoft }, btnGhostTxt: { color: k.accent, fontWeight: '800', fontSize: 14 },
   preview: { width: '100%', height: 200, borderRadius: 18, marginBottom: 16 },
-  center: { alignItems: 'center', paddingVertical: 24 }, loadingTxt: { color: '#64748B', marginTop: 10, fontWeight: '600' },
-  card: { backgroundColor: '#fff', borderRadius: 18, padding: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  cardTxt: { fontSize: 14.5, color: '#1F2937', lineHeight: 22 },
+  center: { alignItems: 'center', paddingVertical: 24 }, loadingTxt: { color: k.textMuted, marginTop: 10, fontWeight: '600' },
+  card: { backgroundColor: k.surface, borderRadius: 18, padding: 18, shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  cardTxt: { fontSize: 14.5, color: k.text, lineHeight: 22 },
   source: { fontSize: 11.5, fontWeight: '600', marginTop: 10, lineHeight: 17, fontStyle: 'italic' },
-  hint: { fontSize: 13, color: '#94A3B8', textAlign: 'center', marginTop: 24 },
+  hint: { fontSize: 13, color: k.textFaint, textAlign: 'center', marginTop: 24 },
   forGoal: { fontSize: 16, fontWeight: '800', marginBottom: 12, letterSpacing: -0.3 },
   // Card raised fournit le fond thémé + elevation.sm + radius.lg via tokens ; on n'ajoute
   // ici que la bordure-verdict (couleur bindée inline) et l'espacement en tokens.

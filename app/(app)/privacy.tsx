@@ -270,7 +270,7 @@ export default function PrivacyScreen() {
               accessibilityRole="button"
               accessibilityLabel={tx.del_btn}
             >
-              {deleting ? <ActivityIndicator color="#fff" /> : <Trash2 size={18} color="#fff" />}
+              {deleting ? <ActivityIndicator color={k.onAccent} /> : <Trash2 size={18} color={k.onAccent} />}
               <Text style={styles.dangerBtnText}>{deleting ? tx.del_deleting : tx.del_btn}</Text>
             </TouchableOpacity>
           </View>
@@ -343,7 +343,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   infoBoxText: {
     flex: 1,
     fontSize: 14,
-    color: '#065F46',
+    color: k.successInk,
     fontWeight: '600',
     lineHeight: 20,
   },
@@ -369,7 +369,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   dangerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#DC2626',
+    color: k.danger,
     marginBottom: 8,
   },
   dangerDesc: {
@@ -379,7 +379,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     marginBottom: 16,
   },
   dangerBtn: {
-    backgroundColor: '#DC2626',
+    backgroundColor: k.danger,
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
@@ -387,7 +387,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     gap: 8,
   },
   dangerBtnText: {
-    color: '#fff',
+    color: k.onAccent,
     fontSize: 16,
     fontWeight: '800',
   },

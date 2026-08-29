@@ -255,7 +255,7 @@ export default function ResultsScreen() {
                 styles.stepLabel,
                 { color: k.textMuted, textAlign: isRTL ? 'right' : 'left' },
                 step.status === 'completed' && styles.stepLabelCompleted,
-                step.status === 'loading' && (isDark ? { color: '#fff', fontWeight: '700' as const } : styles.stepLabelActive)
+                step.status === 'loading' && (isDark ? { color: k.onAccent, fontWeight: '700' as const } : styles.stepLabelActive)
               ]}>
                 {step.label}
               </Text>
@@ -307,7 +307,7 @@ export default function ResultsScreen() {
 
         <View style={[styles.card, { marginTop: 16, backgroundColor: k.surface }]}>
           <View style={[styles.caloriesRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-            <Droplets size={32} color="#0EA5E9" />
+            <Droplets size={32} color={k.info} />
             <View>
               <Text style={[styles.label, { color: k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{t.waterIntake}</Text>
               <Text style={[styles.value, { color: k.text, textAlign: isRTL ? 'right' : 'left' }]}>{plan?.waterIntake} {t.liters}</Text>
@@ -378,7 +378,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     fontWeight: '700',
   },
   langPillTextActive: {
-    color: '#fff',
+    color: k.onAccent,
   },
   loadingContainer: {
     flex: 1,
@@ -459,7 +459,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     backgroundColor: k.surface,
     borderRadius: 24,
     padding: 24,
-    shadowColor: '#000',
+    shadowColor: k.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 10,

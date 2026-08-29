@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MessageCircle, Send, Smartphone, Share2, Globe, Swords } from 'lucide-react-native';
-import { useTokens } from '../constants/tokens';
+import { useTokens, type Tokens } from '../constants/tokens';
 import { useTranslation } from '../lib/i18n';
 import { partager, reseauxInstalles, texteDefi, lienPartage, type Reseau } from '../lib/partage';
 import { rowDir } from '../lib/rtl';
@@ -74,6 +74,7 @@ export default function LancerDefi({
   compact?: boolean;
 }) {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const tok = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.fr;
@@ -115,7 +116,7 @@ export default function LancerDefi({
       accessibilityLabel={`${t.titre} — ${libelle}`}
       activeOpacity={0.85}
     >
-      <Icone size={16} color="#fff" />
+      <Icone size={16} color={k.onAccent} />
       {!compact && <Text style={styles.boutonTexte}>{libelle}</Text>}
     </TouchableOpacity>
   );
@@ -163,12 +164,15 @@ export default function LancerDefi({
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   bloc: { marginTop: 14, gap: 8 },
   entete: { alignItems: 'center', gap: 7 },
   titre: { fontSize: 14.5, fontWeight: '800' },
   rangee: { alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   bouton: { alignItems: 'center', gap: 6, paddingVertical: 9, paddingHorizontal: 13, borderRadius: 12 },
-  boutonTexte: { fontSize: 13, fontWeight: '800', color: '#fff' },
+  boutonTexte: { fontSize: 13, fontWeight: '800', color: k.onAccent },
   aide: { fontSize: 11.5, fontWeight: '600' },
 });

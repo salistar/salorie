@@ -157,7 +157,7 @@ export default function SubstitutionsScreen() {
               <View style={[styles.prioRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 <Text style={[styles.prioNote, { color: sub }, align]}>{t.prioNote}</Text>
                 <View style={styles.bestBadge}>
-                  <Sparkles size={12} color="#fff" />
+                  <Sparkles size={12} color={k.onAccent} />
                   <Text style={styles.bestBadgeTxt}>{`${t.bestFor} · ${t.prio[priority]}`}</Text>
                 </View>
               </View>
@@ -174,24 +174,24 @@ export default function SubstitutionsScreen() {
 // évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 26, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', lineHeight: 20, marginBottom: 20 },
-  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 4, marginBottom: 14, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  input: { flex: 1, fontSize: 15, color: '#0F172A', paddingVertical: 12 },
+  title: { fontSize: 26, fontWeight: '900', color: k.text, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: k.textMuted, lineHeight: 20, marginBottom: 20 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: k.surface, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 4, marginBottom: 14, shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  input: { flex: 1, fontSize: 15, color: k.text, paddingVertical: 12 },
   go: { backgroundColor: k.accent, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 8 },
-  goTxt: { color: '#fff', fontWeight: '800' },
+  goTxt: { color: k.onAccent, fontWeight: '800' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginBottom: 20 },
-  chip: { backgroundColor: '#EAF4EE', borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  chip: { backgroundColor: k.accentSoft, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   chipTxt: { color: k.accent, fontWeight: '700', fontSize: 14 },
   center: { alignItems: 'center', paddingVertical: 24 },
-  loadingTxt: { color: '#64748B', marginTop: 10, fontWeight: '600' },
-  resultCard: { backgroundColor: '#fff', borderRadius: 18, padding: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  resultTxt: { fontSize: 14.5, color: '#1F2937', lineHeight: 22 },
+  loadingTxt: { color: k.textMuted, marginTop: 10, fontWeight: '600' },
+  resultCard: { backgroundColor: k.surface, borderRadius: 18, padding: 18, shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  resultTxt: { fontSize: 14.5, color: k.text, lineHeight: 22 },
   prioRow: { alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   prioNote: { fontSize: 12.5, fontWeight: '600', flexShrink: 1 },
   bestBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: k.accent, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
-  bestBadgeTxt: { color: '#fff', fontWeight: '800', fontSize: 11.5 },
+  bestBadgeTxt: { color: k.onAccent, fontWeight: '800', fontSize: 11.5 },
 });

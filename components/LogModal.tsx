@@ -200,7 +200,7 @@ export default function LogModal() {
                     <Text style={[styles.sectionTitle, { color: textPrimary, textAlign: txtAlign(isRTL) }]}>{t('logmodal.macros')}</Text>
                     <View style={[styles.macrosGrid, { flexDirection: rowDir(isRTL) }]}>
                       <View style={[styles.macroInput, { backgroundColor: inputCardBg, borderColor: inputBorder }]}>
-                        <View style={[styles.macroIcon, { backgroundColor: '#FFEEED' }]}>
+                        <View style={[styles.macroIcon, { backgroundColor: k.dangerSoft }]}>
                           <Beef size={18} color="#FF5C5C" />
                         </View>
                         <TextInput
@@ -219,7 +219,7 @@ export default function LogModal() {
 
                       <View style={[styles.macroInput, { backgroundColor: inputCardBg, borderColor: inputBorder }]}>
                         <View style={[styles.macroIcon, { backgroundColor: '#FFF9EB' }]}>
-                          <Wheat size={18} color="#F59E0B" />
+                          <Wheat size={18} color={k.warning} />
                         </View>
                         <TextInput
                           style={[styles.smallInput, { color: textPrimary }]}
@@ -236,8 +236,8 @@ export default function LogModal() {
                       </View>
 
                       <View style={[styles.macroInput, { backgroundColor: inputCardBg, borderColor: inputBorder }]}>
-                        <View style={[styles.macroIcon, { backgroundColor: '#E0F2FE' }]}>
-                          <Droplets size={18} color="#0EA5E9" />
+                        <View style={[styles.macroIcon, { backgroundColor: k.infoSoft }]}>
+                          <Droplets size={18} color={k.info} />
                         </View>
                         <TextInput
                           style={[styles.smallInput, { color: textPrimary }]}

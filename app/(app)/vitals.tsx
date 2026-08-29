@@ -3,7 +3,7 @@
 // + conseil ("parle à ton médecin"). i18n/dark/RTL/retour. Best-effort (Firestore).
 import React, { useEffect, useMemo, useState } from 'react';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -95,6 +95,7 @@ function TrendIcon({ dir, color }: { dir: Trend['direction']; color: string }) {
 
 export default function VitalsScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('vitals');
   const { resolved, colors } = useTheme();
   const { language, isRTL } = useTranslation() as any;
@@ -220,7 +221,7 @@ export default function VitalsScreen() {
           onPress={saveG}
           loading={savingG}
           disabled={savingG}
-          icon={<Check size={20} color="#fff" />}
+          icon={<Check size={20} color={k.onAccent} />}
           style={{ marginBottom: 8 }}
         />
 
@@ -243,7 +244,7 @@ export default function VitalsScreen() {
           const a = glucoseAlert(h.mgdl, conditions);
           const c = a ? (a.severity === 'danger' ? colors.error : AMBER) : accent;
           return (
-            <View key={h.id} style={[styles.row, { backgroundColor: card, flexDirection: rowDir(isRTL), borderColor: isDark ? '#283241' : 'transparent' }]}>
+            <View key={h.id} style={[styles.row, { backgroundColor: card, flexDirection: rowDir(isRTL), borderColor: isDark ? k.border : 'transparent' }]}>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowV, { color: text }, align]}>{h.mgdl} mg/dL</Text>
                 <Text style={[styles.rowSub, { color: sub }, align]}>{t.ctx[h.context]} · {h.date}</Text>
@@ -271,7 +272,7 @@ export default function VitalsScreen() {
           onPress={saveB}
           loading={savingB}
           disabled={savingB}
-          icon={<Check size={20} color="#fff" />}
+          icon={<Check size={20} color={k.onAccent} />}
           style={{ marginBottom: 8 }}
         />
 
@@ -297,7 +298,7 @@ export default function VitalsScreen() {
           const a = bpAlert(h.systolic, h.diastolic, conditions);
           const c = a ? (a.severity === 'danger' ? colors.error : AMBER) : accent;
           return (
-            <View key={h.id} style={[styles.row, { backgroundColor: card, flexDirection: rowDir(isRTL), borderColor: isDark ? '#283241' : 'transparent' }]}>
+            <View key={h.id} style={[styles.row, { backgroundColor: card, flexDirection: rowDir(isRTL), borderColor: isDark ? k.border : 'transparent' }]}>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowV, { color: text }, align]}>{h.systolic}/{h.diastolic} mmHg{h.pulse ? ` · ${h.pulse} bpm` : ''}</Text>
                 <Text style={[styles.rowSub, { color: sub }, align]}>{h.date}</Text>
@@ -318,6 +319,8 @@ export default function VitalsScreen() {
 
 /** Carte tendance : moyenne/min-max/direction + mini-graphe en barres (Views only). */
 function TrendCard({ trend, secondary, label, avg, range, unit, spark, card, text, sub, track, accent, isDark, isRTL }: any) {
+  const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const dirColor = trend.direction === 'up' ? AMBER : trend.direction === 'down' ? '#3B82F6' : sub;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
   // Mini-graphe : barres normalisées entre min et max de la fenêtre. On inverse
@@ -326,7 +329,6 @@ function TrendCard({ trend, secondary, label, avg, range, unit, spark, card, tex
   const mn = Math.min(...vals, trend.min);
   const mx = Math.max(...vals, trend.max);
   const span = mx - mn || 1;
-  const k = useTokens();
   return (
     <View style={[styles.trendCard, { backgroundColor: card, borderColor: k.border }]}>
       <View style={[styles.trendTop, { flexDirection: rowDir(isRTL) }]}>
@@ -350,16 +352,19 @@ function TrendCard({ trend, secondary, label, avg, range, unit, spark, card, tex
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
-  sub: { fontSize: 14, color: '#64748B', marginBottom: 16, lineHeight: 20 },
+  sub: { fontSize: 14, color: k.textMuted, marginBottom: 16, lineHeight: 20 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  section: { fontSize: 20, fontWeight: '900', color: '#0F172A', letterSpacing: -0.4 },
-  empty: { color: '#94A3B8', fontSize: 14, marginVertical: 8 },
-  row: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1 },
-  rowV: { fontSize: 16, fontWeight: '800', color: '#0F172A' },
-  rowSub: { fontSize: 12, color: '#94A3B8', marginTop: 2 },
+  section: { fontSize: 20, fontWeight: '900', color: k.text, letterSpacing: -0.4 },
+  empty: { color: k.textFaint, fontSize: 14, marginVertical: 8 },
+  row: { flexDirection: 'row', alignItems: 'center', backgroundColor: k.surface, borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1 },
+  rowV: { fontSize: 16, fontWeight: '800', color: k.text },
+  rowSub: { fontSize: 12, color: k.textFaint, marginTop: 2 },
   badge: { borderRadius: 10, paddingVertical: 6, paddingHorizontal: 10 },
   badgeTxt: { fontSize: 12, fontWeight: '800' },
   alert: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 10 },

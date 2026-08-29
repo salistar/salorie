@@ -104,7 +104,7 @@ export default function MealTemplatesScreen() {
             />
           ))}
           <TouchableOpacity style={[styles.addBtn, { backgroundColor: accent }]} onPress={create} disabled={busy}>
-            {busy ? <ActivityIndicator color="#fff" /> : <><Plus size={18} color="#fff" /><Text style={styles.addTxt}>{t.createBtn}</Text></>}
+            {busy ? <ActivityIndicator color={k.onAccent} /> : <><Plus size={18} color={k.onAccent} /><Text style={styles.addTxt}>{t.createBtn}</Text></>}
           </TouchableOpacity>
         </FormCard>
 
@@ -115,7 +115,7 @@ export default function MealTemplatesScreen() {
               <Text style={[styles.tplName, { color: text }, align]}>{tp.name}</Text>
               <Text style={[styles.tplMacro, { color: sub }, align]}>{Math.round(tp.calories || 0)} kcal · {Math.round(tp.protein || 0)}{t.p}/{Math.round(tp.carbs || 0)}{t.c}/{Math.round(tp.fat || 0)}{t.f}</Text>
             </View>
-            <View style={[styles.logChip, { backgroundColor: accent, flexDirection: rowDir(isRTL) }]}><Check size={16} color="#fff" /><Text style={styles.logChipTxt}>{t.logBtn}</Text></View>
+            <View style={[styles.logChip, { backgroundColor: accent, flexDirection: rowDir(isRTL) }]}><Check size={16} color={k.onAccent} /><Text style={styles.logChipTxt}>{t.logBtn}</Text></View>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -127,18 +127,18 @@ export default function MealTemplatesScreen() {
 // évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 24, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', marginBottom: 18 },
+  title: { fontSize: 24, fontWeight: '900', color: k.text, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: k.textMuted, marginBottom: 18 },
   addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 13, marginTop: 4 },
-  addTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
-  label: { fontSize: 13, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
-  empty: { color: '#94A3B8', fontSize: 14 },
-  tpl: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 10 },
-  tplName: { fontSize: 15, fontWeight: '800', color: '#0F172A' },
-  tplMacro: { fontSize: 13, color: '#64748B', marginTop: 3 },
+  addTxt: { color: k.onAccent, fontWeight: '800', fontSize: 14 },
+  label: { fontSize: 13, fontWeight: '700', color: k.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
+  empty: { color: k.textFaint, fontSize: 14 },
+  tpl: { flexDirection: 'row', alignItems: 'center', backgroundColor: k.surface, borderRadius: 14, padding: 16, marginBottom: 10 },
+  tplName: { fontSize: 15, fontWeight: '800', color: k.text },
+  tplMacro: { fontSize: 13, color: k.textMuted, marginTop: 3 },
   logChip: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: k.accent, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12 },
-  logChipTxt: { color: '#fff', fontWeight: '800', fontSize: 13 },
+  logChipTxt: { color: k.onAccent, fontWeight: '800', fontSize: 13 },
 });

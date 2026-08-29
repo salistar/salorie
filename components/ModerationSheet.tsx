@@ -45,6 +45,7 @@ export default function ModerationSheet({
   note?: string;
   onBlocked?: (ownerDocId: string) => void; onReported?: () => void;
 }) {
+  const k = useTokens();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -84,7 +85,7 @@ export default function ModerationSheet({
     <TouchableOpacity onPress={onPress} disabled={busy} activeOpacity={0.7}
       style={[styles.row, { borderColor: line }, isRTL && { flexDirection: 'row-reverse' }]}>
       {icon}
-      <Text style={[styles.rowTxt, { color: danger ? '#DC2626' : text, textAlign: isRTL ? 'right' : 'left' }]}>{label}</Text>
+      <Text style={[styles.rowTxt, { color: danger ? k.danger : text, textAlign: isRTL ? 'right' : 'left' }]}>{label}</Text>
     </TouchableOpacity>
   );
 
@@ -103,16 +104,16 @@ export default function ModerationSheet({
           {done ? (
             <Text style={[styles.done, { color: text }]}>{done}</Text>
           ) : busy ? (
-            <ActivityIndicator color="#2E8B57" style={{ paddingVertical: 24 }} />
+            <ActivityIndicator color={k.accent} style={{ paddingVertical: 24 }} />
           ) : step === 'menu' ? (
             <>
-              {row(<Flag size={20} color="#D97706" strokeWidth={2.4} />, t.report, () => setStep('reasons'))}
-              {targetOwnerDocId ? row(<Ban size={20} color="#DC2626" strokeWidth={2.4} />, t.block(targetName || ''), doBlock, true) : null}
+              {row(<Flag size={20} color={k.warning} strokeWidth={2.4} />, t.report, () => setStep('reasons'))}
+              {targetOwnerDocId ? row(<Ban size={20} color={k.danger} strokeWidth={2.4} />, t.block(targetName || ''), doBlock, true) : null}
               <TouchableOpacity onPress={close} style={styles.cancel}><Text style={[styles.cancelTxt, { color: sub }]}>{t.cancel}</Text></TouchableOpacity>
             </>
           ) : (
             <>
-              {REPORT_REASONS.map((r) => row(<Flag size={18} color="#94a3b8" strokeWidth={2.2} />, t.reasons[r], () => doReport(r)))}
+              {REPORT_REASONS.map((r) => row(<Flag size={18} color={k.textFaint} strokeWidth={2.2} />, t.reasons[r], () => doReport(r)))}
             </>
           )}
         </Pressable>

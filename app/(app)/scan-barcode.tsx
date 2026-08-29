@@ -29,7 +29,7 @@ import { fetchAlternatives, submitPendingProduct, type AlternativeProduct } from
 import { useNutritionData } from '../../hooks/useNutritionData';
 
 // Verdict OBJECTIF (couleur + emoji + libellé i18n).
-const OBJ_COLOR: Record<FoodScore['verdict'], string> = { great: '#16A34A', ok: '#D97706', avoid: '#DC2626' };
+const obj_color = (k: Tokens): Record<FoodScore['verdict'], string> => ({ great: k.success, ok: k.warning, avoid: k.danger });
 const OBJ_EMOJI: Record<FoodScore['verdict'], string> = { great: '✅', ok: '⚠️', avoid: '🚫' };
 
 // Textes trilingues pour le verdict objectif + produit inconnu + non comestible.
@@ -467,7 +467,7 @@ export default function ScanBarcodeScreen() {
       {/* Top bar : retour à gauche, marque au centre */}
       <View style={styles.topBar}>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={styles.iconBtn} onPress={() => router.back()}>
-          <View style={flipAuto()}><ArrowLeft size={22} color="#fff" /></View>
+          <View style={flipAuto()}><ArrowLeft size={22} color={k.onAccent} /></View>
         </TouchableOpacity>
         <View style={{ width: 40 }} />
       </View>
@@ -497,7 +497,7 @@ export default function ScanBarcodeScreen() {
             {recents.map((r) => (
               <TouchableOpacity
                 key={r.barcode}
-                style={[styles.recentRow, isDark && { backgroundColor: '#0f172a', borderColor: '#334155' }]}
+                style={[styles.recentRow, isDark && { backgroundColor: '#0f172a', borderColor: k.borderStrong }]}
                 onPress={() => openRecent(r.barcode)}
                 activeOpacity={0.7}
               >
@@ -520,7 +520,7 @@ export default function ScanBarcodeScreen() {
       {/* Loading */}
       {status === 'loading' && (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#fff" />
+          <ActivityIndicator size="large" color={k.onAccent} />
           <Text style={styles.hint}>{t('barcode.looking_up')} {code}…</Text>
         </View>
       )}
@@ -535,14 +535,14 @@ export default function ScanBarcodeScreen() {
             </View>
 
             {pendingState === 'sent' ? (
-              <View style={[styles.sentBanner, { borderColor: '#16A34A', backgroundColor: '#16A34A1A' }]}>
-                <Text style={[styles.sentTxt, { color: '#16A34A' }]}>{ox.sent}</Text>
+              <View style={[styles.sentBanner, { borderColor: k.accent, backgroundColor: '#16A34A1A' }]}>
+                <Text style={[styles.sentTxt, { color: k.success }]}>{ox.sent}</Text>
               </View>
             ) : (
               <>
                 {/* Aperçu / capture de la photo d'étiquette */}
                 <TouchableOpacity
-                  style={[styles.labelCapture, isDark && { backgroundColor: '#0f172a', borderColor: '#334155' }]}
+                  style={[styles.labelCapture, isDark && { backgroundColor: '#0f172a', borderColor: k.borderStrong }]}
                   onPress={captureLabel}
                   disabled={pendingState === 'sending'}
                 >
@@ -557,23 +557,23 @@ export default function ScanBarcodeScreen() {
                 </TouchableOpacity>
 
                 {pendingState === 'badphoto' && (
-                  <View style={[styles.warnBanner, { borderColor: '#B45309', backgroundColor: '#FEF3C7' }]}>
+                  <View style={[styles.warnBanner, { borderColor: k.warning, backgroundColor: k.warningSoft }]}>
                     <AlertTriangle size={16} color="#B45309" />
                     <Text style={styles.warnBannerTxt}>{ox.badPhoto}</Text>
                   </View>
                 )}
                 {pendingState === 'error' && (
-                  <View style={[styles.warnBanner, { borderColor: '#DC2626', backgroundColor: '#DC26261A' }]}>
-                    <AlertTriangle size={16} color="#DC2626" />
-                    <Text style={[styles.warnBannerTxt, { color: '#DC2626' }]}>{ox.sendFail}</Text>
+                  <View style={[styles.warnBanner, { borderColor: k.danger, backgroundColor: '#DC26261A' }]}>
+                    <AlertTriangle size={16} color={k.danger} />
+                    <Text style={[styles.warnBannerTxt, { color: k.danger }]}>{ox.sendFail}</Text>
                   </View>
                 )}
 
                 {pendingImg && (
                   <TouchableOpacity style={styles.primaryBtn} onPress={sendPending} disabled={pendingState === 'sending'}>
                     {pendingState === 'sending'
-                      ? <ActivityIndicator size="small" color="#fff" />
-                      : <PlusCircle size={18} color="#fff" />}
+                      ? <ActivityIndicator size="small" color={k.onAccent} />
+                      : <PlusCircle size={18} color={k.onAccent} />}
                     <Text style={styles.primaryBtnText}>{pendingState === 'sending' ? ox.sending : ox.send}</Text>
                   </TouchableOpacity>
                 )}
@@ -598,15 +598,15 @@ export default function ScanBarcodeScreen() {
       {status === 'notedible' && found && (
         <View style={[styles.sheet, { backgroundColor: card }]}>
           <View style={styles.foundRow}>
-            <View style={[styles.thumb, styles.thumbPh, isDark && { backgroundColor: '#334155' }]}><Ban size={26} color="#DC2626" /></View>
+            <View style={[styles.thumb, styles.thumbPh, isDark && { backgroundColor: '#334155' }]}><Ban size={26} color={k.danger} /></View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.foundName, { color: textCol }]} numberOfLines={2}>{found.name}</Text>
               <Text style={[styles.sheetSub, { color: subCol }]}>{ox.notEdibleSub}</Text>
             </View>
           </View>
-          <View style={[styles.notEdibleBanner, { borderColor: '#DC2626', backgroundColor: '#DC26261A' }]}>
-            <Ban size={18} color="#DC2626" />
-            <Text style={[styles.notEdibleTxt, { color: '#DC2626' }]}>{ox.notEdible}</Text>
+          <View style={[styles.notEdibleBanner, { borderColor: k.danger, backgroundColor: '#DC26261A' }]}>
+            <Ban size={18} color={k.danger} />
+            <Text style={[styles.notEdibleTxt, { color: k.danger }]}>{ox.notEdible}</Text>
           </View>
           <TouchableOpacity style={styles.ghostBtn} onPress={rescan}>
             <RefreshCw size={16} color={k.accent} />
@@ -623,17 +623,17 @@ export default function ScanBarcodeScreen() {
             {found.image ? <Image source={{ uri: found.image }} style={[styles.thumb, isDark && { backgroundColor: '#334155' }]} /> : <View style={[styles.thumb, styles.thumbPh, isDark && { backgroundColor: '#334155' }]}><ScanBarcode size={26} color={k.accent} /></View>}
             <View style={{ flex: 1 }}>
               <Text style={[styles.foundName, { color: textCol }]} numberOfLines={2}>{found.name}</Text>
-              <Text style={[styles.foundMacros, { color: subCol }]}>{found.calories} kcal · P {found.protein}g · C {found.carbs}g · F {found.fat}g <Text style={[styles.per100, isDark && { color: '#64748b' }]}>/ 100 g</Text></Text>
+              <Text style={[styles.foundMacros, { color: subCol }]}>{found.calories} kcal · P {found.protein}g · C {found.carbs}g · F {found.fat}g <Text style={[styles.per100, isDark && { color: k.textMuted }]}>/ 100 g</Text></Text>
             </View>
           </View>
 
           {/* Verdict OBJECTIF (perso : objectif du jour + régime + conditions) */}
           {found.objective && (
-            <View style={[styles.objCard, { borderColor: OBJ_COLOR[found.objective.verdict], backgroundColor: OBJ_COLOR[found.objective.verdict] + '14' }]}>
+            <View style={[styles.objCard, { borderColor: obj_color(k)[found.objective.verdict], backgroundColor: obj_color(k)[found.objective.verdict] + '14' }]}>
               <View style={styles.objHead}>
                 <Text style={styles.objEmoji}>{OBJ_EMOJI[found.objective.verdict]}</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.objVerdict, { color: OBJ_COLOR[found.objective.verdict] }]}>{ox.verdict[found.objective.verdict]}</Text>
+                  <Text style={[styles.objVerdict, { color: obj_color(k)[found.objective.verdict] }]}>{ox.verdict[found.objective.verdict]}</Text>
                   <Text style={[styles.objSub, { color: subCol }]}>{found.objective.fit}/100 · {ox.goalFit}</Text>
                 </View>
               </View>
@@ -712,7 +712,7 @@ export default function ScanBarcodeScreen() {
 
           {/* Liste nutritionnelle complète /100 g */}
           {found.nutriments && (
-            <View style={[styles.nutriBox, isDark && { backgroundColor: '#0f172a', borderColor: '#334155' }]}>
+            <View style={[styles.nutriBox, isDark && { backgroundColor: '#0f172a', borderColor: k.borderStrong }]}>
               <Text style={[styles.nutriTitle, { color: textCol }]}>{ox.nutrition}</Text>
               {[
                 [ox.kcal, fmt(found.nutriments['energy-kcal_100g'], 'kcal'), false],
@@ -751,7 +751,7 @@ export default function ScanBarcodeScreen() {
                 <View style={{ gap: 8 }}>
                   <Text style={[styles.objWhy, { color: subCol }]}>{ox.alternatives}</Text>
                   {alts.map((a, i) => (
-                    <View key={i} style={[styles.altRow, isDark && { backgroundColor: '#0f172a', borderColor: '#334155' }]}>
+                    <View key={i} style={[styles.altRow, isDark && { backgroundColor: '#0f172a', borderColor: k.borderStrong }]}>
                       {a.image ? <Image source={{ uri: a.image }} style={styles.altThumb} /> : <View style={[styles.altThumb, styles.thumbPh]}><ScanBarcode size={18} color={k.accent} /></View>}
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.altName, { color: textCol }]} numberOfLines={2}>{[a.name, a.brand].filter(Boolean).join(' · ')}</Text>
@@ -791,29 +791,29 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16,
   },
   iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
-  topTitle: { color: '#fff', fontSize: 18, fontWeight: '800' },
+  topTitle: { color: k.onAccent, fontSize: 18, fontWeight: '800' },
   overlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   scanWindow: {
     width: 280, height: 180, borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.05)',
   },
   // Coins type "viseur" (plus pro qu'un cadre plein)
-  corner: { position: 'absolute', width: 34, height: 34, borderColor: '#4ade80' },
+  corner: { position: 'absolute', width: 34, height: 34, borderColor: k.accent },
   cTL: { top: 0, left: 0, borderTopWidth: 4, borderLeftWidth: 4, borderTopLeftRadius: 18 },
   cTR: { top: 0, right: 0, borderTopWidth: 4, borderRightWidth: 4, borderTopRightRadius: 18 },
   cBL: { bottom: 0, left: 0, borderBottomWidth: 4, borderLeftWidth: 4, borderBottomLeftRadius: 18 },
   cBR: { bottom: 0, right: 0, borderBottomWidth: 4, borderRightWidth: 4, borderBottomRightRadius: 18 },
   formatChip: { backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5, marginTop: 14 },
   formatTxt: { color: '#a7f3d0', fontSize: 11.5, fontWeight: '800', letterSpacing: 0.6 },
-  hint: { color: '#fff', fontSize: 15, fontWeight: '600', marginTop: 12, textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 4 },
+  hint: { color: k.onAccent, fontSize: 15, fontWeight: '600', marginTop: 12, textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 4 },
   center: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', gap: 8 },
   // Carte flottante AU-DESSUS de la barre de navigation persistante (~90px) —
   // avant : bottom 0 → la barre recouvrait le bouton « Log » (taps impossibles).
   sheet: {
     position: 'absolute', left: 12, right: 12, bottom: 96,
-    backgroundColor: '#fff', borderRadius: 24,
+    backgroundColor: k.surface, borderRadius: 24,
     padding: 22, gap: 14, maxHeight: '78%',
-    shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 10,
+    shadowColor: k.shadow, shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 10,
   },
   sheetTitle: { fontSize: 20, fontWeight: '900', color: k.text },
   sheetSub: { fontSize: 14, color: k.textMuted },
@@ -824,7 +824,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   foundMacros: { fontSize: 14, color: k.textMuted, marginTop: 4 },
   healthBadge: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, borderWidth: 1.5, padding: 12 },
   healthGrade: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  healthGradeTxt: { color: '#fff', fontSize: 22, fontWeight: '900' },
+  healthGradeTxt: { color: k.onAccent, fontSize: 22, fontWeight: '900' },
   healthVerdict: { fontSize: 16, fontWeight: '800' },
   healthSub: { fontSize: 12, fontWeight: '600', marginTop: 1 },
   descTxt: { fontSize: 13, fontWeight: '600', lineHeight: 19 },
@@ -853,8 +853,8 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   altName: { fontSize: 14, fontWeight: '700' },
   altMeta: { fontSize: 12.5, fontWeight: '600', marginTop: 2 },
   // Alerte allergènes (couleur warning, alignée sur warnBanner)
-  allergenBanner: { flexDirection: 'row', gap: 8, alignItems: 'center', borderRadius: 12, borderWidth: 1.5, borderColor: '#B45309', backgroundColor: '#FEF3C7', padding: 12 },
-  allergenTxt: { fontSize: 13, fontWeight: '800', color: '#92400E', flex: 1 },
+  allergenBanner: { flexDirection: 'row', gap: 8, alignItems: 'center', borderRadius: 12, borderWidth: 1.5, borderColor: k.warning, backgroundColor: k.warningSoft, padding: 12 },
+  allergenTxt: { fontSize: 13, fontWeight: '800', color: k.warningInk, flex: 1 },
   // Verdict halal — le titre porte la couleur, le corps reste lisible.
   halalBanner: { borderRadius: 14, borderWidth: 1.5, padding: 14, gap: 5 },
   halalTitre: { fontSize: 15, fontWeight: '900' },
@@ -869,14 +869,14 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   labelPlaceholder: { alignItems: 'center', gap: 8 },
   labelPlaceholderTxt: { fontSize: 14, fontWeight: '700' },
   warnBanner: { flexDirection: 'row', gap: 8, alignItems: 'center', borderRadius: 12, borderWidth: 1, padding: 12 },
-  warnBannerTxt: { fontSize: 13, fontWeight: '700', color: '#92400E', flex: 1 },
+  warnBannerTxt: { fontSize: 13, fontWeight: '700', color: k.warningInk, flex: 1 },
   sentBanner: { borderRadius: 14, borderWidth: 1.5, padding: 16, alignItems: 'center' },
   sentTxt: { fontSize: 15, fontWeight: '800' },
   primaryBtn: {
     flexDirection: 'row', gap: 8, backgroundColor: k.accent,
     paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center',
   },
-  primaryBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  primaryBtnText: { color: k.onAccent, fontSize: 16, fontWeight: '800' },
   ghostBtn: { flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', paddingVertical: 4 },
   ghostBtnText: { color: k.accent, fontSize: 15, fontWeight: '700' },
   // Scannés récemment — carte flottante au repos, au-dessus de la barre de nav (~90px).
@@ -895,7 +895,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   recentThumb: { width: 34, height: 34, borderRadius: 10, backgroundColor: k.border },
   recentName: { fontSize: 14, fontWeight: '700' },
   recentMeta: { fontSize: 12, fontWeight: '600', marginTop: 1 },
-  permWrap: { flex: 1, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', padding: 32, gap: 14 },
+  permWrap: { flex: 1, backgroundColor: k.surface, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 14 },
   permTitle: { fontSize: 22, fontWeight: '900', color: k.text },
   permText: { fontSize: 15, color: k.textMuted, textAlign: 'center' },
   cancelText: { color: k.textMuted, fontSize: 15, fontWeight: '600', marginTop: 4 },

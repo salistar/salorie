@@ -176,7 +176,7 @@ export default function ListingDetailScreen() {
 
           {/* Contacter (pas de paiement in-app) */}
           <TouchableOpacity style={[styles.contactBtn, { flexDirection: dir }]} onPress={contactSeller} activeOpacity={0.85}>
-            <MessageCircle size={18} color="#fff" />
+            <MessageCircle size={18} color={k.onAccent} />
             <Text style={styles.contactTxt}>{t.contact}</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -210,5 +210,5 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   sellerName: { fontSize: 15, fontWeight: '800', marginTop: 2 },
   noPay: { fontSize: 12.5, lineHeight: 18, marginTop: 16 },
   contactBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 15, marginTop: 12 },
-  contactTxt: { color: '#fff', fontSize: 15.5, fontWeight: '800' },
+  contactTxt: { color: k.onAccent, fontSize: 15.5, fontWeight: '800' },
 });

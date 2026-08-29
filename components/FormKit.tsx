@@ -126,7 +126,7 @@ export function Stepper({ label, value, onChange, step = 1, min = 0, max = 10000
   return (
     <View style={{ marginBottom: ESPACE_ENTRE_CHAMPS }}>
       {label ? <FormLabel>{label}</FormLabel> : null}
-      <View style={[s.stepperWrap, { backgroundColor: th.inputBg, borderColor: error ? '#e11d48' : th.border }, th.rowDir]}>
+      <View style={[s.stepperWrap, { backgroundColor: th.inputBg, borderColor: error ? k.danger : th.border }, th.rowDir]}>
         {/* Les boutons −/+ n'étaient que des icônes : TalkBack annonçait « bouton » sans dire
             lequel ni sur quoi il agit. hitSlop horizontal ajouté aussi (cible < 48dp). */}
         <TouchableOpacity
@@ -193,8 +193,8 @@ export function ChipGroup({ label, options, value, onChange }: any) {
               style={[s.chip, { backgroundColor: active ? th.accent : th.inputBg, borderColor: active ? th.accent : th.border }, active && s.chipActiveShadow, th.rowDir]}
               onPress={() => onChange(o.value)}
             >
-              {active ? <Check size={14} color="#fff" strokeWidth={3} style={{ marginRight: 5 }} /> : null}
-              <Text style={[s.chipTxt, { color: active ? '#fff' : th.sub }]}>{o.label}</Text>
+              {active ? <Check size={14} color={k.onAccent} strokeWidth={3} style={{ marginRight: 5 }} /> : null}
+              <Text style={[s.chipTxt, { color: active ? k.onAccent : th.sub }]}>{o.label}</Text>
             </TouchableOpacity>
           );
         })}
@@ -227,7 +227,7 @@ export function SubmitBar({ label, onPress, disabled, loading }: any) {
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={[s.submit, !off && s.submitShadow]}
         >
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.submitTxt}>{label}</Text>}
+          {loading ? <ActivityIndicator color={k.onAccent} /> : <Text style={s.submitTxt}>{label}</Text>}
         </LinearGradient>
       </TouchableOpacity>
     </View>
@@ -249,7 +249,7 @@ const makeS = (k: Tokens) => StyleSheet.create({
   inputWrap: { borderRadius: RAYON_CHAMP, borderWidth: BORDURE, paddingHorizontal: 14, alignItems: 'center', minHeight: CHAMP_HAUTEUR },
   focusGlow: { ...haloFocus(k.accent) },
   input: { ...SAISIE, flex: 1 },
-  error: { color: '#e11d48', ...ERREUR },
+  error: { color: k.danger, ...ERREUR },
   stepperWrap: { flexDirection: 'row', alignItems: 'center', borderRadius: RAYON_CHAMP, borderWidth: BORDURE, padding: 6, minHeight: CHAMP_HAUTEUR },
   stepBtn: { width: CHAMP_HAUTEUR_COMPACTE, height: CHAMP_HAUTEUR_COMPACTE, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   stepValueWrap: { flex: 1, flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', gap: 4 },
@@ -263,5 +263,5 @@ const makeS = (k: Tokens) => StyleSheet.create({
   submitTouch: { borderRadius: 18 },
   submit: { height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   submitShadow: { shadowColor: k.accent, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.32, shadowRadius: 12, elevation: 7 },
-  submitTxt: { fontSize: 17, fontWeight: '800', color: '#fff', letterSpacing: 0.2 },
+  submitTxt: { fontSize: 17, fontWeight: '800', color: k.onAccent, letterSpacing: 0.2 },
 });

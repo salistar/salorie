@@ -345,8 +345,8 @@ export default function FieldReserveScreen() {
                       activeOpacity={0.85}
                     >
                       {reserving
-                        ? <ActivityIndicator size="small" color="#fff" />
-                        : (<><CheckCircle2 size={18} color="#fff" /><Text style={styles.submitTxt}>{t.confirm}</Text></>)}
+                        ? <ActivityIndicator size="small" color={k.onAccent} />
+                        : (<><CheckCircle2 size={18} color={k.onAccent} /><Text style={styles.submitTxt}>{t.confirm}</Text></>)}
                     </TouchableOpacity>
                   </View>
                 )}
@@ -378,7 +378,7 @@ export default function FieldReserveScreen() {
                   activeOpacity={0.85}
                   onPress={() => togglePSport(sp)}
                 >
-                  <Text style={[styles.chipTxt, { color: active ? '#fff' : text }]}>
+                  <Text style={[styles.chipTxt, { color: active ? k.onAccent : text }]}>
                     {SPORT_EMOJI[sp]} {t.sportNames[sp]}
                   </Text>
                 </TouchableOpacity>
@@ -415,8 +415,8 @@ export default function FieldReserveScreen() {
 
           <TouchableOpacity style={[styles.submitBtn, { flexDirection: dir }]} onPress={onPropose} disabled={proposing} activeOpacity={0.85}>
             {proposing
-              ? <ActivityIndicator size="small" color="#fff" />
-              : (<><Send size={18} color="#fff" /><Text style={styles.submitTxt}>{t.propose}</Text></>)}
+              ? <ActivityIndicator size="small" color={k.onAccent} />
+              : (<><Send size={18} color={k.onAccent} /><Text style={styles.submitTxt}>{t.propose}</Text></>)}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -450,10 +450,10 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   input: { borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, marginBottom: 4 },
   twoCol: { gap: 12 },
   col: { flex: 1 },
-  errTxt: { color: '#ef4444', fontSize: 13, fontWeight: '700', marginTop: 10 },
+  errTxt: { color: k.danger, fontSize: 13, fontWeight: '700', marginTop: 10 },
   okTxt: { color: k.accent, fontSize: 13, fontWeight: '700', marginTop: 10 },
   submitBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 13, marginTop: 14 },
-  submitTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  submitTxt: { color: k.onAccent, fontSize: 15, fontWeight: '800' },
   sectionCard: { borderRadius: 18, padding: 16 },
   sectionTitle: { fontSize: 17, fontWeight: '900', letterSpacing: -0.3 },
   sectionSub: { fontSize: 13, lineHeight: 18, marginTop: 4, marginBottom: 8 },

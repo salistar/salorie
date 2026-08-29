@@ -90,11 +90,11 @@ const S = {
 
 const WEEKLY_GOAL_KM = 25; // objectif de distance partagé par défaut (semaine)
 
-const ROLE_COLOR: Record<FamilyRole, string> = {
-  adulte: '#3B82F6',
-  enfant: '#F59E0B',
+const role_color = (k: Tokens): Record<FamilyRole, string> => ({
+  adulte: k.info,
+  enfant: k.warning,
   senior: '#8B5CF6',
-};
+});
 
 export default function FamilyScreen() {
   const { user } = useUser();
@@ -251,16 +251,16 @@ export default function FamilyScreen() {
                 <Text style={[styles.blockTitle, { color: text }]}>{S.createTitle[lang]}</Text>
               </View>
               <TextInput
-                style={[styles.input, { backgroundColor: bg === 'transparent' ? '#fff' : card, color: text, borderColor: th.border, textAlign: txtAlign(isRTL) }]}
+                style={[styles.input, { backgroundColor: bg === 'transparent' ? k.surface : card, color: text, borderColor: th.border, textAlign: txtAlign(isRTL) }]}
                 placeholder={S.namePh[lang]}
                 placeholderTextColor={sub}
                 value={name}
                 onChangeText={setName}
               />
               <TouchableOpacity style={styles.primaryBtn} onPress={onCreate} disabled={busy}>
-                {busy ? <ActivityIndicator size="small" color="#fff" /> : (
+                {busy ? <ActivityIndicator size="small" color={k.onAccent} /> : (
                   <View style={[styles.btnInner, { flexDirection: rowDir(isRTL) }]}>
-                    <Home size={18} color="#fff" />
+                    <Home size={18} color={k.onAccent} />
                     <Text style={styles.primaryBtnText}>{S.create[lang]}</Text>
                   </View>
                 )}
@@ -276,7 +276,7 @@ export default function FamilyScreen() {
                 <Text style={[styles.blockTitle, { color: text }]}>{S.joinTitle[lang]}</Text>
               </View>
               <TextInput
-                style={[styles.input, { backgroundColor: bg === 'transparent' ? '#fff' : card, color: text, borderColor: th.border, textAlign: txtAlign(isRTL) }]}
+                style={[styles.input, { backgroundColor: bg === 'transparent' ? k.surface : card, color: text, borderColor: th.border, textAlign: txtAlign(isRTL) }]}
                 placeholder={S.codePh[lang]}
                 placeholderTextColor={sub}
                 value={code}
@@ -285,9 +285,9 @@ export default function FamilyScreen() {
                 onSubmitEditing={onJoin}
               />
               <TouchableOpacity style={styles.primaryBtn} onPress={onJoin} disabled={busy}>
-                {busy ? <ActivityIndicator size="small" color="#fff" /> : (
+                {busy ? <ActivityIndicator size="small" color={k.onAccent} /> : (
                   <View style={[styles.btnInner, { flexDirection: rowDir(isRTL) }]}>
-                    <LogIn size={18} color="#fff" />
+                    <LogIn size={18} color={k.onAccent} />
                     <Text style={styles.primaryBtnText}>{S.join[lang]}</Text>
                   </View>
                 )}
@@ -308,7 +308,7 @@ export default function FamilyScreen() {
                 </Text>
               </View>
               <TouchableOpacity style={[styles.inviteBtn, { flexDirection: rowDir(isRTL) }]} onPress={onShareInvite}>
-                <Share2 size={16} color="#fff" />
+                <Share2 size={16} color={k.onAccent} />
                 <Text style={styles.inviteBtnTxt}>{S.invite[lang]}</Text>
               </TouchableOpacity>
             </View>
@@ -325,7 +325,7 @@ export default function FamilyScreen() {
                 <Text style={[styles.bigKmUnit, { color: sub }]}> / {WEEKLY_GOAL_KM} {S.km[lang]}</Text>
               </View>
               <View style={[styles.progressTrack, { backgroundColor: k.border }]}>
-                <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: goalReached ? '#22C55E' : k.accent }]} />
+                <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: goalReached ? k.success : k.accent }]} />
               </View>
               {goalReached && <Text style={[styles.reachedTxt, { textAlign: txtAlign(isRTL) }]}>{S.reached[lang]}</Text>}
 
@@ -342,7 +342,7 @@ export default function FamilyScreen() {
                         <Text style={[styles.memberKmVal, { color: sub }]}>{r.km} {S.km[lang]}</Text>
                       </View>
                       <View style={[styles.progressTrackSm, { backgroundColor: k.border }]}>
-                        <View style={[styles.progressFill, { width: `${share * 100}%`, backgroundColor: ROLE_COLOR[r.role] }]} />
+                        <View style={[styles.progressFill, { width: `${share * 100}%`, backgroundColor: role_color(k)[r.role] }]} />
                       </View>
                     </View>
                   );
@@ -362,8 +362,8 @@ export default function FamilyScreen() {
                     <Text style={styles.memberAvatarTxt}>{(m.name || '?').charAt(0).toUpperCase()}</Text>
                   </View>
                   <Text style={[styles.memberName, { color: text, textAlign: txtAlign(isRTL) }]} numberOfLines={1}>{m.name}</Text>
-                  <View style={[styles.roleBadge, { backgroundColor: ROLE_COLOR[m.role] + '22' }]}>
-                    <Text style={[styles.roleBadgeTxt, { color: ROLE_COLOR[m.role] }]}>{S.roles[m.role][lang]}</Text>
+                  <View style={[styles.roleBadge, { backgroundColor: role_color(k)[m.role] + '22' }]}>
+                    <Text style={[styles.roleBadgeTxt, { color: role_color(k)[m.role] }]}>{S.roles[m.role][lang]}</Text>
                   </View>
                 </View>
               ))}
@@ -374,7 +374,7 @@ export default function FamilyScreen() {
                 <Text style={[styles.addTitle, { color: sub }]}>{S.addMember[lang]}</Text>
               </View>
               <TextInput
-                style={[styles.input, { backgroundColor: bg === 'transparent' ? '#fff' : card, color: text, borderColor: th.border, textAlign: txtAlign(isRTL) }]}
+                style={[styles.input, { backgroundColor: bg === 'transparent' ? k.surface : card, color: text, borderColor: th.border, textAlign: txtAlign(isRTL) }]}
                 placeholder={S.addMemberPh[lang]}
                 placeholderTextColor={sub}
                 value={memberName}
@@ -384,17 +384,17 @@ export default function FamilyScreen() {
                 {(['adulte', 'enfant', 'senior'] as FamilyRole[]).map((rl) => (
                   <TouchableOpacity
                     key={rl}
-                    style={[styles.roleChip, { borderColor: th.border }, memberRole === rl && { backgroundColor: ROLE_COLOR[rl] + '22', borderColor: ROLE_COLOR[rl] }]}
+                    style={[styles.roleChip, { borderColor: th.border }, memberRole === rl && { backgroundColor: role_color(k)[rl] + '22', borderColor: role_color(k)[rl] }]}
                     onPress={() => setMemberRole(rl)}
                   >
-                    <Text style={[styles.roleChipTxt, { color: memberRole === rl ? ROLE_COLOR[rl] : sub }]}>{S.roles[rl][lang]}</Text>
+                    <Text style={[styles.roleChipTxt, { color: memberRole === rl ? role_color(k)[rl] : sub }]}>{S.roles[rl][lang]}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
               <TouchableOpacity style={[styles.primaryBtn, { marginTop: 12 }]} onPress={onAddMember} disabled={addingMember}>
-                {addingMember ? <ActivityIndicator size="small" color="#fff" /> : (
+                {addingMember ? <ActivityIndicator size="small" color={k.onAccent} /> : (
                   <View style={[styles.btnInner, { flexDirection: rowDir(isRTL) }]}>
-                    <UserPlus size={18} color="#fff" />
+                    <UserPlus size={18} color={k.onAccent} />
                     <Text style={styles.primaryBtnText}>{S.add[lang]}</Text>
                   </View>
                 )}
@@ -429,7 +429,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   input: { height: 50, borderRadius: 14, paddingHorizontal: 16, fontSize: 15, fontWeight: '600', borderWidth: 1.5, marginBottom: 12 },
   primaryBtn: { backgroundColor: k.accent, height: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   btnInner: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  primaryBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  primaryBtnText: { color: k.onAccent, fontWeight: '800', fontSize: 15 },
   orTxt: { textAlign: 'center', fontSize: 13, fontWeight: '700', marginVertical: 6, textTransform: 'uppercase', letterSpacing: 1 },
   msg: { fontSize: 13, marginTop: 8, fontWeight: '600', textAlign: 'center' },
 
@@ -437,7 +437,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   familyName: { fontSize: 20, fontWeight: '900' },
   familyCode: { fontSize: 13, marginTop: 4, fontWeight: '600' },
   inviteBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: k.accent, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 14 },
-  inviteBtnTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  inviteBtnTxt: { color: k.onAccent, fontWeight: '800', fontSize: 14 },
 
   challengeSub: { fontSize: 13, marginBottom: 10, lineHeight: 18 },
   kmRow: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 8 },
@@ -446,7 +446,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   progressTrack: { height: 12, borderRadius: 6, overflow: 'hidden' },
   progressTrackSm: { height: 8, borderRadius: 4, overflow: 'hidden', marginTop: 4 },
   progressFill: { height: '100%', borderRadius: 6 },
-  reachedTxt: { color: '#22C55E', fontWeight: '800', fontSize: 14, marginTop: 10 },
+  reachedTxt: { color: k.success, fontWeight: '800', fontSize: 14, marginTop: 10 },
   memberKmTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   memberKmName: { fontSize: 14, fontWeight: '700', flex: 1, marginEnd: 8 },
   memberKmVal: { fontSize: 13, fontWeight: '800' },

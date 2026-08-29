@@ -21,6 +21,7 @@ import { useFeature, useFlagsCtx } from '../lib/FlagsContext';
 import { flagForRoute } from '../lib/navFlags';
 import { PrimaryButton, SecondaryButton } from './ui/Button';
 
+import { useTokens } from '../constants/tokens';
 type GateKind = 'disabled' | 'premium';
 
 /** Ouvre le paywall RevenueCat (tolère les deux API sans crash). */
@@ -39,6 +40,7 @@ function openPaywall() {
  * Toujours un bouton retour (router.back()).
  */
 export function ScreenDisabled({ kind = 'disabled' }: { kind?: GateKind }) {
+  const k = useTokens();
   const { colors } = useTheme();
   const { t } = useTranslation();
   const router = useRouter();
@@ -68,7 +70,7 @@ export function ScreenDisabled({ kind = 'disabled' }: { kind?: GateKind }) {
         {isPremium && (
           <PrimaryButton
             title={t('feature.go_premium')}
-            icon={<Ionicons name="star" size={18} color="#fff" />}
+            icon={<Ionicons name="star" size={18} color={k.onAccent} />}
             onPress={openPaywall}
           />
         )}
@@ -84,6 +86,7 @@ export function ScreenDisabled({ kind = 'disabled' }: { kind?: GateKind }) {
 
 /** CTA Premium inline (compact) — utilisé par <FeatureGate> quand locked. */
 function InlinePremiumCta() {
+  const k = useTokens();
   const { colors } = useTheme();
   const { t } = useTranslation();
   return (
@@ -168,6 +171,7 @@ interface FeatureGateProps {
  *   locked   → petit CTA Premium inline (jamais plein écran).
  */
 export default function FeatureGate({ flag, hideWhenDisabled, children }: FeatureGateProps) {
+  const k = useTokens();
   const { enabled, locked } = useFeature(flag);
 
   if (enabled && !locked) return <>{children}</>;

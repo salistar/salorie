@@ -81,14 +81,14 @@ export default function WelcomeScreen() {
         <View style={styles.features}>
           <Animated.View entering={FadeInDown.delay(400).duration(600)} style={[styles.feature, { backgroundColor: cardBg, borderColor: cardBorder }]}>
             <View style={[styles.featureIcon, { backgroundColor: isDark ? 'rgba(245,158,11,0.18)' : '#FEF3E0' }]}>
-              <Flame size={22} color="#f59e0b" />
+              <Flame size={22} color={k.warning} />
             </View>
             <Text style={[styles.featureText, { color: textColor }]}>{t('welcome.feature_calories')}</Text>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(500).duration(600)} style={[styles.feature, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-            <View style={[styles.featureIcon, { backgroundColor: isDark ? 'rgba(14,165,233,0.18)' : '#E0F2FE' }]}>
-              <Droplets size={22} color="#0EA5E9" />
+            <View style={[styles.featureIcon, { backgroundColor: isDark ? 'rgba(14,165,233,0.18)' : k.infoSoft }]}>
+              <Droplets size={22} color={k.info} />
             </View>
             <Text style={[styles.featureText, { color: textColor }]}>{t('welcome.feature_water')}</Text>
           </Animated.View>
@@ -105,7 +105,7 @@ export default function WelcomeScreen() {
       <Animated.View entering={FadeInDown.delay(800).duration(600)} style={styles.bottomBar}>
         <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: accent, shadowColor: accent }]} onPress={handleGetStarted} activeOpacity={0.85}>
           <Text style={styles.primaryBtnText}>{t('welcome.get_started')}</Text>
-          <View style={flipAuto()}><ArrowRight size={22} color="#fff" /></View>
+          <View style={flipAuto()}><ArrowRight size={22} color={k.onAccent} /></View>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.secondaryBtn} onPress={handleSignIn}>
@@ -216,7 +216,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   primaryBtnText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#fff',
+    color: k.onAccent,
   },
   secondaryBtn: {
     alignItems: 'center',

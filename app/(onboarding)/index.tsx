@@ -433,7 +433,7 @@ export default function OnboardingScreen() {
           <Text style={styles.nextButtonText}>
             {isLast ? tx.finish : tx.next}
           </Text>
-          <View style={flipAuto()}><ArrowRight size={22} color="#fff" /></View>
+          <View style={flipAuto()}><ArrowRight size={22} color={k.onAccent} /></View>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -530,14 +530,14 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     textAlign: 'center',
     fontSize: 18,
     fontWeight: '600',
-    shadowColor: '#000',
+    shadowColor: k.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
     elevation: 2,
   },
   errorText: {
-    color: '#e11d48',
+    color: k.danger,
     fontSize: 13,
     fontWeight: '700',
     marginTop: 12,
@@ -590,7 +590,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     elevation: 6,
   },
   nextButtonText: {
-    color: '#fff',
+    color: k.onAccent,
     fontSize: 17,
     fontWeight: '800',
   },
@@ -600,6 +600,6 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     elevation: 0,
   },
   textWhite: {
-    color: '#fff',
+    color: k.onAccent,
   },
 });

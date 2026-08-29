@@ -347,7 +347,7 @@ export default function SignUpScreen() {
 
         <View style={[
           styles.form,
-          { backgroundColor: cardBg, borderWidth: 1, borderColor: isDark ? '#283241' : 'transparent' },
+          { backgroundColor: cardBg, borderWidth: 1, borderColor: isDark ? k.border : 'transparent' },
           isDark && { shadowColor: 'transparent' },
         ]}>
           <View style={[styles.row, { flexDirection: rowDir(isRTL) }]}>
@@ -424,7 +424,7 @@ export default function SignUpScreen() {
             disabled={loading}
           >
             <Text style={styles.buttonText}>{loading ? '...' : t('auth.get_started')}</Text>
-            {!loading && <View style={flipAuto()}><ArrowRight size={20} color="#fff" /></View>}
+            {!loading && <View style={flipAuto()}><ArrowRight size={20} color={k.onAccent} /></View>}
           </TouchableOpacity>
 
           <View style={styles.dividerContainer}>
@@ -485,7 +485,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     fontWeight: '700',
   },
   langPillTextActive: {
-    color: '#fff',
+    color: k.onAccent,
   },
   scrollContent: {
     flexGrow: 1,
@@ -532,10 +532,10 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     marginTop: 8,
   },
   form: {
-    backgroundColor: '#fff',
+    backgroundColor: k.surface,
     borderRadius: 32,
     padding: 32,
-    shadowColor: '#000',
+    shadowColor: k.shadow,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
     shadowRadius: 20,
@@ -545,7 +545,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 32,
-    backgroundColor: '#fff',
+    backgroundColor: k.surface,
   },
   row: {
     flexDirection: 'row',
@@ -554,12 +554,12 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   label: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1E293B',
+    color: k.text,
     marginBottom: 8,
   },
   description: {
     fontSize: 14,
-    color: '#64748B',
+    color: k.textMuted,
     marginBottom: 24,
   },
   inputContainer: {
@@ -597,7 +597,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#fff',
+    color: k.onAccent,
     fontSize: 18,
     fontWeight: '700',
     marginRight: 8,
@@ -619,7 +619,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     fontWeight: '600',
   },
   googleButton: {
-    backgroundColor: '#fff',
+    backgroundColor: k.surface,
     borderWidth: 1,
     borderColor: k.border,
     borderRadius: 16,

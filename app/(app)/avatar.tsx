@@ -1,7 +1,7 @@
 // Avatar RPG évolutif — niveau, titre, barre d'XP vers le niveau suivant,
 // et paliers/équipement débloqués. XP 100% locale (lib/avatar.ts).
-import React, { useEffect, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -58,6 +58,7 @@ const GEAR_EMOJI: Record<string, string> = {
 
 export default function AvatarScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const titleMap = TITLES[language] || TITLES.en;
@@ -165,16 +166,19 @@ export default function AvatarScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 26, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', lineHeight: 20, marginBottom: 22 },
+  title: { fontSize: 26, fontWeight: '900', color: k.text, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: k.textMuted, lineHeight: 20, marginBottom: 22 },
 
   heroCard: {
-    backgroundColor: '#fff', borderRadius: 24, padding: 24, alignItems: 'center', marginBottom: 24,
-    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 3,
+    backgroundColor: k.surface, borderRadius: 24, padding: 24, alignItems: 'center', marginBottom: 24,
+    shadowColor: k.shadow, shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 3,
   },
   ring: {
     width: 130, height: 130, borderRadius: 65, borderWidth: 6,
@@ -196,9 +200,9 @@ const styles = StyleSheet.create({
 
   sectionTitle: { fontSize: 16, fontWeight: '900', marginBottom: 12, letterSpacing: -0.3 },
   tierRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#fff',
+    flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: k.surface,
     borderRadius: 16, padding: 14, marginBottom: 10,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1,
+    shadowColor: k.shadow, shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
   tierIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   tierEmoji: { fontSize: 22 },
@@ -207,5 +211,5 @@ const styles = StyleSheet.create({
   statusPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
   statusText: { fontSize: 11, fontWeight: '800' },
 
-  tip: { fontSize: 13, color: '#94A3B8', marginTop: 16, textAlign: 'center', lineHeight: 18 },
+  tip: { fontSize: 13, color: k.textFaint, marginTop: 16, textAlign: 'center', lineHeight: 18 },
 });

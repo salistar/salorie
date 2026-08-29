@@ -1,8 +1,8 @@
 // Barre de navigation persistante pour les écrans du groupe (app)/ (écrans poussés).
 // Rendue par app/(app)/_layout.tsx. PAS de usePathname (évite la boucle de re-render
 // au niveau routeur) : 4 boutons qui ramènent aux onglets principaux.
-import React, { useEffect, useState } from 'react';
-import { useTokens } from '../constants/tokens';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Keyboard } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
@@ -40,6 +40,7 @@ const TABS = [
 
 export default function PersistentTabBar() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   // Masque la barre quand le clavier est ouvert (sinon elle flotte au-dessus).
   const [kbOpen, setKbOpen] = useState(false);
   const { isSignedIn } = useAuth();
@@ -100,14 +101,17 @@ export default function PersistentTabBar() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   bar: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 12, paddingBottom: Platform.OS === 'ios' ? 26 : 12 },
   inner: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: k.surface,
     borderRadius: 22,
     paddingVertical: 8,
-    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
+    shadowColor: k.shadow, shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
     elevation: 8,
   },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2 },

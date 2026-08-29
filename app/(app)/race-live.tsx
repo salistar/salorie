@@ -98,7 +98,7 @@ function buildHtml(center: LatLng): string {
       }
     };
     function markerIcon(color){
-      return { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: color, fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3 };
+      return { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: color, fillOpacity: 1, strokeColor: k.onAccent, strokeWeight: 3 };
     }
     window.recenter = function(lat,lng){ window._map.panTo({lat:lat,lng:lng}); };
     if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage('ready');
@@ -361,8 +361,8 @@ export default function RaceLiveScreen() {
               const active = boardTab === tab;
               return (
                 <TouchableOpacity key={tab} activeOpacity={0.85} onPress={() => setBoardTab(tab)}
-                  style={[styles.tab, { backgroundColor: active ? k.accent : (isDark ? '#1f2937' : '#f1f5f9') }]}>
-                  <Text style={[styles.tabTxt, { color: active ? '#fff' : sub }]} numberOfLines={1}>
+                  style={[styles.tab, { backgroundColor: active ? k.accent : (isDark ? '#1f2937' : k.surfaceSunken) }]}>
+                  <Text style={[styles.tabTxt, { color: active ? k.onAccent : sub }]} numberOfLines={1}>
                     {tab === 'players' ? t.indivBoard : t.teamBoard}
                   </Text>
                 </TouchableOpacity>
@@ -461,16 +461,16 @@ export default function RaceLiveScreen() {
         <View style={styles.controls}>
           {/* Action principale (Start → Pause/Resume) en PrimaryButton ; actions secondaires (Finish) en SecondaryButton row dessous. */}
           {status === 'idle' && (
-            <PrimaryButton title={t.start} onPress={() => startTracking(mode)} icon={<Play size={22} color="#fff" fill="#fff" />} />
+            <PrimaryButton title={t.start} onPress={() => startTracking(mode)} icon={<Play size={22} color={k.onAccent} fill={k.surface} />} />
           )}
           {status === 'running' && (
-            <PrimaryButton title={t.pause} onPress={pause} icon={<Pause size={22} color="#fff" fill="#fff" />} style={{ backgroundColor: '#f59e0b' }} />
+            <PrimaryButton title={t.pause} onPress={pause} icon={<Pause size={22} color={k.onAccent} fill={k.surface} />} style={{ backgroundColor: k.warning }} />
           )}
           {status === 'paused' && (
             <>
-              <PrimaryButton title={t.resume} onPress={() => startTracking(mode)} icon={<Play size={22} color="#fff" fill="#fff" />} />
+              <PrimaryButton title={t.resume} onPress={() => startTracking(mode)} icon={<Play size={22} color={k.onAccent} fill={k.surface} />} />
               <View style={styles.controlsSecondary}>
-                <SecondaryButton title={t.finish} onPress={finish} icon={<Square size={18} color="#ef4444" fill="#ef4444" />} style={{ borderColor: '#ef4444' }} />
+                <SecondaryButton title={t.finish} onPress={finish} icon={<Square size={18} color={k.danger} fill={k.danger} />} style={{ borderColor: k.danger }} />
               </View>
             </>
           )}
@@ -481,7 +481,7 @@ export default function RaceLiveScreen() {
       {summary && (
         <View style={styles.sumOverlay}>
           <View style={[styles.sumCard, { backgroundColor: card }]}>
-            <View style={styles.sumIcon}><Trophy size={38} color="#F59E0B" /></View>
+            <View style={styles.sumIcon}><Trophy size={38} color={k.warning} /></View>
             <Text style={[styles.sumTitle, { color: text }]}>{t.great}</Text>
             <Text style={[styles.sumSub, { color: sub }]}>{summary.kcal} kcal · {t.savedToActivity}</Text>
             <View style={styles.sumStatsRow}>
@@ -535,9 +535,9 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   permTxt: { fontSize: 16, fontWeight: '600', textAlign: 'center', marginTop: 16, marginBottom: 20, lineHeight: 22 },
   primaryBtn: { backgroundColor: k.accent, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
-  primaryBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
-  back: { position: 'absolute', top: 50, left: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
-  board: { position: 'absolute', top: 50, left: 12, width: 220, borderRadius: 18, padding: 12, paddingBottom: 8, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 },
+  primaryBtnTxt: { color: k.onAccent, fontSize: 16, fontWeight: '800' },
+  back: { position: 'absolute', top: 50, left: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: k.shadow, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
+  board: { position: 'absolute', top: 50, left: 12, width: 220, borderRadius: 18, padding: 12, paddingBottom: 8, shadowColor: k.shadow, shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 },
   // `marginLeft` PHYSIQUE et volontaire : ces 50 px degagent le bouton retour, qui
   // est positionne en absolu a `left: 16` et ne bouge donc pas en arabe. Le passer
   // en `marginStart` mettrait le retrait a droite pendant que le bouton reste a
@@ -550,7 +550,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   boardRank: { fontSize: 14, fontWeight: '800', width: 22, textAlign: 'center', color: '#888' },
   boardName: { flex: 1, fontSize: 13, fontWeight: '700' },
   boardKm: { fontSize: 12, fontWeight: '700' },
-  panel: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 22, paddingBottom: 34, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: -6 }, elevation: 12 },
+  panel: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 22, paddingBottom: 34, shadowColor: k.shadow, shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: -6 }, elevation: 12 },
   statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
   stat: { alignItems: 'center', flex: 1 },
   statVal: { fontSize: 23, fontWeight: '900', letterSpacing: -1 },
@@ -558,14 +558,14 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   controls: { gap: spacing.sm },
   controlsSecondary: { flexDirection: 'row', gap: spacing.sm },
   bigBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: k.accent, paddingVertical: 18, borderRadius: 18 },
-  bigBtnTxt: { color: '#fff', fontSize: 17, fontWeight: '800' },
+  bigBtnTxt: { color: k.onAccent, fontSize: 17, fontWeight: '800' },
   teamWrap: { marginBottom: 14 },
   teamLabelRow: { alignItems: 'center', gap: 6, marginBottom: 8 },
   teamLabel: { fontSize: 14, fontWeight: '800', flex: 1 },
   teamRow: { gap: 8, alignItems: 'center' },
   teamInput: { flex: 1, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, fontWeight: '600' },
   teamBtn: { backgroundColor: k.accent, paddingHorizontal: 14, paddingVertical: 11, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  teamBtnTxt: { color: '#fff', fontSize: 13, fontWeight: '800' },
+  teamBtnTxt: { color: k.onAccent, fontSize: 13, fontWeight: '800' },
   teamHint: { fontSize: 11, fontWeight: '600', marginTop: 6, lineHeight: 15 },
   modeRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
   modeChip: { flex: 1, borderRadius: 16, borderWidth: 2, paddingVertical: 12, paddingHorizontal: 12, alignItems: 'center', gap: 2 },
@@ -582,5 +582,5 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   sumSub: { fontSize: 13.5, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
   sumStatsRow: { flexDirection: 'row', width: '100%', marginBottom: 6 },
   sumBtn: { backgroundColor: k.accent, alignSelf: 'stretch', height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 14 },
-  sumBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  sumBtnTxt: { color: k.onAccent, fontSize: 16, fontWeight: '800' },
 });

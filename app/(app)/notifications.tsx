@@ -389,7 +389,7 @@ export default function NotificationsScreen() {
             size={20}
             // Gris clair fixe : sur le fond noir du thème sombre, cet état "désactivé"
             // devenait l'élément le plus lumineux de l'en-tête.
-            color={notifications.length > 0 ? '#EF4444' : (k.border)}
+            color={notifications.length > 0 ? k.danger : (k.border)}
           />
         </TouchableOpacity>
       </View>

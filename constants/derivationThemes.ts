@@ -172,6 +172,16 @@ export function paletteComplete(t: JetonsTheme) {
     infoSoft: doux(t.accent2),
     infoInk: encre(t.accent2),
 
+    /**
+     * La couleur d'une ombre portee.
+     *
+     * Elle reste noire dans les six palettes : une ombre est une absence de
+     * lumiere, pas une teinte. La teinter du theme donnait des halos colores
+     * autour des cartes, ce qui ressemble a un defaut de rendu. Elle est
+     * nommee ici pour cesser d'etre recopiee ecran par ecran — 64 fois — et
+     * pour qu'un futur theme puisse la reconsiderer en UN endroit.
+     */
+    shadow: '#000000',
     scrim: 'rgba(0,0,0,0.55)',
     glass: avecAlpha(t.bg, t.sombre ? 0.72 : 0.82),
     hairline: avecAlpha(t.text, 0.08),

@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import { partager, lienPartage } from '../../lib/partage';
 import BoutonsPartage from '../../components/BoutonsPartage';
 import {
@@ -116,6 +116,7 @@ const TXT: Record<Lang, any> = {
 
 export default function Referral() {
   const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const lang: Lang = (language === 'fr' || language === 'ar' ? language : 'en');
@@ -240,8 +241,8 @@ export default function Referral() {
                 activeOpacity={0.85}
                 onPress={onShare}
               >
-                <Share2 size={17} color="#fff" />
-                <Text style={[s.actionTxt, { color: '#fff' }]}>{t.share}</Text>
+                <Share2 size={17} color={k.onAccent} />
+                <Text style={[s.actionTxt, { color: k.onAccent }]}>{t.share}</Text>
               </TouchableOpacity>
               {/* Raccourcis, sous le bouton principal : au Maroc l'invitation part
                   sur WhatsApp neuf fois sur dix, et la feuille du système demande
@@ -320,7 +321,7 @@ export default function Referral() {
                   disabled={submitting}
                 >
                   {submitting ? (
-                    <ActivityIndicator color="#fff" size="small" />
+                    <ActivityIndicator color={k.onAccent} size="small" />
                   ) : (
                     <Text style={s.applyTxt}>{t.apply}</Text>
                   )}
@@ -340,12 +341,15 @@ export default function Referral() {
   );
 }
 
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f3f6f4' },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeS = (k: Tokens) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 18, paddingBottom: 90 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 26, fontWeight: '800', color: '#1B2A33' },
-  sub: { fontSize: 13, color: '#667085', marginTop: 6, lineHeight: 19 },
+  sub: { fontSize: 13, color: k.textMuted, marginTop: 6, lineHeight: 19 },
   card: { borderRadius: 16, padding: 16, marginTop: 14 },
   cardLabel: { fontSize: 13, fontWeight: '600' },
   codeBox: { borderRadius: 14, paddingVertical: 16, marginTop: 10, alignItems: 'center' },
@@ -371,7 +375,7 @@ const s = StyleSheet.create({
   enterSub: { fontSize: 12.5, fontWeight: '600', marginTop: 5, lineHeight: 18 },
   inputRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
   applyBtn: { borderRadius: 12, paddingHorizontal: 20, minWidth: 84, alignItems: 'center', justifyContent: 'center' },
-  applyTxt: { color: '#fff', fontSize: 14.5, fontWeight: '800' },
+  applyTxt: { color: k.onAccent, fontSize: 14.5, fontWeight: '800' },
   msgBox: { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, marginTop: 12 },
   msgTxt: { flex: 1, fontSize: 13, fontWeight: '700', lineHeight: 18 },
 });

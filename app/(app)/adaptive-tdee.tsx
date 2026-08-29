@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Image,
   View,
@@ -19,7 +19,7 @@ import { getUserFromFirestore, updateDailyCalories } from '../../lib/firebase';
 import { getEntries } from '../../lib/tracking';
 import { computeAdaptiveTDEE, AdaptiveResult } from '../../lib/adaptiveTDEE';
 import { useTheme } from '../../lib/ThemeContext';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign } from '../../lib/rtl';
 
@@ -124,6 +124,7 @@ const TXT: any = {
 
 export default function AdaptiveTDEE() {
   const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const __gate = useScreenGate('adaptive-tdee');
   const { user } = useUser();
   const { colors, resolved } = useTheme();
@@ -297,36 +298,39 @@ export default function AdaptiveTDEE() {
   );
 }
 
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f3f6f4' },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeS = (k: Tokens) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 18, paddingBottom: 90 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 26, fontWeight: '800', color: '#1B2A33' },
-  sub: { fontSize: 13, color: '#667085', marginTop: 6, lineHeight: 19 },
-  heroCard: { backgroundColor: '#fff', borderRadius: 20, padding: 22, alignItems: 'center', marginTop: 18, borderWidth: 1, borderColor: '#e6ece8' },
-  heroLabel: { fontSize: 11, fontWeight: '700', color: '#94a3b8', letterSpacing: 1 },
+  sub: { fontSize: 13, color: k.textMuted, marginTop: 6, lineHeight: 19 },
+  heroCard: { backgroundColor: k.surface, borderRadius: 20, padding: 22, alignItems: 'center', marginTop: 18, borderWidth: 1, borderColor: k.border },
+  heroLabel: { fontSize: 11, fontWeight: '700', color: k.textFaint, letterSpacing: 1 },
   heroValue: { fontSize: 52, fontWeight: '900', marginTop: 4 },
-  heroUnit: { fontSize: 13, color: '#667085', marginTop: -4 },
+  heroUnit: { fontSize: 13, color: k.textMuted, marginTop: -4 },
   confPill: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, marginTop: 12 },
   confPillInline: { alignSelf: 'flex-start', marginTop: 8 },
   confTxt: { fontSize: 12, fontWeight: '700' },
   recalibrate: { fontSize: 11, marginTop: 10, lineHeight: 16, textAlign: 'center' },
   row: { flexDirection: 'row', gap: 12, marginTop: 14 },
-  statCard: { flex: 1, backgroundColor: '#fff', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#e6ece8' },
-  statLabel: { fontSize: 11, color: '#94a3b8', fontWeight: '600' },
+  statCard: { flex: 1, backgroundColor: k.surface, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: k.border },
+  statLabel: { fontSize: 11, color: k.textFaint, fontWeight: '600' },
   statValue: { fontSize: 26, fontWeight: '800', color: '#1B2A33', marginTop: 4 },
-  statUnit: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
-  card: { backgroundColor: '#fff', borderRadius: 18, padding: 18, marginTop: 14, borderWidth: 1, borderColor: '#e6ece8' },
+  statUnit: { fontSize: 11, color: k.textFaint, marginTop: 2 },
+  card: { backgroundColor: k.surface, borderRadius: 18, padding: 18, marginTop: 14, borderWidth: 1, borderColor: k.border },
   cardLabel: { fontSize: 13, fontWeight: '700', color: '#1B2A33' },
   recValue: { fontSize: 38, fontWeight: '900', marginTop: 6 },
-  recUnit: { fontSize: 15, fontWeight: '600', color: '#667085' },
-  note: { fontSize: 12, color: '#667085', marginTop: 6, lineHeight: 18 },
-  hint: { fontSize: 12, color: '#94a3b8', marginTop: 10, lineHeight: 18 },
+  recUnit: { fontSize: 15, fontWeight: '600', color: k.textMuted },
+  note: { fontSize: 12, color: k.textMuted, marginTop: 6, lineHeight: 18 },
+  hint: { fontSize: 12, color: k.textFaint, marginTop: 10, lineHeight: 18 },
   applyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 14, marginTop: 16 },
   applyBtnDone: { backgroundColor: '#94a3b8' },
-  applyTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
-  foot: { fontSize: 11, color: '#94a3b8', marginTop: 16, lineHeight: 17, textAlign: 'center' },
-  howCard: { backgroundColor: '#fff', borderRadius: 18, padding: 18, marginTop: 18, borderWidth: 1, borderColor: '#e6ece8' },
+  applyTxt: { color: k.onAccent, fontWeight: '800', fontSize: 15 },
+  foot: { fontSize: 11, color: k.textFaint, marginTop: 16, lineHeight: 17, textAlign: 'center' },
+  howCard: { backgroundColor: k.surface, borderRadius: 18, padding: 18, marginTop: 18, borderWidth: 1, borderColor: k.border },
   howTitle: { fontSize: 17, fontWeight: '900', marginBottom: 10 },
   howBody: { fontSize: 13, lineHeight: 20, marginBottom: 10 },
   methodBox: { borderRadius: 14, padding: 14, marginVertical: 2, marginBottom: 12 },
@@ -338,6 +342,6 @@ const s = StyleSheet.create({
   dataRow: { flexDirection: 'row', gap: 12 },
   dataBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 14 },
   dataBtnAlt: { backgroundColor: 'transparent', borderWidth: 1.5 },
-  dataBtnTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
-  signIn: { fontSize: 13, color: '#667085', marginTop: 18, lineHeight: 19, fontWeight: '600' },
+  dataBtnTxt: { color: k.onAccent, fontWeight: '800', fontSize: 14 },
+  signIn: { fontSize: 13, color: k.textMuted, marginTop: 18, lineHeight: 19, fontWeight: '600' },
 });

@@ -1,18 +1,20 @@
 // Macros par objectif — répartition Protéines / Glucides / Lipides : cible (selon
 // le plan/objectif) vs consommé du jour, avec progression. Réutilise useNutritionData.
 // Theme-aware (light/dark) + trilingue (en/fr/ar).
-import React from 'react';
-import { useTokens } from '../constants/tokens';
+import React, { useMemo } from 'react';
+import { useTokens, type Tokens } from '../constants/tokens';
 import { View, Text, StyleSheet } from 'react-native';
 import { Target } from 'lucide-react-native';
 import { useNutritionData } from '../hooks/useNutritionData';
 import { useTranslation } from '../lib/i18n';
 import { useTheme } from '../lib/ThemeContext';
 
-const MACROS = [
-  { key: 'protein', color: '#2E8B57' },
-  { key: 'carbs', color: '#2563EB' },
-  { key: 'fat', color: '#D97706' },
+// Les trois macros ont chacune leur teinte. Elle vient des jetons, donc du
+// theme : ecrite au niveau du module, elle serait figee a l importation.
+const macros = (k: Tokens) => [
+  { key: 'protein', color: k.accent },
+  { key: 'carbs', color: k.info },
+  { key: 'fat', color: k.warning },
 ] as const;
 
 const TXT: any = {
@@ -23,6 +25,7 @@ const TXT: any = {
 
 function MacroTargets() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { language, isRTL } = useTranslation() as any;
   const tx = TXT[language] || TXT.en;
   const { resolved } = useTheme();
@@ -42,11 +45,11 @@ function MacroTargets() {
   return (
     <View style={[styles.card, { backgroundColor: cardBg }]}>
       <View style={[styles.header, isRTL && { flexDirection: 'row-reverse' }]}>
-        <Target size={18} color="#2E8B57" />
+        <Target size={18} color={k.accent} />
         <Text style={[styles.title, { color: titleColor }, isRTL && { marginLeft: 0, marginRight: 8, textAlign: 'right' }]}>{tx.title}</Text>
         {goals.calories ? <Text style={[styles.kcal, { color: valColor }]}>{Math.round(goals.calories)} {tx.perDay}</Text> : null}
       </View>
-      {MACROS.map((m) => {
+      {macros(k).map((m) => {
         const target = Math.round(Number(goals[m.key]) || 0);
         const cur = Math.round(Number(consumed[m.key]) || 0);
         const pct = target > 0 ? Math.min(100, (cur / target) * 100) : 0;
@@ -69,17 +72,20 @@ function MacroTargets() {
 // inutiles quand le parent se re-render ; ne re-render que sur changement d'état des hooks.
 export default React.memo(MacroTargets);
 
-const styles = StyleSheet.create({
-  card: { backgroundColor: '#fff', borderRadius: 18, padding: 16, marginHorizontal: 16, marginVertical: 8,
-    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
+  card: { backgroundColor: k.surface, borderRadius: 18, padding: 16, marginHorizontal: 16, marginVertical: 8,
+    shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  title: { fontSize: 16, fontWeight: '700', color: '#0F172A', marginStart: 8, flex: 1 },
-  kcal: { fontSize: 12, color: '#94A3B8', fontWeight: '600' },
+  title: { fontSize: 16, fontWeight: '700', color: k.text, marginStart: 8, flex: 1 },
+  kcal: { fontSize: 12, color: k.textFaint, fontWeight: '600' },
   row: { marginBottom: 12 },
   rowTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
-  label: { fontSize: 13, color: '#334155', fontWeight: '600' },
-  val: { fontSize: 13, color: '#64748B' },
-  track: { height: 8, borderRadius: 5, backgroundColor: '#F1F5F9', overflow: 'hidden' },
+  label: { fontSize: 13, color: k.textMuted, fontWeight: '600' },
+  val: { fontSize: 13, color: k.textMuted },
+  track: { height: 8, borderRadius: 5, backgroundColor: k.surfaceSunken, overflow: 'hidden' },
   fill: { height: 8, borderRadius: 5 },
-  footer: { fontSize: 10, color: '#CBD5E1', marginTop: 2 },
+  footer: { fontSize: 10, color: k.textFaint, marginTop: 2 },
 });

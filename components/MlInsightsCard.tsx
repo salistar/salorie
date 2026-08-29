@@ -134,7 +134,7 @@ function MlInsightsCard({ weightHistory, remaining: propRemaining, goal: propGoa
         <Sparkles size={18} color={accent} />
         <Text style={[styles.title, { color: titleColor }, isRTL && { marginLeft: 0, marginRight: 8, textAlign: 'right' }]}>{tx.title}</Text>
         {source && !loading && (
-          <View style={[styles.srcBadge, { backgroundColor: isDark ? 'rgba(46,139,87,0.18)' : '#EAF4EE' }]}>
+          <View style={[styles.srcBadge, { backgroundColor: isDark ? 'rgba(46,139,87,0.18)' : k.accentSoft }]}>
             <Text style={styles.srcBadgeTxt}>{source === 'local' ? tx.srcLocal : source === 'server' ? tx.srcServer : tx.srcAi}</Text>
           </View>
         )}
@@ -155,8 +155,8 @@ function MlInsightsCard({ weightHistory, remaining: propRemaining, goal: propGoa
               <View>
                 <View style={[styles.row, isRTL && { flexDirection: 'row-reverse' }]}>
                   {forecast.direction === 'losing' ? <TrendingDown size={18} color={accent} />
-                    : forecast.direction === 'gaining' ? <TrendingUp size={18} color="#E11D48" />
-                    : <Minus size={18} color="#94A3B8" />}
+                    : forecast.direction === 'gaining' ? <TrendingUp size={18} color={k.danger} />
+                    : <Minus size={18} color={k.textFaint} />}
                   <Text style={[styles.trend, { color: trendColor }, isRTL && { marginLeft: 0, marginRight: 8, textAlign: 'right' }]}>
                     {Math.abs(forecast.trendKgPerWeek || 0).toFixed(2)} {tx.perWeek} {dirLabel(forecast.direction)}
                   </Text>
@@ -203,26 +203,26 @@ function MlInsightsCard({ weightHistory, remaining: propRemaining, goal: propGoa
 // évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
-  card: { backgroundColor: '#fff', borderRadius: 18, padding: 16, marginHorizontal: 16, marginVertical: 8,
-    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  card: { backgroundColor: k.surface, borderRadius: 18, padding: 16, marginHorizontal: 16, marginVertical: 8,
+    shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  title: { fontSize: 16, fontWeight: '700', color: '#0F172A', marginStart: 8, flex: 1 },
+  title: { fontSize: 16, fontWeight: '700', color: k.text, marginStart: 8, flex: 1 },
   srcBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, marginEnd: 6 },
-  srcBadgeTxt: { fontSize: 10, fontWeight: '800', color: '#2E8B57', textTransform: 'uppercase', letterSpacing: 0.3 },
+  srcBadgeTxt: { fontSize: 10, fontWeight: '800', color: k.accent, textTransform: 'uppercase', letterSpacing: 0.3 },
   refresh: { padding: 4 },
   block: { marginTop: 10 },
-  blockTitle: { fontSize: 13, fontWeight: '700', color: '#334155', marginBottom: 6 },
+  blockTitle: { fontSize: 13, fontWeight: '700', color: k.textMuted, marginBottom: 6 },
   row: { flexDirection: 'row', alignItems: 'center' },
-  trend: { fontSize: 14, fontWeight: '600', color: '#0F172A', marginStart: 8, flex: 1 },
-  conf: { fontSize: 11, color: '#94A3B8' },
-  warn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FEF3C7', borderRadius: 10, padding: 8, marginTop: 8 },
-  warnTxt: { fontSize: 12, color: '#92400E', marginStart: 6, flex: 1 },
+  trend: { fontSize: 14, fontWeight: '600', color: k.text, marginStart: 8, flex: 1 },
+  conf: { fontSize: 11, color: k.textFaint },
+  warn: { flexDirection: 'row', alignItems: 'center', backgroundColor: k.warningSoft, borderRadius: 10, padding: 8, marginTop: 8 },
+  warnTxt: { fontSize: 12, color: k.warningInk, marginStart: 6, flex: 1 },
   proj: { fontSize: 13, color: k.accent, marginTop: 6, fontWeight: '600' },
   meal: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 5 },
-  mealName: { fontSize: 13, color: '#0F172A', flex: 1, marginEnd: 8 },
-  mealMacro: { fontSize: 12, color: '#64748B' },
-  muted: { fontSize: 13, color: '#94A3B8', marginTop: 4 },
-  footer: { fontSize: 10, color: '#CBD5E1', marginTop: 12, textAlign: 'right' },
+  mealName: { fontSize: 13, color: k.text, flex: 1, marginEnd: 8 },
+  mealMacro: { fontSize: 12, color: k.textMuted },
+  muted: { fontSize: 13, color: k.textFaint, marginTop: 4 },
+  footer: { fontSize: 10, color: k.textFaint, marginTop: 12, textAlign: 'right' },
 });
 
 // PERF #17 : carte presentational / props-driven — memoïsée pour éviter les

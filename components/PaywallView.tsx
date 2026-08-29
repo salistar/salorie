@@ -14,7 +14,7 @@
 //     est lisible, pas un gris 4 % planqué en bas.
 //  3. **Prix jamais reformatés.** `priceString` vient du Store, déjà localisé et dans la
 //     bonne devise (MAD au Maroc). Le recalculer serait faux sur la moitié des marchés.
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -34,7 +34,7 @@ import { useTheme } from '../lib/ThemeContext';
 import { rowDir, txtAlign } from '../lib/rtl';
 import { PurchasesService, type SellablePackage } from '../lib/PurchasesService';
 import { FREE_LIMITS } from '../lib/freemium';
-import { useTokens } from '../constants/tokens';
+import { useTokens, type Tokens } from '../constants/tokens';
 
 const TXT: Record<string, any> = {
   fr: {
@@ -132,6 +132,7 @@ export type PaywallViewProps = {
 
 export default function PaywallView({ onDone, kcal = '', preview = false, context = 'onboarding' }: PaywallViewProps) {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language as string] || TXT.en;
   const { colors, resolved } = useTheme();
@@ -368,7 +369,7 @@ export default function PaywallView({ onDone, kcal = '', preview = false, contex
               style={styles.cta}
             >
               {busy
-                ? <ActivityIndicator color="#fff" />
+                ? <ActivityIndicator color={k.onAccent} />
                 : <Text style={styles.ctaTxt}>{trialDays > 0 ? t.cta : t.ctaNoTrial}</Text>}
             </LinearGradient>
           </TouchableOpacity>
@@ -384,7 +385,10 @@ export default function PaywallView({ onDone, kcal = '', preview = false, contex
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scroll: { paddingHorizontal: 22, paddingTop: 12, paddingBottom: 12 },
@@ -401,11 +405,11 @@ const styles = StyleSheet.create({
   planPer: { fontSize: 12.5, fontWeight: '600', textAlign: 'center' },
   planTrial: { fontSize: 12, fontWeight: '800', marginTop: 3, textAlign: 'center' },
   bestTag: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, marginBottom: 4 },
-  bestTxt: { color: '#fff', fontSize: 10.5, fontWeight: '900' },
+  bestTxt: { color: k.onAccent, fontSize: 10.5, fontWeight: '900' },
   note: { fontSize: 13, marginTop: 14 },
   footer: { paddingHorizontal: 22, paddingTop: 12, borderTopWidth: 1, gap: 8 },
   cta: { height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  ctaTxt: { color: '#fff', fontSize: 16.5, fontWeight: '900' },
+  ctaTxt: { color: k.onAccent, fontSize: 16.5, fontWeight: '900' },
   then: { fontSize: 12.5, textAlign: 'center' },
   skipBtn: { paddingVertical: 6 },
   skip: { fontSize: 14.5, fontWeight: '700', textAlign: 'center', textDecorationLine: 'underline' },

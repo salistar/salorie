@@ -104,7 +104,7 @@ export default function KitchenScreen() {
                   activeOpacity={0.85}
                   onPress={() => router.push(it.route as any)}
                 >
-                  <View style={[styles.iconWrap, { backgroundColor: isDark ? 'rgba(74,222,128,0.16)' : '#EAF4EE' }]}>
+                  <View style={[styles.iconWrap, { backgroundColor: isDark ? 'rgba(74,222,128,0.16)' : k.accentSoft }]}>
                     <it.Icon size={26} color={accent} />
                   </View>
                   <Text style={[styles.tileLabel, { color: text }]} numberOfLines={2} ellipsizeMode="tail">{it.label}</Text>

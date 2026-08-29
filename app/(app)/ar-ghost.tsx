@@ -281,7 +281,7 @@ export default function ARGhostScreen() {
         <BrandOverlay />
         <View style={styles.setupTop}>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={styles.iconBtn} onPress={() => router.back()}>
-            <ArrowLeft size={22} color="#fff" style={flipForRTL(isRTL)} />
+            <ArrowLeft size={22} color={k.onAccent} style={flipForRTL(isRTL)} />
           </TouchableOpacity>
           <Text style={styles.setupTitle}>{t.title}</Text>
           <View style={{ width: 44 }} />
@@ -303,7 +303,7 @@ export default function ARGhostScreen() {
                 style={[styles.chip, paceSec === lastPace && styles.chipActive]}
                 onPress={() => setPaceSec(lastPace)}
               >
-                <RotateCcw size={13} color={paceSec === lastPace ? '#fff' : '#cbd5e1'} />
+                <RotateCcw size={13} color={paceSec === lastPace ? k.onAccent : k.textFaint} />
                 <Text style={[styles.chipTxt, paceSec === lastPace && styles.chipTxtActive]}>{t.lastRun}</Text>
               </TouchableOpacity>
             )}
@@ -333,7 +333,7 @@ export default function ARGhostScreen() {
           </View>
 
           <TouchableOpacity style={styles.launchBtn} onPress={startChase}>
-            <Play size={22} color="#fff" fill="#fff" />
+            <Play size={22} color={k.onAccent} fill={k.surface} />
             <Text style={styles.launchTxt}>{t.launch}</Text>
           </TouchableOpacity>
           {locDenied && <Text style={styles.locWarn}>{t.locPerm}</Text>}
@@ -355,7 +355,7 @@ export default function ARGhostScreen() {
             <Text style={styles.ghostEmoji}>{won ? '🏆' : '👻'}</Text>
           </View>
           <Text style={styles.resultTitle}>{t.finishTitle}</Text>
-          <Text style={[styles.resultVerdict, { color: won ? k.accent : '#f87171' }]}>
+          <Text style={[styles.resultVerdict, { color: won ? k.accent: k.danger }]}>
             {tie ? t.tie : won ? t.youWin(Math.abs(diff)) : t.youLose(Math.abs(diff))}
           </Text>
           <View style={styles.resultRow}>
@@ -369,7 +369,7 @@ export default function ARGhostScreen() {
             </View>
           </View>
           <TouchableOpacity style={styles.launchBtn} onPress={() => setPhase('setup')}>
-            <RotateCcw size={20} color="#fff" />
+            <RotateCcw size={20} color={k.onAccent} />
             <Text style={styles.launchTxt}>{t.again}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={{ marginTop: 16 }} onPress={() => router.back()}>
@@ -434,7 +434,7 @@ export default function ARGhostScreen() {
       {/* flèche "tourne vers le fantôme" si hors champ */}
       {hasLoc && !inView && (
         <View style={[styles.offArrow, angle < 0 ? { left: 16 } : { right: 16 }]} pointerEvents="none">
-          {angle < 0 ? <ChevronLeft size={32} color="#fff" /> : <ChevronRight size={32} color="#fff" />}
+          {angle < 0 ? <ChevronLeft size={32} color={k.onAccent} /> : <ChevronRight size={32} color={k.onAccent} />}
           <Text style={styles.offArrowTxt} numberOfLines={2}>
             {angle < 0 ? t.turnLeft : t.turnRight}
           </Text>
@@ -444,7 +444,7 @@ export default function ARGhostScreen() {
       {/* top bar */}
       <View style={styles.topBar}>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={styles.iconBtn} onPress={() => { stopSubs(); router.back(); }}>
-          <ArrowLeft size={22} color="#fff" style={flipForRTL(isRTL)} />
+          <ArrowLeft size={22} color={k.onAccent} style={flipForRTL(isRTL)} />
         </TouchableOpacity>
         <View style={styles.titlePill}>
           <Text style={styles.titleTxt}>👻 {mmss(secs)}</Text>
@@ -487,62 +487,62 @@ function hav(a: LatLng, b: LatLng): number {
 const makeStyles = (k: Tokens) => StyleSheet.create({
   fill: { flex: 1 },
   center: { alignItems: 'center', justifyContent: 'center' },
-  permTxt: { color: '#fff', fontSize: 16, fontWeight: '700', textAlign: 'center', marginTop: 18, marginBottom: 22, lineHeight: 22 },
+  permTxt: { color: k.onAccent, fontSize: 16, fontWeight: '700', textAlign: 'center', marginTop: 18, marginBottom: 22, lineHeight: 22 },
   permBtn: { backgroundColor: k.accent, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
-  permBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  permBtnTxt: { color: k.onAccent, fontSize: 16, fontWeight: '800' },
 
   // setup
   setupTop: { position: 'absolute', top: 50, left: 12, right: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  setupTitle: { color: '#fff', fontSize: 17, fontWeight: '900' },
+  setupTitle: { color: k.onAccent, fontSize: 17, fontWeight: '900' },
   setupBody: { flex: 1, paddingHorizontal: 24, paddingTop: 120, paddingBottom: 40, justifyContent: 'center' },
   ghostHero: { alignItems: 'center', marginBottom: 30 },
   ghostGlow: { width: 110, height: 110, borderRadius: 55, backgroundColor: 'rgba(125,211,252,0.16)', borderWidth: 2, borderColor: 'rgba(125,211,252,0.5)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   ghostEmoji: { fontSize: 56 },
-  setupHeading: { color: '#fff', fontSize: 22, fontWeight: '900' },
-  sectionLabel: { color: '#94a3b8', fontSize: 13, fontWeight: '800', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
+  setupHeading: { color: k.onAccent, fontSize: 22, fontWeight: '900' },
+  sectionLabel: { color: k.textFaint, fontSize: 13, fontWeight: '800', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#1e293b', borderRadius: 12, paddingVertical: 11, paddingHorizontal: 16, borderWidth: 1.5, borderColor: 'transparent' },
-  chipActive: { backgroundColor: k.accent, borderColor: '#7dd3fc' },
-  chipTxt: { color: '#cbd5e1', fontSize: 15, fontWeight: '800' },
-  chipTxtActive: { color: '#fff' },
+  chipActive: { backgroundColor: k.accent, borderColor: k.info },
+  chipTxt: { color: k.textFaint, fontSize: 15, fontWeight: '800' },
+  chipTxtActive: { color: k.onAccent },
   launchBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: k.accent, paddingVertical: 17, borderRadius: 16, marginTop: 34 },
-  launchTxt: { color: '#fff', fontSize: 17, fontWeight: '900' },
-  locWarn: { color: '#fbbf24', fontSize: 13, fontWeight: '700', textAlign: 'center', marginTop: 14 },
+  launchTxt: { color: k.onAccent, fontSize: 17, fontWeight: '900' },
+  locWarn: { color: k.warning, fontSize: 13, fontWeight: '700', textAlign: 'center', marginTop: 14 },
 
   // reticle
   reticle: { position: 'absolute', left: W / 2 - 26, top: H / 2 - 26, width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
   reticleRing: { position: 'absolute', width: 52, height: 52, borderRadius: 26, borderWidth: 2, borderColor: 'rgba(255,255,255,0.55)' },
-  reticleDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#fff' },
+  reticleDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: k.surface },
 
   // ghost sprite
-  ghostSprite: { position: 'absolute', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(125,211,252,0.22)', borderWidth: 2, borderColor: 'rgba(125,211,252,0.7)', shadowColor: '#7dd3fc', shadowOpacity: 0.8, shadowRadius: 16, elevation: 8 },
+  ghostSprite: { position: 'absolute', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(125,211,252,0.22)', borderWidth: 2, borderColor: 'rgba(125,211,252,0.7)', shadowColor: k.info, shadowOpacity: 0.8, shadowRadius: 16, elevation: 8 },
 
   // off-screen arrow
   offArrow: { position: 'absolute', top: H / 2 - 44, alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.82)', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 12, maxWidth: 140 },
-  offArrowTxt: { color: '#7dd3fc', fontSize: 12, fontWeight: '800', textAlign: 'center', marginTop: 4 },
+  offArrowTxt: { color: k.info, fontSize: 12, fontWeight: '800', textAlign: 'center', marginTop: 4 },
 
   // top bar
   topBar: { position: 'absolute', top: 50, left: 12, right: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   iconBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
   titlePill: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 14, paddingVertical: 8, paddingHorizontal: 12 },
-  titleTxt: { color: '#fff', fontSize: 15, fontWeight: '900', textAlign: 'center' },
+  titleTxt: { color: k.onAccent, fontSize: 15, fontWeight: '900', textAlign: 'center' },
   compass: { minWidth: 56, height: 44, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
-  compassDeg: { color: '#fff', fontSize: 13, fontWeight: '900' },
-  compassDir: { color: '#7dd3fc', fontSize: 10, fontWeight: '800' },
+  compassDeg: { color: k.onAccent, fontSize: 13, fontWeight: '900' },
+  compassDir: { color: k.info, fontSize: 10, fontWeight: '800' },
 
   // HUD bottom
   hud: { position: 'absolute', bottom: 40, left: 20, right: 20, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 18 },
-  hudTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  hudTxt: { color: k.onAccent, fontSize: 15, fontWeight: '800' },
   progressTrack: { height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.18)', marginTop: 12, overflow: 'hidden' },
   progressFill: { height: 8, borderRadius: 4, backgroundColor: k.accent },
-  progressLabel: { color: '#cbd5e1', fontSize: 12, fontWeight: '700', textAlign: 'center', marginTop: 7 },
+  progressLabel: { color: k.textFaint, fontSize: 12, fontWeight: '700', textAlign: 'center', marginTop: 7 },
 
   // result
   resultBody: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
-  resultTitle: { color: '#fff', fontSize: 26, fontWeight: '900', marginTop: 18 },
+  resultTitle: { color: k.onAccent, fontSize: 26, fontWeight: '900', marginTop: 18 },
   resultVerdict: { fontSize: 18, fontWeight: '800', textAlign: 'center', marginTop: 12, lineHeight: 25 },
   resultRow: { flexDirection: 'row', gap: 16, marginTop: 30 },
   resultCell: { backgroundColor: '#1e293b', borderRadius: 16, paddingVertical: 18, paddingHorizontal: 28, alignItems: 'center', minWidth: 120 },
-  resultCellLabel: { color: '#94a3b8', fontSize: 12, fontWeight: '800', marginBottom: 6 },
-  resultCellVal: { color: '#fff', fontSize: 26, fontWeight: '900', letterSpacing: -1 },
+  resultCellLabel: { color: k.textFaint, fontSize: 12, fontWeight: '800', marginBottom: 6 },
+  resultCellVal: { color: k.onAccent, fontSize: 26, fontWeight: '900', letterSpacing: -1 },
 });

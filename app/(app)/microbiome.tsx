@@ -86,7 +86,7 @@ export default function MicrobiomeScreen() {
             <View style={[styles.opts, { flexDirection: rowDir(isRTL) }]}>
               {x.opts.map((o) => (
                 <TouchableOpacity key={o} style={[styles.opt, { backgroundColor: card }, ans[x.k] === o && { backgroundColor: accent }]} onPress={() => setAns((a) => ({ ...a, [x.k]: o }))}>
-                  <Text style={[styles.optTxt, { color: sub }, ans[x.k] === o && { color: '#fff' }]}>{t.opts[o] || o}</Text>
+                  <Text style={[styles.optTxt, { color: sub }, ans[x.k] === o && { color: k.onAccent }]}>{t.opts[o] || o}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -94,7 +94,7 @@ export default function MicrobiomeScreen() {
         ))}
 
         <TouchableOpacity style={[styles.btn, { backgroundColor: accent }, !done && { opacity: 0.5 }]} onPress={analyze} disabled={!done || loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <><Sparkles size={20} color="#fff" /><Text style={styles.btnTxt}>{t.btn}</Text></>}
+          {loading ? <ActivityIndicator color={k.onAccent} /> : <><Sparkles size={20} color={k.onAccent} /><Text style={styles.btnTxt}>{t.btn}</Text></>}
         </TouchableOpacity>
 
         {!done && (
@@ -103,7 +103,7 @@ export default function MicrobiomeScreen() {
           </View>
         )}
 
-        {!!reco && <View style={[styles.card, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? '#283241' : 'transparent' }, isDark && { shadowColor: 'transparent', elevation: 0 }]}><Text style={[styles.cardTxt, { color: k.text }, align]}>{reco}</Text></View>}
+        {!!reco && <View style={[styles.card, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? k.border : 'transparent' }, isDark && { shadowColor: 'transparent', elevation: 0 }]}><Text style={[styles.cardTxt, { color: k.text }, align]}>{reco}</Text></View>}
 
         <Text style={[type.micro, styles.disclaimer, { color: sub }, align]}>{t.disclaimer}</Text>
       </ScrollView>
@@ -115,19 +115,19 @@ export default function MicrobiomeScreen() {
 // évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 26, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', marginBottom: 20, lineHeight: 20 },
+  title: { fontSize: 26, fontWeight: '900', color: k.text, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: k.textMuted, marginBottom: 20, lineHeight: 20 },
   qBlock: { marginBottom: 16 },
-  qTxt: { fontSize: 15, fontWeight: '700', color: '#0F172A', marginBottom: 10 },
+  qTxt: { fontSize: 15, fontWeight: '700', color: k.text, marginBottom: 10 },
   opts: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  opt: { backgroundColor: '#fff', borderRadius: 12, paddingVertical: 9, paddingHorizontal: 14 },
-  optTxt: { fontSize: 13, fontWeight: '700', color: '#64748B' },
+  opt: { backgroundColor: k.surface, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 14 },
+  optTxt: { fontSize: 13, fontWeight: '700', color: k.textMuted },
   btn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 15, marginTop: 8 },
-  btnTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
-  card: { backgroundColor: '#fff', borderRadius: 18, padding: 18, marginTop: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  cardTxt: { fontSize: 14.5, color: '#1F2937', lineHeight: 22 },
+  btnTxt: { color: k.onAccent, fontWeight: '800', fontSize: 15 },
+  card: { backgroundColor: k.surface, borderRadius: 18, padding: 18, marginTop: 18, shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  cardTxt: { fontSize: 14.5, color: k.text, lineHeight: 22 },
   disclaimer: { marginTop: 20, opacity: 0.7, lineHeight: 16 },
 });

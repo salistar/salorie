@@ -76,7 +76,7 @@ export default function SmartHydrationScreen() {
 
   const ActLvl = ({ i, label }: any) => (
     <TouchableOpacity style={[styles.opt, { backgroundColor: card }, activity === i && styles.optActive]} onPress={() => setActivity(i)}>
-      <Text style={[styles.optTxt, { color: sub }, activity === i && { color: '#fff' }]}>{label}</Text>
+      <Text style={[styles.optTxt, { color: sub }, activity === i && { color: k.onAccent }]}>{label}</Text>
     </TouchableOpacity>
   );
 
@@ -87,7 +87,7 @@ export default function SmartHydrationScreen() {
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
         <Image source={require('../../assets/images/illustrations/weightlifting.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
-        <View style={styles.head}><Droplets size={24} color="#0EA5E9" /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <View style={styles.head}><Droplets size={24} color={k.info} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <PhotoStrip category="health" />
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
@@ -103,9 +103,9 @@ export default function SmartHydrationScreen() {
             <View style={styles.optRow}><ActLvl i={0} label={t.sedentary} /><ActLvl i={1} label={t.moderate} /><ActLvl i={2} label={t.intense} /></View>
 
             <TouchableOpacity style={[styles.hotRow, { backgroundColor: card }, hot && styles.hotActive]} onPress={() => setHot((h) => !h)}>
-              <Sun size={20} color={hot ? '#fff' : '#F59E0B'} />
-              <Text style={[styles.hotTxt, { color: text }, hot && { color: '#fff' }]}>{t.hot}</Text>
-              <Text style={[styles.hotTxt, { color: text }, hot && { color: '#fff' }]}>{hot ? '✓' : ''}</Text>
+              <Sun size={20} color={hot ? k.onAccent : k.warning} />
+              <Text style={[styles.hotTxt, { color: text }, hot && { color: k.onAccent }]}>{t.hot}</Text>
+              <Text style={[styles.hotTxt, { color: text }, hot && { color: k.onAccent }]}>{hot ? '✓' : ''}</Text>
             </TouchableOpacity>
 
             <Text style={[styles.calc, { color: sub }, align]}>{t.calc} : {weight} kg × 35 ml = {base} ml{actBonus ? ` + ${actBonus} (${t.act})` : ''}{hotBonus ? ` + ${hotBonus} (${t.heat})` : ''}.</Text>
@@ -120,23 +120,23 @@ export default function SmartHydrationScreen() {
 // évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 23, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', marginBottom: 20 },
-  hero: { backgroundColor: '#0EA5E9', borderRadius: 24, padding: 24, alignItems: 'center', marginBottom: 20 },
+  title: { fontSize: 23, fontWeight: '900', color: k.text, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: k.textMuted, marginBottom: 20 },
+  hero: { backgroundColor: k.info, borderRadius: 24, padding: 24, alignItems: 'center', marginBottom: 20 },
   heroLabel: { color: '#E0F2FE', fontSize: 13, fontWeight: '600' },
-  heroValue: { color: '#fff', fontSize: 48, fontWeight: '900', letterSpacing: -2, marginTop: 4 },
+  heroValue: { color: k.onAccent, fontSize: 48, fontWeight: '900', letterSpacing: -2, marginTop: 4 },
   heroUnit: { fontSize: 20, fontWeight: '700' },
   heroNote: { color: '#E0F2FE', fontSize: 14, fontWeight: '600', marginTop: 2 },
-  label: { fontSize: 13, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
+  label: { fontSize: 13, fontWeight: '700', color: k.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
   optRow: { flexDirection: 'row', gap: 10, marginBottom: 18 },
-  opt: { flex: 1, backgroundColor: '#fff', borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
+  opt: { flex: 1, backgroundColor: k.surface, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
   optActive: { backgroundColor: k.accent },
-  optTxt: { fontSize: 14, fontWeight: '700', color: '#64748B' },
-  hotRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 16 },
-  hotActive: { backgroundColor: '#F59E0B' },
-  hotTxt: { fontSize: 14, fontWeight: '600', color: '#0F172A', flex: 1 },
-  calc: { fontSize: 13, color: '#94A3B8', lineHeight: 19 },
+  optTxt: { fontSize: 14, fontWeight: '700', color: k.textMuted },
+  hotRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: k.surface, borderRadius: 14, padding: 16, marginBottom: 16 },
+  hotActive: { backgroundColor: k.warning },
+  hotTxt: { fontSize: 14, fontWeight: '600', color: k.text, flex: 1 },
+  calc: { fontSize: 13, color: k.textFaint, lineHeight: 19 },
 });

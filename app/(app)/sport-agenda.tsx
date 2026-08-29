@@ -86,7 +86,7 @@ export default function SportAgenda() {
       <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Bandeau héro visuel */}
         <LinearGradient colors={[accent, '#1d6440']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.heroBanner}>
-          <CalendarDays size={30} color="#fff" />
+          <CalendarDays size={30} color={k.onAccent} />
           <View style={{ flex: 1 }}>
             <Text style={[s.heroTitle, align]}>{t.title}</Text>
             <Text style={[s.heroSub, align]}>{t.sub}</Text>
@@ -100,7 +100,7 @@ export default function SportAgenda() {
           <FormInput label={t.what} value={what} onChangeText={setWhat} />
           <FormInput label={t.when} value={when} onChangeText={setWhen} />
           <TouchableOpacity style={s.addBtn} onPress={add} disabled={busy || !what.trim()}>
-            {busy ? <ActivityIndicator size="small" color="#fff" /> : (<><Plus size={17} color="#fff" /><Text style={s.addTxt}>{t.add}</Text></>)}
+            {busy ? <ActivityIndicator size="small" color={k.onAccent} /> : (<><Plus size={17} color={k.onAccent} /><Text style={s.addTxt}>{t.add}</Text></>)}
           </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/log-exercise' as any)}>
             <Text style={{ color: accent, fontWeight: '700', fontSize: 13, marginTop: 10, textAlign: 'center' }}>{t.logIt} →</Text>
@@ -118,7 +118,7 @@ export default function SportAgenda() {
               <Text style={[{ color: sub, fontSize: 12, marginTop: 2 }, align]}>{it.when}</Text>
             </View>
             <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} onPress={() => remove(it.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Trash2 size={17} color="#e11d48" />
+              <Trash2 size={17} color={k.danger} />
             </TouchableOpacity>
           </View>
         ))}
@@ -148,11 +148,11 @@ const makeS = (k: Tokens) => StyleSheet.create({
   title: { fontSize: 24, fontWeight: '900', letterSpacing: -0.4 },
   sub: { fontSize: 13.5, marginTop: 6, lineHeight: 19 },
   heroBanner: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, padding: 18 },
-  heroTitle: { color: '#fff', fontSize: 21, fontWeight: '900', letterSpacing: -0.3 },
+  heroTitle: { color: k.onAccent, fontSize: 21, fontWeight: '900', letterSpacing: -0.3 },
   heroSub: { color: 'rgba(255,255,255,0.85)', fontSize: 12.5, marginTop: 4, lineHeight: 17 },
   secHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 22, marginBottom: 10 },
   secTitle: { fontSize: 15.5, fontWeight: '800' },
   addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: k.accent, borderRadius: 12, paddingVertical: 12, marginTop: 4 },
-  addTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  addTxt: { color: k.onAccent, fontWeight: '800', fontSize: 14 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 14, padding: 13, marginBottom: 8 },
 });

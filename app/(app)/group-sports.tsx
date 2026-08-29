@@ -201,7 +201,7 @@ export default function GroupSportsScreen() {
         <View style={[styles.actionsRow, { flexDirection: dir }]}>
           <PrimaryButton
             title={t.create}
-            icon={<Plus size={18} color="#fff" />}
+            icon={<Plus size={18} color={k.onAccent} />}
             full
             onPress={() => router.push('/match-create' as any)}
             style={{ flex: 1 }}
@@ -227,7 +227,7 @@ export default function GroupSportsScreen() {
                 activeOpacity={0.85}
                 onPress={() => setFilter(f)}
               >
-                <Text style={[styles.chipTxt, { color: active ? '#fff' : text }]}>{label}</Text>
+                <Text style={[styles.chipTxt, { color: active ? k.onAccent : text }]}>{label}</Text>
               </TouchableOpacity>
             );
           })}
@@ -301,8 +301,8 @@ export default function GroupSportsScreen() {
                     onPress={() => onLeave(m)}
                   >
                     {busy === m.id
-                      ? <ActivityIndicator size="small" color="#ef4444" />
-                      : (<><X size={16} color="#ef4444" /><Text style={styles.leaveTxt}>{t.leave}</Text></>)}
+                      ? <ActivityIndicator size="small" color={k.danger} />
+                      : (<><X size={16} color={k.danger} /><Text style={styles.leaveTxt}>{t.leave}</Text></>)}
                   </TouchableOpacity>
                 ) : isFull ? (
                   <View style={[styles.fullPill, { flexDirection: dir }]}>
@@ -316,8 +316,8 @@ export default function GroupSportsScreen() {
                     onPress={() => onJoin(m)}
                   >
                     {busy === m.id
-                      ? <ActivityIndicator size="small" color="#fff" />
-                      : (<><Check size={16} color="#fff" /><Text style={styles.joinTxt}>{t.join}</Text></>)}
+                      ? <ActivityIndicator size="small" color={k.onAccent} />
+                      : (<><Check size={16} color={k.onAccent} /><Text style={styles.joinTxt}>{t.join}</Text></>)}
                   </TouchableOpacity>
                 )}
               </View>
@@ -339,7 +339,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   sub: { fontSize: 13.5, lineHeight: 19, marginBottom: 14 },
   actionsRow: { gap: 10, marginBottom: 12 },
   primaryBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 13 },
-  primaryTxt: { color: '#fff', fontSize: 14.5, fontWeight: '800', flexShrink: 1, textAlign: 'center' },
+  primaryTxt: { color: k.onAccent, fontSize: 14.5, fontWeight: '800', flexShrink: 1, textAlign: 'center' },
   ghostBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderRadius: 14, paddingVertical: 13, paddingHorizontal: 8 },
   ghostTxt: { color: k.accent, fontSize: 14.5, fontWeight: '800', flexShrink: 1, textAlign: 'center' },
   filtersRow: { gap: 8, paddingVertical: 4, paddingBottom: 8 },
@@ -359,9 +359,9 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   metaRow: { alignItems: 'center', gap: 8, marginTop: 4 },
   metaTxt: { flex: 1, fontSize: 13, fontWeight: '600' },
   joinBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 12, paddingVertical: 11, marginTop: 12 },
-  joinTxt: { color: '#fff', fontSize: 14, fontWeight: '800' },
-  leaveBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: '#ef4444', borderRadius: 12, paddingVertical: 11, marginTop: 12 },
-  leaveTxt: { color: '#ef4444', fontSize: 14, fontWeight: '800' },
+  joinTxt: { color: k.onAccent, fontSize: 14, fontWeight: '800' },
+  leaveBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: k.danger, borderRadius: 12, paddingVertical: 11, marginTop: 12 },
+  leaveTxt: { color: k.danger, fontSize: 14, fontWeight: '800' },
   fullPill: { alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(148,163,184,0.18)', borderRadius: 12, paddingVertical: 11, marginTop: 12 },
-  fullTxt: { color: '#94a3b8', fontSize: 14, fontWeight: '800' },
+  fullTxt: { color: k.textFaint, fontSize: 14, fontWeight: '800' },
 });

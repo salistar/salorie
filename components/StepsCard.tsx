@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useCallback, useState } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -19,6 +20,7 @@ const GOAL = 10000;
 
 export default function StepsCard() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const router = useRouter();
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;
@@ -82,12 +84,12 @@ export default function StepsCard() {
         <View style={styles.blob2} />
 
         {loading ? (
-          <View style={{ paddingVertical: 26, alignItems: 'center' }}><ActivityIndicator color="#fff" /></View>
+          <View style={{ paddingVertical: 26, alignItems: 'center' }}><ActivityIndicator color={k.onAccent} /></View>
         ) : (
           <>
             <View style={[styles.head, row()]}>
               <View style={[styles.titleWrap, row()]}>
-                <View style={styles.iconBubble}><Footprints size={20} color="#fff" /></View>
+                <View style={styles.iconBubble}><Footprints size={20} color={k.onAccent} /></View>
                 <View>
                   <Text style={styles.label}>{t.steps}</Text>
                   <Text style={styles.today}>{t.today}</Text>
@@ -110,7 +112,7 @@ export default function StepsCard() {
 
             <View style={[styles.footer, row()]}>
               <View style={[styles.pill, row()]}>
-                <Flame size={14} color="#fff" />
+                <Flame size={14} color={k.onAccent} />
                 <Text style={styles.pillTxt}>{kcal} {t.kcal}</Text>
               </View>
               <Text style={styles.goalTxt}>{connected ? `${pct}% · ${t.goal}` : t.connect}</Text>
@@ -122,7 +124,10 @@ export default function StepsCard() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   wrap: { marginHorizontal: 20, marginBottom: 16, borderRadius: 26, shadowOpacity: 0.3, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 6 },
   card: { borderRadius: 26, padding: 20, overflow: 'hidden' },
   blob1: { position: 'absolute', top: -40, right: -30, width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(255,255,255,0.10)' },
@@ -130,17 +135,17 @@ const styles = StyleSheet.create({
   head: { alignItems: 'center', justifyContent: 'space-between' },
   titleWrap: { alignItems: 'center', gap: 12 },
   iconBubble: { width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
-  label: { color: '#fff', fontSize: 17, fontWeight: '900', letterSpacing: -0.3 },
+  label: { color: k.onAccent, fontSize: 17, fontWeight: '900', letterSpacing: -0.3 },
   today: { color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: '600', marginTop: 1 },
   valueRow: { alignItems: 'flex-end', marginTop: 16 },
-  steps: { color: '#fff', fontSize: 44, fontWeight: '900', letterSpacing: -2, flexShrink: 1 },
+  steps: { color: k.onAccent, fontSize: 44, fontWeight: '900', letterSpacing: -2, flexShrink: 1 },
   unit: { color: 'rgba(255,255,255,0.85)', fontSize: 16, fontWeight: '800', marginBottom: 7, flexShrink: 0 },
   track: { height: 10, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden', marginTop: 14 },
-  fill: { height: 10, borderRadius: 6, backgroundColor: '#fff' },
+  fill: { height: 10, borderRadius: 6, backgroundColor: k.surface },
   footer: { alignItems: 'center', justifyContent: 'space-between', marginTop: 14 },
   pill: { alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.18)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 },
-  pillTxt: { color: '#fff', fontSize: 13, fontWeight: '800' },
+  pillTxt: { color: k.onAccent, fontSize: 13, fontWeight: '800' },
   goalTxt: { color: 'rgba(255,255,255,0.92)', fontSize: 12.5, fontWeight: '700' },
   modePill: { backgroundColor: 'rgba(255,255,255,0.22)', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999 },
-  modePillTxt: { color: '#fff', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
+  modePillTxt: { color: k.onAccent, fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
 });

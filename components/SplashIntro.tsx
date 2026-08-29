@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Animated, Image, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
+import { useTokens, type Tokens } from '../constants/tokens';
 /**
  * Full-bleed in-app intro splash.
  *
@@ -19,6 +20,8 @@ import { LinearGradient } from 'expo-linear-gradient';
  * independent of auth/loading state (no flash-on-reconnect coupling).
  */
 export default function SplashIntro({ duration = 1700 }: { duration?: number }) {
+  const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const opacity = useRef(new Animated.Value(1)).current;
   const [gone, setGone] = useState(false);
 
@@ -68,7 +71,10 @@ export default function SplashIntro({ duration = 1700 }: { duration?: number }) 
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   center: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
@@ -76,6 +82,6 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   flame: { width: 132, height: 132, marginBottom: 10 },
-  brand: { fontSize: 52, fontWeight: '900', color: '#ffffff', letterSpacing: -1.5 },
+  brand: { fontSize: 52, fontWeight: '900', color: k.onAccent, letterSpacing: -1.5 },
   tagline: { fontSize: 16, fontWeight: '700', color: '#d8f3e1' },
 });

@@ -363,14 +363,14 @@ export default function AiMealPlanScreen() {
 // évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 26, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', marginBottom: 18, lineHeight: 20 },
-  loadingTxt: { color: '#64748B', textAlign: 'center', marginTop: 16, fontWeight: '600' },
-  card: { backgroundColor: '#fff', borderRadius: 18, padding: 18, marginTop: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  cardTxt: { fontSize: 14.5, color: '#1F2937', lineHeight: 22 },
+  title: { fontSize: 26, fontWeight: '900', color: k.text, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: k.textMuted, marginBottom: 18, lineHeight: 20 },
+  loadingTxt: { color: k.textMuted, textAlign: 'center', marginTop: 16, fontWeight: '600' },
+  card: { backgroundColor: k.surface, borderRadius: 18, padding: 18, marginTop: 18, shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  cardTxt: { fontSize: 14.5, color: k.text, lineHeight: 22 },
   regenBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 14, paddingVertical: 10, borderRadius: 12, borderWidth: 1.5, borderColor: k.accent },
   regenTxt: { fontSize: 14, fontWeight: '800', color: k.accent },
   savedTitle: { fontSize: 15, fontWeight: '800', marginTop: 24, marginBottom: 2 },
@@ -382,7 +382,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   localLabel: { fontSize: 14, fontWeight: '700' },
   localHint: { fontSize: 12, marginTop: 1, lineHeight: 16 },
   toggle: { width: 46, height: 26, borderRadius: 13, padding: 3, justifyContent: 'center' },
-  knob: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff' },
+  knob: { width: 20, height: 20, borderRadius: 10, backgroundColor: k.surface },
   medBadge: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginTop: 12 },
   medBadgeTxt: { fontSize: 13, fontWeight: '700', flex: 1 },
 });

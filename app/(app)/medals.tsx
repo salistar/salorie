@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -38,6 +38,7 @@ function fmt(d?: any): string {
 
 export default function Medals() {
   const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -132,17 +133,20 @@ export default function Medals() {
   );
 }
 
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f3f6f4' },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeS = (k: Tokens) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 18, paddingBottom: 90 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 26, fontWeight: '800', color: '#1B2A33' },
-  sub: { fontSize: 13, color: '#667085', marginTop: 6, lineHeight: 19 },
+  sub: { fontSize: 13, color: k.textMuted, marginTop: 6, lineHeight: 19 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 16 },
   cell: { width: '48%', alignItems: 'center', marginBottom: 16 },
   sadaqaLink: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, alignSelf: 'flex-start' },
   sadaqaTxt: { fontSize: 13.5, fontWeight: '800' },
   empty: { marginTop: 30, alignItems: 'center' },
-  emptyTxt: { fontSize: 14, color: '#667085', textAlign: 'center', fontWeight: '600' },
-  emptyHint: { fontSize: 12, color: '#94a3b8', marginTop: 14 },
+  emptyTxt: { fontSize: 14, color: k.textMuted, textAlign: 'center', fontWeight: '600' },
+  emptyHint: { fontSize: 12, color: k.textFaint, marginTop: 14 },
 });

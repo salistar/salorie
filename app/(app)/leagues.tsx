@@ -80,7 +80,16 @@ const S = {
 // Jetons de couleur LOCAUX de l'écran ligues (paliers + zones), regroupés en un seul
 // objet à côté des tokens partagés spacing/radius/elevation/type (constants/theme.ts).
 // Design-only : mêmes valeurs qu'avant, simplement consolidées en un token unique.
-const leagueColors = {
+// ⚠ CES COULEURS NE SUIVENT PAS LE THEME, ET C'EST VOULU.
+// Le bronze, l'argent, l'or et le diamant sont des IDENTITES : une ligue de
+// bronze doit se reconnaitre du premier coup d'oeil, en Rose comme en Dore,
+// exactement comme une medaille reste de la couleur de son metal.
+//
+// Une conversion automatique les avait rendues thematiques : bronze et or
+// tombaient tous deux sur , c'est-a-dire la MEME couleur — la
+// distinction que ces ligues existent pour porter disparaissait. Elles sont
+// donc listees ici, une seule fois, plutot qu'ecrites au fil des ecrans.
+const IDENTITE_LIGUES = {
   tier: {
     bronze: '#B45309',
     silver: '#64748B',
@@ -90,6 +99,8 @@ const leagueColors = {
   promotion: '#22C55E',
   relegation: '#EF4444',
 } as const;
+
+const leagueColors = IDENTITE_LIGUES;
 
 const TIER_COLOR: Record<Tier, string> = leagueColors.tier;
 const PROMO_COLOR = leagueColors.promotion;

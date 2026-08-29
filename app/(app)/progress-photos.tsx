@@ -156,13 +156,13 @@ export default function ProgressPhotosScreen() {
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
 
         <View style={styles.btnRow}>
-          <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={() => add(true)}><Camera size={20} color="#fff" /><Text style={styles.btnPrimaryTxt}>{t.photo}</Text></TouchableOpacity>
+          <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={() => add(true)}><Camera size={20} color={k.onAccent} /><Text style={styles.btnPrimaryTxt}>{t.photo}</Text></TouchableOpacity>
           <TouchableOpacity style={[styles.btn, styles.btnGhost]} onPress={() => add(false)}><ImageIcon size={20} color={accent} /><Text style={styles.btnGhostTxt}>{t.gallery}</Text></TouchableOpacity>
         </View>
 
         {photos.length >= 2 && (
           <TouchableOpacity style={[styles.analyzeBtn, analyzing && { opacity: 0.7 }]} onPress={analyzeEvolution} disabled={analyzing} activeOpacity={0.85}>
-            {analyzing ? <ActivityIndicator color="#fff" /> : <Sparkles size={18} color="#fff" />}
+            {analyzing ? <ActivityIndicator color={k.onAccent} /> : <Sparkles size={18} color={k.onAccent} />}
             <Text style={styles.analyzeTxt}>{analyzing ? t.analyzing : t.analyze}</Text>
           </TouchableOpacity>
         )}
@@ -205,20 +205,20 @@ export default function ProgressPhotosScreen() {
 // évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 23, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', marginBottom: 18 },
+  title: { fontSize: 23, fontWeight: '900', color: k.text, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: k.textMuted, marginBottom: 18 },
   btnRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
   btn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 16 },
   btnPrimary: { backgroundColor: k.accent },
-  btnPrimaryTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
-  btnGhost: { backgroundColor: '#EAF4EE' },
+  btnPrimaryTxt: { color: k.onAccent, fontWeight: '800', fontSize: 15 },
+  btnGhost: { backgroundColor: k.accentSoft },
   btnGhostTxt: { color: k.accent, fontWeight: '800', fontSize: 15 },
-  empty: { color: '#94A3B8', fontSize: 14, textAlign: 'center', marginTop: 30, lineHeight: 20 },
+  empty: { color: k.textFaint, fontSize: 14, textAlign: 'center', marginTop: 30, lineHeight: 20 },
   analyzeBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 16, paddingVertical: 14, marginBottom: 16 },
-  analyzeTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  analyzeTxt: { color: k.onAccent, fontWeight: '800', fontSize: 15 },
   analysisCard: { borderRadius: 18, borderWidth: 1.5, borderColor: k.accent, padding: 16, marginBottom: 18, gap: 6 },
   analysisTitle: { color: k.accent, fontWeight: '800', fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.5 },
   analysisTxt: { fontSize: 14, lineHeight: 21 },
@@ -226,5 +226,5 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   cell: { width: COL, marginBottom: 12 },
   photo: { width: COL, height: COL * 1.3, borderRadius: 16, backgroundColor: '#E5E7EB' },
-  date: { fontSize: 12, color: '#64748B', fontWeight: '600', marginTop: 6, textAlign: 'center' },
+  date: { fontSize: 12, color: k.textMuted, fontWeight: '600', marginTop: 6, textAlign: 'center' },
 });

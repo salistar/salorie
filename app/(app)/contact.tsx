@@ -143,18 +143,18 @@ export default function Contact() {
 // Fabrique thémée : cette feuille lisait des jetons alors qu elle etait
 // evaluee UNE FOIS a l importation, avant que le theme n existe.
 const makeS = (k: Tokens) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f3f6f4' },
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 18, paddingBottom: 90 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 24, fontWeight: '800', color: '#1B2A33' },
-  sub: { fontSize: 13, color: '#667085', marginTop: 6, lineHeight: 19 },
-  label: { fontSize: 13, fontWeight: '700', color: '#64748b', marginTop: 18, marginBottom: 6 },
-  input: { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#e6ece8', padding: 14, fontSize: 15, color: '#1B2A33' },
+  sub: { fontSize: 13, color: k.textMuted, marginTop: 6, lineHeight: 19 },
+  label: { fontSize: 13, fontWeight: '700', color: k.textMuted, marginTop: 18, marginBottom: 6 },
+  input: { backgroundColor: k.surface, borderRadius: 12, borderWidth: 1, borderColor: k.border, padding: 14, fontSize: 15, color: '#1B2A33' },
   btn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 15, marginTop: 22 },
-  btnTxt: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  btnTxt: { color: k.onAccent, fontWeight: '800', fontSize: 16 },
   mail: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16 },
   mailTxt: { color: k.accent, fontWeight: '600', fontSize: 13 },
   done: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 30 },
   doneTxt: { fontSize: 20, fontWeight: '800', color: '#1B2A33', marginTop: 16 },
-  doneSub: { fontSize: 14, color: '#667085', textAlign: 'center', marginTop: 8, lineHeight: 20 },
+  doneSub: { fontSize: 14, color: k.textMuted, textAlign: 'center', marginTop: 8, lineHeight: 20 },
 });

@@ -1,6 +1,6 @@
 // Streaks multi-dimensions — séries de jours consécutifs par catégorie.
-import React, { useEffect, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   Image,
   View,
@@ -33,6 +33,7 @@ const TXT: any = {
 
 export default function StreaksScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('streaks');
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;
@@ -87,7 +88,7 @@ export default function StreaksScreen() {
           ) : null}
         </View>
       </View>
-      <Flame size={22} color={value > 0 ? '#F59E0B' : '#CBD5E1'} />
+      <Flame size={22} color={value > 0 ? k.warning : k.textFaint} />
     </View>
   );
 
@@ -98,7 +99,7 @@ export default function StreaksScreen() {
       <ScreenTopBar showBack showNotif={false} />
       <ScrollView contentContainerStyle={styles.body}>
         <Image source={require('../../assets/images/abstraits/hero-progression.jpg')} style={{ width: '100%', height: 110, borderRadius: 18, marginBottom: 14 }} resizeMode="cover" />
-        <View style={styles.head}><Flame size={24} color="#F59E0B" /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
+        <View style={styles.head}><Flame size={24} color={k.warning} /><Text style={[styles.title, { color: text }]}>{t.title}</Text></View>
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
         {loading ? (
           <View style={{ marginTop: 8 }}>
@@ -110,7 +111,7 @@ export default function StreaksScreen() {
         ) : (
           <>
             <Card icon={Utensils} label={t.meals} value={st.meal.streak} freezes={st.meal.freezes} color={accent} />
-            <Card icon={Droplets} label={t.hydration} value={st.water.streak} freezes={st.water.freezes} color="#0EA5E9" />
+            <Card icon={Droplets} label={t.hydration} value={st.water.streak} freezes={st.water.freezes} color={k.info} />
             <Card icon={Activity} label={t.activity} value={st.activity.streak} freezes={st.activity.freezes} color="#8B5CF6" />
             <View style={[styles.freezeBox, { backgroundColor: k.surface, borderColor: k.border }]}>
               <Text style={[styles.freezeTxt, { color: k.textMuted }, align]}>{t.freezeExplain}</Text>
@@ -131,20 +132,23 @@ export default function StreaksScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 26, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', lineHeight: 20, marginBottom: 22 },
-  card: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#fff', borderRadius: 18, padding: 18, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  title: { fontSize: 26, fontWeight: '900', color: k.text, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: k.textMuted, lineHeight: 20, marginBottom: 22 },
+  card: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: k.surface, borderRadius: 18, padding: 18, marginBottom: 12, shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   iconWrap: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
-  cardValue: { fontSize: 24, fontWeight: '900', color: '#0F172A' },
-  cardUnit: { fontSize: 14, fontWeight: '600', color: '#94A3B8' },
-  cardLabel: { fontSize: 13, color: '#64748B', marginTop: 2 },
+  cardValue: { fontSize: 24, fontWeight: '900', color: k.text },
+  cardUnit: { fontSize: 14, fontWeight: '600', color: k.textFaint },
+  cardLabel: { fontSize: 13, color: k.textMuted, marginTop: 2 },
   shield: { backgroundColor: 'rgba(16,185,129,0.14)', borderRadius: 8, paddingHorizontal: 7, paddingVertical: 2, marginTop: 2 },
-  shieldTxt: { fontSize: 11, fontWeight: '800', color: '#10B981' },
+  shieldTxt: { fontSize: 11, fontWeight: '800', color: k.success },
   freezeBox: { borderRadius: 14, borderWidth: 1, padding: 13, marginTop: 8 },
   freezeTxt: { fontSize: 12.5, fontWeight: '600', lineHeight: 18 },
-  tip: { fontSize: 13, color: '#94A3B8', marginTop: 14, textAlign: 'center', lineHeight: 18 },
+  tip: { fontSize: 13, color: k.textFaint, marginTop: 14, textAlign: 'center', lineHeight: 18 },
 });

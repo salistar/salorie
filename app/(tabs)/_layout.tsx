@@ -1,10 +1,11 @@
+import { useMemo } from 'react';
 import { Tabs } from 'expo-router';
 import { Home, User, BarChart3, Plus, Sparkles, Trophy } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { LoggingProvider, useLogging } from '../../lib/LoggingContext';
 import { useTheme } from '../../lib/ThemeContext';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import { useTranslation } from '../../lib/i18n';
 import * as Haptics from 'expo-haptics';
 import { useBasBarre, useBasBouton } from '../../lib/espaceBas';
@@ -18,6 +19,7 @@ function TabsContent() {
   const defisLabel = language === 'fr' ? 'Défis' : language === 'ar' ? 'تحديات' : 'Challenges';
   const isDark = resolved === 'dark';
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   // La barre suit la palette : `surface` est la couleur d'une carte posee sur
   // le fond, ce qu'est exactement cette barre flottante. Le couple en dur
   // #161C23 / blanc ne bougeait pas d'un theme a l'autre.
@@ -114,10 +116,14 @@ function TabsContent() {
 }
 
 export default function TabsLayout() {
+  const k = useTokens();
   return <TabsContent />;
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   tabBar: {
     position: 'absolute',
     bottom: 24,
@@ -129,7 +135,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
     paddingBottom: 8,
     paddingTop: 6,
-    shadowColor: '#000',
+    shadowColor: k.shadow,
     shadowOffset: {
       width: 0,
       height: 10,

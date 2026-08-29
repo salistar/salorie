@@ -201,11 +201,11 @@ function buildHtml(route: LatLng[], me: LatLng, color: string): string {
     window._map = map;
     window._poly = new google.maps.Polyline({ map: map, path: ROUTE, geodesic: false, strokeColor: '${color}', strokeOpacity: 1, strokeWeight: 6 });
     window._start = new google.maps.Marker({ position: START, map: map, title: 'Start',
-      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#22c55e', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3 } });
+      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: k.success, fillOpacity: 1, strokeColor: k.onAccent, strokeWeight: 3 } });
     window._end = new google.maps.Marker({ position: END, map: map, title: 'Finish',
-      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#ef4444', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3 } });
+      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: k.danger, fillOpacity: 1, strokeColor: k.onAccent, strokeWeight: 3 } });
     window._me = new google.maps.Marker({ position: ME, map: map, title: 'You', zIndex: 999,
-      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '${color}', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 4 } });
+      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '${color}', fillOpacity: 1, strokeColor: k.onAccent, strokeWeight: 4 } });
     function fit(path){ var b = new google.maps.LatLngBounds(); path.forEach(function(p){ b.extend(p); }); map.fitBounds(b, 60); }
     window._fit = fit; fit(ROUTE);
 
@@ -218,8 +218,8 @@ function buildHtml(route: LatLng[], me: LatLng, color: string): string {
       poiMarkers.forEach(function(m){ m.setMap(null); }); poiMarkers = [];
       POIS.forEach(function(p,i){
         var m = new google.maps.Marker({ position:{lat:p.lat,lng:p.lng}, map:map, title:p.name, zIndex:500,
-          label:{ text:String(i+1), color:'#fff', fontSize:'12px', fontWeight:'700' },
-          icon:{ path: google.maps.SymbolPath.CIRCLE, scale:13, fillColor:'#0ea5e9', fillOpacity:1, strokeColor:'#fff', strokeWeight:3 } });
+          label:{ text:String(i+1), color: k.onAccent, fontSize:'12px', fontWeight:'700' },
+          icon:{ path: google.maps.SymbolPath.CIRCLE, scale:13, fillColor: k.info, fillOpacity:1, strokeColor: k.onAccent, strokeWeight:3 } });
         m.addListener('click', function(){ if(window.ReactNativeWebView) window.ReactNativeWebView.postMessage('poiTap:'+i); });
         poiMarkers.push(m);
       });
@@ -237,7 +237,7 @@ function buildHtml(route: LatLng[], me: LatLng, color: string): string {
       if(path.length<2){ if(window.ReactNativeWebView) window.ReactNativeWebView.postMessage('navdone'); return; }
       var info = segInfo(path);
       // arrow icon
-      window._me.setIcon({ path: ARROW, scale: 1.7, fillColor:'${color}', fillOpacity:1, strokeColor:'#fff', strokeWeight:1.5, rotation:0, anchor:new google.maps.Point(0,0) });
+      window._me.setIcon({ path: ARROW, scale: 1.7, fillColor:'${color}', fillOpacity:1, strokeColor: k.onAccent, strokeWeight:1.5, rotation:0, anchor:new google.maps.Point(0,0) });
       window._me.setZIndex(9999);
       map.setZoom(17);
       var t0 = null, navLastSent = -1;
@@ -249,7 +249,7 @@ function buildHtml(route: LatLng[], me: LatLng, color: string): string {
         var nextI = Math.min(pos.seg+1, path.length-1);
         var hdg = bearing(path[pos.seg], path[nextI]);
         window._me.setPosition({lat:pos.lat,lng:pos.lng});
-        window._me.setIcon({ path: ARROW, scale: 1.7, fillColor:'${color}', fillOpacity:1, strokeColor:'#fff', strokeWeight:1.5, rotation:hdg, anchor:new google.maps.Point(0,0) });
+        window._me.setIcon({ path: ARROW, scale: 1.7, fillColor:'${color}', fillOpacity:1, strokeColor: k.onAccent, strokeWeight:1.5, rotation:hdg, anchor:new google.maps.Point(0,0) });
         map.panTo({lat:pos.lat,lng:pos.lng});
         // fire poi events
         for(var i=0;i<POIS.length;i++){ if(!navFired[i] && POIS[i].frac<=frac){ navFired[i]=1; if(window.ReactNativeWebView) window.ReactNativeWebView.postMessage('poi:'+i); } }
@@ -262,7 +262,7 @@ function buildHtml(route: LatLng[], me: LatLng, color: string): string {
 
     window.stopNav = function(){
       if(navRAF){ cancelAnimationFrame(navRAF); navRAF=null; }
-      window._me.setIcon({ path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor:'${color}', fillOpacity:1, strokeColor:'#fff', strokeWeight:4 });
+      window._me.setIcon({ path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor:'${color}', fillOpacity:1, strokeColor: k.onAccent, strokeWeight:4 });
       window._fit(window._poly.getPath().getArray().map(function(p){return {lat:p.lat(),lng:p.lng()};}));
     };
 
@@ -270,13 +270,13 @@ function buildHtml(route: LatLng[], me: LatLng, color: string): string {
     // positions. Nothing moves until navReal() is called with a new location.
     window.enterReal = function(){
       if(navRAF){ cancelAnimationFrame(navRAF); navRAF=null; }
-      window._me.setIcon({ path: ARROW, scale: 1.7, fillColor:'${color}', fillOpacity:1, strokeColor:'#fff', strokeWeight:1.5, rotation:0, anchor:new google.maps.Point(0,0) });
+      window._me.setIcon({ path: ARROW, scale: 1.7, fillColor:'${color}', fillOpacity:1, strokeColor: k.onAccent, strokeWeight:1.5, rotation:0, anchor:new google.maps.Point(0,0) });
       window._me.setZIndex(9999);
       map.setZoom(17);
     };
     window.navReal = function(lat,lng,heading){
       window._me.setPosition({lat:lat,lng:lng});
-      window._me.setIcon({ path: ARROW, scale: 1.7, fillColor:'${color}', fillOpacity:1, strokeColor:'#fff', strokeWeight:1.5, rotation:(heading||0), anchor:new google.maps.Point(0,0) });
+      window._me.setIcon({ path: ARROW, scale: 1.7, fillColor:'${color}', fillOpacity:1, strokeColor: k.onAccent, strokeWeight:1.5, rotation:(heading||0), anchor:new google.maps.Point(0,0) });
       map.panTo({lat:lat,lng:lng});
       if(map.getZoom()<16) map.setZoom(17);
     };
@@ -801,7 +801,7 @@ export default function ChallengeScreen() {
         {/* Street View de MA position sur le parcours (style Conqueror) */}
         {joined && (
           <TouchableOpacity style={styles.myViewBtn} onPress={() => setShowMyView(true)}>
-            <MapPin size={13} color="#fff" />
+            <MapPin size={13} color={k.onAccent} />
             <Text style={styles.myViewTxt}>Street View</Text>
           </TouchableOpacity>
         )}
@@ -810,7 +810,7 @@ export default function ChallengeScreen() {
         {navMode && (
           <>
             <View style={styles.navBanner} pointerEvents="none">
-              {navKind === 'real' ? <Navigation2 size={15} color="#fff" /> : <MapPin size={15} color="#fff" />}
+              {navKind === 'real' ? <Navigation2 size={15} color={k.onAccent} /> : <MapPin size={15} color={k.onAccent} />}
               <Text style={styles.navBannerTxt} numberOfLines={2}>{navKind === 'real' ? t.realHint : t.simHint}</Text>
             </View>
             {activePoi !== null && pois[activePoi] && (
@@ -897,7 +897,7 @@ export default function ChallengeScreen() {
                     ]}
                   >
                     <Text style={[styles.windSegEmoji, on && { opacity: 1 }]}>{opt.e}</Text>
-                    <Text style={[styles.windSegTxt, { color: on ? '#fff' : sub }]} numberOfLines={1}>{opt.l}</Text>
+                    <Text style={[styles.windSegTxt, { color: on ? k.onAccent : sub }]} numberOfLines={1}>{opt.l}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -941,11 +941,11 @@ export default function ChallengeScreen() {
               <>
                 <View style={[styles.actionRow, rtlRow, { marginHorizontal: 0, marginTop: 0 }]}>
                   <TouchableOpacity style={[styles.navBtn, { backgroundColor: primary }]} onPress={startSim}>
-                    <Play size={17} color="#fff" fill="#fff" />
+                    <Play size={17} color={k.onAccent} fill={k.surface} />
                     <Text style={styles.navBtnTxt}>{t.simMode}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.navBtn, { backgroundColor: '#0ea5e9' }]} onPress={startReal}>
-                    <Navigation2 size={17} color="#fff" />
+                  <TouchableOpacity style={[styles.navBtn, { backgroundColor: k.info }]} onPress={startReal}>
+                    <Navigation2 size={17} color={k.onAccent} />
                     <Text style={styles.navBtnTxt}>{t.realMode}</Text>
                   </TouchableOpacity>
                 </View>
@@ -958,8 +958,8 @@ export default function ChallengeScreen() {
                 </TouchableOpacity>
               </>
             ) : (
-              <TouchableOpacity style={[styles.navBtn, { backgroundColor: '#ef4444', marginTop: 0 }]} onPress={stopNav}>
-                <Square size={16} color="#fff" fill="#fff" />
+              <TouchableOpacity style={[styles.navBtn, { backgroundColor: k.danger, marginTop: 0 }]} onPress={stopNav}>
+                <Square size={16} color={k.onAccent} fill={k.surface} />
                 <Text style={styles.navBtnTxt}>{t.stopNav} · {navKind === 'sim' ? t.simMode : t.realMode}</Text>
               </TouchableOpacity>
             )}
@@ -1065,7 +1065,7 @@ export default function ChallengeScreen() {
                 <Text style={styles.viewerKm}>{challenge.name} · {pois[viewerPoi].atKm} {t.km}</Text>
               </View>
               <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} style={styles.viewerClose} onPress={() => setViewerPoi(null)}>
-                <X size={26} color="#fff" />
+                <X size={26} color={k.onAccent} />
               </TouchableOpacity>
             </>
           )}
@@ -1081,7 +1081,7 @@ export default function ChallengeScreen() {
             <Text style={styles.viewerKm}>{challenge?.name} · {myCumulativeKm.toFixed(1)} {t.km}</Text>
           </View>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} style={styles.viewerClose} onPress={() => setShowMyView(false)}>
-            <X size={26} color="#fff" />
+            <X size={26} color={k.onAccent} />
           </TouchableOpacity>
         </View>
       </Modal>
@@ -1123,16 +1123,16 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   notFound: { fontSize: 17, fontWeight: '700', textAlign: 'center', marginTop: 16, marginBottom: 20 },
   primaryBtn: { backgroundColor: k.accent, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
-  primaryBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  primaryBtnTxt: { color: k.onAccent, fontSize: 16, fontWeight: '800' },
   mapWrap: { width: '100%' },
   back: { position: 'absolute', top: 50, left: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', ...elevation.sm },
 
   navBanner: { position: 'absolute', top: 50, left: 72, right: 16, backgroundColor: 'rgba(15,23,42,0.85)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  navBannerTxt: { color: '#fff', fontSize: 12, fontWeight: '600', flex: 1 },
-  navCard: { position: 'absolute', bottom: 14, left: 14, right: 14, backgroundColor: '#fff', borderRadius: 16, flexDirection: 'row', overflow: 'hidden', ...elevation.lg },
+  navBannerTxt: { color: k.onAccent, fontSize: 12, fontWeight: '600', flex: 1 },
+  navCard: { position: 'absolute', bottom: 14, left: 14, right: 14, backgroundColor: k.surface, borderRadius: 16, flexDirection: 'row', overflow: 'hidden', ...elevation.lg },
   navCardImg: { width: 120, height: 92 },
   navCardBody: { flex: 1, padding: 12, justifyContent: 'center' },
-  navCardKicker: { fontSize: 11, fontWeight: '800', color: '#0ea5e9' },
+  navCardKicker: { fontSize: 11, fontWeight: '800', color: k.info },
   navCardName: { fontSize: 16, fontWeight: '900', color: '#111', marginTop: 2 },
   navCardView: { fontSize: 12, fontWeight: '700', color: k.accent, marginTop: 4 },
 
@@ -1152,11 +1152,11 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   tmBtnEmoji: { fontSize: 14 },
   tmBtnTxt: { fontSize: 12.5, fontWeight: '800' },
   myViewBtn: { position: 'absolute', right: 12, bottom: 14, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 6 },
-  myViewTxt: { color: '#fff', fontSize: 11.5, fontWeight: '800' },
+  myViewTxt: { color: k.onAccent, fontSize: 11.5, fontWeight: '800' },
 
   weatherBadge: { position: 'absolute', top: 50, right: 16, backgroundColor: 'rgba(15,23,42,0.85)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7, flexDirection: 'row', alignItems: 'center', gap: 6 },
   weatherEmoji: { fontSize: 15 },
-  weatherTxt: { color: '#fff', fontSize: 14, fontWeight: '800' },
+  weatherTxt: { color: k.onAccent, fontSize: 14, fontWeight: '800' },
 
   windCard: { marginHorizontal: 16, marginTop: 12, borderRadius: 16, padding: 14 },
   windHead: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
@@ -1169,11 +1169,11 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   windHint: { fontSize: 11.5, fontWeight: '500', marginTop: 4, lineHeight: 16 },
 
   joinBtn: { backgroundColor: k.accent, marginHorizontal: 16, marginTop: 16, paddingVertical: 16, borderRadius: 16, alignItems: 'center' },
-  joinBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  joinBtnTxt: { color: k.onAccent, fontSize: 16, fontWeight: '800' },
 
   actionRow: { flexDirection: 'row', gap: 10, marginHorizontal: 16, marginTop: 16 },
   navBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 14 },
-  navBtnTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  navBtnTxt: { color: k.onAccent, fontSize: 15, fontWeight: '800' },
   arBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingVertical: 15, paddingHorizontal: 16, borderRadius: 14, borderWidth: 2 },
   arBtnWide: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14, borderWidth: 2, marginTop: 10 },
   arBtnTxt: { fontSize: 15, fontWeight: '800' },
@@ -1188,9 +1188,9 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   poiImgWrap: { width: '100%', height: 112, backgroundColor: '#e5e7eb' },
   poiImg: { width: '100%', height: '100%' },
   poiLock: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(17,24,39,0.55)', alignItems: 'center', justifyContent: 'center' },
-  poiLockTxt: { color: '#fff', fontSize: 12, fontWeight: '700', paddingHorizontal: 10, textAlign: 'center' },
-  poiBadge: { position: 'absolute', top: 8, left: 8, width: 24, height: 24, borderRadius: 12, backgroundColor: '#0ea5e9', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' },
-  poiBadgeTxt: { color: '#fff', fontSize: 12, fontWeight: '800' },
+  poiLockTxt: { color: k.onAccent, fontSize: 12, fontWeight: '700', paddingHorizontal: 10, textAlign: 'center' },
+  poiBadge: { position: 'absolute', top: 8, left: 8, width: 24, height: 24, borderRadius: 12, backgroundColor: k.info, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' },
+  poiBadgeTxt: { color: k.onAccent, fontSize: 12, fontWeight: '800' },
   poiName: { fontSize: 14, fontWeight: '800' },
   poiKm: { fontSize: 12, fontWeight: '700', marginTop: 2 },
 
@@ -1203,8 +1203,8 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   viewerWrap: { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', alignItems: 'center', justifyContent: 'center' },
   viewerImg: { width: '100%', height: '70%' },
   viewerInfo: { position: 'absolute', bottom: 60, left: 24, right: 24 },
-  viewerName: { color: '#fff', fontSize: 24, fontWeight: '900' },
-  viewerKm: { color: '#cbd5e1', fontSize: 14, fontWeight: '600', marginTop: 6 },
+  viewerName: { color: k.onAccent, fontSize: 24, fontWeight: '900' },
+  viewerKm: { color: k.textFaint, fontSize: 14, fontWeight: '600', marginTop: 6 },
   viewerClose: { position: 'absolute', top: 54, right: 20, width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
 
   tmOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center', padding: 24 },

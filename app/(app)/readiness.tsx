@@ -213,7 +213,7 @@ export default function ReadinessScreen() {
         </View>
 
         <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: accent }]} onPress={onCompute}>
-          <Activity size={20} color="#fff" />
+          <Activity size={20} color={k.onAccent} />
           <Text style={styles.primaryBtnText}>{tx.compute}</Text>
         </TouchableOpacity>
 
@@ -249,6 +249,6 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   hrInput: { flex: 1, borderWidth: 1.5, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 20, fontWeight: '800' },
   hrUnit: { fontSize: 15, fontWeight: '700' },
   primaryBtn: { flexDirection: 'row', gap: 8, paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
-  primaryBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  primaryBtnText: { color: k.onAccent, fontSize: 16, fontWeight: '800' },
   disclaimer: { ...type.micro, marginTop: 18, opacity: 0.85, lineHeight: 16 },
 });

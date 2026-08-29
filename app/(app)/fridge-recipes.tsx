@@ -90,7 +90,7 @@ export default function FridgeRecipesScreen() {
 
         <View style={[styles.btnRow, { flexDirection: rowDir(isRTL) }]}>
           <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={() => run(true)} disabled={loading}>
-            <Camera size={20} color="#fff" /><Text style={styles.btnPrimaryTxt}>{t.camera}</Text>
+            <Camera size={20} color={k.onAccent} /><Text style={styles.btnPrimaryTxt}>{t.camera}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.btn, styles.btnGhost, isDark && { backgroundColor: '#1e3a2f' }]} onPress={() => run(false)} disabled={loading}>
             <ImageIcon size={20} color={accent} /><Text style={[styles.btnGhostTxt, isDark && { color: accent }]}>{t.gallery}</Text>
@@ -99,14 +99,14 @@ export default function FridgeRecipesScreen() {
 
         {uri && <Image source={{ uri }} style={styles.preview} resizeMode="cover" />}
         {loading && <View style={styles.center}><ActivityIndicator color={accent} /><Text style={[styles.loadingTxt, { color: sub }]}>{t.analyzing}</Text></View>}
-        {!!result && <View style={[styles.resultCard, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? '#283241' : 'transparent' }, isDark && { shadowOpacity: 0, elevation: 0 }]}><Text style={[styles.resultTxt, { color: k.text }, align]}>{result}</Text></View>}
+        {!!result && <View style={[styles.resultCard, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? k.border : 'transparent' }, isDark && { shadowOpacity: 0, elevation: 0 }]}><Text style={[styles.resultTxt, { color: k.text }, align]}>{result}</Text></View>}
         {/* FEATURE #103 : passe le résultat (ingrédients + recettes) au générateur de plan repas
             via le champ « ingrédients dispo » existant. Tronqué pour rester un param URL raisonnable. */}
         {!!result && !loading && (
           <View style={styles.mealPlanBtn}>
             <PrimaryButton
               title={t.toMealPlan}
-              icon={<Sparkles size={18} color="#fff" />}
+              icon={<Sparkles size={18} color={k.onAccent} />}
               onPress={() => router.push({ pathname: '/ai-meal-plan', params: { ingredients: result.slice(0, 1500) } } as any)}
             />
           </View>
@@ -121,22 +121,22 @@ export default function FridgeRecipesScreen() {
 // évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 26, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', lineHeight: 20, marginBottom: 20 },
+  title: { fontSize: 26, fontWeight: '900', color: k.text, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: k.textMuted, lineHeight: 20, marginBottom: 20 },
   btnRow: { flexDirection: 'row', gap: 12, marginBottom: 18 },
   btn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: spacing.lg, minHeight: 52, borderRadius: 16 },
   btnPrimary: { backgroundColor: k.accent },
-  btnPrimaryTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
-  btnGhost: { backgroundColor: '#EAF4EE' },
+  btnPrimaryTxt: { color: k.onAccent, fontWeight: '800', fontSize: 15 },
+  btnGhost: { backgroundColor: k.accentSoft },
   btnGhostTxt: { color: k.accent, fontWeight: '800', fontSize: 15 },
   preview: { width: '100%', height: 200, borderRadius: 18, marginBottom: 16 },
   center: { alignItems: 'center', paddingVertical: 24 },
-  loadingTxt: { color: '#64748B', marginTop: 10, fontWeight: '600' },
-  resultCard: { backgroundColor: '#fff', borderRadius: 18, padding: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  resultTxt: { fontSize: 14.5, color: '#1F2937', lineHeight: 22 },
-  hint: { fontSize: 13, color: '#94A3B8', textAlign: 'center', marginTop: 24, lineHeight: 18 },
+  loadingTxt: { color: k.textMuted, marginTop: 10, fontWeight: '600' },
+  resultCard: { backgroundColor: k.surface, borderRadius: 18, padding: 18, shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  resultTxt: { fontSize: 14.5, color: k.text, lineHeight: 22 },
+  hint: { fontSize: 13, color: k.textFaint, textAlign: 'center', marginTop: 24, lineHeight: 18 },
   mealPlanBtn: { marginTop: 14 },
 });

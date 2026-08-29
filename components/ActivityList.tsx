@@ -77,10 +77,10 @@ function ActivityList({ logs, onAddPress }: ActivityListProps) {
 
   const renderIcon = (log: NutritionLog) => {
     if (log.type === 'meal') {
-      return <View style={[styles.iconBox, { backgroundColor: '#FFEEED', width: 60, height: 60, borderRadius: 20 }]}><Utensils size={28} color="#FF5C5C" /></View>;
+      return <View style={[styles.iconBox, { backgroundColor: k.dangerSoft, width: 60, height: 60, borderRadius: 20 }]}><Utensils size={28} color="#FF5C5C" /></View>;
     }
     if (log.type === 'water') {
-      return <View style={[styles.iconBox, { backgroundColor: '#F0FDF4', width: 60, height: 60, borderRadius: 20 }]}><Droplets size={28} color="#22C55E" /></View>;
+      return <View style={[styles.iconBox, { backgroundColor: k.successSoft, width: 60, height: 60, borderRadius: 20 }]}><Droplets size={28} color={k.success} /></View>;
     }
     
     // Exercise Icons
@@ -137,7 +137,7 @@ function ActivityList({ logs, onAddPress }: ActivityListProps) {
                 <View style={styles.details}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
                     {(log as any).note?.grade ? (
-                      <View style={[styles.gradeBadge, { backgroundColor: (log as any).note.color || '#2E8B57' }]}>
+                      <View style={[styles.gradeBadge, { backgroundColor: (log as any).note.color || k.accent }]}>
                         <Text style={styles.gradeTxt}>{(log as any).note.grade}</Text>
                       </View>
                     ) : null}
@@ -222,7 +222,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     backgroundColor: k.surface,
     padding: 18,
     borderRadius: 28,
-    shadowColor: '#000',
+    shadowColor: k.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
@@ -269,7 +269,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     fontWeight: '600',
   },
   gradeBadge: { width: 24, height: 24, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  gradeTxt: { color: '#fff', fontSize: 12.5, fontWeight: '900' },
+  gradeTxt: { color: k.onAccent, fontSize: 12.5, fontWeight: '900' },
   descLine: { fontSize: 11.5, fontWeight: '500', marginTop: 4, lineHeight: 15.5, opacity: 0.9 },
   right: {
     alignItems: 'flex-end',
@@ -283,7 +283,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     letterSpacing: -0.5,
   },
   activityValue: {
-    color: '#10B981', // green for burned calories representation sometimes, or just stick to black
+    color: k.success, // green for burned calories representation sometimes, or just stick to black
   },
   macrosPreview: {
     fontSize: 12,

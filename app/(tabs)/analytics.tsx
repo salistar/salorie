@@ -263,7 +263,7 @@ export default function AnalyticsScreen() {
       <View style={{ marginTop: 8 }}>
         <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row' }}>
           <View style={{ backgroundColor: ai ? 'rgba(14,165,233,0.12)' : greenSoft, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 8 }}>
-            <Text style={{ fontSize: 9.5, fontWeight: '800', color: ai ? '#0EA5E9' : k.accent, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+            <Text style={{ fontSize: 9.5, fontWeight: '800', color: ai ? k.info : k.accent, textTransform: 'uppercase', letterSpacing: 0.4 }}>
               {A_(ai ? 'src_ai' : 'src_computed')}
             </Text>
           </View>
@@ -808,7 +808,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     borderRadius: radius.sm,
   },
   exerciseCtaTxt: {
-    color: '#fff',
+    color: k.onAccent,
     fontWeight: '800',
     fontSize: 12,
   },
@@ -844,7 +844,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     alignItems: 'center',
   },
   scoreInfoBtnTxt: {
-    color: '#fff',
+    color: k.onAccent,
     fontWeight: '800',
     fontSize: 15,
   },
@@ -873,7 +873,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     borderRadius: 32,
     padding: 24,
     marginBottom: 24,
-    shadowColor: '#000',
+    shadowColor: k.shadow,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.05,
     shadowRadius: 24,
@@ -989,7 +989,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   weightCard: {
     backgroundColor: k.surface,
     borderColor: k.surfaceSunken,
-    shadowColor: '#000',
+    shadowColor: k.shadow,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.05,
     shadowRadius: 20,
@@ -1092,7 +1092,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   trendText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#22C55E',
+    color: k.success,
   },
   nextIconContainer: {
     position: 'absolute',
@@ -1135,7 +1135,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     backgroundColor: k.surface,
     borderRadius: 36,
     padding: 24,
-    shadowColor: '#000',
+    shadowColor: k.shadow,
     shadowOffset: { width: 0, height: 20 },
     shadowOpacity: 0.2,
     shadowRadius: 30,
@@ -1191,7 +1191,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     borderRadius: 100,
     borderWidth: 1,
     borderColor: k.border,
-    shadowColor: '#000',
+    shadowColor: k.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,

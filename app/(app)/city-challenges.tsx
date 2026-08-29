@@ -329,8 +329,8 @@ export default function CityChallengesScreen() {
                         disabled={rowBusy}
                         activeOpacity={0.85}
                       >
-                        <MapPin size={14} color={mine ? '#fff' : k.accent} />
-                        <Text style={[styles.joinTxt, { color: mine ? '#fff' : k.accent }]} numberOfLines={1}>
+                        <MapPin size={14} color={mine ? k.onAccent : k.accent} />
+                        <Text style={[styles.joinTxt, { color: mine ? k.onAccent : k.accent }]} numberOfLines={1}>
                           {mine ? t.joined : `${t.join} ${city}`}
                         </Text>
                       </TouchableOpacity>
@@ -360,8 +360,8 @@ export default function CityChallengesScreen() {
                         activeOpacity={0.85}
                       >
                         {rowBusy
-                          ? <ActivityIndicator size="small" color="#fff" />
-                          : (<><Plus size={16} color="#fff" /><Text style={styles.addBtnTxt}>{t.add}</Text></>)}
+                          ? <ActivityIndicator size="small" color={k.onAccent} />
+                          : (<><Plus size={16} color={k.onAccent} /><Text style={styles.addBtnTxt}>{t.add}</Text></>)}
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -407,6 +407,6 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   addRow: { gap: 10, alignItems: 'center' },
   addInput: { flex: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15 },
   addBtn: { alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: k.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 18 },
-  addBtnTxt: { color: '#fff', fontSize: 14, fontWeight: '800' },
-  errTxt: { color: '#ef4444', fontSize: 13, fontWeight: '700', marginTop: 12 },
+  addBtnTxt: { color: k.onAccent, fontSize: 14, fontWeight: '800' },
+  errTxt: { color: k.danger, fontSize: 13, fontWeight: '700', marginTop: 12 },
 });

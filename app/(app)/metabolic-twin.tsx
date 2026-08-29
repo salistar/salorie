@@ -1,7 +1,7 @@
 // Jumeau métabolique — projette ton poids selon ce que tu manges (+ ETA objectif).
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   Image,
   View,
@@ -80,6 +80,7 @@ const TXT: any = {
 
 export default function MetabolicTwinScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('metabolic-twin');
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
@@ -92,7 +93,7 @@ export default function MetabolicTwinScreen() {
   const text = tok.text;
   const sub = tok.textMuted;
   const align: any = { textAlign: txtAlign(isRTL) };
-  const cardBorder = isDark ? { borderWidth: 1, borderColor: '#283241' } : null;
+  const cardBorder = isDark ? { borderWidth: 1, borderColor: k.border } : null;
   const shadow = isDark ? { shadowColor: 'transparent', elevation: 0 } : null;
 
   const { user } = useUser();
@@ -151,7 +152,7 @@ export default function MetabolicTwinScreen() {
         <View style={[styles.hero, { backgroundColor: GREEN }]}>
           <Text style={styles.heroLabel}>{t.heroLabel}</Text>
           <Text style={styles.heroValue}>{w30}<Text style={styles.heroUnit}> kg</Text></Text>
-          <Text style={[styles.heroDelta, { color: delta30 <= 0 ? '#fff' : '#FECDD3' }]}>{delta30 > 0 ? '+' : ''}{delta30} kg · {rate > 0 ? '+' : ''}{rate} {t.perWeek}</Text>
+          <Text style={[styles.heroDelta, { color: delta30 <= 0 ? k.onAccent : '#FECDD3' }]}>{delta30 > 0 ? '+' : ''}{delta30} kg · {rate > 0 ? '+' : ''}{rate} {t.perWeek}</Text>
         </View>
 
         <View style={[styles.row, { flexDirection: rowDir(isRTL) }]}>
@@ -201,32 +202,35 @@ export default function MetabolicTwinScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 26, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', lineHeight: 20, marginBottom: 22 },
-  label: { fontSize: 13, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
+  title: { fontSize: 26, fontWeight: '900', color: k.text, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: k.textMuted, lineHeight: 20, marginBottom: 22 },
+  label: { fontSize: 13, fontWeight: '700', color: k.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 },
-  stepBtn: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#EAF4EE', alignItems: 'center', justifyContent: 'center' },
+  stepBtn: { width: 56, height: 56, borderRadius: 28, backgroundColor: k.accentSoft, alignItems: 'center', justifyContent: 'center' },
   intakeWrap: { alignItems: 'center' },
-  intake: { fontSize: 40, fontWeight: '900', color: '#0F172A', letterSpacing: -1 },
-  unit: { fontSize: 13, color: '#94A3B8', fontWeight: '700' },
+  intake: { fontSize: 40, fontWeight: '900', color: k.text, letterSpacing: -1 },
+  unit: { fontSize: 13, color: k.textFaint, fontWeight: '700' },
   hero: { borderRadius: 24, padding: 24, alignItems: 'center', marginBottom: 16 },
-  heroLabel: { color: '#E7F5EC', fontSize: 13, fontWeight: '600' },
-  heroValue: { color: '#fff', fontSize: 48, fontWeight: '900', letterSpacing: -2, marginTop: 4 },
+  heroLabel: { color: k.accentSoft, fontSize: 13, fontWeight: '600' },
+  heroValue: { color: k.onAccent, fontSize: 48, fontWeight: '900', letterSpacing: -2, marginTop: 4 },
   heroUnit: { fontSize: 20, fontWeight: '700' },
-  heroDelta: { fontSize: 15, fontWeight: '800', marginTop: 4, color: '#fff' },
+  heroDelta: { fontSize: 15, fontWeight: '800', marginTop: 4, color: k.onAccent },
   row: { flexDirection: 'row', gap: 10, marginBottom: 16 },
-  cell: { flex: 1, backgroundColor: '#fff', borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  cellV: { fontSize: 18, fontWeight: '900', color: '#0F172A' },
-  cellL: { fontSize: 12, color: '#94A3B8', marginTop: 4 },
-  etaCard: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#fff', borderRadius: 18, padding: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  etaTitle: { fontSize: 15, fontWeight: '800', color: '#0F172A' },
-  etaSub: { fontSize: 13, color: '#64748B', marginTop: 3, lineHeight: 18 },
-  howCard: { backgroundColor: '#fff', borderRadius: 20, padding: 18, marginTop: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  cell: { flex: 1, backgroundColor: k.surface, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  cellV: { fontSize: 18, fontWeight: '900', color: k.text },
+  cellL: { fontSize: 12, color: k.textFaint, marginTop: 4 },
+  etaCard: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: k.surface, borderRadius: 18, padding: 18, shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  etaTitle: { fontSize: 15, fontWeight: '800', color: k.text },
+  etaSub: { fontSize: 13, color: k.textMuted, marginTop: 3, lineHeight: 18 },
+  howCard: { backgroundColor: k.surface, borderRadius: 20, padding: 18, marginTop: 18, shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   howTitle: { fontSize: 18, fontWeight: '900', marginBottom: 10 },
   howSubTitle: { fontSize: 15, fontWeight: '800', marginTop: 6, marginBottom: 8 },
   howBody: { fontSize: 14, lineHeight: 21, marginBottom: 10 },

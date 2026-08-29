@@ -1,7 +1,7 @@
 import BrandOverlay from '../../components/BrandOverlay';
 import { flipAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -69,6 +69,8 @@ function fmtDist(km: number, kmLabel: string): string {
 }
 
 function ArThumb({ challengeId, index }: { challengeId: string; index: number }) {
+  const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const src = poiPhoto(challengeId, index);
   if (!src) return <View style={[styles.thumb, { backgroundColor: '#334155' }]} />;
   return <Image source={src} style={styles.thumb} />;
@@ -76,6 +78,7 @@ function ArThumb({ challengeId, index }: { challengeId: string; index: number })
 
 export default function ChallengeARScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const challenge: Challenge | undefined = getChallenge(String(id || ''));
   const { language } = useTranslation() as any;
@@ -112,7 +115,7 @@ export default function ChallengeARScreen() {
   if (!challenge) {
     return (
       <View style={[styles.fill, styles.center, { backgroundColor: '#000' }]}>
-        <Text style={{ color: '#fff' }}>—</Text>
+        <Text style={{ color: k.onAccent }}>—</Text>
       </View>
     );
   }
@@ -200,7 +203,7 @@ export default function ChallengeARScreen() {
       {/* off-screen arrow toward nearest landmark */}
       {loc && nearest && !nearest.visible && (
         <View style={[styles.offArrow, nearest.angle < 0 ? { left: 16 } : { right: 16 }]} pointerEvents="none">
-          {nearest.angle < 0 ? <ChevronLeft size={30} color="#fff" /> : <ChevronRight size={30} color="#fff" />}
+          {nearest.angle < 0 ? <ChevronLeft size={30} color={k.onAccent} /> : <ChevronRight size={30} color={k.onAccent} />}
           <Text style={styles.offArrowTxt} numberOfLines={1}>{nearest.p.name}</Text>
           <Text style={styles.offArrowSub}>{nearest.angle < 0 ? t.turnLeft : t.turnRight}</Text>
         </View>
@@ -209,7 +212,7 @@ export default function ChallengeARScreen() {
       {/* top bar */}
       <View style={styles.topBar}>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={styles.iconBtn} onPress={() => router.back()}>
-          <View style={flipAuto()}><ArrowLeft size={22} color="#fff" /></View>
+          <View style={flipAuto()}><ArrowLeft size={22} color={k.onAccent} /></View>
         </TouchableOpacity>
         <View style={styles.titlePill}>
           <Text style={styles.titleTxt}>{challenge.emoji} {challenge.name}</Text>
@@ -230,37 +233,40 @@ export default function ChallengeARScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   fill: { flex: 1 },
   center: { alignItems: 'center', justifyContent: 'center' },
   permCard: { alignItems: 'center', alignSelf: 'stretch', paddingVertical: spacing.xl, paddingHorizontal: spacing.xl, gap: spacing.md, backgroundColor: 'rgba(15,23,42,0.72)' },
-  permTitle: { ...(typeTokens.h2 as any), color: '#fff', textAlign: 'center', marginTop: spacing.sm },
-  permTxt: { color: '#fff', fontSize: 16, fontWeight: '700', textAlign: 'center', lineHeight: 22 },
+  permTitle: { ...(typeTokens.h2 as any), color: k.onAccent, textAlign: 'center', marginTop: spacing.sm },
+  permTxt: { color: k.onAccent, fontSize: 16, fontWeight: '700', textAlign: 'center', lineHeight: 22 },
   permAction: { marginTop: spacing.sm },
 
   reticle: { position: 'absolute', left: W / 2 - 26, top: H / 2 - 26, width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
   reticleRing: { position: 'absolute', width: 52, height: 52, borderRadius: 26, borderWidth: 2, borderColor: 'rgba(255,255,255,0.7)' },
-  reticleDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' },
+  reticleDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: k.surface },
 
   tag: { position: 'absolute', width: 180, alignItems: 'center' },
   tagInner: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.88)', borderRadius: 14, padding: 6, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.25)' },
   tagStem: { width: 2, height: 18, backgroundColor: 'rgba(255,255,255,0.6)' },
   thumb: { width: 42, height: 42, borderRadius: 9, backgroundColor: '#334155' },
-  tagName: { color: '#fff', fontSize: 13, fontWeight: '800' },
-  tagDist: { color: '#7dd3fc', fontSize: 11, fontWeight: '700', marginTop: 1 },
+  tagName: { color: k.onAccent, fontSize: 13, fontWeight: '800' },
+  tagDist: { color: k.info, fontSize: 11, fontWeight: '700', marginTop: 1 },
 
   offArrow: { position: 'absolute', top: H / 2 - 40, alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.8)', borderRadius: 14, paddingVertical: 8, paddingHorizontal: 10, maxWidth: 130 },
-  offArrowTxt: { color: '#fff', fontSize: 12, fontWeight: '800', marginTop: 2 },
-  offArrowSub: { color: '#7dd3fc', fontSize: 10, fontWeight: '700' },
+  offArrowTxt: { color: k.onAccent, fontSize: 12, fontWeight: '800', marginTop: 2 },
+  offArrowSub: { color: k.info, fontSize: 10, fontWeight: '700' },
 
   topBar: { position: 'absolute', top: 50, left: 12, right: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   iconBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
   titlePill: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 14, paddingVertical: 8, paddingHorizontal: 12 },
-  titleTxt: { color: '#fff', fontSize: 14, fontWeight: '800', textAlign: 'center' },
+  titleTxt: { color: k.onAccent, fontSize: 14, fontWeight: '800', textAlign: 'center' },
   compass: { width: 56, height: 44, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
-  compassDeg: { color: '#fff', fontSize: 13, fontWeight: '900' },
-  compassDir: { color: '#7dd3fc', fontSize: 10, fontWeight: '800' },
+  compassDeg: { color: k.onAccent, fontSize: 13, fontWeight: '900' },
+  compassDir: { color: k.info, fontSize: 10, fontWeight: '800' },
 
   bottomHint: { position: 'absolute', bottom: 40, left: 24, right: 24, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16 },
-  bottomHintTxt: { color: '#fff', fontSize: 13, fontWeight: '600', textAlign: 'center' },
+  bottomHintTxt: { color: k.onAccent, fontSize: 13, fontWeight: '600', textAlign: 'center' },
 });

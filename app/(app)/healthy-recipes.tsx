@@ -8,7 +8,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { partager, lienPartage } from '../../lib/partage';
 import { directionAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -78,6 +78,7 @@ type Verdict = 'great' | 'ok' | 'avoid';
 
 export default function HealthyRecipesScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -186,9 +187,9 @@ export default function HealthyRecipesScreen() {
   const loading = ctxLoading || nutriLoading;
 
   const verdictMeta = (v: Verdict) => {
-    if (v === 'great') return { label: t.great, color: '#16a34a', Icon: CheckCircle2, bg: isDark ? 'rgba(22,163,74,0.16)' : '#DCFCE7' };
-    if (v === 'ok') return { label: t.ok, color: '#d97706', Icon: MinusCircle, bg: isDark ? 'rgba(217,119,6,0.16)' : '#FEF3C7' };
-    return { label: t.avoid, color: '#dc2626', Icon: AlertTriangle, bg: isDark ? 'rgba(220,38,38,0.16)' : '#FEE2E2' };
+    if (v === 'great') return { label: t.great, color: k.success, Icon: CheckCircle2, bg: isDark ? 'rgba(22,163,74,0.16)' : '#DCFCE7' };
+    if (v === 'ok') return { label: t.ok, color: k.warning, Icon: MinusCircle, bg: isDark ? 'rgba(217,119,6,0.16)' : '#FEF3C7' };
+    return { label: t.avoid, color: k.danger, Icon: AlertTriangle, bg: isDark ? 'rgba(220,38,38,0.16)' : '#FEE2E2' };
   };
 
   const selectedScore = selected ? scoreRecipe(selected, safeCtx) : null;
@@ -223,7 +224,7 @@ export default function HealthyRecipesScreen() {
                 ]}
                 activeOpacity={0.85}
               >
-                <Text style={[styles.filterTxt, { color: activeCat ? '#fff' : (isDark ? '#cbd5e1' : k.accent) }]}>
+                <Text style={[styles.filterTxt, { color: activeCat ? k.onAccent : (isDark ? k.textFaint : k.accent) }]}>
                   {label}
                 </Text>
               </TouchableOpacity>
@@ -259,7 +260,7 @@ export default function HealthyRecipesScreen() {
                       accessible
                       accessibilityLabel={t.recommended}
                     >
-                      <CheckCircle2 size={12} color="#fff" />
+                      <CheckCircle2 size={12} color={k.onAccent} />
                       <Text style={[styles.recoTxt]} numberOfLines={1}>{t.recommended}</Text>
                     </View>
                   )}
@@ -384,7 +385,7 @@ export default function HealthyRecipesScreen() {
                     {/* Astuces santé */}
                     <Text style={[styles.secTitle, { color: text }, align]}>{t.swaps}</Text>
                     {selected.healthySwaps.map((sw, i) => (
-                      <View key={i} style={[styles.swapRow, { flexDirection: rowDir, backgroundColor: isDark ? 'rgba(74,222,128,0.1)' : '#EAF4EE' }]}>
+                      <View key={i} style={[styles.swapRow, { flexDirection: rowDir, backgroundColor: isDark ? 'rgba(74,222,128,0.1)' : k.accentSoft }]}>
                         <CheckCircle2 size={15} color={accent} style={{ marginTop: 1 }} />
                         <Text style={[styles.swapTxt, { color: k.text }, align]}>{sw[lang]}</Text>
                       </View>
@@ -402,7 +403,10 @@ export default function HealthyRecipesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1 },
   body: { padding: 18, paddingBottom: 110 },
   head: { alignItems: 'center', gap: 10, marginTop: 4 },
@@ -419,7 +423,7 @@ const styles = StyleSheet.create({
   badge: { alignSelf: 'flex-start', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
   badgeTxt: { fontSize: 10.5, fontWeight: '900' },
   recoBadge: { alignSelf: 'flex-start', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
-  recoTxt: { fontSize: 10, fontWeight: '900', color: '#fff' },
+  recoTxt: { fontSize: 10, fontWeight: '900', color: k.onAccent },
   tileName: { fontSize: 14.5, fontWeight: '800', lineHeight: 19 },
   macroRow: { alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 },
   kcal: { fontSize: 13, fontWeight: '900' },

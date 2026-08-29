@@ -1,7 +1,7 @@
 // Indicateur hors-ligne + synchro auto. Bannière additive (null quand en ligne &
 // rien en attente). Au retour réseau, rejoue les logs mis en file (offline-first).
 // 100% additif : ne touche à aucune donnée existante.
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { WifiOff, RefreshCw } from 'lucide-react-native';
 import * as Network from 'expo-network';
@@ -9,7 +9,10 @@ import { auth } from '../lib/firebaseAuth';
 import { flushPendingLogs, pendingLogsCount } from '../lib/firebase';
 import { flushPendingRaceProgress } from '../lib/racesApi';
 
+import { useTokens, type Tokens } from '../constants/tokens';
 export default function OfflineBanner() {
+  const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const [offline, setOffline] = useState(false);
   const [pending, setPending] = useState(0);
   const [syncing, setSyncing] = useState(false);
@@ -50,7 +53,7 @@ export default function OfflineBanner() {
 
   return (
     <View style={[styles.bar, syncing && styles.sync]}>
-      {syncing ? <RefreshCw size={15} color="#fff" /> : <WifiOff size={15} color="#fff" />}
+      {syncing ? <RefreshCw size={15} color={k.onAccent} /> : <WifiOff size={15} color={k.onAccent} />}
       <Text style={styles.txt}>
         {syncing
           ? 'Retour en ligne — synchronisation…'
@@ -60,8 +63,11 @@ export default function OfflineBanner() {
   );
 }
 
-const styles = StyleSheet.create({
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#B45309', paddingVertical: 8, paddingHorizontal: 12 },
-  sync: { backgroundColor: '#2E8B57' },
-  txt: { color: '#fff', fontSize: 12.5, fontWeight: '600' },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
+  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.warning, paddingVertical: 8, paddingHorizontal: 12 },
+  sync: { backgroundColor: k.accent },
+  txt: { color: k.onAccent, fontSize: 12.5, fontWeight: '600' },
 });

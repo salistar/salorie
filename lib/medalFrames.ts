@@ -151,7 +151,7 @@ export function buildMedalSvg(p: MedalParams): string {
 </defs>
   <circle cx="132" cy="28" r="8" fill="none" stroke="url(#gb_${id})" stroke-width="5"/>
   ${p.mode === 'template' ? '' : `<circle cx="132" cy="60" r="17" fill="url(#en_${id})" stroke="${c.stroke}" stroke-width="1.2"/>
-  <text x="132" y="61" text-anchor="middle" font-family="Georgia,serif" font-weight="800" font-size="16" fill="#fff">${rank}</text>
+  <text x="132" y="61" text-anchor="middle" font-family="Georgia,serif" font-weight="800" font-size="16" fill={k.surface}>${rank}</text>
   <text x="132" y="72" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="5.7" letter-spacing="2" fill="${c.e0}">RANG</text>
   <path d="M118 78 L122 108 H142 L146 78 Z" fill="url(#en_${id})" stroke="${c.stroke}" stroke-width="1"/>`}
   ${outline}
@@ -162,13 +162,13 @@ export function buildMedalSvg(p: MedalParams): string {
   <circle cx="132" cy="192" r="54" fill="none" stroke="${c.stroke}" stroke-width="2"/>
   <path d="M 73 164.5 A 65 65 0 0 1 191 164.5" fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="23" stroke-linecap="round"/>
   <path d="M 63 224 A 76 76 0 0 0 201 224" fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="20" stroke-linecap="round"/>
-  <text font-family="Georgia,serif" font-weight="700" font-size="15" letter-spacing="1.5" fill="#fff"><textPath href="#top_${id}" startOffset="50%" text-anchor="middle">${esc((p.title || '').toUpperCase()).slice(0, 16)}</textPath></text>
-  <text font-family="sans-serif" font-weight="800" font-size="13" letter-spacing="1.5" fill="#fff"><textPath href="#bot_${id}" startOffset="50%" text-anchor="middle">${esc(String(p.km))} KM</textPath></text>
+  <text font-family="Georgia,serif" font-weight="700" font-size="15" letter-spacing="1.5" fill={k.surface}><textPath href="#top_${id}" startOffset="50%" text-anchor="middle">${esc((p.title || '').toUpperCase()).slice(0, 16)}</textPath></text>
+  <text font-family="sans-serif" font-weight="800" font-size="13" letter-spacing="1.5" fill={k.surface}><textPath href="#bot_${id}" startOffset="50%" text-anchor="middle">${esc(String(p.km))} KM</textPath></text>
   ${p.mode === 'template' ? '' : `<rect x="60" y="277" width="144" height="30" rx="15" fill="#241805" stroke="url(#gb_${id})" stroke-width="1.4"/>
   <text x="132" y="291" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="13" fill="${c.g0}">${esc(p.time || '—')}</text>
   <text x="132" y="301" text-anchor="middle" font-family="sans-serif" font-weight="600" font-size="6" letter-spacing="2.5" fill="${c.g1}">TEMPS DE COURSE</text>
   <path d="M40 336 H224 L224 378 L132 368 L40 378 Z" fill="url(#en_${id})" stroke="${c.stroke}" stroke-width="1.2"/>
-  <text x="132" y="354" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="14.5" fill="#fff">${esc(p.name || '')}</text>
+  <text x="132" y="354" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="14.5" fill={k.surface}>${esc(p.name || '')}</text>
   <text x="132" y="368" text-anchor="middle" font-family="sans-serif" font-weight="600" font-size="9" fill="${c.e0}">${esc(p.dates || '')}</text>`}
 </svg>`;
 }

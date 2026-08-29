@@ -43,6 +43,7 @@ import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
 import FeatureGate from '../../components/FeatureGate';
 
+import { useTokens } from '../../constants/tokens';
 export default function HomeScreen() {
   const { user } = useUser();
   const espaceBas = useEspaceBas();
@@ -218,6 +219,7 @@ export default function HomeScreen() {
         {/* ── Série repas + gel (#38) — visible seulement si série active ET flag 'streaks' ON ── */}
         {mealStreak && mealStreak.streak > 0 ? (
           <FeatureGate flag="streaks" hideWhenDisabled>{(() => {
+  const k = useTokens();
           const S: Record<string, { d: string; days: string; day: string; prot: string }> = {
             en: { d: 'Meal streak', days: 'days', day: 'day', prot: 'Protected' },
             fr: { d: 'Série repas', days: 'jours', day: 'jour', prot: 'Protégée' },
@@ -232,12 +234,12 @@ export default function HomeScreen() {
               style={{
                 marginHorizontal: spacing.xl, marginBottom: spacing.md,
                 flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-                backgroundColor: isDark ? colors.gray[100] : '#FFF7ED',
+                backgroundColor: isDark ? colors.gray[100] : k.warningSoft,
                 borderRadius: radius.lg, paddingVertical: spacing.md, paddingHorizontal: spacing.lg,
                 borderWidth: 1, borderColor: isDark ? colors.gray[200] : '#FED7AA',
               }}
             >
-              <Flame size={22} color="#F59E0B" />
+              <Flame size={22} color={k.warning} />
               <Text style={{ ...(type.cardTitle as any), color: colors.gray[900], flex: 1 }}>
                 {s.d} · {mealStreak.streak} {mealStreak.streak > 1 ? s.days : s.day}
                 {mealStreak.freezes > 0 ? `   🛡️ ${s.prot}${mealStreak.freezes > 1 ? ` ×${mealStreak.freezes}` : ''}` : ''}
@@ -253,6 +255,7 @@ export default function HomeScreen() {
             ici (le chip de log existant dans HomeQuickActions reste la seule entrée).
             Handler IDENTIQUE (handleLog) dans les 2 cas. */}
         {logCtaVariant === 'prominent' ? (() => {
+  const k = useTokens();
           const LOG_LABEL: Record<string, string> = {
             en: 'Log a meal',
             fr: 'Logger un repas',
@@ -272,8 +275,8 @@ export default function HomeScreen() {
                 borderRadius: radius.lg, paddingVertical: spacing.lg, paddingHorizontal: spacing.lg,
               }}
             >
-              <UtensilsCrossed size={22} color="#FFFFFF" />
-              <Text style={{ ...(type.cardTitle as any), color: '#FFFFFF' }}>{label}</Text>
+              <UtensilsCrossed size={22} color={k.onAccent} />
+              <Text style={{ ...(type.cardTitle as any), color: k.onAccent }}>{label}</Text>
             </TouchableOpacity>
           );
         })() : null}

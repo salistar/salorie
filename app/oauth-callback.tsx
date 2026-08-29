@@ -132,7 +132,7 @@ export default function OAuthCallback() {
               borderRadius: 12,
             }}
           >
-            <Text style={{ color: '#fff', fontWeight: '700' }}>Retour</Text>
+            <Text style={{ color: k.onAccent, fontWeight: '700' }}>Retour</Text>
           </TouchableOpacity>
         </View>
       )}

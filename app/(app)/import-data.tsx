@@ -114,7 +114,7 @@ export default function ImportDataScreen() {
     <TouchableOpacity onPress={onPress} activeOpacity={0.85}
       style={[styles.btn, { backgroundColor: primary ? accent : 'transparent', borderColor: accent, borderWidth: primary ? 0 : 1.5 }]}>
       {icon}
-      <Text style={[styles.btnTxt, { color: primary ? '#fff' : accent }]}>{label}</Text>
+      <Text style={[styles.btnTxt, { color: primary ? k.onAccent : accent }]}>{label}</Text>
     </TouchableOpacity>
   );
 
@@ -126,7 +126,7 @@ export default function ImportDataScreen() {
         <Text style={[styles.sub, { color: sub, textAlign: isRTL ? 'right' : 'left' }]}>{t.sub}</Text>
 
         <View style={[styles.cardBox, { backgroundColor: card }]}>
-          {phase === 'idle' && btn(t.pick, pickFile, true, <Upload size={18} color="#fff" strokeWidth={2.5} />)}
+          {phase === 'idle' && btn(t.pick, pickFile, true, <Upload size={18} color={k.onAccent} strokeWidth={2.5} />)}
 
           {phase === 'parsing' && (
             <View style={styles.center}><ActivityIndicator color={accent} /><Text style={[styles.muted, { color: sub }]}>{t.parsing}</Text></View>
@@ -139,7 +139,7 @@ export default function ImportDataScreen() {
                 <Text style={[styles.found, { color: text }]}>{t.found(logs.length)}</Text>
               </View>
               {skipped > 0 && <Text style={[styles.muted, { color: sub }]}>{t.skipped(skipped)}</Text>}
-              {btn(t.import(logs.length), runImport, true, <CheckCircle2 size={18} color="#fff" strokeWidth={2.5} />)}
+              {btn(t.import(logs.length), runImport, true, <CheckCircle2 size={18} color={k.onAccent} strokeWidth={2.5} />)}
             </View>
           )}
 
@@ -162,7 +162,7 @@ export default function ImportDataScreen() {
 
           {phase === 'error' && (
             <View style={{ gap: 12, alignItems: 'center' }}>
-              <AlertTriangle size={34} color="#D97706" strokeWidth={2} />
+              <AlertTriangle size={34} color={k.warning} strokeWidth={2} />
               <Text style={[styles.muted, { color: sub, textAlign: 'center' }]}>{errMsg}</Text>
               {btn(t.pick, () => { setErrMsg(''); setPhase('idle'); }, false)}
             </View>

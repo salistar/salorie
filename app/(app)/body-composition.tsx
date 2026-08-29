@@ -1,6 +1,6 @@
 // Composition corporelle — poids, masse grasse %, muscle (manuel). Balance connectée = à venir.
-import React, { useEffect, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import { numLocaleFor } from '../../lib/format';
 import {
   View,
@@ -60,6 +60,7 @@ const TXT: any = {
 
 export default function BodyCompositionScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('body-composition');
   const { user } = useUser();
   const { colors, resolved } = useTheme();
@@ -79,7 +80,7 @@ export default function BodyCompositionScreen() {
   const sub = tok.textMuted;
   const muted = tok.textFaint;
   const align: any = { textAlign: txtAlign(isRTL) };
-  const cardBorder = isDark ? { borderWidth: 1, borderColor: '#283241' } : null;
+  const cardBorder = isDark ? { borderWidth: 1, borderColor: k.border } : null;
 
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const [v, setV] = useState<Record<string, string>>({});
@@ -137,23 +138,26 @@ export default function BodyCompositionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 23, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', marginBottom: 20, lineHeight: 20 },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 4, marginBottom: 10 },
-  label: { fontSize: 15, fontWeight: '600', color: '#0F172A' },
+  title: { fontSize: 23, fontWeight: '900', color: k.text, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: k.textMuted, marginBottom: 20, lineHeight: 20 },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: k.surface, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 4, marginBottom: 10 },
+  label: { fontSize: 15, fontWeight: '600', color: k.text },
   inputWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  input: { fontSize: 18, fontWeight: '800', color: '#0F172A', minWidth: 70, textAlign: 'right', paddingVertical: 12 },
-  unit: { fontSize: 13, color: '#94A3B8', fontWeight: '700', width: 26 },
-  saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#2E8B57', borderRadius: 14, paddingVertical: 15, marginTop: 8 },
-  saveTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
-  histLabel: { fontSize: 13, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 14, marginBottom: 10 },
-  empty: { color: '#94A3B8', fontSize: 14 },
-  histRow: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 8 },
-  histDate: { fontSize: 13, color: '#64748B' },
-  histVal: { fontSize: 13, fontWeight: '700', color: '#0F172A', flex: 1, textAlign: 'right' },
+  input: { fontSize: 18, fontWeight: '800', color: k.text, minWidth: 70, textAlign: 'right', paddingVertical: 12 },
+  unit: { fontSize: 13, color: k.textFaint, fontWeight: '700', width: 26 },
+  saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 15, marginTop: 8 },
+  saveTxt: { color: k.onAccent, fontWeight: '800', fontSize: 15 },
+  histLabel: { fontSize: 13, fontWeight: '700', color: k.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 14, marginBottom: 10 },
+  empty: { color: k.textFaint, fontSize: 14 },
+  histRow: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: k.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 8 },
+  histDate: { fontSize: 13, color: k.textMuted },
+  histVal: { fontSize: 13, fontWeight: '700', color: k.text, flex: 1, textAlign: 'right' },
   disclaimer: { marginTop: 18, lineHeight: 16, fontWeight: '500' },
 });

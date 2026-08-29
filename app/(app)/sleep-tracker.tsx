@@ -43,10 +43,10 @@ const TXT: any = {
 };
 
 // Note de récupération non-clinique dérivée des heures saisies (présentation seulement).
-function recoveryNote(t: any, h: number): { label: string; color: string } {
-  if (h < 6) return { label: t.recLow, color: '#EF4444' };
-  if (h <= 9) return { label: t.recGood, color: '#16A34A' }; // sens SEMANTIQUE (bon), pas l accent de marque
-  return { label: t.recHigh, color: '#F59E0B' };
+function recoveryNote(t: any, h: number, k: Tokens): { label: string; color: string } {
+  if (h < 6) return { label: t.recLow, color: k.danger };
+  if (h <= 9) return { label: t.recGood, color: k.success }; // sens SEMANTIQUE (bon), pas l accent de marque
+  return { label: t.recHigh, color: k.warning };
 }
 
 export default function SleepTrackerScreen() {
@@ -111,7 +111,7 @@ export default function SleepTrackerScreen() {
         </FormCard>
 
         {(() => {
-          const rec = recoveryNote(t, hours);
+          const rec = recoveryNote(t, hours, k);
           return (
             <View style={[styles.recCard, { backgroundColor: card, borderColor: rec.color }]}>
               <View style={[styles.recDot, { backgroundColor: rec.color }]} />
@@ -125,7 +125,7 @@ export default function SleepTrackerScreen() {
         })()}
 
         <TouchableOpacity style={styles.saveBtn} onPress={save} disabled={saving}>
-          {saving ? <ActivityIndicator color="#fff" /> : <><Check size={20} color="#fff" /><Text style={styles.saveTxt}>{t.save}</Text></>}
+          {saving ? <ActivityIndicator color={k.onAccent} /> : <><Check size={20} color={k.onAccent} /><Text style={styles.saveTxt}>{t.save}</Text></>}
         </TouchableOpacity>
 
         <Text style={[styles.label, { color: sub }, align]}>{t.last7}</Text>
@@ -146,12 +146,12 @@ export default function SleepTrackerScreen() {
 // évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7F9' },
+  safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  title: { fontSize: 24, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
-  sub: { fontSize: 14, color: '#64748B', marginBottom: 20 },
-  label: { fontSize: 13, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10, marginTop: 8 },
+  title: { fontSize: 24, fontWeight: '900', color: k.text, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: k.textMuted, marginBottom: 20 },
+  label: { fontSize: 13, fontWeight: '700', color: k.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10, marginTop: 8 },
   recCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, borderRadius: 16, borderLeftWidth: 4, padding: 14, marginBottom: 12 },
   recDot: { width: 10, height: 10, borderRadius: 5, marginTop: 5 },
   recTextWrap: { flex: 1 },
@@ -159,10 +159,10 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   recValue: { fontSize: 15, fontWeight: '800', marginBottom: 4 },
   recHint: { fontSize: 12, fontWeight: '500', lineHeight: 17 },
   saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 16, paddingVertical: 15, marginBottom: 8 },
-  saveTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
-  empty: { color: '#94A3B8', fontSize: 14 },
-  histRow: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 8 },
-  histDate: { fontSize: 13, color: '#64748B' },
-  histVal: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
+  saveTxt: { color: k.onAccent, fontWeight: '800', fontSize: 15 },
+  empty: { color: k.textFaint, fontSize: 14 },
+  histRow: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: k.surface, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 8 },
+  histDate: { fontSize: 13, color: k.textMuted },
+  histVal: { fontSize: 14, fontWeight: '700', color: k.text },
   disclaimer: { ...type.micro, textAlign: 'center', marginTop: 18, opacity: 0.75 },
 });
