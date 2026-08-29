@@ -1,0 +1,71 @@
+# Un classifieur ne prend la tete de la cascade que s'il reconnait vraiment.
+# ---------------------------------------------------------------------------
+# POURQUOI CE GARDE-FOU EXISTE
+# Le modele en place a ete adopte sur « 41/50 (82 %) » — un comptage des reponses
+# AU-DESSUS DU SEUIL DE CONFIANCE, pas des reponses justes. Mesure faite le
+# 29/08/2026 : 0 bonne reponse sur 101 plats, dont 0 sur les 64 qui auraient ete
+# SERVIES a des utilisateurs. Un palier place en tete coupe tous ceux d'en
+# dessous : s'il se trompe en etant sur de lui, il n'affaiblit pas le service, il
+# ecrit du faux dans le journal de quelqu'un.
+#
+# Ce workflow ne se declenche QUE si le modele ou ses etiquettes changent : il
+# n'a rien a verifier le reste du temps.
+name: food4k — justesse du classifieur
+
+on:
+  push:
+    paths:
+      - 'food4k/*.tflite'
+      - 'food4k/label_map*.json'
+      - 'food4k/valider_modele.py'
+      - 'assets/models/*.tflite'
+  workflow_dispatch:
+
+jobs:
+  justesse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Installer de quoi executer le modele
+        run: pip install --quiet tensorflow-cpu pillow numpy
+
+      # Un corpus REDUIT : une photo par plat suffit a distinguer « reconnait »
+      # de « ne reconnait pas ». Telecharger les 1 414 images a chaque fois
+      # couterait des minutes de CI pour une decision que 101 tranchent deja.
+      - name: Construire le corpus de reference (101 images)
+        run: node scripts/construire-corpus.js 101
+
+      # ⚠ LE MODELE DU TELEPHONE ET CELUI DU SERVEUR DOIVENT ETRE LE MEME.
+      # Ils l'etaient — c'est ce qui a fait que le defaut touchait les deux
+      # paliers a la fois. Une divergence silencieuse serait pire encore : deux
+      # comportements differents pour un seul nom de fichier.
+      - name: Verifier que les deux copies du modele sont identiques
+        run: |
+          a=$(sha256sum food4k/food_salorie.tflite | cut -d' ' -f1)
+          b=$(sha256sum assets/models/food_salorie.tflite | cut -d' ' -f1)
+          echo "  serveur   : $a"
+          echo "  telephone : $b"
+          if [ "$a" != "$b" ]; then
+            echo "  ECHEC : les deux copies different. Une seule peut etre la bonne."
+            exit 1
+          fi
+
+      # La barre : la justesse de ce qui est SERVI, c'est-a-dire des seules
+      # reponses qui atteignent l'utilisateur.
+      - name: Mesurer la justesse
+        run: python food4k/valider_modele.py food4k/food_salorie.tflite food4k/label_map_172.json --seuil 0.50
+        # Le modele actuel echoue DELIBEREMENT ici, et c'est le comportement
+        # attendu tant qu'il n'est pas remplace. `continue-on-error` garde
+        # l'information visible sans bloquer les autres travaux — a retirer le
+        # jour ou un modele passe la barre, pour que la regression suivante
+        # arrete vraiment la chaine.
+        continue-on-error: true
