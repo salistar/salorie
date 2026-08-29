@@ -102,7 +102,7 @@ test.describe('parcours authentifies', () => {
     const p = await ctx.newPage();
     await p.goto(RACINE + '/me', { waitUntil: 'domcontentloaded' });
     await p.waitForTimeout(6000);
-    test.skip(!(await connecte(p)), 'session expiree — se reconnecter dans Edge');
+    if (!(await connecte(p))) { await p.close(); test.skip(true, 'session expiree — se reconnecter dans Edge'); }
 
     // Ce test verifie que la cascade REPOND, dans le delai, et par un palier
     // gratuit plutot que par le dernier recours payant. C'est precisement ce
@@ -201,7 +201,7 @@ test.describe('parcours authentifies', () => {
     const p = await ctx.newPage();
     await p.goto(RACINE + '/me', { waitUntil: 'domcontentloaded' });
     await p.waitForTimeout(6000);
-    test.skip(!(await connecte(p)), 'session expiree — se reconnecter dans Edge');
+    if (!(await connecte(p))) { await p.close(); test.skip(true, 'session expiree — se reconnecter dans Edge'); }
 
     const jeton = await p.evaluate(async () => {
       const entrees: any[] = await new Promise((ok) => {

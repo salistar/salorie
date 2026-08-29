@@ -54,7 +54,7 @@ test.describe('infrastructure d appel', () => {
     const p = await nav!.contexts()[0].newPage();
     await p.goto(RACINE + '/me', { waitUntil: 'domcontentloaded' });
     await p.waitForTimeout(6000);
-    test.skip(!(await connecte(p)), 'session expiree');
+    if (!(await connecte(p))) { await p.close(); test.skip(true, 'session expiree'); }
 
     const r = await p.evaluate(async () => {
       const entrees: any[] = await new Promise((ok) => {
@@ -100,7 +100,7 @@ test.describe('infrastructure d appel', () => {
     const p = await nav!.contexts()[0].newPage();
     await p.goto(RACINE + '/me', { waitUntil: 'domcontentloaded' });
     await p.waitForTimeout(6000);
-    test.skip(!(await connecte(p)), 'session expiree');
+    if (!(await connecte(p))) { await p.close(); test.skip(true, 'session expiree'); }
 
     const r = await p.evaluate(async () => {
       // Les identifiants reels, pas un STUN public : c'est la chaine de
