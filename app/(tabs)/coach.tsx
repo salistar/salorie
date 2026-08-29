@@ -233,7 +233,7 @@ export default function CoachScreen() {
   const hasPlan = d.recommendedTarget != null;
   const trend = d.weightTrendKgPerWeek;
   const TrendIcon = trend == null || Math.abs(trend) < 0.05 ? Minus : trend < 0 ? TrendingDown : TrendingUp;
-  const trendColor = trend == null ? sub : trend < 0 ? '#34D399' : '#fbbf24';
+  const trendColor = trend == null ? sub : trend < 0 ? k.success : k.warning;
   const unlocked = d.achievements.filter(a => a.unlocked).length;
 
   return (

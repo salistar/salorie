@@ -27,7 +27,6 @@ import { spacing, radius } from '../../constants/theme';
 // Clé Maps lue depuis l'env (EXPO_PUBLIC_GOOGLE_MAPS_KEY) — plus de clé en dur dans le
 // bundle. Clé publiable côté client : DOIT être restreinte dans GCP (package + SHA-1 + API).
 const GOOGLE_MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY ?? '';
-const OTHER_COLOR = '#3b82f6'; // others — blue
 
 const TXT: Record<string, any> = {
   en: { title: 'Live Race', perm: 'Location permission is required to join the race.', grant: 'Grant access', dist: 'Distance', time: 'Time', pace: 'Pace', kcal: 'Calories', start: 'Start', pause: 'Pause', resume: 'Resume', finish: 'Finish', saved: 'Race finished', savedMsg: 'kcal added to your activity for today.', waiting: 'Getting your location…', leaderboard: 'Leaderboard', you: 'You', km: 'km', done: 'finished',
@@ -62,7 +61,7 @@ function buildHtml(center: LatLng, k: Tokens): string {
 <script>
   var C = ${JSON.stringify(center)};
   var ME = ${JSON.stringify(k.success)};
-  var OTHER = ${JSON.stringify(OTHER_COLOR)};
+  var OTHER = ${JSON.stringify(k.info)};
   function initMap(){
     window._map = new google.maps.Map(document.getElementById('map'), {
       center: C, zoom: 15, disableDefaultUI: true, clickableIcons: false, gestureHandling: 'greedy'
@@ -546,7 +545,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   tab: { flex: 1, paddingVertical: 5, borderRadius: 9, alignItems: 'center' },
   tabTxt: { fontSize: 11.5, fontWeight: '800' },
   boardRow: { alignItems: 'center', paddingVertical: 5, paddingHorizontal: 6, borderRadius: 10, gap: 8 },
-  boardRank: { fontSize: 14, fontWeight: '800', width: 22, textAlign: 'center', color: '#888' },
+  boardRank: { fontSize: 14, fontWeight: '800', width: 22, textAlign: 'center', color: k.textMuted },
   boardName: { flex: 1, fontSize: 13, fontWeight: '700' },
   boardKm: { fontSize: 12, fontWeight: '700' },
   panel: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 22, paddingBottom: 34, shadowColor: k.shadow, shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: -6 }, elevation: 12 },

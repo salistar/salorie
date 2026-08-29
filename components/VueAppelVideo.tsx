@@ -1,3 +1,7 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// Le noir derriere le flux d'un appel video, pour la meme raison.
+
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SwitchCamera, VideoOff, Video as VideoIcon } from 'lucide-react-native';

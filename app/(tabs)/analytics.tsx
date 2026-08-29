@@ -80,7 +80,7 @@ export default function AnalyticsScreen() {
   const bgColor = isDark ? k.surface : 'transparent';
   // Premium + dark-aware palette (P2/P4): one accent (green) + neutral surfaces,
   // instead of the loud pink/blue/amber cards. All surfaces/text adapt to theme.
-  const surface = isDark ? colors.card : '#fff';
+  const surface = k.surface;
   const surfaceSoft = k.surfaceSunken;
   const tPrimary = k.text;
   const tMuted = k.textMuted;
@@ -496,7 +496,7 @@ export default function AnalyticsScreen() {
                     propsForDots: {
                       r: "4",
                       strokeWidth: "2",
-                      stroke: "#007AFF"
+                      stroke: k.info
                     }
                   }}
                   bezier
@@ -572,7 +572,7 @@ export default function AnalyticsScreen() {
                   const good = !tr || tr.good;
                   const Icon = !tr || tr.direction === 'stable' ? Minus : tr.direction === 'rising' ? TrendingUp : TrendingDown;
                   const c = good ? k.success : k.warning;
-                  const bgc = good ? '#F0FDF4' : '#FFFBEB';
+                  const bgc = good ? k.successSoft : k.warningSoft;
                   const label = good ? t('analytics.on_track') : `${tr!.delta > 0 ? '+' : ''}${tr!.delta.toFixed(1)} kg`;
                   return (
                     <View style={[styles.trendBadge, { backgroundColor: bgc }]}>
@@ -917,7 +917,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   waterStatValue: {
     fontSize: 22,
     fontWeight: '900',
-    color: '#007AFF',
+    color: k.info,
   },
   energySummaryRow: {
     flexDirection: 'row',

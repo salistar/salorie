@@ -364,7 +364,7 @@ export default function LogFoodDetailsScreen() {
               style={[styles.macroCard, { backgroundColor: k.surface, borderColor: cardBorder }]}
             >
               <View style={[styles.macroIcon, { backgroundColor: k.dangerSoft }]}>
-                <Beef size={20} color="#FF5C5C" />
+                <Beef size={20} color={k.danger} />
               </View>
               <Text style={[styles.macroLabel, { color: textMuted }]}>{t('logfood.protein')}</Text>
               <View style={styles.macroInputRow}>
@@ -476,7 +476,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     borderRadius: 24,
     overflow: 'hidden',
     marginBottom: 20,
-    backgroundColor: '#00000010',
+    backgroundColor: k.shadow + '10',
     shadowColor: k.shadow,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,

@@ -1,3 +1,10 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// Le vert de WhatsApp (#25D366) et le bleu de Facebook (#1877F2) sont les
+// couleurs de MARQUE de ces services. Un bouton « Partager sur WhatsApp »
+// teinte selon notre theme ne serait plus reconnu — et les chartes de ces
+// plateformes l'interdisent.
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Share2, MessageCircle, Globe } from 'lucide-react-native';

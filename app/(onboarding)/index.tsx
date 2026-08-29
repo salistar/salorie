@@ -595,7 +595,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     fontWeight: '800',
   },
   buttonDisabled: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: k.surfaceSunken,
     shadowOpacity: 0,
     elevation: 0,
   },

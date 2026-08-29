@@ -223,7 +223,7 @@ export function SubmitBar({ label, onPress, disabled, loading }: any) {
         accessibilityState={{ disabled: !!off, busy: !!loading }}
       >
         <LinearGradient
-          colors={off ? ['#CBD5E1', '#CBD5E1'] : [th.accent, k.accentStrong]}
+          colors={off ? [k.border, k.border] : [th.accent, k.accentStrong]}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={[s.submit, !off && s.submitShadow]}
         >
@@ -241,7 +241,7 @@ const makeS = (k: Tokens) => StyleSheet.create({
   headTitle: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5, flex: 1 },
   headSub: { fontSize: 13.5, marginTop: 8, lineHeight: 19 },
   card: { borderRadius: RAYON_CARTE, padding: 18, borderWidth: BORDURE, marginBottom: 16 },
-  cardShadow: { shadowColor: '#0F172A', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 14, elevation: 2 },
+  cardShadow: { shadowColor: k.shadow, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 14, elevation: 2 },
   label: { ...LIBELLE },
   // `minHeight` MANQUAIT : padding 14 x2 + ligne ~19 donnait ~47 dp, sous le
   // plancher d'accessibilite Android de 48. Les champs etaient plus petits que

@@ -1,3 +1,9 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// L'ecran d'ouverture s'affiche AVANT que le theme ne soit connu — le
+// fournisseur n'est pas encore monte. Il ne peut donc pas suivre une palette,
+// et doit porter les couleurs de la marque.
+
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Animated, Image, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';

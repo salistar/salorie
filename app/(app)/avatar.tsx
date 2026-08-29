@@ -188,7 +188,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   ringLevel: { fontSize: 52, fontWeight: '900', lineHeight: 56, letterSpacing: -1 },
   gearBadge: {
     width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
-    marginTop: -22, borderWidth: 3, borderColor: '#fff',
+    marginTop: -22, borderWidth: 3, borderColor: k.surface,
   },
   gearBadgeEmoji: { fontSize: 20 },
   heroTitle: { fontSize: 22, fontWeight: '900', marginTop: 10, letterSpacing: -0.5 },

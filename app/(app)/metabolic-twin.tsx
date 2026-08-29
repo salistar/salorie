@@ -152,7 +152,7 @@ export default function MetabolicTwinScreen() {
         <View style={[styles.hero, { backgroundColor: GREEN }]}>
           <Text style={styles.heroLabel}>{t.heroLabel}</Text>
           <Text style={styles.heroValue}>{w30}<Text style={styles.heroUnit}> kg</Text></Text>
-          <Text style={[styles.heroDelta, { color: delta30 <= 0 ? k.onAccent : '#FECDD3' }]}>{delta30 > 0 ? '+' : ''}{delta30} kg · {rate > 0 ? '+' : ''}{rate} {t.perWeek}</Text>
+          <Text style={[styles.heroDelta, { color: delta30 <= 0 ? k.onAccent : k.dangerSoft }]}>{delta30 > 0 ? '+' : ''}{delta30} kg · {rate > 0 ? '+' : ''}{rate} {t.perWeek}</Text>
         </View>
 
         <View style={[styles.row, { flexDirection: rowDir(isRTL) }]}>

@@ -1,6 +1,6 @@
 // Streaks multi-dimensions — séries de jours consécutifs par catégorie.
 import React, { useEffect, useState, useMemo } from 'react';
-import { useTokens, type Tokens } from '../../constants/tokens';
+import { useTokens, type Tokens , CATEGORIES } from '../../constants/tokens';
 import {
   Image,
   View,
@@ -112,7 +112,7 @@ export default function StreaksScreen() {
           <>
             <Card icon={Utensils} label={t.meals} value={st.meal.streak} freezes={st.meal.freezes} color={accent} />
             <Card icon={Droplets} label={t.hydration} value={st.water.streak} freezes={st.water.freezes} color={k.info} />
-            <Card icon={Activity} label={t.activity} value={st.activity.streak} freezes={st.activity.freezes} color="#8B5CF6" />
+            <Card icon={Activity} label={t.activity} value={st.activity.streak} freezes={st.activity.freezes} color={CATEGORIES.musculation} />
             <View style={[styles.freezeBox, { backgroundColor: k.surface, borderColor: k.border }]}>
               <Text style={[styles.freezeTxt, { color: k.textMuted }, align]}>{t.freezeExplain}</Text>
             </View>

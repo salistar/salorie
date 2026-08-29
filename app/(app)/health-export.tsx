@@ -311,7 +311,7 @@ export default function HealthExportScreen() {
             )}
 
             <View style={[styles.disc, rowDir]}>
-              <ShieldAlert size={18} color="#B42318" />
+              <ShieldAlert size={18} color={k.dangerInk} />
               <Text style={[styles.discTxt, align]}>{t.disclaimerCard}</Text>
             </View>
           </>

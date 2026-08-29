@@ -237,7 +237,7 @@ export default function HomeScreen() {
                 flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
                 backgroundColor: isDark ? colors.gray[100] : k.warningSoft,
                 borderRadius: radius.lg, paddingVertical: spacing.md, paddingHorizontal: spacing.lg,
-                borderWidth: 1, borderColor: isDark ? colors.gray[200] : '#FED7AA',
+                borderWidth: 1, borderColor: k.warningSoft,
               }}
             >
               <Flame size={22} color={k.warning} />

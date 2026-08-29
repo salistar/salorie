@@ -184,7 +184,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 8 },
   title: { fontSize: 22, fontWeight: '800', color: k.text },
   resultsBox: { maxHeight: 260, backgroundColor: k.surface, marginHorizontal: 16, marginTop: 6, borderRadius: 14, borderWidth: 1, borderColor: k.border },
-  resRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderBottomWidth: 1, borderBottomColor: '#F5F7FA' },
+  resRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderBottomWidth: 1, borderBottomColor: k.border },
   resName: { flex: 1, fontSize: 14, color: k.text },
   resMacro: { fontSize: 12, color: k.textMuted },
   body: { padding: 16, gap: 10 },

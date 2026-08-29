@@ -119,7 +119,7 @@ export default function LogManualExerciseScreen() {
             <View style={styles.spacer} />
 
             <View style={[styles.row, isRTL && { flexDirection: 'row-reverse' }]}>
-              <Flame size={20} color="#FF5C5C" strokeWidth={3} />
+              <Flame size={20} color={k.danger} strokeWidth={3} />
               <Text style={[styles.label, { color: textLabel, marginBottom: 0 }]}>
                 {t('manual.calories_burned')}
               </Text>

@@ -38,7 +38,7 @@ export default function LogExerciseScreen() {
       id: 'run',
       title: t('logex.run'),
       desc: t('logex.run_desc'),
-      icon: <Footprints size={26} color="#FF5C5C" />,
+      icon: <Footprints size={26} color={k.danger} />,
       bg: k.dangerSoft,
       onPress: () => {
         router.push({

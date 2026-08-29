@@ -99,7 +99,7 @@ export default function LogModal() {
   const labelColor = k.textMuted;
   const mutedColor = k.textMuted;
   const typeTextColor = k.textMuted;
-  const placeholderColor = isDark ? '#64748b' : undefined;
+  const placeholderColor = k.textMuted;
 
   return (
     <Modal
@@ -201,7 +201,7 @@ export default function LogModal() {
                     <View style={[styles.macrosGrid, { flexDirection: rowDir(isRTL) }]}>
                       <View style={[styles.macroInput, { backgroundColor: inputCardBg, borderColor: inputBorder }]}>
                         <View style={[styles.macroIcon, { backgroundColor: k.dangerSoft }]}>
-                          <Beef size={18} color="#FF5C5C" />
+                          <Beef size={18} color={k.danger} />
                         </View>
                         <TextInput
                           style={[styles.smallInput, { color: textPrimary }]}

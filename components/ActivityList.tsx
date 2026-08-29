@@ -77,7 +77,7 @@ function ActivityList({ logs, onAddPress }: ActivityListProps) {
 
   const renderIcon = (log: NutritionLog) => {
     if (log.type === 'meal') {
-      return <View style={[styles.iconBox, { backgroundColor: k.dangerSoft, width: 60, height: 60, borderRadius: 20 }]}><Utensils size={28} color="#FF5C5C" /></View>;
+      return <View style={[styles.iconBox, { backgroundColor: k.dangerSoft, width: 60, height: 60, borderRadius: 20 }]}><Utensils size={28} color={k.danger} /></View>;
     }
     if (log.type === 'water') {
       return <View style={[styles.iconBox, { backgroundColor: k.successSoft, width: 60, height: 60, borderRadius: 20 }]}><Droplets size={28} color={k.success} /></View>;

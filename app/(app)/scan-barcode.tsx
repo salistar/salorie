@@ -1,3 +1,8 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// Le noir sous l'apercu de la camera, et le vert clair du format de code
+// lisible par-dessus : deux couleurs posees SUR l'image, pas sur l'interface.
+
 // Barcode scanner — scanne un code-barres produit (EAN/UPC) et recupere les
 // infos nutritionnelles via OpenFoodFacts (API publique, gratuite, sans cle),
 // puis pre-remplit l'ecran log-food-details. Logging produit ultra-rapide.
@@ -535,7 +540,7 @@ export default function ScanBarcodeScreen() {
             </View>
 
             {pendingState === 'sent' ? (
-              <View style={[styles.sentBanner, { borderColor: k.accent, backgroundColor: '#16A34A1A' }]}>
+              <View style={[styles.sentBanner, { borderColor: k.accent, backgroundColor: k.successSoft }]}>
                 <Text style={[styles.sentTxt, { color: k.success }]}>{ox.sent}</Text>
               </View>
             ) : (
@@ -563,7 +568,7 @@ export default function ScanBarcodeScreen() {
                   </View>
                 )}
                 {pendingState === 'error' && (
-                  <View style={[styles.warnBanner, { borderColor: k.danger, backgroundColor: '#DC26261A' }]}>
+                  <View style={[styles.warnBanner, { borderColor: k.danger, backgroundColor: k.dangerSoft }]}>
                     <AlertTriangle size={16} color={k.danger} />
                     <Text style={[styles.warnBannerTxt, { color: k.danger }]}>{ox.sendFail}</Text>
                   </View>
@@ -604,7 +609,7 @@ export default function ScanBarcodeScreen() {
               <Text style={[styles.sheetSub, { color: subCol }]}>{ox.notEdibleSub}</Text>
             </View>
           </View>
-          <View style={[styles.notEdibleBanner, { borderColor: k.danger, backgroundColor: '#DC26261A' }]}>
+          <View style={[styles.notEdibleBanner, { borderColor: k.danger, backgroundColor: k.dangerSoft }]}>
             <Ban size={18} color={k.danger} />
             <Text style={[styles.notEdibleTxt, { color: k.danger }]}>{ox.notEdible}</Text>
           </View>
@@ -804,7 +809,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   cBL: { bottom: 0, left: 0, borderBottomWidth: 4, borderLeftWidth: 4, borderBottomLeftRadius: 18 },
   cBR: { bottom: 0, right: 0, borderBottomWidth: 4, borderRightWidth: 4, borderBottomRightRadius: 18 },
   formatChip: { backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5, marginTop: 14 },
-  formatTxt: { color: '#a7f3d0', fontSize: 11.5, fontWeight: '800', letterSpacing: 0.6 },
+  formatTxt: { color: k.success, fontSize: 11.5, fontWeight: '800', letterSpacing: 0.6 },
   hint: { color: k.onAccent, fontSize: 15, fontWeight: '600', marginTop: 12, textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 4 },
   center: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', gap: 8 },
   // Carte flottante AU-DESSUS de la barre de navigation persistante (~90px) —

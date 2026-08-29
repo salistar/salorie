@@ -1,3 +1,8 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// Chaque plan d'entrainement porte sa couleur, comme une collection porte
+// ses tomes. Les thematiser rendrait deux plans indiscernables.
+
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
@@ -19,7 +24,7 @@ import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { addNutritionLog, emailToDocId } from '../../lib/firebase';
 import { useScreenGate } from '../../components/FeatureGate';
-import { useTokens, Tokens } from '../../constants/tokens';
+import { useTokens, Tokens , CATEGORIES } from '../../constants/tokens';
 
 type Plan = {
   emoji: string; color: string; title: string; level: string; duration: string; focus: string; met: number;
@@ -44,7 +49,7 @@ const plansParLangue = (k: Tokens): Record<string, Plan[]> => ({
       { name: 'Bench Press', detail: '4 × 8' }, { name: 'Lat Pulldown', detail: '4 × 10' }, { name: 'Deadlift', detail: '3 × 6' }, { name: 'Lunges', detail: '3 × 12' }, { name: 'Lateral Raise', detail: '3 × 15' } ] },
     { emoji: '🔥', color: k.warning, title: 'HIIT Cardio', level: 'All levels', duration: '25 min', focus: 'Fat burn', met: 9, exercises: [
       { name: 'Running', detail: '5 min' }, { name: 'Cycling', detail: '8 min' }, { name: 'HIIT intervals', detail: '6 × 1 min' }, { name: 'Walking (cooldown)', detail: '5 min' } ] },
-    { emoji: '⚡', color: '#7c3aed', title: 'Muscle Gain', level: 'Advanced', duration: '60 min', focus: 'Hypertrophy', met: 6, exercises: [
+    { emoji: '⚡', color: CATEGORIES.musculation, title: 'Muscle Gain', level: 'Advanced', duration: '60 min', focus: 'Hypertrophy', met: 6, exercises: [
       { name: 'Deadlift', detail: '4 × 6' }, { name: 'Squat', detail: '4 × 8' }, { name: 'Bench Press', detail: '4 × 8' }, { name: 'Pull-up', detail: '4 × max' }, { name: 'Barbell Row', detail: '4 × 10' } ] },
     { emoji: '🧘', color: k.info, title: 'Core & Abs', level: 'All levels', duration: '20 min', focus: 'Core', met: 4.5, exercises: [
       { name: 'Plank', detail: '3 × 45s' }, { name: 'Crunches', detail: '3 × 20' }, { name: 'Russian Twist', detail: '3 × 30' }, { name: 'Hanging Knee Raise', detail: '3 × 12' } ] },
@@ -58,7 +63,7 @@ const plansParLangue = (k: Tokens): Record<string, Plan[]> => ({
       { name: 'Développé couché', detail: '4 × 8' }, { name: 'Tirage vertical', detail: '4 × 10' }, { name: 'Soulevé de terre', detail: '3 × 6' }, { name: 'Fentes', detail: '3 × 12' }, { name: 'Élévations latérales', detail: '3 × 15' } ] },
     { emoji: '🔥', color: k.warning, title: 'HIIT Cardio', level: 'Tous niveaux', duration: '25 min', focus: 'Brûle-graisse', met: 9, exercises: [
       { name: 'Course', detail: '5 min' }, { name: 'Vélo', detail: '8 min' }, { name: 'Intervalles HIIT', detail: '6 × 1 min' }, { name: 'Marche (retour au calme)', detail: '5 min' } ] },
-    { emoji: '⚡', color: '#7c3aed', title: 'Prise de muscle', level: 'Avancé', duration: '60 min', focus: 'Hypertrophie', met: 6, exercises: [
+    { emoji: '⚡', color: CATEGORIES.musculation, title: 'Prise de muscle', level: 'Avancé', duration: '60 min', focus: 'Hypertrophie', met: 6, exercises: [
       { name: 'Soulevé de terre', detail: '4 × 6' }, { name: 'Squat', detail: '4 × 8' }, { name: 'Développé couché', detail: '4 × 8' }, { name: 'Tractions', detail: '4 × max' }, { name: 'Rowing barre', detail: '4 × 10' } ] },
     { emoji: '🧘', color: k.info, title: 'Abdos & Gainage', level: 'Tous niveaux', duration: '20 min', focus: 'Ceinture abdo', met: 4.5, exercises: [
       { name: 'Gainage', detail: '3 × 45s' }, { name: 'Crunchs', detail: '3 × 20' }, { name: 'Russian Twist', detail: '3 × 30' }, { name: 'Relevé de genoux suspendu', detail: '3 × 12' } ] },
@@ -72,7 +77,7 @@ const plansParLangue = (k: Tokens): Record<string, Plan[]> => ({
       { name: 'بنش برس', detail: '4 × 8' }, { name: 'سحب علوي', detail: '4 × 10' }, { name: 'رفعة ميتة', detail: '3 × 6' }, { name: 'لانجز', detail: '3 × 12' }, { name: 'رفرفة جانبية', detail: '3 × 15' } ] },
     { emoji: '🔥', color: k.warning, title: 'كارديو HIIT', level: 'كل المستويات', duration: '25 د', focus: 'حرق الدهون', met: 9, exercises: [
       { name: 'جري', detail: '5 د' }, { name: 'دراجة', detail: '8 د' }, { name: 'فترات HIIT', detail: '6 × دقيقة' }, { name: 'مشي (تهدئة)', detail: '5 د' } ] },
-    { emoji: '⚡', color: '#7c3aed', title: 'بناء العضلات', level: 'متقدم', duration: '60 د', focus: 'تضخيم', met: 6, exercises: [
+    { emoji: '⚡', color: CATEGORIES.musculation, title: 'بناء العضلات', level: 'متقدم', duration: '60 د', focus: 'تضخيم', met: 6, exercises: [
       { name: 'رفعة ميتة', detail: '4 × 6' }, { name: 'سكوات', detail: '4 × 8' }, { name: 'بنش برس', detail: '4 × 8' }, { name: 'عقلة', detail: '4 × أقصى' }, { name: 'تجديف بار', detail: '4 × 10' } ] },
     { emoji: '🧘', color: k.info, title: 'البطن والثبات', level: 'كل المستويات', duration: '20 د', focus: 'عضلات الcore', met: 4.5, exercises: [
       { name: 'بلانك', detail: '3 × 45ث' }, { name: 'كرنش', detail: '3 × 20' }, { name: 'التواء روسي', detail: '3 × 30' }, { name: 'رفع الركبتين معلقًا', detail: '3 × 12' } ] },
