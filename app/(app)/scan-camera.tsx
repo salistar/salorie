@@ -124,7 +124,7 @@ export default function ScanCameraScreen() {
         <Text style={styles.permissionTitle}>{t.accessTitle}</Text>
         <Text style={styles.permissionText}>{t.accessText}</Text>
         <TouchableOpacity style={styles.permissionBtn} onPress={requestPermission} accessibilityRole="button" accessibilityLabel={t.grant}><Text style={styles.permissionBtnText}>{t.grant}</Text></TouchableOpacity>
-        <TouchableOpacity style={[styles.permissionBtn, { backgroundColor: '#334155' }]} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel={t.cancel}><Text style={styles.permissionBtnText}>{t.cancel}</Text></TouchableOpacity>
+        <TouchableOpacity style={[styles.permissionBtn, { backgroundColor: k.surfaceRaised }]} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel={t.cancel}><Text style={styles.permissionBtnText}>{t.cancel}</Text></TouchableOpacity>
       </View>
     );
   }
@@ -357,7 +357,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   loadingText: { color: k.onAccent, fontSize: 14 },
   permissionWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 16, backgroundColor: '#000' },
   permissionTitle: { color: k.onAccent, fontSize: 22, fontWeight: '800', textAlign: 'center' },
-  permissionText: { color: '#ccc', fontSize: 14, textAlign: 'center', marginBottom: 12 },
+  permissionText: { color: k.textMuted, fontSize: 14, textAlign: 'center', marginBottom: 12 },
   permissionBtn: { backgroundColor: k.accent, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 16, minWidth: 200, alignItems: 'center' },
   permissionBtnText: { color: k.onAccent, fontSize: 15, fontWeight: '700' },
 });
