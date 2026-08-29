@@ -2,8 +2,8 @@
 // Chemin principal : backend objectif-aware (/menu/analyze, llama-3.2 + scoreFood)
 // qui renvoie des plats SCORÉS (verdict + raisons). Gemini Vision reste en FALLBACK
 // uniquement si l'endpoint backend échoue ou ne lit aucun plat.
-import React, { useEffect, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -30,7 +30,6 @@ import { Card } from '../../components/ui';
 import { radius, spacing, elevation } from '../../constants/theme';
 import { useScreenGate } from '../../components/FeatureGate';
 
-const GREEN = '#2E8B57';
 
 const TXT: any = {
   en: { title: 'Restaurant mode', sub: 'Snap the menu → the best picks for your goal', menu_photo: 'Menu photo', gallery: 'Gallery', loading: 'Reading the menu…', hint: '🍽️ Tip: frame the menu well, text readable.', fail: 'Analysis failed', error: 'error', forYourGoal: 'For your goal', noDishes: "Couldn't read any dish from this menu.", great: 'Great pick', ok: 'Decent', avoid: 'Avoid', kcal: 'kcal', fitsBudget: 'fits your {n} kcal left', overBudget: 'over by {n} kcal', budgetDone: "you're already at your calorie limit" },
@@ -43,14 +42,17 @@ interface Reco { name: string; kcal: number; protein: number; carbs: number; fat
 
 export default function RestaurantModeScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;
@@ -204,7 +206,10 @@ export default function RestaurantModeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F4F7F9' },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
@@ -212,8 +217,8 @@ const styles = StyleSheet.create({
   sub: { fontSize: 14, color: '#64748B', lineHeight: 20, marginBottom: 20 },
   btnRow: { flexDirection: 'row', gap: 12, marginBottom: 18 },
   btn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 16 },
-  btnPrimary: { backgroundColor: GREEN }, btnPrimaryTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
-  btnGhost: { backgroundColor: '#EAF4EE' }, btnGhostTxt: { color: GREEN, fontWeight: '800', fontSize: 14 },
+  btnPrimary: { backgroundColor: k.accent }, btnPrimaryTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  btnGhost: { backgroundColor: '#EAF4EE' }, btnGhostTxt: { color: k.accent, fontWeight: '800', fontSize: 14 },
   preview: { width: '100%', height: 200, borderRadius: 18, marginBottom: 16 },
   center: { alignItems: 'center', paddingVertical: 24 }, loadingTxt: { color: '#64748B', marginTop: 10, fontWeight: '600' },
   card: { backgroundColor: '#fff', borderRadius: 18, padding: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },

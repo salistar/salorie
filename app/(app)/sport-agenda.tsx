@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -22,7 +22,6 @@ import { getActiveRaces } from '../../lib/racesApi';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 
-const GREEN = '#2E8B57';
 
 const TXT: any = {
   en: { title: 'Sport agenda', sub: 'Plan your workouts and see upcoming virtual races.', plan: 'Plan a workout', what: 'Workout (e.g. Run 5 km)', when: 'Date (YYYY-MM-DD)', add: 'Add', planned: 'Planned workouts', races: 'Upcoming virtual races', empty: 'Nothing planned yet.', km: 'km', logIt: 'Log a workout now' },
@@ -32,15 +31,18 @@ const TXT: any = {
 
 export default function SportAgenda() {
   const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;
@@ -137,7 +139,9 @@ export default function SportAgenda() {
   );
 }
 
-const s = StyleSheet.create({
+// Fabrique themee : cette feuille lisait des jetons alors qu elle etait
+// evaluee UNE FOIS a l importation.
+const makeS = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1 },
   body: { padding: 18, paddingBottom: 40 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -148,7 +152,7 @@ const s = StyleSheet.create({
   heroSub: { color: 'rgba(255,255,255,0.85)', fontSize: 12.5, marginTop: 4, lineHeight: 17 },
   secHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 22, marginBottom: 10 },
   secTitle: { fontSize: 15.5, fontWeight: '800' },
-  addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: GREEN, borderRadius: 12, paddingVertical: 12, marginTop: 4 },
+  addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: k.accent, borderRadius: 12, paddingVertical: 12, marginTop: 4 },
   addTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 14, padding: 13, marginBottom: 8 },
 });

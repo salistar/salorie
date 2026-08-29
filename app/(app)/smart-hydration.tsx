@@ -1,6 +1,6 @@
 // Hydratation intelligente — objectif d'eau calculé selon le poids + l'activité.
-import React, { useEffect, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   Image,
   View,
@@ -21,7 +21,6 @@ import { useTheme } from '../../lib/ThemeContext';
 import { useScreenGate } from '../../components/FeatureGate';
 import { useFeature } from '../../lib/FlagsContext';
 
-const GREEN = '#2E8B57';
 
 const TXT: any = {
   en: { title: 'Smart hydration', sub: 'Water goal tailored to your weight and activity.', hero: 'Recommended goal', glasses: 'glasses', act_label: 'Activity level', sedentary: 'Sedentary', moderate: 'Moderate', intense: 'Intense', hot: 'Hot weather / heavy sweating', calc: 'Calculation', act: 'activity', heat: 'heat' },
@@ -31,6 +30,7 @@ const TXT: any = {
 
 export default function SmartHydrationScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('smart-hydration');
   // Seuils paramétrables sans redéploiement (admin web → flag « smart-hydration » → params JSON).
   // Défauts = valeurs actuelles → aucun changement de comportement tant que rien n'est réglé.
@@ -42,9 +42,11 @@ export default function SmartHydrationScreen() {
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;
@@ -114,7 +116,10 @@ export default function SmartHydrationScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F4F7F9' },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
@@ -128,7 +133,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
   optRow: { flexDirection: 'row', gap: 10, marginBottom: 18 },
   opt: { flex: 1, backgroundColor: '#fff', borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
-  optActive: { backgroundColor: GREEN },
+  optActive: { backgroundColor: k.accent },
   optTxt: { fontSize: 14, fontWeight: '700', color: '#64748B' },
   hotRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 16 },
   hotActive: { backgroundColor: '#F59E0B' },

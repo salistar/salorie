@@ -1,6 +1,6 @@
 // Microbiote — questionnaire santé intestinale → recommandations IA. Analyse labo = à venir.
-import React, { useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   Image,
   View,
@@ -21,7 +21,6 @@ import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign } from '../../lib/rtl';
 import { type } from '../../constants/theme';
 
-const GREEN = '#2E8B57';
 const AI_LANG: any = { en: 'English', fr: 'French', ar: 'Arabic' };
 
 const TXT: any = {
@@ -40,12 +39,15 @@ const Q = [
 
 export default function MicrobiomeScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('microbiome');
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;
@@ -109,7 +111,10 @@ export default function MicrobiomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F4F7F9' },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
@@ -120,7 +125,7 @@ const styles = StyleSheet.create({
   opts: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   opt: { backgroundColor: '#fff', borderRadius: 12, paddingVertical: 9, paddingHorizontal: 14 },
   optTxt: { fontSize: 13, fontWeight: '700', color: '#64748B' },
-  btn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GREEN, borderRadius: 14, paddingVertical: 15, marginTop: 8 },
+  btn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 15, marginTop: 8 },
   btnTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
   card: { backgroundColor: '#fff', borderRadius: 18, padding: 18, marginTop: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   cardTxt: { fontSize: 14.5, color: '#1F2937', lineHeight: 22 },

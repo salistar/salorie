@@ -1,8 +1,8 @@
 // Comptage de répétitions ON-DEVICE via l'accéléromètre (expo-sensors).
 // Modèle = détection de pics sur la magnitude d'accélération (machine à états
 // haut/bas + anti-rebond temporel). 100% local, hors-ligne, aucune caméra.
-import React, { useEffect, useRef, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -19,7 +19,6 @@ import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
 import { useScreenGate } from '../../components/FeatureGate';
 
-const GREEN = '#2E8B57';
 // Seuils (en g). Un rep = la magnitude passe au-dessus de HIGH puis revient sous LOW.
 const HIGH = 1.28;
 const LOW = 0.82;
@@ -78,14 +77,17 @@ const TXT: any = {
 
 export default function RepCounterScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('rep-counter');
   const { language } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const text = tok.text;
@@ -195,19 +197,22 @@ export default function RepCounterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F8FAFC' },
   body: { padding: 24, alignItems: 'center', paddingBottom: 60 },
   title: { fontSize: 22, fontWeight: '800', color: '#0F172A', marginTop: 8 },
   sub: { fontSize: 13, color: '#64748B', textAlign: 'center', marginTop: 8 },
   counterWrap: { marginTop: 48, alignItems: 'center' },
-  count: { fontSize: 96, fontWeight: '900', color: GREEN, lineHeight: 100 },
+  count: { fontSize: 96, fontWeight: '900', color: k.accent, lineHeight: 100 },
   countLabel: { fontSize: 16, color: '#94A3B8', marginTop: -6 },
   magRow: { flexDirection: 'row', alignItems: 'center', marginTop: 24 },
   magTxt: { fontSize: 13, color: '#64748B', marginStart: 6 },
   actions: { flexDirection: 'row', gap: 14, marginTop: 48 },
   btn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 26, borderRadius: 16, gap: 8 },
-  primary: { backgroundColor: GREEN },
+  primary: { backgroundColor: k.accent },
   secondary: { backgroundColor: '#E2E8F0' },
   btnTxt: { color: '#fff', fontWeight: '700', fontSize: 16 },
   btnTxtDark: { color: '#475569', fontWeight: '700', fontSize: 16 },

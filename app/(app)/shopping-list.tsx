@@ -4,9 +4,9 @@
 // supermarché, c'est-à-dire là où le réseau ne passe pas. La synchronisation
 // vient par-dessus, jamais à la place — le détail du raisonnement est dans
 // `lib/listeCourses.ts`.
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   Image,
   View,
@@ -35,7 +35,6 @@ import {
   visibles,
 } from '../../lib/listeCourses';
 
-const GREEN = '#2E8B57';
 type Item = ArticleCourses;
 
 const TXT: any = {
@@ -46,14 +45,17 @@ const TXT: any = {
 
 export default function ShoppingListScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('shopping-list');
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;
@@ -178,7 +180,10 @@ export default function ShoppingListScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F4F7F9' },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
@@ -188,10 +193,10 @@ const styles = StyleSheet.create({
   etatTxt: { fontSize: 12.5 },
   addRow: { flexDirection: 'row', gap: 10, marginBottom: 18 },
   input: { flex: 1, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: '#0F172A', borderWidth: 1.5, borderColor: '#E2E8F0' },
-  addBtn: { width: 52, height: 52, borderRadius: 14, backgroundColor: GREEN, alignItems: 'center', justifyContent: 'center' },
+  addBtn: { width: 52, height: 52, borderRadius: 14, backgroundColor: k.accent, alignItems: 'center', justifyContent: 'center' },
   item: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 10 },
   check: { width: 26, height: 26, borderRadius: 8, borderWidth: 2, borderColor: '#CBD5E1', alignItems: 'center', justifyContent: 'center' },
-  checkDone: { backgroundColor: GREEN, borderColor: GREEN },
+  checkDone: { backgroundColor: k.accent, borderColor: k.accent },
   itemName: { flex: 1, fontSize: 15, fontWeight: '600', color: '#0F172A' },
   itemDone: { textDecorationLine: 'line-through', color: '#94A3B8' },
   clearBtn: { marginTop: 8, alignItems: 'center', paddingVertical: 12 },

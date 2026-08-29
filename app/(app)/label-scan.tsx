@@ -1,8 +1,8 @@
 // OCR d'étiquettes nutritionnelles ON-DEVICE (MLKit Text Recognition).
 // Photo (caméra/galerie) → reconnaissance de texte locale → parsing kcal/macros.
 // 100% on-device, hors-ligne. Gestion d'erreur robuste (jamais de crash).
-import React, { useState, useRef, useEffect } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -38,7 +38,6 @@ const OBJ_VERDICT_TXT: Record<string, Record<FoodScore['verdict'], string>> = {
   ar: { great: 'مثالي لهدفك', ok: 'مقبول لهدفك', avoid: 'تجنّبه لهدفك' },
 };
 
-const GREEN = '#2E8B57';
 
 const TXT: any = {
   en: { title: 'Scan a label', sub: 'Snap the nutrition facts table — 100% on-device text recognition (MLKit).', camera: 'Camera', gallery: 'Gallery', detected: 'Detected values', calories: 'Calories', protein: 'Protein', carbs: 'Carbs', fat: 'Fat', recognized: 'Recognized text', note: 'Model: MLKit Text Recognition (on-device, offline).', permDenied: 'Permission denied', ocrUnavailable: 'OCR unavailable', why: 'Why', verdictScore: 'goal fit' },
@@ -90,6 +89,7 @@ function parseNutrition(text: string): Parsed {
 
 export default function LabelScanScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -283,7 +283,10 @@ export default function LabelScanScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F8FAFC' },
   body: { padding: 20, paddingBottom: 40 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
@@ -291,7 +294,7 @@ const styles = StyleSheet.create({
   sub: { fontSize: 13, color: '#64748B', marginTop: 8 },
   actions: { flexDirection: 'row', gap: 12, marginTop: 20 },
   btn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14, gap: 8 },
-  primary: { backgroundColor: GREEN },
+  primary: { backgroundColor: k.accent },
   secondary: { backgroundColor: '#E2E8F0' },
   btnTxt: { color: '#fff', fontWeight: '700', fontSize: 15 },
   btnTxtDark: { color: '#475569', fontWeight: '700', fontSize: 15 },
@@ -299,7 +302,7 @@ const styles = StyleSheet.create({
   warn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FEF3C7', borderRadius: 12, padding: 12, marginTop: 16 },
   warnTxt: { fontSize: 13, color: '#92400E', flex: 1 },
   parsedCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginTop: 18, borderWidth: 1, borderColor: '#D1FAE5' },
-  parsedTitle: { fontSize: 14, fontWeight: '700', color: GREEN, marginBottom: 8 },
+  parsedTitle: { fontSize: 14, fontWeight: '700', color: k.accent, marginBottom: 8 },
   parsedRow: { fontSize: 14, color: '#334155', paddingVertical: 3 },
   bold: { fontWeight: '800', color: '#0F172A' },
   healthBadge: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, borderWidth: 1.5, padding: 12, marginTop: 14 },

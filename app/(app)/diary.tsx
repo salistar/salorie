@@ -1,10 +1,10 @@
 // DIARY — journal alimentaire chronologique par repas (colonne vertébrale des
 // leaders MFP/Yazio) : 4 slots (petit-déj/déjeuner/snack/dîner) avec totaux par
 // slot, suppression, « copier hier », navigation par date. Trilingue + dark + RTL.
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { flipAuto } from '../../lib/rtl';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import { numLocaleFor } from '../../lib/format';
 import {
   View,
@@ -24,7 +24,6 @@ import { router } from 'expo-router';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 
-const GREEN = '#2E8B57';
 
 const TXT: any = {
   en: { title: 'Food diary', today: 'Today', breakfast: 'Breakfast', lunch: 'Lunch', snack: 'Snacks', dinner: 'Dinner', other: 'Water & activity', empty: 'Nothing logged', copy: 'Copy yesterday', copied: 'meals copied!', total: 'Day total', kcal: 'kcal', add: 'Add', delTitle: 'Delete this entry?', cancel: 'Cancel', del: 'Delete' },
@@ -51,15 +50,18 @@ function slotOf(l: NutritionLog): string {
 
 export default function Diary() {
   const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;
@@ -227,7 +229,9 @@ export default function Diary() {
   );
 }
 
-const s = StyleSheet.create({
+// Fabrique thémée : cette feuille lisait des jetons alors qu elle etait
+// evaluee UNE FOIS a l importation, avant que le theme n existe.
+const makeS = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1 },
   body: { padding: 18, paddingBottom: 40 },
   dateRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -237,12 +241,12 @@ const s = StyleSheet.create({
   totalTxt: { fontSize: 14.5, fontWeight: '800', flex: 1 },
   macroTxt: { fontSize: 12, fontWeight: '700' },
   copyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingVertical: 10 },
-  copyTxt: { color: GREEN, fontWeight: '800', fontSize: 13 },
+  copyTxt: { color: k.accent, fontWeight: '800', fontSize: 13 },
   slotCard: { borderRadius: 18, padding: 14, marginBottom: 12 },
   slotHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   slotTitle: { fontSize: 15, fontWeight: '800' },
   slotKcal: { fontSize: 12.5, fontWeight: '800', marginEnd: 8 },
-  addBtn: { backgroundColor: GREEN, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  addBtn: { backgroundColor: k.accent, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   itemRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(148,163,184,0.25)' },
   gradeBadge: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   gradeTxt: { color: '#fff', fontSize: 14, fontWeight: '900' },

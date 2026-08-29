@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -23,7 +23,6 @@ import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
 import { useScreenGate } from '../../components/FeatureGate';
 
-const GREEN = '#2E8B57';
 type Phase = 'idle' | 'recording' | 'analyzing' | 'preview' | 'saved';
 
 const TXT: any = {
@@ -58,14 +57,17 @@ const TXT: any = {
 
 export default function VoiceLog() {
   const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const cardBg = tok.surface;
@@ -182,28 +184,30 @@ export default function VoiceLog() {
   );
 }
 
-const s = StyleSheet.create({
+// Fabrique themee : cette feuille lisait des jetons alors qu elle etait
+// evaluee UNE FOIS a l importation.
+const makeS = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#f3f6f4' },
   body: { padding: 18, paddingBottom: 90 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 26, fontWeight: '800', color: '#1B2A33' },
   sub: { fontSize: 13, color: '#667085', marginTop: 6, lineHeight: 19 },
   micWrap: { alignItems: 'center', marginTop: 50 },
-  micBtn: { width: 130, height: 130, borderRadius: 65, backgroundColor: GREEN, alignItems: 'center', justifyContent: 'center', elevation: 4, shadowColor: GREEN, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } },
+  micBtn: { width: 130, height: 130, borderRadius: 65, backgroundColor: k.accent, alignItems: 'center', justifyContent: 'center', elevation: 4, shadowColor: k.accent, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } },
   micBtnRec: { backgroundColor: '#e11d48' },
   micLabel: { marginTop: 20, fontSize: 14, color: '#667085', fontWeight: '600' },
   err: { color: '#e11d48', fontSize: 13, marginTop: 18, textAlign: 'center' },
   card: { backgroundColor: '#fff', borderRadius: 20, padding: 22, marginTop: 28, borderWidth: 1, borderColor: '#e6ece8' },
   mealName: { fontSize: 20, fontWeight: '800', color: '#1B2A33', textAlign: 'center' },
-  kcal: { fontSize: 40, fontWeight: '900', color: GREEN, textAlign: 'center', marginTop: 4 },
+  kcal: { fontSize: 40, fontWeight: '900', color: k.accent, textAlign: 'center', marginTop: 4 },
   macros: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 18 },
   macro: { alignItems: 'center' },
   mVal: { fontSize: 18, fontWeight: '800', color: '#1B2A33' },
   mLbl: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
   actions: { flexDirection: 'row', gap: 10, marginTop: 22 },
-  retry: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 14, borderWidth: 1.5, borderColor: GREEN },
-  retryTxt: { color: GREEN, fontWeight: '700', fontSize: 14.5, flexShrink: 1 },
-  add: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, flex: 1, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 14, backgroundColor: GREEN },
+  retry: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 14, borderWidth: 1.5, borderColor: k.accent },
+  retryTxt: { color: k.accent, fontWeight: '700', fontSize: 14.5, flexShrink: 1 },
+  add: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, flex: 1, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 14, backgroundColor: k.accent },
   addTxt: { color: '#fff', fontWeight: '800', fontSize: 14.5, flexShrink: 1 },
   savedTxt: { fontSize: 16, fontWeight: '700', color: '#1B2A33', textAlign: 'center', marginVertical: 16 },
 });

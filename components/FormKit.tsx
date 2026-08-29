@@ -4,7 +4,7 @@
 // Tous les composants sont theme-aware (dark) et RTL-ready.
 // v2 : design enrichi (focus vert, boutons +/- ronds teintés, chips à coche,
 // CTA dégradé, FormHeader icône+titre) — API 100% rétro-compatible.
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { Minus, Plus, Check } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,16 +15,15 @@ import {
   BORDURE, LIBELLE, SAISIE, SAISIE_NOMBRE, ERREUR, ESPACE_ENTRE_CHAMPS, haloFocus,
 } from '../constants/formTokens';
 
-import { useTokens } from '../constants/tokens';
-const GREEN = '#2E8B57';
-const GREEN_DARK = '#246B43';
+import { useTokens, type Tokens } from '../constants/tokens';
 
 export function useFormTheme() {
   const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const { resolved } = useTheme();
   const { isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
   // L accent vient du theme : le couple clair/sombre fige n en connaissait que deux.
   const accent = k.accent;
@@ -44,6 +43,8 @@ export function useFormTheme() {
 
 /** En-tête d'écran de formulaire : pastille icône + titre + sous-titre. */
 export function FormHeader({ icon: Icon, title, subtitle }: any) {
+  const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const th = useFormTheme();
   return (
     <View style={{ marginBottom: 18 }}>
@@ -62,18 +63,24 @@ export function FormHeader({ icon: Icon, title, subtitle }: any) {
 
 /** Carte qui groupe des champs liés. */
 export function FormCard({ children, style }: any) {
+  const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const th = useFormTheme();
   return <View style={[s.card, { backgroundColor: th.card, borderColor: th.border }, th.isDark ? null : s.cardShadow, style]}>{children}</View>;
 }
 
 /** Label au-dessus du champ. */
 export function FormLabel({ children }: any) {
+  const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const th = useFormTheme();
   return <Text style={[s.label, { color: th.sub }, th.align]}>{children}</Text>;
 }
 
 /** Champ texte : label au-dessus + input thémé + focus vert + icône optionnelle + erreur inline. */
 export function FormInput({ label, error, style, icon: Icon, ...props }: any) {
+  const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const th = useFormTheme();
   const [focus, setFocus] = useState(false);
   const bColor = error ? '#e11d48' : focus ? th.accent : th.border;
@@ -101,6 +108,8 @@ export function FormInput({ label, error, style, icon: Icon, ...props }: any) {
 
 /** Erreur inline (sous le champ). */
 export function InlineError({ error }: { error?: string }) {
+  const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   if (!error) return null;
   // L'erreur n'était que rouge : invisible pour les lecteurs d'écran ET pour les
   // daltoniens si la couleur est le seul signal. Live region = annonce à l'apparition.
@@ -109,6 +118,8 @@ export function InlineError({ error }: { error?: string }) {
 
 /** Stepper numérique (+/-) avec saisie directe — boutons ronds teintés. */
 export function Stepper({ label, value, onChange, step = 1, min = 0, max = 100000, unit, error }: any) {
+  const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const th = useFormTheme();
   const num = Number(value) || 0;
   const set = (v: number) => onChange(String(Math.max(min, Math.min(max, v))));
@@ -161,6 +172,8 @@ export function Stepper({ label, value, onChange, step = 1, min = 0, max = 10000
 
 /** Groupe de chips (choix unique). options: [{value,label}] — coche sur l'actif. */
 export function ChipGroup({ label, options, value, onChange }: any) {
+  const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const th = useFormTheme();
   return (
     <View style={{ marginBottom: ESPACE_ENTRE_CHAMPS }}>
@@ -192,6 +205,8 @@ export function ChipGroup({ label, options, value, onChange }: any) {
 
 /** CTA unique : vert dégradé, plein, en bas d'écran. */
 export function SubmitBar({ label, onPress, disabled, loading }: any) {
+  const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const th = useFormTheme();
   const off = disabled || loading;
   return (
@@ -208,7 +223,7 @@ export function SubmitBar({ label, onPress, disabled, loading }: any) {
         accessibilityState={{ disabled: !!off, busy: !!loading }}
       >
         <LinearGradient
-          colors={off ? ['#CBD5E1', '#CBD5E1'] : [th.accent, GREEN_DARK]}
+          colors={off ? ['#CBD5E1', '#CBD5E1'] : [th.accent, k.accentStrong]}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={[s.submit, !off && s.submitShadow]}
         >
@@ -219,7 +234,9 @@ export function SubmitBar({ label, onPress, disabled, loading }: any) {
   );
 }
 
-const s = StyleSheet.create({
+// Fabrique themee : cette feuille lisait des jetons alors qu elle etait
+// evaluee UNE FOIS a l importation, avant que le theme n existe.
+const makeS = (k: Tokens) => StyleSheet.create({
   headIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   headTitle: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5, flex: 1 },
   headSub: { fontSize: 13.5, marginTop: 8, lineHeight: 19 },
@@ -230,7 +247,7 @@ const s = StyleSheet.create({
   // plancher d'accessibilite Android de 48. Les champs etaient plus petits que
   // ceux de <Input> (54) dans les ecrans qui melangent les deux.
   inputWrap: { borderRadius: RAYON_CHAMP, borderWidth: BORDURE, paddingHorizontal: 14, alignItems: 'center', minHeight: CHAMP_HAUTEUR },
-  focusGlow: { ...haloFocus(GREEN) },
+  focusGlow: { ...haloFocus(k.accent) },
   input: { ...SAISIE, flex: 1 },
   error: { color: '#e11d48', ...ERREUR },
   stepperWrap: { flexDirection: 'row', alignItems: 'center', borderRadius: RAYON_CHAMP, borderWidth: BORDURE, padding: 6, minHeight: CHAMP_HAUTEUR },
@@ -240,11 +257,11 @@ const s = StyleSheet.create({
   unit: { fontSize: 13, fontWeight: '800' },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { flexDirection: 'row', alignItems: 'center', borderRadius: RAYON_PUCE, borderWidth: BORDURE, paddingHorizontal: 16, paddingVertical: 10, minHeight: CHAMP_HAUTEUR_COMPACTE },
-  chipActiveShadow: { shadowColor: GREEN, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
+  chipActiveShadow: { shadowColor: k.accent, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
   chipTxt: { fontSize: 13.5, fontWeight: '800' },
   footer: { padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20 },
   submitTouch: { borderRadius: 18 },
   submit: { height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  submitShadow: { shadowColor: GREEN, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.32, shadowRadius: 12, elevation: 7 },
+  submitShadow: { shadowColor: k.accent, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.32, shadowRadius: 12, elevation: 7 },
   submitTxt: { fontSize: 17, fontWeight: '800', color: '#fff', letterSpacing: 0.2 },
 });

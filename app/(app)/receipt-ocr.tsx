@@ -1,7 +1,7 @@
 // OCR ticket de caisse — photo → lignes structurées (backend llama-3.2, objectif-aware)
 // EN PRIORITÉ ; repli sur MLKit OCR on-device + extraction Gemini si l'endpoint échoue.
-import React, { useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -30,7 +30,6 @@ import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
 import { useScreenGate } from '../../components/FeatureGate';
 
-const GREEN = '#2E8B57';
 
 // Verdict objectif par ligne (couleur + libellé court i18n).
 const VERDICT_COLOR: Record<FoodScore['verdict'], string> = { great: '#16A34A', ok: '#D97706', avoid: '#DC2626' };
@@ -47,13 +46,16 @@ type ReceiptData = { merchant: string | null; date: string | null; total: number
 
 export default function ReceiptOcrScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;
@@ -218,7 +220,10 @@ export default function ReceiptOcrScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F4F7F9' },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
@@ -226,8 +231,8 @@ const styles = StyleSheet.create({
   sub: { fontSize: 14, color: '#64748B', lineHeight: 20, marginBottom: 20 },
   btnRow: { flexDirection: 'row', gap: 12, marginBottom: 18 },
   btn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 16 },
-  btnPrimary: { backgroundColor: GREEN }, btnPrimaryTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
-  btnGhost: { backgroundColor: '#EAF4EE' }, btnGhostTxt: { color: GREEN, fontWeight: '800', fontSize: 15 },
+  btnPrimary: { backgroundColor: k.accent }, btnPrimaryTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  btnGhost: { backgroundColor: '#EAF4EE' }, btnGhostTxt: { color: k.accent, fontWeight: '800', fontSize: 15 },
   preview: { width: '100%', height: 200, borderRadius: 18, marginBottom: 16 },
   center: { alignItems: 'center', paddingVertical: 24 }, loadingTxt: { color: '#64748B', marginTop: 10, fontWeight: '600' },
   card: { backgroundColor: '#fff', borderRadius: 18, padding: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },

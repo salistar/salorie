@@ -2,8 +2,8 @@
 // récapitulatif santé 30 jours (profil, conditions médicales, moyennes
 // nutrition, poids, glycémie/tension). PDF via expo-print si dispo, sinon
 // fallback texte via Share. i18n en/fr/ar, dark, RTL, retour.
-import React, { useEffect, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   Image,
   View,
@@ -33,7 +33,6 @@ import {
   ReportLabels,
 } from '../../lib/healthExport';
 
-const GREEN = '#2E8B57';
 
 const TXT: any = {
   en: {
@@ -179,15 +178,18 @@ const TXT: any = {
 
 export default function HealthExportScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('health-export');
   const { user } = useUser();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;
@@ -319,7 +321,10 @@ export default function HealthExportScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F4F7F9' },
   body: { padding: 20, paddingBottom: 100 },
   cover: { width: '100%', height: 110, borderRadius: 18, marginBottom: 14 },
@@ -352,7 +357,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: GREEN,
+    backgroundColor: k.accent,
     borderRadius: 14,
     paddingVertical: 15,
     marginTop: 16,

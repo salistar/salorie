@@ -39,7 +39,6 @@ import {
   type ScoredRecipe,
 } from '../../lib/localRecipes';
 
-const GREEN = '#2E8B57';
 
 const TXT: any = {
   en: {
@@ -92,7 +91,9 @@ export default function HealthyRecipesScreen() {
   const text = tok.text;
   const sub = tok.textMuted;
   const border = isDark ? 'rgba(255,255,255,0.08)' : '#EEF2F6';
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const chipBg = isDark ? '#1e293b' : '#EAF4EE';
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
   const rowDir: any = isRTL ? 'row-reverse' : 'row';
@@ -222,7 +223,7 @@ export default function HealthyRecipesScreen() {
                 ]}
                 activeOpacity={0.85}
               >
-                <Text style={[styles.filterTxt, { color: activeCat ? '#fff' : (isDark ? '#cbd5e1' : GREEN) }]}>
+                <Text style={[styles.filterTxt, { color: activeCat ? '#fff' : (isDark ? '#cbd5e1' : k.accent) }]}>
                   {label}
                 </Text>
               </TouchableOpacity>

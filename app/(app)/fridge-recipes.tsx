@@ -1,6 +1,6 @@
 // Photo du frigo → recettes (Gemini Vision). Identifie les ingrédients + propose des recettes.
-import React, { useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -26,7 +26,6 @@ import { rowDir, flipForRTL } from '../../lib/rtl';
 import { spacing } from '../../constants/theme';
 import { useScreenGate } from '../../components/FeatureGate';
 
-const GREEN = '#2E8B57';
 const PROMPTS: any = {
   en: "Here is a photo of a fridge or pantry. 1) List the food ingredients you see (short bullets). 2) Suggest 3 simple recipes that can be made with these ingredients, each with a name and an estimate of calories per serving. Answer in English, concise, clear format.",
   fr: "Voici une photo d'un frigo ou d'un placard. 1) Liste les ingrédients alimentaires que tu vois (puces courtes). 2) Propose 3 recettes simples réalisables avec ces ingrédients, chacune avec un nom et une estimation de calories par portion. Réponds en français, concis, format clair.",
@@ -41,6 +40,7 @@ const TXT: any = {
 
 export default function FridgeRecipesScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -50,7 +50,9 @@ export default function FridgeRecipesScreen() {
   const card = tok.surface;
   const text = tok.text;
   const sub = tok.textMuted;
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 
   const __gate = useScreenGate('fridge-recipes');
@@ -115,7 +117,10 @@ export default function FridgeRecipesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F4F7F9' },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
@@ -123,10 +128,10 @@ const styles = StyleSheet.create({
   sub: { fontSize: 14, color: '#64748B', lineHeight: 20, marginBottom: 20 },
   btnRow: { flexDirection: 'row', gap: 12, marginBottom: 18 },
   btn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: spacing.lg, minHeight: 52, borderRadius: 16 },
-  btnPrimary: { backgroundColor: GREEN },
+  btnPrimary: { backgroundColor: k.accent },
   btnPrimaryTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
   btnGhost: { backgroundColor: '#EAF4EE' },
-  btnGhostTxt: { color: GREEN, fontWeight: '800', fontSize: 15 },
+  btnGhostTxt: { color: k.accent, fontWeight: '800', fontSize: 15 },
   preview: { width: '100%', height: 200, borderRadius: 18, marginBottom: 16 },
   center: { alignItems: 'center', paddingVertical: 24 },
   loadingTxt: { color: '#64748B', marginTop: 10, fontWeight: '600' },

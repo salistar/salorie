@@ -20,7 +20,6 @@ import { emailToDocId, NutritionLog } from '../../lib/firebase';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 
-const GREEN = '#2E8B57';
 
 const TXT: any = {
   en: { title: 'Activity', sub: 'Your runs, races, workouts and steps.', empty: 'No activity yet. Start a run or a race!',
@@ -35,7 +34,7 @@ function iconFor(name: string) {
   const n = (name || '').toLowerCase();
   if (n.includes('pas') || n.includes('step') || n.includes('خطو')) return { Icon: Footprints, bg: '#EEF2FF', color: '#6366F1' };
   if (n.includes('race') || n.includes('course') || n.includes('سباق')) return { Icon: Trophy, bg: '#FEF3E0', color: '#F59E0B' };
-  if (n.includes('run') || n.includes('جري') || n.includes('gps')) return { Icon: Flag, bg: '#EAF4EE', color: GREEN };
+  if (n.includes('run') || n.includes('جري') || n.includes('gps')) return { Icon: Flag, bg: '#EAF4EE', color: '#2E8B57' }; // couleur de CATEGORIE, comme ses voisines : elle ne suit pas le theme
   if (n.includes('lift') || n.includes('muscu') || n.includes('workout') || n.includes('séance') || n.includes('تمرين')) return { Icon: Dumbbell, bg: '#F5F3FF', color: '#8B5CF6' };
   return { Icon: Flame, bg: '#FFF1F2', color: '#F43F5E' };
 }
@@ -48,9 +47,11 @@ export default function ActivityScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;

@@ -1,6 +1,6 @@
 // Import recette depuis une URL — récupère la page + extrait recette & nutrition (IA).
-import React, { useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   Image,
   View,
@@ -20,7 +20,6 @@ import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign } from '../../lib/rtl';
 import { useScreenGate } from '../../components/FeatureGate';
 
-const GREEN = '#2E8B57';
 const AI_LANG: any = { en: 'English', fr: 'French', ar: 'Arabic' };
 
 const TXT: any = {
@@ -31,11 +30,14 @@ const TXT: any = {
 
 export default function ImportRecipeScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;
@@ -91,13 +93,16 @@ export default function ImportRecipeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F4F7F9' },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
   title: { fontSize: 24, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
   sub: { fontSize: 14, color: '#64748B', marginBottom: 18, lineHeight: 20 },
-  btn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GREEN, borderRadius: 14, paddingVertical: 15 },
+  btn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 15 },
   btnTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
   loadingTxt: { color: '#64748B', textAlign: 'center', marginTop: 16, fontWeight: '600' },
   card: { backgroundColor: '#fff', borderRadius: 18, padding: 18, marginTop: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },

@@ -21,7 +21,6 @@ import PhotoStrip from '../../components/PhotoStrip';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 
-const GREEN = '#2E8B57';
 
 const TXT: any = {
   en: { title: 'Kitchen & meals', sub: 'All your food tools in one place.',
@@ -53,7 +52,9 @@ export default function KitchenScreen() {
   const text = tok.text;
   const sub = tok.textMuted;
   const border = isDark ? 'rgba(255,255,255,0.08)' : '#EEF2F6';
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 
   const SECTIONS = [

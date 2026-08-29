@@ -22,7 +22,6 @@ import { useScreenGate } from '../../components/FeatureGate';
 import { streakOf } from '../../lib/streaks';
 import { ymd } from '../../lib/format';
 
-const GREEN = '#2E8B57';
 // fmt (ymd) + streakOf sont partagés depuis lib/format + lib/streaks (dédup — #38).
 const fmt = ymd;
 
@@ -44,9 +43,11 @@ export default function StreaksScreen() {
   const prenom = String(user?.firstName || '').trim() || (language === 'ar' ? 'صديقك' : language === 'fr' ? 'Un ami' : 'A friend');
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;

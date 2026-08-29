@@ -9,7 +9,6 @@ import { useNutritionData } from '../hooks/useNutritionData';
 import { useTranslation } from '../lib/i18n';
 import { useTheme } from '../lib/ThemeContext';
 
-const GREEN = '#2E8B57';
 
 const TXT: any = {
   en: { caption: 'Daily health score', calories: 'Calories', protein: 'Protein', hydration: 'Hydration', excellent: 'Excellent', good: 'Good', ongoing: 'Ongoing', start: 'Get started' },
@@ -25,9 +24,11 @@ export default function DailyHealthScore() {
   const { resolved } = useTheme();
   const tx = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const cardBg = tok.surface;
   const txtColor = tok.text;
