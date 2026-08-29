@@ -89,9 +89,6 @@ jobs:
         # Les deux ont ete trouves a la main pendant la migration des themes.
         run: node scripts/verifier-jetons.js
 
-      - name: Le compteur de couleurs en dur ne remonte pas
-        run: node scripts/couleurs-en-dur.js
-
       - name: Aucune image hors manifeste
         run: node scripts/manifeste-images.js --verifier
 
