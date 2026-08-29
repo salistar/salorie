@@ -51,7 +51,7 @@ export default function KitchenScreen() {
   const card = tok.surface;
   const text = tok.text;
   const sub = tok.textMuted;
-  const border = isDark ? 'rgba(255,255,255,0.08)' : '#EEF2F6';
+  const border = isDark ? 'rgba(255,255,255,0.08)' : k.border;
   // L'accent vient du theme : le couple clair/sombre fige
   // n'ouvrait que deux des six palettes.
   const accent = k.accent;

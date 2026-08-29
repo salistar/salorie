@@ -14,7 +14,7 @@ import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colorLog, explain } from '../lib/LocalDataStore';
-import { useTokens, Tokens } from '../constants/tokens';
+import { useTokens, Tokens , CATEGORIES, pastilleCategorie } from '../constants/tokens';
 
 // Cle AsyncStorage : si Android tue l app pendant que la camera est ouverte,
 // on retrouve l URI ici au redemarrage et on relance automatiquement
@@ -182,7 +182,7 @@ export default function ActionMenu() {
       id: 'database',
       title: t('menu.food_database'),
       icon: <Database size={24} color={k.warning} />,
-      bg: '#FFF9EB',
+      bg: pastilleCategorie('aliments', k.isDark).bg,
       onPress: () => {
         hideActionMenu();
         router.push('/food-database' as any);
@@ -203,7 +203,7 @@ export default function ActionMenu() {
       id: 'voice',
       title: lx.voice,
       icon: <Mic size={24} color="#8B5CF6" />,
-      bg: '#F3EEFF',
+      bg: pastilleCategorie('musculation', k.isDark).bg,
       flag: 'voice-log',
       onPress: () => { hideActionMenu(); router.push('/voice-log' as any); },
     },
@@ -211,7 +211,7 @@ export default function ActionMenu() {
       id: 'weight',
       title: lx.weight,
       icon: <Scale size={24} color="#B45309" />,
-      bg: '#FEF3E2',
+      bg: pastilleCategorie('aliments', k.isDark).bg,
       onPress: () => { hideActionMenu(); router.push('/update-weight' as any); },
     },
   ];
@@ -244,20 +244,20 @@ export default function ActionMenu() {
                 <View style={[styles.iconBox, { backgroundColor: k.dangerSoft }]}>
                   <Camera size={24} color="#FF5C5C" />
                 </View>
-                <Text style={[styles.actionTitle, isDark && { color: '#f1f5f9' }]}>{t('menu.take_photo')}</Text>
+                <Text style={[styles.actionTitle, { color: k.text }]}>{t('menu.take_photo')}</Text>
                 <Text style={[styles.cardHint, isDark && { color: k.textFaint }]}>{lx.camHint}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.card, isDark && { backgroundColor: k.surface }]} activeOpacity={0.7} onPress={() => { setScanChoice(false); handleGalleryAction(); }}>
                 <View style={[styles.iconBox, { backgroundColor: k.infoSoft }]}>
                   <ImageIcon size={24} color={k.info} />
                 </View>
-                <Text style={[styles.actionTitle, isDark && { color: '#f1f5f9' }]}>{t('menu.gallery')}</Text>
+                <Text style={[styles.actionTitle, { color: k.text }]}>{t('menu.gallery')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.card, isDark && { backgroundColor: k.surface }]} activeOpacity={0.7} onPress={() => setScanChoice(false)}>
                 <View style={[styles.iconBox, { backgroundColor: k.surfaceSunken }]}>
                   <X size={24} color={k.textMuted} />
                 </View>
-                <Text style={[styles.actionTitle, isDark && { color: '#f1f5f9' }]}>{t('menu.cancel')}</Text>
+                <Text style={[styles.actionTitle, { color: k.text }]}>{t('menu.cancel')}</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -277,7 +277,7 @@ export default function ActionMenu() {
                       </View>
                     )}
                   </View>
-                  <Text style={[styles.actionTitle, isDark && { color: '#f1f5f9' }]}>{action.title}</Text>
+                  <Text style={[styles.actionTitle, { color: k.text }]}>{action.title}</Text>
                 </TouchableOpacity>
               ))}
             </View>

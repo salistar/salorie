@@ -312,7 +312,7 @@ export default function PreferencesScreen() {
                       backgroundColor: on
                         ? k.accent
                         : resolved === 'dark'
-                        ? '#1c2430'
+                        ? k.surface
                         : k.surfaceSunken,
                       borderColor: on ? k.accent : k.border,
                     },

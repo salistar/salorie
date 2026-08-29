@@ -5,7 +5,7 @@ import { NutritionLog } from '../lib/firebase';
 import { useTranslation } from '../lib/i18n';
 import { translate } from '../lib/translator';
 import { useTheme } from '../lib/ThemeContext';
-import { useTokens, Tokens } from '../constants/tokens';
+import { useTokens, Tokens , CATEGORIES, pastilleCategorie } from '../constants/tokens';
 
 interface ActivityListProps {
   logs: NutritionLog[];
@@ -85,21 +85,21 @@ function ActivityList({ logs, onAddPress }: ActivityListProps) {
     
     // Exercise Icons
     let Icon = Zap;
-    let bg = '#E0F2FE';
-    let color = '#0EA5E9';
+    let bg: string = pastilleCategorie('exercice', k.isDark).bg;
+    let color: string = CATEGORIES.exercice;
 
     if (log.name.toLowerCase().includes('run')) {
       Icon = Footprints;
-      bg = '#EEF2FF';
-      color = '#6366F1';
+      bg = pastilleCategorie('course', k.isDark).bg;
+      color = CATEGORIES.course;
     } else if (log.name.toLowerCase().includes('lifting')) {
       Icon = Weight;
-      bg = '#F5F3FF';
-      color = '#8B5CF6';
+      bg = pastilleCategorie('musculation', k.isDark).bg;
+      color = CATEGORIES.musculation;
     } else if (log.type === 'activity') {
       Icon = Flame;
-      bg = '#FFF1F2';
-      color = '#F43F5E';
+      bg = pastilleCategorie('activite', k.isDark).bg;
+      color = CATEGORIES.activite;
     }
 
     return <View style={[styles.iconBox, { backgroundColor: bg, width: 60, height: 60, borderRadius: 20 }]}><Icon size={28} color={color} /></View>;

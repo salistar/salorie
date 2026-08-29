@@ -231,7 +231,7 @@ export default function SignInScreen() {
   };
 
   // Couleurs dérivées du thème (l'écran était tout blanc en dur)
-  const cardBg = isDark ? colors.card : '#fff';
+  const cardBg = isDark ? colors.card : k.surface;
   const inputBg = k.border;
   const textPrimary = k.text;
   const textMuted = k.textMuted;

@@ -726,7 +726,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     flex: 2,
     // Fond sombre FIXE (indépendant du thème) pour garder le texte blanc lisible
     // en clair ET en sombre (le token gray[900] s'inverse en dark → illisible).
-    backgroundColor: '#0F172A',
+    backgroundColor: k.surface,
     borderRadius: radius.xl,
     padding: spacing.xl,
     minHeight: 120,
@@ -1055,7 +1055,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 20,
-    backgroundColor: '#F0F9FF',
+    backgroundColor: k.infoSoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,

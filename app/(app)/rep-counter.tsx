@@ -152,7 +152,7 @@ export default function RepCounterScreen() {
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={[styles.btn, styles.secondary, isDark && { backgroundColor: '#334155' }]} onPress={reset}>
+          <TouchableOpacity style={[styles.btn, styles.secondary, { backgroundColor: k.surfaceRaised }]} onPress={reset}>
             <RotateCcw size={20} color={isDark ? k.textFaint : k.textMuted} />
             <Text style={[styles.btnTxtDark, isDark && { color: k.textFaint }]}>{t.reset}</Text>
           </TouchableOpacity>

@@ -377,7 +377,7 @@ export default function NotificationsScreen() {
   );
 
   return (
-    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, isDark && { backgroundColor: '#000' }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: k.bg }]}>
       <ScreenTopBar />
       <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backButton, isDark && { backgroundColor: k.surfaceSunken }]} onPress={() => router.back()}>

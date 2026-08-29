@@ -124,7 +124,7 @@ export default function Rewards() {
               return (
                 <View key={r.id} style={[s.card, { backgroundColor: card, opacity: open ? 1 : 0.92 }]}>
                   <View style={[s.rewardTop, { flexDirection: rowDir(isRTL) }]}>
-                    <View style={[s.iconWrap, { backgroundColor: open ? 'rgba(46,139,87,0.12)' : (isDark ? '#0f1419' : k.surfaceSunken) }]}>
+                    <View style={[s.iconWrap, { backgroundColor: open ? 'rgba(46,139,87,0.12)' : (isDark ? k.surface : k.surfaceSunken) }]}>
                       <Icon size={22} color={open ? GREEN : lockTint} />
                     </View>
                     <View style={s.rewardInfo}>

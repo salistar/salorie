@@ -144,9 +144,9 @@ export default function MetabolicTwinScreen() {
 
         <Text style={[styles.label, { color: sub }, align]}>{t.ifIEat}</Text>
         <View style={[styles.stepper, { flexDirection: rowDir(isRTL) }]}>
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retirer')} style={[styles.stepBtn, isDark && { backgroundColor: '#1e3a2f' }]} onPress={() => setIntake((v) => Math.max(800, v - 100))}><Minus size={22} color={GREEN} /></TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retirer')} style={[styles.stepBtn, { backgroundColor: k.accentSoft }]} onPress={() => setIntake((v) => Math.max(800, v - 100))}><Minus size={22} color={GREEN} /></TouchableOpacity>
           <View style={styles.intakeWrap}><Text style={[styles.intake, { color: text }]}>{intake}</Text><Text style={[styles.unit, { color: sub }]}>kcal</Text></View>
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('ajouter')} style={[styles.stepBtn, isDark && { backgroundColor: '#1e3a2f' }]} onPress={() => setIntake((v) => Math.min(5000, v + 100))}><Plus size={22} color={GREEN} /></TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('ajouter')} style={[styles.stepBtn, { backgroundColor: k.accentSoft }]} onPress={() => setIntake((v) => Math.min(5000, v + 100))}><Plus size={22} color={GREEN} /></TouchableOpacity>
         </View>
 
         <View style={[styles.hero, { backgroundColor: GREEN }]}>

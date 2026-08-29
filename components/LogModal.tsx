@@ -218,7 +218,7 @@ export default function LogModal() {
                       </View>
 
                       <View style={[styles.macroInput, { backgroundColor: inputCardBg, borderColor: inputBorder }]}>
-                        <View style={[styles.macroIcon, { backgroundColor: '#FFF9EB' }]}>
+                        <View style={[styles.macroIcon, { backgroundColor: k.warningSoft }]}>
                           <Wheat size={18} color={k.warning} />
                         </View>
                         <TextInput

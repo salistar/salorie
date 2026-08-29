@@ -1185,7 +1185,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   lbCount: { fontSize: 13, fontWeight: '600' },
 
   poiCard: { width: 200, borderRadius: 16, overflow: 'hidden', ...elevation.sm },
-  poiImgWrap: { width: '100%', height: 112, backgroundColor: '#e5e7eb' },
+  poiImgWrap: { width: '100%', height: 112, backgroundColor: k.surfaceSunken },
   poiImg: { width: '100%', height: '100%' },
   poiLock: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(17,24,39,0.55)', alignItems: 'center', justifyContent: 'center' },
   poiLockTxt: { color: k.onAccent, fontSize: 12, fontWeight: '700', paddingHorizontal: 10, textAlign: 'center' },

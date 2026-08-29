@@ -331,7 +331,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   },
   infoBox: {
     flexDirection: 'row',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: k.successSoft,
     padding: 20,
     borderRadius: 24,
     borderWidth: 1,

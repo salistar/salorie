@@ -92,7 +92,7 @@ export default function FridgeRecipesScreen() {
           <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={() => run(true)} disabled={loading}>
             <Camera size={20} color={k.onAccent} /><Text style={styles.btnPrimaryTxt}>{t.camera}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.btn, styles.btnGhost, isDark && { backgroundColor: '#1e3a2f' }]} onPress={() => run(false)} disabled={loading}>
+          <TouchableOpacity style={[styles.btn, styles.btnGhost, { backgroundColor: k.accentSoft }]} onPress={() => run(false)} disabled={loading}>
             <ImageIcon size={20} color={accent} /><Text style={[styles.btnGhostTxt, isDark && { color: accent }]}>{t.gallery}</Text>
           </TouchableOpacity>
         </View>

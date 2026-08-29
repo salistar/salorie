@@ -88,4 +88,27 @@ export const CATEGORIES = {
   idees: '#10b981',
   contact: '#3b82f6',
   journaux: '#64748b',
+
+  // Ajoutees le 29/08/2026 : elles etaient recopiees a la main dans
+  // ActivityList et ActionMenu, avec leur fond pale en prime. Les nommer ici
+  // supprime la recopie sans les rendre thematiques — une seance de course
+  // garde son indigo en Rose comme en Dore.
+  exercice: '#0ea5e9',
+  course: '#6366f1',
+  musculation: '#8b5cf6',
+  activite: '#f43f5e',
+  aliments: '#f59e0b',
 } as const;
+
+/**
+ * La pastille d'une categorie : sa couleur, et son fond teinte.
+ *
+ * Le fond n'est PAS une seconde valeur a choisir — c'est la meme couleur, plus
+ * transparente. La convention etait deja ecrite plus haut — suffixe 15 en
+ * clair, 26 en sombre — mais chaque ecran la reappliquait a la main, souvent avec
+ * un pale different. Une fonction l'applique pour tous.
+ */
+export function pastilleCategorie(cle: keyof typeof CATEGORIES, sombre: boolean) {
+  const c = CATEGORIES[cle];
+  return { color: c, bg: c + (sombre ? '26' : '15') };
+}

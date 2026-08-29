@@ -178,7 +178,7 @@ export default function ProgressPhotosScreen() {
           <View style={styles.grid}>
             {photos.map((p, i) => (
               <View key={i} style={styles.cell}>
-                <Image source={{ uri: p.uri }} style={[styles.photo, isDark && { backgroundColor: '#334155' }]} resizeMode="cover" />
+                <Image source={{ uri: p.uri }} style={[styles.photo, { backgroundColor: k.surfaceRaised }]} resizeMode="cover" />
                 <Text style={[styles.date, { color: sub }]}>{p.date}</Text>
                 {/* Les photos d'AVANT la synchronisation ne partent que sur ce
                     geste explicite : elles ont ete prises quand l'ecran
@@ -225,6 +225,6 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   analysisSrc: { fontSize: 11, fontStyle: 'italic', marginTop: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   cell: { width: COL, marginBottom: 12 },
-  photo: { width: COL, height: COL * 1.3, borderRadius: 16, backgroundColor: '#E5E7EB' },
+  photo: { width: COL, height: COL * 1.3, borderRadius: 16, backgroundColor: k.surfaceSunken },
   date: { fontSize: 12, color: k.textMuted, fontWeight: '600', marginTop: 6, textAlign: 'center' },
 });

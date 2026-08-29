@@ -99,7 +99,7 @@ export default function CalorieBudgetScreen() {
   const card = tok.surface;
   const text = tok.text;
   const sub = tok.textMuted;
-  const border = isDark ? '#283241' : 'transparent';
+  const border = isDark ? k.border : 'transparent';
   const align: any = { textAlign: txtAlign(isRTL) };
 
   const { goals, consumed, logs } = useNutritionData(new Date().toISOString().split('T')[0]);
@@ -176,8 +176,8 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   lineIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   lineLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: k.text },
   lineValue: { fontSize: 15, fontWeight: '800' },
-  sep: { height: 1, backgroundColor: '#EEF2F7', marginHorizontal: 10 },
-  barTrack: { height: 12, borderRadius: 6, backgroundColor: '#E5E7EB', overflow: 'hidden' },
+  sep: { height: 1, backgroundColor: k.surfaceSunken, marginHorizontal: 10 },
+  barTrack: { height: 12, borderRadius: 6, backgroundColor: k.surfaceSunken, overflow: 'hidden' },
   barFill: { height: '100%', borderRadius: 6 },
   barLabel: { fontSize: 12, color: k.textFaint, marginTop: 6, textAlign: 'center' },
   howCard: { backgroundColor: k.surface, borderRadius: 20, padding: 18, marginTop: 22 },

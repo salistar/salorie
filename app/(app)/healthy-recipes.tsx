@@ -91,11 +91,11 @@ export default function HealthyRecipesScreen() {
   const card = tok.surface;
   const text = tok.text;
   const sub = tok.textMuted;
-  const border = isDark ? 'rgba(255,255,255,0.08)' : '#EEF2F6';
+  const border = isDark ? 'rgba(255,255,255,0.08)' : k.border;
   // L'accent vient du theme : le couple clair/sombre fige
   // n'ouvrait que deux des six palettes.
   const accent = k.accent;
-  const chipBg = isDark ? '#1e293b' : '#EAF4EE';
+  const chipBg = isDark ? '#1e293b' : k.accentSoft;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
   const rowDir: any = isRTL ? 'row-reverse' : 'row';
 

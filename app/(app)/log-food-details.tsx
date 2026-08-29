@@ -382,7 +382,7 @@ export default function LogFoodDetailsScreen() {
               entering={FadeInDown.delay(300).duration(600)}
               style={[styles.macroCard, { backgroundColor: k.surface, borderColor: cardBorder }]}
             >
-              <View style={[styles.macroIcon, { backgroundColor: '#FFF9EB' }]}>
+              <View style={[styles.macroIcon, { backgroundColor: k.warningSoft }]}>
                 <Wheat size={20} color={k.warning} />
               </View>
               <Text style={[styles.macroLabel, { color: textMuted }]}>{t('logfood.carbs')}</Text>

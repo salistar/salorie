@@ -361,7 +361,7 @@ export default function RaceLiveScreen() {
               const active = boardTab === tab;
               return (
                 <TouchableOpacity key={tab} activeOpacity={0.85} onPress={() => setBoardTab(tab)}
-                  style={[styles.tab, { backgroundColor: active ? k.accent : (isDark ? '#1f2937' : k.surfaceSunken) }]}>
+                  style={[styles.tab, { backgroundColor: active ? k.accent : (isDark ? k.surface : k.surfaceSunken) }]}>
                   <Text style={[styles.tabTxt, { color: active ? k.onAccent : sub }]} numberOfLines={1}>
                     {tab === 'players' ? t.indivBoard : t.teamBoard}
                   </Text>
@@ -577,7 +577,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   modeSegHint: { fontSize: 11, fontWeight: '600', marginTop: spacing.sm, marginHorizontal: spacing.xs, marginBottom: spacing.xs },
   sumOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center', padding: 28 },
   sumCard: { width: '100%', maxWidth: 380, borderRadius: 28, padding: 26, alignItems: 'center', gap: 6 },
-  sumIcon: { width: 76, height: 76, borderRadius: 38, backgroundColor: '#FEF3E0', alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  sumIcon: { width: 76, height: 76, borderRadius: 38, backgroundColor: k.warningSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
   sumTitle: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5 },
   sumSub: { fontSize: 13.5, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
   sumStatsRow: { flexDirection: 'row', width: '100%', marginBottom: 6 },
