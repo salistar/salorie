@@ -3,15 +3,25 @@
 
 POURQUOI CE FICHIER EXISTE
 Le modele en place a ete adopte sur la mesure « 41/50 (82 %) ». Ce chiffre
-comptait les reponses AU-DESSUS DU SEUIL DE CONFIANCE — pas les reponses justes.
-Mesure faite le 29/08/2026 : 0 bonne reponse sur 74 plats Food-101, annoncees
-avec 0,90 a 0,99 de confiance.
+compte les reponses AU-DESSUS DU SEUIL DE CONFIANCE : il dit la COUVERTURE — a
+quelle frequence le modele tranche — et c'est une chose utile a savoir. Il ne dit
+simplement rien de la JUSTESSE, et rien d'autre ne la disait.
 
 Un classifieur place en tete de cascade coupe tous les paliers en dessous. S'il
 se trompe en etant sur de lui, il ne degrade pas le service : il ecrit du faux
-dans le journal d'un utilisateur, qui l'y lira comme une donnee mesuree.
+dans le journal d'un utilisateur, qui l'y lira comme une donnee mesuree. D'ou ce
+script, qui ne mesure qu'une chose, celle qui manquait.
 
-Ce script ne mesure donc qu'UNE chose, celle qui manquait : la JUSTESSE.
+Etat au 29/08/2026 pour `food_salorie.tflite` :
+  justesse globale               57,4 %
+  justesse de ce qui est SERVI   71,9 %  -> ACCEPTE
+
+⚠ Une premiere version de ce meme fichier annoncait « 0 sur 74 ». Elle lisait un
+corpus dont les etiquettes etaient DEDUITES de la position des photos dans le jeu
+de donnees au lieu d'etre lues : la photo comptee « pizza » etait un plat de
+nachos. Sur cette base, le palier a ete debranche en production, a tort. La
+mesure ne vaut jamais mieux que la verite terrain qu'on lui donne — et ici, cette
+verite doit venir du champ `label` du jeu, jamais d'un calcul.
 
   python food4k/valider_modele.py [modele.tflite] [etiquettes.json] [--seuil 0.5]
 
@@ -49,12 +59,29 @@ def softmax(x):
 
 
 def main():
-    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    # ⚠ LA VALEUR D'UNE OPTION N'EST PAS UN ARGUMENT POSITIONNEL.
+    # Premiere version : `[a for a in sys.argv[1:] if not a.startswith('--')]`.
+    # Dans `valider_modele.py --seuil 0.50`, le « 0.50 » ne commence pas par des
+    # tirets : il etait donc pris pour le chemin du modele, et le script mourait
+    # sur « Could not open '0.50' ». La forme longue passait par chance, parce
+    # que les chemins y precedent l'option.
+    seuil = SEUIL_DEFAUT
+    args = []
+    reste = list(sys.argv[1:])
+    while reste:
+        a = reste.pop(0)
+        if a == '--seuil':
+            if not reste:
+                print('  --seuil attend une valeur, par exemple : --seuil 0.50')
+                return 2
+            seuil = float(reste.pop(0))
+        elif a.startswith('--'):
+            continue
+        else:
+            args.append(a)
+
     modele = args[0] if args else os.path.join(ICI, 'food_salorie.tflite')
     etiquettes = args[1] if len(args) > 1 else os.path.join(ICI, 'label_map_172.json')
-    seuil = SEUIL_DEFAUT
-    if '--seuil' in sys.argv:
-        seuil = float(sys.argv[sys.argv.index('--seuil') + 1])
 
     classes = json.load(io.open(etiquettes, encoding='utf-8'))['classes']
     index = {c.replace('_', ' ').lower(): i for i, c in enumerate(classes)}
@@ -115,8 +142,9 @@ def main():
 
     if taux_servi < seuil:
         print('\n  REFUSE. Sous la barre de %.0f %%.' % (seuil * 100))
-        print('  Ce modele ne doit pas court-circuiter la cascade : laisser')
-        print('  FOOD4K_ENABLED non defini, et MODELE_ON_DEVICE_FIABLE a false.')
+        print('  Ce modele ne doit pas court-circuiter la cascade. Pour le couper :')
+        print('    serveur   : poser FOOD4K_ENABLED=false')
+        print('    telephone : MODELE_ON_DEVICE_FIABLE = false (lib/onDeviceVision.ts)')
         return 1
 
     print('\n  ACCEPTE. Il peut prendre la tete de la cascade.')
