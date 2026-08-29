@@ -180,16 +180,16 @@ export default function MetabolicTwinScreen() {
             <Text style={[styles.mathBody, { color: text }, align]}>{t.fTdeeBody}</Text>
             <Text style={[styles.mathFormula, { color: text }, align]}>TDEE ≈ {p.weight} kg × 31 = {tdee} {t.kcalDay}</Text>
 
-            <View style={[styles.mathSep, { backgroundColor: isDark ? '#334155' : '#D7E8DD' }]} />
+            <View style={[styles.mathSep, { backgroundColor: k.surfaceSunken }]} />
             <Text style={[styles.mathLabel, { color: GREEN }, align]}>{t.fEnergy}</Text>
             <Text style={[styles.mathBody, { color: text }, align]}>{t.fEnergyBody}</Text>
 
-            <View style={[styles.mathSep, { backgroundColor: isDark ? '#334155' : '#D7E8DD' }]} />
+            <View style={[styles.mathSep, { backgroundColor: k.surfaceSunken }]} />
             <Text style={[styles.mathLabel, { color: GREEN }, align]}>{t.fProjection}</Text>
             <Text style={[styles.mathFormula, { color: text }, align]}>{t.fProjBody}</Text>
             <Text style={[styles.mathBody, { color: sub }, align]}>{t.fPlug}: {p.weight} + (({intake} − {tdee}) × 30) ÷ 7700 = {w30} kg</Text>
 
-            <View style={[styles.mathSep, { backgroundColor: isDark ? '#334155' : '#D7E8DD' }]} />
+            <View style={[styles.mathSep, { backgroundColor: k.surfaceSunken }]} />
             <Text style={[styles.mathLabel, { color: GREEN }, align]}>{t.fRate}</Text>
             <Text style={[styles.mathFormula, { color: text }, align]}>({intake} − {tdee}) × 7 ÷ 7700 = {rate} {t.perWeek}</Text>
           </View>

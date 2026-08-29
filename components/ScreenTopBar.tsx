@@ -51,8 +51,8 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
   // Dark-aware dropdown menus (theme / language).
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(k), [k]);
-  const menuBg = isDark ? '#161C23' : k.surface;
-  const menuItemText = isDark ? '#f1f5f9' : k.text;
+  const menuBg = k.surface;
+  const menuItemText = k.text;
   const menuActiveBg = isDark ? 'rgba(46,139,87,0.18)' : k.accentSoft;
 
   const themeIcons: Record<ThemeMode, any> = {
@@ -94,7 +94,7 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
         )}
         {title ? (
           <Text
-            style={[styles.screenTitle, { color: resolved === 'dark' ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}
+            style={[styles.screenTitle, { color: k.text, textAlign: isRTL ? 'right' : 'left' }]}
             numberOfLines={1}
           >
             {title}

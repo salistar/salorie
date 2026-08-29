@@ -111,8 +111,8 @@ export default function StreaksScreen() {
             <Card icon={Utensils} label={t.meals} value={st.meal.streak} freezes={st.meal.freezes} color={accent} />
             <Card icon={Droplets} label={t.hydration} value={st.water.streak} freezes={st.water.freezes} color="#0EA5E9" />
             <Card icon={Activity} label={t.activity} value={st.activity.streak} freezes={st.activity.freezes} color="#8B5CF6" />
-            <View style={[styles.freezeBox, { backgroundColor: isDark ? '#0b3b2e' : '#ECFDF5', borderColor: isDark ? '#155e4a' : '#A7F3D0' }]}>
-              <Text style={[styles.freezeTxt, { color: isDark ? '#6ee7b7' : '#047857' }, align]}>{t.freezeExplain}</Text>
+            <View style={[styles.freezeBox, { backgroundColor: k.surface, borderColor: k.border }]}>
+              <Text style={[styles.freezeTxt, { color: k.textMuted }, align]}>{t.freezeExplain}</Text>
             </View>
             <Text style={[styles.tip, { color: sub }]}>{t.tip}</Text>
             {/* La serie est le declencheur d orgueil le plus fort de l app : c est

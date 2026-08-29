@@ -62,11 +62,11 @@ export default function FeatureRequestsScreen() {
   const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(k), [k]);
-  const tPrimary = isDark ? '#fff' : k.text;
-  const tMuted = isDark ? '#9BA1A6' : k.textMuted;
-  const cardBg = isDark ? '#161C23' : k.surfaceSunken;
-  const cardBorder = isDark ? '#283241' : k.border;
-  const upvoteBg = isDark ? '#0f1419' : k.surface;
+  const tPrimary = k.text;
+  const tMuted = k.textMuted;
+  const cardBg = k.surfaceSunken;
+  const cardBorder = k.border;
+  const upvoteBg = k.surface;
   const FL = ({
     en: { board: 'Feature Board', shape: 'Shape the Future', vote: 'Vote for features you want to see or suggest your own.', empty: 'No requests yet. Be the first!', by: 'by', newTitle: 'New idea', fTitle: 'Title', fTitlePh: "What's your idea?", fDesc: 'Description', fDescPh: 'How would it work?', submit: 'Submit Request', okTitle: 'Thank you!', okMsg: 'Your idea was added. The community can now upvote it.' },
     fr: { board: 'Idées & votes', shape: 'Façonnez le futur', vote: 'Votez pour les fonctionnalités souhaitées ou proposez les vôtres.', empty: "Aucune demande pour l'instant. Soyez le premier !", by: 'par', newTitle: 'Nouvelle idée', fTitle: 'Titre', fTitlePh: 'Quelle est votre idée ?', fDesc: 'Description', fDescPh: 'Comment ça marcherait ?', submit: 'Envoyer la demande', okTitle: 'Merci !', okMsg: 'Votre idée a été ajoutée. La communauté peut maintenant voter pour elle.' },
@@ -196,7 +196,7 @@ export default function FeatureRequestsScreen() {
   };
 
   return (
-    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: resolved === 'dark' ? '#0f1419' : k.surface }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: k.surface }]}>
       <ScreenTopBar showBack title={FL.board} showBrand={false} showNotif={false} />
 
       <View style={styles.topInfo}>
@@ -216,7 +216,7 @@ export default function FeatureRequestsScreen() {
           
           {requests.length === 0 && (
             <View style={styles.emptyState}>
-              <Lightbulb size={48} color={isDark ? '#283241' : k.border} />
+              <Lightbulb size={48} color={k.border} />
               <Text style={[styles.emptyText, { color: tMuted }]}>{FL.empty}</Text>
             </View>
           )}
@@ -243,11 +243,11 @@ export default function FeatureRequestsScreen() {
         onRequestClose={() => setIsModalVisible(false)}
       >
         <View style={[styles.modalOverlay, directionAuto()]}>
-          <Animated.View entering={FadeInUp.duration(400)} style={[styles.modalContent, { backgroundColor: isDark ? '#161C23' : k.surface }]}>
+          <Animated.View entering={FadeInUp.duration(400)} style={[styles.modalContent, { backgroundColor: k.surface }]}>
             <View style={[styles.modalHeader, { flexDirection: rowDir(isRTL) }]}>
               <Text style={[styles.modalTitle, { color: tPrimary }]}>{FL.newTitle}</Text>
               <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={() => setIsModalVisible(false)}>
-                <X size={24} color={isDark ? '#9BA1A6' : k.textMuted} />
+                <X size={24} color={k.textMuted} />
               </TouchableOpacity>
             </View>
 

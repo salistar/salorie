@@ -64,9 +64,9 @@ export default function MealPlanHistoryScreen() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState<number | null>(0);
 
-  const text = isDark ? '#fff' : k.text;
-  const sub = isDark ? '#9BA1A6' : k.textMuted;
-  const card = isDark ? k.surface : '#fff';
+  const text = k.text;
+  const sub = k.textMuted;
+  const card = k.surface;
   const bg = isDark ? '#0f1419' : 'transparent';
   const accent = k.accent;
 

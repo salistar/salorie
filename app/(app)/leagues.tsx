@@ -119,9 +119,9 @@ export default function LeaguesScreen() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<MyLeague | null>(null);
 
-  const text = isDark ? '#fff' : k.text;
-  const sub = isDark ? '#9BA1A6' : k.textMuted;
-  const card = isDark ? k.surface : '#fff';
+  const text = k.text;
+  const sub = k.textMuted;
+  const card = k.surface;
   const bg = isDark ? '#0f1419' : 'transparent';
 
   const load = useCallback(async () => {
@@ -204,7 +204,7 @@ export default function LeaguesScreen() {
                     {myRank ? `#${myRank}` : S.notRanked[lang]}
                   </Text>
                 </View>
-                <View style={[styles.heroDivider, { backgroundColor: isDark ? '#222' : k.border }]} />
+                <View style={[styles.heroDivider, { backgroundColor: k.border }]} />
                 <View style={styles.heroStatCell}>
                   <Text style={[styles.heroStatLabel, { color: sub }]}>{S.xp[lang]}</Text>
                   <Text style={[styles.heroStatValue, { color: text }]}>{myXp}</Text>
@@ -268,7 +268,7 @@ export default function LeaguesScreen() {
                       style={[
                         styles.rankRow,
                         { flexDirection: rowDir(isRTL) },
-                        !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: isDark ? '#222' : k.border },
+                        !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: k.border },
                         zone === 'promotion' && { backgroundColor: PROMO_COLOR + '0D' },
                         zone === 'relegation' && { backgroundColor: RELEG_COLOR + '0D' },
                         r.isMe && { backgroundColor: tierColor + '14' },
@@ -276,7 +276,7 @@ export default function LeaguesScreen() {
                     >
                       {/* Barre de zone (promo/relég) sur le bord */}
                       <View style={[styles.zoneBar, { backgroundColor: zoneColor }]} />
-                      <View style={[styles.rankNumWrap, { backgroundColor: isDark ? '#1a1a1a' : k.surfaceSunken }]}>
+                      <View style={[styles.rankNumWrap, { backgroundColor: k.surfaceSunken }]}>
                         <Text style={[styles.rankNum, { color: r.rank <= 3 ? tierColor : sub }]}>{r.rank}</Text>
                       </View>
                       <View style={{ flex: 1 }}>

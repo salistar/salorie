@@ -65,10 +65,10 @@ export default function UpdateWeightScreen() {
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(k), [k]);
 
-  const pageBg = isDark ? '#0f1419' : k.surface;
+  const pageBg = k.surface;
   const cardBg = k.surfaceSunken;
-  const primaryText = isDark ? '#fff' : k.text;
-  const secondaryText = isDark ? '#9BA1A6' : k.textMuted;
+  const primaryText = k.text;
+  const secondaryText = k.textMuted;
 
   const { user } = useUser();
   const params = useLocalSearchParams();

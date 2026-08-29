@@ -85,7 +85,7 @@ export default function ImportRecipeScreen() {
         </TouchableOpacity>
 
         {loading && <Text style={[styles.loadingTxt, { color: sub }]}>{t.loading}</Text>}
-        {!!result && <View style={[styles.card, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? '#283241' : 'transparent' }, isDark && { shadowColor: 'transparent', elevation: 0 }]}><Text style={[styles.cardTxt, { color: isDark ? '#e2e8f0' : '#1F2937' }, align]}>{result}</Text></View>}
+        {!!result && <View style={[styles.card, { backgroundColor: card, borderWidth: 1, borderColor: isDark ? '#283241' : 'transparent' }, isDark && { shadowColor: 'transparent', elevation: 0 }]}><Text style={[styles.cardTxt, { color: k.text }, align]}>{result}</Text></View>}
       </ScrollView>
     </SafeAreaView>
   );

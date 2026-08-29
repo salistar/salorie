@@ -188,9 +188,9 @@ export default function SocialScreen() {
     }
   };
 
-  const text = isDark ? '#fff' : k.text;
-  const sub = isDark ? '#9BA1A6' : k.textMuted;
-  const card = isDark ? k.surface : '#fff';
+  const text = k.text;
+  const sub = k.textMuted;
+  const card = k.surface;
   const bg = isDark ? '#0f1419' : 'transparent';
 
   if (!__gate.ok) return __gate.node;

@@ -257,7 +257,7 @@ export default function Referral() {
                   <Text style={[s.statVal, { color: GREEN }]}>{count}</Text>
                   <Text style={[s.statLabel, { color: sub }, align]}>{t.friends}</Text>
                 </View>
-                <View style={[s.rewardCol, { borderColor: isDark ? '#334155' : '#e5e9ec' }]}>
+                <View style={[s.rewardCol, { borderColor: k.border }]}>
                   <Text style={[s.cardLabel, { color: sub }, align]}>{t.reward}</Text>
                   {stats?.reward?.tier ? (
                     <Text style={[s.rewardTxt, { color: text }, align]}>

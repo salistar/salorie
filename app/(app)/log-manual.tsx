@@ -43,13 +43,13 @@ export default function LogManualExerciseScreen() {
 
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(k), [k]);
-  const bg = isDark ? '#0B0F14' : k.surface;
+  const bg = k.surface;
   const textPrimary = isDark ? colors.gray[900] : k.text;
   const textMuted = isDark ? colors.gray[400] : k.textMuted;
   const textLabel = isDark ? colors.gray[700] : k.textMuted;
-  const cardBg = isDark ? '#161C23' : k.surfaceSunken;
+  const cardBg = k.surfaceSunken;
   const cardBorder = isDark ? colors.gray[200] : k.border;
-  const inputBg = isDark ? '#0B0F14' : k.surface;
+  const inputBg = k.surface;
 
   console.log('\x1b[33m[LogManual] RENDER\x1b[0m', { name, calories, theme: resolved });
 

@@ -312,9 +312,9 @@ export default function AiMealPlanScreen() {
 
         {/* Badge conditions médicales prises en compte (source : dietPrefs). */}
         {conditions.length > 0 && (
-          <View style={[styles.medBadge, { backgroundColor: isDark ? '#14532d' : '#dcfce7' }, isRTL && { flexDirection: 'row-reverse' }]}>
+          <View style={[styles.medBadge, { backgroundColor: k.surface }, isRTL && { flexDirection: 'row-reverse' }]}>
             <Sparkles size={16} color={accent} />
-            <Text style={[styles.medBadgeTxt, { color: isDark ? '#bbf7d0' : '#166534' }, align]}>{t.medBadge}</Text>
+            <Text style={[styles.medBadgeTxt, { color: k.text }, align]}>{t.medBadge}</Text>
           </View>
         )}
 

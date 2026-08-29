@@ -285,8 +285,8 @@ export default function FoodDatabaseScreen() {
         activeOpacity={0.7}
       >
         <View style={[styles.cardLeft, isRTL && { marginRight: 0, marginLeft: 12 }]}>
-          <Text numberOfLines={2} ellipsizeMode="tail" style={[styles.foodName, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}>{item.food_name}</Text>
-          <Text style={[styles.foodInfo, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{localizeServing(serving, language)} • {calories} kcal</Text>
+          <Text numberOfLines={2} ellipsizeMode="tail" style={[styles.foodName, { color: k.text, textAlign: isRTL ? 'right' : 'left' }]}>{item.food_name}</Text>
+          <Text style={[styles.foodInfo, { color: k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{localizeServing(serving, language)} • {calories} kcal</Text>
         </View>
         <View style={styles.addBtn}>
           <Plus size={24} color={k.surface} strokeWidth={3} />
@@ -299,26 +299,26 @@ export default function FoodDatabaseScreen() {
   const keyExtractor = useCallback((item: any) => item.food_id.toString(), []);
 
   return (
-    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: isDark ? '#0f1419' : k.surface }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: k.surface }]}>
       <ScreenTopBar />
       <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backBtn, { backgroundColor: k.surfaceSunken }]} onPress={() => router.back()}>
-          <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ArrowLeft size={28} color={isDark ? '#fff' : k.text} strokeWidth={2.5} /></View>
+          <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ArrowLeft size={28} color={k.text} strokeWidth={2.5} /></View>
         </TouchableOpacity>
-        <Text numberOfLines={1} style={[styles.headerTitle, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}>{t.title}</Text>
+        <Text numberOfLines={1} style={[styles.headerTitle, { color: k.text, textAlign: isRTL ? 'right' : 'left' }]}>{t.title}</Text>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('scanner')} style={styles.scanBtn} onPress={() => router.push('/scan-barcode' as any)}>
           <ScanBarcode size={24} color={k.accent} strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
 
       <View style={[styles.searchContainer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-        <Search size={20} color={isDark ? '#9BA1A6' : k.textMuted} style={[styles.searchIcon, isRTL ? { left: undefined, right: 36 } : undefined]} />
+        <Search size={20} color={k.textMuted} style={[styles.searchIcon, isRTL ? { left: undefined, right: 36 } : undefined]} />
         <TextInput
-          style={[styles.input, { backgroundColor: k.surfaceSunken, color: isDark ? '#fff' : k.text, borderColor: k.border, textAlign: isRTL ? 'right' : 'left', paddingLeft: isRTL ? 48 : 52, paddingRight: isRTL ? 52 : 48 }]}
+          style={[styles.input, { backgroundColor: k.surfaceSunken, color: k.text, borderColor: k.border, textAlign: isRTL ? 'right' : 'left', paddingLeft: isRTL ? 48 : 52, paddingRight: isRTL ? 52 : 48 }]}
           placeholder={t.searchPlaceholder}
           value={query}
           onChangeText={handleSearch}
-          placeholderTextColor={isDark ? '#9BA1A6' : k.textMuted}
+          placeholderTextColor={k.textMuted}
           returnKeyType="search"
           onSubmitEditing={() => performSearch(query)}
         />
@@ -339,7 +339,7 @@ export default function FoodDatabaseScreen() {
               {frequents.length > 0 && (
                 <>
                   <View style={[styles.quickHead, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                    <Flame size={16} color="#ef4444" /><Text style={[styles.quickTitle, { color: isDark ? '#fff' : k.text }]}>{t.frequents}</Text>
+                    <Flame size={16} color="#ef4444" /><Text style={[styles.quickTitle, { color: k.text }]}>{t.frequents}</Text>
                   </View>
                   {frequents.map((f) => (
                     <React.Fragment key={`freq${f.food_id}`}>{renderItem({ item: f })}</React.Fragment>
@@ -349,7 +349,7 @@ export default function FoodDatabaseScreen() {
               {viewed.length > 0 && (
                 <>
                   <View style={[styles.quickHead, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                    <RotateCcw size={16} color={k.accent} /><Text style={[styles.quickTitle, { color: isDark ? '#fff' : k.text }]}>{t.viewed}</Text>
+                    <RotateCcw size={16} color={k.accent} /><Text style={[styles.quickTitle, { color: k.text }]}>{t.viewed}</Text>
                   </View>
                   {viewed.map((f) => (
                     <React.Fragment key={`viewed${f.food_id}`}>{renderItem({ item: f })}</React.Fragment>
@@ -359,7 +359,7 @@ export default function FoodDatabaseScreen() {
               {favorites.length > 0 && (
                 <>
                   <View style={[styles.quickHead, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                    <Star size={16} color="#f59e0b" fill="#f59e0b" /><Text style={[styles.quickTitle, { color: isDark ? '#fff' : k.text }]}>{t.favorites}</Text>
+                    <Star size={16} color="#f59e0b" fill="#f59e0b" /><Text style={[styles.quickTitle, { color: k.text }]}>{t.favorites}</Text>
                   </View>
                   {favorites.map((f, i) => (
                     <QuickRow key={`fav${i}`} f={f} fav onLog={quickLog} onFav={onToggleFav} isDark={isDark} isRTL={isRTL} km={t.km} language={language} />
@@ -369,7 +369,7 @@ export default function FoodDatabaseScreen() {
               {recents.length > 0 && (
                 <>
                   <View style={[styles.quickHead, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                    <History size={16} color={k.accent} /><Text style={[styles.quickTitle, { color: isDark ? '#fff' : k.text }]}>{t.recents}</Text>
+                    <History size={16} color={k.accent} /><Text style={[styles.quickTitle, { color: k.text }]}>{t.recents}</Text>
                   </View>
                   {recents.map((f, i) => (
                     <QuickRow key={`rec${i}`} f={f} fav={favorites.some((x) => x.name === f.name)} onLog={quickLog} onFav={onToggleFav} isDark={isDark} isRTL={isRTL} km={t.km} language={language} />
@@ -383,11 +383,11 @@ export default function FoodDatabaseScreen() {
           !loading && query.length >= 3 ? (
             <View style={styles.emptyState}>
               <Utensils size={48} color={k.border} />
-              <Text style={[styles.emptyText, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.noResults} {String.fromCharCode(8220)}{query}{String.fromCharCode(8221)}</Text>
+              <Text style={[styles.emptyText, { color: k.textMuted }]}>{t.noResults} {String.fromCharCode(8220)}{query}{String.fromCharCode(8221)}</Text>
             </View>
           ) : query.length > 0 && query.length < 3 ? (
              <View style={styles.emptyState}>
-              <Text style={[styles.hintText, { color: isDark ? '#9BA1A6' : k.textFaint }]}>{t.keepTyping}</Text>
+              <Text style={[styles.hintText, { color: k.textFaint }]}>{t.keepTyping}</Text>
             </View>
           ) : null
         )}
@@ -408,8 +408,8 @@ function QuickRow({ f, fav, onLog, onFav, isDark, isRTL, km, language }: any) {
         <Star size={20} color="#f59e0b" fill={fav ? '#f59e0b' : 'transparent'} />
       </TouchableOpacity>
       <View style={{ flex: 1 }}>
-        <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '700', color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }}>{f.name}</Text>
-        <Text style={{ fontSize: 12.5, color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }}>{f.serving ? `${localizeServing(f.serving, language)} • ` : ''}{Math.round(f.calories)} {km === 'كلم' ? 'سعرة' : 'kcal'}</Text>
+        <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '700', color: k.text, textAlign: isRTL ? 'right' : 'left' }}>{f.name}</Text>
+        <Text style={{ fontSize: 12.5, color: k.textMuted, textAlign: isRTL ? 'right' : 'left' }}>{f.serving ? `${localizeServing(f.serving, language)} • ` : ''}{Math.round(f.calories)} {km === 'كلم' ? 'سعرة' : 'kcal'}</Text>
       </View>
       <View style={[qrStyles.relog, { backgroundColor: k.accent }]}><RotateCcw size={18} color="#fff" strokeWidth={2.5} /></View>
     </TouchableOpacity>

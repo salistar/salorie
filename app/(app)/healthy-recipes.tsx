@@ -385,7 +385,7 @@ export default function HealthyRecipesScreen() {
                     {selected.healthySwaps.map((sw, i) => (
                       <View key={i} style={[styles.swapRow, { flexDirection: rowDir, backgroundColor: isDark ? 'rgba(74,222,128,0.1)' : '#EAF4EE' }]}>
                         <CheckCircle2 size={15} color={accent} style={{ marginTop: 1 }} />
-                        <Text style={[styles.swapTxt, { color: isDark ? '#cbd5e1' : '#166534' }, align]}>{sw[lang]}</Text>
+                        <Text style={[styles.swapTxt, { color: k.text }, align]}>{sw[lang]}</Text>
                       </View>
                     ))}
 

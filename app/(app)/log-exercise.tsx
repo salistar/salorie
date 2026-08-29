@@ -24,12 +24,12 @@ export default function LogExerciseScreen() {
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(k), [k]);
 
-  const bg = isDark ? '#0B0F14' : k.surface;
+  const bg = k.surface;
   const textPrimary = isDark ? colors.gray[900] : k.text;
   const textMuted = isDark ? colors.gray[400] : k.textMuted;
-  const cardBg = isDark ? '#161C23' : k.surface;
+  const cardBg = k.surface;
   const cardBorder = isDark ? colors.gray[200] : k.border;
-  const backBtnBg = isDark ? '#161C23' : k.surfaceSunken;
+  const backBtnBg = k.surfaceSunken;
 
   console.log('\x1b[33m[LogExercise] RENDER\x1b[0m', { theme: resolved });
 

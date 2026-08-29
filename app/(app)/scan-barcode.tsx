@@ -193,8 +193,8 @@ export default function ScanBarcodeScreen() {
   const styles = useMemo(() => makeStyles(k), [k]);
   const tok = useTokens();
   const card = tok.surface;
-  const textCol = isDark ? '#f1f5f9' : k.text;
-  const subCol = isDark ? '#94a3b8' : k.textMuted;
+  const textCol = k.text;
+  const subCol = k.textMuted;
   const [permission, requestPermission] = useCameraPermissions();
   const [status, setStatus] = useState<'scanning' | 'loading' | 'found' | 'notedible' | 'notfound'>('scanning');
   const [found, setFound] = useState<Found | null>(null);
@@ -641,7 +641,7 @@ export default function ScanBarcodeScreen() {
                 <View style={{ marginTop: 8, gap: 3 }}>
                   <Text style={[styles.objWhy, { color: subCol }]}>{ox.why}</Text>
                   {found.objective.reasons.slice(0, 4).map((r, i) => (
-                    <Text key={i} style={[styles.objReason, { color: isDark ? '#cbd5e1' : '#334155' }]}>• {r}</Text>
+                    <Text key={i} style={[styles.objReason, { color: k.text }]}>• {r}</Text>
                   ))}
                 </View>
               ) : null}

@@ -123,9 +123,9 @@ export default function FamilyScreen() {
   const [memberRole, setMemberRole] = useState<FamilyRole>('enfant');
   const [addingMember, setAddingMember] = useState(false);
 
-  const text = isDark ? '#fff' : k.text;
-  const sub = isDark ? '#9BA1A6' : k.textMuted;
-  const card = isDark ? k.surface : '#fff';
+  const text = k.text;
+  const sub = k.textMuted;
+  const card = k.surface;
   const bg = isDark ? '#0f1419' : 'transparent';
 
   const refreshWeekly = useCallback(async (fam: Family) => {
@@ -324,7 +324,7 @@ export default function FamilyScreen() {
                 <Text style={[styles.bigKm, { color: text }]}>{weekly.totalKm}</Text>
                 <Text style={[styles.bigKmUnit, { color: sub }]}> / {WEEKLY_GOAL_KM} {S.km[lang]}</Text>
               </View>
-              <View style={[styles.progressTrack, { backgroundColor: isDark ? '#222' : k.border }]}>
+              <View style={[styles.progressTrack, { backgroundColor: k.border }]}>
                 <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: goalReached ? '#22C55E' : k.accent }]} />
               </View>
               {goalReached && <Text style={[styles.reachedTxt, { textAlign: txtAlign(isRTL) }]}>{S.reached[lang]}</Text>}
@@ -341,7 +341,7 @@ export default function FamilyScreen() {
                         </Text>
                         <Text style={[styles.memberKmVal, { color: sub }]}>{r.km} {S.km[lang]}</Text>
                       </View>
-                      <View style={[styles.progressTrackSm, { backgroundColor: isDark ? '#222' : k.border }]}>
+                      <View style={[styles.progressTrackSm, { backgroundColor: k.border }]}>
                         <View style={[styles.progressFill, { width: `${share * 100}%`, backgroundColor: ROLE_COLOR[r.role] }]} />
                       </View>
                     </View>

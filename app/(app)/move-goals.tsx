@@ -143,7 +143,7 @@ export default function MoveGoals() {
                 </TouchableOpacity>
               </View>
               <Text style={[s.moveDesc, { color: sub }, align]}>{language === 'fr' ? m.descFr : language === 'ar' ? m.descAr : m.descEn}</Text>
-              <View style={[s.track, { backgroundColor: isDark ? '#334155' : '#e2e8f0' }]}>
+              <View style={[s.track, { backgroundColor: k.surfaceSunken }]}>
                 <View style={[s.fill, { width: `${pct}%`, backgroundColor: done ? accent : '#86b8a0' }]} />
               </View>
             </View>

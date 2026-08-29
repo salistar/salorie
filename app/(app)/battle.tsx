@@ -221,9 +221,9 @@ export default function BattleScreen() {
                   if (!loserGage) return null;
                   const line = iLose ? t.gageYouPay : theyLose ? `${result.name} ${t.gageTheyPay}` : t.gageTie;
                   return (
-                    <View style={[styles.gageBox, { backgroundColor: isDark ? '#3b2f12' : '#FEF3C7', borderColor: isDark ? '#a16207' : '#FDE68A' }]}>
-                      <Text style={[styles.gageTitle, { color: isDark ? '#fcd34d' : '#92400E' }, align]}>{t.gageTitle}</Text>
-                      <Text style={[styles.gageLine, { color: isDark ? '#fde68a' : '#78350F' }, align]}>{line}</Text>
+                    <View style={[styles.gageBox, { backgroundColor: k.surfaceSunken, borderColor: k.border }]}>
+                      <Text style={[styles.gageTitle, { color: k.text }, align]}>{t.gageTitle}</Text>
+                      <Text style={[styles.gageLine, { color: k.text }, align]}>{line}</Text>
                       <Text style={[styles.gageText, { color: text }, align]}>{loserGage}</Text>
                     </View>
                   );

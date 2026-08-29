@@ -311,7 +311,7 @@ export default function RamadanScreen() {
         <View style={{ flex: 1 }} />
         <Text style={[styles.splitPct, { color: sub }]}>{share.suhoor}% · {share.iftar}%</Text>
       </View>
-      <View style={[styles.splitTrack, { backgroundColor: isDark ? '#334155' : '#E2E8F0', flexDirection: rowDir(isRTL) }]}>
+      <View style={[styles.splitTrack, { backgroundColor: k.surfaceSunken, flexDirection: rowDir(isRTL) }]}>
         <View style={{ width: `${share.suhoor}%`, backgroundColor: '#F59E0B', height: '100%' }} />
         <View style={{ width: `${share.iftar}%`, backgroundColor: GREEN, height: '100%' }} />
       </View>
@@ -489,7 +489,7 @@ export default function RamadanScreen() {
               <Text style={[styles.slotsLbl, { color: sub, textAlign: txtAlign(isRTL) }]}>{t.slots}</Text>
               <View style={[styles.slotsWrap, { flexDirection: rowDir(isRTL) }]}>
                 {slots.map((sl) => (
-                  <View key={sl.glass} style={[styles.slotChip, { backgroundColor: isDark ? '#0f1419' : '#F1F5F9', borderColor: border }]}>
+                  <View key={sl.glass} style={[styles.slotChip, { backgroundColor: k.surface, borderColor: border }]}>
                     <Text style={[styles.slotTime, { color: text }]}>{sl.time}</Text>
                     <Text style={[styles.slotLbl, { color: sub }]}>{slotT[sl.label]}</Text>
                   </View>

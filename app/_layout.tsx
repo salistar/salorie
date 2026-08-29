@@ -647,7 +647,7 @@ function InitialLayout() {
   // onboarding, et les ecrans sont transparents le temps de la resolution.
   const showLoading = false;
 
-  const bgColor = resolved === 'dark' ? '#000000' : k.surface;
+  const bgColor = k.surface;
 
   // FIX DÉFINITIF boucle d'amplification (« Maximum update depth ») : InitialLayout est
   // abonné à useSegments + useRootNavigationState → il re-rend à CHAQUE tick du store de

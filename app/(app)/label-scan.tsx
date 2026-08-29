@@ -223,10 +223,10 @@ export default function LabelScanScreen() {
         {hasParsed ? (
           <View style={[styles.parsedCard, { backgroundColor: card }, isDark && { borderColor: '#334155' }]}>
             <Text style={[styles.parsedTitle, { color: accent }, align]}>{t.detected}</Text>
-            {parsed.calories != null && <Text style={[styles.parsedRow, { color: isDark ? '#cbd5e1' : '#334155' }, align]}>{t.calories} : <Text style={[styles.bold, { color: fg }]}>{parsed.calories} kcal</Text></Text>}
-            {parsed.protein != null && <Text style={[styles.parsedRow, { color: isDark ? '#cbd5e1' : '#334155' }, align]}>{t.protein} : <Text style={[styles.bold, { color: fg }]}>{parsed.protein} g</Text></Text>}
-            {parsed.carbs != null && <Text style={[styles.parsedRow, { color: isDark ? '#cbd5e1' : '#334155' }, align]}>{t.carbs} : <Text style={[styles.bold, { color: fg }]}>{parsed.carbs} g</Text></Text>}
-            {parsed.fat != null && <Text style={[styles.parsedRow, { color: isDark ? '#cbd5e1' : '#334155' }, align]}>{t.fat} : <Text style={[styles.bold, { color: fg }]}>{parsed.fat} g</Text></Text>}
+            {parsed.calories != null && <Text style={[styles.parsedRow, { color: k.text }, align]}>{t.calories} : <Text style={[styles.bold, { color: fg }]}>{parsed.calories} kcal</Text></Text>}
+            {parsed.protein != null && <Text style={[styles.parsedRow, { color: k.text }, align]}>{t.protein} : <Text style={[styles.bold, { color: fg }]}>{parsed.protein} g</Text></Text>}
+            {parsed.carbs != null && <Text style={[styles.parsedRow, { color: k.text }, align]}>{t.carbs} : <Text style={[styles.bold, { color: fg }]}>{parsed.carbs} g</Text></Text>}
+            {parsed.fat != null && <Text style={[styles.parsedRow, { color: k.text }, align]}>{t.fat} : <Text style={[styles.bold, { color: fg }]}>{parsed.fat} g</Text></Text>}
           </View>
         ) : null}
 
@@ -262,7 +262,7 @@ export default function LabelScanScreen() {
               <View style={styles.objReasons}>
                 <Text style={[styles.objWhy, { color: sub }, align]}>{t.why}</Text>
                 {objScore.reasons.slice(0, 4).map((r, i) => (
-                  <Text key={i} style={[styles.objReason, { color: isDark ? '#cbd5e1' : '#334155' }, align]}>• {r}</Text>
+                  <Text key={i} style={[styles.objReason, { color: k.text }, align]}>• {r}</Text>
                 ))}
               </View>
             ) : null}
@@ -272,7 +272,7 @@ export default function LabelScanScreen() {
 
         {text ? (
           <View style={[styles.textCard, { backgroundColor: card }]}>
-            <Text style={[styles.textTitle, { color: isDark ? '#cbd5e1' : '#334155' }, align]}>{t.recognized}</Text>
+            <Text style={[styles.textTitle, { color: k.text }, align]}>{t.recognized}</Text>
             <Text style={[styles.rawText, { color: sub }]}>{text}</Text>
           </View>
         ) : null}

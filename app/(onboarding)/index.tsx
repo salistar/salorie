@@ -106,15 +106,15 @@ export default function OnboardingScreen() {
 
   // Palette theme-aware (accent toujours = k.accent).
   const C = {
-    bg: isDark ? '#0f1419' : '#F8FAFC',
+    bg: k.surface,
     card: k.surface,
-    border: isDark ? '#2d3543' : k.border,
-    title: isDark ? '#fff' : k.text,
-    sub: isDark ? '#9BA1A6' : k.textMuted,
-    text: isDark ? '#fff' : k.text,
+    border: k.border,
+    title: k.text,
+    sub: k.textMuted,
+    text: k.text,
     accent: k.accent,
     backBtn: k.border,
-    backIcon: isDark ? '#9BA1A6' : k.textMuted,
+    backIcon: k.textMuted,
   };
 
   const STEPS = [

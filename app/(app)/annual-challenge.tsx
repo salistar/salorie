@@ -174,7 +174,7 @@ export default function AnnualChallenge() {
           </View>
           <Text style={[s.cumLabel, { color: sub }, align]}>{t.cumulated}</Text>
 
-          <View style={[s.track, { backgroundColor: isDark ? '#334155' : '#e2e8f0' }]}>
+          <View style={[s.track, { backgroundColor: k.surfaceSunken }]}>
             <View style={[s.fill, { width: `${pct}%`, backgroundColor: accent }]} />
           </View>
 
@@ -186,7 +186,7 @@ export default function AnnualChallenge() {
         {/* Message d'encouragement par palier */}
         <View style={[s.encourage, { backgroundColor: isDark ? 'rgba(74,222,128,0.10)' : '#eaf4ee' }]}>
           <Flag size={18} color={accent} />
-          <Text style={[s.encourageTxt, { color: isDark ? '#d1fae5' : '#166534' }, align]}>{encourage(t, pct)}</Text>
+          <Text style={[s.encourageTxt, { color: k.text }, align]}>{encourage(t, pct)}</Text>
         </View>
 
         {/* Réglage de l'objectif : stepper + saisie */}

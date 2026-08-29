@@ -41,10 +41,10 @@ export default function AddWaterScreen() {
 
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(k), [k]);
-  const bg = isDark ? '#0B0F14' : k.surface;
+  const bg = k.surface;
   const textPrimary = isDark ? colors.gray[900] : k.text;
   const textMuted = isDark ? colors.gray[400] : k.textMuted;
-  const cardBg = isDark ? '#161C23' : k.surfaceSunken;
+  const cardBg = k.surfaceSunken;
 
   const increment = 125;
   const maxMl = 1000;

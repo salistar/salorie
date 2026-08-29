@@ -140,7 +140,7 @@ export default function Rewards() {
                         <Text style={[s.badgeTxt, { color: GREEN }]}>{t.unlocked}</Text>
                       </View>
                     ) : (
-                      <View style={[s.badge, { backgroundColor: isDark ? '#0f1419' : '#f1f5f9', flexDirection: rowDir(isRTL) }]}>
+                      <View style={[s.badge, { backgroundColor: k.surface, flexDirection: rowDir(isRTL) }]}>
                         <Lock size={13} color={lockTint} />
                         <Text style={[s.badgeTxt, { color: lockTint }]}>{r.kmRequired} {t.km}</Text>
                       </View>

@@ -222,8 +222,8 @@ export default function FastingScreen() {
             {PROTOCOLS.map((p) => (
               <TouchableOpacity key={p.id} disabled={!!startTs}
                 onPress={() => setProto(p)}
-                style={[styles.proto, { backgroundColor: isDark ? '#334155' : '#E2E8F0' }, proto.id === p.id && { backgroundColor: GREEN }, !!startTs && { opacity: 0.5 }]}>
-                <Text style={[styles.protoTxt, { color: isDark ? '#cbd5e1' : '#475569' }, proto.id === p.id && styles.protoTxtActive]}>{p.label}</Text>
+                style={[styles.proto, { backgroundColor: k.surfaceSunken }, proto.id === p.id && { backgroundColor: GREEN }, !!startTs && { opacity: 0.5 }]}>
+                <Text style={[styles.protoTxt, { color: k.text }, proto.id === p.id && styles.protoTxtActive]}>{p.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -243,7 +243,7 @@ export default function FastingScreen() {
                 </View>
                 <Text style={[styles.timerLabel, type.body, { color: sub }]}>{ramPhase === 'suhoor' ? tr.suhoor : ramPhase === 'fast' ? tr.fasting : tr.iftar}</Text>
                 <Text style={[styles.timer, type.hero, { color: ramPhase === 'iftar' ? GREEN : text }]}>{fmt(ramTarget - now)}</Text>
-                <View style={[styles.track, { backgroundColor: isDark ? '#334155' : '#F1F5F9' }]}><View style={[styles.fill, { width: `${ramPct}%`, backgroundColor: GREEN }]} /></View>
+                <View style={[styles.track, { backgroundColor: k.surface }]}><View style={[styles.fill, { width: `${ramPct}%`, backgroundColor: GREEN }]} /></View>
                 <Text style={[styles.sub, { color: sub, textAlign: 'center' }]}>
                   {ramPhase === 'suhoor'
                     ? `${tr.fastStartsAt} ${prayer.fajrStr}`
@@ -262,7 +262,7 @@ export default function FastingScreen() {
             <View style={[styles.timerCard, { backgroundColor: card, borderWidth: 1, borderColor: border }, !isDark && styles.cardShadow]}>
               <Text style={[styles.timerLabel, type.body, { color: sub }]}>{startTs ? (done ? t.done : t.fastingTime) : t.ready}</Text>
               <Text style={[styles.timer, type.hero, { color: text }, done ? { color: GREEN } : null]}>{startTs ? fmt(elapsed) : '00:00:00'}</Text>
-              <View style={[styles.track, { backgroundColor: isDark ? '#334155' : '#F1F5F9' }]}><View style={[styles.fill, { width: `${pct}%`, backgroundColor: GREEN }]} /></View>
+              <View style={[styles.track, { backgroundColor: k.surface }]}><View style={[styles.fill, { width: `${pct}%`, backgroundColor: GREEN }]} /></View>
               <Text style={[styles.sub, { color: sub }]}>
                 {startTs ? (done ? t.canEat : `${t.remaining} ${fmt(remaining)} · ${t.goal} ${proto.fast}h`) : `${t.goalCap} ${proto.fast}h`}
               </Text>
@@ -292,7 +292,7 @@ export default function FastingScreen() {
           {!joined ? (
             <View style={[styles.cJoinRow, { flexDirection: rowDir(isRTL) }]}>
               <TextInput
-                style={[styles.codeInput, { color: text, backgroundColor: isDark ? '#0f1419' : '#F1F5F9', borderColor: isDark ? '#334155' : '#E2E8F0', textAlign: txtAlign(isRTL) }]}
+                style={[styles.codeInput, { color: text, backgroundColor: k.surface, borderColor: k.border, textAlign: txtAlign(isRTL) }]}
                 placeholder={t.codePh} placeholderTextColor={sub} value={code} onChangeText={setCode} autoCapitalize="none"
               />
               <TouchableOpacity style={[styles.joinBtn, { backgroundColor: GREEN }, (!code.trim() || connecting) && { opacity: 0.6 }]} onPress={joinChallenge} disabled={connecting || !code.trim()}>
@@ -314,7 +314,7 @@ export default function FastingScreen() {
                 return (
                   <View key={i} style={[styles.pRow, { flexDirection: rowDir(isRTL) }]}>
                     <Text style={[styles.pName, { color: text, textAlign: txtAlign(isRTL) }]} numberOfLines={1}>{p.name}</Text>
-                    <View style={[styles.pTrack, { backgroundColor: isDark ? '#334155' : '#F1F5F9' }]}>
+                    <View style={[styles.pTrack, { backgroundColor: k.surface }]}>
                       <View style={[styles.pFill, { width: `${pc}%`, backgroundColor: p.status === 'fasting' ? GREEN : '#94A3B8' }]} />
                     </View>
                     <Text style={[styles.pPct, { color: sub }]}>{p.status === 'fasting' ? `${pc}%` : '—'}</Text>
@@ -325,7 +325,7 @@ export default function FastingScreen() {
           )}
         </View>
 
-        <Text style={[styles.note, { color: isDark ? '#64748b' : '#94A3B8' }]}>{t.note}</Text>
+        <Text style={[styles.note, { color: k.textFaint }]}>{t.note}</Text>
       </ScrollView>
     </SafeAreaView>
   );

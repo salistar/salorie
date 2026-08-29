@@ -15,25 +15,28 @@ import {
   BORDURE, LIBELLE, SAISIE, SAISIE_NOMBRE, ERREUR, ESPACE_ENTRE_CHAMPS, haloFocus,
 } from '../constants/formTokens';
 
+import { useTokens } from '../constants/tokens';
 const GREEN = '#2E8B57';
 const GREEN_DARK = '#246B43';
 
 export function useFormTheme() {
+  const k = useTokens();
   const { resolved } = useTheme();
   const { isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
   // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L accent vient du theme : le couple clair/sombre fige n en connaissait que deux.
+  const accent = k.accent;
   return {
     isDark, isRTL, accent,
-    bg: isDark ? '#0B0F14' : '#ffffff',
-    card: isDark ? '#161C23' : '#FFFFFF',
-    border: isDark ? '#283241' : '#E8EDF2',
-    inputBg: isDark ? '#0B0F14' : '#F8FAFC',
-    text: isDark ? '#F1F5F9' : '#0F172A',
-    sub: isDark ? '#94A3B8' : '#64748B',
-    tint: isDark ? 'rgba(46,139,87,0.18)' : '#EAF4EE',
+    bg: k.surface,
+    card: k.surface,
+    border: k.border,
+    inputBg: k.surface,
+    text: k.text,
+    sub: k.textMuted,
+    tint: k.accentSoft,
     align: { textAlign: (isRTL ? 'right' : 'left') as any },
     rowDir: { flexDirection: (isRTL ? 'row-reverse' : 'row') as any },
   };

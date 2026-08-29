@@ -102,9 +102,9 @@ export default function ReadinessScreen() {
   const tx = TXT[language] || TXT.en;
   const accent = k.accent;
 
-  const text = isDark ? '#fff' : k.text;
-  const sub = isDark ? '#9BA1A6' : k.textMuted;
-  const card = isDark ? k.surface : '#fff';
+  const text = k.text;
+  const sub = k.textMuted;
+  const card = k.surface;
   const bg = isDark ? '#0f1419' : 'transparent';
   const tok = useTokens();
   const border = tok.border;
