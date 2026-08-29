@@ -83,7 +83,7 @@ export function FormInput({ label, error, style, icon: Icon, ...props }: any) {
   const s = useMemo(() => makeS(k), [k]);
   const th = useFormTheme();
   const [focus, setFocus] = useState(false);
-  const bColor = error ? '#e11d48' : focus ? th.accent : th.border;
+  const bColor = error ? k.danger : focus ? th.accent : th.border;
   return (
     <View style={{ marginBottom: ESPACE_ENTRE_CHAMPS }}>
       {label ? <FormLabel>{label}</FormLabel> : null}

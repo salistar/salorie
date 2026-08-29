@@ -28,7 +28,6 @@ export function useBarreVisible(): boolean {
   return Boolean(isSignedIn);
 }
 
-const GREY = '#94A3B8';
 
 const TABS = [
   { key: 'home', label: 'Home', icon: Home, route: '/(tabs)' },
@@ -91,7 +90,7 @@ export default function PersistentTabBar() {
           return (
             <TouchableOpacity key={t.key} style={styles.item} activeOpacity={0.7}
               onPress={() => { try { router.navigate(t.route as any); } catch { router.replace(t.route as any); } }}>
-              <Icon size={22} color={GREY} />
+              <Icon size={22} color={k.textFaint} />
               <Text style={styles.label} numberOfLines={1}>{labelFor(t.key, t.label)}</Text>
             </TouchableOpacity>
           );
@@ -115,5 +114,5 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     elevation: 8,
   },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2 },
-  label: { fontSize: 10, color: GREY, fontWeight: '600' },
+  label: { fontSize: 10, color: k.textFaint, fontWeight: '600' },
 });

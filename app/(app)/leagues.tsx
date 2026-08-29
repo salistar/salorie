@@ -1,3 +1,11 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// Les couleurs de ligue — bronze, argent, or, diamant — sont des IDENTITES.
+// Une conversion automatique avait fait tomber bronze et or sur le meme jeton :
+// la distinction que ces ligues existent pour porter disparaissait.
+//
+// Le marqueur ci-dessus est LU par les outils de migration. C est la seule
+// protection qui tienne : ce fichier a ete abime deux fois avant qu il existe.
 // Écran LIGUES HEBDOMADAIRES (rétention façon Duolingo) — hub qui affiche le classement
 // de MA ligue cette semaine, mon rang/XP, le temps restant avant clôture et les zones
 // de promotion/relégation colorées. 100% Firestore via lib/leagues.ts. Trilingue + dark + RTL.

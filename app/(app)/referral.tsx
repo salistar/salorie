@@ -330,7 +330,7 @@ export default function Referral() {
               {msg && (
                 <View style={[s.msgBox, { backgroundColor: msg.ok ? 'rgba(46,139,87,0.12)' : (isDark ? '#3f1d1d' : k.dangerSoft), flexDirection: rowDir(isRTL) }]}>
                   {msg.ok ? <Ticket size={15} color={GREEN} /> : null}
-                  <Text style={[s.msgTxt, { color: msg.ok ? GREEN : (isDark ? '#fca5a5' : '#b42318') }, align]}>{msg.text}</Text>
+                  <Text style={[s.msgTxt, { color: msg.ok ? GREEN : (isDark ? '#fca5a5' : k.dangerInk) }, align]}>{msg.text}</Text>
                 </View>
               )}
             </View>

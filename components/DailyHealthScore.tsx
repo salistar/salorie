@@ -49,7 +49,7 @@ export default function DailyHealthScore() {
   const score = Math.round((calScore * 0.4 + protScore * 0.3 + waterScore * 0.3) * 100);
 
   const label = score >= 80 ? tx.excellent : score >= 55 ? tx.good : score >= 30 ? tx.ongoing : tx.start;
-  const color = score >= 80 ? accent : score >= 55 ? '#16A34A' : score >= 30 ? '#D97706' : '#94A3B8';
+  const color = score >= 80 ? accent : score >= 55 ? k.success : score >= 30 ? k.warning : k.textFaint;
 
   const Bar = ({ label, v }: { label: string; v: number }) => (
     <View style={[styles.barRow, isRTL && { flexDirection: 'row-reverse' }]}>

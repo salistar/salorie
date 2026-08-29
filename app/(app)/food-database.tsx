@@ -405,7 +405,7 @@ function QuickRow({ f, fav, onLog, onFav, isDark, isRTL, km, language }: any) {
     <TouchableOpacity activeOpacity={0.7} onPress={() => onLog(f)}
       style={[qrStyles.row, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: k.surface, borderColor: k.border }]}>
       <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('favori')} onPress={() => onFav(f)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-        <Star size={20} color={k.warning} fill={fav ? '#f59e0b' : 'transparent'} />
+        <Star size={20} color={k.warning} fill={fav ? k.warning : 'transparent'} />
       </TouchableOpacity>
       <View style={{ flex: 1 }}>
         <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '700', color: k.text, textAlign: isRTL ? 'right' : 'left' }}>{f.name}</Text>

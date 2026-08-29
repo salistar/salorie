@@ -28,7 +28,6 @@ import {
   GlucoseEntry, BPEntry, GlucoseContext, Trend, VitalAlert,
 } from '../../lib/vitals';
 
-const AMBER = '#F59E0B';
 
 const CTX_ORDER: GlucoseContext[] = ['fasting', 'pre_meal', 'post_meal', 'bedtime', 'random'];
 
@@ -192,7 +191,7 @@ export default function VitalsScreen() {
         {/* ALERTES colorées + conseil médecin */}
         {activeAlerts.map((a, i) => {
           const danger = a.severity === 'danger';
-          const c = danger ? colors.error : AMBER;
+          const c = danger ? colors.error : k.warning;
           return (
             <View key={i} style={[styles.alert, { backgroundColor: c + '18', borderColor: c + '55', flexDirection: rowDir(isRTL) }]}>
               <AlertTriangle size={20} color={c} />
@@ -242,7 +241,7 @@ export default function VitalsScreen() {
           <Text style={[styles.empty, { color: sub }, align]}>{t.empty}</Text>
         ) : glu.slice(0, 12).map((h) => {
           const a = glucoseAlert(h.mgdl, conditions);
-          const c = a ? (a.severity === 'danger' ? colors.error : AMBER) : accent;
+          const c = a ? (a.severity === 'danger' ? colors.error : k.warning) : accent;
           return (
             <View key={h.id} style={[styles.row, { backgroundColor: card, flexDirection: rowDir(isRTL), borderColor: isDark ? k.border : 'transparent' }]}>
               <View style={{ flex: 1 }}>
@@ -296,7 +295,7 @@ export default function VitalsScreen() {
           <Text style={[styles.empty, { color: sub }, align]}>{t.empty}</Text>
         ) : bp.slice(0, 12).map((h) => {
           const a = bpAlert(h.systolic, h.diastolic, conditions);
-          const c = a ? (a.severity === 'danger' ? colors.error : AMBER) : accent;
+          const c = a ? (a.severity === 'danger' ? colors.error : k.warning) : accent;
           return (
             <View key={h.id} style={[styles.row, { backgroundColor: card, flexDirection: rowDir(isRTL), borderColor: isDark ? k.border : 'transparent' }]}>
               <View style={{ flex: 1 }}>
@@ -321,7 +320,7 @@ export default function VitalsScreen() {
 function TrendCard({ trend, secondary, label, avg, range, unit, spark, card, text, sub, track, accent, isDark, isRTL }: any) {
   const k = useTokens();
   const styles = useMemo(() => makeStyles(k), [k]);
-  const dirColor = trend.direction === 'up' ? AMBER : trend.direction === 'down' ? '#3B82F6' : sub;
+  const dirColor = trend.direction === 'up' ? k.warning : trend.direction === 'down' ? '#3B82F6' : sub;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
   // Mini-graphe : barres normalisées entre min et max de la fenêtre. On inverse
   // l'ordre pour lire chrono (ancien→récent). Barres RTL-safe (le conteneur suit isRTL).

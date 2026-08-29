@@ -86,11 +86,11 @@ const TXT: any = {
   },
 };
 
-function verdictColor(score: number) {
-  if (score >= 80) return '#22c55e';
+function verdictColor(score: number, k: Tokens) {
+  if (score >= 80) return k.success;
   if (score >= 60) return '#84cc16';
-  if (score >= 40) return '#f59e0b';
-  return '#ef4444';
+  if (score >= 40) return k.warning;
+  return k.danger;
 }
 
 export default function ReadinessScreen() {
@@ -171,13 +171,13 @@ export default function ReadinessScreen() {
         {/* Score gauge */}
         {result && (
           <View style={[styles.gaugeCard, { backgroundColor: card, borderColor: border }]}>
-            <View style={[styles.circle, { borderColor: verdictColor(result.score) }]}>
-              <Text style={[styles.scoreNum, { color: verdictColor(result.score) }]}>{result.score}</Text>
+            <View style={[styles.circle, { borderColor: verdictColor(result.score, k) }]}>
+              <Text style={[styles.scoreNum, { color: verdictColor(result.score, k) }]}>{result.score}</Text>
               <Text style={[styles.scoreOf, { color: sub }]}>/ 100</Text>
             </View>
             <Text style={[styles.scoreCaption, { color: sub, textAlign: 'center' }]}>{tx.yourScore}</Text>
-            <View style={[styles.badge, { backgroundColor: verdictColor(result.score) + '22' }]}>
-              <Text style={[styles.badgeTxt, { color: verdictColor(result.score) }]}>{tx.labels[result.label]}</Text>
+            <View style={[styles.badge, { backgroundColor: verdictColor(result.score, k) + '22' }]}>
+              <Text style={[styles.badgeTxt, { color: verdictColor(result.score, k) }]}>{tx.labels[result.label]}</Text>
             </View>
             <Text style={[styles.advice, { color: text, textAlign: 'center' }]}>{tx.advice[result.advice]}</Text>
           </View>

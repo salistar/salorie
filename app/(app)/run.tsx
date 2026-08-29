@@ -364,7 +364,7 @@ export default function RunScreen() {
   const tok = useTokens();
   const bg = tok.bg;
 
-  const html = useMemo(() => (center ? buildHtml(center, k.accent) : ''), [center]);
+  const html = useMemo(() => (center ? buildHtml(center, k.accent) : ''), [center, k]);
 
   if (perm === 'denied') {
     return (

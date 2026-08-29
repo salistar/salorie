@@ -187,9 +187,9 @@ export default function HealthyRecipesScreen() {
   const loading = ctxLoading || nutriLoading;
 
   const verdictMeta = (v: Verdict) => {
-    if (v === 'great') return { label: t.great, color: k.success, Icon: CheckCircle2, bg: isDark ? 'rgba(22,163,74,0.16)' : '#DCFCE7' };
-    if (v === 'ok') return { label: t.ok, color: k.warning, Icon: MinusCircle, bg: isDark ? 'rgba(217,119,6,0.16)' : '#FEF3C7' };
-    return { label: t.avoid, color: k.danger, Icon: AlertTriangle, bg: isDark ? 'rgba(220,38,38,0.16)' : '#FEE2E2' };
+    if (v === 'great') return { label: t.great, color: k.success, Icon: CheckCircle2, bg: isDark ? 'rgba(22,163,74,0.16)' : k.successSoft };
+    if (v === 'ok') return { label: t.ok, color: k.warning, Icon: MinusCircle, bg: isDark ? 'rgba(217,119,6,0.16)' : k.warningSoft };
+    return { label: t.avoid, color: k.danger, Icon: AlertTriangle, bg: isDark ? 'rgba(220,38,38,0.16)' : k.dangerSoft };
   };
 
   const selectedScore = selected ? scoreRecipe(selected, safeCtx) : null;

@@ -335,7 +335,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     padding: 20,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#D1FAE5',
+    borderColor: k.successSoft,
     gap: 16,
     marginVertical: 10,
     alignItems: 'center',
