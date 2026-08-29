@@ -30,7 +30,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useMe } from './MeProvider';
-import { useProfil, enregistrerTheme } from '../../lib/useFirestoreMe';
+import { useProfil, enregistrerTheme, enregistrerLangue } from '../../lib/useFirestoreMe';
 import { sensLecture, type Langue } from '../../lib/i18nMe';
 
 type Tri = { fr: string; en: string; ar: string };
@@ -190,6 +190,25 @@ export default function MeNav() {
             landing et back-office l'avaient, /me obligeait a repasser par la
             page d'accueil pour changer de palette. Meme composant, meme cle de
             stockage — le choix suit l'utilisateur d'une surface a l'autre. */}
+        {/* Les trois langues, sur chaque page de l espace membre.
+            Elles n existaient que sur la page d accueil publique : depuis
+            /me, changer de langue demandait de ressortir du site. Le
+            changement est immediat — `useProfil` ecoute le document, la
+            nouvelle valeur redescend sans rechargement. */}
+        <div className="me-nav-langues" role="group" aria-label="Langue">
+          {(["fr", "en", "ar"] as Langue[]).map((l) => (
+            <button
+              key={l}
+              type="button"
+              className={'me-nav-langue' + (langue === l ? ' actif' : '')}
+              aria-pressed={langue === l}
+              onClick={() => { void enregistrerLangue(uid, l); }}
+            >
+              {l.toUpperCase()}
+            </button>
+          ))}
+        </div>
+
         <div className="me-nav-themes">
           {/* Le theme suit l'utilisateur d'un appareil a l'autre.
               Le mobile ecrit `preferences.theme` dans le meme document que

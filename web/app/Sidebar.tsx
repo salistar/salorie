@@ -80,6 +80,17 @@ export default function Sidebar() {
           </div>
         ) : null}
         <SelecteurTheme compact />
+        {/* Le code source, ici et pas sur la page publique.
+            Il ne sert qu a l equipe, et cette barre n apparait qu apres
+            identification — c est exactement le bon public. */}
+        <a
+          href="https://github.com/salistar/salorie"
+          target="_blank"
+          rel="noopener"
+          className="admin-lien-source"
+        >
+          Code source
+        </a>
         <form action="/api/auth/logout" method="post">
           <button type="submit" className="sb-logout">⎋ Déconnexion</button>
         </form>

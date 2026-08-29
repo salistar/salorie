@@ -100,6 +100,26 @@ export async function enregistrerTheme(uid: string, theme: string): Promise<void
   }
 }
 
+/**
+ * Enregistre la langue dans le profil.
+ *
+ * Le mobile lit la MEME cle : changer de langue ici la change aussi sur le
+ * telephone, sans que rien n ait a se synchroniser — les deux clients ecoutent
+ * le meme document.
+ *
+ * Le changement est immediat et SANS RECHARGEMENT : `useProfil` ecoute par
+ * onSnapshot, la nouvelle valeur redescend d elle-meme dans l arbre React.
+ */
+export async function enregistrerLangue(uid: string, langue: string): Promise<void> {
+  if (!uid) return;
+  try {
+    const { updateDoc } = await import('firebase/firestore');
+    await updateDoc(doc(firestore(), 'users', uid), { language: langue });
+  } catch {
+    /* hors ligne : la langue reprendra a la prochaine connexion */
+  }
+}
+
 /** Journee au format `YYYY-MM-DD` LOCAL — identique a la cle `date` ecrite par le mobile. */
 export function jourLocal(d = new Date()): string {
   const p = (n: number) => String(n).padStart(2, '0');

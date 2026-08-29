@@ -1674,3 +1674,30 @@ tbody tr:last-child td { border-bottom: none; }
 img[loading='lazy'] {
   background-color: var(--t-surface2);
 }
+
+/* Les trois langues dans la barre de l'espace membre.
+   Même place que les pastilles de thème : sous la marque, là où l'œil revient.
+   Un réglage enfoui dans une page de préférences n'est pas un réglage — c'est
+   une option que personne ne trouve. */
+.me-nav-langues {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px 0;
+}
+.me-nav-langue {
+  flex: 1;
+  padding: 6px 0;
+  border-radius: 999px;
+  border: 1px solid var(--t-border);
+  background: transparent;
+  color: var(--t-text-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.me-nav-langue.actif {
+  border-color: var(--t-accent);
+  color: var(--t-accent);
+  background: var(--t-accent-soft);
+}
