@@ -4,7 +4,7 @@
 // vendeur. Trilingue (en/fr/ar) + dark + RTL + flèche retour. Firestore best-effort.
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, Tokens } from '../../constants/tokens';
 import React, { useCallback, useState, useMemo } from 'react';
 import {
   View,
@@ -20,7 +20,6 @@ import { router, useFocusEffect } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, Plus, Store, Tag, User as UserIcon, MapPin, MoreVertical } from 'lucide-react-native';
 import PerfList from '../../components/PerfList';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign, flipForRTL } from '../../lib/rtl';
@@ -28,7 +27,6 @@ import { listListings, LISTING_CATEGORIES, ListingCategory, MarketplaceListing }
 import ModerationSheet from '../../components/ModerationSheet';
 import { getBlockedSet } from '../../lib/moderation';
 
-const PRIMARY = Colors.light.primary;
 
 const CAT_EMOJI: Record<ListingCategory, string> = {
   meal: '🍱', coaching: '🧑‍🏫', gear: '🏋️', produce: '🥦', service: '🛠️', other: '📦',
@@ -70,10 +68,11 @@ const TXT: Record<string, any> = {
 export default function MarketplaceScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
 
   const [listings, setListings] = useState<MarketplaceListing[]>([]);
   const [category, setCategory] = useState<ListingCategory | null>(null);
@@ -84,12 +83,12 @@ export default function MarketplaceScreen() {
   const align = txtAlign(isRTL);
   const dir = rowDir(isRTL);
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const tok = useTokens();
   const bg = tok.bg;
-  const field = isDark ? Colors.dark.gray[100] : Colors.light.gray[100];
+  const field = k.border;
 
   const load = useCallback(async (cat: ListingCategory | null) => {
     setLoading(true);
@@ -152,7 +151,7 @@ export default function MarketplaceScreen() {
             activeOpacity={0.85}
             onPress={() => router.push('/listing-create?mine=1' as any)}
           >
-            <UserIcon size={17} color={PRIMARY} />
+            <UserIcon size={17} color={k.accent} />
             <Text style={[styles.mineTxt, { color: text }]}>{t.myListings}</Text>
           </TouchableOpacity>
         </View>
@@ -160,7 +159,7 @@ export default function MarketplaceScreen() {
         {/* Filtre catégorie */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
           <TouchableOpacity
-            style={[styles.chip, { backgroundColor: !category ? PRIMARY : field }]}
+            style={[styles.chip, { backgroundColor: !category ? k.accent : field }]}
             activeOpacity={0.85}
             onPress={() => setCategory(null)}
           >
@@ -171,7 +170,7 @@ export default function MarketplaceScreen() {
             return (
               <TouchableOpacity
                 key={c}
-                style={[styles.chip, { backgroundColor: active ? PRIMARY : field }]}
+                style={[styles.chip, { backgroundColor: active ? k.accent : field }]}
                 activeOpacity={0.85}
                 onPress={() => setCategory(c)}
               >
@@ -201,7 +200,7 @@ export default function MarketplaceScreen() {
             </View>
           ) : (
             <View style={[styles.emptyBox, { backgroundColor: card }]}>
-              <Store size={34} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} />
+              <Store size={34} color={k.textFaint} />
               <Text style={[styles.emptySub, { color: sub }]}>{t.empty}</Text>
             </View>
           )
@@ -226,8 +225,8 @@ export default function MarketplaceScreen() {
                 <View style={styles.gridBody}>
                   <Text style={[styles.gridTitle, { color: text, textAlign: align }]} numberOfLines={1}>{l.title}</Text>
                   <View style={[styles.gridMetaRow, { flexDirection: dir }]}>
-                    <Tag size={12} color={PRIMARY} />
-                    <Text style={[styles.gridPrice, { color: PRIMARY }]} numberOfLines={1}>{priceLabel(l)}</Text>
+                    <Tag size={12} color={k.accent} />
+                    <Text style={[styles.gridPrice, { color: k.accent }]} numberOfLines={1}>{priceLabel(l)}</Text>
                   </View>
                   {!!l.placeName && (
                     <View style={[styles.gridMetaRow, { flexDirection: dir }]}>
@@ -255,7 +254,7 @@ export default function MarketplaceScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   modBtn: { position: 'absolute', top: 6, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 14, padding: 4 },
   container: { flex: 1 },
   header: { alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
@@ -264,7 +263,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 60 },
   sub: { fontSize: 13, lineHeight: 18, marginBottom: 14 },
   actionsRow: { gap: 10, marginBottom: 14 },
-  publishBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: PRIMARY, borderRadius: 14, paddingVertical: 13 },
+  publishBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 13 },
   publishTxt: { color: '#fff', fontSize: 14.5, fontWeight: '800' },
   mineBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 13 },
   mineTxt: { fontSize: 14.5, fontWeight: '800' },

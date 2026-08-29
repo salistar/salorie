@@ -69,6 +69,7 @@ const TXT: any = {
 };
 
 export default function Sadaqa() {
+  const k = useTokens();
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;

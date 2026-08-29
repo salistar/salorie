@@ -22,6 +22,7 @@ const TXT: any = {
 };
 
 function MacroTargets() {
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const tx = TXT[language] || TXT.en;
   const { resolved } = useTheme();

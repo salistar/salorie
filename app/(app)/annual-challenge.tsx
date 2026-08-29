@@ -92,6 +92,7 @@ function encourage(t: any, pct: number): string {
 }
 
 export default function AnnualChallenge() {
+  const k = useTokens();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;

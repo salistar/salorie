@@ -89,6 +89,7 @@ function fmtPace(paceSec: number): string {
 const MAX_REC_MS = 20000; // auto-stop à ~20 s
 
 export default function LiveTwinScreen() {
+  const k = useTokens();
   const { user } = useUser();
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;

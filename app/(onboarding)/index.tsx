@@ -23,11 +23,11 @@ import {
   ArrowLeft,
 } from 'lucide-react-native';
 import { useUser } from '@clerk/clerk-expo';
-import { Colors } from '../../constants/Colors';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
 import { Stepper } from '../../components/FormKit';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 // i18n LOCAL — toutes les chaînes auparavant codées en dur (placeholders,
 // labels d'unités, boutons) passent ici. Rien d'anglais ne reste en FR/AR.
@@ -98,22 +98,23 @@ export default function OnboardingScreen() {
   const { user } = useUser();
   const { t, language, isRTL } = useTranslation() as any;
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const tx = TXT[language as string] || TXT.en;
   const [currentStep, setCurrentStep] = useState(0);
 
-  // Palette theme-aware (accent toujours = Colors.light.primary).
+  // Palette theme-aware (accent toujours = k.accent).
   const C = {
     bg: isDark ? '#0f1419' : '#F8FAFC',
-    card: isDark ? Colors.dark.card : Colors.light.white,
-    border: isDark ? '#2d3543' : Colors.light.gray[200],
-    title: isDark ? '#fff' : Colors.light.gray[800],
-    sub: isDark ? '#9BA1A6' : Colors.light.gray[500],
-    text: isDark ? '#fff' : Colors.light.gray[800],
-    accent: isDark ? Colors.dark.primary : Colors.light.primary,
-    backBtn: isDark ? Colors.dark.gray[100] : Colors.light.gray[200],
-    backIcon: isDark ? '#9BA1A6' : Colors.light.gray[600],
+    card: k.surface,
+    border: isDark ? '#2d3543' : k.border,
+    title: isDark ? '#fff' : k.text,
+    sub: isDark ? '#9BA1A6' : k.textMuted,
+    text: isDark ? '#fff' : k.text,
+    accent: k.accent,
+    backBtn: k.border,
+    backIcon: isDark ? '#9BA1A6' : k.textMuted,
   };
 
   const STEPS = [
@@ -232,7 +233,7 @@ export default function OnboardingScreen() {
           key={index}
           style={[
             styles.progressSegment,
-            { backgroundColor: index <= currentStep ? C.accent : (isDark ? Colors.dark.gray[100] : Colors.light.gray[200]) },
+            { backgroundColor: index <= currentStep ? C.accent : (k.border) },
           ]}
         />
       ))}
@@ -441,7 +442,7 @@ export default function OnboardingScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -582,7 +583,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
     shadowRadius: 10,

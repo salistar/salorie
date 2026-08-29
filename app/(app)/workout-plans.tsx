@@ -13,13 +13,13 @@ import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ArrowLeft, ChevronDown, Dumbbell, Clock, BarChart3, Flame, CheckCircle2 } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import PhotoStrip from '../../components/PhotoStrip';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { addNutritionLog, emailToDocId } from '../../lib/firebase';
 import { useScreenGate } from '../../components/FeatureGate';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 type Plan = {
   emoji: string; color: string; title: string; level: string; duration: string; focus: string; met: number;
@@ -156,9 +156,10 @@ const EX_HOW: Record<string, Record<string, string>> = {
 export default function WorkoutPlansScreen() {
   const __gate = useScreenGate('workout-plans');
   const { resolved } = useTheme();
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const t = TXT[language] || TXT.en;
   const plans = PLANS[language] || PLANS.en;
   const [open, setOpen] = useState<number | null>(0);
@@ -192,9 +193,9 @@ export default function WorkoutPlansScreen() {
     finally { setBusy(null); }
   };
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const bg = isDark ? '#0f1419' : 'transparent';
   const row = (rev = false): any => ({ flexDirection: isRTL ? (rev ? 'row' : 'row-reverse') : (rev ? 'row-reverse' : 'row') });
   const ta: any = { textAlign: isRTL ? 'right' : 'left' };
@@ -207,7 +208,7 @@ export default function WorkoutPlansScreen() {
         <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
         <View style={[styles.titleRow, row()]}>
-          <Dumbbell size={26} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+          <Dumbbell size={26} color={k.accent} />
           <Text style={[styles.title, { color: text }, ta]}>{t.title}</Text>
         </View>
         <Text style={[styles.subtitle, { color: sub }, ta]}>{t.sub}</Text>
@@ -269,11 +270,11 @@ export default function WorkoutPlansScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 60 },
   topRow: { alignItems: 'center', marginTop: 4 },
-  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] },
+  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: k.surfaceSunken },
   titleRow: { alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 28, fontWeight: '900', letterSpacing: -1 },
   subtitle: { fontSize: 14, marginTop: 8, marginBottom: 18, lineHeight: 20 },
@@ -295,6 +296,6 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   exDetail: { fontSize: 14, fontWeight: '800' },
   doneBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 14, paddingVertical: 13, borderRadius: 14 },
   doneBtnTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
-  cta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: Colors.light.primary, paddingVertical: 16, borderRadius: 16, marginTop: 10, shadowColor: isDark ? 'transparent' : Colors.light.primary, shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
+  cta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: k.accent, paddingVertical: 16, borderRadius: 16, marginTop: 10, shadowColor: k.isDark ? 'transparent' : k.accent, shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
   ctaTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
 });

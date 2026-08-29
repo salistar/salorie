@@ -73,6 +73,7 @@ export default function LancerDefi({
   chemin: string;
   compact?: boolean;
 }) {
+  const k = useTokens();
   const tok = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.fr;

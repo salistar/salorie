@@ -53,6 +53,7 @@ const T: Record<string, Record<string, string>> = {
 };
 
 export default function PanierSouk() {
+  const k = useTokens();
   const tok = useTokens();
   const { language, isRTL } = useTranslation();
   const t = T[String(language)] || T.fr;

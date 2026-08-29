@@ -46,6 +46,7 @@ type ReceiptLine = { raw: string; food: string | null; qty: number; price: numbe
 type ReceiptData = { merchant: string | null; date: string | null; total: number | null; lines: ReceiptLine[]; ok: boolean };
 
 export default function ReceiptOcrScreen() {
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();

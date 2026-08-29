@@ -16,7 +16,6 @@ import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, Trophy, ChevronUp, ChevronDown, Clock } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { SkeletonCard, Skeleton } from '../../components/ui';
-import { Colors } from '../../constants/Colors';
 import { type } from '../../constants/theme';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
@@ -31,6 +30,7 @@ import {
   RELEGATE_COUNT,
 } from '../../lib/leagues';
 
+import { useTokens, Tokens } from '../../constants/tokens';
 type Lang = 'en' | 'fr' | 'ar';
 
 // Chaînes LOCALES trilingues (convention : pas de clés i18n.tsx pour les NOUVELLES strings).
@@ -108,19 +108,20 @@ function formatLeft(ms: number, lang: Lang): string {
 export default function LeaguesScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const lang: Lang = (['en', 'fr', 'ar'].includes(language) ? language : 'en') as Lang;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
 
   const email = user?.primaryEmailAddress?.emailAddress || '';
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<MyLeague | null>(null);
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const bg = isDark ? '#0f1419' : 'transparent';
 
   const load = useCallback(async () => {
@@ -150,7 +151,7 @@ export default function LeaguesScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topRow}>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')}
-            style={[styles.backBtn, { backgroundColor: isDark ? 'rgba(40,50,60,0.6)' : Colors.light.gray[50] }]}
+            style={[styles.backBtn, { backgroundColor: isDark ? 'rgba(40,50,60,0.6)' : k.surfaceSunken }]}
             onPress={() => router.back()}
           >
             <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ArrowLeft size={22} color={text} /></View>
@@ -203,7 +204,7 @@ export default function LeaguesScreen() {
                     {myRank ? `#${myRank}` : S.notRanked[lang]}
                   </Text>
                 </View>
-                <View style={[styles.heroDivider, { backgroundColor: isDark ? '#222' : Colors.light.gray[100] }]} />
+                <View style={[styles.heroDivider, { backgroundColor: isDark ? '#222' : k.border }]} />
                 <View style={styles.heroStatCell}>
                   <Text style={[styles.heroStatLabel, { color: sub }]}>{S.xp[lang]}</Text>
                   <Text style={[styles.heroStatValue, { color: text }]}>{myXp}</Text>
@@ -267,7 +268,7 @@ export default function LeaguesScreen() {
                       style={[
                         styles.rankRow,
                         { flexDirection: rowDir(isRTL) },
-                        !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: isDark ? '#222' : Colors.light.gray[100] },
+                        !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: isDark ? '#222' : k.border },
                         zone === 'promotion' && { backgroundColor: PROMO_COLOR + '0D' },
                         zone === 'relegation' && { backgroundColor: RELEG_COLOR + '0D' },
                         r.isMe && { backgroundColor: tierColor + '14' },
@@ -275,7 +276,7 @@ export default function LeaguesScreen() {
                     >
                       {/* Barre de zone (promo/relég) sur le bord */}
                       <View style={[styles.zoneBar, { backgroundColor: zoneColor }]} />
-                      <View style={[styles.rankNumWrap, { backgroundColor: isDark ? '#1a1a1a' : Colors.light.gray[50] }]}>
+                      <View style={[styles.rankNumWrap, { backgroundColor: isDark ? '#1a1a1a' : k.surfaceSunken }]}>
                         <Text style={[styles.rankNum, { color: r.rank <= 3 ? tierColor : sub }]}>{r.rank}</Text>
                       </View>
                       <View style={{ flex: 1 }}>
@@ -303,7 +304,7 @@ export default function LeaguesScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 90 },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },

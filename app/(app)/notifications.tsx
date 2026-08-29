@@ -25,7 +25,6 @@ import {
   X,
 } from 'lucide-react-native';
 import PerfList from '../../components/PerfList';
-import { Colors } from '../../constants/Colors';
 import {
   collection,
   query,
@@ -39,6 +38,7 @@ import { db, emailToDocId } from '../../lib/firebase';
 import Animated, { FadeInDown, Layout } from 'react-native-reanimated';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 const TXT: Record<string, {
   notifications: string;
@@ -143,8 +143,9 @@ export default function NotificationsScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const docId = emailToDocId(email);
@@ -220,11 +221,11 @@ export default function NotificationsScreen() {
     const kind = selected.data?.kind;
     const plan = cachedProfile?.nutritionalPlan || {};
 
-    const detailCardStyle = [styles.detailCard, isDark && { backgroundColor: Colors.dark.card }];
-    const detailTitleStyle = [styles.detailTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' as const : 'left' as const }];
+    const detailCardStyle = [styles.detailCard, isDark && { backgroundColor: k.surface }];
+    const detailTitleStyle = [styles.detailTitle, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' as const : 'left' as const }];
     const detailRowStyle = [styles.detailRow, { flexDirection: isRTL ? 'row-reverse' as const : 'row' as const }];
-    const detailLabelStyle = [styles.detailLabel, { color: isDark ? '#9BA1A6' : Colors.light.gray[500], textAlign: isRTL ? 'right' as const : 'left' as const }];
-    const detailValueStyle = [styles.detailValue, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' as const : 'left' as const }];
+    const detailLabelStyle = [styles.detailLabel, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' as const : 'left' as const }];
+    const detailValueStyle = [styles.detailValue, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' as const : 'left' as const }];
 
     if (kind === 'calories') {
       return (
@@ -336,20 +337,20 @@ export default function NotificationsScreen() {
         style={[
           styles.card,
           { flexDirection: isRTL ? 'row-reverse' : 'row' },
-          isDark && { backgroundColor: Colors.dark.card, borderColor: Colors.dark.gray[100] },
+          isDark && { backgroundColor: k.surface, borderColor: k.border },
           !item.read && styles.cardUnread,
           // Dark mode: keep unread cards dark (cardUnread forces white otherwise).
-          isDark && !item.read && { backgroundColor: Colors.dark.card, borderColor: Colors.light.primary + '55' },
+          isDark && !item.read && { backgroundColor: k.surface, borderColor: k.accent + '55' },
         ]}
       >
-        <View style={[styles.iconWrapper, isRTL ? { marginRight: 0, marginLeft: 16 } : null, isDark && { backgroundColor: Colors.dark.gray[100] }]}>
-          <Bell size={20} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+        <View style={[styles.iconWrapper, isRTL ? { marginRight: 0, marginLeft: 16 } : null, isDark && { backgroundColor: k.border }]}>
+          <Bell size={20} color={k.accent} />
         </View>
         <View style={styles.content}>
-          <Text style={[styles.notifTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{item.title}</Text>
-          <Text style={[styles.notifBody, { color: isDark ? '#9BA1A6' : Colors.light.gray[500], textAlign: isRTL ? 'right' : 'left' }]}>{item.body}</Text>
+          <Text style={[styles.notifTitle, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}>{item.title}</Text>
+          <Text style={[styles.notifBody, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{item.body}</Text>
           <View style={[styles.footer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-            <Clock size={12} color={isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} />
+            <Clock size={12} color={k.textMuted} />
             <Text style={styles.timeText}>
               {new Date(item.receivedAt).toLocaleTimeString([], {
                 hour: '2-digit',
@@ -358,8 +359,8 @@ export default function NotificationsScreen() {
             </Text>
             <Circle
               size={4}
-              color={isDark ? Colors.dark.gray[200] : Colors.light.gray[200]}
-              fill={isDark ? Colors.dark.gray[200] : Colors.light.gray[200]}
+              color={k.border}
+              fill={k.border}
               style={{ marginHorizontal: 8 }}
             />
             <Text style={styles.timeText}>
@@ -379,31 +380,31 @@ export default function NotificationsScreen() {
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, isDark && { backgroundColor: '#000' }]}>
       <ScreenTopBar />
       <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backButton, isDark && { backgroundColor: Colors.dark.gray[50] }]} onPress={() => router.back()}>
-          <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ChevronLeft size={24} color={isDark ? '#fff' : Colors.light.gray[900]} /></View>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.backButton, isDark && { backgroundColor: k.surfaceSunken }]} onPress={() => router.back()}>
+          <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ChevronLeft size={24} color={isDark ? '#fff' : k.text} /></View>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{t.notifications}</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? '#fff' : k.text }]}>{t.notifications}</Text>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} style={styles.clearButton} onPress={clearAll}>
           <Trash2
             size={20}
             // Gris clair fixe : sur le fond noir du thème sombre, cet état "désactivé"
             // devenait l'élément le plus lumineux de l'en-tête.
-            color={notifications.length > 0 ? '#EF4444' : (isDark ? Colors.dark.gray[200] : Colors.light.gray[200])}
+            color={notifications.length > 0 ? '#EF4444' : (k.border)}
           />
         </TouchableOpacity>
       </View>
 
       {loading ? (
         <View style={styles.loadingWrapper}>
-          <ActivityIndicator size="large" color={isDark ? Colors.dark.primary : Colors.light.primary} />
+          <ActivityIndicator size="large" color={k.accent} />
         </View>
       ) : notifications.length === 0 ? (
         <View style={styles.emptyState}>
-          <View style={[styles.emptyIconCircle, isDark && { backgroundColor: Colors.dark.gray[50] }]}>
-            <Inbox size={48} color={isDark ? Colors.dark.gray[200] : Colors.light.gray[200]} />
+          <View style={[styles.emptyIconCircle, isDark && { backgroundColor: k.surfaceSunken }]}>
+            <Inbox size={48} color={k.border} />
           </View>
-          <Text style={[styles.emptyTitle, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{t.inboxEmpty}</Text>
-          <Text style={[styles.emptySubtitle, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>
+          <Text style={[styles.emptyTitle, { color: isDark ? '#fff' : k.text }]}>{t.inboxEmpty}</Text>
+          <Text style={[styles.emptySubtitle, { color: isDark ? '#9BA1A6' : k.textMuted }]}>
             {t.inboxSubtitle}
           </Text>
         </View>
@@ -430,15 +431,15 @@ export default function NotificationsScreen() {
         onRequestClose={() => setSelected(null)}
       >
         <View style={[styles.modalOverlay, directionAuto()]}>
-          <View style={[styles.modalContent, isDark && { backgroundColor: Colors.dark.card }]}>
+          <View style={[styles.modalContent, isDark && { backgroundColor: k.surface }]}>
             <View style={[styles.modalHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-              <Text style={[styles.modalTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{selected?.title}</Text>
+              <Text style={[styles.modalTitle, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}>{selected?.title}</Text>
               <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={() => setSelected(null)}>
-                <X size={24} color={isDark ? '#9BA1A6' : Colors.light.gray[500]} />
+                <X size={24} color={isDark ? '#9BA1A6' : k.textMuted} />
               </TouchableOpacity>
             </View>
             <ScrollView>
-              <Text style={[styles.modalBody, { color: isDark ? '#9BA1A6' : Colors.light.gray[600], textAlign: isRTL ? 'right' : 'left' }]}>{selected?.body}</Text>
+              <Text style={[styles.modalBody, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{selected?.body}</Text>
               {renderCardDetail()}
             </ScrollView>
           </View>
@@ -450,10 +451,10 @@ export default function NotificationsScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
   },
   header: {
     flexDirection: 'row',
@@ -466,14 +467,14 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   clearButton: {
     width: 44,
@@ -491,17 +492,17 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     borderRadius: 24,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderColor: k.border,
   },
   cardUnread: {
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
-    borderColor: isDark ? Colors.dark.primary : Colors.light.primary + '33',
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    backgroundColor: k.surface,
+    borderColor: k.accent + '33',
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
@@ -511,7 +512,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -522,12 +523,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   notifTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     marginBottom: 4,
   },
   notifBody: {
     fontSize: 14,
-    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
+    color: k.textMuted,
     lineHeight: 20,
     fontWeight: '500',
     marginBottom: 8,
@@ -538,7 +539,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   },
   timeText: {
     fontSize: 12,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     fontWeight: '600',
     marginLeft: 4,
   },
@@ -546,7 +547,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     marginLeft: 8,
     marginTop: 6,
   },
@@ -560,7 +561,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
@@ -568,12 +569,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 15,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     textAlign: 'center',
     lineHeight: 22,
     fontWeight: '500',
@@ -584,7 +585,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: 24,
@@ -600,17 +601,17 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     marginRight: 12,
   },
   modalBody: {
     fontSize: 15,
-    color: isDark ? Colors.dark.gray[600] : Colors.light.gray[600],
+    color: k.textMuted,
     lineHeight: 22,
     marginBottom: 20,
   },
   detailCard: {
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     borderRadius: 20,
     padding: 20,
     gap: 12,
@@ -618,7 +619,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   detailTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     marginBottom: 4,
   },
   detailRow: {
@@ -627,27 +628,27 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderBottomColor: k.border,
   },
   detailLabel: {
     fontSize: 14,
-    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
+    color: k.textMuted,
     fontWeight: '600',
   },
   detailValue: {
     fontSize: 14,
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     fontWeight: '800',
   },
   detailAction: {
     marginTop: 12,
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     paddingVertical: 14,
     borderRadius: 16,
     alignItems: 'center',
   },
   detailActionText: {
-    color: Colors.light.white,
+    color: k.surface,
     fontSize: 15,
     fontWeight: '800',
   },

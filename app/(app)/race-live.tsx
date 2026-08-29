@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView, TextInput } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
@@ -9,7 +9,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
 import { ArrowLeft, Play, Pause, Square, MapPin, Trophy, Users } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { addNutritionLog, emailToDocId, logEvent } from '../../lib/firebase';
@@ -28,7 +27,6 @@ import { spacing, radius } from '../../constants/theme';
 // Clé Maps lue depuis l'env (EXPO_PUBLIC_GOOGLE_MAPS_KEY) — plus de clé en dur dans le
 // bundle. Clé publiable côté client : DOIT être restreinte dans GCP (package + SHA-1 + API).
 const GOOGLE_MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY ?? '';
-const PRIMARY = Colors.light.primary;
 const ME_COLOR = '#22c55e';   // current user — green
 const OTHER_COLOR = '#3b82f6'; // others — blue
 
@@ -112,6 +110,8 @@ function buildHtml(center: LatLng): string {
 }
 
 export default function RaceLiveScreen() {
+  const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const raceId = String(id || '');
   const { user } = useUser();
@@ -271,9 +271,9 @@ export default function RaceLiveScreen() {
   const mmss = `${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`;
   const paceStr = paceMin > 0 ? `${Math.floor(paceMin)}'${String(Math.round((paceMin % 1) * 60)).padStart(2, '0')}"` : "--'--";
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const tok = useTokens();
   const bg = tok.bg;
 
@@ -312,7 +312,7 @@ export default function RaceLiveScreen() {
   if (perm === 'denied') {
     return (
       <View style={[styles.center, { backgroundColor: bg, padding: 32 }]}>
-        <MapPin size={48} color={PRIMARY} />
+        <MapPin size={48} color={k.accent} />
         <Text style={[styles.permTxt, { color: text }]}>{t.perm}</Text>
         <TouchableOpacity style={styles.primaryBtn} onPress={() => Location.requestForegroundPermissionsAsync().then((r) => r.status === 'granted' && setPerm('ok'))}>
           <Text style={styles.primaryBtnTxt}>{t.grant}</Text>
@@ -341,10 +341,10 @@ export default function RaceLiveScreen() {
           domStorageEnabled
           onMessage={(e) => { if (e.nativeEvent.data === 'ready') { mapReady.current = true; pushMarkers(participants); } }}
           startInLoadingState
-          renderLoading={() => <View style={[StyleSheet.absoluteFill, styles.center]}><ActivityIndicator size="large" color={PRIMARY} /></View>}
+          renderLoading={() => <View style={[StyleSheet.absoluteFill, styles.center]}><ActivityIndicator size="large" color={k.accent} /></View>}
         />
       ) : (
-        <View style={[StyleSheet.absoluteFill, styles.center]}><ActivityIndicator size="large" color={PRIMARY} /><Text style={{ color: sub, marginTop: 12 }}>{t.waiting}</Text></View>
+        <View style={[StyleSheet.absoluteFill, styles.center]}><ActivityIndicator size="large" color={k.accent} /><Text style={{ color: sub, marginTop: 12 }}>{t.waiting}</Text></View>
       )}
 
       <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.back, { backgroundColor: card }]} onPress={() => router.back()}>
@@ -361,7 +361,7 @@ export default function RaceLiveScreen() {
               const active = boardTab === tab;
               return (
                 <TouchableOpacity key={tab} activeOpacity={0.85} onPress={() => setBoardTab(tab)}
-                  style={[styles.tab, { backgroundColor: active ? PRIMARY : (isDark ? '#1f2937' : '#f1f5f9') }]}>
+                  style={[styles.tab, { backgroundColor: active ? k.accent : (isDark ? '#1f2937' : '#f1f5f9') }]}>
                   <Text style={[styles.tabTxt, { color: active ? '#fff' : sub }]} numberOfLines={1}>
                     {tab === 'players' ? t.indivBoard : t.teamBoard}
                   </Text>
@@ -411,7 +411,7 @@ export default function RaceLiveScreen() {
         {status === 'idle' && (
           <View style={styles.teamWrap}>
             <View style={[styles.teamLabelRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-              <Users size={15} color={PRIMARY} />
+              <Users size={15} color={k.accent} />
               <Text style={[styles.teamLabel, { color: text, textAlign: isRTL ? 'right' : 'left' }]}>{t.teamMode}</Text>
             </View>
             <View style={[styles.teamRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
@@ -446,7 +446,7 @@ export default function RaceLiveScreen() {
                     style={[
                       styles.modeSeg,
                       active
-                        ? { backgroundColor: isDark ? '#14321f' : '#ecfdf3', borderColor: PRIMARY }
+                        ? { backgroundColor: isDark ? '#14321f' : '#ecfdf3', borderColor: k.accent }
                         : { borderColor: 'transparent' },
                     ]}
                   />
@@ -507,6 +507,8 @@ export default function RaceLiveScreen() {
 }
 
 function SumStat({ v, u, l, text, sub }: any) {
+  const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   return (
     <View style={{ alignItems: 'center', flex: 1 }}>
       <Text style={{ fontSize: 22, fontWeight: '900', color: text, letterSpacing: -0.5 }}>{v}</Text>
@@ -516,6 +518,8 @@ function SumStat({ v, u, l, text, sub }: any) {
 }
 
 function Stat({ label, value, unit, text, sub }: any) {
+  const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   return (
     <View style={styles.stat}>
       <Text style={[styles.statVal, { color: text }]}>{value}</Text>
@@ -524,10 +528,13 @@ function Stat({ label, value, unit, text, sub }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   permTxt: { fontSize: 16, fontWeight: '600', textAlign: 'center', marginTop: 16, marginBottom: 20, lineHeight: 22 },
-  primaryBtn: { backgroundColor: PRIMARY, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
+  primaryBtn: { backgroundColor: k.accent, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
   primaryBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
   back: { position: 'absolute', top: 50, left: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
   board: { position: 'absolute', top: 50, left: 12, width: 220, borderRadius: 18, padding: 12, paddingBottom: 8, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 },
@@ -550,14 +557,14 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 11, fontWeight: '600', marginTop: 3 },
   controls: { gap: spacing.sm },
   controlsSecondary: { flexDirection: 'row', gap: spacing.sm },
-  bigBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: PRIMARY, paddingVertical: 18, borderRadius: 18 },
+  bigBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: k.accent, paddingVertical: 18, borderRadius: 18 },
   bigBtnTxt: { color: '#fff', fontSize: 17, fontWeight: '800' },
   teamWrap: { marginBottom: 14 },
   teamLabelRow: { alignItems: 'center', gap: 6, marginBottom: 8 },
   teamLabel: { fontSize: 14, fontWeight: '800', flex: 1 },
   teamRow: { gap: 8, alignItems: 'center' },
   teamInput: { flex: 1, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, fontWeight: '600' },
-  teamBtn: { backgroundColor: PRIMARY, paddingHorizontal: 14, paddingVertical: 11, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  teamBtn: { backgroundColor: k.accent, paddingHorizontal: 14, paddingVertical: 11, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   teamBtnTxt: { color: '#fff', fontSize: 13, fontWeight: '800' },
   teamHint: { fontSize: 11, fontWeight: '600', marginTop: 6, lineHeight: 15 },
   modeRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
@@ -574,6 +581,6 @@ const styles = StyleSheet.create({
   sumTitle: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5 },
   sumSub: { fontSize: 13.5, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
   sumStatsRow: { flexDirection: 'row', width: '100%', marginBottom: 6 },
-  sumBtn: { backgroundColor: PRIMARY, alignSelf: 'stretch', height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 14 },
+  sumBtn: { backgroundColor: k.accent, alignSelf: 'stretch', height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 14 },
   sumBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
 });

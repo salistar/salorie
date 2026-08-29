@@ -50,6 +50,7 @@ function slotOf(l: NutritionLog): string {
 }
 
 export default function Diary() {
+  const k = useTokens();
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const { resolved } = useTheme();

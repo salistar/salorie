@@ -35,6 +35,7 @@ const TXT: any = {
 };
 
 export default function MealTemplatesScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('meal-templates');
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;

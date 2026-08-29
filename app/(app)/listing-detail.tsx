@@ -3,7 +3,7 @@
 // l'ownerUid EST l'email sanitizé). Trilingue (en/fr/ar) + dark + RTL + flèche retour.
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, Tokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   View,
@@ -18,13 +18,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, MessageCircle, Tag, MapPin, User as UserIcon } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign, flipForRTL } from '../../lib/rtl';
 import { getListing, ListingCategory, MarketplaceListing } from '../../lib/marketplace';
 
-const PRIMARY = Colors.light.primary;
 
 const CAT_EMOJI: Record<ListingCategory, string> = {
   meal: '🍱', coaching: '🧑‍🏫', gear: '🏋️', produce: '🥦', service: '🛠️', other: '📦',
@@ -65,10 +63,11 @@ const TXT: Record<string, any> = {
 
 export default function ListingDetailScreen() {
   const { resolved } = useTheme();
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const params = useLocalSearchParams<{ id?: string }>();
   const id = typeof params.id === 'string' ? params.id : '';
 
@@ -78,12 +77,12 @@ export default function ListingDetailScreen() {
   const align = txtAlign(isRTL);
   const dir = rowDir(isRTL);
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const tok = useTokens();
   const bg = tok.bg;
-  const field = isDark ? Colors.dark.gray[100] : Colors.light.gray[100];
+  const field = k.border;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -122,7 +121,7 @@ export default function ListingDetailScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.loadingBox}><ActivityIndicator size="large" color={PRIMARY} /></View>
+        <View style={styles.loadingBox}><ActivityIndicator size="large" color={k.accent} /></View>
       ) : !listing ? (
         <View style={styles.loadingBox}>
           <Text style={[styles.notFound, { color: sub }]}>{t.notFound}</Text>
@@ -142,9 +141,9 @@ export default function ListingDetailScreen() {
 
           {/* Prix + catégorie */}
           <View style={[styles.metaRow, { flexDirection: dir }]}>
-            <View style={[styles.metaChip, { flexDirection: dir, backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight }]}>
-              <Tag size={14} color={PRIMARY} />
-              <Text style={[styles.metaChipTxt, { color: PRIMARY }]}>{priceLabel(listing)}</Text>
+            <View style={[styles.metaChip, { flexDirection: dir, backgroundColor: k.accentSoft }]}>
+              <Tag size={14} color={k.accent} />
+              <Text style={[styles.metaChipTxt, { color: k.accent }]}>{priceLabel(listing)}</Text>
             </View>
             <View style={[styles.metaChip, { flexDirection: dir, backgroundColor: field }]}>
               <Text style={[styles.metaChipTxt, { color: text }]}>{CAT_EMOJI[listing.category]} {t.cats[listing.category]}</Text>
@@ -164,7 +163,7 @@ export default function ListingDetailScreen() {
 
           {/* Vendeur */}
           <View style={[styles.sellerCard, { backgroundColor: card, flexDirection: dir }]}>
-            <View style={styles.sellerIcon}><UserIcon size={18} color={PRIMARY} /></View>
+            <View style={styles.sellerIcon}><UserIcon size={18} color={k.accent} /></View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.sellerLabel, { color: sub, textAlign: align }]}>{t.seller}</Text>
               <Text style={[styles.sellerName, { color: text, textAlign: align }]} numberOfLines={1}>
@@ -188,7 +187,7 @@ export default function ListingDetailScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   header: { alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
@@ -206,10 +205,10 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   placeTxt: { fontSize: 14, fontWeight: '600', flex: 1 },
   desc: { fontSize: 15, lineHeight: 22, marginTop: 14 },
   sellerCard: { alignItems: 'center', gap: 12, borderRadius: 16, padding: 14, marginTop: 20 },
-  sellerIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center' },
+  sellerIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: k.accentSoft, alignItems: 'center', justifyContent: 'center' },
   sellerLabel: { fontSize: 12, fontWeight: '700' },
   sellerName: { fontSize: 15, fontWeight: '800', marginTop: 2 },
   noPay: { fontSize: 12.5, lineHeight: 18, marginTop: 16 },
-  contactBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: PRIMARY, borderRadius: 14, paddingVertical: 15, marginTop: 12 },
+  contactBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 15, marginTop: 12 },
   contactTxt: { color: '#fff', fontSize: 15.5, fontWeight: '800' },
 });

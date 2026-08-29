@@ -89,6 +89,7 @@ function parseNutrition(text: string): Parsed {
 }
 
 export default function LabelScanScreen() {
+  const k = useTokens();
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;

@@ -96,6 +96,7 @@ function fmt(ms: number) {
 }
 
 export default function FastingScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('fasting');
   const { user } = useUser();
   const { colors, resolved } = useTheme();

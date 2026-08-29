@@ -29,6 +29,7 @@ const TXT: any = {
 const KIND_ICON: any = { news: Newspaper, race: Flag, challenge: Trophy, update: Sparkles };
 
 export default function Journal() {
+  const k = useTokens();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;

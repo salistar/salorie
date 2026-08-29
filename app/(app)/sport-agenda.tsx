@@ -31,6 +31,7 @@ const TXT: any = {
 };
 
 export default function SportAgenda() {
+  const k = useTokens();
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const { resolved } = useTheme();

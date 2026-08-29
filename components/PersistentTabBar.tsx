@@ -39,6 +39,7 @@ const TABS = [
 ];
 
 export default function PersistentTabBar() {
+  const k = useTokens();
   // Masque la barre quand le clavier est ouvert (sinon elle flotte au-dessus).
   const [kbOpen, setKbOpen] = useState(false);
   const { isSignedIn } = useAuth();

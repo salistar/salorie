@@ -14,7 +14,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Flame, Beef, Wheat, Droplets, FileText } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import { useLogging } from '../../lib/LoggingContext';
 import { addNutritionLog } from '../../lib/firebase';
 import { submitScanFeedback } from '../../lib/mlFeedback';
@@ -40,6 +39,7 @@ function defaultSlot(): string {
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { colorLog, explain } from '../../lib/LocalDataStore';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 console.log('\x1b[35m[log-food-details.tsx] MODULE LOADED\x1b[0m');
 
@@ -48,11 +48,12 @@ export default function LogFoodDetailsScreen() {
   const { selectedDate, triggerRefresh } = useLogging();
   const params = useLocalSearchParams();
   const { colors, resolved } = useTheme();
+  const k = useTokens();
   const { t, isRTL, language } = useTranslation() as any;
   const sl = SLOT_LABELS[language] || SLOT_LABELS.en;
 
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
 
   // Helper : parse "250 g" / "1 cup" → { quantity, unit }
   const parseServing = (servingStr: string) => {
@@ -211,13 +212,13 @@ export default function LogFoodDetailsScreen() {
 
   // ----- Theme-aware palette -----
   const accent = colors.primary;
-  const bg = isDark ? '#0B0F14' : Colors.light.white;
-  const textPrimary = isDark ? colors.gray[900] : Colors.light.gray[900];
-  const textSecondary = isDark ? colors.gray[500] : Colors.light.gray[500];
-  const textMuted = isDark ? colors.gray[400] : Colors.light.gray[400];
-  const cardBg = isDark ? '#161C23' : Colors.light.gray[50];
-  const cardBorder = isDark ? colors.gray[200] : Colors.light.gray[100];
-  const inputBorder = isDark ? colors.gray[200] : Colors.light.gray[100];
+  const bg = isDark ? '#0B0F14' : k.surface;
+  const textPrimary = isDark ? colors.gray[900] : k.text;
+  const textSecondary = isDark ? colors.gray[500] : k.textMuted;
+  const textMuted = isDark ? colors.gray[400] : k.textMuted;
+  const cardBg = isDark ? '#161C23' : k.surfaceSunken;
+  const cardBorder = isDark ? colors.gray[200] : k.border;
+  const inputBorder = isDark ? colors.gray[200] : k.border;
   const hintColor = isDark ? '#7E858E' : '#9AA0A6';
 
   return (
@@ -360,7 +361,7 @@ export default function LogFoodDetailsScreen() {
           <View style={[styles.macrosContainer, isRTL && { flexDirection: 'row-reverse' }]}>
             <Animated.View
               entering={FadeInDown.delay(200).duration(600)}
-              style={[styles.macroCard, { backgroundColor: isDark ? '#1F2833' : Colors.light.white, borderColor: cardBorder }]}
+              style={[styles.macroCard, { backgroundColor: isDark ? '#1F2833' : k.surface, borderColor: cardBorder }]}
             >
               <View style={[styles.macroIcon, { backgroundColor: '#FFEEED' }]}>
                 <Beef size={20} color="#FF5C5C" />
@@ -379,7 +380,7 @@ export default function LogFoodDetailsScreen() {
 
             <Animated.View
               entering={FadeInDown.delay(300).duration(600)}
-              style={[styles.macroCard, { backgroundColor: isDark ? '#1F2833' : Colors.light.white, borderColor: cardBorder }]}
+              style={[styles.macroCard, { backgroundColor: isDark ? '#1F2833' : k.surface, borderColor: cardBorder }]}
             >
               <View style={[styles.macroIcon, { backgroundColor: '#FFF9EB' }]}>
                 <Wheat size={20} color="#F59E0B" />
@@ -398,7 +399,7 @@ export default function LogFoodDetailsScreen() {
 
             <Animated.View
               entering={FadeInDown.delay(400).duration(600)}
-              style={[styles.macroCard, { backgroundColor: isDark ? '#1F2833' : Colors.light.white, borderColor: cardBorder }]}
+              style={[styles.macroCard, { backgroundColor: isDark ? '#1F2833' : k.surface, borderColor: cardBorder }]}
             >
               <View style={[styles.macroIcon, { backgroundColor: '#E0F2FE' }]}>
                 <Droplets size={20} color="#0EA5E9" />
@@ -450,7 +451,7 @@ export default function LogFoodDetailsScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safeArea: { flex: 1 },
   header: {
     flexDirection: 'row',

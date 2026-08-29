@@ -1,6 +1,6 @@
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, Tokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   View,
@@ -17,7 +17,6 @@ import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, MapPin, Plus, Trash2, Send, Clock, ChevronDown, ChevronRight, Route as RouteIcon, Flag } from 'lucide-react-native';
 import PerfList from '../../components/PerfList';
 import ModerationSheet from '../../components/ModerationSheet';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign, flipForRTL } from '../../lib/rtl';
@@ -27,7 +26,6 @@ import {
 } from '../../lib/communityRoutes';
 import { emailToDocId } from '../../lib/firebase';
 
-const PRIMARY = Colors.light.primary;
 
 // NOUVELLES chaînes = objet LOCAL trilingue {en,fr,ar}.
 const TXT: Record<string, any> = {
@@ -129,10 +127,11 @@ const emptyStop = (): DraftStop => ({ name: '', lat: '', lng: '', atKm: '' });
 export default function CommunityRoutesScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
 
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || (email ? email.split('@')[0] : '');
@@ -160,12 +159,12 @@ export default function CommunityRoutesScreen() {
   const align = txtAlign(isRTL);
   const dir = rowDir(isRTL);
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const tok = useTokens();
   const bg = tok.bg;
-  const field = isDark ? Colors.dark.gray[100] : Colors.light.gray[100];
+  const field = k.border;
 
   const loadLists = useCallback(async () => {
     setLoading(true);
@@ -231,7 +230,7 @@ export default function CommunityRoutesScreen() {
   const statusLabel = (s: CommunityRoute['status']) =>
     s === 'approved' ? t.statusApproved : s === 'rejected' ? t.statusRejected : t.statusPending;
   const statusColor = (s: CommunityRoute['status']) =>
-    s === 'approved' ? '#22c55e' : s === 'rejected' ? '#ef4444' : Colors.light.secondary;
+    s === 'approved' ? '#22c55e' : s === 'rejected' ? '#ef4444' : k.warning;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
@@ -290,7 +289,7 @@ export default function CommunityRoutesScreen() {
             <View key={i} style={[styles.stopCard, { backgroundColor: field }]}>
               <View style={[styles.stopHeader, { flexDirection: dir }]}>
                 <View style={[styles.stopBadge, { flexDirection: dir }]}>
-                  <MapPin size={13} color={PRIMARY} />
+                  <MapPin size={13} color={k.accent} />
                   <Text style={styles.stopBadgeTxt}>{i + 1}</Text>
                 </View>
                 {stops.length > 1 && (
@@ -324,15 +323,15 @@ export default function CommunityRoutesScreen() {
             </View>
           ))}
 
-          <TouchableOpacity style={[styles.addStopBtn, { flexDirection: dir, borderColor: PRIMARY }]} onPress={addStop} activeOpacity={0.8}>
-            <Plus size={18} color={PRIMARY} />
+          <TouchableOpacity style={[styles.addStopBtn, { flexDirection: dir, borderColor: k.accent }]} onPress={addStop} activeOpacity={0.8}>
+            <Plus size={18} color={k.accent} />
             <Text style={styles.addStopTxt}>{t.addStop}</Text>
           </TouchableOpacity>
 
           {formErr && <Text style={[styles.errTxt, { textAlign: align }]}>{formErr}</Text>}
           {submitted && (
-            <View style={[styles.okBox, { backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight }]}>
-              <Clock size={16} color={PRIMARY} />
+            <View style={[styles.okBox, { backgroundColor: k.accentSoft }]}>
+              <Clock size={16} color={k.accent} />
               <Text style={[styles.okTxt, { textAlign: align }]}>{t.submitted}</Text>
             </View>
           )}
@@ -370,10 +369,10 @@ export default function CommunityRoutesScreen() {
         }
         ListEmptyComponent={
           loading ? (
-          <View style={styles.loadingBox}><ActivityIndicator size="large" color={PRIMARY} /></View>
+          <View style={styles.loadingBox}><ActivityIndicator size="large" color={k.accent} /></View>
           ) : (
           <View style={[styles.emptyBox, { backgroundColor: card }]}>
-            <RouteIcon size={34} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} />
+            <RouteIcon size={34} color={k.textFaint} />
             <Text style={[styles.emptySub, { color: sub }]}>{t.approvedEmpty}</Text>
           </View>
           )
@@ -388,7 +387,7 @@ export default function CommunityRoutesScreen() {
                   onPress={() => setExpanded(open ? null : (r.id || null))}
                 >
                   <View style={styles.routeIcon}>
-                    <RouteIcon size={20} color={PRIMARY} />
+                    <RouteIcon size={20} color={k.accent} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.routeName, { color: text, textAlign: align }]} numberOfLines={1}>{r.name}</Text>
@@ -407,7 +406,7 @@ export default function CommunityRoutesScreen() {
                     )}
                     {(r.waypoints || []).map((w, i) => (
                       <View key={i} style={[styles.wpRow, { flexDirection: dir }]}>
-                        <View style={styles.wpDot}><MapPin size={13} color={PRIMARY} /></View>
+                        <View style={styles.wpDot}><MapPin size={13} color={k.accent} /></View>
                         <Text style={[styles.wpName, { color: text, textAlign: align }]} numberOfLines={1}>
                           {w.name} · {w.atKm} {t.km}
                         </Text>
@@ -449,7 +448,7 @@ export default function CommunityRoutesScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   header: { alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
@@ -463,17 +462,17 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   inputMulti: { minHeight: 70, textAlignVertical: 'top' },
   stopCard: { borderRadius: 14, padding: 12, marginBottom: 10 },
   stopHeader: { alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  stopBadge: { alignItems: 'center', gap: 5, backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
-  stopBadgeTxt: { fontSize: 12, fontWeight: '800', color: PRIMARY },
+  stopBadge: { alignItems: 'center', gap: 5, backgroundColor: k.accentSoft, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
+  stopBadgeTxt: { fontSize: 12, fontWeight: '800', color: k.accent },
   stopInput: { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, marginBottom: 8 },
   stopRow: { gap: 8 },
   stopInputHalf: { flex: 1 },
   addStopBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderRadius: 12, paddingVertical: 12, marginTop: 2 },
-  addStopTxt: { color: PRIMARY, fontSize: 14, fontWeight: '800' },
+  addStopTxt: { color: k.accent, fontSize: 14, fontWeight: '800' },
   errTxt: { color: '#ef4444', fontSize: 13, fontWeight: '700', marginTop: 12 },
   okBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, padding: 12, marginTop: 12 },
-  okTxt: { flex: 1, color: PRIMARY, fontSize: 13, fontWeight: '700', lineHeight: 18 },
-  submitBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: PRIMARY, borderRadius: 14, paddingVertical: 14, marginTop: 14 },
+  okTxt: { flex: 1, color: k.accent, fontSize: 13, fontWeight: '700', lineHeight: 18 },
+  submitBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 14, marginTop: 14 },
   submitTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
   listTitle: { fontSize: 17, fontWeight: '900', letterSpacing: -0.3, marginTop: 6, marginBottom: 10 },
   loadingBox: { paddingVertical: 40, alignItems: 'center' },
@@ -481,13 +480,13 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   emptySub: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
   routeCard: { borderRadius: 16, marginBottom: 10, overflow: 'hidden' },
   routeRow: { alignItems: 'center', gap: 12, padding: 14 },
-  routeIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center' },
+  routeIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: k.accentSoft, alignItems: 'center', justifyContent: 'center' },
   routeName: { fontSize: 16, fontWeight: '800' },
   routeMeta: { fontSize: 12, marginTop: 3 },
   routeDetail: { paddingHorizontal: 14, paddingBottom: 14 },
   routeDesc: { fontSize: 13, lineHeight: 19, marginBottom: 10 },
   wpRow: { alignItems: 'center', gap: 10, marginBottom: 8 },
-  wpDot: { width: 26, height: 26, borderRadius: 13, backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center' },
+  wpDot: { width: 26, height: 26, borderRadius: 13, backgroundColor: k.accentSoft, alignItems: 'center', justifyContent: 'center' },
   wpName: { flex: 1, fontSize: 14, fontWeight: '700' },
   // Signalement : volontairement discret (gris, petit) — il doit être TROUVABLE sans
   // concurrencer le contenu. Zone tactile portée à 44 px de haut malgré la petite typo.

@@ -2,7 +2,6 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, Dimensions, Alert } fr
 import { directionAuto } from '../lib/rtl';
 import { useState, useMemo } from 'react';
 import { Zap, Droplets, Database, Scan, Crown, Mic, ScanBarcode, Scale, Camera, Image as ImageIcon, X } from 'lucide-react-native';
-import { Colors } from '../constants/Colors';
 import { useLogging } from '../lib/LoggingContext';
 import { useTranslation } from '../lib/i18n';
 import { useFlagsCtx } from '../lib/FlagsContext';
@@ -15,6 +14,7 @@ import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colorLog, explain } from '../lib/LocalDataStore';
+import { useTokens, Tokens } from '../constants/tokens';
 
 // Cle AsyncStorage : si Android tue l app pendant que la camera est ouverte,
 // on retrouve l URI ici au redemarrage et on relance automatiquement
@@ -25,8 +25,9 @@ const PENDING_SCAN_KEY = 'pending_scan_v1';
 export default function ActionMenu() {
   const { isActionMenuVisible, hideActionMenu, showLogModal, setScanImageBase64 } = useLogging();
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { t, language } = useTranslation() as any;
   // Feature-flags : on masque les tuiles dont le flag est OFF (évite les culs-de-sac).
   // Lecture unique du contexte (pas de hook dans .map, rules-of-hooks OK).
@@ -272,7 +273,7 @@ export default function ActionMenu() {
                     {action.icon}
                     {action.premium && (
                       <View style={styles.premiumBadge}>
-                        <Crown size={10} color={Colors.light.white} strokeWidth={3} />
+                        <Crown size={10} color={k.surface} strokeWidth={3} />
                       </View>
                     )}
                   </View>
@@ -289,7 +290,7 @@ export default function ActionMenu() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.15)', // Lighter overlay for better transparency feel
@@ -311,12 +312,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   card: {
     width: (width - 40 - 16 - 16) / 2, // Adjusted for gap and container padding
     aspectRatio: 1.1,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 12,
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
     shadowRadius: 16,
@@ -339,18 +340,18 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     padding: 4,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: isDark ? Colors.dark.white : Colors.light.white,
+    borderColor: k.surface,
   },
   actionTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     textAlign: 'center',
   },
   cardHint: {
     fontSize: 11,
     fontWeight: '600',
-    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
+    color: k.textMuted,
     textAlign: 'center',
     marginTop: 2,
   },

@@ -80,6 +80,7 @@ const TXT: any = {
 };
 
 export default function CalorieBudgetScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('calorie-budget');
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;

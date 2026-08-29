@@ -54,6 +54,7 @@ type Props = {
 };
 
 function MlInsightsCard({ weightHistory, remaining: propRemaining, goal: propGoal }: Props = {}) {
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const tx = TXT[language] || TXT.en;
   const { resolved } = useTheme();

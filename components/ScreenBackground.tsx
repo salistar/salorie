@@ -2,13 +2,14 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../lib/ThemeContext';
-import { Colors } from '../constants/Colors';
+import { useTokens, Tokens } from '../constants/tokens';
 
 /**
  * Global screen background — gradient that switches based on theme.
  */
 export default function ScreenBackground() {
   const { resolved } = useTheme();
+  const k = useTokens();
 
   if (resolved === 'dark') {
     // Solid black background, no gradient
@@ -20,7 +21,7 @@ export default function ScreenBackground() {
   return (
     <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
       <LinearGradient
-        colors={[Colors.light.white, '#e8f5ec', Colors.light.primaryLight]}
+        colors={[k.surface, '#e8f5ec', k.accentSoft]}
         locations={[0, 0.55, 1]}
         style={StyleSheet.absoluteFillObject}
       />

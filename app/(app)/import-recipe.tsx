@@ -30,6 +30,7 @@ const TXT: any = {
 };
 
 export default function ImportRecipeScreen() {
+  const k = useTokens();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;

@@ -13,25 +13,26 @@ import { useRouter } from 'expo-router';
 import { ArrowRight, Flame, Droplets, Activity } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Colors } from '../../constants/Colors';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { resolved, colors } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
-  const textColor = isDark ? colors.gray[900] : Colors.light.gray[900];
-  const subTextColor = isDark ? colors.gray[500] : Colors.light.gray[500];
+  const styles = useMemo(() => makeStyles(k), [k]);
+  const textColor = isDark ? colors.gray[900] : k.text;
+  const subTextColor = isDark ? colors.gray[500] : k.textMuted;
   // FIX dark : les cartes « features » étaient figées en rgba(255,255,255,.85) alors
   // que leur texte passe en blanc → blanc sur blanc, illisible sur le TOUT PREMIER
   // écran de l'app. On dérive désormais surface/bordure/accent du thème.
   const cardBg = isDark ? colors.card : 'rgba(255,255,255,0.85)';
-  const cardBorder = isDark ? colors.gray[200] : Colors.light.white;
-  const accent = isDark ? colors.primary : Colors.light.primary;
+  const cardBorder = isDark ? colors.gray[200] : k.surface;
+  const accent = isDark ? colors.primary : k.accent;
 
   const handleGetStarted = async () => {
     await AsyncStorage.setItem('welcome_seen', 'true');
@@ -119,7 +120,7 @@ export default function WelcomeScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -137,7 +138,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     marginTop: 12,
     marginBottom: 16,
     borderWidth: 4,
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.2,
     shadowRadius: 20,
@@ -203,10 +204,10 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     height: 56,
     borderRadius: 28,
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
     shadowRadius: 16,

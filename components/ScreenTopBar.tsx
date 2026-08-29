@@ -3,11 +3,11 @@ import { View, Text, Image, TouchableOpacity, StyleSheet, Modal, Pressable } fro
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Bell, Sun, Moon, Smartphone, Globe, ArrowLeft } from 'lucide-react-native';
-import { Colors } from '../constants/Colors';
 import { useTheme, ThemeMode } from '../lib/ThemeContext';
 import { useTranslation, Language } from '../lib/i18n';
 import { rowDir, txtAlign, directionAuto } from '../lib/rtl';
 import AppBrand from './AppBrand';
+import { useTokens, Tokens } from '../constants/tokens';
 
 // Libellés du menu de thème, traduits (sinon "Light/Dark/System" en anglais partout).
 const THEME_LABELS: Record<string, Record<string, string>> = {
@@ -40,19 +40,20 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { mode, setMode, resolved, colors } = useTheme();
+  const k = useTokens();
   const { language, setLanguage, isRTL } = useTranslation();
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
 
-  const iconColor = resolved === 'dark' ? colors.gray[600] : Colors.light.gray[700];
+  const iconColor = resolved === 'dark' ? colors.gray[600] : k.textMuted;
   const btnBg = resolved === 'dark' ? 'rgba(40,50,60,0.6)' : 'rgba(255,255,255,0.8)';
-  const btnBorder = resolved === 'dark' ? colors.gray[200] : Colors.light.gray[200];
+  const btnBorder = resolved === 'dark' ? colors.gray[200] : k.border;
   // Dark-aware dropdown menus (theme / language).
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
-  const menuBg = isDark ? '#161C23' : Colors.light.white;
-  const menuItemText = isDark ? '#f1f5f9' : Colors.light.gray[800];
-  const menuActiveBg = isDark ? 'rgba(46,139,87,0.18)' : Colors.light.primaryLight;
+  const styles = useMemo(() => makeStyles(k), [k]);
+  const menuBg = isDark ? '#161C23' : k.surface;
+  const menuItemText = isDark ? '#f1f5f9' : k.text;
+  const menuActiveBg = isDark ? 'rgba(46,139,87,0.18)' : k.accentSoft;
 
   const themeIcons: Record<ThemeMode, any> = {
     light: Sun,
@@ -87,13 +88,13 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
             mange la largeur et tronque le titre type « Sa… »). Sur les sous-écrans,
             back + titre suffisent comme en-tête. */}
         {!title && (
-          <View style={[styles.brandLogoWrap, { backgroundColor: resolved === 'dark' ? colors.card : '#fff', borderColor: resolved === 'dark' ? colors.gray[200] : Colors.light.gray[200] }]}>
+          <View style={[styles.brandLogoWrap, { backgroundColor: resolved === 'dark' ? colors.card : '#fff', borderColor: resolved === 'dark' ? colors.gray[200] : k.border }]}>
             <Image source={require('../assets/images/fire.png')} style={styles.brandLogo} resizeMode="contain" />
           </View>
         )}
         {title ? (
           <Text
-            style={[styles.screenTitle, { color: resolved === 'dark' ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}
+            style={[styles.screenTitle, { color: resolved === 'dark' ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}
             numberOfLines={1}
           >
             {title}
@@ -191,7 +192,7 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
                     setThemeMenuOpen(false);
                   }}
                 >
-                  <Icon size={18} color={mode === m ? Colors.light.primary : (isDark ? colors.gray[600] : Colors.light.gray[700])} />
+                  <Icon size={18} color={mode === m ? k.accent : (isDark ? colors.gray[600] : k.textMuted)} />
                   <Text style={[styles.menuItemText, { color: menuItemText, textAlign: txtAlign(isRTL) }, mode === m && styles.menuItemTextActive]}>
                     {(THEME_LABELS[language] || THEME_LABELS.en)[m]}
                   </Text>
@@ -207,7 +208,7 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -276,12 +277,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     borderRadius: 11,
     backgroundColor: 'rgba(255,255,255,0.8)',
     borderWidth: 1,
-    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
+    borderColor: k.border,
   },
   iconBtnText: {
     fontSize: 11,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[700] : Colors.light.gray[700],
+    color: k.textMuted,
   },
   iconBtnSquare: {
     width: 38,
@@ -291,7 +292,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.8)',
     borderWidth: 1,
-    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
+    borderColor: k.border,
   },
   modalBackdrop: {
     flex: 1,
@@ -304,7 +305,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 20,
   },
   menu: {
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     borderRadius: 16,
     padding: 8,
     gap: 4,
@@ -324,7 +325,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     borderRadius: 10,
   },
   menuItemActive: {
-    backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight,
+    backgroundColor: k.accentSoft,
   },
   menuItemFlag: {
     fontSize: 18,
@@ -332,9 +333,9 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   menuItemText: {
     fontSize: 15,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
   },
   menuItemTextActive: {
-    color: isDark ? Colors.dark.primary : Colors.light.primary,
+    color: k.accent,
   },
 });

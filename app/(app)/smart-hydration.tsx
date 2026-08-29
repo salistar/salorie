@@ -30,6 +30,7 @@ const TXT: any = {
 };
 
 export default function SmartHydrationScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('smart-hydration');
   // Seuils paramétrables sans redéploiement (admin web → flag « smart-hydration » → params JSON).
   // Défauts = valeurs actuelles → aucun changement de comportement tant que rien n'est réglé.

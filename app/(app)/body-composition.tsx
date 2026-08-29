@@ -59,6 +59,7 @@ const TXT: any = {
 };
 
 export default function BodyCompositionScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('body-composition');
   const { user } = useUser();
   const { colors, resolved } = useTheme();

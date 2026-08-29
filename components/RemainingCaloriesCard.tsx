@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { directionAuto } from '../lib/rtl';
-import { useTokens } from '../constants/tokens';
+import { useTokens, Tokens } from '../constants/tokens';
 import { a11y } from '../lib/a11y';
 import {
   View,
@@ -13,7 +13,6 @@ import {
   Platform,
 } from 'react-native';
 import { Pencil, X, Check, Flame, Beef, Wheat, Droplets } from 'lucide-react-native';
-import { Colors } from '../constants/Colors';
 import HalfProgress from './HalfProgress';
 import { useTranslation } from '../lib/i18n';
 import { useTheme } from '../lib/ThemeContext';
@@ -87,19 +86,20 @@ export default function RemainingCaloriesCard({
   const { t, language, isRTL } = useTranslation() as any;
   const tx = TXT[language] || TXT.en;
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   // Theme-aware surface so the card doesn't stay bright white on the dark home.
-  const cardBg = isDark ? '#161C23' : Colors.light.white;
-  const titleColor = isDark ? '#f1f5f9' : Colors.light.gray[900];
-  const subColor = isDark ? '#94a3b8' : Colors.light.gray[400];
-  const valueColor = isDark ? '#f1f5f9' : Colors.light.gray[900];
-  const statValueColor = isDark ? '#e2e8f0' : Colors.light.gray[800];
-  const macroBg = isDark ? 'rgba(46,139,87,0.15)' : Colors.light.primaryLight;
+  const cardBg = isDark ? '#161C23' : k.surface;
+  const titleColor = isDark ? '#f1f5f9' : k.text;
+  const subColor = isDark ? '#94a3b8' : k.textMuted;
+  const valueColor = isDark ? '#f1f5f9' : k.text;
+  const statValueColor = isDark ? '#e2e8f0' : k.text;
+  const macroBg = isDark ? 'rgba(46,139,87,0.15)' : k.accentSoft;
   const tok = useTokens();
   const macroIconBg = tok.bg;
-  const trackColor = isDark ? '#334155' : Colors.light.gray[200];
-  const borderColor = isDark ? 'rgba(255,255,255,0.08)' : Colors.light.gray[50];
+  const trackColor = isDark ? '#334155' : k.border;
+  const borderColor = isDark ? 'rgba(255,255,255,0.08)' : k.surfaceSunken;
   const [modalVisible, setModalVisible] = useState(false);
   const [inputs, setInputs] = useState({
     calories: String(goal),
@@ -115,7 +115,7 @@ export default function RemainingCaloriesCard({
   // "replaced" by red/yellow when thresholds are crossed, which was confusing.
   // Overshoot is signalled by the remaining number going negative (shown in red
   // by the caller), not by repainting the green arc.
-  const getProgressColor = () => Colors.light.primary;
+  const getProgressColor = () => k.accent;
 
   const handleSave = () => {
     onGoalUpdate?.({
@@ -146,7 +146,7 @@ export default function RemainingCaloriesCard({
               setModalVisible(true);
             }}
           >
-            <Pencil size={20} color={isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} strokeWidth={2.5} />
+            <Pencil size={20} color={k.textMuted} strokeWidth={2.5} />
           </TouchableOpacity>
         </View>
 
@@ -226,14 +226,14 @@ export default function RemainingCaloriesCard({
           style={[styles.modalOverlay, directionAuto()]}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <View style={[styles.modalCard, isDark && { backgroundColor: Colors.dark.card }]}>
+          <View style={[styles.modalCard, isDark && { backgroundColor: k.surface }]}>
             <View style={[styles.modalHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
               <View>
-                <Text style={[styles.modalTitle, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}>{tx.dailyTargets}</Text>
-                <Text style={[styles.modalSubtitle, { color: isDark ? '#9BA1A6' : Colors.light.gray[400], textAlign: isRTL ? 'right' : 'left' }]}>{tx.adjustGoals}</Text>
+                <Text style={[styles.modalTitle, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}>{tx.dailyTargets}</Text>
+                <Text style={[styles.modalSubtitle, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.adjustGoals}</Text>
               </View>
-              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={() => setModalVisible(false)} style={[styles.closeBtn, isDark && { backgroundColor: Colors.dark.gray[50] }]}>
-                <X size={24} color={isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} />
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={() => setModalVisible(false)} style={[styles.closeBtn, isDark && { backgroundColor: k.surfaceSunken }]}>
+                <X size={24} color={k.textMuted} />
               </TouchableOpacity>
             </View>
 
@@ -242,13 +242,13 @@ export default function RemainingCaloriesCard({
               <View style={styles.inputGroup}>
                 <View style={[styles.labelRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                   <View style={[styles.miniIconCircle, { backgroundColor: 'rgba(41, 143, 80, 0.1)' }]}>
-                    <Flame size={16} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+                    <Flame size={16} color={k.accent} />
                   </View>
-                  <Text style={[styles.inputLabel, { color: isDark ? '#9BA1A6' : Colors.light.gray[600], textAlign: isRTL ? 'right' : 'left' }]}>{tx.dailyCalories}</Text>
+                  <Text style={[styles.inputLabel, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.dailyCalories}</Text>
                 </View>
-                <View style={[styles.textInputWrapper, isDark && { backgroundColor: Colors.dark.gray[50], borderColor: Colors.dark.gray[100] }]}>
+                <View style={[styles.textInputWrapper, isDark && { backgroundColor: k.surfaceSunken, borderColor: k.border }]}>
                   <TextInput
-                    style={[styles.textInput, { color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}
+                    style={[styles.textInput, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}
                     value={inputs.calories}
                     onChangeText={(v) => setInputs(prev => ({ ...prev, calories: v }))}
                     accessibilityLabel={tx.dailyCalories}
@@ -269,11 +269,11 @@ export default function RemainingCaloriesCard({
                     <View style={[styles.miniIconCircle, { backgroundColor: 'rgba(255, 92, 92, 0.1)' }]}>
                       <Beef size={14} color="#FF5C5C" />
                     </View>
-                    <Text style={[styles.inputLabel, { color: isDark ? '#9BA1A6' : Colors.light.gray[600], textAlign: isRTL ? 'right' : 'left' }]}>{tx.protein}</Text>
+                    <Text style={[styles.inputLabel, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.protein}</Text>
                   </View>
-                  <View style={[styles.textInputWrapper, isDark && { backgroundColor: Colors.dark.gray[50], borderColor: Colors.dark.gray[100] }]}>
+                  <View style={[styles.textInputWrapper, isDark && { backgroundColor: k.surfaceSunken, borderColor: k.border }]}>
                     <TextInput
-                      style={[styles.textInput, { fontSize: 16, color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}
+                      style={[styles.textInput, { fontSize: 16, color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}
                       value={inputs.protein}
                       onChangeText={(v) => setInputs(prev => ({ ...prev, protein: v }))}
                       accessibilityLabel={tx.protein}
@@ -293,11 +293,11 @@ export default function RemainingCaloriesCard({
                     <View style={[styles.miniIconCircle, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
                       <Wheat size={14} color="#F59E0B" />
                     </View>
-                    <Text style={[styles.inputLabel, { color: isDark ? '#9BA1A6' : Colors.light.gray[600], textAlign: isRTL ? 'right' : 'left' }]}>{tx.carbs}</Text>
+                    <Text style={[styles.inputLabel, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.carbs}</Text>
                   </View>
-                  <View style={[styles.textInputWrapper, isDark && { backgroundColor: Colors.dark.gray[50], borderColor: Colors.dark.gray[100] }]}>
+                  <View style={[styles.textInputWrapper, isDark && { backgroundColor: k.surfaceSunken, borderColor: k.border }]}>
                     <TextInput
-                      style={[styles.textInput, { fontSize: 16, color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}
+                      style={[styles.textInput, { fontSize: 16, color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}
                       value={inputs.carbs}
                       onChangeText={(v) => setInputs(prev => ({ ...prev, carbs: v }))}
                       accessibilityLabel={tx.carbs}
@@ -317,11 +317,11 @@ export default function RemainingCaloriesCard({
                     <View style={[styles.miniIconCircle, { backgroundColor: 'rgba(14, 165, 233, 0.1)' }]}>
                       <Droplets size={14} color="#0EA5E9" />
                     </View>
-                    <Text style={[styles.inputLabel, { color: isDark ? '#9BA1A6' : Colors.light.gray[600], textAlign: isRTL ? 'right' : 'left' }]}>{tx.fats}</Text>
+                    <Text style={[styles.inputLabel, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.fats}</Text>
                   </View>
-                  <View style={[styles.textInputWrapper, isDark && { backgroundColor: Colors.dark.gray[50], borderColor: Colors.dark.gray[100] }]}>
+                  <View style={[styles.textInputWrapper, isDark && { backgroundColor: k.surfaceSunken, borderColor: k.border }]}>
                     <TextInput
-                      style={[styles.textInput, { fontSize: 16, color: isDark ? '#fff' : Colors.light.gray[900], textAlign: isRTL ? 'right' : 'left' }]}
+                      style={[styles.textInput, { fontSize: 16, color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}
                       value={inputs.fats}
                       onChangeText={(v) => setInputs(prev => ({ ...prev, fats: v }))}
                       accessibilityLabel={tx.fats}
@@ -350,12 +350,12 @@ export default function RemainingCaloriesCard({
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   card: {
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     borderRadius: 32,
     padding: 24,
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.08,
     shadowRadius: 24,
@@ -371,7 +371,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     letterSpacing: -0.5,
   },
   editIconBtn: {
@@ -392,13 +392,13 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   remainingValue: {
     fontSize: 48,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     letterSpacing: -1.5,
   },
   remainingLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     marginTop: -4,
   },
   macrosGrid: {
@@ -409,7 +409,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   },
   macroBox: {
     flex: 1,
-    backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight,
+    backgroundColor: k.accentSoft,
     borderRadius: 20,
     padding: 16, // More padding
     alignItems: 'center',
@@ -433,12 +433,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   macroValue: {
     fontSize: 16, // Bigger
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   macroName: {
     fontSize: 12, // Bigger
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
+    color: k.textMuted,
     marginTop: 1,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -449,7 +449,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     marginTop: 10,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    borderTopColor: k.surfaceSunken,
   },
   statItem: {
     flex: 1,
@@ -458,7 +458,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   statLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     marginBottom: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -466,12 +466,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   statValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
   },
   divider: {
     width: 1,
     height: 24,
-    backgroundColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    backgroundColor: k.border,
   },
   modalOverlay: {
     flex: 1,
@@ -479,7 +479,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalCard: {
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     borderTopLeftRadius: 36,
     borderTopRightRadius: 36,
     padding: 32,
@@ -494,17 +494,17 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     letterSpacing: -0.5,
   },
   modalSubtitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     marginTop: 2,
   },
   closeBtn: {
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     padding: 8,
     borderRadius: 12,
   },
@@ -531,28 +531,28 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[600] : Colors.light.gray[600],
+    color: k.textMuted,
   },
   textInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     borderRadius: 16,
     paddingHorizontal: 16,
     borderWidth: 1.5,
-    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderColor: k.border,
   },
   textInput: {
     flex: 1,
     fontSize: 20,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     paddingVertical: 14,
   },
   unitText: {
     fontSize: 14,
     fontWeight: '600',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
   },
   multiInputRow: {
     flexDirection: 'row',
@@ -562,11 +562,11 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     borderRadius: 18,
     paddingVertical: 18,
     gap: 10,
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 12,

@@ -10,25 +10,26 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, Footprints, Weight, Settings2, ChevronRight } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 console.log('\x1b[35m[log-exercise.tsx] MODULE LOADED\x1b[0m');
 
 export default function LogExerciseScreen() {
   const { colors, resolved } = useTheme();
+  const k = useTokens();
   const { t, isRTL } = useTranslation();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
 
-  const bg = isDark ? '#0B0F14' : Colors.light.white;
-  const textPrimary = isDark ? colors.gray[900] : Colors.light.gray[900];
-  const textMuted = isDark ? colors.gray[400] : Colors.light.gray[400];
-  const cardBg = isDark ? '#161C23' : Colors.light.white;
-  const cardBorder = isDark ? colors.gray[200] : Colors.light.gray[100];
-  const backBtnBg = isDark ? '#161C23' : Colors.light.gray[50];
+  const bg = isDark ? '#0B0F14' : k.surface;
+  const textPrimary = isDark ? colors.gray[900] : k.text;
+  const textMuted = isDark ? colors.gray[400] : k.textMuted;
+  const cardBg = isDark ? '#161C23' : k.surface;
+  const cardBorder = isDark ? colors.gray[200] : k.border;
+  const backBtnBg = isDark ? '#161C23' : k.surfaceSunken;
 
   console.log('\x1b[33m[LogExercise] RENDER\x1b[0m', { theme: resolved });
 
@@ -117,7 +118,7 @@ export default function LogExerciseScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safeArea: { flex: 1 },
   header: { paddingHorizontal: 20, paddingTop: 4, marginBottom: 16 },
   backBtn: {

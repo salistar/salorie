@@ -37,6 +37,7 @@ function fmt(d?: any): string {
 }
 
 export default function Medals() {
+  const k = useTokens();
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;

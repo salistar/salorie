@@ -21,11 +21,11 @@ import {
 } from 'lucide-react-native';
 import { generateNutritionalPlan, NutritionalPlan } from '../../lib/AiModel';
 import { stashPendingOnboarding } from '../../lib/onboardingSave';
-import { Colors } from '../../constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation, Language } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
 import ScreenTopBar from '../../components/ScreenTopBar';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 const TXT: Record<string, {
   generating: string;
@@ -110,8 +110,9 @@ export default function ResultsScreen() {
   const { language, setLanguage, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const params = useLocalSearchParams();
 
   const [loading, setLoading] = useState(true);
@@ -233,26 +234,26 @@ export default function ResultsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: isDark ? '#0f1419' : Colors.light.white }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: isDark ? '#0f1419' : k.surface }]}>
         <Image
           source={require('../../assets/images/illustrations/generating.jpg')}
           style={{ width: 180, height: 180, borderRadius: 90, marginBottom: 20 }}
         />
-        <Sparkles size={40} color={isDark ? Colors.dark.primary : Colors.light.primary} style={styles.aiIcon} />
-        <Text style={[styles.loadingTitle, { color: isDark ? '#fff' : Colors.light.gray[800] }]}>{t.generating}</Text>
+        <Sparkles size={40} color={k.accent} style={styles.aiIcon} />
+        <Text style={[styles.loadingTitle, { color: isDark ? '#fff' : k.text }]}>{t.generating}</Text>
         <View style={styles.stepsList}>
           {steps.map((step, index) => (
-            <View key={index} style={[styles.stepItem, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: isDark ? Colors.dark.card : Colors.light.gray[50] }]}>
+            <View key={index} style={[styles.stepItem, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: k.surfaceSunken }]}>
               {step.status === 'completed' ? (
-                <CheckCircle size={24} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+                <CheckCircle size={24} color={k.accent} />
               ) : step.status === 'loading' ? (
-                <ActivityIndicator size="small" color={isDark ? Colors.dark.primary : Colors.light.primary} />
+                <ActivityIndicator size="small" color={k.accent} />
               ) : (
                 <View style={styles.pendingDot} />
               )}
               <Text style={[
                 styles.stepLabel,
-                { color: isDark ? '#9BA1A6' : Colors.light.gray[500], textAlign: isRTL ? 'right' : 'left' },
+                { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' },
                 step.status === 'completed' && styles.stepLabelCompleted,
                 step.status === 'loading' && (isDark ? { color: '#fff', fontWeight: '700' as const } : styles.stepLabelActive)
               ]}>
@@ -274,67 +275,67 @@ export default function ResultsScreen() {
             source={require('../../assets/images/illustrations/plan.jpg')}
             style={styles.heroImage}
           />
-          <CheckCircle size={48} color={isDark ? Colors.dark.primary : Colors.light.primary} style={{ marginTop: 12 }} />
-          <Text style={[styles.title, { color: isDark ? '#fff' : Colors.light.gray[800] }]}>{t.yourPlan}</Text>
-          <Text style={[styles.subtitle, { color: isDark ? '#9BA1A6' : Colors.light.gray[500] }]}>{t.planSubtitle}</Text>
+          <CheckCircle size={48} color={k.accent} style={{ marginTop: 12 }} />
+          <Text style={[styles.title, { color: isDark ? '#fff' : k.text }]}>{t.yourPlan}</Text>
+          <Text style={[styles.subtitle, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.planSubtitle}</Text>
         </View>
 
-        <View style={[styles.card, { backgroundColor: isDark ? Colors.dark.card : '#fff' }]}>
+        <View style={[styles.card, { backgroundColor: isDark ? k.surface : '#fff' }]}>
           <View style={[styles.caloriesRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-            <Flame size={32} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+            <Flame size={32} color={k.accent} />
             <View>
-              <Text style={[styles.label, { color: isDark ? '#9BA1A6' : Colors.light.gray[500], textAlign: isRTL ? 'right' : 'left' }]}>{t.dailyCalories}</Text>
-              <Text style={[styles.value, { color: isDark ? '#fff' : Colors.light.gray[800], textAlign: isRTL ? 'right' : 'left' }]}>{plan?.dailyCalories} kcal</Text>
+              <Text style={[styles.label, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{t.dailyCalories}</Text>
+              <Text style={[styles.value, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}>{plan?.dailyCalories} kcal</Text>
             </View>
           </View>
 
           <View style={styles.macrosRow}>
             <View style={styles.macroItem}>
-              <Text style={[styles.macroLabel, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>{t.protein}</Text>
+              <Text style={[styles.macroLabel, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.protein}</Text>
               <Text style={styles.macroValue}>{plan?.proteins}g</Text>
             </View>
             <View style={styles.macroItem}>
-              <Text style={[styles.macroLabel, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>{t.carbs}</Text>
+              <Text style={[styles.macroLabel, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.carbs}</Text>
               <Text style={styles.macroValue}>{plan?.carbs}g</Text>
             </View>
             <View style={styles.macroItem}>
-              <Text style={[styles.macroLabel, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>{t.fats}</Text>
+              <Text style={[styles.macroLabel, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.fats}</Text>
               <Text style={styles.macroValue}>{plan?.fats}g</Text>
             </View>
           </View>
         </View>
 
-        <View style={[styles.card, { marginTop: 16, backgroundColor: isDark ? Colors.dark.card : '#fff' }]}>
+        <View style={[styles.card, { marginTop: 16, backgroundColor: isDark ? k.surface : '#fff' }]}>
           <View style={[styles.caloriesRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <Droplets size={32} color="#0EA5E9" />
             <View>
-              <Text style={[styles.label, { color: isDark ? '#9BA1A6' : Colors.light.gray[500], textAlign: isRTL ? 'right' : 'left' }]}>{t.waterIntake}</Text>
-              <Text style={[styles.value, { color: isDark ? '#fff' : Colors.light.gray[800], textAlign: isRTL ? 'right' : 'left' }]}>{plan?.waterIntake} {t.liters}</Text>
+              <Text style={[styles.label, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{t.waterIntake}</Text>
+              <Text style={[styles.value, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}>{plan?.waterIntake} {t.liters}</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.adviceSection}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : Colors.light.gray[800], textAlign: isRTL ? 'right' : 'left' }]}>{t.aiAdvice}</Text>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : k.text, textAlign: isRTL ? 'right' : 'left' }]}>{t.aiAdvice}</Text>
           {plan?.advice.map((item, index) => (
-            <View key={index} style={[styles.adviceItem, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: isDark ? Colors.dark.card : '#fff' }]}>
-              <Zap size={20} color={isDark ? Colors.dark.secondary : Colors.light.secondary} />
-              <Text style={[styles.adviceText, { color: isDark ? '#9BA1A6' : Colors.light.gray[700], textAlign: isRTL ? 'right' : 'left' }]}>{item}</Text>
+            <View key={index} style={[styles.adviceItem, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: isDark ? k.surface : '#fff' }]}>
+              <Zap size={20} color={k.warning} />
+              <Text style={[styles.adviceText, { color: isDark ? '#9BA1A6' : k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{item}</Text>
             </View>
           ))}
         </View>
 
       </ScrollView>
 
-      <View style={[styles.bottomBar, { backgroundColor: isDark ? Colors.dark.card : Colors.light.gray[50] }]}>
+      <View style={[styles.bottomBar, { backgroundColor: k.surfaceSunken }]}>
         {/* AHA MOMENT : CTA principal vers le logging du premier repas. */}
         <TouchableOpacity disabled={saving} style={[styles.finishButton, { flexDirection: isRTL ? 'row-reverse' : 'row', opacity: saving ? 0.7 : 1 }]} onPress={() => finishOnboarding('/food-database')}>
           <Text style={styles.finishButtonText}>{t.logFirstMeal}</Text>
-          <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ArrowRight size={24} color={Colors.light.white} /></View>
+          <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ArrowRight size={24} color={k.surface} /></View>
         </TouchableOpacity>
         {/* Secondaire : continuer plus tard, direct au tableau de bord. */}
         <TouchableOpacity disabled={saving} style={styles.laterButton} onPress={() => finishOnboarding('/(tabs)')}>
-          <Text style={[styles.laterButtonText, { color: isDark ? '#9BA1A6' : Colors.light.gray[500] }]}>{t.later}</Text>
+          <Text style={[styles.laterButtonText, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.later}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -343,7 +344,7 @@ export default function ResultsScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -366,11 +367,11 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     borderRadius: 14,
     backgroundColor: 'rgba(255,255,255,0.7)',
     borderWidth: 1,
-    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
+    borderColor: k.border,
   },
   langPillActive: {
-    backgroundColor: Colors.light.primary,
-    borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
+    backgroundColor: k.accent,
+    borderColor: k.accent,
   },
   langPillText: {
     fontSize: 14,
@@ -383,13 +384,13 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     padding: 24,
   },
   loadingTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
     marginBottom: 32,
   },
   stepsList: {
@@ -402,20 +403,20 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     gap: 16,
     padding: 16,
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     borderRadius: 16,
   },
   stepLabel: {
     fontSize: 16,
-    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
+    color: k.textMuted,
     fontWeight: '500',
   },
   stepLabelActive: {
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
     fontWeight: '700',
   },
   stepLabelCompleted: {
-    color: isDark ? Colors.dark.primary : Colors.light.primary,
+    color: k.accent,
     fontWeight: '600',
   },
   pendingDot: {
@@ -423,7 +424,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
+    borderColor: k.border,
   },
   aiIcon: {
     marginBottom: 20,
@@ -444,18 +445,18 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
     marginTop: 16,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
+    color: k.textMuted,
     marginTop: 8,
     textAlign: 'center',
   },
   card: {
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     borderRadius: 24,
     padding: 24,
     shadowColor: '#000',
@@ -472,12 +473,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
+    color: k.textMuted,
   },
   value: {
     fontSize: 24,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
   },
   macrosRow: {
     flexDirection: 'row',
@@ -485,7 +486,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     marginTop: 24,
     paddingTop: 24,
     borderTopWidth: 1,
-    borderTopColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderTopColor: k.border,
   },
   macroItem: {
     alignItems: 'center',
@@ -493,14 +494,14 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   macroLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     marginBottom: 4,
     textTransform: 'uppercase',
   },
   macroValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: isDark ? Colors.dark.primary : Colors.light.primary,
+    color: k.accent,
   },
   adviceSection: {
     marginTop: 32,
@@ -508,14 +509,14 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[800] : Colors.light.gray[800],
+    color: k.text,
     marginBottom: 16,
   },
   adviceItem: {
     flexDirection: 'row',
     gap: 12,
     marginBottom: 12,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     padding: 16,
     borderRadius: 16,
     alignItems: 'center',
@@ -523,31 +524,31 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   adviceText: {
     flex: 1,
     fontSize: 14,
-    color: isDark ? Colors.dark.gray[700] : Colors.light.gray[700],
+    color: k.textMuted,
     lineHeight: 20,
   },
   bottomBar: {
     paddingHorizontal: 24,
     paddingBottom: 24,
     paddingTop: 12,
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
   },
   finishButton: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     height: 64,
     borderRadius: 32,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 5,
   },
   finishButtonText: {
-    color: Colors.light.white,
+    color: k.surface,
     fontSize: 18,
     fontWeight: '700',
   },

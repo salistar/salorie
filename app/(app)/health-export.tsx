@@ -178,6 +178,7 @@ const TXT: any = {
 };
 
 export default function HealthExportScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('health-export');
   const { user } = useUser();
   const { resolved } = useTheme();

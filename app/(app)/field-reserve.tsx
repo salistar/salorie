@@ -3,7 +3,7 @@
 // (modération admin). Firestore best-effort.
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, Tokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   View,
@@ -21,7 +21,6 @@ import {
   Calendar, Pencil, DollarSign,
 } from 'lucide-react-native';
 import { Input } from '../../components/ui';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign, flipForRTL } from '../../lib/rtl';
@@ -30,7 +29,6 @@ import {
   SportField, SportReservation, Sport, SPORTS,
 } from '../../lib/groupSports';
 
-const PRIMARY = Colors.light.primary;
 
 const SPORT_EMOJI: Record<Sport, string> = {
   football: '⚽', tennis: '🎾', basketball: '🏀', volleyball: '🏐',
@@ -121,10 +119,11 @@ function parseDateTime(dateStr: string, timeStr: string): number | null {
 export default function FieldReserveScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
 
   const email = user?.primaryEmailAddress?.emailAddress || '';
 
@@ -151,12 +150,12 @@ export default function FieldReserveScreen() {
   const align = txtAlign(isRTL);
   const dir = rowDir(isRTL);
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const tok = useTokens();
   const bg = tok.bg;
-  const field = isDark ? Colors.dark.gray[100] : Colors.light.gray[100];
+  const field = k.border;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -266,10 +265,10 @@ export default function FieldReserveScreen() {
         {/* Terrains approuvés */}
         <Text style={[styles.listTitle, { color: text, textAlign: align }]}>{t.fieldsTitle}</Text>
         {loading ? (
-          <View style={styles.loadingBox}><ActivityIndicator size="large" color={PRIMARY} /></View>
+          <View style={styles.loadingBox}><ActivityIndicator size="large" color={k.accent} /></View>
         ) : fields.length === 0 ? (
           <View style={[styles.emptyBox, { backgroundColor: card }]}>
-            <CalendarRange size={34} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} />
+            <CalendarRange size={34} color={k.textFaint} />
             <Text style={[styles.emptySub, { color: sub }]}>{t.empty}</Text>
           </View>
         ) : (
@@ -279,7 +278,7 @@ export default function FieldReserveScreen() {
             return (
               <View key={f.id} style={[styles.fieldCard, { backgroundColor: card }]}>
                 <TouchableOpacity style={[styles.fieldRow, { flexDirection: dir }]} activeOpacity={0.85} onPress={() => toggleExpand(f)}>
-                  <View style={styles.fieldIcon}><MapPin size={20} color={PRIMARY} /></View>
+                  <View style={styles.fieldIcon}><MapPin size={20} color={k.accent} /></View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.fieldName, { color: text, textAlign: align }]} numberOfLines={1}>{f.name}</Text>
                     <Text style={[styles.fieldMeta, { color: sub, textAlign: align }]} numberOfLines={1}>
@@ -375,7 +374,7 @@ export default function FieldReserveScreen() {
               return (
                 <TouchableOpacity
                   key={sp}
-                  style={[styles.chip, { backgroundColor: active ? PRIMARY : field }]}
+                  style={[styles.chip, { backgroundColor: active ? k.accent : field }]}
                   activeOpacity={0.85}
                   onPress={() => togglePSport(sp)}
                 >
@@ -405,8 +404,8 @@ export default function FieldReserveScreen() {
 
           {proposeMsg && (
             proposeMsg.ok ? (
-              <View style={[styles.okBox, { backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight }]}>
-                <Clock size={16} color={PRIMARY} />
+              <View style={[styles.okBox, { backgroundColor: k.accentSoft }]}>
+                <Clock size={16} color={k.accent} />
                 <Text style={[styles.okBoxTxt, { textAlign: align }]}>{proposeMsg.text}</Text>
               </View>
             ) : (
@@ -427,7 +426,7 @@ export default function FieldReserveScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   header: { alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
@@ -439,7 +438,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   emptySub: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
   fieldCard: { borderRadius: 16, marginBottom: 10, overflow: 'hidden' },
   fieldRow: { alignItems: 'center', gap: 12, padding: 14 },
-  fieldIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center' },
+  fieldIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: k.accentSoft, alignItems: 'center', justifyContent: 'center' },
   fieldName: { fontSize: 16, fontWeight: '800' },
   fieldMeta: { fontSize: 12, marginTop: 3 },
   fieldDetail: { paddingHorizontal: 14, paddingBottom: 14 },
@@ -452,8 +451,8 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   twoCol: { gap: 12 },
   col: { flex: 1 },
   errTxt: { color: '#ef4444', fontSize: 13, fontWeight: '700', marginTop: 10 },
-  okTxt: { color: PRIMARY, fontSize: 13, fontWeight: '700', marginTop: 10 },
-  submitBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: PRIMARY, borderRadius: 14, paddingVertical: 13, marginTop: 14 },
+  okTxt: { color: k.accent, fontSize: 13, fontWeight: '700', marginTop: 10 },
+  submitBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 13, marginTop: 14 },
   submitTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
   sectionCard: { borderRadius: 18, padding: 16 },
   sectionTitle: { fontSize: 17, fontWeight: '900', letterSpacing: -0.3 },
@@ -462,5 +461,5 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   chip: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999 },
   chipTxt: { fontSize: 13, fontWeight: '800' },
   okBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, padding: 12, marginTop: 12 },
-  okBoxTxt: { flex: 1, color: PRIMARY, fontSize: 13, fontWeight: '700', lineHeight: 18 },
+  okBoxTxt: { flex: 1, color: k.accent, fontSize: 13, fontWeight: '700', lineHeight: 18 },
 });

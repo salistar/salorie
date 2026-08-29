@@ -1,8 +1,8 @@
 import React from 'react';
 import { View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
+import { useTokens, Tokens } from '../constants/tokens';
 
 /**
  * HalfProgress — a semicircular arc gauge rendered with SVG so the green
@@ -39,9 +39,10 @@ export default function HalfProgress({
   // sont évaluées hors de tout contexte de thème. `trackColor` valait gray[100] (#F1F5F9),
   // soit un arc quasi blanc sur une carte sombre — l'unique appelant ne le surchargeant pas.
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const arcColor = color ?? (isDark ? Colors.dark.primary : Colors.light.primary);
-  const arcTrack = trackColor ?? (isDark ? Colors.dark.gray[100] : Colors.light.gray[100]);
+  const arcColor = color ?? (k.accent);
+  const arcTrack = trackColor ?? (k.border);
   const p = Math.min(1, Math.max(0, progress));
 
   // Centre-line radius of the stroke (so the stroke stays inside the size box)

@@ -79,6 +79,7 @@ const TXT: any = {
 };
 
 export default function MetabolicTwinScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('metabolic-twin');
   const { colors, resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;

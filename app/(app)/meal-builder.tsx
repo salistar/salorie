@@ -47,6 +47,7 @@ function parseDescription(desc: string) {
 type Item = { id: string; name: string; qty: number; calories: number; protein: number; carbs: number; fat: number };
 
 export default function MealBuilderScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('meal-builder');
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;

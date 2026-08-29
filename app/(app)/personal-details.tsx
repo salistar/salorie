@@ -19,7 +19,6 @@ import {
   Droplet,
   Zap
 } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { FormCard, Stepper, SubmitBar } from '../../components/FormKit';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -28,6 +27,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 const TXT: Record<string, {
   headerTitle: string;
@@ -119,14 +119,15 @@ export default function PersonalDetailsScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
 
-  const pageBg = isDark ? '#0f1419' : Colors.light.white;
-  const cardBg = isDark ? Colors.dark.card : Colors.light.gray[50];
-  const primaryText = isDark ? '#fff' : Colors.light.gray[900];
-  const secondaryText = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const borderColor = isDark ? Colors.dark.gray[100] : Colors.light.gray[100];
+  const pageBg = isDark ? '#0f1419' : k.surface;
+  const cardBg = k.surfaceSunken;
+  const primaryText = isDark ? '#fff' : k.text;
+  const secondaryText = isDark ? '#9BA1A6' : k.textMuted;
+  const borderColor = k.border;
 
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
@@ -210,7 +211,7 @@ export default function PersonalDetailsScreen() {
     <Animated.View entering={FadeInRight.delay(delay).duration(600)} style={styles.inputContainer}>
       <View style={[styles.labelRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <View style={[styles.iconBackground, isRTL ? { marginRight: 0, marginLeft: 10 } : null]}>
-          <Icon size={18} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+          <Icon size={18} color={k.accent} />
         </View>
         <Text style={[styles.inputLabel, { color: secondaryText, textAlign: isRTL ? 'right' : 'left' }]}>{label}</Text>
       </View>
@@ -228,7 +229,7 @@ export default function PersonalDetailsScreen() {
 
         {loading ? (
           <View style={styles.loadingWrapper}>
-            <ActivityIndicator size="large" color={isDark ? Colors.dark.primary : Colors.light.primary} />
+            <ActivityIndicator size="large" color={k.accent} />
           </View>
         ) : (
           <ScrollView 
@@ -304,10 +305,10 @@ export default function PersonalDetailsScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
   },
   header: {
     flexDirection: 'row',
@@ -320,14 +321,14 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   loadingWrapper: {
     flex: 1,
@@ -344,12 +345,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   introTitle: {
     fontSize: 28,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     marginBottom: 8,
   },
   introDesc: {
     fontSize: 16,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     fontWeight: '500',
     lineHeight: 22,
   },
@@ -366,7 +367,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: Colors.light.primary + '15',
+    backgroundColor: k.accent + '15',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
@@ -374,31 +375,31 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[600] : Colors.light.gray[600],
+    color: k.textMuted,
   },
   textInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     borderRadius: 20,
     paddingHorizontal: 20,
     borderWidth: 1.5,
-    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderColor: k.border,
   },
   textInput: {
     flex: 1,
     height: 56,
     fontSize: 18,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   unitText: {
     fontSize: 16,
     fontWeight: '800',
-    color: isDark ? Colors.dark.primary : Colors.light.primary,
+    color: k.accent,
   },
   saveButton: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     height: 64,
     borderRadius: 24,
     flexDirection: 'row',
@@ -406,7 +407,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
     gap: 12,
     marginTop: 16,
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
     shadowRadius: 15,
@@ -418,6 +419,6 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   saveButtonText: {
     fontSize: 18,
     fontWeight: '800',
-    color: Colors.light.white,
+    color: k.surface,
   },
 });

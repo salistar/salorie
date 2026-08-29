@@ -42,6 +42,7 @@ type Verdict = 'great' | 'ok' | 'avoid';
 interface Reco { name: string; kcal: number; protein: number; carbs: number; fat: number; fit: number; verdict: Verdict; reasons: string[]; }
 
 export default function RestaurantModeScreen() {
+  const k = useTokens();
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;

@@ -14,7 +14,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Flame, Check, ArrowLeft, Share2 } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { useLogging } from '../../lib/LoggingContext';
 import { addNutritionLog } from '../../lib/firebase';
@@ -22,6 +21,7 @@ import { useUser } from '@clerk/clerk-expo';
 import Animated, { FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 const TXT: Record<string, any> = {
   en: { burned: 'Your workout burned', logWorkout: 'Log Workout', great: 'Great session!', kcal: 'kcal', min: 'min', dur: 'Duration', intensity: 'Intensity', saved: 'It will be added to your activity', share: 'Share', shareTitle: 'My Salorie workout' },
@@ -37,8 +37,9 @@ export default function WorkoutResultScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
+  const k = useTokens();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const params = useLocalSearchParams();
   const { calories, name, duration } = params;
 
@@ -112,7 +113,7 @@ export default function WorkoutResultScreen() {
   };
 
   return (
-    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: isDark ? '#0f1419' : Colors.light.white }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: isDark ? '#0f1419' : k.surface }]}>
       <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
       <View style={styles.content}>
@@ -126,25 +127,25 @@ export default function WorkoutResultScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(300).duration(600)} style={{ alignItems: 'center', alignSelf: 'stretch' }}>
-          <Text style={[styles.great, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{t.great}</Text>
-          <Text style={[styles.subtitle, { color: isDark ? '#9BA1A6' : Colors.light.gray[500] }]}>{t.burned}</Text>
-          <Text style={[styles.calories, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{fmtNum(calories) || '—'}<Text style={styles.calUnit}> {t.kcal}</Text></Text>
+          <Text style={[styles.great, { color: isDark ? '#fff' : k.text }]}>{t.great}</Text>
+          <Text style={[styles.subtitle, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.burned}</Text>
+          <Text style={[styles.calories, { color: isDark ? '#fff' : k.text }]}>{fmtNum(calories) || '—'}<Text style={styles.calUnit}> {t.kcal}</Text></Text>
 
           {/* Rangée de stats designée */}
-          <View style={[styles.statsRow, { backgroundColor: isDark ? '#161C23' : Colors.light.gray[50] }]}>
+          <View style={[styles.statsRow, { backgroundColor: isDark ? '#161C23' : k.surfaceSunken }]}>
             <View style={styles.stat}>
-              <Text style={[styles.statVal, { color: isDark ? '#fff' : Colors.light.gray[900] }]}>{fmtNum(duration) || '—'}</Text>
-              <Text style={[styles.statLbl, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>{t.dur} ({t.min})</Text>
+              <Text style={[styles.statVal, { color: isDark ? '#fff' : k.text }]}>{fmtNum(duration) || '—'}</Text>
+              <Text style={[styles.statLbl, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.dur} ({t.min})</Text>
             </View>
-            <View style={[styles.statDivider, { backgroundColor: isDark ? '#283241' : Colors.light.gray[100] }]} />
+            <View style={[styles.statDivider, { backgroundColor: isDark ? '#283241' : k.border }]} />
             <View style={styles.stat}>
-              <Text style={[styles.statVal, { color: isDark ? '#fff' : Colors.light.gray[900] }]} numberOfLines={1}>{intensiteSeance || '—'}</Text>
-              <Text style={[styles.statLbl, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]}>{t.intensity}</Text>
+              <Text style={[styles.statVal, { color: isDark ? '#fff' : k.text }]} numberOfLines={1}>{intensiteSeance || '—'}</Text>
+              <Text style={[styles.statLbl, { color: isDark ? '#9BA1A6' : k.textMuted }]}>{t.intensity}</Text>
             </View>
           </View>
 
-          <Text style={[styles.info, { color: isDark ? '#9BA1A6' : Colors.light.gray[400] }]} numberOfLines={1}>{typeSeance}</Text>
-          <Text style={[styles.savedHint, { color: isDark ? Colors.dark.primary : Colors.light.primary }]}>{t.saved}</Text>
+          <Text style={[styles.info, { color: isDark ? '#9BA1A6' : k.textMuted }]} numberOfLines={1}>{typeSeance}</Text>
+          <Text style={[styles.savedHint, { color: k.accent }]}>{t.saved}</Text>
         </Animated.View>
       </View>
 
@@ -152,13 +153,13 @@ export default function WorkoutResultScreen() {
         <TouchableOpacity
           style={[
             styles.shareBtn,
-            { flexDirection: isRTL ? 'row-reverse' : 'row', borderColor: isDark ? '#283241' : Colors.light.gray[200] },
+            { flexDirection: isRTL ? 'row-reverse' : 'row', borderColor: isDark ? '#283241' : k.border },
           ]}
           onPress={handleShare}
           activeOpacity={0.85}
         >
-          <Share2 size={20} color={isDark ? Colors.dark.primary : Colors.light.primary} strokeWidth={2.5} />
-          <Text style={[styles.shareText, { color: isDark ? Colors.dark.primary : Colors.light.primary }]}>{t.share}</Text>
+          <Share2 size={20} color={k.accent} strokeWidth={2.5} />
+          <Text style={[styles.shareText, { color: k.accent }]}>{t.share}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -167,10 +168,10 @@ export default function WorkoutResultScreen() {
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color={Colors.light.white} />
+            <ActivityIndicator color={k.surface} />
           ) : (
             <>
-              <Check size={24} color={Colors.light.white} strokeWidth={3} />
+              <Check size={24} color={k.surface} strokeWidth={3} />
               <Text style={styles.logText}>{t.logWorkout}</Text>
             </>
           )}
@@ -182,10 +183,10 @@ export default function WorkoutResultScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
   },
   header: {
     paddingHorizontal: 20,
@@ -197,7 +198,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
   },
   content: {
     flex: 1,
@@ -224,7 +225,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   subtitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500],
+    color: k.textMuted,
     textAlign: 'center',
     marginBottom: 12,
   },
@@ -232,7 +233,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   calories: {
     fontSize: 72,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     textAlign: 'center',
     letterSpacing: -2,
   },
@@ -246,7 +247,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   info: {
     fontSize: 16,
     fontWeight: '600',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     textAlign: 'center',
     marginTop: 16,
   },
@@ -255,21 +256,21 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 48 : 32,
   },
   logBtn: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     height: 64,
     borderRadius: 24,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
   },
   disabledBtn: {
-    backgroundColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
+    backgroundColor: k.border,
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -291,6 +292,6 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   logText: {
     fontSize: 20,
     fontWeight: '800',
-    color: Colors.light.white,
+    color: k.surface,
   },
 });

@@ -18,7 +18,6 @@ import { Video, ResizeMode } from 'expo-av';
 import { hasVideo, getVideoSource, cacheInBackground, primeCacheIndex } from '../../lib/exerciseVideos';
 import DemoYouTube from '../../components/DemoYouTube';
 import { EXERCICES_PLUS } from '../../lib/exercicesPlus';
-import { Colors } from '../../constants/Colors';
 import { getUserFromFirestore } from '../../lib/firebase';
 import { useUser } from '@clerk/clerk-expo';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -28,6 +27,7 @@ import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { colorLog, explain } from '../../lib/LocalDataStore';
 import { geminiShim } from '../../lib/aiProxy';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 const { width } = Dimensions.get('window');
 console.log('\x1b[35m[workout-details.tsx] MODULE LOADED\x1b[0m');
@@ -175,9 +175,11 @@ export default function WorkoutDetailsScreen() {
   const type = (params.type as string) || 'run'; // 'run' | 'lifting'
 
   const { colors, resolved } = useTheme();
+
+  const k = useTokens();
   const { t, language, isRTL } = useTranslation();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   // Display name + how-to: wger-sourced exercises carry inline {en,fr,ar} maps;
   // the original catalog uses i18n keys (labelKey / lift.howto.<id>).
   const exLabel = (ex: any): string => (ex?.label ? (ex.label[language] || ex.label.en) : t(ex?.labelKey as any));
@@ -353,11 +355,11 @@ Output a single integer (e.g. 247). No explanation.`;
   };
 
   // Theme palette
-  const bg = isDark ? '#0B0F14' : Colors.light.white;
-  const textPrimary = isDark ? colors.gray[900] : Colors.light.gray[900];
-  const textMuted = isDark ? colors.gray[400] : Colors.light.gray[400];
-  const cardBg = isDark ? '#161C23' : Colors.light.gray[50];
-  const cardBorder = isDark ? colors.gray[200] : Colors.light.gray[100];
+  const bg = isDark ? '#0B0F14' : k.surface;
+  const textPrimary = isDark ? colors.gray[900] : k.text;
+  const textMuted = isDark ? colors.gray[400] : k.textMuted;
+  const cardBg = isDark ? '#161C23' : k.surfaceSunken;
+  const cardBorder = isDark ? colors.gray[200] : k.border;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: bg }]}>
@@ -397,8 +399,8 @@ Output a single integer (e.g. 247). No explanation.`;
                     styles.activityCard,
                     { backgroundColor: cardBg, borderColor: cardBorder },
                     isSelected && {
-                      borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
-                      backgroundColor: isDark ? '#1F2833' : Colors.light.white,
+                      borderColor: k.accent,
+                      backgroundColor: isDark ? '#1F2833' : k.surface,
                     },
                   ]}
                   onPress={() => {
@@ -426,7 +428,7 @@ Output a single integer (e.g. 247). No explanation.`;
                     style={[
                       styles.activityLabel,
                       { color: textPrimary },
-                      isSelected && { color: isDark ? Colors.dark.primary : Colors.light.primary },
+                      isSelected && { color: k.accent },
                     ]}
                     numberOfLines={1}
                   >
@@ -488,7 +490,7 @@ Output a single integer (e.g. 247). No explanation.`;
             ) : (
               // No video and no (working) image → text-only placeholder.
               <View style={styles.heroFallback}>
-                <Dumbbell size={46} color={isDark ? Colors.dark.primary : Colors.light.primary} />
+                <Dumbbell size={46} color={k.accent} />
                 <Text style={[styles.heroFallbackTxt, { color: textPrimary }]} numberOfLines={2}>
                   {exLabel(selected) || selected.id}
                 </Text>
@@ -523,10 +525,10 @@ Output a single integer (e.g. 247). No explanation.`;
                     key={mKey}
                     style={[
                       styles.muscleBadge,
-                      { backgroundColor: isDark ? '#22303C' : '#FFEEED', borderColor: Colors.light.primary },
+                      { backgroundColor: isDark ? '#22303C' : '#FFEEED', borderColor: k.accent },
                     ]}
                   >
-                    <Text style={[styles.muscleBadgeText, { color: isDark ? Colors.dark.primary : Colors.light.primary }]}>
+                    <Text style={[styles.muscleBadgeText, { color: k.accent }]}>
                       {t(mKey as any)}
                     </Text>
                   </View>
@@ -636,7 +638,7 @@ Output a single integer (e.g. 247). No explanation.`;
           >
             {computing ? (
               <>
-                <ActivityIndicator color={Colors.light.white} />
+                <ActivityIndicator color={k.surface} />
                 <Text style={[styles.continueText, { marginLeft: 8 }]}>
                   {t('workout.calculating')}
                 </Text>
@@ -653,7 +655,7 @@ Output a single integer (e.g. 247). No explanation.`;
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safeArea: { flex: 1 },
   header: { paddingHorizontal: 20, paddingTop: 4, marginBottom: 4 },
   backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
@@ -753,18 +755,18 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     borderTopWidth: 1,
   },
   continueBtn: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     height: 56,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
   },
   disabledBtn: { opacity: 0.7 },
-  continueText: { fontSize: 17, fontWeight: '800', color: Colors.light.white },
+  continueText: { fontSize: 17, fontWeight: '800', color: k.surface },
 });

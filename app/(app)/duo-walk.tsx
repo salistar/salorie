@@ -77,6 +77,7 @@ function metres(a: { lat: number; lng: number }, b: { lat: number; lng: number }
 }
 
 export default function MarcheADeux() {
+  const k = useTokens();
   const router = useRouter();
   const tok = useTokens();
   const { language, isRTL } = useTranslation();

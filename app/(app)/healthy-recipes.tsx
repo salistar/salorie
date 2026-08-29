@@ -78,6 +78,7 @@ const TXT: any = {
 type Verdict = 'great' | 'ok' | 'avoid';
 
 export default function HealthyRecipesScreen() {
+  const k = useTokens();
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;

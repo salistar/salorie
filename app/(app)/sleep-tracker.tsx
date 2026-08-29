@@ -51,6 +51,7 @@ function recoveryNote(t: any, h: number): { label: string; color: string } {
 }
 
 export default function SleepTrackerScreen() {
+  const k = useTokens();
   const __gate = useScreenGate('sleep-tracker');
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;

@@ -68,6 +68,7 @@ const TXT: any = {
 };
 
 export default function NutriScoreScreen() {
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();

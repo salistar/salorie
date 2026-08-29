@@ -11,13 +11,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { ArrowLeft, History, ChevronDown } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign } from '../../lib/rtl';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { EmptyState, SkeletonCard } from '../../components/ui';
 import { listMealPlans, SavedMealPlan } from '../../lib/aiStore';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 // Libellés locaux à cet écran (trilingues) — pas de clés ajoutées à lib/i18n.
 const TXT = {
@@ -53,9 +53,10 @@ function fmtDate(ts: any, locale: string): string {
 export default function MealPlanHistoryScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const tx = TXT[language as keyof typeof TXT] ?? TXT.en;
   const locale = LOCALES[language] ?? LOCALES.en;
   const savedTitle = tx.saved;
@@ -63,11 +64,11 @@ export default function MealPlanHistoryScreen() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState<number | null>(0);
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const bg = isDark ? '#0f1419' : 'transparent';
-  const accent = isDark ? Colors.dark.primary : Colors.light.primary;
+  const accent = k.accent;
 
   useEffect(() => {
     (async () => {
@@ -125,11 +126,11 @@ export default function MealPlanHistoryScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 60 },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
-  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] },
+  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: k.surfaceSunken },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   title: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5 },
   empty: { fontSize: 14, lineHeight: 20, marginTop: 30, textAlign: 'center' },

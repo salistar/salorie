@@ -20,6 +20,7 @@ const TXT: any = {
 function clamp01(x: number) { return Math.max(0, Math.min(1, x)); }
 
 export default function DailyHealthScore() {
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const { resolved } = useTheme();
   const tx = TXT[language] || TXT.en;

@@ -123,6 +123,7 @@ const TXT: any = {
 };
 
 export default function AdaptiveTDEE() {
+  const k = useTokens();
   const __gate = useScreenGate('adaptive-tdee');
   const { user } = useUser();
   const { colors, resolved } = useTheme();

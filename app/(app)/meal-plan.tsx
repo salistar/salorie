@@ -20,7 +20,6 @@ import ScreenTopBar from '../../components/ScreenTopBar';
 import PhotoStrip from '../../components/PhotoStrip';
 import BrandBanner from '../../components/BrandBanner';
 import { SkeletonCard } from '../../components/ui';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign } from '../../lib/rtl';
@@ -29,6 +28,7 @@ import { generateMealPlan, MealPlan } from '../../lib/AiModel';
 import { saveMealPlan } from '../../lib/aiStore';
 import { getDietPrefs, dietPromptHint } from '../../lib/dietPrefs';
 import { useScreenGate } from '../../components/FeatureGate';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 const DEFAULTS = { calories: 2000, protein: 150, carbs: 220, fat: 65 };
 
@@ -36,9 +36,10 @@ export default function MealPlanScreen() {
   const __gate = useScreenGate('meal-plan');
   const { user } = useUser();
   const { colors, resolved } = useTheme();
+  const k = useTokens();
   const { t, language, isRTL } = useTranslation() as any;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
 
   // Local FR/EN/AR strings for the pre-generation preview (D1). Kept inline so
   // we don't touch the shared i18n file — zero risk of breaking other screens.
@@ -135,9 +136,9 @@ export default function MealPlanScreen() {
     }
   };
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const bg = isDark ? '#0f1419' : 'transparent';
 
   useEffect(() => {
@@ -237,7 +238,7 @@ export default function MealPlanScreen() {
               </View>
             </View>
 
-            <View style={[styles.stepsCard, { backgroundColor: card, borderColor: isDark ? '#283241' : Colors.light.gray[100] }]}>
+            <View style={[styles.stepsCard, { backgroundColor: card, borderColor: isDark ? '#283241' : k.border }]}>
               <Text style={[styles.stepsTitle, { color: text, textAlign: txtAlign(isRTL) }]}>{L('how_title')}</Text>
               {[L('step1'), L('step2'), L('step3')].map((s, i) => (
                 <View key={i} style={[styles.stepRow, { flexDirection: rowDir(isRTL) }]}>
@@ -271,7 +272,7 @@ export default function MealPlanScreen() {
 
         {error && !loading && (
           <View style={[styles.errorBox, { backgroundColor: card }]}>
-            <Text style={{ color: isDark ? Colors.dark.error : Colors.light.error, fontWeight: '600', textAlign: txtAlign(isRTL) }}>{t('mealplan.error')}</Text>
+            <Text style={{ color: k.danger, fontWeight: '600', textAlign: txtAlign(isRTL) }}>{t('mealplan.error')}</Text>
             <TouchableOpacity style={[styles.generateBtn, { backgroundColor: colors.primary, flexDirection: rowDir(isRTL) }]} onPress={generate}>
               <RefreshCw size={18} color="#fff" /><Text style={styles.generateText}>{t('mealplan.retry')}</Text>
             </TouchableOpacity>
@@ -301,9 +302,9 @@ export default function MealPlanScreen() {
             ))}
 
             {/* Totals */}
-            <View style={[styles.totalsCard, { backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight }]}>
-              <Text style={[styles.totalsTitle, { color: isDark ? Colors.dark.primaryDark : Colors.light.primaryDark, textAlign: txtAlign(isRTL) }]}>{t('mealplan.daily_total')}</Text>
-              <Text style={[styles.totalsValue, { color: isDark ? Colors.dark.primaryDark : Colors.light.primaryDark, textAlign: txtAlign(isRTL) }]}>
+            <View style={[styles.totalsCard, { backgroundColor: k.accentSoft }]}>
+              <Text style={[styles.totalsTitle, { color: k.accentStrong, textAlign: txtAlign(isRTL) }]}>{t('mealplan.daily_total')}</Text>
+              <Text style={[styles.totalsValue, { color: k.accentStrong, textAlign: txtAlign(isRTL) }]}>
                 {fmtNum(Math.round(plan.totals.calories))} kcal · {fmtNum(Math.round(plan.totals.protein))}P / {fmtNum(Math.round(plan.totals.carbs))}C / {fmtNum(Math.round(plan.totals.fat))}F
               </Text>
             </View>
@@ -365,28 +366,28 @@ export default function MealPlanScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 60 },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50] },
+  backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: k.surfaceSunken },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   title: { fontSize: 30, fontWeight: '900', letterSpacing: -1 },
   subtitle: { fontSize: 14, marginTop: 8, marginBottom: 14, lineHeight: 20 },
   hero: { width: '100%', height: 140, borderRadius: 18, marginBottom: 18 },
-  targetsCard: { backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight, borderRadius: 18, padding: 16, marginTop: 2, marginBottom: 14 },
-  targetsTitle: { fontSize: 12, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase', color: isDark ? Colors.dark.primaryDark : Colors.light.primaryDark, marginBottom: 14 },
+  targetsCard: { backgroundColor: k.accentSoft, borderRadius: 18, padding: 16, marginTop: 2, marginBottom: 14 },
+  targetsTitle: { fontSize: 12, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase', color: k.accentStrong, marginBottom: 14 },
   targetsRow: { flexDirection: 'row', justifyContent: 'space-between' },
   targetTile: { alignItems: 'center', flex: 1 },
-  targetVal: { fontSize: 20, fontWeight: '900', color: isDark ? Colors.dark.primaryDark : Colors.light.primaryDark },
-  targetLbl: { fontSize: 11, fontWeight: '700', color: isDark ? Colors.dark.gray[500] : Colors.light.gray[500], marginTop: 2 },
-  stepsCard: { borderRadius: 18, padding: 16, marginBottom: 16, gap: 12, borderWidth: 1, borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100] },
+  targetVal: { fontSize: 20, fontWeight: '900', color: k.accentStrong },
+  targetLbl: { fontSize: 11, fontWeight: '700', color: k.textMuted, marginTop: 2 },
+  stepsCard: { borderRadius: 18, padding: 16, marginBottom: 16, gap: 12, borderWidth: 1, borderColor: k.border },
   stepsTitle: { fontSize: 14, fontWeight: '800', marginBottom: 2 },
   stepRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  stepNum: { width: 26, height: 26, borderRadius: 13, backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center' },
-  stepNumTxt: { color: isDark ? Colors.dark.primary : Colors.light.primary, fontWeight: '900', fontSize: 13 },
+  stepNum: { width: 26, height: 26, borderRadius: 13, backgroundColor: k.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  stepNumTxt: { color: k.accent, fontWeight: '900', fontSize: 13 },
   stepTxt: { flex: 1, fontSize: 13, fontWeight: '600', lineHeight: 18 },
-  generateBtn: { flexDirection: 'row', gap: 8, backgroundColor: Colors.light.primary, paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
+  generateBtn: { flexDirection: 'row', gap: 8, backgroundColor: k.accent, paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   generateText: { color: '#fff', fontSize: 16, fontWeight: '800' },
   loadingBox: { alignItems: 'center', gap: 12, paddingVertical: 60 },
   loadingText: { fontSize: 15, fontWeight: '600' },
@@ -399,7 +400,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   mealItems: { fontSize: 13, marginTop: 4, lineHeight: 18 },
   macroRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
   macro: { fontSize: 13, fontWeight: '700' },
-  logBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: Colors.light.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
+  logBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: k.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
   logBtnText: { color: '#fff', fontWeight: '800', fontSize: 13 },
   totalsCard: { borderRadius: 16, padding: 16, marginTop: 4, marginBottom: 22 },
   totalsTitle: { fontSize: 12, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase' },
@@ -414,10 +415,10 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   tipCard: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', borderRadius: 16, padding: 16, marginBottom: 18 },
   tipText: { flex: 1, fontSize: 14, lineHeight: 20, fontWeight: '600' },
   regenBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', paddingVertical: 12 },
-  regenText: { color: isDark ? Colors.dark.primary : Colors.light.primary, fontSize: 15, fontWeight: '700' },
+  regenText: { color: k.accent, fontSize: 15, fontWeight: '700' },
   histLink: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', paddingVertical: 14, marginTop: 6 },
-  histLinkTxt: { color: isDark ? Colors.dark.primary : Colors.light.primary, fontSize: 15, fontWeight: '800' },
-  saveAllBtn: { flexDirection: 'row', gap: 8, backgroundColor: Colors.light.primary, paddingVertical: 15, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
+  histLinkTxt: { color: k.accent, fontSize: 15, fontWeight: '800' },
+  saveAllBtn: { flexDirection: 'row', gap: 8, backgroundColor: k.accent, paddingVertical: 15, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
   saveAllText: { color: '#fff', fontSize: 15, fontWeight: '800' },
   rowBtns: { flexDirection: 'row', gap: 8, marginTop: 4 },
 });

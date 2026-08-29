@@ -23,7 +23,6 @@ import {
   Camera,
   CheckCircle2
 } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -34,6 +33,7 @@ import { useTranslation, Language, getLanguageName } from '../../lib/i18n';
 import { getMLConsent, setMLConsent } from '../../lib/alConsent';
 import { getDietPrefs, setDietPrefs, DietPref } from '../../lib/dietPrefs';
 import { Utensils } from 'lucide-react-native';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 export default function PreferencesScreen() {
   const { user } = useUser();
@@ -43,13 +43,14 @@ export default function PreferencesScreen() {
   // l'utilisateur se perdait a chaque ouverture de l'ecran, sans erreur.
   // `choix` et `setTheme` portent les six.
   const { choix, setTheme, colors, resolved } = useTheme();
-  const tPrimary = resolved === 'dark' ? '#fff' : Colors.light.gray[900];
-  const tMuted = resolved === 'dark' ? '#9BA1A6' : Colors.light.gray[500];
+  const k = useTokens();
+  const tPrimary = resolved === 'dark' ? '#fff' : k.text;
+  const tMuted = resolved === 'dark' ? '#9BA1A6' : k.textMuted;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
-  const cardBg = isDark ? '#161C23' : Colors.light.gray[50];
-  const titleCol = isDark ? '#f1f5f9' : Colors.light.gray[900];
-  const iconWrap = isDark ? '#0f1419' : Colors.light.white;
+  const styles = useMemo(() => makeStyles(k), [k]);
+  const cardBg = isDark ? '#161C23' : k.surfaceSunken;
+  const titleCol = isDark ? '#f1f5f9' : k.text;
+  const iconWrap = isDark ? '#0f1419' : k.surface;
   const { language, setLanguage, t, isRTL } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState(true);
@@ -148,12 +149,12 @@ export default function PreferencesScreen() {
 
 
   return (
-    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: resolved === 'dark' ? '#0f1419' : Colors.light.white }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: resolved === 'dark' ? '#0f1419' : k.surface }]}>
       <ScreenTopBar showBack title={t('prefs.title')} showBrand={false} showNotif={false} />
 
       {loading ? (
         <View style={styles.loadingWrapper}>
-          <ActivityIndicator size="large" color={isDark ? Colors.dark.primary : Colors.light.primary} />
+          <ActivityIndicator size="large" color={k.accent} />
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
@@ -200,7 +201,7 @@ export default function PreferencesScreen() {
 
           <Animated.View entering={FadeInDown.delay(200).duration(600)} style={[styles.notificationCard, { backgroundColor: cardBg }]}>
             <View style={[styles.notifIconWrapper, { backgroundColor: iconWrap }]}>
-              <Bell size={20} color={notifications ? Colors.light.primary : isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} />
+              <Bell size={20} color={notifications ? k.accent : k.textMuted} />
             </View>
             <View style={styles.notifTextContent}>
               <Text style={[styles.notifTitle, { color: titleCol }]}>{t('prefs.push_notifs')}</Text>
@@ -212,8 +213,8 @@ export default function PreferencesScreen() {
                 setNotifications(val);
                 updatePreference('notificationsEnabled', val);
               }}
-              trackColor={{ false: isDark ? Colors.dark.gray[200] : Colors.light.gray[200], true: isDark ? Colors.dark.primary : Colors.light.primary }}
-              thumbColor={isDark ? Colors.dark.white : Colors.light.white}
+              trackColor={{ false: k.border, true: k.accent }}
+              thumbColor={k.surface}
             />
           </Animated.View>
 
@@ -224,7 +225,7 @@ export default function PreferencesScreen() {
           </View>
           <Animated.View entering={FadeInDown.delay(250).duration(600)} style={[styles.notificationCard, { backgroundColor: cardBg }]}>
             <View style={[styles.notifIconWrapper, { backgroundColor: iconWrap }]}>
-              <Camera size={20} color={mlConsent ? Colors.light.primary : isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} />
+              <Camera size={20} color={mlConsent ? k.accent : k.textMuted} />
             </View>
             <View style={styles.notifTextContent}>
               <Text style={[styles.notifTitle, { color: titleCol }]}>
@@ -248,8 +249,8 @@ export default function PreferencesScreen() {
                 setMlConsentState(val);
                 setMLConsent(val);
               }}
-              trackColor={{ false: isDark ? Colors.dark.gray[200] : Colors.light.gray[200], true: isDark ? Colors.dark.primary : Colors.light.primary }}
-              thumbColor={isDark ? Colors.dark.white : Colors.light.white}
+              trackColor={{ false: k.border, true: k.accent }}
+              thumbColor={k.surface}
             />
           </Animated.View>
 
@@ -272,7 +273,7 @@ export default function PreferencesScreen() {
                 style={[styles.notificationCard, { marginBottom: 10, backgroundColor: cardBg }]}
               >
                 <View style={[styles.notifIconWrapper, { backgroundColor: iconWrap }]}>
-                  <Utensils size={20} color={on ? Colors.light.primary : isDark ? Colors.dark.gray[400] : Colors.light.gray[400]} />
+                  <Utensils size={20} color={on ? k.accent : k.textMuted} />
                 </View>
                 <View style={styles.notifTextContent}>
                   <Text style={[styles.notifTitle, { color: titleCol }]}>{row.label}</Text>
@@ -280,8 +281,8 @@ export default function PreferencesScreen() {
                 <Switch
                   value={on}
                   onValueChange={(val) => toggleDiet(row.key, val)}
-                  trackColor={{ false: isDark ? Colors.dark.gray[200] : Colors.light.gray[200], true: isDark ? Colors.dark.primary : Colors.light.primary }}
-                  thumbColor={isDark ? Colors.dark.white : Colors.light.white}
+                  trackColor={{ false: k.border, true: k.accent }}
+                  thumbColor={k.surface}
                 />
               </Animated.View>
             );
@@ -309,18 +310,18 @@ export default function PreferencesScreen() {
                     styles.chip,
                     {
                       backgroundColor: on
-                        ? Colors.light.primary
+                        ? k.accent
                         : resolved === 'dark'
                         ? '#1c2430'
-                        : Colors.light.gray[50],
-                      borderColor: on ? Colors.light.primary : isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
+                        : k.surfaceSunken,
+                      borderColor: on ? k.accent : k.border,
                     },
                   ]}
                 >
                   <Text
                     style={[
                       styles.chipText,
-                      { color: on ? Colors.light.white : tPrimary },
+                      { color: on ? k.surface : tPrimary },
                     ]}
                   >
                     {t(c.labelKey)}
@@ -341,10 +342,10 @@ export default function PreferencesScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
   },
   header: {
     flexDirection: 'row',
@@ -357,14 +358,14 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   loadingWrapper: {
     flex: 1,
@@ -380,12 +381,12 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   sectionTitle: {
     fontSize: 24,
     fontWeight: '900',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
     marginBottom: 4,
   },
   sectionDesc: {
     fontSize: 14,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     fontWeight: '500',
   },
   themeRow: {
@@ -395,7 +396,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   },
   themeCard: {
     width: (width - 48 - 24) / 3,
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     borderRadius: 24,
     padding: 16,
     alignItems: 'center',
@@ -403,9 +404,9 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     borderColor: 'transparent',
   },
   themeCardSelected: {
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
-    borderColor: isDark ? Colors.dark.primary : Colors.light.primary,
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    backgroundColor: k.surface,
+    borderColor: k.accent,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
@@ -415,7 +416,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 16,
-    backgroundColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    backgroundColor: k.border,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
@@ -423,38 +424,38 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   themeLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
   },
   themeLabelSelected: {
-    color: isDark ? Colors.dark.primary : Colors.light.primary,
+    color: k.accent,
   },
   selectedBadge: {
     position: 'absolute',
     top: -8,
     right: -8,
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     width: 20,
     height: 20,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: isDark ? Colors.dark.white : Colors.light.white,
+    borderColor: k.surface,
   },
   notificationCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: isDark ? Colors.dark.gray[50] : Colors.light.gray[50],
+    backgroundColor: k.surfaceSunken,
     padding: 20,
     borderRadius: 28,
     borderWidth: 1,
-    borderColor: isDark ? Colors.dark.gray[100] : Colors.light.gray[100],
+    borderColor: k.border,
   },
   notifIconWrapper: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: isDark ? Colors.dark.card : Colors.light.white,
+    backgroundColor: k.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -465,11 +466,11 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   notifTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: isDark ? Colors.dark.gray[900] : Colors.light.gray[900],
+    color: k.text,
   },
   notifDesc: {
     fontSize: 12,
-    color: isDark ? Colors.dark.gray[400] : Colors.light.gray[400],
+    color: k.textMuted,
     fontWeight: '500',
     marginTop: 2,
   },

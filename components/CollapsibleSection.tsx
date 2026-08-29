@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { flipAuto } from '../lib/rtl';
 import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { ChevronDown, ChevronRight } from 'lucide-react-native';
-import { Colors } from '../constants/Colors';
 import { useTheme } from '../lib/ThemeContext';
+import { useTokens, Tokens } from '../constants/tokens';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -21,12 +21,13 @@ interface Props {
 export default function CollapsibleSection({ title, defaultOpen = false, children, color }: Props) {
   const [open, setOpen] = useState(defaultOpen);
   const { resolved } = useTheme();
-  const titleColor = resolved === 'dark' ? '#f1f5f9' : Colors.light.gray[900];
+  const k = useTokens();
+  const titleColor = resolved === 'dark' ? '#f1f5f9' : k.text;
   const toggle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setOpen((o) => !o);
   };
-  const tint = color || Colors.light.primary;
+  const tint = color || k.accent;
   return (
     <View style={styles.wrap}>
       <TouchableOpacity style={styles.header} activeOpacity={0.7} onPress={toggle}>

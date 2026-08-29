@@ -13,7 +13,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, Flame, Activity } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import { useLogging } from '../../lib/LoggingContext';
 import { addNutritionLog } from '../../lib/firebase';
 import { useUser } from '@clerk/clerk-expo';
@@ -23,6 +22,7 @@ import { useTranslation } from '../../lib/i18n';
 import { colorLog, explain } from '../../lib/LocalDataStore';
 import { Stepper, InlineError } from '../../components/FormKit';
 import { Input } from '../../components/ui';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 console.log('\x1b[35m[log-manual.tsx] MODULE LOADED\x1b[0m');
 
@@ -33,6 +33,7 @@ export default function LogManualExerciseScreen() {
   const { user } = useUser();
   const { selectedDate, triggerRefresh } = useLogging();
   const { colors, resolved } = useTheme();
+  const k = useTokens();
   const { t, isRTL, language } = useTranslation() as any;
   const kcalErr = language === 'fr' ? '⚠️ Entre un nombre de kcal valide' : language === 'ar' ? '⚠️ أدخل عدد سعرات صالحًا' : '⚠️ Enter a valid number of kcal';
 
@@ -41,14 +42,14 @@ export default function LogManualExerciseScreen() {
   const [loading, setLoading] = useState(false);
 
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
-  const bg = isDark ? '#0B0F14' : Colors.light.white;
-  const textPrimary = isDark ? colors.gray[900] : Colors.light.gray[900];
-  const textMuted = isDark ? colors.gray[400] : Colors.light.gray[400];
-  const textLabel = isDark ? colors.gray[700] : Colors.light.gray[700];
-  const cardBg = isDark ? '#161C23' : Colors.light.gray[50];
-  const cardBorder = isDark ? colors.gray[200] : Colors.light.gray[100];
-  const inputBg = isDark ? '#0B0F14' : Colors.light.white;
+  const styles = useMemo(() => makeStyles(k), [k]);
+  const bg = isDark ? '#0B0F14' : k.surface;
+  const textPrimary = isDark ? colors.gray[900] : k.text;
+  const textMuted = isDark ? colors.gray[400] : k.textMuted;
+  const textLabel = isDark ? colors.gray[700] : k.textMuted;
+  const cardBg = isDark ? '#161C23' : k.surfaceSunken;
+  const cardBorder = isDark ? colors.gray[200] : k.border;
+  const inputBg = isDark ? '#0B0F14' : k.surface;
 
   console.log('\x1b[33m[LogManual] RENDER\x1b[0m', { name, calories, theme: resolved });
 
@@ -136,7 +137,7 @@ export default function LogManualExerciseScreen() {
             disabled={!name || !calories || loading}
           >
             {loading ? (
-              <ActivityIndicator color={Colors.light.white} />
+              <ActivityIndicator color={k.surface} />
             ) : (
               <Text style={styles.logText}>{t('manual.log_activity')}</Text>
             )}
@@ -149,7 +150,7 @@ export default function LogManualExerciseScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safeArea: { flex: 1 },
   header: { paddingHorizontal: 20, paddingTop: 4, marginBottom: 10 },
   backBtn: {
@@ -185,17 +186,17 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   spacer: { height: 22 },
   footer: { padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24 },
   logBtn: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     height: 60,
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
   },
-  disabledBtn: { backgroundColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200], shadowOpacity: 0, elevation: 0 },
-  logText: { fontSize: 18, fontWeight: '800', color: Colors.light.white },
+  disabledBtn: { backgroundColor: k.border, shadowOpacity: 0, elevation: 0 },
+  logText: { fontSize: 18, fontWeight: '800', color: k.surface },
 });

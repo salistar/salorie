@@ -26,6 +26,14 @@ jest.mock(
 );
 
 import AttenteConnexion, { DELAI_EXPLICATION_MS } from '../../components/AttenteConnexion';
+import { ThemeProvider } from '../../lib/ThemeContext';
+
+// ⚠ LE FOURNISSEUR DE THEME EST INDISPENSABLE DEPUIS QUE L ECRAN EST THEME.
+// Il montait ses couleurs en dur ; il lit maintenant les jetons, donc il exige
+// le contexte. Dans l application il est deja rendu A L INTERIEUR du
+// ThemeProvider (app/_layout.tsx, sous <ClerkLoading>) : c est bien le test qui
+// le montait a nu, pas l ecran qui serait mal place.
+const monter = (n: React.ReactElement) => render(<ThemeProvider>{n}</ThemeProvider>);
 
 /**
  * Fait passer le délai d'explication, en laissant les promesses se résoudre.
@@ -59,7 +67,7 @@ afterEach(() => {
 
 describe('<AttenteConnexion />', () => {
   it("ne dit rien avant le délai — l'attente courte est normale", () => {
-    const { queryByText, getByText } = render(<AttenteConnexion onReessayer={() => {}} />);
+    const { queryByText, getByText } = monter(<AttenteConnexion onReessayer={() => {}} />);
     expect(getByText('Salorie')).toBeTruthy();
     expect(queryByText('Aucune connexion internet')).toBeNull();
     expect(queryByText('La connexion est lente')).toBeNull();
@@ -67,7 +75,7 @@ describe('<AttenteConnexion />', () => {
 
   it('dit « hors ligne » et propose de réessayer quand le réseau est injoignable', async () => {
     mockReseau.joignable = false;
-    const { getByText } = render(<AttenteConnexion onReessayer={() => {}} />);
+    const { getByText } = monter(<AttenteConnexion onReessayer={() => {}} />);
     await laisserPasserLeDelai();
     expect(getByText('Aucune connexion internet')).toBeTruthy();
     expect(getByText('Réessayer')).toBeTruthy();
@@ -75,7 +83,7 @@ describe('<AttenteConnexion />', () => {
 
   it("dit « connexion lente » quand le réseau marche : c'est nous qui traînons", async () => {
     mockReseau.joignable = true;
-    const { getByText, queryByText } = render(<AttenteConnexion onReessayer={() => {}} />);
+    const { getByText, queryByText } = monter(<AttenteConnexion onReessayer={() => {}} />);
     await laisserPasserLeDelai();
     expect(getByText('La connexion est lente')).toBeTruthy();
     // Pas de bouton : rien à réessayer, ça arrive tout seul.
@@ -84,7 +92,7 @@ describe('<AttenteConnexion />', () => {
 
   it("n'accuse pas la connexion à tort si l'état du réseau est indisponible", async () => {
     mockReseau.jette = true;
-    const { getByText, queryByText } = render(<AttenteConnexion onReessayer={() => {}} />);
+    const { getByText, queryByText } = monter(<AttenteConnexion onReessayer={() => {}} />);
     await laisserPasserLeDelai();
     expect(getByText('La connexion est lente')).toBeTruthy();
     expect(queryByText('Aucune connexion internet')).toBeNull();
@@ -93,7 +101,7 @@ describe('<AttenteConnexion />', () => {
   it('remonte le clic sur « Réessayer »', async () => {
     mockReseau.joignable = false;
     const onReessayer = jest.fn();
-    const { getByText } = render(<AttenteConnexion onReessayer={onReessayer} />);
+    const { getByText } = monter(<AttenteConnexion onReessayer={onReessayer} />);
     await laisserPasserLeDelai();
     expect(getByText('Réessayer')).toBeTruthy();
     fireEvent.press(getByText('Réessayer'));
@@ -103,14 +111,14 @@ describe('<AttenteConnexion />', () => {
   it("parle arabe quand l'app est en arabe", async () => {
     mockLangue = 'ar';
     mockReseau.joignable = false;
-    const { getByText } = render(<AttenteConnexion onReessayer={() => {}} />);
+    const { getByText } = monter(<AttenteConnexion onReessayer={() => {}} />);
     await laisserPasserLeDelai();
     expect(getByText('لا يوجد اتصال بالإنترنت')).toBeTruthy();
     expect(getByText('إعادة المحاولة')).toBeTruthy();
   });
 
   it('ne laisse pas de minuteur derrière lui', () => {
-    const { unmount } = render(<AttenteConnexion onReessayer={() => {}} />);
+    const { unmount } = monter(<AttenteConnexion onReessayer={() => {}} />);
     unmount();
     // Un setState après démontage produirait un avertissement React ; on vérifie
     // simplement que faire avancer le temps après coup ne casse rien.

@@ -15,7 +15,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import BrandOverlay from '../../components/BrandOverlay';
 import { a11y } from '../../lib/a11y';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
@@ -24,7 +24,6 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import { ArrowLeft, Ghost, ChevronLeft, ChevronRight, Play, RotateCcw } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import { useTranslation } from '../../lib/i18n';
 import { txtAlign, flipForRTL } from '../../lib/rtl';
 import { isPlausibleMove } from '../../lib/antiCheat';
@@ -38,7 +37,7 @@ import {
   bearingDeg,
 } from '../../lib/ghostRoute';
 
-const PRIMARY = Colors.light.primary;
+import { useTokens, Tokens } from '../../constants/tokens';
 const { width: W, height: H } = Dimensions.get('window');
 const FOV = 42; // demi-champ horizontal (deg) où le fantôme est "devant" — comme challenge-ar
 const LAST_PACE_KEY = 'ghost_last_pace_sec'; // s/km du dernier run fantôme (preset "mon dernier run")
@@ -108,6 +107,8 @@ function mmss(secs: number): string {
 }
 
 export default function ARGhostScreen() {
+  const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
@@ -261,7 +262,7 @@ export default function ARGhostScreen() {
   if (!permission.granted) {
     return (
       <View style={[styles.fill, styles.center, { backgroundColor: '#000', padding: 32 }]}>
-        <Ghost size={48} color={PRIMARY} />
+        <Ghost size={48} color={k.accent} />
         <Text style={styles.permTxt}>{t.perm}</Text>
         <TouchableOpacity style={styles.permBtn} onPress={requestPermission}>
           <Text style={styles.permBtnTxt}>{t.grant}</Text>
@@ -350,11 +351,11 @@ export default function ARGhostScreen() {
       <View style={[styles.fill, { backgroundColor: '#0b1220' }]}>
         <BrandOverlay />
         <View style={styles.resultBody}>
-          <View style={[styles.ghostGlow, won && { backgroundColor: 'rgba(46,139,87,0.25)', borderColor: PRIMARY }]}>
+          <View style={[styles.ghostGlow, won && { backgroundColor: 'rgba(46,139,87,0.25)', borderColor: k.accent }]}>
             <Text style={styles.ghostEmoji}>{won ? '🏆' : '👻'}</Text>
           </View>
           <Text style={styles.resultTitle}>{t.finishTitle}</Text>
-          <Text style={[styles.resultVerdict, { color: won ? PRIMARY : '#f87171' }]}>
+          <Text style={[styles.resultVerdict, { color: won ? k.accent : '#f87171' }]}>
             {tie ? t.tie : won ? t.youWin(Math.abs(diff)) : t.youLose(Math.abs(diff))}
           </Text>
           <View style={styles.resultRow}>
@@ -480,11 +481,14 @@ function hav(a: LatLng, b: LatLng): number {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   fill: { flex: 1 },
   center: { alignItems: 'center', justifyContent: 'center' },
   permTxt: { color: '#fff', fontSize: 16, fontWeight: '700', textAlign: 'center', marginTop: 18, marginBottom: 22, lineHeight: 22 },
-  permBtn: { backgroundColor: PRIMARY, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
+  permBtn: { backgroundColor: k.accent, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
   permBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
 
   // setup
@@ -498,10 +502,10 @@ const styles = StyleSheet.create({
   sectionLabel: { color: '#94a3b8', fontSize: 13, fontWeight: '800', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#1e293b', borderRadius: 12, paddingVertical: 11, paddingHorizontal: 16, borderWidth: 1.5, borderColor: 'transparent' },
-  chipActive: { backgroundColor: PRIMARY, borderColor: '#7dd3fc' },
+  chipActive: { backgroundColor: k.accent, borderColor: '#7dd3fc' },
   chipTxt: { color: '#cbd5e1', fontSize: 15, fontWeight: '800' },
   chipTxtActive: { color: '#fff' },
-  launchBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: PRIMARY, paddingVertical: 17, borderRadius: 16, marginTop: 34 },
+  launchBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: k.accent, paddingVertical: 17, borderRadius: 16, marginTop: 34 },
   launchTxt: { color: '#fff', fontSize: 17, fontWeight: '900' },
   locWarn: { color: '#fbbf24', fontSize: 13, fontWeight: '700', textAlign: 'center', marginTop: 14 },
 
@@ -530,7 +534,7 @@ const styles = StyleSheet.create({
   hud: { position: 'absolute', bottom: 40, left: 20, right: 20, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 18 },
   hudTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
   progressTrack: { height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.18)', marginTop: 12, overflow: 'hidden' },
-  progressFill: { height: 8, borderRadius: 4, backgroundColor: PRIMARY },
+  progressFill: { height: 8, borderRadius: 4, backgroundColor: k.accent },
   progressLabel: { color: '#cbd5e1', fontSize: 12, fontWeight: '700', textAlign: 'center', marginTop: 7 },
 
   // result

@@ -14,7 +14,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Check, Circle, Flame, Beef, Wheat, Droplets, Scale, FileText, Share2 } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import Animated, {
   FadeInDown,
   FadeIn,
@@ -45,6 +44,7 @@ import { scoreFood, FoodScore } from '../../lib/objective/scoring';
 import { buildObjectiveContext } from '../../lib/objective/buildContext';
 import { useScreenGate } from '../../components/FeatureGate';
 import { macroTexte } from '../../lib/macroFormat';
+import { useTokens, Tokens } from '../../constants/tokens';
 
 const PENDING_SCAN_KEY = 'pending_scan_v1';
 
@@ -155,6 +155,7 @@ export default function ScanAnalysisScreen() {
 
   const { scanImageBase64, setScanImageBase64 } = useLogging();
   const { colors, resolved } = useTheme();
+  const k = useTokens();
   const { t, language, isRTL } = useTranslation();
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -203,7 +204,7 @@ export default function ScanAnalysisScreen() {
   const __gate = useScreenGate('food-recognition');
 
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
 
   // #199 — petite animation d'apparition (fade géré par FadeIn + scale-in ici)
   // du bloc verdict/résultat dès que l'analyse se termine. Piloté par une shared
@@ -761,13 +762,13 @@ ${langInstr}`;
   };
 
   // ----- Theme-aware styles -----
-  const bg = isDark ? '#0B0F14' : Colors.light.white;
-  const textPrimary = isDark ? colors.gray[900] : Colors.light.gray[900];
-  const textSecondary = isDark ? colors.gray[500] : Colors.light.gray[500];
-  const textMuted = isDark ? colors.gray[400] : Colors.light.gray[400];
-  const cardBg = isDark ? '#161C23' : Colors.light.gray[50];
-  const cardBorder = isDark ? colors.gray[200] : Colors.light.gray[100];
-  const activeBg = isDark ? '#1F2833' : Colors.light.white;
+  const bg = isDark ? '#0B0F14' : k.surface;
+  const textPrimary = isDark ? colors.gray[900] : k.text;
+  const textSecondary = isDark ? colors.gray[500] : k.textMuted;
+  const textMuted = isDark ? colors.gray[400] : k.textMuted;
+  const cardBg = isDark ? '#161C23' : k.surfaceSunken;
+  const cardBorder = isDark ? colors.gray[200] : k.border;
+  const activeBg = isDark ? '#1F2833' : k.surface;
 
   if (!__gate.ok) return __gate.node;
 
@@ -810,22 +811,22 @@ ${langInstr}`;
                     style={[
                       styles.stepRow,
                       { backgroundColor: cardBg, borderColor: 'transparent' },
-                      isActive && { backgroundColor: activeBg, borderColor: isDark ? Colors.dark.primary : Colors.light.primary },
+                      isActive && { backgroundColor: activeBg, borderColor: k.accent },
                       isRTL && { flexDirection: 'row-reverse' },
                     ]}
                   >
                     <View
                       style={[
                         styles.statusIcon,
-                        { backgroundColor: isDark ? colors.gray[100] : Colors.light.gray[100] },
-                        isCompleted && { backgroundColor: Colors.light.primary },
+                        { backgroundColor: isDark ? colors.gray[100] : k.border },
+                        isCompleted && { backgroundColor: k.accent },
                         isActive && { backgroundColor: 'transparent' },
                       ]}
                     >
                       {isCompleted ? (
-                        <Check size={16} color={Colors.light.white} strokeWidth={3} />
+                        <Check size={16} color={k.surface} strokeWidth={3} />
                       ) : isActive ? (
-                        <ActivityIndicator size="small" color={isDark ? Colors.dark.primary : Colors.light.primary} />
+                        <ActivityIndicator size="small" color={k.accent} />
                       ) : (
                         <Circle size={16} color={textMuted} />
                       )}
@@ -891,7 +892,7 @@ ${langInstr}`;
                       </TouchableOpacity>
                       <View style={styles.portionCenter}>
                         <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 6 }, isRTL && { flexDirection: 'row-reverse' }]}>
-                          <Scale size={15} color={isDark ? Colors.dark.primary : Colors.light.primary} strokeWidth={2.5} />
+                          <Scale size={15} color={k.accent} strokeWidth={2.5} />
                           <Text style={[styles.portionValue, { color: textPrimary }]}>≈ {aiResult.quantity} {aiResult.unit}</Text>
                         </View>
                         <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }, isRTL && { flexDirection: 'row-reverse' }]}>
@@ -954,8 +955,8 @@ ${langInstr}`;
                 style={[styles.shareBtn, { borderColor: cardBorder }, isRTL && { flexDirection: 'row-reverse' }]}
                 activeOpacity={0.85}
               >
-                <Share2 size={16} color={isDark ? Colors.dark.primary : Colors.light.primary} strokeWidth={2.5} />
-                <Text style={[styles.shareBtnTxt, { color: isDark ? Colors.dark.primary : Colors.light.primary }]}>
+                <Share2 size={16} color={k.accent} strokeWidth={2.5} />
+                <Text style={[styles.shareBtnTxt, { color: k.accent }]}>
                   {language === 'fr' ? 'Partager' : language === 'ar' ? 'مشاركة' : 'Share'}
                 </Text>
               </TouchableOpacity>
@@ -1082,11 +1083,11 @@ ${langInstr}`;
               {/* Macros grid */}
               <View style={styles.macrosGrid}>
                 <MacroTile
-                  icon={<Flame size={18} color={isDark ? Colors.dark.primary : Colors.light.primary} />}
+                  icon={<Flame size={18} color={k.accent} />}
                   label={t('scan.calories_short')}
                   value={macroTexte(aiResult.calories)}
                   unit="kcal"
-                  tileBg={isDark ? '#1F2833' : Colors.light.white}
+                  tileBg={isDark ? '#1F2833' : k.surface}
                   border={cardBorder}
                   textPrimary={textPrimary}
                   textMuted={textMuted}
@@ -1096,7 +1097,7 @@ ${langInstr}`;
                   label={t('scan.protein_short')}
                   value={macroTexte(aiResult.protein)}
                   unit="g"
-                  tileBg={isDark ? '#1F2833' : Colors.light.white}
+                  tileBg={isDark ? '#1F2833' : k.surface}
                   border={cardBorder}
                   textPrimary={textPrimary}
                   textMuted={textMuted}
@@ -1106,7 +1107,7 @@ ${langInstr}`;
                   label={t('scan.carbs_short')}
                   value={macroTexte(aiResult.carbs)}
                   unit="g"
-                  tileBg={isDark ? '#1F2833' : Colors.light.white}
+                  tileBg={isDark ? '#1F2833' : k.surface}
                   border={cardBorder}
                   textPrimary={textPrimary}
                   textMuted={textMuted}
@@ -1116,7 +1117,7 @@ ${langInstr}`;
                   label={t('scan.fat_short')}
                   value={macroTexte(aiResult.fat)}
                   unit="g"
-                  tileBg={isDark ? '#1F2833' : Colors.light.white}
+                  tileBg={isDark ? '#1F2833' : k.surface}
                   border={cardBorder}
                   textPrimary={textPrimary}
                   textMuted={textMuted}
@@ -1161,7 +1162,8 @@ function MacroTile({
 }) {
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   return (
     <View style={[styles.macroTile, { backgroundColor: tileBg, borderColor: border }]}>
       {icon}
@@ -1175,9 +1177,10 @@ function MacroTile({
 }
 
 function AnimatedLoadingBar() {
+  const k = useTokens();
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
   const translateY = useSharedValue(0);
 
   useEffect(() => {
@@ -1197,7 +1200,7 @@ function AnimatedLoadingBar() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safeArea: { flex: 1 },
   header: {
     paddingHorizontal: 20,
@@ -1250,9 +1253,9 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   scanLine: {
     height: 4,
     width: '100%',
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     opacity: 0.8,
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
     shadowRadius: 10,
@@ -1390,23 +1393,23 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
 
   footer: { padding: 24, paddingBottom: 30 },
   continueBtn: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: k.accent,
     height: 60,
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: isDark ? 'transparent' : Colors.light.primary,
+    shadowColor: k.isDark ? 'transparent' : k.accent,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
   },
   disabledBtn: {
-    backgroundColor: isDark ? Colors.dark.gray[200] : Colors.light.gray[200],
+    backgroundColor: k.border,
     shadowOpacity: 0,
     elevation: 0,
   },
-  continueText: { fontSize: 17, fontWeight: '800', color: Colors.light.white },
+  continueText: { fontSize: 17, fontWeight: '800', color: k.surface },
   errorText: {
     color: '#FF5C5C',
     fontSize: 14,

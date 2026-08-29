@@ -2,7 +2,7 @@
 // et Rejoindre/Quitter. Renvoie aussi vers la réservation de terrain. Firestore best-effort.
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, Tokens } from '../../constants/tokens';
 import React, { useCallback, useState, useMemo } from 'react';
 import {
   View,
@@ -20,7 +20,6 @@ import {
   ArrowLeft, Plus, Users, MapPin, CalendarClock, Check, X, CalendarRange,
 } from 'lucide-react-native';
 import PerfList from '../../components/PerfList';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign, flipForRTL } from '../../lib/rtl';
@@ -29,7 +28,6 @@ import {
 } from '../../lib/groupSports';
 import { emailToDocId } from '../../lib/firebase';
 
-const PRIMARY = Colors.light.primary;
 
 const SPORT_EMOJI: Record<Sport, string> = {
   football: '⚽', tennis: '🎾', basketball: '🏀', volleyball: '🏐',
@@ -90,10 +88,11 @@ const TXT: Record<string, any> = {
 export default function GroupSportsScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
 
   const email = user?.primaryEmailAddress?.emailAddress || '';
   const myUid = emailToDocId(email);
@@ -107,12 +106,12 @@ export default function GroupSportsScreen() {
   const align = txtAlign(isRTL);
   const dir = rowDir(isRTL);
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const tok = useTokens();
   const bg = tok.bg;
-  const chipBg = isDark ? Colors.dark.gray[100] : Colors.light.gray[100];
+  const chipBg = k.border;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -209,7 +208,7 @@ export default function GroupSportsScreen() {
           />
           <SecondaryButton
             title={t.reserve}
-            icon={<CalendarRange size={18} color={PRIMARY} />}
+            icon={<CalendarRange size={18} color={k.accent} />}
             full
             onPress={() => router.push('/field-reserve' as any)}
             style={{ flex: 1 }}
@@ -224,7 +223,7 @@ export default function GroupSportsScreen() {
             return (
               <TouchableOpacity
                 key={f}
-                style={[styles.chip, { backgroundColor: active ? PRIMARY : chipBg }]}
+                style={[styles.chip, { backgroundColor: active ? k.accent : chipBg }]}
                 activeOpacity={0.85}
                 onPress={() => setFilter(f)}
               >
@@ -235,7 +234,7 @@ export default function GroupSportsScreen() {
         </ScrollView>
 
         {notice && (
-          <View style={[styles.noticeBox, { backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight }]}>
+          <View style={[styles.noticeBox, { backgroundColor: k.accentSoft }]}>
             <Text style={[styles.noticeTxt, { textAlign: align }]}>{notice}</Text>
           </View>
         )}
@@ -251,7 +250,7 @@ export default function GroupSportsScreen() {
           </View>
           ) : (
           <View style={[styles.emptyBox, { backgroundColor: card }]}>
-            <Users size={34} color={isDark ? Colors.dark.gray[300] : Colors.light.gray[300]} />
+            <Users size={34} color={k.textFaint} />
             <Text style={[styles.emptySub, { color: sub }]}>{t.empty}</Text>
           </View>
           )
@@ -264,12 +263,12 @@ export default function GroupSportsScreen() {
             return (
               <View key={m.id} style={[styles.matchCard, { backgroundColor: card }]}>
                 <View style={[styles.matchTop, { flexDirection: dir }]}>
-                  <View style={[styles.sportBadge, { backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight }]}>
+                  <View style={[styles.sportBadge, { backgroundColor: k.accentSoft }]}>
                     <Text style={styles.sportEmoji}>{SPORT_EMOJI[m.sport]}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.matchTitle, { color: text, textAlign: align }]} numberOfLines={1}>{m.title}</Text>
-                    <Text style={[styles.matchSport, { color: PRIMARY, textAlign: align }]} numberOfLines={1}>
+                    <Text style={[styles.matchSport, { color: k.accent, textAlign: align }]} numberOfLines={1}>
                       {t.sports[m.sport]}{isHost ? ` · ${t.host}` : ''}
                     </Text>
                   </View>
@@ -331,7 +330,7 @@ export default function GroupSportsScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   header: { alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
@@ -339,15 +338,15 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 60 },
   sub: { fontSize: 13.5, lineHeight: 19, marginBottom: 14 },
   actionsRow: { gap: 10, marginBottom: 12 },
-  primaryBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: PRIMARY, borderRadius: 14, paddingVertical: 13 },
+  primaryBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 13 },
   primaryTxt: { color: '#fff', fontSize: 14.5, fontWeight: '800', flexShrink: 1, textAlign: 'center' },
   ghostBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderRadius: 14, paddingVertical: 13, paddingHorizontal: 8 },
-  ghostTxt: { color: PRIMARY, fontSize: 14.5, fontWeight: '800', flexShrink: 1, textAlign: 'center' },
+  ghostTxt: { color: k.accent, fontSize: 14.5, fontWeight: '800', flexShrink: 1, textAlign: 'center' },
   filtersRow: { gap: 8, paddingVertical: 4, paddingBottom: 8 },
   chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 },
   chipTxt: { fontSize: 13, fontWeight: '800' },
   noticeBox: { borderRadius: 12, padding: 12, marginTop: 6, marginBottom: 8 },
-  noticeTxt: { color: PRIMARY, fontSize: 13, fontWeight: '700' },
+  noticeTxt: { color: k.accent, fontSize: 13, fontWeight: '700' },
   loadingBox: { paddingVertical: 40, alignItems: 'center' },
   emptyBox: { borderRadius: 18, padding: 26, alignItems: 'center', gap: 12, marginTop: 8 },
   emptySub: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
@@ -359,7 +358,7 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   matchSport: { fontSize: 12.5, fontWeight: '800', marginTop: 2 },
   metaRow: { alignItems: 'center', gap: 8, marginTop: 4 },
   metaTxt: { flex: 1, fontSize: 13, fontWeight: '600' },
-  joinBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: PRIMARY, borderRadius: 12, paddingVertical: 11, marginTop: 12 },
+  joinBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 12, paddingVertical: 11, marginTop: 12 },
   joinTxt: { color: '#fff', fontSize: 14, fontWeight: '800' },
   leaveBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: '#ef4444', borderRadius: 12, paddingVertical: 11, marginTop: 12 },
   leaveTxt: { color: '#ef4444', fontSize: 14, fontWeight: '800' },

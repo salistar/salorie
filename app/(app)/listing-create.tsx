@@ -4,7 +4,7 @@
 // Trilingue (en/fr/ar) + dark + RTL + flèche retour. Firestore best-effort.
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, Tokens } from '../../constants/tokens';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   View,
@@ -24,7 +24,6 @@ import { useUser } from '@clerk/clerk-expo';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { ArrowLeft, Send, ImagePlus, Clock, CheckCircle2, Trash2, X } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign, flipForRTL } from '../../lib/rtl';
@@ -33,7 +32,6 @@ import {
   LISTING_CATEGORIES, ListingCategory, MarketplaceListing,
 } from '../../lib/marketplace';
 
-const PRIMARY = Colors.light.primary;
 
 const CAT_EMOJI: Record<ListingCategory, string> = {
   meal: '🍱', coaching: '🧑‍🏫', gear: '🏋️', produce: '🥦', service: '🛠️', other: '📦',
@@ -105,10 +103,11 @@ const TXT: Record<string, any> = {
 export default function ListingCreateScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
+  const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+  const styles = useMemo(() => makeStyles(k), [k]);
 
   const email = user?.primaryEmailAddress?.emailAddress || '';
 
@@ -131,12 +130,12 @@ export default function ListingCreateScreen() {
   const align = txtAlign(isRTL);
   const dir = rowDir(isRTL);
 
-  const text = isDark ? '#fff' : Colors.light.gray[900];
-  const sub = isDark ? '#9BA1A6' : Colors.light.gray[500];
-  const card = isDark ? Colors.dark.card : '#fff';
+  const text = isDark ? '#fff' : k.text;
+  const sub = isDark ? '#9BA1A6' : k.textMuted;
+  const card = isDark ? k.surface : '#fff';
   const tok = useTokens();
   const bg = tok.bg;
-  const field = isDark ? Colors.dark.gray[100] : Colors.light.gray[100];
+  const field = k.border;
 
   const loadMine = useCallback(async () => {
     if (!email) { setLoadingMine(false); return; }
@@ -228,7 +227,7 @@ export default function ListingCreateScreen() {
       : !l.approved ? t.pending : t.statusActive;
   const statusColor = (l: MarketplaceListing) =>
     l.status === 'sold' ? '#f59e0b' : l.status === 'removed' ? '#ef4444'
-      : !l.approved ? Colors.light.secondary : '#22c55e';
+      : !l.approved ? k.warning : '#22c55e';
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
@@ -274,7 +273,7 @@ export default function ListingCreateScreen() {
               return (
                 <TouchableOpacity
                   key={c}
-                  style={[styles.chip, { backgroundColor: active ? PRIMARY : field }]}
+                  style={[styles.chip, { backgroundColor: active ? k.accent : field }]}
                   activeOpacity={0.85}
                   onPress={() => setCategory(c)}
                 >
@@ -313,7 +312,7 @@ export default function ListingCreateScreen() {
               <Image source={{ uri: imageUrl }} style={styles.preview} resizeMode="cover" />
               <View style={[styles.photoActions, { flexDirection: dir }]}>
                 <TouchableOpacity style={[styles.photoBtn, { flexDirection: dir, backgroundColor: field }]} onPress={pickImage} activeOpacity={0.85}>
-                  <ImagePlus size={16} color={PRIMARY} />
+                  <ImagePlus size={16} color={k.accent} />
                   <Text style={[styles.photoBtnTxt, { color: text }]}>{t.changePhoto}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.photoBtn, { flexDirection: dir, backgroundColor: field }]} onPress={() => setImageUrl(undefined)} activeOpacity={0.85}>
@@ -323,16 +322,16 @@ export default function ListingCreateScreen() {
               </View>
             </View>
           ) : (
-            <TouchableOpacity style={[styles.addPhotoBtn, { flexDirection: dir, borderColor: PRIMARY }]} onPress={pickImage} activeOpacity={0.85}>
-              <ImagePlus size={18} color={PRIMARY} />
+            <TouchableOpacity style={[styles.addPhotoBtn, { flexDirection: dir, borderColor: k.accent }]} onPress={pickImage} activeOpacity={0.85}>
+              <ImagePlus size={18} color={k.accent} />
               <Text style={styles.addPhotoTxt}>{t.addPhoto}</Text>
             </TouchableOpacity>
           )}
 
           {formErr && <Text style={[styles.errTxt, { textAlign: align }]}>{formErr}</Text>}
           {submitted && (
-            <View style={[styles.okBox, { backgroundColor: isDark ? Colors.dark.primaryLight : Colors.light.primaryLight }]}>
-              <Clock size={16} color={PRIMARY} />
+            <View style={[styles.okBox, { backgroundColor: k.accentSoft }]}>
+              <Clock size={16} color={k.accent} />
               <Text style={[styles.okTxt, { textAlign: align }]}>{t.submitted}</Text>
             </View>
           )}
@@ -347,7 +346,7 @@ export default function ListingCreateScreen() {
         {/* MES ANNONCES */}
         <Text style={[styles.listTitle, { color: text, textAlign: align }]}>{t.mine}</Text>
         {loadingMine ? (
-          <View style={styles.loadingBox}><ActivityIndicator size="large" color={PRIMARY} /></View>
+          <View style={styles.loadingBox}><ActivityIndicator size="large" color={k.accent} /></View>
         ) : mine.length === 0 ? (
           <Text style={[styles.emptySub, { color: sub, textAlign: align }]}>{t.mineEmpty}</Text>
         ) : (
@@ -404,7 +403,7 @@ export default function ListingCreateScreen() {
 
 // Fabrique thémée : un StyleSheet est évalué au chargement du module, où `isDark`
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
-const makeStyles = (isDark: boolean) => StyleSheet.create({
+const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
   header: { alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
@@ -425,11 +424,11 @@ const makeStyles = (isDark: boolean) => StyleSheet.create({
   photoBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 10, paddingVertical: 10 },
   photoBtnTxt: { fontSize: 13, fontWeight: '700' },
   addPhotoBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderRadius: 12, paddingVertical: 14 },
-  addPhotoTxt: { color: PRIMARY, fontSize: 14, fontWeight: '800' },
+  addPhotoTxt: { color: k.accent, fontSize: 14, fontWeight: '800' },
   errTxt: { color: '#ef4444', fontSize: 13, fontWeight: '700', marginTop: 12 },
   okBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, padding: 12, marginTop: 12 },
-  okTxt: { flex: 1, color: PRIMARY, fontSize: 13, fontWeight: '700', lineHeight: 18 },
-  submitBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: PRIMARY, borderRadius: 14, paddingVertical: 14, marginTop: 16 },
+  okTxt: { flex: 1, color: k.accent, fontSize: 13, fontWeight: '700', lineHeight: 18 },
+  submitBtn: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 14, marginTop: 16 },
   submitTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
   listTitle: { fontSize: 17, fontWeight: '900', letterSpacing: -0.3, marginTop: 4, marginBottom: 10 },
   loadingBox: { paddingVertical: 30, alignItems: 'center' },
