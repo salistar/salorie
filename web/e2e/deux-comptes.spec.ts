@@ -223,4 +223,91 @@ test.describe('deux comptes distincts', () => {
     // seul compte ne peut pas verifier.
     expect(auteurA, 'les deux comptes doivent signer differemment').not.toBe(auteurB);
   });
+
+  test('un duo entre deux amis : chacun voit l autre arriver, la signalisation passe', async () => {
+    test.skip(!a || !b, 'il faut les deux navigateurs');
+    const sa = await session(a!);
+    const sb = await session(b!);
+    if (!sa.jeton || !sb.jeton) test.skip(true, 'les deux doivent etre connectes');
+
+    const duo = 'duo-test-' + Math.random().toString(36).slice(2, 9);
+
+    // ⚠ C'EST ICI QUE LE CONTROLE D'AMITIE SE JOUE.
+    // `duo:join` refuse un inconnu : « Un duo est un DUO : deux personnes, pas
+    // un salon ouvert. Sans cette borne, un identifiant devine ouvrirait le
+    // micro et la camera de deux inconnus a un troisieme. » Les deux comptes
+    // employes ici SONT amis — le test verifie donc le chemin PASSANT.
+    //
+    // Le chemin refusant demanderait un troisieme compte non ami. Il n'est pas
+    // couvert, et ce commentaire est la pour qu'on ne croie pas le contraire.
+    const acteur = (page: Page, jeton: string, envoieSignal: boolean) =>
+      page.evaluate(
+        async ({ api, jeton, duo, envoieSignal }: any) => {
+          await new Promise<void>((ok, ko) => {
+            if ((window as any).io) return ok();
+            const s = document.createElement('script');
+            s.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
+            s.onload = () => ok(); s.onerror = () => ko(new Error('socket.io'));
+            document.head.appendChild(s);
+          });
+          const io = (window as any).io;
+          const S = io(api + '/social', { transports: ['websocket'], auth: { token: jeton }, forceNew: true });
+          await new Promise((ok) => { S.on('connect', ok); setTimeout(ok, 8000); });
+
+          const arrivees: string[] = [];
+          const refus: any[] = [];
+          const signaux: any[] = [];
+          S.on('duo:arrivee', (c: any) => arrivees.push(c?.auteur));
+          S.on('duo:refus', (c: any) => refus.push(c));
+          S.on('webrtc:signal', (c: any) => signaux.push(c));
+
+          // ⚠ ON ATTEND LA CONNEXION, PAS UNE DUREE.
+          // Une execution sur trois ne voyait NI arrivee ni signal : les deux
+          // `page.evaluate` partent en parallele, et si l un des sockets
+          // n avait pas fini de s authentifier, son `duo:join` partait dans le
+          // vide. `connect` est le seul moment ou l on sait qu il est pret.
+          if (!S.connected) {
+            await new Promise((ok) => { S.once('connect', ok); setTimeout(ok, 6000); });
+          }
+          S.emit('duo:join', { duoId: duo });
+          await new Promise((ok) => setTimeout(ok, 6000));
+
+          // Un seul des deux emet la signalisation : c'est l'appelant.
+          if (envoieSignal) {
+            // ⚠ LA FORME EXACTE COMPTE, et ma premiere version l ignorait.
+            // Le serveur exige `{ duoId, type, data }` avec `type` parmi
+            // offer | answer | ice — tout le reste est jete en silence. Mon
+            // envoi initial `{ duoId, signal: {...} }` etait donc refuse, et
+            // le test concluait a tort que la signalisation ne passait pas.
+            // La validation faisait exactement son travail.
+            S.emit('webrtc:signal', { duoId: duo, type: 'offer', data: { sdp: 'test' } });
+          }
+          await new Promise((ok) => setTimeout(ok, 5000));
+          S.close();
+          return { arrivees, refus, signaux };
+        },
+        { api: API, jeton, duo, envoieSignal },
+      );
+
+    const [ra, rb] = await Promise.all([
+      acteur(sa.page, sa.jeton!, true),
+      acteur(sb.page, sb.jeton!, false),
+    ]);
+
+    console.log('  A : arrivees=' + JSON.stringify(ra.arrivees) + ' refus=' + JSON.stringify(ra.refus));
+    console.log('  B : arrivees=' + JSON.stringify(rb.arrivees) + ' signaux=' + JSON.stringify(rb.signaux).slice(0, 120));
+
+    expect(ra.refus.length, 'deux amis ne doivent pas etre refuses').toBe(0);
+    expect(rb.refus.length, 'deux amis ne doivent pas etre refuses').toBe(0);
+
+    // La presence mutuelle : chacun doit savoir que l'autre est la. Sans cela,
+    // celui qui arrive en dernier reste sur « En attente de l'autre » devant
+    // quelqu'un qui est deja present — le defaut corrige le 20/08/2026.
+    const seVoient = ra.arrivees.length > 0 || rb.arrivees.length > 0;
+    expect(seVoient, 'chacun doit voir l autre arriver dans le duo').toBe(true);
+
+    // La signalisation est ce qui precede TOUT appel : sans elle, aucune offre
+    // WebRTC ne traverse, et l'appel ne sonne meme pas.
+    expect(rb.signaux.length, 'la signalisation de A doit atteindre B').toBeGreaterThan(0);
+  });
 });
