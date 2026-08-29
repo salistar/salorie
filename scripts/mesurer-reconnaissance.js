@@ -4,6 +4,8 @@
 //   node scripts/mesurer-reconnaissance.js            # 101 images, une par plat
 //   node scripts/mesurer-reconnaissance.js --tout     # les 1 414
 //   node scripts/mesurer-reconnaissance.js --par 3    # 3 par plat
+//   node scripts/mesurer-reconnaissance.js --sauter 2 # ignore les 2 premieres
+//                                                     # (celles deja en cache)
 //
 // Le jeton vient d'Edge par le port de debogage, comme les tests de bout en
 // bout : la cascade exige une identite, et taper un jeton a la main dans une
@@ -43,10 +45,13 @@ async function jeton() {
   const nav = await chromium.connectOverCDP(CDP);
   const page = nav.contexts()[0].pages().find((p) => /salorie\.com/.test(p.url()))
     || (await nav.contexts()[0].newPage());
-  if (!/salorie\.com/.test(page.url())) {
-    await page.goto('https://salorie.com/me', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(6000);
-  }
+  // ⚠ ON RECHARGE, MEME SI LA PAGE EST DEJA LA.
+  // IndexedDB ne contient que le DERNIER jeton ecrit par le SDK Firebase. Sur un
+  // onglet ouvert depuis des heures, c'est un jeton expire : le lire donne une
+  // chaine parfaitement formee et parfaitement refusee. Charger la page force le
+  // SDK a renouveler et a REECRIRE, et c'est ce jeton-la qu'on veut.
+  await page.goto('https://salorie.com/me', { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(7000);
   const j = await page.evaluate(async () => {
     const entrees = await new Promise((ok) => {
       const req = indexedDB.open('firebaseLocalStorageDb');
@@ -95,6 +100,39 @@ const normaliser = (s) =>
   String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
 
+/**
+ * Le prompt REEL de l'app, lu dans sa source.
+ *
+ * ⚠ POURQUOI ON NE LE RECOPIE PAS.
+ * Une premiere version envoyait ma propre question (« Quel aliment cette photo
+ * montre-t-elle ? »). Le modele repondait alors en PROSE, alors que l'app exige
+ * un JSON avec un champ `name` — et le comparateur notait faux des reponses
+ * parfois justes. La mesure decrivait mon prompt, pas le produit.
+ *
+ * Une copie figee aurait le meme defaut a retardement : elle divergerait au
+ * premier ajustement du prompt, sans que rien ne le signale. On le lit donc a
+ * la source, et on echoue bruyamment si on ne le trouve plus.
+ */
+function promptDeLApp() {
+  const src = fs.readFileSync(
+    path.join(__dirname, '..', 'app', '(app)', 'scan-analysis.tsx'), 'utf8');
+  const debut = src.indexOf('const prompt = `');
+  if (debut < 0) {
+    throw new Error(
+      "prompt introuvable dans scan-analysis.tsx : la mesure ne peut pas " +
+      "pretendre decrire ce que vivent les utilisateurs. Corrige l'ancrage.");
+  }
+  const ouvrant = src.indexOf('`', debut) + 1;
+  // Le litteral se termine au premier accent grave non echappe.
+  let i = ouvrant;
+  while (i < src.length && !(src[i] === '`' && src[i - 1] !== '\\')) i++;
+  const brut = src.slice(ouvrant, i);
+  // L'app y injecte la langue demandee. On fixe le francais : la comparaison
+  // porte sur des noms de plats, qui restent reconnaissables dans les deux
+  // langues, et une langue fixe rend la mesure reproductible.
+  return brut.replace('${langInstr}', 'Answer in FRENCH.');
+}
+
 async function main() {
   const manifeste = JSON.parse(fs.readFileSync(path.join(RACINE, 'manifeste.json'), 'utf8'));
   const tout = process.argv.includes('--tout');
@@ -103,14 +141,39 @@ async function main() {
 
   // Un echantillon EQUILIBRE, comme le corpus : sinon on mesurerait les plats
   // qui se trouvent en tete de liste.
+  // ⚠ SAUTER LES PHOTOS DEJA SOUMISES, SINON ON MESURE LE CACHE.
+  // Le serveur garde ses reponses. Relancer la mesure sur les memes images
+  // rejoue donc les reponses de la fois precedente — y compris celles d'un
+  // palier qu'on vient justement de debrancher. `--sauter N` avance dans le
+  // corpus (quatorze photos par plat) pour interroger la cascade REELLE.
+  const iSaut = process.argv.indexOf('--sauter');
+  const saut = iSaut > 0 ? Number(process.argv[iSaut + 1]) : 0;
+
   const vus = {};
   const echantillon = manifeste.images.filter((im) => {
     vus[im.classe] = (vus[im.classe] || 0) + 1;
-    return vus[im.classe] <= parClasse;
+    return vus[im.classe] > saut && vus[im.classe] <= saut + parClasse;
   });
 
-  const j = await jeton();
+  // ⚠ UN JETON FIREBASE NE VIT QU'UNE HEURE.
+  // Premiere version : il etait lu UNE fois au demarrage. Sur une mesure de 404
+  // images a deux secondes l'une, la course dure plus d'un quart d'heure — et si
+  // le jeton stocke etait deja vieux, TOUTES les requetes revenaient en 401.
+  // C'est ce qui s'est produit : 404 erreurs sur 404, que le script a presentees
+  // comme « la cascade ne repond plus » alors que l'API se portait tres bien. Un
+  // instrument doit savoir distinguer sa propre panne de celle qu'il observe.
+  const PROMPT = promptDeLApp();
+  let j = await jeton();
   if (!j) { console.error('  Aucun jeton : ouvre une session Salorie dans Edge.'); process.exit(1); }
+  let jetonPose = Date.now();
+  const jetonFrais = async () => {
+    // Renouvele bien avant l'heure : une expiration en plein milieu ferait
+    // basculer la fin de la mesure en 401 et tirerait le taux vers le bas.
+    if (Date.now() - jetonPose < 40 * 60 * 1000) return j;
+    j = (await jeton()) || j;
+    jetonPose = Date.now();
+    return j;
+  };
   console.log(`  ${echantillon.length} images a soumettre\n`);
 
   const parPlat = {};
@@ -133,8 +196,8 @@ async function main() {
       try {
         const r = await fetch(`${API}/ai/vision`, {
           method: 'POST',
-          headers: { 'content-type': 'application/json', authorization: `Bearer ${j}` },
-          body: JSON.stringify({ imageBase64: base64, prompt: 'Quel aliment cette photo montre-t-elle ?' }),
+          headers: { 'content-type': 'application/json', authorization: `Bearer ${await jetonFrais()}` },
+          body: JSON.stringify({ imageBase64: base64, prompt: PROMPT }),
         });
         if (r.status === 429) {
           // Le seau se vide en soixante secondes : on attend qu'il se vide,
@@ -142,6 +205,13 @@ async function main() {
           etranglements++;
           await dodo(20_000);
           continue;
+        }
+        if (r.status === 401) {
+          // On ne poursuit pas : sans identite valide, chaque image suivante
+          // reviendrait en 401 et le rapport annoncerait 0 % de reconnaissance
+          // pour une raison etrangere a la cascade.
+          console.error('\n  ARRET : jeton refuse (401). Reconnecte-toi dans Edge et relance.');
+          process.exit(2);
         }
         const corps = await r.text();
         if (r.ok) { const a = analyser(corps); nom = a.nom; moteur = a.moteur; if (nom) repondu++; } else { erreurs++; }
