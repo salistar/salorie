@@ -54,7 +54,7 @@ export default function SubstitutionsScreen() {
   const card = tok.surface;
   const text = tok.text;
   const sub = tok.textMuted;
-  const resultTxtColor = isDark ? '#e2e8f0' : '#1F2937';
+  const resultTxtColor = k.text;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 
   const __gate = useScreenGate('substitutions');

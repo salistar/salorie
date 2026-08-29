@@ -57,7 +57,8 @@ export default function HomeScreen() {
     ar: { sub: 'تتبّع. كل بذكاء. حقّق هدفك.' },
   };
   const bannerSub = (HSTR[String(language)] || HSTR.en).sub;
-  const bgColor = resolved === 'dark' ? '#0f1419' : 'transparent';
+  const k = useTokens();
+  const bgColor = resolved === 'dark' ? k.surface : 'transparent';
   const { selectedDate, refreshCount, showLogModal } = useLogging();
   const { loading, goals, consumed, logs, refresh } = useNutritionData(selectedDate);
 

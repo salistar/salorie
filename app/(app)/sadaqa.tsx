@@ -181,7 +181,7 @@ const makeS = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 18, paddingBottom: 90 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
-  title: { fontSize: 26, fontWeight: '800', color: '#1B2A33' },
+  title: { fontSize: 26, fontWeight: '800', color: k.text },
   sub: { fontSize: 13, color: k.textMuted, marginTop: 6, lineHeight: 19 },
   card: { borderRadius: 16, padding: 16, marginTop: 14 },
   kmLabel: { fontSize: 13, fontWeight: '600' },

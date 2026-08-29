@@ -167,7 +167,7 @@ export default function HealthScreen() {
   const text = k.text;
   const sub = k.textMuted;
   const card = k.surface;
-  const bg = isDark ? '#0f1419' : 'transparent';
+  const bg = isDark ? k.surface : 'transparent';
 
   const connect = useCallback(async () => {
     setBusy(true); setMsg(null);

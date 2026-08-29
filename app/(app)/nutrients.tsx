@@ -52,7 +52,7 @@ export default function NutrientsScreen() {
   const text = k.text;
   const sub = k.textMuted;
   const card = k.surface;
-  const bg = isDark ? '#0f1419' : 'transparent';
+  const bg = isDark ? k.surface : 'transparent';
 
   const run = useCallback(async (force = false) => {
     const email = user?.primaryEmailAddress?.emailAddress || '';

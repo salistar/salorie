@@ -1,3 +1,15 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// Ce fichier porte des couleurs qui NE SUIVENT PAS le theme, et ne doivent
+// jamais etre converties en jetons.
+//
+// Le marqueur ci-dessus n'est pas decoratif : les outils de migration le
+// LISENT et sautent le fichier. Un simple commentaire en francais ne protege
+// rien — ce fichier a ete abime trois fois avant que ce marqueur existe.
+// Les paliers d avatar forment une progression : gris, vert, bleu, violet,
+// ambre, rouge, magenta. Deux d entre eux tomberaient sur le meme jeton et la
+// progression cesserait de se lire.
+
 // Avatar RPG évolutif — système d'XP/niveaux 100% LOCAL (AsyncStorage).
 // L'XP s'accumule à partir de l'activité de l'utilisateur (repas loggés, km, etc.).
 // addXp(n) est branché plus tard par les écrans d'activité ; cet module ne fait

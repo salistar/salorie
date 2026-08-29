@@ -53,7 +53,14 @@ let total = 0;
 for (const d of DOSSIERS) {
   for (const f in {}) void f;
   for (const f of fichiers(path.join(RACINE, d))) {
-    const n = (fs.readFileSync(f, 'utf8').match(HEX) || []).length;
+    const contenu = fs.readFileSync(f, 'utf8');
+    // ⚠ LES FICHIERS D'IDENTITE SORTENT DU COMPTE.
+    // Nutri-Score, cadres de medaille, paliers d'avatar, echelle A-E : leurs
+    // couleurs ne suivent PAS le theme, et c'est ce qui les rend justes. Les
+    // compter comme une dette pousserait quelqu'un a les "corriger" — ce qui
+    // est arrive trois fois pendant ce chantier.
+    if (contenu.includes('@couleurs-identite')) continue;
+    const n = (contenu.match(HEX) || []).length;
     if (!n) continue;
     parFichier[path.relative(RACINE, f).replace(/\\/g, '/')] = n;
     total += n;

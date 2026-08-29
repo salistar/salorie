@@ -212,7 +212,7 @@ export default function CoachScreen() {
   const text = k.text;
   const sub = k.textMuted;
   const card = k.surface;
-  const bg = isDark ? '#0f1419' : 'transparent';
+  const bg = isDark ? k.surface : 'transparent';
 
   // !data couvre aussi le cas DÉCONNECTÉ (pas d'email → data jamais chargée) :
   // sans ce garde, `data!` crashait l'onglet Coach pour un user signé out.

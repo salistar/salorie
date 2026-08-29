@@ -1,3 +1,13 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// Ce fichier porte des couleurs qui NE SUIVENT PAS le theme, et ne doivent
+// jamais etre converties en jetons.
+//
+// Le marqueur ci-dessus n'est pas decoratif : les outils de migration le
+// LISENT et sautent le fichier. Un simple commentaire en francais ne protege
+// rien — ce fichier a ete abime trois fois avant que ce marqueur existe.
+// Les cadres de medaille : bronze, argent, or. La couleur EST le rang.
+
 // Générateur de médailles paramétrable (builder). On génère le SVG en code :
 //  - COULEUR libre (n'importe quel hex → palette émail dérivée) — plus de noms de thème.
 //  - des dizaines de FORMES (paramétriques : étoiles, polygones, engrenages, écusson…).

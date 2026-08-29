@@ -58,7 +58,7 @@ export default function RestaurantModeScreen() {
   const card = tok.surface;
   const text = tok.text;
   const sub = tok.textMuted;
-  const cardTxtColor = isDark ? '#e2e8f0' : '#1F2937';
+  const cardTxtColor = k.text;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 
   const __gate = useScreenGate('restaurant-mode');

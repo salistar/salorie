@@ -140,7 +140,7 @@ const makeS = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 18, paddingBottom: 90 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
-  title: { fontSize: 26, fontWeight: '800', color: '#1B2A33' },
+  title: { fontSize: 26, fontWeight: '800', color: k.text },
   sub: { fontSize: 13, color: k.textMuted, marginTop: 6, lineHeight: 19 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 16 },
   cell: { width: '48%', alignItems: 'center', marginBottom: 16 },

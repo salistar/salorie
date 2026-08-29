@@ -95,7 +95,7 @@ export default function HealthyRecipesScreen() {
   // L'accent vient du theme : le couple clair/sombre fige
   // n'ouvrait que deux des six palettes.
   const accent = k.accent;
-  const chipBg = isDark ? '#1e293b' : k.accentSoft;
+  const chipBg = isDark ? k.surface : k.accentSoft;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
   const rowDir: any = isRTL ? 'row-reverse' : 'row';
 

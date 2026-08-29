@@ -1,3 +1,13 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// Ce fichier porte des couleurs qui NE SUIVENT PAS le theme, et ne doivent
+// jamais etre converties en jetons.
+//
+// Le marqueur ci-dessus n'est pas decoratif : les outils de migration le
+// LISENT et sautent le fichier. Un simple commentaire en francais ne protege
+// rien — ce fichier a ete abime trois fois avant que ce marqueur existe.
+// Couleurs officielles du Nutri-Score, publiees par Sante publique France.
+
 // Nutri-Score (algorithme 2017, aliments solides) — calcul simplifié mais fidèle.
 // Entrées pour 100 g : énergie (kcal), sucres (g), graisses saturées (g),
 // sodium (mg), fibres (g), protéines (g), % fruits/légumes.
@@ -35,6 +45,18 @@ export function nutriScore(i: {
   return { score, grade };
 }
 
+/**
+ * ⚠ COULEURS OFFICIELLES DU NUTRI-SCORE — INTOUCHABLES.
+ *
+ * Ce ne sont pas des couleurs de marque : ce sont celles du logo depose,
+ * publiees par Sante publique France. Les remplacer par des jetons de theme
+ * afficherait un Nutri-Score qui n'en est plus un — un consommateur reconnait
+ * cette echelle a ses teintes exactes, et un vert « du theme » a la place du
+ * #038141 officiel serait trompeur.
+ *
+ * Elles ne suivent donc AUCUN theme, et ne doivent jamais entrer dans la
+ * comptabilite des couleurs a migrer.
+ */
 export const GRADE_COLOR: Record<NutriGrade, string> = {
   A: '#038141', B: '#85BB2F', C: '#FECB02', D: '#EE8100', E: '#E63E11',
 };

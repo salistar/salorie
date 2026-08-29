@@ -70,7 +70,7 @@ export default function Rewards() {
   const card = tok.surface;
   const text = tok.text;
   const sub = tok.textMuted;
-  const lockTint = isDark ? '#334155' : '#94a3b8';
+  const lockTint = k.textFaint;
   const codeBg = tok.accentSoft;
   const align: any = { textAlign: txtAlign(isRTL) };
   const L = (o: { en: string; fr: string; ar: string }) => o[language as 'en' | 'fr' | 'ar'] || o.en;
@@ -190,7 +190,7 @@ const makeS = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: k.surfaceSunken },
   body: { padding: 18, paddingBottom: 90 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
-  title: { fontSize: 26, fontWeight: '800', color: '#1B2A33' },
+  title: { fontSize: 26, fontWeight: '800', color: k.text },
   sub: { fontSize: 13, color: k.textMuted, marginTop: 6, lineHeight: 19 },
   card: { borderRadius: 16, padding: 16, marginTop: 14 },
   kmLabel: { fontSize: 13, fontWeight: '600' },
@@ -211,6 +211,6 @@ const makeS = (k: Tokens) => StyleSheet.create({
   codeBox: { borderRadius: 14, padding: 14, marginTop: 14 },
   codeHead: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   codeLabel: { fontSize: 12.5, fontWeight: '800' },
-  code: { fontSize: 24, fontWeight: '900', letterSpacing: 2, color: '#1B2A33', marginTop: 8, textAlign: 'center' },
+  code: { fontSize: 24, fontWeight: '900', letterSpacing: 2, color: k.text, marginTop: 8, textAlign: 'center' },
   note: { fontSize: 11.5, marginTop: 10, lineHeight: 16 },
 });

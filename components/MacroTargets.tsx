@@ -33,10 +33,10 @@ function MacroTargets() {
   const tok = useTokens();
   const cardBg = tok.surface;
   const titleColor = tok.text;
-  const labelColor = isDark ? '#cbd5e1' : '#334155';
+  const labelColor = k.text;
   const valColor = tok.textMuted;
   const trackBg = tok.surfaceSunken;
-  const footerColor = isDark ? '#475569' : '#CBD5E1';
+  const footerColor = k.borderStrong;
 
   const data: any = useNutritionData(new Date().toISOString().split('T')[0]);
   const goals = data?.goals || { protein: 0, carbs: 0, fat: 0, calories: 0 };

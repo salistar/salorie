@@ -306,7 +306,7 @@ export default function AiMealPlanScreen() {
               <Text style={[styles.localLabel, { color: text }, align]}>{t.localLabel}</Text>
               <Text style={[styles.localHint, { color: sub }, align]}>{t.localHint}</Text>
             </View>
-            <View style={[styles.toggle, { backgroundColor: localPref ? accent : (isDark ? '#334155' : '#cbd5e1') }]}>
+            <View style={[styles.toggle, { backgroundColor: localPref ? accent : (k.borderStrong) }]}>
               <View style={[styles.knob, localPref ? { alignSelf: 'flex-end' } : { alignSelf: 'flex-start' }]} />
             </View>
           </TouchableOpacity>
