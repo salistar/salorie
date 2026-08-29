@@ -1,3 +1,9 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// L'ecran d'erreur de dernier recours porte des couleurs fixes : il s'affiche
+// quand l'application est cassee, et ne doit dependre d'AUCUN contexte — le
+// fournisseur de theme pouvant etre justement ce qui a echoue.
+
 import * as SecureStore from 'expo-secure-store';
 import * as Linking from 'expo-linking';
 import { ClerkProvider, ClerkLoaded, ClerkLoading, useAuth, useUser, useSession } from '@clerk/clerk-expo';
@@ -744,10 +750,18 @@ class ErrorBoundary extends Component<{ children: any }, { error: Error | null }
   }
   render() {
     if (this.state.error) {
-  const k = useTokens();
+      // ⚠ COULEURS FIXES, ET UN CROCHET SERAIT ICI UNE FAUTE.
+      // C'est un ErrorBoundary, donc un composant de CLASSE : 
+      // y est interdit par React. Un outil de migration l'y avait insere —
+      // le typage l'acceptait, et l'ecran aurait plante au moment precis ou
+      // une erreur venait de survenir.
+      //
+      // Et meme si c'etait possible : cet ecran s'affiche quand l'application
+      // est cassee. Il ne doit dependre d'AUCUN contexte, le fournisseur de
+      // theme pouvant etre justement ce qui a echoue.
       return (
         <View style={{ flex: 1, backgroundColor: '#0f3a22', padding: 24, justifyContent: 'center' }}>
-          <Text style={{ color: k.onAccent, fontSize: 18, fontWeight: '800', marginBottom: 12 }}>Salorie — erreur de démarrage</Text>
+          <Text style={{ color: '#ffffff', fontSize: 18, fontWeight: '800', marginBottom: 12 }}>Salorie — erreur de démarrage</Text>
           <Text style={{ color: '#ffe08a', fontSize: 13 }} selectable>{String(this.state.error?.message || this.state.error)}</Text>
           <Text style={{ color: '#9fe0b8', fontSize: 10, marginTop: 12 }} selectable>{String(this.state.error?.stack || '').slice(0, 1000)}</Text>
         </View>

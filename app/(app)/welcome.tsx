@@ -94,7 +94,7 @@ export default function WelcomeScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(600).duration(600)} style={[styles.feature, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-            <View style={[styles.featureIcon, { backgroundColor: isDark ? 'rgba(74,222,128,0.18)' : '#ebf5ee' }]}>
+            <View style={[styles.featureIcon, { backgroundColor: k.accentSoft }]}>
               <Activity size={22} color={accent} />
             </View>
             <Text style={[styles.featureText, { color: textColor }]}>{t('welcome.feature_activity')}</Text>

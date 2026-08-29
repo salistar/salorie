@@ -1,3 +1,10 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// Les quatre couleurs du logo Google — bleu, vert, jaune, rouge. Ce sont les
+// valeurs officielles de la marque, et les regles de Google interdisent
+// explicitement de les modifier. Un logo Google teinte selon notre theme ne
+// serait plus le logo Google.
+
 // Logo Google officiel, pour le bouton « Continuer avec Google ».
 // ---------------------------------------------------------------------------
 // Il remplace une icone de GLOBE, qui posait un vrai probleme de lecture : le

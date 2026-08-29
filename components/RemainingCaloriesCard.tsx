@@ -179,7 +179,7 @@ export default function RemainingCaloriesCard({
         <View style={styles.macrosGrid}>
           <View style={[styles.macroBox, { backgroundColor: macroBg }]}>
             <View style={[styles.macroIconCircle, { backgroundColor: macroIconBg }]}>
-              <Beef size={22} color="#FF5C5C" />
+              <Beef size={22} color={k.danger} />
             </View>
             <Text style={[styles.macroValue, { color: valueColor }]}>{Math.max(0, proteinGoal - protein)}g</Text>
             <Text style={[styles.macroName, { color: subColor }]}>{t('home.protein_left')}</Text>
@@ -267,7 +267,7 @@ export default function RemainingCaloriesCard({
                 <View style={[styles.inputGroup, { flex: 1 }]}>
                   <View style={[styles.labelRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                     <View style={[styles.miniIconCircle, { backgroundColor: 'rgba(255, 92, 92, 0.1)' }]}>
-                      <Beef size={14} color="#FF5C5C" />
+                      <Beef size={14} color={k.danger} />
                     </View>
                     <Text style={[styles.inputLabel, { color: k.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>{tx.protein}</Text>
                   </View>

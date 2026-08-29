@@ -108,7 +108,7 @@ export default function Journal() {
                   return (
                     <TouchableOpacity key={r._id} style={[s.card, { backgroundColor: card }, rowDir]} activeOpacity={0.85}
                       onPress={() => router.push(('/challenge?id=' + r._id + '&src=mongo') as any)}>
-                      {w0 ? <Image source={{ uri: streetViewUrl(w0.lat, w0.lng, 200, 200) }} style={s.thumb} /> : <View style={[s.thumb, { backgroundColor: '#cbd5e1' }]} />}
+                      {w0 ? <Image source={{ uri: streetViewUrl(w0.lat, w0.lng, 200, 200) }} style={s.thumb} /> : <View style={[s.thumb, { backgroundColor: k.surfaceSunken }]} />}
                       <View style={{ flex: 1 }}>
                         <Text style={[s.cardTitle, { color: text }, align]} numberOfLines={1}>{r.name}</Text>
                         <Text style={[s.cardBody, { color: sub }, align]}>{r.totalKm} {t.km} · {(r.waypoints || []).length} pts</Text>

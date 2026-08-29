@@ -1,3 +1,8 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// Le noir sous l'apercu de la camera : ce qu'on voit la ou rien n'est encore
+// dessine.
+
 // Register a product whose barcode wasn't found in OpenFoodFacts. Saves the
 // nutrition the user enters + a product photo + a barcode photo to the shared
 // custom_products collection, so the next scan of this barcode resolves instantly.
@@ -226,7 +231,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   camTop: { position: 'absolute', top: 60, left: 0, right: 0, alignItems: 'center' },
   camTitle: { color: k.onAccent, fontSize: 16, fontWeight: '800', backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 },
   camBottom: { position: 'absolute', bottom: 50, left: 0, right: 0, alignItems: 'center', gap: 16 },
-  shutter: { width: 74, height: 74, borderRadius: 37, borderWidth: 5, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+  shutter: { width: 74, height: 74, borderRadius: 37, borderWidth: 5, borderColor: k.surface, alignItems: 'center', justifyContent: 'center' },
   shutterInner: { width: 56, height: 56, borderRadius: 28, backgroundColor: k.surface },
   camCancel: { color: k.onAccent, fontSize: 15, fontWeight: '700' },
 });

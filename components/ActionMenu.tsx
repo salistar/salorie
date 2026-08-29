@@ -193,7 +193,7 @@ export default function ActionMenu() {
       // (Caméra / Galerie). La caméra détecte le code-barres OU photographie un plat.
       id: 'scan',
       title: lx.scan,
-      icon: <Scan size={24} color="#FF5C5C" />,
+      icon: <Scan size={24} color={k.danger} />,
       bg: k.dangerSoft,
       premium: true,
       flag: 'food-recognition',
@@ -202,7 +202,7 @@ export default function ActionMenu() {
     {
       id: 'voice',
       title: lx.voice,
-      icon: <Mic size={24} color="#8B5CF6" />,
+      icon: <Mic size={24} color={CATEGORIES.musculation} />,
       bg: pastilleCategorie('musculation', k.isDark).bg,
       flag: 'voice-log',
       onPress: () => { hideActionMenu(); router.push('/voice-log' as any); },
@@ -210,7 +210,7 @@ export default function ActionMenu() {
     {
       id: 'weight',
       title: lx.weight,
-      icon: <Scale size={24} color="#B45309" />,
+      icon: <Scale size={24} color={k.warningInk} />,
       bg: pastilleCategorie('aliments', k.isDark).bg,
       onPress: () => { hideActionMenu(); router.push('/update-weight' as any); },
     },
@@ -242,7 +242,7 @@ export default function ActionMenu() {
             <View style={styles.grid}>
               <TouchableOpacity style={[styles.card, isDark && { backgroundColor: k.surface }]} activeOpacity={0.7} onPress={goCamera}>
                 <View style={[styles.iconBox, { backgroundColor: k.dangerSoft }]}>
-                  <Camera size={24} color="#FF5C5C" />
+                  <Camera size={24} color={k.danger} />
                 </View>
                 <Text style={[styles.actionTitle, { color: k.text }]}>{t('menu.take_photo')}</Text>
                 <Text style={[styles.cardHint, isDark && { color: k.textFaint }]}>{lx.camHint}</Text>

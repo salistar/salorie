@@ -1,3 +1,9 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// Le vert de WhatsApp, le bleu de Telegram et celui de Facebook sont les
+// couleurs de MARQUE de ces services. Un bouton de partage teinte selon notre
+// theme ne serait plus reconnu, et leurs chartes l interdisent.
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MessageCircle, Send, Smartphone, Share2, Globe, Swords } from 'lucide-react-native';

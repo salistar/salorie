@@ -320,7 +320,7 @@ export default function VitalsScreen() {
 function TrendCard({ trend, secondary, label, avg, range, unit, spark, card, text, sub, track, accent, isDark, isRTL }: any) {
   const k = useTokens();
   const styles = useMemo(() => makeStyles(k), [k]);
-  const dirColor = trend.direction === 'up' ? k.warning : trend.direction === 'down' ? '#3B82F6' : sub;
+  const dirColor = trend.direction === 'up' ? k.warning : trend.direction === 'down' ? k.info : sub;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
   // Mini-graphe : barres normalisées entre min et max de la fenêtre. On inverse
   // l'ordre pour lire chrono (ancien→récent). Barres RTL-safe (le conteneur suit isRTL).

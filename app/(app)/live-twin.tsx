@@ -100,7 +100,7 @@ export default function LiveTwinScreen() {
   const GREEN = colors.primary;
   const tok = useTokens();
   const bg = tok.bg;
-  const card = isDark ? colors.card : '#fff';
+  const card = k.surface;
   const text = isDark ? k.onAccent : k.text;
   const sub = isDark ? k.textMuted : k.textMuted;
   const border = isDark ? colors.gray[200] : k.border;

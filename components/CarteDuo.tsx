@@ -122,7 +122,7 @@ function init(){
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
   cadre: { marginTop: 12, borderRadius: 16, overflow: 'hidden', height: 220 },
-  carte: { flex: 1, backgroundColor: '#e8eef0' },
+  carte: { flex: 1, backgroundColor: k.surfaceSunken },
   bandeau: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingVertical: 7, paddingHorizontal: 12 },
   bandeauTxt: { color: k.onAccent, fontSize: 13, fontWeight: '700', textAlign: 'center' },
 });

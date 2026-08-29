@@ -363,7 +363,7 @@ export default function RamadanScreen() {
           />
           <View style={[styles.toggleRow, { flexDirection: rowDir(isRTL) }]}>
             <Text style={[styles.toggleLbl, { color: text, textAlign: txtAlign(isRTL) }]}>{t.enable}</Text>
-            <Switch value={enabled} onValueChange={onToggle} trackColor={{ true: GREEN, false: '#cbd5e1' }} thumbColor="#fff" />
+            <Switch value={enabled} onValueChange={onToggle} trackColor={{ true: GREEN, false: k.border }} thumbColor={k.onAccent} />
           </View>
           <PrimaryButton title={savedFlash ? t.saved : t.save} onPress={save} style={{ marginTop: spacing.md }} />
         </Card>
@@ -514,7 +514,7 @@ export default function RamadanScreen() {
             </View>
           </View>
           <TouchableOpacity
-            style={[styles.fastBtn, { backgroundColor: fastedToday ? (isDark ? '#334155' : k.surfaceSunken) : GREEN, flexDirection: rowDir(isRTL) }, (logging || !email) && { opacity: 0.6 }]}
+            style={[styles.fastBtn, { backgroundColor: fastedToday ? (k.surfaceRaised) : GREEN, flexDirection: rowDir(isRTL) }, (logging || !email) && { opacity: 0.6 }]}
             onPress={logToday}
             disabled={fastedToday || logging || !email}
           >

@@ -107,7 +107,7 @@ export default function EquipmentScan() {
               <Text style={[s.rowTxt, { color: sub }, align]}>{t.muscles} : {(res.muscles || []).join(', ')}</Text>
             </View>
             <View style={[s.row, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-              <Flame size={16} color="#ea580c" />
+              <Flame size={16} color={k.warning} />
               <Text style={[s.rowTxt, { color: sub }, align]}>{t.cal} : ~{res.kcal30} kcal</Text>
             </View>
             <View style={[s.row, { flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'flex-start' }]}>

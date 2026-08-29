@@ -214,7 +214,7 @@ export default function LabelScanScreen() {
 
         {err && (
           <View style={styles.warn}>
-            <AlertTriangle size={16} color="#B45309" />
+            <AlertTriangle size={16} color={k.warningInk} />
             <Text style={styles.warnTxt}>{err}</Text>
           </View>
         )}

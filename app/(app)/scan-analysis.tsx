@@ -44,7 +44,7 @@ import { scoreFood, FoodScore } from '../../lib/objective/scoring';
 import { buildObjectiveContext } from '../../lib/objective/buildContext';
 import { useScreenGate } from '../../components/FeatureGate';
 import { macroTexte } from '../../lib/macroFormat';
-import { useTokens, Tokens } from '../../constants/tokens';
+import { useTokens, Tokens , CATEGORIES } from '../../constants/tokens';
 
 const PENDING_SCAN_KEY = 'pending_scan_v1';
 
@@ -861,7 +861,7 @@ ${langInstr}`;
                   const cfg = source === 'device'
                     ? { bg: k.accentSoft, fg: k.accent, label: language === 'fr' ? "Sur l'appareil" : language === 'ar' ? 'على الجهاز' : 'On-device' }
                     : source === 'backend'
-                    ? { bg: 'rgba(99,102,241,0.12)', fg: '#6366F1', label: language === 'fr' ? 'Backend' : language === 'ar' ? 'الخادم' : 'Backend' }
+                    ? { bg: 'rgba(99,102,241,0.12)', fg: CATEGORIES.course, label: language === 'fr' ? 'Backend' : language === 'ar' ? 'الخادم' : 'Backend' }
                     : { bg: 'rgba(14,165,233,0.12)', fg: k.info, label: language === 'fr' ? 'IA · Gemini' : language === 'ar' ? 'ذكاء · Gemini' : 'AI · Gemini' };
                   return (
                     <View style={{ backgroundColor: cfg.bg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
@@ -1093,7 +1093,7 @@ ${langInstr}`;
                   textMuted={textMuted}
                 />
                 <MacroTile
-                  icon={<Beef size={18} color="#FF5C5C" />}
+                  icon={<Beef size={18} color={k.danger} />}
                   label={t('scan.protein_short')}
                   value={macroTexte(aiResult.protein)}
                   unit="g"

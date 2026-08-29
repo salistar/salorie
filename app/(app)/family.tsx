@@ -32,7 +32,7 @@ import {
   familyWeeklyKm,
 } from '../../lib/family';
 
-import { useTokens, Tokens } from '../../constants/tokens';
+import { useTokens, Tokens , CATEGORIES } from '../../constants/tokens';
 type Lang = 'en' | 'fr' | 'ar';
 
 // Chaînes LOCALES trilingues (convention : pas de clés i18n.tsx pour les NOUVELLES strings).
@@ -93,7 +93,7 @@ const WEEKLY_GOAL_KM = 25; // objectif de distance partagé par défaut (semaine
 const role_color = (k: Tokens): Record<FamilyRole, string> => ({
   adulte: k.info,
   enfant: k.warning,
-  senior: '#8B5CF6',
+  senior: CATEGORIES.musculation,
 });
 
 export default function FamilyScreen() {

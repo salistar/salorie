@@ -1,3 +1,10 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// L'echelle de disponibilite compte QUATRE paliers : vert, lime, ambre,
+// rouge. Trois d'entre eux ont un jeton, le quatrieme non — le convertir
+// ferait tomber deux paliers sur la meme couleur, et l'echelle cesserait de
+// se lire. Elle reste donc entiere, et fixe.
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { a11y } from '../../lib/a11y';
 import { useTokens, Tokens } from '../../constants/tokens';

@@ -352,7 +352,7 @@ export default function RacesScreen() {
                 <TouchableOpacity key={r._id} activeOpacity={0.9} style={[styles.challengeCard, { backgroundColor: card }]} onPress={() => router.push({ pathname: '/challenge', params: { id: r._id, src: 'mongo' } })}>
                   <View style={styles.heroWrap}>
                     {/* Photo héro = Street View du départ ; badge = la MÉDAILLE (pas d'émoji). */}
-                    {w0 ? <Image source={{ uri: streetViewUrl(w0.lat, w0.lng, 640, 400) }} style={styles.hero} resizeMode="cover" /> : <View style={[styles.hero, { backgroundColor: '#dbe4ee' }]} />}
+                    {w0 ? <Image source={{ uri: streetViewUrl(w0.lat, w0.lng, 640, 400) }} style={styles.hero} resizeMode="cover" /> : <View style={[styles.hero, { backgroundColor: k.surfaceSunken }]} />}
                     <View style={styles.heroShade} />
                     <View style={{ position: 'absolute', top: 6, left: 8 }}>
                       <Medal width={62} {...(r.medalSpec || {})} title={r.name} km={r.totalKm} />
@@ -389,7 +389,7 @@ export default function RacesScreen() {
                   <TouchableOpacity key={c.id} activeOpacity={0.9} style={[styles.challengeCard, { backgroundColor: card }]} onPress={() => router.push({ pathname: '/challenge', params: { id: c.id } })}>
                     {/* GRANDE photo du lieu + médaille en BADGE (coin) */}
                     <View style={styles.heroWrap}>
-                      {hero ? <Image source={hero} style={styles.hero} resizeMode="cover" /> : <View style={[styles.hero, { backgroundColor: '#cbd5e1' }]} />}
+                      {hero ? <Image source={hero} style={styles.hero} resizeMode="cover" /> : <View style={[styles.hero, { backgroundColor: k.surfaceSunken }]} />}
                       <View style={styles.heroShade} />
                       {/* Logo (emoji) REMPLACÉ par la médaille — photo du lieu conservée */}
                       <View style={{ position: 'absolute', top: 6, left: 8 }}>

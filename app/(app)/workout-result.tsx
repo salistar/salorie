@@ -122,7 +122,7 @@ export default function WorkoutResultScreen() {
           style={styles.fireWrapper}
         >
           <View style={styles.fireCircle}>
-            <Flame size={80} color="#FF5C5C" strokeWidth={2.5} />
+            <Flame size={80} color={k.danger} strokeWidth={2.5} />
           </View>
         </Animated.View>
 

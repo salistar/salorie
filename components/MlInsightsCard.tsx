@@ -164,7 +164,7 @@ function MlInsightsCard({ weightHistory, remaining: propRemaining, goal: propGoa
                 </View>
                 {forecast.plateau && (
                   <View style={styles.warn}>
-                    <AlertTriangle size={14} color="#B45309" />
+                    <AlertTriangle size={14} color={k.warningInk} />
                     <Text style={styles.warnTxt}>{tx.plateau}</Text>
                   </View>
                 )}

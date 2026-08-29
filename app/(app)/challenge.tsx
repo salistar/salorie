@@ -292,9 +292,10 @@ function buildHtml(route: LatLng[], me: LatLng, color: string): string {
 // Photo d'un arrêt : bundlée (défis hardcodés, offline) OU URL distante (Street View
 // auto pour les courses Mongo, calculée depuis les coords).
 function PoiPhoto({ challengeId, index, style, photoUrl }: { challengeId: string; index: number; style?: any; photoUrl?: string }) {
+  const k = useTokens();
   if (photoUrl) return <Image source={{ uri: photoUrl }} style={style} resizeMode="cover" />;
   const src = poiPhoto(challengeId, index);
-  if (!src) return <View style={[style, { backgroundColor: '#cbd5e1' }]} />;
+  if (!src) return <View style={[style, { backgroundColor: k.surfaceSunken }]} />;
   return <Image source={src} style={style} resizeMode="cover" />;
 }
 
@@ -1133,7 +1134,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   navCardImg: { width: 120, height: 92 },
   navCardBody: { flex: 1, padding: 12, justifyContent: 'center' },
   navCardKicker: { fontSize: 11, fontWeight: '800', color: k.info },
-  navCardName: { fontSize: 16, fontWeight: '900', color: '#111', marginTop: 2 },
+  navCardName: { fontSize: 16, fontWeight: '900', color: k.text, marginTop: 2 },
   navCardView: { fontSize: 12, fontWeight: '700', color: k.accent, marginTop: 4 },
 
   header: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18, marginHorizontal: 16, marginTop: -20, borderRadius: 22, ...elevation.md },
@@ -1189,13 +1190,13 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   poiImg: { width: '100%', height: '100%' },
   poiLock: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(17,24,39,0.55)', alignItems: 'center', justifyContent: 'center' },
   poiLockTxt: { color: k.onAccent, fontSize: 12, fontWeight: '700', paddingHorizontal: 10, textAlign: 'center' },
-  poiBadge: { position: 'absolute', top: 8, left: 8, width: 24, height: 24, borderRadius: 12, backgroundColor: k.info, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' },
+  poiBadge: { position: 'absolute', top: 8, left: 8, width: 24, height: 24, borderRadius: 12, backgroundColor: k.info, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: k.surface },
   poiBadgeTxt: { color: k.onAccent, fontSize: 12, fontWeight: '800' },
   poiName: { fontSize: 14, fontWeight: '800' },
   poiKm: { fontSize: 12, fontWeight: '700', marginTop: 2 },
 
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 16, marginHorizontal: 16, marginBottom: 8, borderRadius: 16 },
-  rank: { fontSize: 18, fontWeight: '800', width: 30, textAlign: 'center', color: '#888' },
+  rank: { fontSize: 18, fontWeight: '800', width: 30, textAlign: 'center', color: k.textMuted },
   rowName: { fontSize: 15, fontWeight: '700' },
   rowKm: { fontSize: 15, fontWeight: '800' },
   rowKmSub: { fontSize: 12, fontWeight: '600' },

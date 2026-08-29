@@ -1,3 +1,8 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// La couleur de la LED de notification s'allume HORS de l'application, sur
+// l'ecran verrouille. Aucun theme ne s'y applique.
+
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
@@ -31,6 +36,7 @@ export class NotificationService {
         name: 'default',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
+        // ⚠ La LED s allume HORS de l application : aucun theme ne s y applique.
         lightColor: '#8B5CF6',
       });
     }

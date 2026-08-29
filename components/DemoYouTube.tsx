@@ -1,3 +1,8 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// Le noir derriere le lecteur video : c'est le fond d'une video, pas une
+// surface d'interface. Toute autre couleur ferait un cadre autour de l'image.
+
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Linking } from 'react-native';
 import { WebView } from 'react-native-webview';

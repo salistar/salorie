@@ -146,7 +146,7 @@ export default function MoveGoals() {
               </View>
               <Text style={[s.moveDesc, { color: sub }, align]}>{language === 'fr' ? m.descFr : language === 'ar' ? m.descAr : m.descEn}</Text>
               <View style={[s.track, { backgroundColor: k.surfaceSunken }]}>
-                <View style={[s.fill, { width: `${pct}%`, backgroundColor: done ? accent : '#86b8a0' }]} />
+                <View style={[s.fill, { width: `${pct}%`, backgroundColor: done ? accent : k.border }]} />
               </View>
             </View>
           );
