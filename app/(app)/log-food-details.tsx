@@ -219,7 +219,7 @@ export default function LogFoodDetailsScreen() {
   const cardBg = k.surfaceSunken;
   const cardBorder = isDark ? colors.gray[200] : k.border;
   const inputBorder = isDark ? colors.gray[200] : k.border;
-  const hintColor = isDark ? '#7E858E' : '#9AA0A6';
+  const hintColor = k.textFaint;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: bg }]}>
@@ -425,8 +425,8 @@ export default function LogFoodDetailsScreen() {
               styles.budgetContextRow,
               {
                 backgroundColor: fits
-                  ? (isDark ? '#12241A' : '#ECFDF5')
-                  : (isDark ? '#2A1518' : '#FEF2F2'),
+                  ? (k.successSoft)
+                  : (k.dangerSoft),
                 borderColor: fits ? k.accent : k.danger,
               },
             ]}

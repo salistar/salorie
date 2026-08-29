@@ -109,7 +109,7 @@ export default function VitalsScreen() {
   // L'accent vient du theme : le couple clair/sombre fige
   // n'ouvrait que deux des six palettes.
   const accent = k.accent;
-  const track = isDark ? '#283241' : '#E8EDF2';
+  const track = k.border;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 
   const { user } = useUser();

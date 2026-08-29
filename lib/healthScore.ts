@@ -1,3 +1,14 @@
+// @couleurs-identite
+// ---------------------------------------------------------------------------
+// Ce fichier porte des couleurs qui NE SUIVENT PAS le theme, et ne doivent
+// jamais etre converties en jetons.
+//
+// Le marqueur ci-dessus n'est pas decoratif : les outils de migration le
+// LISENT et sautent le fichier. Un simple commentaire en francais ne protege
+// rien — ce fichier a ete abime trois fois avant que ce marqueur existe.
+// Echelle A->E : un degrade continu du vert au rouge. La rendre thematique
+// n en teinterait que trois paliers sur cinq, et casserait la progression.
+
 // Score santé ON-DEVICE (hors-ligne) d'un produit — Nutri-Score simplifié calculé
 // localement à partir des nutriments /100g. Utilisé par le scan code-barres ET le
 // scan d'étiquette. Aucun réseau, aucun appel IA : pur calcul déterministe.

@@ -77,7 +77,7 @@ export default function AnalyticsScreen() {
   const k = useTokens();
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(k), [k]);
-  const bgColor = isDark ? '#0f1419' : 'transparent';
+  const bgColor = isDark ? k.surface : 'transparent';
   // Premium + dark-aware palette (P2/P4): one accent (green) + neutral surfaces,
   // instead of the loud pink/blue/amber cards. All surfaces/text adapt to theme.
   const surface = isDark ? colors.card : '#fff';

@@ -126,7 +126,7 @@ export default function FamilyScreen() {
   const text = k.text;
   const sub = k.textMuted;
   const card = k.surface;
-  const bg = isDark ? '#0f1419' : 'transparent';
+  const bg = isDark ? k.surface : 'transparent';
 
   const refreshWeekly = useCallback(async (fam: Family) => {
     try {

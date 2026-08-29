@@ -198,7 +198,7 @@ export default function PrivacyScreen() {
   const tPrimary = k.text;
   const tMuted = k.textMuted;
   const infoBoxBg = k.accentSoft;
-  const infoBoxBorder = isDark ? '#283241' : '#D1FAE5';
+  const infoBoxBorder = k.successSoft;
   const infoBoxText = k.accentStrong;
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>

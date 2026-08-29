@@ -59,7 +59,7 @@ export default function ModerationSheet({
   const sheetBg = tok.surface;
   const text = tok.text;
   const sub = tok.textMuted;
-  const line = isDark ? '#283241' : '#EEF2F6';
+  const line = k.border;
 
   const reset = () => { setStep('menu'); setBusy(false); setDone(''); };
   const close = () => { reset(); onClose(); };

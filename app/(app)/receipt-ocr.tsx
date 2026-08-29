@@ -61,7 +61,7 @@ export default function ReceiptOcrScreen() {
   const card = tok.surface;
   const text = tok.text;
   const sub = tok.textMuted;
-  const cardTxtColor = isDark ? '#e2e8f0' : '#1F2937';
+  const cardTxtColor = k.text;
   const border = tok.border;
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
   const rowDir: any = { flexDirection: isRTL ? 'row-reverse' : 'row' };
