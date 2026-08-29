@@ -115,3 +115,7 @@ __pycache__/
 # Profil Edge des campagnes de captures : contient des COOKIES DE SESSION.
 # Ne doit jamais entrer dans le depot.
 web/profil-captures/
+
+# Corpus de reference IA : ~75 Mo d images, reconstructible par
+# scripts/construire-corpus.js. Le manifeste suffit a le reproduire.
+corpus-ia/
