@@ -127,10 +127,20 @@ function promptDeLApp() {
   let i = ouvrant;
   while (i < src.length && !(src[i] === '`' && src[i - 1] !== '\\')) i++;
   const brut = src.slice(ouvrant, i);
-  // L'app y injecte la langue demandee. On fixe le francais : la comparaison
-  // porte sur des noms de plats, qui restent reconnaissables dans les deux
-  // langues, et une langue fixe rend la mesure reproductible.
-  return brut.replace('${langInstr}', 'Answer in FRENCH.');
+  // ⚠ DEUX CORRECTIONS ICI, ET CHACUNE FAUSSAIT LE CHIFFRE.
+  //
+  // 1. `replaceAll`, pas `replace`. Le prompt porte DEUX `${langInstr}` ; n'en
+  //    remplacer qu'un envoyait le second tel quel au modele, qui le recopiait
+  //    dans sa reponse (« {langInstr} Francais {langInstr} »). On mesurait donc
+  //    un prompt corrompu.
+  //
+  // 2. ANGLAIS, pas francais. Les etiquettes de Food-101 sont anglaises. En
+  //    demandant une reponse en francais, une reconnaissance PARFAITE
+  //    (« tarte aux pommes » pour apple_pie) etait comptee comme une erreur : on
+  //    mesurait la langue de la reponse, pas la justesse. L'app, elle, demande
+  //    la langue de l'utilisateur — ce que ce banc ne peut pas reproduire sans
+  //    une table de traduction des 101 plats, qui reste a faire.
+  return brut.replaceAll('${langInstr}', 'Answer in ENGLISH.');
 }
 
 async function main() {

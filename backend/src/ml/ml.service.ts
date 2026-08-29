@@ -712,6 +712,45 @@ export class MlService {
         ? [tryFood4k, tryOllama, tryGroq, tryCloudflare, tryMistral, tryZhipu, tryMoonshot, tryXai, tryOpenAi, tryAnthropic, tryFoodApi]
         : [tryFood4k, tryCloudflare, tryGroq, tryOllama, tryMistral, tryZhipu, tryMoonshot, tryXai, tryOpenAi, tryAnthropic, tryFoodApi];
 
+
+    // ── CE QU'UNE REPONSE DOIT VALOIR POUR ETRE ACCEPTEE ─────────────────────
+    //
+    // La condition etait `res.text.trim()` : N'IMPORTE QUEL texte non vide etait
+    // retenu. La cascade escaladait donc sur le SILENCE d'un palier, jamais sur
+    // une reponse inutilisable — et comme Cloudflare repond toujours quelque
+    // chose, les fournisseurs places derriere n'etaient JAMAIS atteints.
+    //
+    // Mesure du 29/08/2026 : sur 101 plats, Cloudflare rend du markdown
+    // (« **Name:** Fried Doughnuts ») la ou le prompt exige un JSON strict.
+    // L'app ne sait pas le lire, et la cascade s'arretait la, satisfaite.
+    //
+    // On ne durcit QUE lorsque l'appelant a demande du JSON : `/ai/vision` sert
+    // aussi a decrire du materiel ou un contenu de frigo, ou une phrase est la
+    // bonne reponse. Exiger du JSON partout casserait ces usages-la.
+    const exigeJson = /STRICT JSON|Return .{0,40}JSON|JSON with these keys/i.test(prompt || '');
+
+    /** Rend l'objet si le texte porte un JSON exploitable, sinon null. */
+    const jsonUtilisable = (texte: string): any => {
+      const t = String(texte || '').trim();
+      // Les modeles enrobent volontiers leur JSON dans une cloture markdown ;
+      // le refuser pour cette seule raison ferait escalader sans raison.
+      const sansCloture = t.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '');
+      const debut = sansCloture.indexOf('{');
+      const fin = sansCloture.lastIndexOf('}');
+      if (debut < 0 || fin <= debut) return null;
+      try {
+        const o = JSON.parse(sansCloture.slice(debut, fin + 1));
+        // Un objet vide satisfait `JSON.parse` sans rien apprendre a personne :
+        // c'est `name` qui fait la difference entre une fiche et une coquille.
+        return o && typeof o === 'object' && String(o.name || '').trim() ? o : null;
+      } catch { return null; }
+    };
+
+    // Le dernier texte hors contrat rencontre. Si AUCUN palier ne rend du JSON
+    // valide, mieux vaut le remettre a l'appelant que rien du tout : il saura au
+    // moins afficher quelque chose, et l'utilisateur pourra corriger a la main.
+    let repli: { text: string; engine: string } | null = null;
+
     for (const tier of tiers) {
       const tierName = (tier as any).name || 'tier';
       // #47 circuit-breaker : si ce tier est "ouvert" (trop d'échecs récents),
@@ -738,6 +777,16 @@ export class MlService {
       // un echec d'ecriture ne doit jamais retarder ni casser un scan.
       void this.redis.recordAiCall('vision', res ? res.engine : `${tierName}:miss`, tMs);
       if (res && res.text && String(res.text).trim()) {
+        // Le palier a parle. Reste a savoir s'il a repondu A LA QUESTION POSEE.
+        if (exigeJson && !jsonUtilisable(res.text)) {
+          this.log(`tier ${tierName} hors contrat (JSON demande, non rendu) -> on continue`);
+          // On le garde sous le coude sans le mettre en cache : mettre en cache
+          // une reponse hors contrat la figerait pour sept jours et empecherait
+          // la cascade de mieux faire au scan suivant.
+          if (!repli) repli = res;
+          this.cbRecordFailure(tierName);
+          continue;
+        }
         // #47 succès -> ferme le circuit de ce tier.
         this.cbRecordSuccess(tierName);
         // Télémétrie cascade : compte le tier réellement utilisé (best-effort).
@@ -751,6 +800,15 @@ export class MlService {
       }
       // #47 miss/erreur (null, vide, ou exception) -> compte un échec pour ce tier.
       if (threw || !res) this.cbRecordFailure(tierName);
+    }
+
+    // Aucun palier n'a tenu le contrat. On rend malgre tout le dernier texte
+    // obtenu : une reponse mal formee laisse encore l'utilisateur corriger a la
+    // main, une absence de reponse ne lui laisse rien. Le suffixe dit ce qui
+    // s'est passe, pour que la telemetrie ne compte pas cela comme un succes.
+    if (repli) {
+      this.log('aucun palier n a rendu le JSON demande -> repli sur ' + repli.engine);
+      return { text: repli.text, engine: repli.engine + ':hors-contrat' };
     }
 
     // Aucun modèle backend dispo (Ollama non déployé + pas d'API food) → erreur claire.
