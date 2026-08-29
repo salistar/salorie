@@ -8,6 +8,7 @@ import { useTranslation, Language } from '../lib/i18n';
 import { rowDir, txtAlign, directionAuto } from '../lib/rtl';
 import AppBrand from './AppBrand';
 import { useTokens, Tokens } from '../constants/tokens';
+import { THEMES, ORDRE_THEMES } from '../constants/themesGeneres';
 
 // Libellés du menu de thème, traduits (sinon "Light/Dark/System" en anglais partout).
 const THEME_LABELS: Record<string, Record<string, string>> = {
@@ -39,7 +40,7 @@ interface ScreenTopBarProps {
 export default function ScreenTopBar({ showBrand = true, showNotif = true, showBack = false, title, onBack }: ScreenTopBarProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { mode, setMode, resolved, colors } = useTheme();
+  const { mode, setMode, choix, setTheme, resolved, colors } = useTheme();
   const k = useTokens();
   const { language, setLanguage, isRTL } = useTranslation();
   const [langMenuOpen, setLangMenuOpen] = useState(false);
@@ -171,34 +172,52 @@ export default function ScreenTopBar({ showBrand = true, showNotif = true, showB
         </Pressable>
       </Modal>
 
-      {/* Theme menu */}
+      {/* Menu de theme — les SIX palettes, plus « systeme ».
+          Il n'en proposait que trois : quatre themes etaient inatteignables
+          depuis un ecran quelconque. Le changement est immediat, sans
+          navigation ni rechargement — le contexte le diffuse a tout l'arbre. */}
       <Modal visible={themeMenuOpen} transparent animationType="fade" onRequestClose={() => setThemeMenuOpen(false)}>
-        <Pressable style={[styles.modalBackdrop, { alignItems: isRTL ? 'flex-start' : 'flex-end', paddingTop: insets.top + 60 }, directionAuto()]} onPress={() => setThemeMenuOpen(false)}>
-          <View style={[styles.menu, { backgroundColor: menuBg }]}>
-            {(['light', 'dark', 'system'] as ThemeMode[]).map((m) => {
-              const Icon = themeIcons[m];
-              return (
+        <Pressable style={[styles.modalBackdrop, { alignItems: isRTL ? 'flex-start' : 'flex-end' }]} onPress={() => setThemeMenuOpen(false)}>
+          <View style={[styles.menu, { backgroundColor: menuBg, paddingVertical: 10 }]}>
+            <Text style={[styles.menuItemText, { color: k.textMuted, paddingHorizontal: 14, paddingBottom: 8, textAlign: txtAlign(isRTL) }]}>
+              {(THEME_LABELS[language] || THEME_LABELS.en).system}
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 14, paddingBottom: 6, maxWidth: 220 }}>
+              <TouchableOpacity
+                accessibilityRole="menuitem"
+                accessibilityState={{ selected: choix === 'system' }}
+                accessibilityLabel={(THEME_LABELS[language] || THEME_LABELS.en).system}
+                onPress={() => { setTheme('system'); setThemeMenuOpen(false); }}
+                style={{
+                  height: 34, paddingHorizontal: 12, borderRadius: 999, borderWidth: 2,
+                  alignItems: 'center', justifyContent: 'center',
+                  borderColor: choix === 'system' ? k.accent : k.border,
+                }}
+              >
+                <Text style={{ fontSize: 12.5, fontWeight: '800', color: choix === 'system' ? k.accent : k.textMuted }}>
+                  Auto
+                </Text>
+              </TouchableOpacity>
+
+              {ORDRE_THEMES.map((cle) => (
                 <TouchableOpacity
-                  key={m}
-                  style={[
-                    styles.menuItem,
-                    { flexDirection: rowDir(isRTL) },
-                    mode === m && { backgroundColor: menuActiveBg },
-                  ]}
+                  key={cle}
                   accessibilityRole="menuitem"
-                  accessibilityState={{ selected: mode === m }}
-                  onPress={() => {
-                    setMode(m);
-                    setThemeMenuOpen(false);
+                  accessibilityState={{ selected: choix === cle }}
+                  accessibilityLabel={THEMES[cle].nom}
+                  onPress={() => { setTheme(cle); setThemeMenuOpen(false); }}
+                  hitSlop={6}
+                  style={{
+                    width: 34, height: 34, borderRadius: 999, borderWidth: choix === cle ? 3 : 2,
+                    backgroundColor: THEMES[cle].bg,
+                    borderColor: choix === cle ? k.accent : THEMES[cle].border,
                   }}
-                >
-                  <Icon size={18} color={mode === m ? k.accent : (isDark ? colors.gray[600] : k.textMuted)} />
-                  <Text style={[styles.menuItemText, { color: menuItemText, textAlign: txtAlign(isRTL) }, mode === m && styles.menuItemTextActive]}>
-                    {(THEME_LABELS[language] || THEME_LABELS.en)[m]}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+                />
+              ))}
+            </View>
+            <Text style={[styles.menuItemText, { color: k.textFaint, paddingHorizontal: 14, paddingTop: 4, textAlign: txtAlign(isRTL) }]}>
+              {choix === 'system' ? '' : THEMES[choix].nom}
+            </Text>
           </View>
         </Pressable>
       </Modal>

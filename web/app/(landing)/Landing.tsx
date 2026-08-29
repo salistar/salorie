@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import SelecteurTheme from "@/components/ui/SelecteurTheme";
-import { Camera, Activity, Brain, TrendingUp, Globe, Shield, Smartphone, Code2, ExternalLink, Download, Package, Trophy, Dumbbell, Heart, Sparkles, Quote, ChevronDown, Check, X, LogIn, UserPlus } from "lucide-react";
+import { Camera, Activity, Brain, TrendingUp, Globe, Shield, Smartphone, ExternalLink, Download, Package, Trophy, Dumbbell, Heart, Sparkles, Quote, ChevronDown, Check, X, LogIn, UserPlus } from "lucide-react";
 import type { ReleaseMeta } from "./releaseMeta";
 import { lireTemoin } from "../../lib/temoinPrenom";
 
@@ -23,7 +23,6 @@ const teinte = (pct: number) => `color-mix(in srgb, var(--t-accent) ${pct}%, tra
 const REL = "https://github.com/salistar/salorie/releases/download/v1.0.0";
 const APK_URL = `${REL}/salorie-v1.0.0-prod.apk`;
 const AAB_URL = `${REL}/salorie-v1.0.0-prod.aab`;
-const REPO = "https://github.com/salistar/salorie";
 // Connect the landing to the live web app.
 // L'espace de connexion. Le bouton « Essayer sur le web » qui pointait ici a ete
 // retire : il envoyait les visiteurs sur une page de connexion, en laissant croire
@@ -364,12 +363,11 @@ export default function Landing({
                 et il ecrit la meme cle — un choix fait ici suit l'utilisateur
                 partout. */}
             <SelecteurTheme compact />
-            {/* GitHub redevient DISCRET : il occupait la place du bouton
-                principal, alors que la landing doit mener a l'application. */}
-            <a href={REPO} target="_blank" rel="noopener" title="Code source"
-               style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 12px", borderRadius: 10, border: "1px solid var(--border)", color: "var(--muted-2)", fontWeight: 600, fontSize: 14 }}>
-              <Code2 size={16} /> GitHub
-            </a>
+            {/* GitHub n'est PLUS ici.
+                Le code source n'interesse pas un visiteur venu suivre ses
+                calories : ce lien occupait une place de premier plan pour un
+                usage reserve a l'equipe. Il vit desormais dans la barre du
+                back-office, apres identification. */}
 
             {/* Espace membre — la porte d'entree qui manquait : RIEN, sur la
                 landing, ne menait a l'application web.
@@ -611,9 +609,6 @@ export default function Landing({
             </div>
           )}
           <div style={{ marginTop: 20 }}>
-            <a href={REPO} target="_blank" rel="noopener" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 700, opacity: 0.92, textDecoration: "underline" }}>
-              <ExternalLink size={16} /> {t.source}
-            </a>
           </div>
         </div>
       </section>
@@ -630,9 +625,10 @@ export default function Landing({
               trouvable ». La page /delete-account existait deja et figurait au sitemap,
               mais n etait liee depuis AUCUNE page — un relecteur ne l aurait pas trouvee. */}
           <a href="/delete-account" style={{ color: PRIMARY, fontWeight: 600 }}>{t.footer.deleteAccount}</a>
-          <a href={REPO} target="_blank" rel="noopener" style={{ color: PRIMARY, fontWeight: 600 }}>{t.footer.github}</a>
-          <a href={`${REPO}/releases`} target="_blank" rel="noopener" style={{ color: PRIMARY, fontWeight: 600 }}>{t.footer.releases}</a>
-          <a href={`${REPO}/issues/new`} target="_blank" rel="noopener" style={{ color: PRIMARY, fontWeight: 600 }}>{t.footer.bug}</a>
+          {/* Code source, releases et signalement de bug ne sont PLUS ici.
+              Ils vivent dans la barre du back-office, apres identification :
+              ils ne servent qu'a l'equipe, et les afficher publiquement
+              revenait a indiquer a tout le monde ou vit le depot. */}
           {/* L'administration doit etre TROUVABLE, pas mise en avant. Un bouton
               criard dans l'en-tete inviterait chaque visiteur a pousser une porte
               qui ne le concerne pas ; l'absence de lien obligerait l'equipe a
