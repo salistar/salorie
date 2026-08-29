@@ -78,7 +78,7 @@ function ArThumb({ challengeId, index }: { challengeId: string; index: number })
   const k = useTokens();
   const styles = useMemo(() => makeStyles(k), [k]);
   const src = poiPhoto(challengeId, index);
-  if (!src) return <View style={[styles.thumb, { backgroundColor: '#334155' }]} />;
+  if (!src) return <View style={[styles.thumb, { backgroundColor: k.surfaceRaised }]} />;
   return <Image source={src} style={styles.thumb} />;
 }
 
@@ -257,7 +257,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   tag: { position: 'absolute', width: 180, alignItems: 'center' },
   tagInner: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.88)', borderRadius: 14, padding: 6, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.25)' },
   tagStem: { width: 2, height: 18, backgroundColor: 'rgba(255,255,255,0.6)' },
-  thumb: { width: 42, height: 42, borderRadius: 9, backgroundColor: '#334155' },
+  thumb: { width: 42, height: 42, borderRadius: 9, backgroundColor: k.surfaceRaised },
   tagName: { color: k.onAccent, fontSize: 13, fontWeight: '800' },
   tagDist: { color: k.info, fontSize: 11, fontWeight: '700', marginTop: 1 },
 

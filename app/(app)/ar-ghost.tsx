@@ -274,7 +274,7 @@ export default function ARGhostScreen() {
           <Text style={styles.permBtnTxt}>{t.grant}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={{ marginTop: 18 }} onPress={() => router.back()}>
-          <Text style={{ color: '#9ca3af', fontWeight: '700' }}>← {t.back}</Text>
+          <Text style={{ color: k.textFaint, fontWeight: '700' }}>← {t.back}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -379,7 +379,7 @@ export default function ARGhostScreen() {
             <Text style={styles.launchTxt}>{t.again}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={{ marginTop: 16 }} onPress={() => router.back()}>
-            <Text style={{ color: '#9ca3af', fontWeight: '800', fontSize: 15 }}>{t.done}</Text>
+            <Text style={{ color: k.textFaint, fontWeight: '800', fontSize: 15 }}>{t.done}</Text>
           </TouchableOpacity>
         </View>
       </View>
