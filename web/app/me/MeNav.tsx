@@ -131,6 +131,7 @@ const GROUPES: Groupe[] = [
   {
     titre: { fr: 'Compte', en: 'Account', ar: 'الحساب' },
     liens: [
+      { href: '/me/strava', label: { fr: 'Strava', en: 'Strava', ar: 'سترافا' }, icone: Download },
       { href: '/me/import', label: { fr: 'Import', en: 'Import', ar: 'الاستيراد' }, icone: Download },
       { href: '/me/notifications', label: { fr: 'Notifications', en: 'Notifications', ar: 'الإشعارات' }, icone: Bell },
       { href: '/me/abonnement', label: { fr: 'Abonnement', en: 'Subscription', ar: 'الاشتراك' }, icone: Sparkles },
