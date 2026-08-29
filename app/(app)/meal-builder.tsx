@@ -1,8 +1,8 @@
 // Meal-builder / recettes — compose un repas en cherchant des ingrédients
 // (searchFood / OpenFoodFacts) → total des macros en direct. Réutilise la recherche existante.
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { a11y } from '../../lib/a11y';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -27,7 +27,6 @@ import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign } from '../../lib/rtl';
 import { useScreenGate } from '../../components/FeatureGate';
 
-const GREEN = '#2E8B57';
 
 const TXT: any = {
   en: { title: 'Build a meal', searchPh: 'Search for an ingredient…', empty: 'Search for ingredients to build your recipe. Macro totals update live.', p: 'P', c: 'C', f: 'F', logMeal: 'Log this meal', composed: 'Composed meal', logged: 'Logged ✅', loggedMsg: 'Meal added to today.', errTitle: 'Error', errMsg: 'Could not log the meal.' },
@@ -48,6 +47,7 @@ type Item = { id: string; name: string; qty: number; calories: number; protein: 
 
 export default function MealBuilderScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('meal-builder');
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
@@ -58,7 +58,9 @@ export default function MealBuilderScreen() {
   const card = tok.surface;
   const text = tok.text;
   const sub = tok.textMuted;
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const align: any = { textAlign: txtAlign(isRTL) };
   const row: any = { flexDirection: rowDir(isRTL) };
 
@@ -166,7 +168,7 @@ export default function MealBuilderScreen() {
             <Text style={[styles.totalMacro, align]}>{Math.round(total.protein)}g {t.p} · {Math.round(total.carbs)}g {t.c} · {Math.round(total.fat)}g {t.f}</Text>
           </View>
           <TouchableOpacity style={[styles.logBtn, row]} onPress={logMeal} disabled={busy} activeOpacity={0.85}>
-            {busy ? <ActivityIndicator color={GREEN} /> : (<><Check size={18} color={GREEN} /><Text style={styles.logBtnTxt}>{t.logMeal}</Text></>)}
+            {busy ? <ActivityIndicator color={k.accent} /> : (<><Check size={18} color={k.accent} /><Text style={styles.logBtnTxt}>{t.logMeal}</Text></>)}
           </TouchableOpacity>
         </View>
       )}
@@ -174,7 +176,10 @@ export default function MealBuilderScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F8FAFC' },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 8 },
   title: { fontSize: 22, fontWeight: '800', color: '#0F172A' },
@@ -189,9 +194,9 @@ const styles = StyleSheet.create({
   itemMacro: { fontSize: 11, color: '#64748B', marginTop: 2 },
   qtyBtn: { width: 30, height: 30, borderRadius: 8, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' },
   qty: { fontSize: 14, fontWeight: '700', color: '#0F172A', minWidth: 18, textAlign: 'center' },
-  totalBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: GREEN, padding: 18, paddingBottom: 28, gap: 12 },
+  totalBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: k.accent, padding: 18, paddingBottom: 28, gap: 12 },
   totalKcal: { fontSize: 22, fontWeight: '900', color: '#fff' },
   totalMacro: { fontSize: 14, color: '#E7F5EC', fontWeight: '600' },
   logBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fff', borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16 },
-  logBtnTxt: { color: GREEN, fontWeight: '800', fontSize: 14 },
+  logBtnTxt: { color: k.accent, fontWeight: '800', fontSize: 14 },
 });

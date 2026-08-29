@@ -1,6 +1,6 @@
 // Templates de repas — enregistre tes repas habituels, re-logge en 1 tap.
-import React, { useEffect, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   Image,
   View,
@@ -25,7 +25,6 @@ import { rowDir, txtAlign } from '../../lib/rtl';
 import { SkeletonCard } from '../../components/ui';
 import { useScreenGate } from '../../components/FeatureGate';
 
-const GREEN = '#2E8B57';
 const F = [{ k: 'calories', l: 'Calories', u: 'kcal' }, { k: 'protein', l: 'Prot.', u: 'g' }, { k: 'carbs', l: 'Gluc.', u: 'g' }, { k: 'fat', l: 'Lip.', u: 'g' }];
 
 const TXT: any = {
@@ -36,12 +35,15 @@ const TXT: any = {
 
 export default function MealTemplatesScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('meal-templates');
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;
@@ -121,19 +123,22 @@ export default function MealTemplatesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F4F7F9' },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
   title: { fontSize: 24, fontWeight: '900', color: '#0F172A', letterSpacing: -0.5 },
   sub: { fontSize: 14, color: '#64748B', marginBottom: 18 },
-  addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GREEN, borderRadius: 14, paddingVertical: 13, marginTop: 4 },
+  addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 13, marginTop: 4 },
   addTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
   label: { fontSize: 13, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
   empty: { color: '#94A3B8', fontSize: 14 },
   tpl: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 10 },
   tplName: { fontSize: 15, fontWeight: '800', color: '#0F172A' },
   tplMacro: { fontSize: 13, color: '#64748B', marginTop: 3 },
-  logChip: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: GREEN, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12 },
+  logChip: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: k.accent, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12 },
   logChipTxt: { color: '#fff', fontWeight: '800', fontSize: 13 },
 });

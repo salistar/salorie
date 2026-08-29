@@ -28,7 +28,6 @@ import {
   GlucoseEntry, BPEntry, GlucoseContext, Trend, VitalAlert,
 } from '../../lib/vitals';
 
-const GREEN = '#2E8B57';
 const AMBER = '#F59E0B';
 
 const CTX_ORDER: GlucoseContext[] = ['fasting', 'pre_meal', 'post_meal', 'bedtime', 'random'];
@@ -106,7 +105,9 @@ export default function VitalsScreen() {
   const card = tok.surface;
   const text = tok.text;
   const sub = tok.textMuted;
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const track = isDark ? '#283241' : '#E8EDF2';
   const align: any = { textAlign: isRTL ? 'right' : 'left' };
 

@@ -1,6 +1,6 @@
 // Photos de progression — capture + galerie locale (persistée sur l'appareil).
-import React, { useEffect, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -28,7 +28,6 @@ import { useUser } from '@clerk/clerk-expo';
 // ici se retrouve sur app.salorie.salistar.com/me/photos, et l'inverse.
 import { televerser, stockageConfigure, jourLocal } from '../../lib/photosProgressionSync';
 
-const GREEN = '#2E8B57';
 const KEY = 'progress_photos_v1';
 const COL = (Dimensions.get('window').width - 52) / 2;
 
@@ -40,14 +39,17 @@ const TXT: any = {
 
 export default function ProgressPhotosScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('progress-photos');
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const text = tok.text;
@@ -199,7 +201,10 @@ export default function ProgressPhotosScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F4F7F9' },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
@@ -207,15 +212,15 @@ const styles = StyleSheet.create({
   sub: { fontSize: 14, color: '#64748B', marginBottom: 18 },
   btnRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
   btn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 16 },
-  btnPrimary: { backgroundColor: GREEN },
+  btnPrimary: { backgroundColor: k.accent },
   btnPrimaryTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
   btnGhost: { backgroundColor: '#EAF4EE' },
-  btnGhostTxt: { color: GREEN, fontWeight: '800', fontSize: 15 },
+  btnGhostTxt: { color: k.accent, fontWeight: '800', fontSize: 15 },
   empty: { color: '#94A3B8', fontSize: 14, textAlign: 'center', marginTop: 30, lineHeight: 20 },
-  analyzeBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GREEN, borderRadius: 16, paddingVertical: 14, marginBottom: 16 },
+  analyzeBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 16, paddingVertical: 14, marginBottom: 16 },
   analyzeTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
-  analysisCard: { borderRadius: 18, borderWidth: 1.5, borderColor: GREEN, padding: 16, marginBottom: 18, gap: 6 },
-  analysisTitle: { color: GREEN, fontWeight: '800', fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.5 },
+  analysisCard: { borderRadius: 18, borderWidth: 1.5, borderColor: k.accent, padding: 16, marginBottom: 18, gap: 6 },
+  analysisTitle: { color: k.accent, fontWeight: '800', fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.5 },
   analysisTxt: { fontSize: 14, lineHeight: 21 },
   analysisSrc: { fontSize: 11, fontStyle: 'italic', marginTop: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },

@@ -37,7 +37,6 @@ const DATA_SAVER_KEY = '@salorie/data_saver';
 // Qualités capture/galerie : [normal, économie de données].
 const CAP_Q = { normal: 0.4, saver: 0.3 };   // capture appareil / fallback caméra système
 const GAL_Q = { normal: 0.5, saver: 0.35 };  // sélection galerie
-const GREEN = '#2E8B57';
 const BARCODE_TYPES: any = ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39'];
 
 const TXT: Record<string, any> = {
@@ -63,9 +62,11 @@ export default function ScanCameraScreen() {
   const k = useTokens();
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(k), [k]);
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const params = useLocalSearchParams();
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
@@ -319,7 +320,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   segmentWrap: { alignItems: 'center', marginTop: -8 },
   segment: { flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 999, padding: 4, gap: 4 },
   segBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 999 },
-  segBtnActive: { backgroundColor: GREEN },
+  segBtnActive: { backgroundColor: k.accent },
   segTxt: { fontSize: 14, fontWeight: '800' },
   viewfinder: { alignItems: 'center', justifyContent: 'center', gap: 14 },
   bcFrame: { width: 270, height: 160, borderRadius: 18, borderWidth: 3, borderColor: '#4ade80', backgroundColor: 'rgba(255,255,255,0.04)' },
@@ -327,23 +328,23 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   bottomBar: { paddingBottom: 34, paddingTop: 14, backgroundColor: 'rgba(0,0,0,0.35)' },
   modelRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 16 },
   modelChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.3)' },
-  modelChipActive: { backgroundColor: GREEN, borderColor: GREEN },
+  modelChipActive: { backgroundColor: k.accent, borderColor: k.accent },
   modelTxt: { fontSize: 13, fontWeight: '800' },
   controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 28 },
   galleryBtn: { width: 72, alignItems: 'center', gap: 4 },
   galleryTxt: { color: '#fff', fontSize: 11, fontWeight: '700' },
   shutter: { width: 82, height: 82, borderRadius: 41, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: 'rgba(255,255,255,0.35)' },
   shutterDisabled: { opacity: 0.5 },
-  shutterInner: { width: 66, height: 66, borderRadius: 33, backgroundColor: GREEN },
+  shutterInner: { width: 66, height: 66, borderRadius: 33, backgroundColor: k.accent },
   shutterPlaceholder: { width: 82, height: 82 },
   hintBottom: { color: '#fff', textAlign: 'center', marginTop: 12, fontSize: 13, fontWeight: '600' },
   // FEATURE #152 : overlay d'onboarding scan (non bloquant).
   demoWrap: { position: 'absolute', left: 0, right: 0, top: '32%', alignItems: 'center', paddingHorizontal: 20 },
   demoCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, maxWidth: 420, backgroundColor: 'rgba(15,23,42,0.92)', borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)', padding: 16 },
-  demoIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: GREEN, alignItems: 'center', justifyContent: 'center' },
+  demoIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: k.accent, alignItems: 'center', justifyContent: 'center' },
   demoTitle: { color: '#fff', fontSize: 15, fontWeight: '800', marginBottom: 4 },
   demoBody: { color: '#cbd5e1', fontSize: 13, fontWeight: '500', lineHeight: 18 },
-  demoBtn: { alignSelf: 'flex-start', marginTop: 12, backgroundColor: GREEN, paddingHorizontal: 18, paddingVertical: 8, borderRadius: 999 },
+  demoBtn: { alignSelf: 'flex-start', marginTop: 12, backgroundColor: k.accent, paddingHorizontal: 18, paddingVertical: 8, borderRadius: 999 },
   demoBtnTxt: { color: '#fff', fontSize: 13, fontWeight: '800' },
   demoClose: { padding: 2 },
   loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, backgroundColor: '#000' },

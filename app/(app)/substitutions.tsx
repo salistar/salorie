@@ -5,7 +5,7 @@
 // On oriente le prompt IA pour renvoyer les alternatives du meilleur au moins bon pour la
 // priorité active, et on affiche un petit badge « meilleur choix » indiquant cette priorité.
 import React, { useEffect, useMemo, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   Image,
   View,
@@ -29,7 +29,6 @@ import type { ObjectiveContext } from '../../lib/objective/scoring';
 import { spacing } from '../../constants/theme';
 import { useScreenGate } from '../../components/FeatureGate';
 
-const GREEN = '#2E8B57';
 
 const TXT: any = {
   en: { title: 'Substitutions', sub: 'Type a food → healthier alternatives, instantly.', placeholder: 'E.g. soda, chips, mayonnaise…', ok: 'OK', loading: 'Searching for alternatives…', fail: 'Suggestion failed', error: 'error', suggestions: ['Soda', 'Chips', 'White pasta', 'Mayonnaise', 'White bread', 'Dessert cream'], bestFor: 'Best choice', prio: { salt: 'less salt', sugar: 'less sugar', calories: 'fewer calories' }, prioNote: 'Alternatives ranked for your goal:' },
@@ -39,14 +38,17 @@ const TXT: any = {
 
 export default function SubstitutionsScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;
@@ -168,7 +170,10 @@ export default function SubstitutionsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F4F7F9' },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
@@ -176,17 +181,17 @@ const styles = StyleSheet.create({
   sub: { fontSize: 14, color: '#64748B', lineHeight: 20, marginBottom: 20 },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 4, marginBottom: 14, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   input: { flex: 1, fontSize: 15, color: '#0F172A', paddingVertical: 12 },
-  go: { backgroundColor: GREEN, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 8 },
+  go: { backgroundColor: k.accent, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 8 },
   goTxt: { color: '#fff', fontWeight: '800' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginBottom: 20 },
   chip: { backgroundColor: '#EAF4EE', borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  chipTxt: { color: GREEN, fontWeight: '700', fontSize: 14 },
+  chipTxt: { color: k.accent, fontWeight: '700', fontSize: 14 },
   center: { alignItems: 'center', paddingVertical: 24 },
   loadingTxt: { color: '#64748B', marginTop: 10, fontWeight: '600' },
   resultCard: { backgroundColor: '#fff', borderRadius: 18, padding: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   resultTxt: { fontSize: 14.5, color: '#1F2937', lineHeight: 22 },
   prioRow: { alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   prioNote: { fontSize: 12.5, fontWeight: '600', flexShrink: 1 },
-  bestBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: GREEN, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
+  bestBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: k.accent, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
   bestBadgeTxt: { color: '#fff', fontWeight: '800', fontSize: 11.5 },
 });

@@ -1,7 +1,7 @@
 // Plan repas IA — génère un plan de 3 jours selon objectif + budget MAD +
 // conditions médicales (diabète/hypertension…) + ingrédients locaux/MENA.
-import React, { useEffect, useRef, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -27,7 +27,6 @@ import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { useScreenGate } from '../../components/FeatureGate';
 
-const GREEN = '#2E8B57';
 
 // Traduction des conditions médicales (dietPrefs.conditions, mêmes clés que
 // lib/objective/scoring.ts) en consignes IA — miroir des règles de scoreFood
@@ -145,6 +144,7 @@ const TXT: any = {
 
 export default function AiMealPlanScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('ai-meal-plan');
   const { user } = useUser();
   // FEATURE #103 : ingrédients transmis depuis « Frigo → recettes » (param URL).
@@ -153,9 +153,11 @@ export default function AiMealPlanScreen() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;
@@ -357,7 +359,10 @@ export default function AiMealPlanScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F4F7F9' },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
@@ -366,8 +371,8 @@ const styles = StyleSheet.create({
   loadingTxt: { color: '#64748B', textAlign: 'center', marginTop: 16, fontWeight: '600' },
   card: { backgroundColor: '#fff', borderRadius: 18, padding: 18, marginTop: 18, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   cardTxt: { fontSize: 14.5, color: '#1F2937', lineHeight: 22 },
-  regenBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 14, paddingVertical: 10, borderRadius: 12, borderWidth: 1.5, borderColor: GREEN },
-  regenTxt: { fontSize: 14, fontWeight: '800', color: GREEN },
+  regenBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 14, paddingVertical: 10, borderRadius: 12, borderWidth: 1.5, borderColor: k.accent },
+  regenTxt: { fontSize: 14, fontWeight: '800', color: k.accent },
   savedTitle: { fontSize: 15, fontWeight: '800', marginTop: 24, marginBottom: 2 },
   savedHint: { fontSize: 12, marginBottom: 10 },
   savedItem: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 14, padding: 14, marginBottom: 8 },

@@ -25,7 +25,6 @@ import { useUser } from '@clerk/clerk-expo';
 // qui peut, lui, reposer l'objectif de l'annee.
 import { pousser, ecrireObjectifLocal, lireLocale } from '../../lib/progression';
 
-const GREEN = '#2E8B57';
 const STEP = 50; // pas du stepper (km)
 
 const TXT: any = {
@@ -97,9 +96,11 @@ export default function AnnualChallenge() {
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;

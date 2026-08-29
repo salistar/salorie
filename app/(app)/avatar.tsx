@@ -16,7 +16,6 @@ import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
 import { getAvatar, TIERS, xpForLevel, AvatarState } from '../../lib/avatar';
 
-const GREEN = '#2E8B57';
 
 // Libellés d'écran (nouvelles chaînes => objet LOCAL trilingue, pas de clés i18n.tsx).
 const TXT: any = {
@@ -65,9 +64,11 @@ export default function AvatarScreen() {
   const gearMap = GEAR[language] || GEAR.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
 
   const tok = useTokens();
   const bg = tok.bg;

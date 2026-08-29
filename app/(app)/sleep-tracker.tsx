@@ -1,6 +1,6 @@
 // Suivi du sommeil — heures dormies + qualité, avec historique.
-import React, { useEffect, useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   Image,
   View,
@@ -22,7 +22,6 @@ import { useTheme } from '../../lib/ThemeContext';
 import { type } from '../../constants/theme';
 import { useScreenGate } from '../../components/FeatureGate';
 
-const GREEN = '#2E8B57';
 const QUALITY = ['😫', '😴', '😐', '🙂', '🤩'];
 
 const TXT: any = {
@@ -46,21 +45,24 @@ const TXT: any = {
 // Note de récupération non-clinique dérivée des heures saisies (présentation seulement).
 function recoveryNote(t: any, h: number): { label: string; color: string } {
   if (h < 6) return { label: t.recLow, color: '#EF4444' };
-  if (h <= 9) return { label: t.recGood, color: GREEN };
+  if (h <= 9) return { label: t.recGood, color: '#16A34A' }; // sens SEMANTIQUE (bon), pas l accent de marque
   return { label: t.recHigh, color: '#F59E0B' };
 }
 
 export default function SleepTrackerScreen() {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const __gate = useScreenGate('sleep-tracker');
   const { user } = useUser();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;
@@ -140,7 +142,10 @@ export default function SleepTrackerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F4F7F9' },
   body: { padding: 20, paddingBottom: 100 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
@@ -153,7 +158,7 @@ const styles = StyleSheet.create({
   recLabel: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
   recValue: { fontSize: 15, fontWeight: '800', marginBottom: 4 },
   recHint: { fontSize: 12, fontWeight: '500', lineHeight: 17 },
-  saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GREEN, borderRadius: 16, paddingVertical: 15, marginBottom: 8 },
+  saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 16, paddingVertical: 15, marginBottom: 8 },
   saveTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
   empty: { color: '#94A3B8', fontSize: 14 },
   histRow: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 8 },

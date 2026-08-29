@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useTokens } from '../../constants/tokens';
+import React, { useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../../constants/tokens';
 import {
   View,
   Text,
@@ -18,7 +18,6 @@ import { db, logEvent, emailToDocId } from '../../lib/firebase';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 
-const GREEN = '#2E8B57';
 
 const TXT: any = {
   en: {
@@ -67,14 +66,17 @@ const TXT: any = {
 
 export default function Contact() {
   const k = useTokens();
+  const s = useMemo(() => makeS(k), [k]);
   const { user } = useUser();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const bg = tok.bg;
   const card = tok.surface;
@@ -138,7 +140,9 @@ export default function Contact() {
   );
 }
 
-const s = StyleSheet.create({
+// Fabrique thémée : cette feuille lisait des jetons alors qu elle etait
+// evaluee UNE FOIS a l importation, avant que le theme n existe.
+const makeS = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#f3f6f4' },
   body: { padding: 18, paddingBottom: 90 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
@@ -146,10 +150,10 @@ const s = StyleSheet.create({
   sub: { fontSize: 13, color: '#667085', marginTop: 6, lineHeight: 19 },
   label: { fontSize: 13, fontWeight: '700', color: '#64748b', marginTop: 18, marginBottom: 6 },
   input: { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#e6ece8', padding: 14, fontSize: 15, color: '#1B2A33' },
-  btn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GREEN, borderRadius: 14, paddingVertical: 15, marginTop: 22 },
+  btn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: k.accent, borderRadius: 14, paddingVertical: 15, marginTop: 22 },
   btnTxt: { color: '#fff', fontWeight: '800', fontSize: 16 },
   mail: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16 },
-  mailTxt: { color: GREEN, fontWeight: '600', fontSize: 13 },
+  mailTxt: { color: k.accent, fontWeight: '600', fontSize: 13 },
   done: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 30 },
   doneTxt: { fontSize: 20, fontWeight: '800', color: '#1B2A33', marginTop: 16 },
   doneSub: { fontSize: 14, color: '#667085', textAlign: 'center', marginTop: 8, lineHeight: 20 },

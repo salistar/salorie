@@ -3,8 +3,8 @@
 //  - Recommandation de repas (scoring macro vs objectif)
 // Autonome : récupère le profil, appelle les endpoints, gère loading/erreur/no-data.
 // Theme-aware (light/dark) + trilingue (en/fr/ar).
-import React, { useEffect, useState } from 'react';
-import { useTokens } from '../constants/tokens';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTokens, type Tokens } from '../constants/tokens';
 import { a11y } from '../lib/a11y';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { TrendingDown, TrendingUp, Minus, Sparkles, Utensils, AlertTriangle, RefreshCw } from 'lucide-react-native';
@@ -15,7 +15,6 @@ import { localWeightForecast, localMealReco } from '../lib/localInsights';
 import { useTranslation } from '../lib/i18n';
 import { useTheme } from '../lib/ThemeContext';
 
-const GREEN = '#2E8B57';
 
 const TXT: any = {
   en: {
@@ -55,13 +54,16 @@ type Props = {
 
 function MlInsightsCard({ weightHistory, remaining: propRemaining, goal: propGoal }: Props = {}) {
   const k = useTokens();
+  const styles = useMemo(() => makeStyles(k), [k]);
   const { language, isRTL } = useTranslation() as any;
   const tx = TXT[language] || TXT.en;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  // Accent thémé : GREEN est le vert CLAIR ; en sombre on utilise le token
+  // Accent thémé : k.accent est le vert CLAIR ; en sombre on utilise le token
   // dark officiel (contraste correct sur fond sombre).
-  const accent = isDark ? '#4ade80' : GREEN;
+  // L'accent vient du theme : le couple clair/sombre fige
+  // n'ouvrait que deux des six palettes.
+  const accent = k.accent;
   const tok = useTokens();
   const cardBg = tok.surface;
   const titleColor = tok.text;
@@ -197,7 +199,10 @@ function MlInsightsCard({ weightHistory, remaining: propRemaining, goal: propGoa
   );
 }
 
-const styles = StyleSheet.create({
+// Fabrique thémée : ce StyleSheet lisait des jetons alors qu'il était
+// évalué UNE FOIS à l'importation, avant que le thème n'existe. Les
+// couleurs y étaient donc figées sur la palette par défaut, à vie.
+const makeStyles = (k: Tokens) => StyleSheet.create({
   card: { backgroundColor: '#fff', borderRadius: 18, padding: 16, marginHorizontal: 16, marginVertical: 8,
     shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
@@ -212,7 +217,7 @@ const styles = StyleSheet.create({
   conf: { fontSize: 11, color: '#94A3B8' },
   warn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FEF3C7', borderRadius: 10, padding: 8, marginTop: 8 },
   warnTxt: { fontSize: 12, color: '#92400E', marginStart: 6, flex: 1 },
-  proj: { fontSize: 13, color: GREEN, marginTop: 6, fontWeight: '600' },
+  proj: { fontSize: 13, color: k.accent, marginTop: 6, fontWeight: '600' },
   meal: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 5 },
   mealName: { fontSize: 13, color: '#0F172A', flex: 1, marginEnd: 8 },
   mealMacro: { fontSize: 12, color: '#64748B' },
