@@ -104,15 +104,11 @@ test.describe('parcours authentifies', () => {
     await p.waitForTimeout(6000);
     test.skip(!(await connecte(p)), 'session expiree — se reconnecter dans Edge');
 
-    // ⚠ CE TEST NE MESURE PAS LA JUSTESSE DE LA RECONNAISSANCE.
-    // Le prompt renvoyait a `donnees/corpus-de-test/` (1 471 images
-    // etiquetees) pour verifier la cascade. Ce dossier n'existe pas dans ce
-    // depot, et n'est pas non plus ignore par git — il n'y est simplement pas.
-    // Sans etiquettes, on ne peut rien affirmer sur ce que le modele RECONNAIT.
+    // Ce test verifie que la cascade REPOND, dans le delai, et par un palier
+    // gratuit plutot que par le dernier recours payant. C'est precisement ce
+    // qui etait tombe en panne le 25/08/2026.
     //
-    // Ce qui reste verifiable, et qui a de la valeur : la cascade repond, dans
-    // le delai, et par un palier gratuit plutot que par le dernier recours
-    // payant. C'est precisement ce qui etait tombe en panne le 25/08/2026.
+    // La RECONNAISSANCE est eprouvee separement, dans le test suivant.
     const resultat = await p.evaluate(async (racine) => {
       // Le jeton Firebase n'est pas expose sur `window` : le SDK le range dans
       // IndexedDB. C'est le seul moyen, depuis un test, d'appeler l'API avec
@@ -179,6 +175,91 @@ test.describe('parcours authentifies', () => {
       j.engine,
       'servi par le dernier recours payant : aucun palier gratuit n a repondu',
     ).toBeTruthy();
+
+    await p.close();
+  });
+
+  test('la cascade reconnait ce qu elle voit, sur le corpus etiquete', async () => {
+    test.skip(!nav, 'aucun Edge authentifie sur ' + CDP + ' — voir l en-tete du fichier');
+    const ctx = nav!.contexts()[0];
+
+    // ⚠ CE CORPUS EST MODESTE, ET CE N'EST PAS CELUI QUI ETAIT ANNONCE.
+    // Le cahier des charges renvoyait a 1 471 images etiquetees, absentes du
+    // depot. Celui-ci en compte 19, construites depuis les etiquettes que le
+    // manifeste des photos gardait deja — la requete ayant servi a recuperer
+    // chaque image.
+    //
+    // Il ne mesure donc PAS une precision : 19 images ne le permettent pas.
+    // Il attrape une panne — la cascade qui repond « frites » a une salade, ou
+    // qui cesse de repondre. C'est tres en dessous de ce qui etait demande, et
+    // tres au-dessus de rien.
+    const corpus = require('../../donnees/corpus-de-test/corpus.json');
+    // Un echantillon, pas le corpus entier : chaque appel coute une requete au
+    // fournisseur, et six suffisent a voir si la reconnaissance tient.
+    const echantillon = corpus.entrees.slice(0, 6);
+
+    const p = await ctx.newPage();
+    await p.goto(RACINE + '/me', { waitUntil: 'domcontentloaded' });
+    await p.waitForTimeout(6000);
+    test.skip(!(await connecte(p)), 'session expiree — se reconnecter dans Edge');
+
+    const jeton = await p.evaluate(async () => {
+      const entrees: any[] = await new Promise((ok) => {
+        const req = indexedDB.open('firebaseLocalStorageDb');
+        req.onsuccess = () => {
+          try {
+            const st = req.result.transaction('firebaseLocalStorage', 'readonly')
+              .objectStore('firebaseLocalStorage').getAll();
+            st.onsuccess = () => ok(st.result);
+            st.onerror = () => ok([]);
+          } catch { ok([]); }
+        };
+        req.onerror = () => ok([]);
+      });
+      const u = entrees.map((e) => e.value).find((v: any) => v && v.stsTokenManager);
+      return u?.stsTokenManager?.accessToken || null;
+    });
+    test.skip(!jeton, 'aucun jeton Firebase dans la session');
+
+    const fs = require('fs');
+    const path = require('path');
+    const racineDepot = path.resolve(__dirname, '..', '..');
+
+    let justes = 0;
+    for (const e of echantillon) {
+      const b64 = fs.readFileSync(path.join(racineDepot, e.image)).toString('base64');
+      const r = await p.evaluate(
+        async ({ jeton, b64 }: any) => {
+          const rep = await fetch('https://api.salorie.com/ai/vision', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', Authorization: 'Bearer ' + jeton },
+            body: JSON.stringify({
+              prompt: 'Decris en une phrase courte ce que montre cette photo.',
+              imageBase64: b64,
+              mimeType: 'image/jpeg',
+            }),
+          });
+          return { statut: rep.status, corps: (await rep.text()).slice(0, 600) };
+        },
+        { jeton, b64 },
+      );
+
+      let texte = '';
+      try { texte = String(JSON.parse(r.corps).text || '').toLowerCase(); } catch { /* reponse illisible */ }
+      const trouve = e.attenduParmi.some((mot: string) => texte.includes(mot.toLowerCase()));
+      if (trouve) justes++;
+      console.log('  ' + (trouve ? 'ok  ' : 'RATE') + ' ' + e.famille.padEnd(10) + texte.slice(0, 70));
+    }
+
+    console.log('  reconnaissance : ' + justes + ' / ' + echantillon.length);
+    // ⚠ LE SEUIL EST BAS, DELIBEREMENT.
+    // On cherche une PANNE, pas une performance. Exiger 6 sur 6 rendrait le
+    // test instable — une description juste peut employer un autre mot que
+    // ceux de la liste. La moitie suffit a distinguer « ca marche » de « ca ne
+    // regarde meme plus l'image ».
+    expect(justes, 'la cascade ne reconnait plus rien de ce qu elle voit').toBeGreaterThanOrEqual(
+      Math.ceil(echantillon.length / 2),
+    );
 
     await p.close();
   });
