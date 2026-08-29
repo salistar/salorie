@@ -255,7 +255,7 @@ export default function AiCoachScreen() {
           const on = personaId === p.id;
           return (
             <TouchableOpacity key={p.id} onPress={() => changePersona(p.id)} disabled={loading}
-              style={[styles.personaChip, { backgroundColor: on ? GREEN : (isDark ? '#1e293b' : k.surfaceSunken) }, loading && { opacity: 0.6 }]}>
+              style={[styles.personaChip, { backgroundColor: on ? GREEN : (isDark ? k.surface : k.surfaceSunken) }, loading && { opacity: 0.6 }]}>
               <Text style={[styles.personaTxt, { color: on ? k.onAccent : (isDark ? k.textFaint : k.textMuted) }]}>{(p.label as any)[language] || p.label.en}</Text>
             </TouchableOpacity>
           );

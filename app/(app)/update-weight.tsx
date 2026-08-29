@@ -208,7 +208,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 24,
-    backgroundColor: '#F0F9FF',
+    backgroundColor: k.infoSoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 40,

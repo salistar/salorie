@@ -267,7 +267,7 @@ export default function ResultsScreen() {
   }
 
   return (
-    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: isDark ? '#0f1419' : 'transparent' }]}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: isDark ? k.surface : 'transparent' }]}>
       <ScreenTopBar showNotif={false} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>

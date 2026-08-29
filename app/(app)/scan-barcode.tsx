@@ -441,7 +441,7 @@ export default function ScanBarcodeScreen() {
   if (!permission) return <View style={styles.black} />;
   if (!permission.granted) {
     return (
-      <View style={[styles.permWrap, isDark && { backgroundColor: '#0f172a' }]}>
+      <View style={[styles.permWrap, { backgroundColor: k.bg }]}>
         <ScanBarcode size={56} color={k.accent} />
         <Text style={[styles.permTitle, { color: textCol }]}>{t('barcode.perm_title')}</Text>
         <Text style={[styles.permText, { color: subCol }]}>{t('barcode.perm_text')}</Text>
@@ -497,11 +497,11 @@ export default function ScanBarcodeScreen() {
             {recents.map((r) => (
               <TouchableOpacity
                 key={r.barcode}
-                style={[styles.recentRow, isDark && { backgroundColor: '#0f172a', borderColor: k.borderStrong }]}
+                style={[styles.recentRow, isDark && { backgroundColor: k.surface, borderColor: k.borderStrong }]}
                 onPress={() => openRecent(r.barcode)}
                 activeOpacity={0.7}
               >
-                <View style={[styles.recentThumb, styles.thumbPh, isDark && { backgroundColor: '#334155' }]}>
+                <View style={[styles.recentThumb, styles.thumbPh, { backgroundColor: k.surfaceRaised }]}>
                   <ScanBarcode size={16} color={k.accent} />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -542,7 +542,7 @@ export default function ScanBarcodeScreen() {
               <>
                 {/* Aperçu / capture de la photo d'étiquette */}
                 <TouchableOpacity
-                  style={[styles.labelCapture, isDark && { backgroundColor: '#0f172a', borderColor: k.borderStrong }]}
+                  style={[styles.labelCapture, isDark && { backgroundColor: k.surface, borderColor: k.borderStrong }]}
                   onPress={captureLabel}
                   disabled={pendingState === 'sending'}
                 >
@@ -598,7 +598,7 @@ export default function ScanBarcodeScreen() {
       {status === 'notedible' && found && (
         <View style={[styles.sheet, { backgroundColor: card }]}>
           <View style={styles.foundRow}>
-            <View style={[styles.thumb, styles.thumbPh, isDark && { backgroundColor: '#334155' }]}><Ban size={26} color={k.danger} /></View>
+            <View style={[styles.thumb, styles.thumbPh, { backgroundColor: k.surfaceRaised }]}><Ban size={26} color={k.danger} /></View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.foundName, { color: textCol }]} numberOfLines={2}>{found.name}</Text>
               <Text style={[styles.sheetSub, { color: subCol }]}>{ox.notEdibleSub}</Text>
@@ -620,7 +620,7 @@ export default function ScanBarcodeScreen() {
         <View style={[styles.sheet, { backgroundColor: card }]}>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 14 }}>
           <View style={styles.foundRow}>
-            {found.image ? <Image source={{ uri: found.image }} style={[styles.thumb, isDark && { backgroundColor: '#334155' }]} /> : <View style={[styles.thumb, styles.thumbPh, isDark && { backgroundColor: '#334155' }]}><ScanBarcode size={26} color={k.accent} /></View>}
+            {found.image ? <Image source={{ uri: found.image }} style={[styles.thumb, { backgroundColor: k.surfaceRaised }]} /> : <View style={[styles.thumb, styles.thumbPh, { backgroundColor: k.surfaceRaised }]}><ScanBarcode size={26} color={k.accent} /></View>}
             <View style={{ flex: 1 }}>
               <Text style={[styles.foundName, { color: textCol }]} numberOfLines={2}>{found.name}</Text>
               <Text style={[styles.foundMacros, { color: subCol }]}>{found.calories} kcal · P {found.protein}g · C {found.carbs}g · F {found.fat}g <Text style={[styles.per100, isDark && { color: k.textMuted }]}>/ 100 g</Text></Text>
@@ -712,7 +712,7 @@ export default function ScanBarcodeScreen() {
 
           {/* Liste nutritionnelle complète /100 g */}
           {found.nutriments && (
-            <View style={[styles.nutriBox, isDark && { backgroundColor: '#0f172a', borderColor: k.borderStrong }]}>
+            <View style={[styles.nutriBox, isDark && { backgroundColor: k.surface, borderColor: k.borderStrong }]}>
               <Text style={[styles.nutriTitle, { color: textCol }]}>{ox.nutrition}</Text>
               {[
                 [ox.kcal, fmt(found.nutriments['energy-kcal_100g'], 'kcal'), false],
@@ -751,7 +751,7 @@ export default function ScanBarcodeScreen() {
                 <View style={{ gap: 8 }}>
                   <Text style={[styles.objWhy, { color: subCol }]}>{ox.alternatives}</Text>
                   {alts.map((a, i) => (
-                    <View key={i} style={[styles.altRow, isDark && { backgroundColor: '#0f172a', borderColor: k.borderStrong }]}>
+                    <View key={i} style={[styles.altRow, isDark && { backgroundColor: k.surface, borderColor: k.borderStrong }]}>
                       {a.image ? <Image source={{ uri: a.image }} style={styles.altThumb} /> : <View style={[styles.altThumb, styles.thumbPh]}><ScanBarcode size={18} color={k.accent} /></View>}
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.altName, { color: textCol }]} numberOfLines={2}>{[a.name, a.brand].filter(Boolean).join(' · ')}</Text>

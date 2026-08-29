@@ -247,7 +247,7 @@ export default function PaywallView({ onDone, kcal = '', preview = false, contex
         }}
       >
         <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <View style={[styles.badge, { backgroundColor: isDark ? 'rgba(74,222,128,0.12)' : '#ECFDF5', flexDirection: rowDir(isRTL) }]}>
+          <View style={[styles.badge, { backgroundColor: isDark ? 'rgba(74,222,128,0.12)' : k.successSoft, flexDirection: rowDir(isRTL) }]}>
             <Sparkles size={14} color={C.accent} />
             <Text style={[styles.badgeTxt, { color: C.accent }]}>{t.eyebrow}</Text>
           </View>
@@ -260,7 +260,7 @@ export default function PaywallView({ onDone, kcal = '', preview = false, contex
           <View style={{ marginTop: 16 }}>
             {t.benefits.map((b: any, i: number) => (
               <View key={i} style={[styles.benefit, { flexDirection: rowDir(isRTL) }]}>
-                <View style={[styles.tick, { backgroundColor: isDark ? 'rgba(74,222,128,0.14)' : '#ECFDF5' }]}>
+                <View style={[styles.tick, { backgroundColor: isDark ? 'rgba(74,222,128,0.14)' : k.successSoft }]}>
                   <Check size={14} color={C.accent} strokeWidth={3} />
                 </View>
                 {/* Bénéfice sur UNE ligne (titre + comparatif en gris) : sur deux lignes,

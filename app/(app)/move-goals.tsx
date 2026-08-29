@@ -134,12 +134,12 @@ export default function MoveGoals() {
           return (
             <View key={m.key} style={[s.moveCard, { backgroundColor: card }]}>
               <View style={[{ alignItems: 'center', gap: 12 }, rowDir]}>
-                <Image source={MOVE_IMG[m.key]} style={[s.moveImg, isDark && { backgroundColor: '#334155' }]} resizeMode="cover" />
+                <Image source={MOVE_IMG[m.key]} style={[s.moveImg, { backgroundColor: k.surfaceRaised }]} resizeMode="cover" />
                 <View style={{ flex: 1 }}>
                   <Text style={[s.moveName, { color: text }, align]}>{(m as any)[language] || m.en}</Text>
                   <Text style={[s.moveMeta, { color: done ? accent : sub }, align]}>{c} / {m.goal}{done ? ` · ${t.done}` : ''}</Text>
                 </View>
-                <TouchableOpacity style={[s.addBtn, { backgroundColor: done ? accent : '#eef2f7' }]} onPress={() => addSet(m)}>
+                <TouchableOpacity style={[s.addBtn, { backgroundColor: done ? accent : k.surfaceSunken }]} onPress={() => addSet(m)}>
                   {done ? <Check size={16} color={k.onAccent} /> : <Plus size={16} color={accent} />}
                   <Text style={[s.addTxt, { color: done ? k.onAccent : accent }]}>{m.per}</Text>
                 </TouchableOpacity>

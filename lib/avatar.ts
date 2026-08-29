@@ -40,6 +40,12 @@ export type Tier = {
   color: string;
 };
 
+// ⚠ ECHELLE D'IDENTITE — NE PAS THEMATISER.
+// Les paliers d'avatar forment une progression : gris, vert, bleu, violet,
+// ambre, rouge, magenta. Les convertir en jetons rendrait plusieurs paliers
+// identiques (deux d'entre eux tomberaient sur ) et la progression
+// cesserait de se lire. Un palier doit se reconnaitre en Rose comme en Dore,
+// exactement comme la couleur d'une ceinture.
 export const TIERS: Tier[] = [
   { minLevel: 1, titleKey: 'rookie', gearKey: 'sneakers', color: '#94A3B8' },
   { minLevel: 3, titleKey: 'walker', gearKey: 'water_bottle', color: '#10B981' },

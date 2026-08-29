@@ -110,7 +110,7 @@ export default function FastingScreen() {
   const card = tok.surface;
   const text = tok.text;
   const sub = tok.textMuted;
-  const border = isDark ? '#283241' : 'transparent';
+  const border = isDark ? k.border : 'transparent';
 
   const [proto, setProto] = useState(PROTOCOLS[0]);
   const [startTs, setStartTs] = useState<number | null>(null);

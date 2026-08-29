@@ -530,7 +530,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   featCard: { width: '48%', alignItems: 'center', borderRadius: 16, paddingVertical: 16, paddingHorizontal: 8, marginBottom: 12, shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   featLabel: { fontSize: 13, fontWeight: '700', marginTop: 8, textAlign: 'center' },
   streakCard: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, padding: 18, marginBottom: 22, shadowColor: k.shadow, shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
-  streakIcon: { width: 52, height: 52, borderRadius: radius.pill, backgroundColor: '#FEF3E0', alignItems: 'center', justifyContent: 'center' },
+  streakIcon: { width: 52, height: 52, borderRadius: radius.pill, backgroundColor: k.warningSoft, alignItems: 'center', justifyContent: 'center' },
   streakValue: { fontSize: 20, fontWeight: '900' },
   streakSub: { fontSize: 13, marginTop: 3, lineHeight: 18 },
 

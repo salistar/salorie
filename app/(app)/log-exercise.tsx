@@ -65,7 +65,7 @@ export default function LogExerciseScreen() {
       title: t('logex.manual'),
       desc: t('logex.manual_desc'),
       icon: <Settings2 size={26} color={k.warning} />,
-      bg: '#FFF9EB',
+      bg: k.warningSoft,
       onPress: () => router.push('/log-manual' as any),
     },
   ];

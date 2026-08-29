@@ -69,7 +69,7 @@ function MlInsightsCard({ weightHistory, remaining: propRemaining, goal: propGoa
   const titleColor = tok.text;
   const blockColor = isDark ? '#cbd5e1' : '#334155';
   const trendColor = tok.text;
-  const subColor = isDark ? '#94a3b8' : '#94A3B8';
+  const subColor = isDark ? k.textFaint : k.textFaint;
   const mealNameColor = isDark ? '#e2e8f0' : '#0F172A';
 
   const [loading, setLoading] = useState(true);

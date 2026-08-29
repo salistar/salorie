@@ -101,9 +101,9 @@ export default function LiveTwinScreen() {
   const tok = useTokens();
   const bg = tok.bg;
   const card = isDark ? colors.card : '#fff';
-  const text = isDark ? '#fff' : k.text;
-  const sub = isDark ? '#9BA1A6' : k.textMuted;
-  const border = isDark ? colors.gray[200] : '#e2e8f0';
+  const text = isDark ? k.onAccent : k.text;
+  const sub = isDark ? k.textMuted : k.textMuted;
+  const border = isDark ? colors.gray[200] : k.border;
 
   const myName = user?.firstName || user?.primaryEmailAddress?.emailAddress?.split('@')[0] || (t.you as string);
 

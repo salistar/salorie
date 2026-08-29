@@ -277,7 +277,7 @@ export default function ARGhostScreen() {
   // ── SETUP : choix allure + distance avant départ ──
   if (phase === 'setup') {
     return (
-      <View style={[styles.fill, { backgroundColor: '#0b1220' }]}>
+      <View style={[styles.fill, { backgroundColor: k.surface }]}>
         <BrandOverlay />
         <View style={styles.setupTop}>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={styles.iconBtn} onPress={() => router.back()}>
@@ -348,7 +348,7 @@ export default function ARGhostScreen() {
     const won = diff > 0;
     const tie = diff === 0;
     return (
-      <View style={[styles.fill, { backgroundColor: '#0b1220' }]}>
+      <View style={[styles.fill, { backgroundColor: k.surface }]}>
         <BrandOverlay />
         <View style={styles.resultBody}>
           <View style={[styles.ghostGlow, won && { backgroundColor: 'rgba(46,139,87,0.25)', borderColor: k.accent }]}>
@@ -501,7 +501,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   setupHeading: { color: k.onAccent, fontSize: 22, fontWeight: '900' },
   sectionLabel: { color: k.textFaint, fontSize: 13, fontWeight: '800', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#1e293b', borderRadius: 12, paddingVertical: 11, paddingHorizontal: 16, borderWidth: 1.5, borderColor: 'transparent' },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: k.surface, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 16, borderWidth: 1.5, borderColor: 'transparent' },
   chipActive: { backgroundColor: k.accent, borderColor: k.info },
   chipTxt: { color: k.textFaint, fontSize: 15, fontWeight: '800' },
   chipTxtActive: { color: k.onAccent },
@@ -542,7 +542,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   resultTitle: { color: k.onAccent, fontSize: 26, fontWeight: '900', marginTop: 18 },
   resultVerdict: { fontSize: 18, fontWeight: '800', textAlign: 'center', marginTop: 12, lineHeight: 25 },
   resultRow: { flexDirection: 'row', gap: 16, marginTop: 30 },
-  resultCell: { backgroundColor: '#1e293b', borderRadius: 16, paddingVertical: 18, paddingHorizontal: 28, alignItems: 'center', minWidth: 120 },
+  resultCell: { backgroundColor: k.surface, borderRadius: 16, paddingVertical: 18, paddingHorizontal: 28, alignItems: 'center', minWidth: 120 },
   resultCellLabel: { color: k.textFaint, fontSize: 12, fontWeight: '800', marginBottom: 6 },
   resultCellVal: { color: k.onAccent, fontSize: 26, fontWeight: '900', letterSpacing: -1 },
 });

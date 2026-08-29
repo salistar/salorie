@@ -577,7 +577,7 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   heroMedalWrap: { alignItems: 'center', paddingVertical: 14, backgroundColor: k.accentSoft },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
   infoName: { fontSize: 16, fontWeight: '800' },
-  chipLite: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eef2f7', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  chipLite: { flexDirection: 'row', alignItems: 'center', backgroundColor: k.surfaceSunken, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
   chipLiteTxt: { fontSize: 12, fontWeight: '700', color: k.textMuted },
   joinSmall: { backgroundColor: k.accent, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 10 },
   heroName: { color: k.onAccent, fontSize: 19, fontWeight: '900', letterSpacing: -0.3, textShadowColor: 'rgba(0,0,0,0.4)', textShadowRadius: 6 },

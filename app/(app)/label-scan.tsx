@@ -204,7 +204,7 @@ export default function LabelScanScreen() {
           <TouchableOpacity style={[styles.btn, styles.primary, { backgroundColor: accent }]} onPress={() => run(true)}>
             <Camera size={20} color={k.onAccent} /><Text style={styles.btnTxt}>{t.camera}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.btn, styles.secondary, isDark && { backgroundColor: '#334155' }]} onPress={() => run(false)}>
+          <TouchableOpacity style={[styles.btn, styles.secondary, { backgroundColor: k.surfaceRaised }]} onPress={() => run(false)}>
             <Images size={20} color={isDark ? k.textFaint : k.textMuted} /><Text style={[styles.btnTxtDark, isDark && { color: k.textFaint }]}>{t.gallery}</Text>
           </TouchableOpacity>
         </View>

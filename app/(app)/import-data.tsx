@@ -62,7 +62,7 @@ export default function ImportDataScreen() {
   const text = tok.text;
   const sub = tok.textMuted;
   // Accent thémé : vert clair en mode clair, token dark officiel en sombre.
-  const accent = isDark ? '#4ade80' : '#2E8B57';
+  const accent = isDark ? k.accent : k.accent;
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [logs, setLogs] = useState<ImportedLog[]>([]);

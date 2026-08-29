@@ -153,9 +153,9 @@ export default function MealBuilderScreen() {
               <Text style={[styles.itemName, { color: text }, align]} numberOfLines={1}>{x.name}</Text>
               <Text style={[styles.itemMacro, { color: sub }, align]}>{Math.round(x.calories * x.qty)} kcal · {Math.round(x.protein * x.qty)}g {t.p} · {Math.round(x.carbs * x.qty)}g {t.c} · {Math.round(x.fat * x.qty)}g {t.f}</Text>
             </View>
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retirer')} onPress={() => setQty(x.id, -1)} style={[styles.qtyBtn, isDark && { backgroundColor: '#334155' }]}><Minus size={16} color={isDark ? k.textFaint : k.textMuted} /></TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retirer')} onPress={() => setQty(x.id, -1)} style={[styles.qtyBtn, { backgroundColor: k.surfaceRaised }]}><Minus size={16} color={isDark ? k.textFaint : k.textMuted} /></TouchableOpacity>
             <Text style={[styles.qty, { color: text }]}>{x.qty}</Text>
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('ajouter')} onPress={() => setQty(x.id, 1)} style={[styles.qtyBtn, isDark && { backgroundColor: '#334155' }]}><Plus size={16} color={isDark ? k.textFaint : k.textMuted} /></TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('ajouter')} onPress={() => setQty(x.id, 1)} style={[styles.qtyBtn, { backgroundColor: k.surfaceRaised }]}><Plus size={16} color={isDark ? k.textFaint : k.textMuted} /></TouchableOpacity>
             <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('supprimer')} onPress={() => remove(x.id)} style={{ marginHorizontal: 8 }}><Trash2 size={18} color={k.danger} /></TouchableOpacity>
           </View>
         ))}

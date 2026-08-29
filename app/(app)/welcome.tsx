@@ -80,7 +80,7 @@ export default function WelcomeScreen() {
 
         <View style={styles.features}>
           <Animated.View entering={FadeInDown.delay(400).duration(600)} style={[styles.feature, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-            <View style={[styles.featureIcon, { backgroundColor: isDark ? 'rgba(245,158,11,0.18)' : '#FEF3E0' }]}>
+            <View style={[styles.featureIcon, { backgroundColor: isDark ? 'rgba(245,158,11,0.18)' : k.warningSoft }]}>
               <Flame size={22} color={k.warning} />
             </View>
             <Text style={[styles.featureText, { color: textColor }]}>{t('welcome.feature_calories')}</Text>
