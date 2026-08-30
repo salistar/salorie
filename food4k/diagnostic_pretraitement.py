@@ -1,18 +1,25 @@
 # -*- coding: utf-8 -*-
 """Quel pretraitement ce modele attend-il reellement ?
 
-CE QUE CE SCRIPT EXISTE POUR TRANCHER
-Le sidecar mesure 0 bonne reponse sur 74 plats Food-101, alors que ces 101 plats
-font partie de ses 172 classes. Deux explications possibles, et une seule facon
-de les separer : donner au modele les MEMES images avec des pretraitements
-differents, et regarder lequel produit de la justesse.
+A QUOI CE SCRIPT SERT
+Un classifieur mal alimente se trompe SANS lever la moindre erreur : la mauvaise
+normalisation, un recadrage different, des canaux inverses, et il rend des
+reponses confiantes et fausses. Rien dans le code ne le dit ; seul l'essai le
+dit. Ce script donne au modele les MEMES images avec dix pretraitements
+differents et compte, pour chacun, combien de plats sont reconnus.
 
-  - Si un pretraitement donne une bonne accuracy, le modele va bien et c'est le
-    sidecar qui l'alimente mal. On corrige app.py.
-  - Si AUCUN ne donne de justesse, le modele lui-meme est en cause, et le
-    corriger demande de le reentrainer ou de le remplacer.
+Etat au 29/08/2026 : `brut 0..255` — celui qu'emploient le sidecar et le
+telephone — est bien le bon. Le modele obtient 57,4 % de justesse globale et
+71,9 % sur les seules reponses qu'il rend au-dessus de son seuil.
 
-Ce que ce script ne fait PAS : deviner. Il essaie, et il compte.
+⚠ CE SCRIPT A DEJA MENTI, ET IL FAUT SAVOIR POURQUOI.
+Lance une premiere fois, il annoncait 0/60 pour les DIX variantes, et on en a
+conclu que le modele etait mort. Il lisait un corpus dont les etiquettes etaient
+DEDUITES de la position des photos dans le jeu de donnees au lieu d'etre lues :
+la photo comptee « pizza » etait un plat de nachos. Un banc d'essai ne vaut
+jamais mieux que la verite terrain qu'on lui donne. Avant de croire un zero,
+verifier le corpus — `scripts/construire-corpus.js` lit desormais le champ
+`label` du jeu.
 
 Usage :  python diagnostic_pretraitement.py [nombre d images]
 """
@@ -133,7 +140,10 @@ def main():
     print('  ses reponses : %s' % ' | '.join(exemples[meilleur[0]]))
     if meilleur[1]['top1'] == 0:
         print('\n  => AUCUN pretraitement ne produit de justesse.')
-        print('     Le probleme n est pas la facon dont le modele est alimente.')
+        print('     Avant d en conclure que le modele est mort : VERIFIER LE CORPUS.')
+        print('     Un zero sur les dix variantes a la fois est plus souvent le signe')
+        print('     d etiquettes fausses que d un modele qui aurait perdu ses poids —')
+        print('     c est exactement ce qui est arrive le 29/08/2026.')
 
 
 if __name__ == '__main__':
