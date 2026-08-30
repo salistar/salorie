@@ -418,6 +418,13 @@ export default function ScanAnalysisScreen() {
             // `MODELE_ON_DEVICE_FIABLE` (lib/onDeviceVision.ts) permet de couper
             // ce raccourci d'un seul endroit si un futur modele se degrade ;
             // `food4k/valider_modele.py` dit quand il le faut.
+            // Le telephone exige DEJA 0,85, plus que le serveur. La mesure du
+            // 30/08/2026 (food4k/courbe_seuil.py) confirme que c'est le bon
+            // ordre de grandeur : a 0,80 le modele est juste sur 82,6 % de ce
+            // qu'il rend sur Food-101, mais seulement 30,6 % sur les plats
+            // marocains. On ne le baisse donc pas — et on ne le monte pas non
+            // plus, car au-dela la couverture s'effondre sans gain reel sur la
+            // cuisine qui compte ici.
             if (MODELE_ON_DEVICE_FIABLE && top.score >= 0.85 && macro && macro.kcal > 0) {
               explain('Cascade auto : on-device confiant (≥85%), aucun appel cloud');
               finishWith({ name: macro.name, description: '', calories: Math.round(macro.kcal), protein: macro.protein, carbs: macro.carbs, fat: macro.fat, quantity: 100, unit: 'g', serving: '100 g' }, 'device');
