@@ -659,7 +659,27 @@ export class MlService {
       if (process.env.FOOD4K_ENABLED === 'false') return null;
       const url = process.env.FOOD4K_URL;
       if (!url) return null;
-      const minConf = parseFloat(process.env.FOOD4K_MIN_CONF || '0.6');
+      // ⚠ SEUIL PORTE DE 0,60 A 0,80 LE 30/08/2026, SUR MESURE.
+      //
+      // Ce que le seuil achete, mesure par food4k/courbe_seuil.py — « juste
+      // parmi ce qui est SERVI », c'est-a-dire ce que l'utilisateur recoit :
+      //
+      //   seuil    Food-101      cuisine marocaine
+      //   0,60      71,9 %          24,6 %
+      //   0,80      82,6 %          30,6 %
+      //
+      // La cuisine marocaine est le public de Salorie, et c'est la que ce modele
+      // est le plus faible : a 0,60 il tranchait une fois sur deux et se trompait
+      // trois fois sur quatre. Le seuil ne repare pas cela — meme a 0,95 la
+      // justesse y plafonne a 40,9 % — mais il reduit le nombre de fiches fausses
+      // qui entrent dans un journal comme des donnees mesurees.
+      //
+      // Le prix est reel et assume : la couverture tombe de 63 % a 45 % sur
+      // Food-101, de 52 % a 31 % sur les plats marocains. Tout le reste descend
+      // vers Cloudflare — une seconde de plus, et un appel de plus.
+      //
+      // Le vrai correctif reste un modele reentraine sur des photos marocaines.
+      const minConf = parseFloat(process.env.FOOD4K_MIN_CONF || '0.8');
       // Langue déduite du prompt (l'app y injecte « répondre EN FRANÇAIS / بالعربية / in ENGLISH »)
       // → le sidecar renvoie le nom Food-101 localisé (table i18n des 101 classes).
       const lang = /fran[cç]ais/i.test(prompt) ? 'fr' : /العربية|بالعربية/.test(prompt) ? 'ar' : 'en';
