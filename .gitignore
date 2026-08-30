@@ -119,3 +119,7 @@ web/profil-captures/
 # Corpus de reference IA : ~75 Mo d images, reconstructible par
 # scripts/construire-corpus.js. Le manifeste suffit a le reproduire.
 corpus-ia/
+
+# Corpus de reference cuisine marocaine/MENA (Wikimedia Commons),
+# reconstructible par scripts/construire-corpus-maghreb.js
+corpus-maghreb/

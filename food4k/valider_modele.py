@@ -23,7 +23,8 @@ nachos. Sur cette base, le palier a ete debranche en production, a tort. La
 mesure ne vaut jamais mieux que la verite terrain qu'on lui donne — et ici, cette
 verite doit venir du champ `label` du jeu, jamais d'un calcul.
 
-  python food4k/valider_modele.py [modele.tflite] [etiquettes.json] [--seuil 0.5]
+  python food4k/valider_modele.py [modele.tflite] [etiquettes.json] \
+         [--seuil 0.5] [--corpus corpus-maghreb] [--tout]
 
 Sortie 0 si le modele passe la barre, 1 sinon. Prevu pour etre branche a la CI.
 
@@ -66,6 +67,8 @@ def main():
     # sur « Could not open '0.50' ». La forme longue passait par chance, parce
     # que les chemins y precedent l'option.
     seuil = SEUIL_DEFAUT
+    corpus = CORPUS
+    une_par_plat = True
     args = []
     reste = list(sys.argv[1:])
     while reste:
@@ -75,6 +78,16 @@ def main():
                 print('  --seuil attend une valeur, par exemple : --seuil 0.50')
                 return 2
             seuil = float(reste.pop(0))
+        elif a == '--corpus':
+            if not reste:
+                print('  --corpus attend un dossier, par exemple : --corpus corpus-maghreb')
+                return 2
+            corpus = reste.pop(0)
+        elif a == '--tout':
+            # Une photo par plat suffit sur Food-101, dont la verite terrain est
+            # solide. Sur un corpus plus faible, prendre TOUTES les photos noie
+            # une etiquette douteuse dans les autres.
+            une_par_plat = False
         elif a.startswith('--'):
             continue
         else:
@@ -97,32 +110,42 @@ def main():
         print('  Un ecart ici suffit a rendre toutes les reponses fausses sans lever d erreur.')
         return 1
 
-    manifeste = json.load(io.open(os.path.join(CORPUS, 'manifeste.json'), encoding='utf-8'))
+    manifeste = json.load(io.open(os.path.join(corpus, 'manifeste.json'), encoding='utf-8'))
+    if manifeste.get('avertissement'):
+        # Un corpus qui se sait fragile doit le dire A CHAQUE mesure, pas
+        # seulement dans son fichier de fabrication.
+        print('  ATTENTION : %s\n' % manifeste['avertissement'])
 
-    # Une photo par plat : un echantillon desequilibre mesurerait les plats les
-    # plus representes, pas le modele.
+    # Par defaut une photo par plat : un echantillon desequilibre mesurerait les
+    # plats les plus representes, pas le modele.
     vus = set()
     echantillon = []
     for im in manifeste['images']:
-        if im['classe'] in vus:
+        if une_par_plat and im['classe'] in vus:
             continue
         cible = index.get(im['classe'].replace('_', ' ').lower())
         if cible is None:
             continue  # classe absente du modele : hors de son domaine, pas sa faute
+        if not os.path.exists(os.path.join(corpus, im['fichier'])):
+            continue
         vus.add(im['classe'])
-        echantillon.append((im['fichier'], cible))
+        echantillon.append((im['fichier'], cible, im.get('provenance', 'reference')))
 
     justes = justes_confiants = confiants = 0
-    for fichier, cible in echantillon:
-        img = Image.open(os.path.join(CORPUS, fichier)).convert('RGB').resize((taille, taille), Image.BILINEAR)
+    parProvenance = {}
+    for fichier, cible, provenance in echantillon:
+        img = Image.open(os.path.join(corpus, fichier)).convert('RGB').resize((taille, taille), Image.BILINEAR)
         it.set_tensor(ENT['index'], np.asarray(img, np.float32)[None])
         it.invoke()
         pr = np.asarray(it.get_tensor(SOR['index'])).ravel()
         if pr.min() < 0 or abs(float(pr.sum()) - 1.0) > 0.05:
             pr = softmax(pr)
         i = int(pr.argmax())
+        pp = parProvenance.setdefault(provenance, {'n': 0, 'justes': 0})
+        pp['n'] += 1
         if i == cible:
             justes += 1
+            pp['justes'] += 1
         if float(pr[i]) >= CONFIANCE_MIN:
             confiants += 1
             if i == cible:
@@ -135,7 +158,16 @@ def main():
     taux_servi = justes_confiants / confiants if confiants else 0.0
 
     print('  modele            : %s' % os.path.basename(modele))
-    print('  plats evalues     : %d' % n)
+    print('  corpus            : %s' % os.path.basename(os.path.normpath(corpus)))
+    print('  images evaluees   : %d' % n)
+    if len(parProvenance) > 1 or 'reference' not in parProvenance:
+        # ⚠ NE JAMAIS FONDRE DEUX QUALITES DE VERITE EN UN SEUL TAUX.
+        # Une etiquette posee par un humain dans une categorie et une etiquette
+        # deduite d'un mot dans un titre ne valent pas la meme chose. Les melanger
+        # produit un chiffre qu'on ne sait plus interpreter.
+        for prov, v in sorted(parProvenance.items(), key=lambda kv: -kv[1]['n']):
+            print('    dont %-12s %3d images, %3d justes  (%.1f %%)'
+                  % (prov, v['n'], v['justes'], 100.0 * v['justes'] / v['n'] if v['n'] else 0))
     print('  justesse globale  : %d/%d  (%.1f %%)' % (justes, n, taux * 100))
     print('  reponses servies  : %d au-dessus de %.2f de confiance' % (confiants, CONFIANCE_MIN))
     print('  JUSTESSE DE CE QUI EST SERVI : %d/%d  (%.1f %%)' % (justes_confiants, confiants, taux_servi * 100))
