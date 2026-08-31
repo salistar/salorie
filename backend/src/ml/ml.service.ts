@@ -736,7 +736,26 @@ export class MlService implements OnModuleInit {
       // vers Cloudflare — une seconde de plus, et un appel de plus.
       //
       // Le vrai correctif reste un modele reentraine sur des photos marocaines.
-      const minConf = parseFloat(process.env.FOOD4K_MIN_CONF || '0.8');
+      // ⚠ SEUILS RELEVES A 0,90 / 0,95 LE 31/08/2026, SUR MESURE EN PRODUCTION.
+      // La cascade interrogee sur 98 photos de cuisine marocaine :
+      //   tier0    28 servies    7,1 % justes
+      //   openai   59 servies   35,6 %
+      // Cinq fois moins bon que le palier suivant : chacune de ces 28 reponses
+      // est une fiche nutritionnelle fausse ecrite dans un journal, la ou le
+      // cloud aurait vu juste une fois sur trois.
+      //
+      // Ce qui reste a 0,80 sur une photo marocaine, ce sont les predictions de
+      // classes FOOD-101 posees sur un plat local — le seuil local a 0,90 a deja
+      // ecarte les autres. Or ces predictions-la sont fausses presque toujours,
+      // et rien a l'execution ne les distingue d'une bonne reponse : quatre
+      // signaux de la distribution ont ete testes (confiance, marge, entropie,
+      // masse du top-5), aucun ne separe (cf. food4k/signal_hors_domaine.py).
+      //
+      // Faute de pouvoir les reconnaitre, on releve le seuil general. Sur
+      // Food-101 la justesse de ce qui est servi passe de 82,6 % a 93,5 %, pour
+      // une couverture qui tombe de 45 % a 31 %. Le reste descend vers le cloud :
+      // plus lent, payant, et plus juste.
+      const minConf = parseFloat(process.env.FOOD4K_MIN_CONF || '0.9');
       // ⚠ UN SEUIL PLUS EXIGEANT POUR LES CLASSES LOCALES.
       // Le modele n'est pas egalement bon sur ses deux moities. Mesure du
       // 30/08/2026 sur 1 549 images, a confiance >= 0,80 :
@@ -752,7 +771,7 @@ export class MlService implements OnModuleInit {
       // recoivent une prediction Food-101, indiscernable a l'execution d'une
       // bonne. Ce reglage n'agit que sur les cas ou le modele annonce lui-meme
       // une classe locale.
-      const minConfLocale = parseFloat(process.env.FOOD4K_MIN_CONF_LOCALE || '0.9');
+      const minConfLocale = parseFloat(process.env.FOOD4K_MIN_CONF_LOCALE || '0.95');
       // Langue déduite du prompt (l'app y injecte « répondre EN FRANÇAIS / بالعربية / in ENGLISH »)
       // → le sidecar renvoie le nom Food-101 localisé (table i18n des 101 classes).
       const lang = /fran[cç]ais/i.test(prompt) ? 'fr' : /العربية|بالعربية/.test(prompt) ? 'ar' : 'en';
