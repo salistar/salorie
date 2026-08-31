@@ -127,6 +127,34 @@ async function sonder(key: string, label: string, valeur: string): Promise<Etat>
         const j: any = await r.json();
         return { ...base, valide: true, detail: j?.name ? `compte « ${j.name} »` : 'clé valide' };
       }
+      // ⚠ GROQ ETAIT POSE ET MUET, ET RIEN NE LE DISAIT.
+      // La cle est enregistree depuis le 13/08/2026, et le palier n'a JAMAIS
+      // repondu sur plusieurs centaines de requetes mesurees. Sans sonde, on ne
+      // pouvait pas distinguer « cle invalide » de « modele disparu » — or Groq
+      // retire regulierement ses modeles « preview », et le defaut du backend en
+      // est un (`llama-3.2-90b-vision-preview`).
+      //
+      // On liste donc les modeles ET on dit lesquels savent voir : c'est ce qui
+      // permet de corriger GROQ_VISION_MODEL sans tatonner.
+      case 'GROQ_API_KEY': {
+        const r = await req('https://api.groq.com/openai/v1/models', {
+          headers: { Authorization: `Bearer ${valeur}` },
+        });
+        if (!r) return { ...base, detail: 'injoignable' };
+        if (!r.ok) return { ...base, valide: false, detail: `refusée (HTTP ${r.status})` };
+        const j: any = await r.json().catch(() => null);
+        const ids: string[] = (j?.data || []).map((m: any) => String(m?.id || ''));
+        // Les noms varient d'une generation a l'autre ; on cherche ce qui evoque
+        // la vision plutot qu'une liste figee qui vieillirait mal.
+        const vision = ids.filter((id) => /vision|vl|scout|maverick|multimodal/i.test(id));
+        return {
+          ...base,
+          valide: true,
+          detail: vision.length
+            ? `${ids.length} modèles, vision : ${vision.slice(0, 3).join(', ')}`
+            : `${ids.length} modèles, AUCUN modèle de vision — le palier restera muet`,
+        };
+      }
       case 'ZHIPU_API_KEY':
         return {
           ...base,
