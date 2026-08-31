@@ -49,6 +49,13 @@ jobs:
         run: |
           node -e "const f='app.json';const j=JSON.parse(require('fs').readFileSync(f));j.expo.newArchEnabled=false;require('fs').writeFileSync(f,JSON.stringify(j,null,2));"
 
+      # Les niveaux d'API Android sont-ils fixes, et assez hauts pour Play ?
+      # Place AVANT le prebuild : le controle ne lit que `app.json` et echoue en
+      # secondes, la ou decouvrir le probleme au depot sur Play coute une
+      # version prete a sortir.
+      - name: Verifier les niveaux d'API Android
+        run: node scripts/verifier-android-sdk.js
+
       - name: Expo prebuild
         env:
           CI: '1'

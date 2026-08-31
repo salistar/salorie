@@ -117,6 +117,14 @@ jobs:
 
       # La clé Maps DOIT être présente ici : prebuild régénère AndroidManifest.xml et
       # y injecte `android.config.googleMaps.apiKey` depuis app.config.js.
+      # Le paywall sera-t-il vivant dans ce build ?
+      # PurchasesService refuse silencieusement de configurer le SDK sans cle
+      # de production : l'application se lance, le bouton « s'abonner » s'affiche,
+      # et rien ne se passe quand on appuie. On prefere un build qui echoue a une
+      # version publiee dont l'abonnement est inachetable.
+      - name: Verifier la cle d'achats
+        run: node scripts/verifier-cle-achats.js
+
       - name: Expo prebuild
         env:
           CI: '1'
