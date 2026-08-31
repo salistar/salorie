@@ -21,8 +21,32 @@
  * modification de l'une doit etre reportee dans l'autre.
  */
 
-const TOUS = ['food4k', 'cloudflare', 'groq', 'ollama', 'zhipu', 'moonshot',
-  'xai', 'openai', 'mistral', 'anthropic', 'foodapi'];
+// Le catalogue, avec sa classe de cout — copie fidele de ml.service.ts.
+const COUT = { gratuit: 0, bonMarche: 1, cher: 2 };
+const CATALOGUE = [
+  { nom: 'food4k', cout: COUT.gratuit },
+  { nom: 'ollama', cout: COUT.gratuit },
+  { nom: 'cloudflare', cout: COUT.gratuit },
+  { nom: 'zhipu', cout: COUT.bonMarche },
+  { nom: 'moonshot', cout: COUT.bonMarche },
+  { nom: 'openai', cout: COUT.bonMarche },
+  { nom: 'mistral', cout: COUT.bonMarche },
+  { nom: 'xai', cout: COUT.cher },
+  { nom: 'anthropic', cout: COUT.cher },
+  { nom: 'foodapi', cout: COUT.cher },
+];
+
+/** L'ordre par defaut, derive du cout — jamais ecrit a la main. */
+function ordreParCout(primary?: string): string[] {
+  const trie = CATALOGUE.map((t, i) => ({ ...t, i }))
+    .sort((a, b) => a.cout - b.cout || a.i - b.i)
+    .map((t) => t.nom);
+  return primary === 'ollama'
+    ? ['ollama', ...trie.filter((n) => n !== 'ollama')]
+    : trie;
+}
+
+const TOUS = ordreParCout();
 
 function calculerOrdre(visionOrder: string | undefined, ordreDefaut = TOUS): string[] {
   const connus = new Set(ordreDefaut);
@@ -46,9 +70,43 @@ describe("l'ordre par defaut", () => {
     const o = calculerOrdre(undefined);
     // Mesure : mistral 14,0 % juste sur 43 requetes servies. Il reste dans la
     // cascade — une reponse faible vaut mieux qu'aucune — mais apres les autres.
-    for (const meilleur of ['zhipu', 'moonshot', 'xai', 'openai']) {
+    // A cout egal, l'ordre du catalogue tranche, et il place Mistral en
+    // dernier des paliers bon marche : mesure du 31/08/2026, 14,0 % contre
+    // 65,5 % pour OpenAI sur les memes cas difficiles.
+    for (const meilleur of ['zhipu', 'moonshot', 'openai']) {
       expect(o.indexOf(meilleur)).toBeLessThan(o.indexOf('mistral'));
     }
+  });
+});
+
+describe("la regle : toujours du gratuit vers le payant", () => {
+  it('ne place aucun palier payant avant un palier gratuit', () => {
+    const o = ordreParCout();
+    const cout = (n: string) => CATALOGUE.find((t) => t.nom === n)!.cout;
+    for (let i = 1; i < o.length; i++) {
+      // ⚠ C'EST LA REGLE QUE MISTRAL A VIOLEE PENDANT DES MOIS.
+      // Ecrite comme une liste figee, elle devenait fausse au premier
+      // changement. Derivee du cout, elle ne peut plus l'etre.
+      expect(cout(o[i])).toBeGreaterThanOrEqual(cout(o[i - 1]));
+    }
+  });
+
+  it('commence par les paliers sans facture', () => {
+    expect(ordreParCout().slice(0, 3).sort())
+      .toEqual(['cloudflare', 'food4k', 'ollama']);
+  });
+
+  it('VISION_PRIMARY=ollama remonte l auto-heberge en tete', () => {
+    expect(ordreParCout('ollama')[0]).toBe('ollama');
+    // Et sans perdre personne au passage.
+    expect([...ordreParCout('ollama')].sort()).toEqual([...TOUS].sort());
+  });
+
+  // ⚠ GROQ EST ABSENT DU CATALOGUE, ET C'EST DELIBERE.
+  it('n inclut pas Groq : il n a aucun modele de vision', () => {
+    // Sonde du 31/08/2026 : cle valide, 14 modeles, aucun multimodal. Le garder
+    // dans la cascade ajoutait un aller-retour pour un `null` garanti.
+    expect(ordreParCout()).not.toContain('groq');
   });
 });
 
