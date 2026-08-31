@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { FirebaseService } from '../firebase.service';
 import { AiService, enTexte } from '../ai/ai.service';
 import { RedisService } from '../redis.service';
@@ -16,13 +16,70 @@ import { randomUUID, createHmac, createHash } from 'crypto';
  * Tous les algos sont des fonctions pures testables (voir ml.service.spec / script).
  */
 @Injectable()
-export class MlService {
+export class MlService implements OnModuleInit {
   constructor(
     private firebase: FirebaseService,
     private ai: AiService,
     private redis: RedisService,
     private secrets: SecretsService,
   ) {}
+
+  /**
+   * Quels paliers de vision sont ARMES ? Ecrit une fois, au demarrage.
+   *
+   * ⚠ POURQUOI CELA MANQUAIT, ET CE QUE CA COUTAIT.
+   * Chaque palier non configure rend `null` en silence : c'est le bon
+   * comportement pendant une requete — la cascade continue — mais cela rend son
+   * absence INVISIBLE. Consequence observee le 30/08/2026 : sur plusieurs
+   * centaines de requetes mesurees, aucune reponse n'est jamais venue de Groq ni
+   * d'Ollama, tous deux GRATUITS et places AVANT Mistral qui est payant. On
+   * croyait avoir quatre paliers gratuits ; il n'y en avait qu'un.
+   *
+   * Un palier absent n'est pas une panne : c'est souvent un choix. Mais un choix
+   * qu'on ne voit nulle part finit par etre oublie, et on paie pour un repli
+   * qu'on croyait gratuit.
+   *
+   * Aucune valeur de cle n'est ecrite ici — seulement leur presence.
+   */
+  async onModuleInit() {
+    // Les cles Firestore sont lues via SecretsService ; les autres reglages
+    // viennent de l'environnement. On interroge les deux de la meme facon.
+    // ⚠ CHAQUE PALIER EST INTERROGE COMME LA CASCADE L'INTERROGE.
+    // Certaines cles vivent dans Firestore (SecretsService), d'autres dans
+    // l'environnement. Une premiere version testait `process.env.CF_ACCOUNT_ID`,
+    // qui vient en realite des secrets : elle aurait declare Cloudflare absent
+    // alors qu'il sert la majorite des requetes. Un inventaire faux est pire que
+    // pas d'inventaire, puisqu'on agit dessus.
+    const secret = (nom: string) => this.secrets.get(nom).catch(() => undefined);
+    const [cfCompte, cleGroq, cleMistral, cleZhipu, cleAnthropic] = await Promise.all([
+      secret('CF_ACCOUNT_ID'), secret('GROQ_API_KEY'), secret('MISTRAL_API_KEY'),
+      secret('ZHIPU_API_KEY'), secret('ANTHROPIC_API_KEY'),
+    ]);
+
+    const paliers: Array<[string, boolean, 'gratuit' | 'payant' | 'auto-heberge']> = [
+      ['tier0:food4k', process.env.FOOD4K_ENABLED !== 'false' && !!process.env.FOOD4K_URL, 'auto-heberge'],
+      ['cloudflare', !!cfCompte, 'gratuit'],
+      ['groq', !!cleGroq, 'gratuit'],
+      ['ollama', !!process.env.OLLAMA_URL, 'auto-heberge'],
+      ['mistral', !!cleMistral, 'payant'],
+      ['zhipu', !!cleZhipu, 'payant'],
+      ['anthropic', !!cleAnthropic, 'payant'],
+    ];
+
+    const armes = paliers.filter(([, ok]) => ok).map(([n]) => n);
+    const absents = paliers.filter(([, ok]) => !ok);
+    this.log('paliers de vision armes : ' + (armes.join(', ') || 'AUCUN'));
+
+    // On ne signale que les gratuits manquants : c'est la que l'absence coute,
+    // puisqu'elle deporte la charge sur un palier payant place derriere.
+    const gratuitsAbsents = absents.filter(([, , cout]) => cout !== 'payant').map(([n]) => n);
+    if (gratuitsAbsents.length) {
+      this.log(
+        'paliers GRATUITS non configures : ' + gratuitsAbsents.join(', ')
+        + ' — les cas qu ils auraient absorbes partent vers un palier payant.',
+      );
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // #47 CIRCUIT-BREAKER (par tier, en mémoire process). Un tier qui échoue
@@ -680,6 +737,22 @@ export class MlService {
       //
       // Le vrai correctif reste un modele reentraine sur des photos marocaines.
       const minConf = parseFloat(process.env.FOOD4K_MIN_CONF || '0.8');
+      // ⚠ UN SEUIL PLUS EXIGEANT POUR LES CLASSES LOCALES.
+      // Le modele n'est pas egalement bon sur ses deux moities. Mesure du
+      // 30/08/2026 sur 1 549 images, a confiance >= 0,80 :
+      //   annonce une classe Food-101     -> 81,4 % juste (n=698)
+      //   annonce un plat marocain/MENA   -> 48,5 % juste (n=33)
+      // A 0,90, la seconde remonte a 56 % pour 25 reponses au lieu de 33.
+      //
+      // Reserve honnete : l'echantillon local est petit (n=33 puis 25), et la
+      // verite terrain vient de Wikimedia, moins sure que Food-101. Le sens de
+      // l'ecart est net, son ampleur exacte l'est moins.
+      //
+      // Cela ne repare pas le fond : la plupart des photos de plats marocains
+      // recoivent une prediction Food-101, indiscernable a l'execution d'une
+      // bonne. Ce reglage n'agit que sur les cas ou le modele annonce lui-meme
+      // une classe locale.
+      const minConfLocale = parseFloat(process.env.FOOD4K_MIN_CONF_LOCALE || '0.9');
       // Langue déduite du prompt (l'app y injecte « répondre EN FRANÇAIS / بالعربية / in ENGLISH »)
       // → le sidecar renvoie le nom Food-101 localisé (table i18n des 101 classes).
       const lang = /fran[cç]ais/i.test(prompt) ? 'fr' : /العربية|بالعربية/.test(prompt) ? 'ar' : 'en';
@@ -695,7 +768,11 @@ export class MlService {
         clearTimeout(to);
         if (r.ok) {
           const j: any = await r.json();
-          if (j?.ok && typeof j.confidence === 'number' && j.confidence >= minConf && Number(j.kcal) > 0) {
+          // Le sidecar renvoie `famille` depuis le 30/08/2026 ; un sidecar plus
+          // ancien ne l'a pas, et on retombe alors sur le seuil general — jamais
+          // sur un seuil plus laxiste.
+          const exige = j?.famille === 'locale' ? minConfLocale : minConf;
+          if (j?.ok && typeof j.confidence === 'number' && j.confidence >= exige && Number(j.kcal) > 0) {
             // Format attendu par l'app (parseVision) : name + calories + macros + serving.
             const text = JSON.stringify({
               name: j.name, calories: j.kcal, protein: j.protein, carbs: j.carbs, fat: j.fat,
