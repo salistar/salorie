@@ -795,13 +795,44 @@ export class MlService implements OnModuleInit {
     // ------------------------------------------------------------------
     const primary = (process.env.VISION_PRIMARY || 'cloudflare').toLowerCase();
     // tryFood4k EN TÊTE : fast-path gratuit sur les plats Food-101 confiants.
-    const tiers =
-      primary === 'ollama'
-        // tryZhipu en avant-derniere position : PAYANT, donc apres tous les tiers
-        // gratuits (food4k, Cloudflare, Groq, Ollama), conformement a la priorite
-        // « toujours le gratuit d'abord » — mais avant Gemini, gere plus loin.
-        ? [tryFood4k, tryOllama, tryGroq, tryCloudflare, tryMistral, tryZhipu, tryMoonshot, tryXai, tryOpenAi, tryAnthropic, tryFoodApi]
-        : [tryFood4k, tryCloudflare, tryGroq, tryOllama, tryMistral, tryZhipu, tryMoonshot, tryXai, tryOpenAi, tryAnthropic, tryFoodApi];
+    // ── L'ORDRE DE LA CASCADE ────────────────────────────────────────────────
+    //
+    // ⚠ MISTRAL A ETE DESCENDU LE 30/08/2026, SUR MESURE.
+    // Sur 303 photos passees par la cascade complete en production :
+    //   tier0:food4k   216 servies   71,8 % justes
+    //   cloudflare      42 servies   52,4 %
+    //   mistral         43 servies   14,0 %
+    // Mistral etait le premier a recevoir ce que Cloudflare ne pouvait pas
+    // traiter — soit un septieme du trafic — et il repondait juste une fois sur
+    // sept. Il reste dans la cascade (mieux vaut une reponse faible qu'aucune),
+    // mais apres les paliers qui font mieux.
+    //
+    // Ce qui n'est PAS mesure, et qu'il faut savoir : la qualite de Zhipu,
+    // Moonshot et xAI, jamais atteints jusqu'ici. Les descendre Mistral leur
+    // confie ces cas sans preuve de leur superiorite — c'est un pari raisonne,
+    // pas une certitude, et c'est pour cela que l'ordre est devenu REGLABLE.
+    //
+    // `VISION_ORDER` accepte une liste de noms separes par des virgules, par
+    // exemple « food4k,cloudflare,mistral,zhipu ». Tout palier non cite est
+    // ajoute a la fin dans l'ordre par defaut : on ne peut donc pas en perdre un
+    // par oubli. Revenir en arriere ne demande qu'une variable, pas un
+    // redeploiement de code.
+    const parNom: Record<string, () => Promise<{ text: string; engine: string } | null>> = {
+      food4k: tryFood4k, cloudflare: tryCloudflare, groq: tryGroq, ollama: tryOllama,
+      zhipu: tryZhipu, moonshot: tryMoonshot, xai: tryXai, openai: tryOpenAi,
+      anthropic: tryAnthropic, mistral: tryMistral, foodapi: tryFoodApi,
+    };
+
+    const ordreDefaut = primary === 'ollama'
+      ? ['food4k', 'ollama', 'groq', 'cloudflare', 'zhipu', 'moonshot', 'xai', 'openai', 'mistral', 'anthropic', 'foodapi']
+      : ['food4k', 'cloudflare', 'groq', 'ollama', 'zhipu', 'moonshot', 'xai', 'openai', 'mistral', 'anthropic', 'foodapi'];
+
+    // `new Set` : un nom cite deux fois dans VISION_ORDER appellerait sinon le
+    // meme palier deux fois de suite — inutile, et trompeur dans les journaux.
+    const demandes = [...new Set(String(process.env.VISION_ORDER || '')
+      .split(',').map((x) => x.trim().toLowerCase()).filter((x) => parNom[x]))];
+    const ordre = [...demandes, ...ordreDefaut.filter((n) => !demandes.includes(n))];
+    const tiers = ordre.map((n) => parNom[n]);
 
 
     // ── CE QU'UNE REPONSE DOIT VALOIR POUR ETRE ACCEPTEE ─────────────────────
@@ -843,7 +874,11 @@ export class MlService implements OnModuleInit {
     let repli: { text: string; engine: string } | null = null;
 
     for (const tier of tiers) {
-      const tierName = (tier as any).name || 'tier';
+      // Le nom vient desormais de l'ordre, pas de `Function.name` : une fonction
+      // rangee dans un objet peut perdre son nom a la minification, et le
+      // circuit-breaker se mettrait alors a confondre tous les paliers sous une
+      // seule cle.
+      const tierName = ordre[tiers.indexOf(tier)] || (tier as any).name || 'tier';
       // #47 circuit-breaker : si ce tier est "ouvert" (trop d'échecs récents),
       // on le SKIP sans tenter l'appel (évite le timeout) — la cascade continue.
       if (this.cbIsOpen(tierName)) {
