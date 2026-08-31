@@ -20,6 +20,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
+      # Le seuil du tier-0 vit dans le code ET dans docker-compose.override.yml,
+      # et c'est le compose qui gagne. Deux changements du code, les 30 et 31/08,
+      # n'ont rien produit pour cette raison. Ce controle refuse qu'ils divergent.
+      - name: Verifier que code et deploiement disent le meme seuil
+        run: node scripts/verifier-seuils.js
+
       - name: Build backend
         working-directory: backend
         run: npm install && npm run build

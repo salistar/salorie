@@ -40,9 +40,32 @@ services:
       # `tryOllama` se saute proprement quand la variable est absente.
       FOOD_VISION_API_URL: ${FOOD_VISION_API_URL:-}
       FOOD_VISION_API_KEY: ${FOOD_VISION_API_KEY:-}
-      # Tier-0 ONNX : URL du sidecar + seuil de confiance (>= -> réponse directe).
+      # Tier-0 : URL du sidecar + seuils de confiance (>= -> réponse directe).
+      #
+      # ⚠⚠ CE FICHIER GAGNE SUR LE DEFAUT ECRIT DANS ml.service.ts. ⚠⚠
+      # Le seuil a ete porte a 0,80 puis 0,90 DANS LE CODE les 30 et 31/08/2026,
+      # et ces deux changements n'ont RIEN produit en production : la valeur
+      # partait d'ici, figee a 0,60. Deux mesures ont ete attribuees a un reglage
+      # qui n'avait jamais pris. Quand une valeur vit a deux endroits, c'est
+      # toujours celle qu'on n'a pas modifiee qui decide.
+      #
+      # Mesure du 31/08 sur 98 photos de cuisine marocaine, seuil effectif 0,60 :
+      #   tier0    28 servies    7,1 % justes
+      #   openai   59 servies   35,6 %
+      # Cinq fois moins bon que le palier suivant : chacune de ces reponses est
+      # une fiche nutritionnelle fausse ecrite dans un journal.
+      #
+      # Sur Food-101, monter a 0,90 fait passer la justesse de ce qui est servi
+      # de 82,6 % a 93,5 %, pour une couverture qui tombe de 45 % a 31 %. Le
+      # reste descend vers le cloud : plus lent, payant, et plus juste.
       FOOD4K_URL: ${FOOD4K_URL:-http://food4k:8000}
-      FOOD4K_MIN_CONF: ${FOOD4K_MIN_CONF:-0.60}
+      FOOD4K_MIN_CONF: ${FOOD4K_MIN_CONF:-0.90}
+      # Seuil PLUS STRICT pour les classes locales (marocaines / MENA), ou le
+      # modele est nettement plus faible : a 0,80 il annonce juste 48,5 % du
+      # temps contre 81,4 % sur les classes Food-101 (n=1 549, 30/08).
+      # Ecrit ici EXPRESSEMENT, meme s'il vaut deja cela dans le code : laisser
+      # un seul des deux seuils dans l'override etait precisement le piege.
+      FOOD4K_MIN_CONF_LOCALE: ${FOOD4K_MIN_CONF_LOCALE:-0.95}
       # Relais TURN (S2). Le secret est PARTAGE avec coturn : le backend signe des
       # identifiants ephemeres que coturn revalide par le meme HMAC, sans tenir
       # aucune base de comptes. Vide = seul le STUN est propose, et l'API le DIT.
