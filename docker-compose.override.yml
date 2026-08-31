@@ -42,7 +42,15 @@ services:
       FOOD_VISION_API_KEY: ${FOOD_VISION_API_KEY:-}
       # Tier-0 : URL du sidecar + seuils de confiance (>= -> réponse directe).
       #
-      # ⚠⚠ CE FICHIER GAGNE SUR LE DEFAUT ECRIT DANS ml.service.ts. ⚠⚠
+      # ⚠⚠ CE FICHIER GAGNE SUR ml.service.ts — MAIS LE .env DU VPS GAGNE SUR LUI.
+      # Le `${VAR:-defaut}` n'applique le defaut que si la variable est ABSENTE de
+      # l'environnement. Or le .env du serveur est preserve d'un deploiement a
+      # l'autre (deploy-backend-web.yml le dit expressement), et il porte une
+      # valeur posee a la main. Sonde du 31/08/2026 : une reponse du tier-0 est
+      # passee a 0,53 — sous les 0,60 d'ici comme sous les 0,90 du code.
+      # Modifier ce fichier ne suffit donc PAS : il faut aussi editer le .env sur
+      # le VPS, ou l'y retirer pour que cette valeur reprenne la main.
+      # `node scripts/seuil-effectif.js` dit ce qui s'applique vraiment.
       # Le seuil a ete porte a 0,80 puis 0,90 DANS LE CODE les 30 et 31/08/2026,
       # et ces deux changements n'ont RIEN produit en production : la valeur
       # partait d'ici, figee a 0,60. Deux mesures ont ete attribuees a un reglage
