@@ -135,8 +135,8 @@ jobs:
             #
             # Le filtre ci-dessus tolere « export X= » et « X : » : le sed manuel du
             # 31/08 n'avait rien remplace, probablement pour une de ces formes.
-            printf '%s\n' 'FOOD4K_MIN_CONF=${{ vars.FOOD4K_MIN_CONF || '"'"'0.90'"'"' }}' >> .env.next
-            printf '%s\n' 'FOOD4K_MIN_CONF_LOCALE=${{ vars.FOOD4K_MIN_CONF_LOCALE || '"'"'0.95'"'"' }}' >> .env.next
+            printf '%s\n' 'FOOD4K_MIN_CONF=${{ vars.FOOD4K_MIN_CONF || '0.90' }}' >> .env.next
+            printf '%s\n' 'FOOD4K_MIN_CONF_LOCALE=${{ vars.FOOD4K_MIN_CONF_LOCALE || '0.95' }}' >> .env.next
             # ADMIN_SETUP_KEY : RETIREE le 27/08/2026.
             #
             # Elle rouvrait /register a un compte de plus, et servait d'unique issue
