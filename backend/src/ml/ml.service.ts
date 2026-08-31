@@ -817,22 +817,69 @@ export class MlService implements OnModuleInit {
     // ajoute a la fin dans l'ordre par defaut : on ne peut donc pas en perdre un
     // par oubli. Revenir en arriere ne demande qu'une variable, pas un
     // redeploiement de code.
-    const parNom: Record<string, () => Promise<{ text: string; engine: string } | null>> = {
-      food4k: tryFood4k, cloudflare: tryCloudflare, groq: tryGroq, ollama: tryOllama,
-      zhipu: tryZhipu, moonshot: tryMoonshot, xai: tryXai, openai: tryOpenAi,
-      anthropic: tryAnthropic, mistral: tryMistral, foodapi: tryFoodApi,
-    };
+    // ── L'ORDRE EST DERIVE DU COUT, PAS ECRIT A LA MAIN ──────────────────────
+    //
+    // Regle : toujours du plus gratuit au plus payant. L'ecrire comme une liste
+    // figee la rendait fausse au premier changement — c'est ainsi que Mistral,
+    // payant, s'est retrouve a servir un septieme du trafic devant des paliers
+    // gratuits. La classe de cout est donc portee PAR CHAQUE PALIER, et l'ordre
+    // en decoule.
+    //
+    // ⚠ GROQ NE FIGURE PAS DANS CETTE LISTE, ET CE N'EST PAS UN OUBLI.
+    // Sa cle est valide (verifie le 31/08/2026 par la sonde de la page des
+    // cles), mais Groq n'expose AUCUN modele de vision — 14 modeles, aucun
+    // multimodal. Le laisser dans la cascade ajoutait une lecture de secret et
+    // un aller-retour pour un `null` garanti. Pour le remettre le jour ou Groq
+    // publiera un modele de vision : l'ajouter a VISION_ORDER, la fonction
+    // `tryGroq` est intacte.
+    //
+    // ⚠ OLLAMA NON PLUS : le service a ete retire du docker-compose le
+    // 13/08/2026 (zero requete en huit semaines, 10 Go liberes). `tryOllama`
+    // reste et se reactive des que OLLAMA_URL est defini.
+    const COUT = { gratuit: 0, bonMarche: 1, cher: 2 } as const;
+    const catalogue: Array<{ nom: string; fn: () => Promise<{ text: string; engine: string } | null>; cout: number }> = [
+      // Auto-heberge : aucun appel sortant, aucune facture.
+      { nom: 'food4k', fn: tryFood4k, cout: COUT.gratuit },
+      { nom: 'ollama', fn: tryOllama, cout: COUT.gratuit },
+      // Cloudflare Workers AI : palier gratuit genereux (~10 000 appels/jour).
+      { nom: 'cloudflare', fn: tryCloudflare, cout: COUT.gratuit },
+      // Payants. Mesure du 31/08/2026 : OpenAI gpt-4o-mini rend 65,5 % de bonnes
+      // reponses sur les cas difficiles, Mistral small 14,0 %. Le rang suit donc
+      // le cout, mais un palier mesure mauvais ne remonte pas pour autant.
+      { nom: 'zhipu', fn: tryZhipu, cout: COUT.bonMarche },
+      { nom: 'moonshot', fn: tryMoonshot, cout: COUT.bonMarche },
+      { nom: 'openai', fn: tryOpenAi, cout: COUT.bonMarche },
+      { nom: 'mistral', fn: tryMistral, cout: COUT.bonMarche },
+      { nom: 'xai', fn: tryXai, cout: COUT.cher },
+      { nom: 'anthropic', fn: tryAnthropic, cout: COUT.cher },
+      // Dernier recours : une API d'aliments, ni LLM ni payante a l'appel.
+      { nom: 'foodapi', fn: tryFoodApi, cout: COUT.cher },
+    ];
 
+    // Tri STABLE par cout : a cout egal, l'ordre du catalogue est conserve, ce
+    // qui laisse la mesure decider entre paliers de meme prix.
+    const trie = catalogue
+      .map((t, i) => ({ ...t, i }))
+      .sort((a, b) => a.cout - b.cout || a.i - b.i);
+
+    const parNom2: Record<string, () => Promise<{ text: string; engine: string } | null>> =
+      Object.fromEntries(catalogue.map((t) => [t.nom, t.fn]));
+    // `primary === 'ollama'` remonte le palier auto-heberge devant Cloudflare.
+    const sansGroq = trie.map((t) => t.nom).filter((n) => n !== 'groq');
+    // VISION_PRIMARY=ollama remonte le palier auto-heberge devant Cloudflare.
+    // Ecrit franchement plutot qu'avec un comparateur conditionnel, qui exprimait
+    // mal l'intention et dependait de la stabilite du tri.
     const ordreDefaut = primary === 'ollama'
-      ? ['food4k', 'ollama', 'groq', 'cloudflare', 'zhipu', 'moonshot', 'xai', 'openai', 'mistral', 'anthropic', 'foodapi']
-      : ['food4k', 'cloudflare', 'groq', 'ollama', 'zhipu', 'moonshot', 'xai', 'openai', 'mistral', 'anthropic', 'foodapi'];
+      ? ['ollama', ...sansGroq.filter((n) => n !== 'ollama')]
+      : sansGroq;
 
-    // `new Set` : un nom cite deux fois dans VISION_ORDER appellerait sinon le
-    // meme palier deux fois de suite — inutile, et trompeur dans les journaux.
     const demandes = [...new Set(String(process.env.VISION_ORDER || '')
-      .split(',').map((x) => x.trim().toLowerCase()).filter((x) => parNom[x]))];
+      .split(',').map((x) => x.trim().toLowerCase())
+      .filter((x) => parNom2[x] || x === 'groq'))];
     const ordre = [...demandes, ...ordreDefaut.filter((n) => !demandes.includes(n))];
-    const tiers = ordre.map((n) => parNom[n]);
+    // `tryGroq` reste joignable par VISION_ORDER meme s'il n'est plus au
+    // catalogue : c'est ce qui permettra de le rebrancher sans redeploiement.
+    const tiers = ordre.map((n) => (n === 'groq' ? tryGroq : parNom2[n]));
 
 
     // ── CE QU'UNE REPONSE DOIT VALOIR POUR ETRE ACCEPTEE ─────────────────────
