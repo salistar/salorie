@@ -394,21 +394,21 @@ jobs:
 
             docker compose up -d --build --remove-orphans
 
-            # ⚠ OLLAMA SANS MODELE EST DIX GIGAOCTETS QUI NE SERVENT A RIEN.
-            # Le conteneur demarre sans aucun modele : `tryOllama` recoit alors une
-            # erreur et rend `null` a chaque appel. La cascade continue — donc rien
-            # ne casse, et rien ne le signale non plus. C'est exactement la forme de
-            # panne silencieuse qui a laisse Groq muet pendant des semaines.
+            # Ollama sans modele, ce sont dix gigaoctets qui ne servent a rien :
+            # tryOllama recoit une erreur et rend null a chaque appel, la cascade
+            # continue, et rien ne le signale. Meme forme de panne silencieuse que
+            # Groq muet pendant des semaines.
             #
-            # `ollama pull` est idempotent : quand le modele est deja la, il rend la
-            # main en une seconde. On ne bloque PAS le deploiement s'il echoue — le
-            # reste de la pile n'a pas a tomber parce qu'un palier de repli manque —
-            # mais on le DIT dans le journal.
+            # ollama pull est idempotent : une seconde quand le modele est deja la.
+            # On ne bloque PAS le deploiement s'il echoue, mais le journal le dit.
+            OLLAMA_MODELE="${OLLAMA_VISION_MODEL:-moondream}"
             if docker compose ps --services 2>/dev/null | grep -qx ollama; then
-              echo "  ollama : tirage du modele ${OLLAMA_VISION_MODEL:-moondream}"
-              timeout 900 docker compose exec -T ollama ollama pull "${OLLAMA_VISION_MODEL:-moondream}" \
-                && echo "  ollama : modele pret" \
-                || echo "  ATTENTION : tirage echoue — le palier ollama restera muet"
+              echo "  ollama : tirage du modele $OLLAMA_MODELE"
+              if timeout 900 docker compose exec -T ollama ollama pull "$OLLAMA_MODELE"; then
+                echo "  ollama : modele pret"
+              else
+                echo "  ATTENTION : tirage echoue, le palier ollama restera muet"
+              fi
               docker compose exec -T ollama ollama list || true
             fi
             docker compose ps
