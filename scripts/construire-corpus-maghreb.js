@@ -83,6 +83,67 @@ function variantes(classe) {
   return [...v];
 }
 
+/**
+ * Cette image montre-t-elle le plat, ou seulement quelque chose qui porte son nom ?
+ *
+ * ⚠ POURQUOI CE FILTRE EXISTE — CE QUI ETAIT ENTRE SANS LUI (30/08/2026).
+ * Une categorie Wikimedia rassemble tout ce qui touche a un sujet, pas seulement
+ * des assiettes. Le premier corpus contenait :
+ *   - « Kaaks-Wappen.png » — un BLASON, dans la categorie du gateau kaak ;
+ *   - « Cavities in couscous after boiling then rapidly cooling » — une macro
+ *     scientifique de texture, ou aucun humain ne reconnaitrait un plat ;
+ *   - « Lamb fillets with zaalook » — le plat est l'agneau, le zaalouk n'est
+ *     qu'un accompagnement au bord de l'image.
+ * Le modele repondait « lobster bisque » devant la macro de couscous, on comptait
+ * une erreur, et le taux de reconnaissance en sortait fausse vers le bas.
+ *
+ * Le filtre est deliberement PRUDENT : il ecarte ce qui est manifestement hors
+ * sujet, pas ce qui est simplement difficile. Ecarter les cas durs gonflerait le
+ * score et rendrait la mesure inutile — c'est l'erreur symetrique, et elle est
+ * plus insidieuse parce qu'elle flatte.
+ */
+const HORS_SUJET = new RegExp([
+  'wappen', 'coat.of.arms', 'blason', 'logo', 'stamp', 'timbre', 'banknote',
+  'map\\b', 'carte\\b', 'diagram', 'schema', 'graph', 'chart',
+  'portrait', 'poster', 'affiche', 'book', 'livre', 'cover',
+  'packaging', 'package', 'box\\b', 'boite', 'sachet', 'label\\b',
+  'microscop', 'cavities', 'texture', 'cross.section',
+  'shop', 'store', 'market stall', 'restaurant exterior', 'street',
+].join('|'), 'i');
+
+/** Le nom du plat apparait-il dans le titre ? Tolerant aux graphies : la
+ *  translitteration de l'arabe varie (bastila / basstila / pastilla / bisteeya),
+ *  et exiger l'egalite exacte ecarterait des images parfaitement valides. */
+function titreConcorde(titre, classe) {
+  const nu = (x) => String(x).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z]/g, '');
+  const t = nu(titre);
+  const tReduit = t.replace(/(.)\1+/g, '$1');
+
+  // ⚠ LES MEMES GRAPHIES QUE LES CATEGORIES, ET POUR LA MEME RAISON.
+  // La translitteration de l'arabe varie enormement : tajine/tagine,
+  // bastila/pastilla/bisteeya, msemen/msemmen. `variantes()` porte deja ces
+  // equivalences pour trouver les categories ; s'en priver ici ferait ecarter
+  // des images parfaitement valides — « Lamb Tajine at Chambar » rejetee pour la
+  // classe « tagine », a une lettre pres.
+  // Singulier ET pluriel : la table de variantes porte « Tajines » (le nom de
+  // la categorie Wikimedia), alors que les titres ecrivent « Tajine ». Sans
+  // cette souplesse, « Lamb Tajine at Chambar » etait ecarte a une lettre pres.
+  const candidats = [classe, ...variantes(classe)]
+    .flatMap((c) => String(c).split(' '))
+    .flatMap((m) => [m, m.replace(/s$/i, '')])
+    .filter((m) => m.length >= 4);
+
+  if (!candidats.length) return true; // nom trop court pour trancher
+  return candidats.some((m) => {
+    const a = nu(m);
+    if (!a) return false;
+    const reduit = a.replace(/(.)\1+/g, '$1');            // basstila -> bastila
+    return t.includes(a) || tReduit.includes(reduit);
+  });
+}
+
 async function fichiersParCategorie(classe) {
   for (const nom of variantes(classe)) {
     const d = await api({
@@ -126,6 +187,7 @@ async function main() {
   const manifeste = [];
   const vides = [];
   let echecs = 0;
+  let ecartes = 0;
 
   for (const classe of cibles) {
     let lot = await fichiersParCategorie(classe);
@@ -141,6 +203,12 @@ async function main() {
       if (!ii || !/^image\/(jpeg|png)$/.test(ii.mime || '')) continue;
       const src = ii.thumburl || ii.url;
       if (!src) continue;
+
+      // Deux garde-fous, dans cet ordre : le manifestement hors sujet d'abord,
+      // puis l'exigence que le titre nomme bien le plat.
+      const titre = String(page.title || '');
+      if (HORS_SUJET.test(titre)) { ecartes++; continue; }
+      if (!titreConcorde(titre, classe)) { ecartes++; continue; }
 
       const nom = `${classe.replace(/[^a-z0-9]+/gi, '_')}_${pris}.jpg`;
       const dest = path.join(RACINE, nom);
@@ -190,6 +258,9 @@ async function main() {
   if (vides.length) console.log(`  ${vides.length} classes sans aucune source : ${vides.slice(0, 8).join(', ')}…`);
   // Distingue « pas de source » de « source refusee » : ce sont deux
   // problemes differents, et un seul se resout en relancant.
+  // Dire ce qu'on a ecarte : un filtre muet est un filtre qu'on ne peut pas
+  // juger, et celui-ci decide de ce que la mesure va voir.
+  if (ecartes) console.log(`  ${ecartes} images ecartees (hors sujet ou titre sans rapport)`);
   if (echecs) console.log(`  ${echecs} telechargements refuses malgre trois essais — relancer completera`);
 }
 

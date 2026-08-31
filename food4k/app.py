@@ -47,6 +47,18 @@ classes = json.load(open(os.path.join(HERE, 'label_map_172.json'), encoding='utf
 NUTRI = json.load(open(os.path.join(HERE, 'nutrition_172.json'), encoding='utf-8'))
 NAMES = json.load(open(os.path.join(HERE, 'names_172.json'), encoding='utf-8'))  # {label:{en,fr,ar}}
 
+# ⚠ LE MODELE N'EST PAS EGALEMENT BON SUR SES DEUX MOITIES.
+# Mesure du 30/08/2026 sur 1 549 images, a confiance >= 0,80 :
+#   annonce une classe Food-101      -> 81,4 % juste (n=698)
+#   annonce un plat marocain / MENA  -> 48,5 % juste (n=33)
+# Trente-trois points d'ecart. Le backend s'en sert pour exiger davantage la ou
+# le modele se trompe le plus, au lieu d'appliquer le meme seuil partout.
+# On renvoie donc la FAMILLE avec la prediction ; c'est ici qu'elle se sait.
+FOOD101 = set(
+    c.replace('_', ' ').lower()
+    for c in json.load(open(os.path.join(HERE, 'label_map.json'), encoding='utf-8'))['classes']
+)
+
 _it = Interpreter(model_path=os.path.join(HERE, 'food_salorie.tflite'))
 _it.allocate_tensors()
 _IN, _OUT = _it.get_input_details()[0], _it.get_output_details()[0]
@@ -129,6 +141,9 @@ def classify(req: Req):
             'ok': True, 'label': label, 'name': name, 'confidence': float(pr[i]),
             'kcal': n['kcal'], 'protein': n['p'], 'carbs': n['c'], 'fat': n['f'],
             'serving': '100 g', 'top5': top5,
+            # 'food101' ou 'locale' : le backend applique un seuil different
+            # selon le cas (cf. FOOD4K_MIN_CONF / FOOD4K_MIN_CONF_LOCALE).
+            'famille': 'food101' if label.lower() in FOOD101 else 'locale',
         }
     except Exception as e:
         return {'ok': False, 'error': f'inference: {e}'}
