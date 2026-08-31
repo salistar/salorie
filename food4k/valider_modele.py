@@ -51,10 +51,10 @@ SEUIL_DEFAUT = 0.50
 # Le seuil de confiance auquel le sidecar rend une reponse directe. La justesse
 # se mesure SUR CES REPONSES-LA : ce sont les seules qui atteignent
 # l'utilisateur, et donc les seules qui comptent.
-# Aligne sur le defaut du backend, porte a 0,8 le 30/08/2026 (cf.
+# Aligne sur le defaut du backend, porte a 0,9 le 31/08/2026 (cf.
 # ml.service.ts et courbe_seuil.py). Un validateur qui mesurerait a un autre
 # seuil que celui de la production ne dirait rien de la production.
-CONFIANCE_MIN = float(os.environ.get('FOOD4K_MIN_CONF', '0.8'))
+CONFIANCE_MIN = float(os.environ.get('FOOD4K_MIN_CONF', '0.9'))
 
 
 def softmax(x):

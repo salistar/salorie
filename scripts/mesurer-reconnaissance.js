@@ -30,8 +30,11 @@
 const fs = require('fs');
 const path = require('path');
 
-const RACINE = path.join(__dirname, '..', 'corpus-ia');
-const REPERE = path.join(__dirname, '..', 'corpus-ia', 'repere.json');
+// Le corpus vise. Par defaut Food-101 ;  interroge la
+// cascade sur la cuisine marocaine, jamais mesuree cote CLOUD jusqu'au 31/08/2026.
+const iCorpus = process.argv.indexOf('--corpus');
+const RACINE = path.join(__dirname, '..', iCorpus > 0 ? process.argv[iCorpus + 1] : 'corpus-ia');
+const REPERE = path.join(RACINE, 'repere.json');
 const API = process.env.SALORIE_API || 'https://api.salorie.com';
 const CDP = process.env.SALORIE_CDP || 'http://127.0.0.1:9222';
 
