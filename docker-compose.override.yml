@@ -36,8 +36,11 @@ services:
       # les plats MENA ». On laisse desormais le code choisir ; la variable reste
       # surchargeable par l'environnement si besoin.
       CF_VISION_MODEL: ${CF_VISION_MODEL:-}
-      # OLLAMA_URL retiree : le service ollama est supprime (cf. docker-compose.yml).
-      # `tryOllama` se saute proprement quand la variable est absente.
+      # OLLAMA_URL retablie le 31/08/2026 avec le service (cf. docker-compose.yml).
+      # `tryOllama` se saute proprement quand la variable est absente, ce qui
+      # laisse la pile fonctionner meme si le conteneur est arrete.
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+      OLLAMA_VISION_MODEL: ${OLLAMA_VISION_MODEL:-moondream}
       FOOD_VISION_API_URL: ${FOOD_VISION_API_URL:-}
       FOOD_VISION_API_KEY: ${FOOD_VISION_API_KEY:-}
       # Tier-0 : URL du sidecar + seuils de confiance (>= -> réponse directe).
@@ -67,7 +70,7 @@ services:
       # de 82,6 % a 93,5 %, pour une couverture qui tombe de 45 % a 31 %. Le
       # reste descend vers le cloud : plus lent, payant, et plus juste.
       FOOD4K_URL: ${FOOD4K_URL:-http://food4k:8000}
-      FOOD4K_MIN_CONF: ${FOOD4K_MIN_CONF:-0.90}
+      FOOD4K_MIN_CONF: ${FOOD4K_MIN_CONF:-0.80}
       # Seuil PLUS STRICT pour les classes locales (marocaines / MENA), ou le
       # modele est nettement plus faible : a 0,80 il annonce juste 48,5 % du
       # temps contre 81,4 % sur les classes Food-101 (n=1 549, 30/08).
