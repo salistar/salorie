@@ -271,6 +271,21 @@ async function main() {
     console.log(`    ${moteur.padEnd(46)} ${String(v.justes).padStart(3)}/${String(v.n).padEnd(4)} ${pc.padStart(5)} %`);
   }
 
+  // ⚠ UNE MESURE QUI REJOUE LE CACHE NE MESURE PLUS LA CASCADE D'AUJOURD'HUI.
+  // Le serveur garde ses reponses sept jours. Relancer sur des images deja
+  // soumises rejoue donc les reponses d'AVANT le dernier changement — et le
+  // resultat semble parfaitement normal. C'est arrive le 31/08/2026 : 100
+  // reponses sur 202 venaient du cache, la comparaison avant/apres etait
+  // inutilisable, et rien ne le disait. `--sauter N` avance dans le corpus.
+  const partCache = (parMoteur['cache']?.n || 0) / (echantillon.length || 1);
+  if (partCache > 0.2) {
+    console.log('');
+    console.log('  ATTENTION : ' + Math.round(partCache * 100) + ' % des reponses viennent du CACHE.');
+    console.log('  Ce sont des reponses calculees AVANT, rejouees telles quelles. Cette');
+    console.log('  mesure ne decrit donc pas la cascade actuelle. Relancer avec');
+    console.log('  --sauter ' + (saut + parClasse) + ' pour interroger des images jamais soumises.');
+  }
+
   const pires = Object.entries(parPlat)
     .filter(([, v]) => v.justes === 0)
     .slice(0, 12);
