@@ -30,6 +30,10 @@ const CATALOGUE = [
   { nom: 'zhipu', cout: COUT.bonMarche },
   { nom: 'moonshot', cout: COUT.bonMarche },
   { nom: 'openai', cout: COUT.bonMarche },
+  // Ajoutes le 31/08/2026, jamais mesures : places entre le connu-bon (OpenAI,
+  // 64,7 %) et le connu-mauvais (Mistral, 14,0 %).
+  { nom: 'qwen', cout: COUT.bonMarche },
+  { nom: 'minimax', cout: COUT.bonMarche },
   { nom: 'mistral', cout: COUT.bonMarche },
   { nom: 'xai', cout: COUT.cher },
   { nom: 'anthropic', cout: COUT.cher },

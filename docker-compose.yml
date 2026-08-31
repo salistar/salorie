@@ -38,7 +38,36 @@ services:
   # @cf/meta/llama-3.2-11b-vision-instruct repond HTTP 200 et identifie un tagine.
   # Il le precede dans la cascade, sur GPU au lieu du CPU. Ollama liberait 8,27 Go
   # d'image + 1,7 Go de modele.
-  # Pour le remettre : restaurer ce service, le volume salorie_ollama, et OLLAMA_URL.
+  # REMIS LE 31/08/2026, a la demande.
+  #
+  # Ce qui a change depuis son retrait : la cascade ne compte plus qu'UN SEUL
+  # palier gratuit reellement actif (Cloudflare). Groq, qu'on croyait gratuit et
+  # disponible, n'expose aucun modele de vision — verifie par sonde. Tout ce que
+  # Cloudflare ne traite pas tombe donc sur du payant, et c'etait 57 % des
+  # requetes lors de la mesure du 31/08.
+  #
+  # ⚠ CE QU'IL COUTE, DIT D'AVANCE. Inference CPU : plusieurs SECONDES par image,
+  # la ou Cloudflare repond en centaines de millisecondes sur GPU. Il est donc
+  # place APRES Cloudflare dans l'ordre par defaut, jamais devant. L'image et le
+  # modele pesent environ 10 Go de disque.
+  #
+  # ⚠ LE MODELE N'EST PAS TIRE AUTOMATIQUEMENT. Apres le premier demarrage :
+  #     docker compose exec ollama ollama pull moondream
+  # Tant qu'aucun modele n'est tire, `tryOllama` recoit une erreur et rend
+  # `null` : la cascade continue, mais le palier ne sert a rien. Verifier avec
+  #     docker compose exec ollama ollama list
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    # Aucun port publie : seul le backend l'appelle, par le reseau interne.
+    # L'exposer donnerait un LLM ouvert a tout Internet, sans authentification.
+    expose: ["11434"]
+    volumes: [salorie_ollama:/root/.ollama]
+    environment:
+      # Decharge le modele apres cinq minutes d'inactivite : sur un VPS partage,
+      # garder 2 Go de RAM occupes pour un palier rarement sollicite prive les
+      # autres services.
+      OLLAMA_KEEP_ALIVE: 5m
 
   backend:
     build: ./backend
@@ -148,6 +177,7 @@ services:
 
 volumes:
   salorie_mongo:
+  salorie_ollama:
   salorie_uploads:
 
 networks:

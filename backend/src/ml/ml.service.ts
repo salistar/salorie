@@ -531,6 +531,30 @@ export class MlService implements OnModuleInit {
     const tryXai = openAiCompat(
       'xai', 'https://api.x.ai/v1/chat/completions',
       'XAI_API_KEY', 'grok-2-vision-1212', 'XAI_VISION_MODEL');
+    // ⚠ TROIS FOURNISSEURS DE LA PAGE ADMIN N'ETAIENT PAS DANS CETTE CASCADE.
+    // Leurs cles etaient posees et valides depuis des semaines, et la vision ne
+    // les appelait jamais. Ajoutes le 31/08/2026 :
+    //
+    //   Qwen (DashScope)  qwen-vl-max, multimodal, compatible OpenAI
+    //   MiniMax           MiniMax-VL-01, multimodal, compatible OpenAI
+    //
+    // DeepSeek reste ABSENT, et c'est deliberate : son API publique ne sert que
+    // des modeles de texte (deepseek-chat, deepseek-reasoner). L'ajouter
+    // reproduirait le cas Groq — un palier qui rend `null` a chaque appel sans
+    // que rien ne le dise. Sa cle reste utile pour la cascade de TEXTE.
+    //
+    // ⚠ LE NOM DU MODELE EST LE POINT FRAGILE. Groq a servi de lecon : son
+    // defaut pointait un modele « preview » retire depuis, et le palier se
+    // taisait. Les deux noms ci-dessous sont donc SURCHARGEABLES par
+    // l'environnement, et la page des cles sonde desormais les modeles
+    // disponibles chez chaque fournisseur.
+    const tryQwen = openAiCompat(
+      'qwen', 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
+      'DASHSCOPE_API_KEY', 'qwen-vl-max', 'DASHSCOPE_VISION_MODEL');
+    const tryMinimax = openAiCompat(
+      'minimax', 'https://api.minimax.chat/v1/text/chatcompletion_v2',
+      'MINIMAX_API_KEY', 'MiniMax-VL-01', 'MINIMAX_VISION_MODEL');
+
     const tryOpenAi = openAiCompat(
       'openai', 'https://api.openai.com/v1/chat/completions',
       'OPENAI_API_KEY', 'gpt-4o-mini', 'OPENAI_VISION_MODEL');
@@ -755,7 +779,7 @@ export class MlService implements OnModuleInit {
       // Food-101 la justesse de ce qui est servi passe de 82,6 % a 93,5 %, pour
       // une couverture qui tombe de 45 % a 31 %. Le reste descend vers le cloud :
       // plus lent, payant, et plus juste.
-      const minConf = parseFloat(process.env.FOOD4K_MIN_CONF || '0.9');
+      const minConf = parseFloat(process.env.FOOD4K_MIN_CONF || '0.8');
       // ⚠ UN SEUIL PLUS EXIGEANT POUR LES CLASSES LOCALES.
       // Le modele n'est pas egalement bon sur ses deux moities. Mesure du
       // 30/08/2026 sur 1 549 images, a confiance >= 0,80 :
@@ -868,6 +892,13 @@ export class MlService implements OnModuleInit {
       { nom: 'zhipu', fn: tryZhipu, cout: COUT.bonMarche },
       { nom: 'moonshot', fn: tryMoonshot, cout: COUT.bonMarche },
       { nom: 'openai', fn: tryOpenAi, cout: COUT.bonMarche },
+      // Qwen et MiniMax : ajoutes le 31/08/2026, jamais mesures. Places APRES
+      // OpenAI, seul palier dont la justesse est etablie (64,7 % sur les cas
+      // difficiles), et AVANT Mistral, seul dont elle est etablie comme mauvaise
+      // (14,0 %). Entre les deux : l'inconnu, qu'on ne fait pas passer devant du
+      // connu-bon ni derriere du connu-mauvais.
+      { nom: 'qwen', fn: tryQwen, cout: COUT.bonMarche },
+      { nom: 'minimax', fn: tryMinimax, cout: COUT.bonMarche },
       { nom: 'mistral', fn: tryMistral, cout: COUT.bonMarche },
       { nom: 'xai', fn: tryXai, cout: COUT.cher },
       { nom: 'anthropic', fn: tryAnthropic, cout: COUT.cher },
