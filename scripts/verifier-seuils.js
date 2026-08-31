@@ -9,8 +9,20 @@
 // l'override. Deux mesures ont ete attribuees a un reglage qui n'avait jamais
 // pris — et rien, nulle part, ne le signalait.
 //
-// Quand une valeur vit a deux endroits, c'est toujours celle qu'on n'a pas
-// modifiee qui decide. Ce script refuse qu'elles divergent.
+// ⚠⚠ ET IL Y A UNE TROISIEME SOURCE, QUI GAGNE SUR LES DEUX AUTRES. ⚠⚠
+// Le fichier `.env` du VPS est ADDITIF par conception : le deploiement le
+// preserve d'une fois sur l'autre, expressement pour que les reglages faits a la
+// main sur le serveur survivent (cf. deploy-backend-web.yml, qui cite
+// « un FOOD4K_MIN_CONF ajuste » comme exemple a ne pas perdre).
+//
+// Constate le 31/08/2026 en sondant la production : une reponse du tier-0 est
+// passee a 0,53 de confiance — sous les 0,60 du compose, sous les 0,90 du code.
+// Le serveur porte donc sa propre valeur, plus basse que les deux.
+//
+// CE SCRIPT NE PEUT PAS LA LIRE. Il verifie l'accord entre le code et le
+// compose, ce qui reste utile ; mais un accord ici ne dit RIEN de ce que la
+// production applique. Pour cela : `node scripts/seuil-effectif.js`, qui
+// interroge l'API et lit la confiance minimale reellement servie.
 //
 // Usage :  node scripts/verifier-seuils.js
 
@@ -68,4 +80,7 @@ if (divergent) {
   process.exit(1);
 }
 
-console.log('\n  Le code et le deploiement disent la meme chose.');
+console.log('\n  Le code et le compose disent la meme chose.');
+console.log('  ATTENTION : le .env du VPS gagne sur les deux et n est pas lisible');
+console.log('  d ici. Pour connaitre le seuil REELLEMENT applique :');
+console.log('    node scripts/seuil-effectif.js 40 --sauter 15');
