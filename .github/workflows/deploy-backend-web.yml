@@ -104,7 +104,7 @@ jobs:
             # deploiement suivant, sans trace et sans message. On ne remplace desormais que
             # les cles gerees par ce workflow et on preserve tout le reste.
             touch .env
-            grep -vE '^(FIREBASE_SERVICE_ACCOUNT|GEMINI_API_KEY|USDA_API_KEY|AUTH_SECRET|CF_ACCOUNT_ID|CF_API_TOKEN|NEXT_PUBLIC_GMAP_KEY|MAIL_INGEST_KEY|ADMIN_SETUP_KEY)=' .env > .env.next || true
+            grep -vE '^ *(export +)?(FIREBASE_SERVICE_ACCOUNT|GEMINI_API_KEY|USDA_API_KEY|AUTH_SECRET|CF_ACCOUNT_ID|CF_API_TOKEN|NEXT_PUBLIC_GMAP_KEY|MAIL_INGEST_KEY|ADMIN_SETUP_KEY|FOOD4K_MIN_CONF|FOOD4K_MIN_CONF_LOCALE)( *=| *:)' .env > .env.next || true
             printf '%s\n' 'FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' >> .env.next
             printf '%s\n' 'GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}' >> .env.next
             printf '%s\n' 'USDA_API_KEY=${{ secrets.USDA_API_KEY }}' >> .env.next
@@ -118,6 +118,25 @@ jobs:
             # serveur jusqu'au 13 aout 2026 — reclamee depuis le 29 juillet — elle laissait
             # POST /pipeline/webhook-sink ouvert a tout Internet.
             printf '%s\n' 'ADMIN_API_KEY=${{ secrets.ADMIN_API_KEY }}' >> .env.next
+            # ⚠ SEUILS DU TIER-0 : REPRIS EN MAIN PAR LE DEPLOIEMENT LE 31/08/2026.
+            #
+            # Ils etaient poses A LA MAIN dans ce .env, que ce workflow preserve
+            # expressement. Consequence : deux changements du depot — dans le code,
+            # puis dans docker-compose.override.yml — n'ont RIEN produit, et deux
+            # mesures ont ete attribuees a un reglage qui n'avait pas pris. Sonde du
+            # 31/08 : une reponse du tier-0 servie a 0,53 de confiance, sous les 0,60
+            # du compose comme sous les 0,90 du code.
+            #
+            # C'est un renoncement ASSUME au principe « les reglages du serveur
+            # survivent » : pour ces deux cles precisement, une valeur invisible qui
+            # gagne en silence a coute plus cher que la souplesse qu'elle offrait. Les
+            # ajuster passe desormais par les VARIABLES du depot (Settings > Variables),
+            # ou par ce fichier — les deux sont lisibles et versionnes.
+            #
+            # Le filtre ci-dessus tolere « export X= » et « X : » : le sed manuel du
+            # 31/08 n'avait rien remplace, probablement pour une de ces formes.
+            printf '%s\n' 'FOOD4K_MIN_CONF=${{ vars.FOOD4K_MIN_CONF || '"'"'0.90'"'"' }}' >> .env.next
+            printf '%s\n' 'FOOD4K_MIN_CONF_LOCALE=${{ vars.FOOD4K_MIN_CONF_LOCALE || '"'"'0.95'"'"' }}' >> .env.next
             # ADMIN_SETUP_KEY : RETIREE le 27/08/2026.
             #
             # Elle rouvrait /register a un compte de plus, et servait d'unique issue
