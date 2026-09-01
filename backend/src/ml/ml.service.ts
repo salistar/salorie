@@ -141,6 +141,36 @@ export class MlService implements OnModuleInit {
     }
   }
 
+  /** Ollama : image en base64 dans `images`, reponse dans `response`. */
+  private async essayerOllama(modele: string): Promise<string> {
+    try {
+      const ctrl = new AbortController();
+      // L'inference CPU est lente : une minute, la ou vingt secondes suffisent
+      // aux fournisseurs sur GPU. Trop court, on conclurait « injoignable » a
+      // tort — et on debrancherait un palier qui fonctionne.
+      const to = setTimeout(() => ctrl.abort(), 60000);
+      const r = await fetch(`${process.env.OLLAMA_URL}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: modele, stream: false,
+          prompt: 'What colour is this image? One word.',
+          images: [MlService.PIXEL_JPEG],
+        }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(to);
+      if (r.ok) {
+        const j: any = await r.json();
+        return String(j?.response || '').trim() ? 'REPOND A UNE IMAGE' : 'reponse vide';
+      }
+      const detail = (await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120);
+      return `refus HTTP ${r.status} : ${detail}`;
+    } catch (e: any) {
+      return `injoignable (${String(e?.message || '').slice(0, 40)})`;
+    }
+  }
+
   /** Anthropic : meme essai, autre dialecte (`x-api-key`, blocs de contenu). */
   private async essayerAnthropic(cle: string, modele: string): Promise<string> {
     try {
@@ -212,7 +242,21 @@ export class MlService implements OnModuleInit {
     const resultats = await Promise.all(paliers.map(async (t) => {
       const cle = t.cle ? await secret(t.cle) : undefined;
       if (t.cle && !cle) return { palier: t.nom, cle: 'absente', modele: t.modele, etat: 'muet' };
-      if (!t.url) return { palier: t.nom, cle: 'presente', modele: t.modele, etat: 'non verifiable', note: t.note };
+      // ⚠ PAS DE LISTE NE VEUT PAS DIRE PAS D'ESSAI.
+      // Cette sortie anticipee sautait l'essai reel pour MiniMax et Cloudflare,
+      // qui ne publient pas de liste de modeles — c'est-a-dire precisement les
+      // deux paliers dont on ne savait RIEN. La verification s'arretait ou elle
+      // etait le plus necessaire.
+      if (!t.url) {
+        const vu = essai && cle && t.chat
+          ? await this.essayerVision(t.nom, t.chat, cle, t.modele)
+          : undefined;
+        return {
+          palier: t.nom, cle: t.cle ? 'presente' : 'sans objet', modele: t.modele,
+          etat: vu === 'REPOND A UNE IMAGE' ? 'pret' : 'non verifiable',
+          essai: vu, note: t.note,
+        };
+      }
 
       try {
         const ctrl = new AbortController();
@@ -236,6 +280,10 @@ export class MlService implements OnModuleInit {
         let vu: string | undefined;
         if (essai && cle && t.chat) {
           vu = await this.essayerVision(t.nom, t.chat, cle, t.modele);
+        } else if (essai && t.nom === 'ollama' && process.env.OLLAMA_URL) {
+          // Palier le plus recent, donc le moins eprouve : il merite un essai
+          // autant que les autres. Dialecte propre a Ollama.
+          vu = await this.essayerOllama(t.modele);
         } else if (essai && cle && t.nom === 'anthropic') {
           // Anthropic ne parle pas le dialecte OpenAI : sans ce cas, le seul
           // palier « cher » restait non essaye, donc non verifie.
