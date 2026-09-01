@@ -41,6 +41,100 @@ export class MlService implements OnModuleInit {
    *
    * Aucune valeur de cle n'est ecrite ici — seulement leur presence.
    */
+  /**
+   * Chaque palier de vision repondra-t-il vraiment ?
+   *
+   * ⚠ POURQUOI CETTE SONDE EXISTE.
+   * Un palier se tait pour DEUX raisons qu'on ne distingue pas de l'exterieur :
+   * la cle manque, ou le MODELE demande n'existe plus. Groq a passe des semaines
+   * muet pour la seconde — sa cle etait valide, et son defaut pointait un modele
+   * « preview » retire depuis. Rien ne le signalait : `tryGroq` rendait `null`,
+   * la cascade continuait, et on payait un palier superieur a chaque scan.
+   *
+   * Le 31/08/2026, Qwen et MiniMax ont ete branches avec des noms de modeles que
+   * je n'avais pas pu tester. Le meme piege attendait. Cette sonde le desamorce :
+   * elle demande a chaque fournisseur SA liste de modeles et verifie que celui
+   * qu'on s'apprete a appeler s'y trouve.
+   *
+   * Aucune valeur de cle ne sort d'ici — seulement des noms de modeles.
+   */
+  async sonderPaliersVision() {
+    const secret = (n: string) => this.secrets.get(n).catch(() => undefined);
+    const modeleDe = (env: string, defaut: string) => process.env[env] || defaut;
+
+    // Pour chaque palier : ou demander la liste, et quel modele on appellera.
+    const paliers: Array<{
+      nom: string; cle?: string; url?: string; entete?: (k: string) => Record<string, string>;
+      modele: string; extraire?: (j: any) => string[]; note?: string;
+    }> = [
+      { nom: 'cloudflare', cle: 'CF_ACCOUNT_ID',
+        modele: modeleDe('CF_VISION_MODEL', '@cf/meta/llama-3.2-11b-vision-instruct'),
+        note: 'liste non interrogeable sans le jeton Workers AI' },
+      { nom: 'ollama', url: (process.env.OLLAMA_URL || '') + '/api/tags',
+        modele: modeleDe('OLLAMA_VISION_MODEL', 'moondream'),
+        extraire: (j) => (j?.models || []).map((m: any) => String(m?.name || '')) },
+      { nom: 'zhipu', cle: 'ZHIPU_API_KEY', url: 'https://open.bigmodel.cn/api/paas/v4/models',
+        modele: modeleDe('ZHIPU_VISION_MODEL', 'glm-4v-flash') },
+      { nom: 'moonshot', cle: 'MOONSHOT_API_KEY', url: 'https://api.moonshot.ai/v1/models',
+        modele: modeleDe('MOONSHOT_VISION_MODEL', 'moonshot-v1-128k-vision-preview') },
+      { nom: 'openai', cle: 'OPENAI_API_KEY', url: 'https://api.openai.com/v1/models',
+        modele: modeleDe('OPENAI_VISION_MODEL', 'gpt-4o-mini') },
+      { nom: 'qwen', cle: 'DASHSCOPE_API_KEY',
+        url: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/models',
+        modele: modeleDe('DASHSCOPE_VISION_MODEL', 'qwen-vl-max') },
+      { nom: 'minimax', cle: 'MINIMAX_API_KEY',
+        modele: modeleDe('MINIMAX_VISION_MODEL', 'MiniMax-VL-01'),
+        note: 'MiniMax ne publie pas de liste de modeles' },
+      { nom: 'mistral', cle: 'MISTRAL_API_KEY', url: 'https://api.mistral.ai/v1/models',
+        modele: modeleDe('MISTRAL_VISION_MODEL', 'mistral-small-latest') },
+      { nom: 'xai', cle: 'XAI_API_KEY', url: 'https://api.x.ai/v1/models',
+        modele: modeleDe('XAI_VISION_MODEL', 'grok-2-vision-1212') },
+      { nom: 'anthropic', cle: 'ANTHROPIC_API_KEY', url: 'https://api.anthropic.com/v1/models',
+        modele: modeleDe('ANTHROPIC_VISION_MODEL', 'claude-3-5-sonnet-latest') },
+    ];
+
+    const resultats = await Promise.all(paliers.map(async (t) => {
+      const cle = t.cle ? await secret(t.cle) : undefined;
+      if (t.cle && !cle) return { palier: t.nom, cle: 'absente', modele: t.modele, etat: 'muet' };
+      if (!t.url) return { palier: t.nom, cle: 'presente', modele: t.modele, etat: 'non verifiable', note: t.note };
+
+      try {
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 12000);
+        const entetes: Record<string, string> = t.nom === 'anthropic'
+          ? { 'x-api-key': cle || '', 'anthropic-version': '2023-06-01' }
+          : cle ? { Authorization: `Bearer ${cle}` } : {};
+        const r = await fetch(t.url, { headers: entetes, signal: ctrl.signal });
+        clearTimeout(to);
+        if (!r.ok) return { palier: t.nom, cle: 'presente', modele: t.modele, etat: `liste refusee (HTTP ${r.status})` };
+
+        const j: any = await r.json();
+        const ids: string[] = t.extraire
+          ? t.extraire(j)
+          : (j?.data || j?.models || []).map((m: any) => String(m?.id || m?.name || ''));
+        // Ollama nomme ses modeles « moondream:latest » : on compare sur le
+        // prefixe, sinon un modele present serait declare absent.
+        const present = ids.some((id) => id === t.modele || id.split(':')[0] === t.modele.split(':')[0]);
+        return {
+          palier: t.nom, cle: 'presente', modele: t.modele,
+          etat: present ? 'pret' : 'MODELE INTROUVABLE',
+          modelesVus: ids.length,
+          suggestions: present ? undefined
+            : ids.filter((id) => /vision|vl|multimodal|scout|maverick|4o|sonnet|glm-4v/i.test(id)).slice(0, 4),
+        };
+      } catch (e: any) {
+        return { palier: t.nom, cle: 'presente', modele: t.modele, etat: `injoignable (${String(e?.message || '').slice(0, 40)})` };
+      }
+    }));
+
+    const muets = resultats.filter((r) => r.etat === 'muet' || r.etat === 'MODELE INTROUVABLE');
+    if (muets.length) {
+      this.log('paliers de vision qui NE REPONDRONT PAS : '
+        + muets.map((m) => `${m.palier} (${m.etat})`).join(', '));
+    }
+    return { paliers: resultats, muets: muets.length };
+  }
+
   async onModuleInit() {
     // Les cles Firestore sont lues via SecretsService ; les autres reglages
     // viennent de l'environnement. On interroge les deux de la meme facon.
