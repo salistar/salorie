@@ -394,18 +394,10 @@ jobs:
 
             docker compose up -d --build --remove-orphans
 
-            # Ollama sans modele, ce sont dix gigaoctets qui ne servent a rien :
-            # tryOllama recoit une erreur et rend null a chaque appel, la cascade
-            # continue, et rien ne le signale. Meme forme de panne silencieuse que
-            # Groq muet pendant des semaines.
-            #
-            # ollama pull est idempotent : une seconde quand le modele est deja la.
-            # On ne bloque PAS le deploiement s il echoue, mais le journal le dit.
             OLLAMA_MODELE="${OLLAMA_VISION_MODEL:-moondream}"
             if docker compose ps --services 2>/dev/null | grep -qx ollama; then
               echo "  ollama : tirage du modele $OLLAMA_MODELE"
-              timeout 900 docker compose exec -T ollama ollama pull "$OLLAMA_MODELE" || echo "  ATTENTION : tirage echoue, le palier restera muet"
-              docker compose exec -T ollama ollama list || true
+              timeout 900 docker compose exec -T ollama ollama pull "$OLLAMA_MODELE" || echo "  tirage echoue"
             fi
             docker compose ps
 
