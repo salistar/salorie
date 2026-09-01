@@ -133,8 +133,10 @@ export class MlController {
    *  Ne renvoie aucune cle — seulement des noms de modeles. */
   @UseGuards(AdminKeyGuard)
   @Get('vision-tiers')
-  visionTiers() {
-    return this.ml.sonderPaliersVision();
+  visionTiers(@Query('essai') essai?: string) {
+    // `?essai=1` envoie une image de 1x1 pixel a chaque fournisseur. Plus lent
+    // et facturable au jeton pres, donc jamais par defaut.
+    return this.ml.sonderPaliersVision(essai === '1');
   }
 
   @Get('cascade-stats')

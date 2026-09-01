@@ -58,13 +58,63 @@ export class MlService implements OnModuleInit {
    *
    * Aucune valeur de cle ne sort d'ici — seulement des noms de modeles.
    */
-  async sonderPaliersVision() {
+  /**
+   * Une image minuscule, envoyee pour de vrai au fournisseur.
+   *
+   * ⚠ EXISTER N'EST PAS SAVOIR VOIR, ET C'EST LA DEUXIEME COUCHE DU PIEGE.
+   * La liste des modeles dit qu'un nom est encore servi ; elle ne dit pas qu'il
+   * accepte une image. Choisir « glm-5.3 » parce qu'il figure dans la liste, sans
+   * verifier, refait la meme erreur un cran plus loin : le palier repondrait une
+   * erreur a chaque scan, la cascade continuerait, et rien ne le signalerait.
+   *
+   * Un JPEG de 1x1 pixel suffit : on ne juge pas la reponse, seulement le fait
+   * qu'elle arrive. Le cout est negligeable et l'essai n'a lieu que sur demande.
+   */
+  private static readonly PIXEL_JPEG =
+    '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0a'
+    + 'HBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAA'
+    + 'AAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==';
+
+  private async essayerVision(
+    nom: string, url: string, cle: string, modele: string,
+  ): Promise<string> {
+    try {
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 20000);
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cle}` },
+        body: JSON.stringify({
+          model: modele, max_tokens: 16,
+          messages: [{ role: 'user', content: [
+            { type: 'text', text: 'What colour is this image? One word.' },
+            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${MlService.PIXEL_JPEG}` } },
+          ] }],
+        }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(to);
+      if (r.ok) {
+        const j: any = await r.json();
+        const t = j?.choices?.[0]?.message?.content;
+        return t ? 'REPOND A UNE IMAGE' : 'reponse vide';
+      }
+      // Le message du fournisseur dit souvent POURQUOI — modele inconnu, pas de
+      // droit multimodal, quota. On le garde, tronque.
+      const detail = (await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120);
+      return `refus HTTP ${r.status} : ${detail}`;
+    } catch (e: any) {
+      return `injoignable (${String(e?.message || '').slice(0, 40)})`;
+    }
+  }
+
+  async sonderPaliersVision(essai = false) {
     const secret = (n: string) => this.secrets.get(n).catch(() => undefined);
     const modeleDe = (env: string, defaut: string) => process.env[env] || defaut;
 
     // Pour chaque palier : ou demander la liste, et quel modele on appellera.
     const paliers: Array<{
-      nom: string; cle?: string; url?: string; entete?: (k: string) => Record<string, string>;
+      nom: string; cle?: string; url?: string; chat?: string;
       modele: string; extraire?: (j: any) => string[]; note?: string;
     }> = [
       { nom: 'cloudflare', cle: 'CF_ACCOUNT_ID',
@@ -73,21 +123,21 @@ export class MlService implements OnModuleInit {
       { nom: 'ollama', url: (process.env.OLLAMA_URL || '') + '/api/tags',
         modele: modeleDe('OLLAMA_VISION_MODEL', 'moondream'),
         extraire: (j) => (j?.models || []).map((m: any) => String(m?.name || '')) },
-      { nom: 'zhipu', cle: 'ZHIPU_API_KEY', url: 'https://open.bigmodel.cn/api/paas/v4/models',
+      { nom: 'zhipu', chat: 'https://open.bigmodel.cn/api/paas/v4/chat/completions', cle: 'ZHIPU_API_KEY', url: 'https://open.bigmodel.cn/api/paas/v4/models',
         modele: modeleDe('ZHIPU_VISION_MODEL', 'glm-4v-flash') },
-      { nom: 'moonshot', cle: 'MOONSHOT_API_KEY', url: 'https://api.moonshot.ai/v1/models',
+      { nom: 'moonshot', chat: 'https://api.moonshot.ai/v1/chat/completions', cle: 'MOONSHOT_API_KEY', url: 'https://api.moonshot.ai/v1/models',
         modele: modeleDe('MOONSHOT_VISION_MODEL', 'moonshot-v1-128k-vision-preview') },
-      { nom: 'openai', cle: 'OPENAI_API_KEY', url: 'https://api.openai.com/v1/models',
+      { nom: 'openai', chat: 'https://api.openai.com/v1/chat/completions', cle: 'OPENAI_API_KEY', url: 'https://api.openai.com/v1/models',
         modele: modeleDe('OPENAI_VISION_MODEL', 'gpt-4o-mini') },
-      { nom: 'qwen', cle: 'DASHSCOPE_API_KEY',
+      { nom: 'qwen', chat: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions', cle: 'DASHSCOPE_API_KEY',
         url: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/models',
         modele: modeleDe('DASHSCOPE_VISION_MODEL', 'qwen-vl-max') },
-      { nom: 'minimax', cle: 'MINIMAX_API_KEY',
+      { nom: 'minimax', chat: 'https://api.minimax.chat/v1/text/chatcompletion_v2', cle: 'MINIMAX_API_KEY',
         modele: modeleDe('MINIMAX_VISION_MODEL', 'MiniMax-VL-01'),
         note: 'MiniMax ne publie pas de liste de modeles' },
-      { nom: 'mistral', cle: 'MISTRAL_API_KEY', url: 'https://api.mistral.ai/v1/models',
+      { nom: 'mistral', chat: 'https://api.mistral.ai/v1/chat/completions', cle: 'MISTRAL_API_KEY', url: 'https://api.mistral.ai/v1/models',
         modele: modeleDe('MISTRAL_VISION_MODEL', 'mistral-small-latest') },
-      { nom: 'xai', cle: 'XAI_API_KEY', url: 'https://api.x.ai/v1/models',
+      { nom: 'xai', chat: 'https://api.x.ai/v1/chat/completions', cle: 'XAI_API_KEY', url: 'https://api.x.ai/v1/models',
         modele: modeleDe('XAI_VISION_MODEL', 'grok-2-vision-1212') },
       { nom: 'anthropic', cle: 'ANTHROPIC_API_KEY', url: 'https://api.anthropic.com/v1/models',
         modele: modeleDe('ANTHROPIC_VISION_MODEL', 'claude-3-5-sonnet-latest') },
@@ -115,8 +165,14 @@ export class MlService implements OnModuleInit {
         // Ollama nomme ses modeles « moondream:latest » : on compare sur le
         // prefixe, sinon un modele present serait declare absent.
         const present = ids.some((id) => id === t.modele || id.split(':')[0] === t.modele.split(':')[0]);
+        // L'essai reel, quand il est demande et que le fournisseur parle le
+        // dialecte OpenAI. C'est la seule verification qui tranche vraiment.
+        let vu: string | undefined;
+        if (essai && cle && t.chat) {
+          vu = await this.essayerVision(t.nom, t.chat, cle, t.modele);
+        }
         return {
-          palier: t.nom, cle: 'presente', modele: t.modele,
+          palier: t.nom, cle: 'presente', modele: t.modele, essai: vu,
           etat: present ? 'pret' : 'MODELE INTROUVABLE',
           modelesVus: ids.length,
           // ⚠ ON REND LA LISTE ENTIERE, PAS UN FILTRE.
