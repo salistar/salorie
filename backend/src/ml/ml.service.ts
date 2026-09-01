@@ -71,6 +71,43 @@ export class MlService implements OnModuleInit {
    * qu'elle arrive. Le cout est negligeable et l'essai n'a lieu que sur demande.
    */
   /**
+   * Le modele appele pour chaque palier de vision — UNE SEULE definition.
+   *
+   * ⚠ ILS VIVAIENT A DEUX ENDROITS, ET ILS AVAIENT DIVERGE.
+   * La cascade lisait `process.env.X || 'a'`, la sonde `modeleDe('X')`.
+   * Trois paliers ne concordaient plus (01/09/2026) :
+   *   ZHIPU      cascade glm-4.5v            sonde glm-4v-flash
+   *   OLLAMA     cascade llava               sonde moondream
+   *   ANTHROPIC  cascade claude-3-5-haiku    sonde claude-3-5-sonnet
+   * La sonde validait donc des modeles que la cascade n'appelle pas — elle
+   * pouvait declarer « pret » un palier condamne, et l'inverse. C'est le defaut
+   * le plus insidieux qu'un verificateur puisse avoir : verifier autre chose que
+   * ce qui tourne.
+   *
+   * En production les variables sont posees, donc les deux lisaient la meme
+   * valeur ; la divergence n'apparaissait que sans environnement — c'est-a-dire
+   * en developpement, la ou on croit tester.
+   */
+  private static readonly MODELE_DEFAUT: Record<string, string> = {
+    CF_VISION_MODEL: '@cf/meta/llama-3.2-11b-vision-instruct',
+    OLLAMA_VISION_MODEL: 'moondream',
+    ZHIPU_VISION_MODEL: 'glm-4.5v',
+    MOONSHOT_VISION_MODEL: 'moonshot-v1-128k-vision-preview',
+    OPENAI_VISION_MODEL: 'gpt-4o-mini',
+    DASHSCOPE_VISION_MODEL: 'qwen-vl-max',
+    MINIMAX_VISION_MODEL: 'MiniMax-VL-01',
+    MISTRAL_VISION_MODEL: 'mistral-small-latest',
+    XAI_VISION_MODEL: 'grok-2-vision-1212',
+    ANTHROPIC_VISION_MODEL: 'claude-3-5-haiku-latest',
+    GROQ_VISION_MODEL: 'llama-3.2-90b-vision-preview',
+  };
+
+  /** Le modele effectif d'un palier : l'environnement, sinon le defaut unique. */
+  static modeleVision(variable: string): string {
+    return process.env[variable] || MlService.MODELE_DEFAUT[variable] || '';
+  }
+
+  /**
    * L'image d'essai : un carre de 64 pixels, uni.
    *
    * ⚠ ELLE FAISAIT 1x1 PIXEL, ET CELA PRODUISAIT UN FAUX NEGATIF.
@@ -101,7 +138,9 @@ export class MlService implements OnModuleInit {
   ): Promise<string> {
     try {
       const ctrl = new AbortController();
-      const to = setTimeout(() => ctrl.abort(), 20000);
+      // Trente secondes, comme la cascade : une sonde plus impatiente que
+      // l'appel reel condamnerait un palier qui sert correctement.
+      const to = setTimeout(() => ctrl.abort(), 30000);
       const r = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cle}` },
@@ -134,6 +173,58 @@ export class MlService implements OnModuleInit {
       }
       // Le message du fournisseur dit souvent POURQUOI — modele inconnu, pas de
       // droit multimodal, quota. On le garde, tronque.
+      const detail = (await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120);
+      return `refus HTTP ${r.status} : ${detail}`;
+    } catch (e: any) {
+      return `injoignable (${String(e?.message || '').slice(0, 40)})`;
+    }
+  }
+
+  /**
+   * Cloudflare Workers AI : essai reel.
+   *
+   * ⚠ DEUX PARTICULARITES, TIREES DE `tryCloudflare` ET NON SUPPOSEES.
+   * L'image part en TABLEAU D'OCTETS, pas en base64 — envoyer la chaine ferait
+   * echouer l'appel pour une raison qui n'aurait rien a voir avec le modele.
+   * Et le compte et le jeton sont DEUX secrets distincts : une sonde qui ne
+   * lirait que `CF_ACCOUNT_ID` declarerait le palier configure alors qu'il ne
+   * peut pas appeler.
+   *
+   * C'est le palier gratuit qui porte aujourd'hui l'essentiel de la charge. Il
+   * etait pourtant le seul, avec MiniMax, a n'avoir jamais ete essaye — parce
+   * que Cloudflare ne publie pas de liste de modeles interrogeable sans jeton.
+   */
+  private async essayerCloudflare(compte: string, jeton: string, modele: string): Promise<string> {
+    try {
+      const ctrl = new AbortController();
+      // Trente secondes, comme `tryCloudflare` : une sonde plus impatiente que
+      // le chemin de production condamnerait un palier qui sert deja.
+      const to = setTimeout(() => ctrl.abort(), 30000);
+      const octets = Array.from(Buffer.from(MlService.PIXEL_JPEG, 'base64'));
+      const r = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${compte}/ai/run/${modele}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jeton}` },
+          body: JSON.stringify({
+            prompt: 'What colour is this image? One word.',
+            image: octets,
+            max_tokens: 64,
+          }),
+          signal: ctrl.signal,
+        },
+      );
+      clearTimeout(to);
+      if (r.ok) {
+        const j: any = await r.json();
+        // `enTexte` : Cloudflare rend son champ DEJA ANALYSE quand le modele
+        // emet du JSON, et `String(objet)` vaut « [object Object] » — quinze
+        // caracteres non vides, acceptes comme une reponse valide. Meme piege
+        // que la cascade texte, corrige le 25/08/2026.
+        const t = enTexte(j?.result?.description || j?.result?.response || '');
+        if (t) return 'REPOND A UNE IMAGE';
+        return 'reponse vide — cles : ' + Object.keys(j?.result || j || {}).join(',');
+      }
       const detail = (await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120);
       return `refus HTTP ${r.status} : ${detail}`;
     } catch (e: any) {
@@ -175,7 +266,7 @@ export class MlService implements OnModuleInit {
   private async essayerAnthropic(cle: string, modele: string): Promise<string> {
     try {
       const ctrl = new AbortController();
-      const to = setTimeout(() => ctrl.abort(), 20000);
+      const to = setTimeout(() => ctrl.abort(), 30000);
       const r = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -184,7 +275,9 @@ export class MlService implements OnModuleInit {
           'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify({
-          model: modele, max_tokens: 64,
+          // 256 comme ailleurs : 64 avait deja fait declarer muets des
+          // modeles a raisonnement dont le budget partait dans la reflexion.
+          model: modele, max_tokens: 256,
           messages: [{ role: 'user', content: [
             { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: MlService.PIXEL_JPEG } },
             { type: 'text', text: 'What colour is this image? One word.' },
@@ -206,7 +299,8 @@ export class MlService implements OnModuleInit {
 
   async sonderPaliersVision(essai = false) {
     const secret = (n: string) => this.secrets.get(n).catch(() => undefined);
-    const modeleDe = (env: string, defaut: string) => process.env[env] || defaut;
+    // Meme source que la cascade : voir MODELE_DEFAUT.
+    const modeleDe = (env: string) => MlService.modeleVision(env);
 
     // Pour chaque palier : ou demander la liste, et quel modele on appellera.
     const paliers: Array<{
@@ -214,29 +308,29 @@ export class MlService implements OnModuleInit {
       modele: string; extraire?: (j: any) => string[]; note?: string;
     }> = [
       { nom: 'cloudflare', cle: 'CF_ACCOUNT_ID',
-        modele: modeleDe('CF_VISION_MODEL', '@cf/meta/llama-3.2-11b-vision-instruct'),
-        note: 'liste non interrogeable sans le jeton Workers AI' },
+        modele: modeleDe('CF_VISION_MODEL'),
+        note: 'Cloudflare ne publie pas de liste interrogeable ; seul l essai tranche' },
       { nom: 'ollama', url: (process.env.OLLAMA_URL || '') + '/api/tags',
-        modele: modeleDe('OLLAMA_VISION_MODEL', 'moondream'),
+        modele: modeleDe('OLLAMA_VISION_MODEL'),
         extraire: (j) => (j?.models || []).map((m: any) => String(m?.name || '')) },
       { nom: 'zhipu', chat: 'https://open.bigmodel.cn/api/paas/v4/chat/completions', cle: 'ZHIPU_API_KEY', url: 'https://open.bigmodel.cn/api/paas/v4/models',
-        modele: modeleDe('ZHIPU_VISION_MODEL', 'glm-4v-flash') },
+        modele: modeleDe('ZHIPU_VISION_MODEL') },
       { nom: 'moonshot', chat: 'https://api.moonshot.ai/v1/chat/completions', cle: 'MOONSHOT_API_KEY', url: 'https://api.moonshot.ai/v1/models',
-        modele: modeleDe('MOONSHOT_VISION_MODEL', 'moonshot-v1-128k-vision-preview') },
+        modele: modeleDe('MOONSHOT_VISION_MODEL') },
       { nom: 'openai', chat: 'https://api.openai.com/v1/chat/completions', cle: 'OPENAI_API_KEY', url: 'https://api.openai.com/v1/models',
-        modele: modeleDe('OPENAI_VISION_MODEL', 'gpt-4o-mini') },
+        modele: modeleDe('OPENAI_VISION_MODEL') },
       { nom: 'qwen', chat: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions', cle: 'DASHSCOPE_API_KEY',
         url: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/models',
-        modele: modeleDe('DASHSCOPE_VISION_MODEL', 'qwen-vl-max') },
+        modele: modeleDe('DASHSCOPE_VISION_MODEL') },
       { nom: 'minimax', chat: 'https://api.minimax.chat/v1/text/chatcompletion_v2', cle: 'MINIMAX_API_KEY',
-        modele: modeleDe('MINIMAX_VISION_MODEL', 'MiniMax-VL-01'),
+        modele: modeleDe('MINIMAX_VISION_MODEL'),
         note: 'MiniMax ne publie pas de liste de modeles' },
       { nom: 'mistral', chat: 'https://api.mistral.ai/v1/chat/completions', cle: 'MISTRAL_API_KEY', url: 'https://api.mistral.ai/v1/models',
-        modele: modeleDe('MISTRAL_VISION_MODEL', 'mistral-small-latest') },
+        modele: modeleDe('MISTRAL_VISION_MODEL') },
       { nom: 'xai', chat: 'https://api.x.ai/v1/chat/completions', cle: 'XAI_API_KEY', url: 'https://api.x.ai/v1/models',
-        modele: modeleDe('XAI_VISION_MODEL', 'grok-2-vision-1212') },
+        modele: modeleDe('XAI_VISION_MODEL') },
       { nom: 'anthropic', cle: 'ANTHROPIC_API_KEY', url: 'https://api.anthropic.com/v1/models',
-        modele: modeleDe('ANTHROPIC_VISION_MODEL', 'claude-3-5-sonnet-latest') },
+        modele: modeleDe('ANTHROPIC_VISION_MODEL') },
     ];
 
     const resultats = await Promise.all(paliers.map(async (t) => {
@@ -248,12 +342,20 @@ export class MlService implements OnModuleInit {
       // deux paliers dont on ne savait RIEN. La verification s'arretait ou elle
       // etait le plus necessaire.
       if (!t.url) {
-        const vu = essai && cle && t.chat
-          ? await this.essayerVision(t.nom, t.chat, cle, t.modele)
-          : undefined;
+        let vu: string | undefined;
+        if (essai && cle && t.chat) {
+          vu = await this.essayerVision(t.nom, t.chat, cle, t.modele);
+        } else if (essai && cle && t.nom === 'cloudflare') {
+          // Le jeton est un SECOND secret, distinct du compte.
+          const jeton = await secret('CF_API_TOKEN');
+          vu = jeton
+            ? await this.essayerCloudflare(cle, jeton, t.modele)
+            : 'CF_API_TOKEN absent — le palier ne peut pas appeler';
+        }
         return {
           palier: t.nom, cle: t.cle ? 'presente' : 'sans objet', modele: t.modele,
-          etat: vu === 'REPOND A UNE IMAGE' ? 'pret' : 'non verifiable',
+          etat: vu === undefined ? 'non verifiable'
+            : vu === 'REPOND A UNE IMAGE' ? 'pret' : 'NE REPOND PAS',
           essai: vu, note: t.note,
         };
       }
@@ -274,7 +376,15 @@ export class MlService implements OnModuleInit {
           : (j?.data || j?.models || []).map((m: any) => String(m?.id || m?.name || ''));
         // Ollama nomme ses modeles « moondream:latest » : on compare sur le
         // prefixe, sinon un modele present serait declare absent.
-        const present = ids.some((id) => id === t.modele || id.split(':')[0] === t.modele.split(':')[0]);
+        // ⚠ UN ALIAS NE PEUT PAS FIGURER DANS UNE LISTE DE MODELES.
+        // « mistral-small-latest », « claude-3-5-haiku-latest » : ces noms sont
+        // des pointeurs vers la version courante, et les fournisseurs listent les
+        // versions datees, pas les alias. Les chercher a l'identique declarait
+        // introuvable un modele parfaitement appelable — et l'essai reel le
+        // demontrait deux lignes plus bas.
+        const racine = (x: string) => x.split(':')[0].replace(/-latest$/, '');
+        const present = ids.some((id) => id === t.modele || racine(id) === racine(t.modele)
+          || (t.modele.endsWith('-latest') && id.startsWith(racine(t.modele))));
         // L'essai reel, quand il est demande et que le fournisseur parle le
         // dialecte OpenAI. C'est la seule verification qui tranche vraiment.
         let vu: string | undefined;
@@ -289,9 +399,16 @@ export class MlService implements OnModuleInit {
           // palier « cher » restait non essaye, donc non verifie.
           vu = await this.essayerAnthropic(cle, t.modele);
         }
+        // ⚠ L'ETAT SUIT L'ESSAI QUAND IL A EU LIEU.
+        // Il ne regardait que la liste : Anthropic affichait « pret » a cote de
+        // « refus HTTP 400 : credit balance too low ». Un verdict qui contredit
+        // la preuve affichee juste a cote ne trompe pas longtemps, mais il
+        // trompe — et c'est le resume qu'on lit, pas le detail.
+        const etatEssai = vu === undefined ? null
+          : vu === 'REPOND A UNE IMAGE' ? 'pret' : 'NE REPOND PAS';
         return {
           palier: t.nom, cle: 'presente', modele: t.modele, essai: vu,
-          etat: present ? 'pret' : 'MODELE INTROUVABLE',
+          etat: etatEssai || (present ? 'pret (liste seule)' : 'MODELE INTROUVABLE'),
           modelesVus: ids.length,
           // ⚠ ON REND LA LISTE ENTIERE, PAS UN FILTRE.
           // Une premiere version ne proposait que les noms contenant « vision »,
@@ -657,7 +774,7 @@ export class MlService implements OnModuleInit {
       const cfAccount = await this.secrets.get('CF_ACCOUNT_ID');
       const cfToken = await this.secrets.get('CF_API_TOKEN');
       // VLM fort (vocabulaire ouvert, bien meilleur sur les plats MENA) ; overridable par env.
-      const cfModel = process.env.CF_VISION_MODEL || '@cf/meta/llama-3.2-11b-vision-instruct';
+      const cfModel = MlService.modeleVision('CF_VISION_MODEL');
       if (!cfAccount || !cfToken) return null;
       try {
         // Cloudflare llava attend l'image en TABLEAU D'OCTETS (uint8), pas en base64.
@@ -691,7 +808,7 @@ export class MlService implements OnModuleInit {
     // Ollama auto-hébergé (srv3) — gratuit/illimité (même pattern que WHISPER_URL).
     const tryOllama = async (): Promise<{ text: string; engine: string } | null> => {
       const ollamaUrl = process.env.OLLAMA_URL; // ex: http://ollama:11434
-      const model = process.env.OLLAMA_VISION_MODEL || 'llava';
+      const model = MlService.modeleVision('OLLAMA_VISION_MODEL');
       if (!ollamaUrl) return null;
       try {
         const ctrl = new AbortController();
@@ -721,7 +838,7 @@ export class MlService implements OnModuleInit {
     const tryGroq = async (): Promise<{ text: string; engine: string } | null> => {
       const groqKey = await this.secrets.get('GROQ_API_KEY');
       if (!groqKey) return null; // skip proprement si non configuré
-      const groqModel = process.env.GROQ_VISION_MODEL || 'llama-3.2-90b-vision-preview';
+      const groqModel = MlService.modeleVision('GROQ_VISION_MODEL');
       try {
         const ctrl = new AbortController();
         const to = setTimeout(() => ctrl.abort(), 30000);
@@ -839,7 +956,7 @@ export class MlService implements OnModuleInit {
     const tryAnthropic = async (): Promise<{ text: string; engine: string } | null> => {
       const key = await this.secrets.get('ANTHROPIC_API_KEY');
       if (!key) return null;
-      const model = process.env.ANTHROPIC_VISION_MODEL || 'claude-3-5-haiku-latest';
+      const model = MlService.modeleVision('ANTHROPIC_VISION_MODEL');
       try {
         const ctrl = new AbortController();
         const to = setTimeout(() => ctrl.abort(), 30000);
@@ -878,7 +995,7 @@ export class MlService implements OnModuleInit {
     const tryMistral = async (): Promise<{ text: string; engine: string } | null> => {
       const key = await this.secrets.get('MISTRAL_API_KEY');
       if (!key) return null;
-      const model = process.env.MISTRAL_VISION_MODEL || 'mistral-small-latest';
+      const model = MlService.modeleVision('MISTRAL_VISION_MODEL');
       try {
         const ctrl = new AbortController();
         const to = setTimeout(() => ctrl.abort(), 30000);
@@ -927,7 +1044,7 @@ export class MlService implements OnModuleInit {
     const tryZhipu = async (): Promise<{ text: string; engine: string } | null> => {
       const zhipuKey = await this.secrets.get('ZHIPU_API_KEY');
       if (!zhipuKey) return null;
-      const zhipuModel = process.env.ZHIPU_VISION_MODEL || 'glm-4.5v';
+      const zhipuModel = MlService.modeleVision('ZHIPU_VISION_MODEL');
       try {
         const ctrl = new AbortController();
         const to = setTimeout(() => ctrl.abort(), 45000); // GLM-4.5V raisonne avant de repondre

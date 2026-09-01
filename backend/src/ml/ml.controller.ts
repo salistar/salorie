@@ -125,20 +125,29 @@ export class MlController {
     return this.ml.feedbackStats();
   }
 
-  /** Télémétrie cascade vision : usage par tier + taux cloud payant / cache (admin).
-   *  Protégé par AdminKeyGuard (en-tête x-admin-key) EN PLUS de l'auth Firebase. */
-  @UseGuards(AdminKeyGuard)
   /** Chaque palier de vision repondra-t-il vraiment ? Interroge chaque
-   *  fournisseur pour verifier que le modele qu'on appellera existe encore.
-   *  Ne renvoie aucune cle — seulement des noms de modeles. */
+   *  fournisseur pour verifier que le modele qu'on appellera existe encore, et
+   *  avec `?essai=1` lui envoie une vraie image.
+   *  Ne renvoie aucune cle — seulement des noms de modeles.
+   *
+   *  ⚠ NE JAMAIS INSERER UNE ROUTE ENTRE UN `@UseGuards` ET SON `@Get`.
+   *  C'est ce que j'ai fait le 01/09/2026 : le garde de `cascade-stats` s'est
+   *  retrouve au-dessus de CETTE methode, et `cascade-stats` est parti en
+   *  production sans protection — lisible par n'importe quel utilisateur
+   *  authentifie, alors qu'il expose la telemetrie de la cascade et la part du
+   *  cloud payant. Les decorateurs s'appliquent a ce qui SUIT, et un commentaire
+   *  entre deux ne les separe pas visuellement pour autant. */
   @UseGuards(AdminKeyGuard)
   @Get('vision-tiers')
   visionTiers(@Query('essai') essai?: string) {
-    // `?essai=1` envoie une image de 1x1 pixel a chaque fournisseur. Plus lent
-    // et facturable au jeton pres, donc jamais par defaut.
+    // `?essai=1` envoie une vraie image a chaque fournisseur. Plus lent et
+    // facturable au jeton pres, donc jamais par defaut.
     return this.ml.sonderPaliersVision(essai === '1');
   }
 
+  /** Télémétrie cascade vision : usage par tier + taux cloud payant / cache (admin).
+   *  Protégé par AdminKeyGuard (en-tête x-admin-key) EN PLUS de l'auth Firebase. */
+  @UseGuards(AdminKeyGuard)
   @Get('cascade-stats')
   cascadeStats() {
     return this.ml.getCascadeStats();
