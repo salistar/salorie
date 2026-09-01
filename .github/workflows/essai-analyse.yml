@@ -1,0 +1,32 @@
+# Fichier d'ESSAI, temporaire.
+# ---------------------------------------------------------------------------
+# GitHub a refuse deux fois d'analyser deploy-backend-web.yml apres l'ajout d'un
+# bloc shell, sans dire pourquoi : run sans job, portant le chemin du fichier au
+# lieu du nom du workflow. Le schema officiel accepte pourtant les deux versions.
+#
+# Ce fichier ne fait qu'une chose : porter le MEME texte, pour voir s'il est
+# accepte isolement. Il ne s'execute jamais tout seul (workflow_dispatch), et
+# sera supprime des la reponse obtenue.
+name: Essai — analyse du bloc ollama
+
+on:
+  workflow_dispatch:
+
+jobs:
+  essai:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Le bloc en cause, tel quel
+        run: |
+          echo "ce script ne fait rien de reel"
+
+          OLLAMA_MODELE="${OLLAMA_VISION_MODEL:-moondream}"
+          if docker compose ps --services 2>/dev/null | grep -qx ollama; then
+            echo "  ollama : tirage du modele $OLLAMA_MODELE"
+            if timeout 900 docker compose exec -T ollama ollama pull "$OLLAMA_MODELE"; then
+              echo "  ollama : modele pret"
+            else
+              echo "  ATTENTION : tirage echoue, le palier ollama restera muet"
+            fi
+            docker compose exec -T ollama ollama list || true
+          fi
