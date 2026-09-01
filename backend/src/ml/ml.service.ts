@@ -106,7 +106,12 @@ export class MlService implements OnModuleInit {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cle}` },
         body: JSON.stringify({
-          model: modele, max_tokens: 16,
+          // ⚠ SEIZE JETONS NE SUFFISAIENT PAS.
+          // `glm-5.3-flash` et `kimi-k3` rendaient une reponse VIDE : ce sont des
+          // modeles a raisonnement, et le budget partait entierement dans la
+          // reflexion, sans laisser un mot de reponse. La sonde concluait
+          // « reponse vide » — ambigu, donc inutilisable pour decider.
+          model: modele, max_tokens: 256,
           messages: [{ role: 'user', content: [
             { type: 'text', text: 'What colour is this image? One word.' },
             { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${MlService.PIXEL_JPEG}` } },
@@ -117,11 +122,51 @@ export class MlService implements OnModuleInit {
       clearTimeout(to);
       if (r.ok) {
         const j: any = await r.json();
-        const t = j?.choices?.[0]?.message?.content;
-        return t ? 'REPOND A UNE IMAGE' : 'reponse vide';
+        const msg = j?.choices?.[0]?.message || {};
+        // Les modeles a raisonnement rangent leur texte ailleurs que dans
+        // `content` — chercher ce seul champ les declarait muets a tort.
+        const t = msg.content || msg.reasoning_content || msg.reasoning
+          || j?.output?.text || j?.reply;
+        if (t) return 'REPOND A UNE IMAGE';
+        // Vide malgre un budget confortable : on rend la forme de la reponse
+        // plutot qu'un verdict. « Vide » sans explication n'aide personne.
+        return 'reponse vide — champs : ' + Object.keys(msg).join(',');
       }
       // Le message du fournisseur dit souvent POURQUOI — modele inconnu, pas de
       // droit multimodal, quota. On le garde, tronque.
+      const detail = (await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120);
+      return `refus HTTP ${r.status} : ${detail}`;
+    } catch (e: any) {
+      return `injoignable (${String(e?.message || '').slice(0, 40)})`;
+    }
+  }
+
+  /** Anthropic : meme essai, autre dialecte (`x-api-key`, blocs de contenu). */
+  private async essayerAnthropic(cle: string, modele: string): Promise<string> {
+    try {
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 20000);
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': cle,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: modele, max_tokens: 64,
+          messages: [{ role: 'user', content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: MlService.PIXEL_JPEG } },
+            { type: 'text', text: 'What colour is this image? One word.' },
+          ] }],
+        }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(to);
+      if (r.ok) {
+        const j: any = await r.json();
+        return j?.content?.[0]?.text ? 'REPOND A UNE IMAGE' : 'reponse vide';
+      }
       const detail = (await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120);
       return `refus HTTP ${r.status} : ${detail}`;
     } catch (e: any) {
@@ -191,6 +236,10 @@ export class MlService implements OnModuleInit {
         let vu: string | undefined;
         if (essai && cle && t.chat) {
           vu = await this.essayerVision(t.nom, t.chat, cle, t.modele);
+        } else if (essai && cle && t.nom === 'anthropic') {
+          // Anthropic ne parle pas le dialecte OpenAI : sans ce cas, le seul
+          // palier « cher » restait non essaye, donc non verifie.
+          vu = await this.essayerAnthropic(cle, t.modele);
         }
         return {
           palier: t.nom, cle: 'presente', modele: t.modele, essai: vu,
