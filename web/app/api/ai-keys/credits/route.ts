@@ -105,14 +105,45 @@ async function sonder(key: string, label: string, valeur: string): Promise<Etat>
         }
         return { ...base, valide: false, detail: `refusée (HTTP ${r.status})` };
       }
-      case 'ANTHROPIC_API_KEY':
+      // ⚠ UNE CLE VALIDE NE VEUT PAS DIRE UN COMPTE UTILISABLE.
+      // `/v1/models` repond parfaitement avec un solde a zero : cette page
+      // affichait donc « valide » pour un palier qui echouait a chaque appel.
+      // Constate le 01/09/2026 par un essai reel — « Your credit balance is too
+      // low to access the Anthropic API ». Le seul moyen de le savoir est de
+      // DEMANDER une inference, pas une liste.
+      //
+      // Un jeton de sortie, c'est-a-dire une fraction de centime. Le prix de
+      // savoir qu'un palier de la cascade est utilisable.
+      case 'ANTHROPIC_API_KEY': {
+        const entetes = { 'x-api-key': valeur, 'anthropic-version': '2023-06-01' };
+        const liste = await valide('https://api.anthropic.com/v1/models', entetes);
+        if (!liste) return { ...base, valide: false, detail: 'clé refusée' };
+
+        const r = await req('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { ...entetes, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: process.env.ANTHROPIC_VISION_MODEL || 'claude-haiku-4-5-20251001',
+            max_tokens: 1,
+            messages: [{ role: 'user', content: 'ping' }],
+          }),
+        });
+        if (!r) return { ...base, valide: true, detail: 'clé valide ; inférence injoignable' };
+        if (r.ok) return { ...base, valide: true, detail: 'clé valide, compte utilisable' };
+
+        const j: any = await r.json().catch(() => null);
+        const msg = String(j?.error?.message || '');
+        // Le message d'Anthropic dit exactement quoi faire ; le tronquer a
+        // l'essentiel evite de noyer l'information. Il ne contient pas la cle.
         return {
           ...base,
-          valide: await valide('https://api.anthropic.com/v1/models', {
-            'x-api-key': valeur, 'anthropic-version': '2023-06-01',
-          }),
-          detail: 'pas d’API de solde chez Anthropic',
+          valide: true,
+          detail: /credit balance/i.test(msg)
+            ? 'clé valide mais COMPTE SANS CRÉDIT — le palier échouera à chaque appel'
+            : `clé valide ; inférence refusée (HTTP ${r.status}) ${msg.slice(0, 60)}`,
         };
+      }
+
       case 'GEMINI_API_KEY':
         return {
           ...base,
