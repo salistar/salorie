@@ -155,6 +155,42 @@ async function sonder(key: string, label: string, valeur: string): Promise<Etat>
             : `${ids.length} modèles, AUCUN modèle de vision — le palier restera muet`,
         };
       }
+      // ⚠ MINIMAX REPOND HTTP 200 SUR UN ECHEC D'AUTHENTIFICATION.
+      // Verifie le 01/09/2026 : la cle enregistree est refusee, et le serveur
+      // rend malgre tout un 200 portant
+      //   {"base_resp":{"status_code":2049,"status_msg":"invalid api key"}}
+      // Aucune des verifications habituelles ne voit ce cas : `r.ok` est vrai,
+      // il n'y a pas de `choices`, et la sonde generique concluait « pas de
+      // sonde connue ». Le palier etait donc muet en production ET declare sans
+      // probleme sur cette page — la pire combinaison.
+      //
+      // On lit donc `base_resp.status_code` : zero vaut succes, tout le reste
+      // porte son propre message d'erreur.
+      case 'MINIMAX_API_KEY': {
+        const r = await req('https://api.minimax.chat/v1/text/chatcompletion_v2', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${valeur}` },
+          body: JSON.stringify({
+            model: 'MiniMax-VL-01',
+            max_tokens: 8,
+            messages: [{ role: 'user', content: 'ping' }],
+          }),
+        });
+        if (!r) return { ...base, detail: 'injoignable' };
+        const j: any = await r.json().catch(() => null);
+        const code = j?.base_resp?.status_code;
+        if (code === 0 || j?.choices) return { ...base, valide: true, detail: 'clé acceptée' };
+        return {
+          ...base,
+          valide: false,
+          // Le message vient de MiniMax : il ne contient pas la cle, seulement
+          // un motif (« invalid api key », « rate limit », « insufficient
+          // balance »). On le rend tel quel, c'est lui qui dit quoi faire.
+          detail: j?.base_resp?.status_msg
+            ? `refusée : ${String(j.base_resp.status_msg).slice(0, 60)} (code ${code})`
+            : `refusée (HTTP ${r.status})`,
+        };
+      }
       case 'ZHIPU_API_KEY':
         return {
           ...base,
