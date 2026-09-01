@@ -169,6 +169,22 @@ services:
       # ni dans le workflow, d'ou « aucune cle d'installation n'est configuree ».
       # Vide = inscription fermee, ce qui reste le bon defaut.
       ADMIN_SETUP_KEY: ${ADMIN_SETUP_KEY:-}
+      # ⚠ LA CLE D'ADMIN N'ATTEIGNAIT PAS LE WEB — CONSTATE LE 01/09/2026.
+      # Le back-office parle au backend de serveur a serveur, avec `x-admin-key`
+      # et SANS jeton Firebase : il n'agit pour aucun utilisateur. Cette variable
+      # etait posee pour le backend mais JAMAIS pour le web, qui envoyait donc une
+      # cle vide.
+      #
+      # Ce que cela cassait, verifie depuis une session admin ouverte :
+      #   /api/moderation      200 mais `stats: {}` — l'echec etait AVALE
+      #   /api/medals-history  403
+      #   /api/news            403 « admin key invalide »
+      # Trois pages du back-office degradees ou muettes, dont une qui affichait
+      # simplement des donnees vides sans un mot.
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-}
+      # Les relais lisent BACKEND_URL ; sans elle ils tombaient sur leur defaut
+      # code en dur, juste par chance.
+      BACKEND_URL: ${BACKEND_URL:-http://backend:4000}
       # ADMIN_USER / ADMIN_PASS retirés le 5 août 2026 : plus AUCUNE lecture dans le code
       # (l'auth admin passe par Mongo + bcrypt via lib/adminAuth.ts, cf. AUTH_SECRET).
       # Les garder revenait à réécrire un mot de passe en clair dans le .env du serveur
