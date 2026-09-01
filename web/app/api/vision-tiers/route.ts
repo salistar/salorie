@@ -32,16 +32,16 @@ export async function GET(req: Request) {
     const h: Record<string, string> = {};
     if (process.env.ADMIN_API_KEY) h['x-admin-key'] = process.env.ADMIN_API_KEY;
 
-    // La sonde interroge une dizaine de fournisseurs : elle peut prendre une
-    // quinzaine de secondes. Sans borne, un fournisseur qui ne repond jamais
-    // ferait pendre la page indefiniment.
-    const ctl = new AbortController();
-    // Un essai reel interroge dix fournisseurs : la borne monte en consequence.
-    const to = setTimeout(() => ctl.abort(), essai ? 90000 : 30000);
-    //  demande un essai REEL : une image de 1x1 pixel envoyee a chaque
-    // fournisseur. Seule facon de distinguer « le modele existe » de « le modele
-    // sait voir ». Facturable au jeton pres, donc jamais par defaut.
+    // `?essai=1` demande un essai REEL : une image de 1x1 pixel envoyee a chaque
+    // fournisseur. C'est la seule facon de distinguer « le modele existe » de
+    // « le modele sait voir ». Facturable au jeton pres, donc jamais par defaut.
     const essai = new URL(req.url).searchParams.get('essai') === '1' ? '?essai=1' : '';
+
+    // La sonde interroge une dizaine de fournisseurs : sans borne, un
+    // fournisseur qui ne repond jamais ferait pendre la page indefiniment. Un
+    // essai reel ajoute un aller-retour par fournisseur : la borne monte.
+    const ctl = new AbortController();
+    const to = setTimeout(() => ctl.abort(), essai ? 90000 : 30000);
     const r = await fetch(`${API}/ml/vision-tiers${essai}`, {
       headers: h, cache: 'no-store', signal: ctl.signal,
     });
