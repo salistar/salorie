@@ -133,6 +133,57 @@ export class MlService implements OnModuleInit {
     + 'xD7oKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACii'
     + 'igAooooA/9k=';
 
+  /**
+   * Masque ce qui ressemble a un secret dans le corps d'un fournisseur.
+   *
+   * ⚠ LES FOURNISSEURS RECOPIENT LA CLE DANS LEURS MESSAGES D'ERREUR.
+   * « Incorrect API key provided: sk-proj-AbCd... » : la sonde rendait ce corps
+   * TEL QUEL vers la page d'admin. Elle est derriere une authentification, mais
+   * une cle qui traverse une reponse HTTP finit dans un journal, un cache, une
+   * capture d'ecran. On ne fait pas transiter un secret parce qu'on juge le
+   * canal sur.
+   *
+   * Le masquage est heuristique, donc genereux : il efface la cle entiere, ses
+   * dix premiers et dix derniers caracteres (les fournisseurs echoent souvent un
+   * fragment), les JWT, les prefixes connus, l'hexa long, et tout jeton opaque
+   * de plus de 32 caracteres. Prix accepte : un identifiant de trace disparait
+   * aussi. Un diagnostic plus pauvre vaut mieux qu'une cle affichee.
+   */
+  private static masquerSecrets(corps: string, cle?: string): string {
+    const s = String(corps || '').replace(/\s+/g, ' ').slice(0, 2000);
+    const bouts: string[] = [];
+    if (cle && cle.length >= 8) {
+      bouts.push(cle);
+      if (cle.length > 10) bouts.push(cle.slice(0, 10), cle.slice(-10));
+    }
+    return s.replace(/[A-Za-z0-9._~+/=-]{8,}/g, (jeton) => {
+      if (bouts.some((b) => jeton.includes(b))) return '[CLE]';
+      if (/^eyJ[A-Za-z0-9_-]{8,}\./.test(jeton)) return '[JWT]';
+      if (/^(?:sk|pk|rk|gsk|xai|sess|key)[-_][A-Za-z0-9_-]{8,}/i.test(jeton)) return '[CLE]';
+      if (/^[A-Fa-f0-9]{32,}$/.test(jeton)) return '[HEX]';
+      if (jeton.length >= 32) return '[LONG]';
+      return jeton;
+    });
+  }
+
+  /**
+   * Le texte d'un message, ou qu'il soit range.
+   *
+   * ⚠ UN TABLEAU DE BLOCS VIDE EST « TRUTHY ».
+   * `content: []` passe un test de verite et faisait prendre une reponse muette
+   * pour une reponse valable — le faux positif exactement symetrique de ceux
+   * qu'on vient de corriger.
+   */
+  private static texteDuMessage(msg: any): string {
+    if (!msg || typeof msg !== 'object') return '';
+    const brut = msg.content ?? msg.reasoning_content ?? msg.reasoning;
+    if (typeof brut === 'string') return brut.trim();
+    if (Array.isArray(brut)) {
+      return brut.map((b) => (typeof b === 'string' ? b : b?.text || '')).join(' ').trim();
+    }
+    return '';
+  }
+
   private async essayerVision(
     nom: string, url: string, cle: string, modele: string,
   ): Promise<string> {
@@ -159,22 +210,36 @@ export class MlService implements OnModuleInit {
         signal: ctrl.signal,
       });
       clearTimeout(to);
+
+      // ⚠ LE CORPS EST LU UNE SEULE FOIS, EN TEXTE.
+      // `await r.json()` CONSOMME le flux : apres lui, le corps brut n'existe
+      // plus. C'est pour cela que le diagnostic de MiniMax se reduisait a
+      // « champs : » suivi de rien — le corps existait, on venait de le jeter.
+      // Le lire en texte permet aussi de rendre lisible une reponse non-JSON
+      // (page d'erreur d'une passerelle) au lieu d'un « injoignable » trompeur.
+      const brut = await r.text().catch(() => '');
+      let j: any = null;
+      try { j = JSON.parse(brut); } catch { /* corps non-JSON : garde tel quel */ }
+
       if (r.ok) {
-        const j: any = await r.json();
-        const msg = j?.choices?.[0]?.message || {};
-        // Les modeles a raisonnement rangent leur texte ailleurs que dans
-        // `content` — chercher ce seul champ les declarait muets a tort.
-        const t = msg.content || msg.reasoning_content || msg.reasoning
-          || j?.output?.text || j?.reply;
-        if (t) return 'REPOND A UNE IMAGE';
-        // Vide malgre un budget confortable : on rend la forme de la reponse
-        // plutot qu'un verdict. « Vide » sans explication n'aide personne.
-        return 'reponse vide — champs : ' + Object.keys(msg).join(',');
+        const t = MlService.texteDuMessage(j?.choices?.[0]?.message)
+          || (typeof j?.output?.text === 'string' ? j.output.text : '')
+          || (typeof j?.reply === 'string' ? j.reply : '');
+        if (t.trim()) return 'REPOND A UNE IMAGE';
+
+        // Vide malgre un budget confortable : on rend la FORME de la reponse.
+        // MiniMax repond typiquement 200 avec `{"base_resp":{"status_code":...}}`
+        // et aucun `choices` — regarder ce seul champ, c'etait chercher au seul
+        // endroit ou il n'y avait rien.
+        const racine = j ? Object.keys(j).join(',') : 'corps non-JSON';
+        const fin = j?.choices?.[0]?.finish_reason;
+        return `reponse vide (HTTP 200) — racine: ${racine}`
+          + (fin ? ` — fin: ${fin}` : '')
+          + ` — corps: ${MlService.masquerSecrets(brut, cle).slice(0, 300)}`;
       }
       // Le message du fournisseur dit souvent POURQUOI — modele inconnu, pas de
-      // droit multimodal, quota. On le garde, tronque.
-      const detail = (await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120);
-      return `refus HTTP ${r.status} : ${detail}`;
+      // droit multimodal, quota. Masque : il peut recopier la cle envoyee.
+      return `refus HTTP ${r.status} : ${MlService.masquerSecrets(brut, cle).slice(0, 200)}`;
     } catch (e: any) {
       return `injoignable (${String(e?.message || '').slice(0, 40)})`;
     }
@@ -225,8 +290,8 @@ export class MlService implements OnModuleInit {
         if (t) return 'REPOND A UNE IMAGE';
         return 'reponse vide — cles : ' + Object.keys(j?.result || j || {}).join(',');
       }
-      const detail = (await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120);
-      return `refus HTTP ${r.status} : ${detail}`;
+      const detail = MlService.masquerSecrets(await r.text().catch(() => ''), jeton);
+      return `refus HTTP ${r.status} : ${detail.slice(0, 200)}`;
     } catch (e: any) {
       return `injoignable (${String(e?.message || '').slice(0, 40)})`;
     }
@@ -255,8 +320,8 @@ export class MlService implements OnModuleInit {
         const j: any = await r.json();
         return String(j?.response || '').trim() ? 'REPOND A UNE IMAGE' : 'reponse vide';
       }
-      const detail = (await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120);
-      return `refus HTTP ${r.status} : ${detail}`;
+      const detail = MlService.masquerSecrets(await r.text().catch(() => ''));
+      return `refus HTTP ${r.status} : ${detail.slice(0, 200)}`;
     } catch (e: any) {
       return `injoignable (${String(e?.message || '').slice(0, 40)})`;
     }
@@ -290,8 +355,9 @@ export class MlService implements OnModuleInit {
         const j: any = await r.json();
         return j?.content?.[0]?.text ? 'REPOND A UNE IMAGE' : 'reponse vide';
       }
-      const detail = (await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120);
-      return `refus HTTP ${r.status} : ${detail}`;
+      // Anthropic recopie volontiers la cle dans ses erreurs d'authentification.
+      const detail = MlService.masquerSecrets(await r.text().catch(() => ''), cle);
+      return `refus HTTP ${r.status} : ${detail.slice(0, 200)}`;
     } catch (e: any) {
       return `injoignable (${String(e?.message || '').slice(0, 40)})`;
     }
