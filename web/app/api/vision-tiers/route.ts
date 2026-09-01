@@ -15,12 +15,19 @@
 //
 // Aucune cle ne transite : la reponse ne contient que des noms de modeles.
 import { NextResponse } from 'next/server';
+import { requireAdmin, unauthorized } from '../../../lib/adminGuard';
 
 export const dynamic = 'force-dynamic';
 
-const API = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'https://api.salorie.com';
+// BACKEND_URL : la meme variable que les autres relais d'admin. J'avais pris
+// NEXT_PUBLIC_API_URL, qui n'est pas celle que le serveur renseigne.
+const API = process.env.BACKEND_URL || 'https://api.salorie.com';
 
 export async function GET() {
+  // Le middleware refuse deja toute route d'API hors perimetre, mais les autres
+  // relais d'admin doublent ce controle ici. Deux verrous valent mieux qu'un
+  // quand la route porte la cle d'admin du backend.
+  const _admin = await requireAdmin(); if (!_admin) return unauthorized();
   try {
     const h: Record<string, string> = {};
     if (process.env.ADMIN_API_KEY) h['x-admin-key'] = process.env.ADMIN_API_KEY;

@@ -136,6 +136,11 @@ export function libelleRole(role: Role): string {
  */
 const API_PERIMETRES: { prefixe: string; scope: Scope; superadminSeul?: boolean }[] = [
   { prefixe: '/api/ai-keys', scope: 'apercu', superadminSeul: true },
+  // Etat des paliers de vision : quels fournisseurs repondront vraiment. Meme
+  // perimetre que la page des cles, dont elle est le prolongement — elle revele
+  // quels fournisseurs sont configures, ce qui n'a pas a sortir du cercle des
+  // superadmins.
+  { prefixe: '/api/vision-tiers', scope: 'apercu', superadminSeul: true },
   { prefixe: '/api/admins', scope: 'apercu', superadminSeul: true },
   { prefixe: '/api/achievements', scope: 'medailles' },
   { prefixe: '/api/medals-history', scope: 'medailles' },
