@@ -23,7 +23,7 @@ export const dynamic = 'force-dynamic';
 // NEXT_PUBLIC_API_URL, qui n'est pas celle que le serveur renseigne.
 const API = process.env.BACKEND_URL || 'https://api.salorie.com';
 
-export async function GET() {
+export async function GET(req: Request) {
   // Le middleware refuse deja toute route d'API hors perimetre, mais les autres
   // relais d'admin doublent ce controle ici. Deux verrous valent mieux qu'un
   // quand la route porte la cle d'admin du backend.
@@ -36,8 +36,13 @@ export async function GET() {
     // quinzaine de secondes. Sans borne, un fournisseur qui ne repond jamais
     // ferait pendre la page indefiniment.
     const ctl = new AbortController();
-    const to = setTimeout(() => ctl.abort(), 30000);
-    const r = await fetch(`${API}/ml/vision-tiers`, {
+    // Un essai reel interroge dix fournisseurs : la borne monte en consequence.
+    const to = setTimeout(() => ctl.abort(), essai ? 90000 : 30000);
+    //  demande un essai REEL : une image de 1x1 pixel envoyee a chaque
+    // fournisseur. Seule facon de distinguer « le modele existe » de « le modele
+    // sait voir ». Facturable au jeton pres, donc jamais par defaut.
+    const essai = new URL(req.url).searchParams.get('essai') === '1' ? '?essai=1' : '';
+    const r = await fetch(`${API}/ml/vision-tiers${essai}`, {
       headers: h, cache: 'no-store', signal: ctl.signal,
     });
     clearTimeout(to);
