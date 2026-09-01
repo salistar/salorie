@@ -883,9 +883,18 @@ export class MlService implements OnModuleInit {
     const catalogue: Array<{ nom: string; fn: () => Promise<{ text: string; engine: string } | null>; cout: number }> = [
       // Auto-heberge : aucun appel sortant, aucune facture.
       { nom: 'food4k', fn: tryFood4k, cout: COUT.gratuit },
-      { nom: 'ollama', fn: tryOllama, cout: COUT.gratuit },
       // Cloudflare Workers AI : palier gratuit genereux (~10 000 appels/jour).
       { nom: 'cloudflare', fn: tryCloudflare, cout: COUT.gratuit },
+      // ⚠ OLLAMA APRES CLOUDFLARE, MEME S ILS SONT TOUS DEUX GRATUITS.
+      // A cout egal, c est la LATENCE qui tranche : Ollama infere sur CPU en
+      // plusieurs SECONDES, Cloudflare sur GPU en centaines de millisecondes.
+      // Le placer devant ferait attendre chaque scan que Cloudflare aurait servi
+      // en un instant. Il est le dernier recours gratuit, pas le premier.
+      //
+      // Le tri par cout seul l avait mis DEUXIEME, parce qu il precedait
+      // Cloudflare dans ce tableau — et le commentaire du docker-compose disait
+      // deja l inverse. Deux verites contradictoires dans le meme depot.
+      { nom: 'ollama', fn: tryOllama, cout: COUT.gratuit },
       // Payants. Mesure du 31/08/2026 : OpenAI gpt-4o-mini rend 65,5 % de bonnes
       // reponses sur les cas difficiles, Mistral small 14,0 %. Le rang suit donc
       // le cout, mais un palier mesure mauvais ne remonte pas pour autant.

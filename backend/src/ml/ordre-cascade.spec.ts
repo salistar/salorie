@@ -25,8 +25,8 @@
 const COUT = { gratuit: 0, bonMarche: 1, cher: 2 };
 const CATALOGUE = [
   { nom: 'food4k', cout: COUT.gratuit },
-  { nom: 'ollama', cout: COUT.gratuit },
   { nom: 'cloudflare', cout: COUT.gratuit },
+  { nom: 'ollama', cout: COUT.gratuit },
   { nom: 'zhipu', cout: COUT.bonMarche },
   { nom: 'moonshot', cout: COUT.bonMarche },
   { nom: 'openai', cout: COUT.bonMarche },
@@ -93,6 +93,12 @@ describe("la regle : toujours du gratuit vers le payant", () => {
       // changement. Derivee du cout, elle ne peut plus l'etre.
       expect(cout(o[i])).toBeGreaterThanOrEqual(cout(o[i - 1]));
     }
+  });
+
+  // ⚠ A COUT EGAL, LA LATENCE TRANCHE.
+  it('appelle Cloudflare (GPU) avant Ollama (CPU), tous deux gratuits', () => {
+    const o = ordreParCout();
+    expect(o.indexOf('cloudflare')).toBeLessThan(o.indexOf('ollama'));
   });
 
   it('commence par les paliers sans facture', () => {
