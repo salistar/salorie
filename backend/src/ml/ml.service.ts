@@ -119,8 +119,14 @@ export class MlService implements OnModuleInit {
           palier: t.nom, cle: 'presente', modele: t.modele,
           etat: present ? 'pret' : 'MODELE INTROUVABLE',
           modelesVus: ids.length,
-          suggestions: present ? undefined
-            : ids.filter((id) => /vision|vl|multimodal|scout|maverick|4o|sonnet|glm-4v/i.test(id)).slice(0, 4),
+          // ⚠ ON REND LA LISTE ENTIERE, PAS UN FILTRE.
+          // Une premiere version ne proposait que les noms contenant « vision »,
+          // « vl » ou similaires. Chez Zhipu, Moonshot et xAI, ce filtre n a RIEN
+          // trouve alors que ces fournisseurs ont bien des modeles multimodaux :
+          // ils ne le disent simplement pas dans le nom. Un filtre qui ne connait
+          // pas les conventions de nommage de demain cache ce qu il devrait
+          // montrer — mieux vaut la liste brute et un humain qui choisit.
+          modeles: present ? undefined : ids.slice(0, 30),
         };
       } catch (e: any) {
         return { palier: t.nom, cle: 'presente', modele: t.modele, etat: `injoignable (${String(e?.message || '').slice(0, 40)})` };
