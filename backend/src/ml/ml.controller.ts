@@ -128,6 +128,15 @@ export class MlController {
   /** Télémétrie cascade vision : usage par tier + taux cloud payant / cache (admin).
    *  Protégé par AdminKeyGuard (en-tête x-admin-key) EN PLUS de l'auth Firebase. */
   @UseGuards(AdminKeyGuard)
+  /** Chaque palier de vision repondra-t-il vraiment ? Interroge chaque
+   *  fournisseur pour verifier que le modele qu'on appellera existe encore.
+   *  Ne renvoie aucune cle — seulement des noms de modeles. */
+  @UseGuards(AdminKeyGuard)
+  @Get('vision-tiers')
+  visionTiers() {
+    return this.ml.sonderPaliersVision();
+  }
+
   @Get('cascade-stats')
   cascadeStats() {
     return this.ml.getCascadeStats();
