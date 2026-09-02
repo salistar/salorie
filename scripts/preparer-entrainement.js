@@ -34,16 +34,36 @@ const SORTIE = process.argv[2]
 
 const SOURCES = [
   {
-    dossier: 'corpus-ia',
-    nom: 'Food-101 (ETH Zurich)',
+    // ⚠ LA PARTITION D'ENTRAINEMENT, PAS CELLE DE VALIDATION.
+    // `corpus-ia` porte la partition de validation, celle qu'interrogent
+    // `mesurer-reconnaissance.js` et `valider_modele.py`. L'inclure ici
+    // reviendrait a donner a l'eleve le sujet de l'examen : le modele afficherait
+    // un score flatteur et faux. Les deux corpus ne se croisent jamais.
+    dossier: 'corpus-entrainement',
+    nom: 'Food-101 (ETH Zurich, partition train)',
     fiabilite: 'reference',
-    note: 'etiquettes du jeu de donnees, lues et non deduites',
+    note: 'etiquettes du jeu de donnees, lues et non deduites ; disjointes de la validation',
   },
   {
     dossier: 'corpus-maghreb',
     nom: 'Wikimedia Commons',
     fiabilite: 'moyenne',
     note: 'rangees par des contributeurs ; provenance `categorie` plus sure que `recherche`',
+  },
+  {
+    // ⚠ LICENCE INCONNUE — LE SEUL VOLUME REEL TROUVE POUR LE MAROCAIN.
+    // Trois depots Hugging Face, aucun ne declarant de licence. Retenus le
+    // 01/09/2026 en connaissance de cause, apres avoir mesure les alternatives :
+    // Open Food Facts est hors domaine (packshots de produits emballes),
+    // Openverse n'apporte que 40 a 80 images nouvelles et ZERO sur neuf des
+    // classes rares, Wikipedia recoupe largement Commons.
+    //
+    // Ils vivent dans leur PROPRE dossier : les retirer, c'est supprimer un
+    // dossier, pas refaire le jeu.
+    dossier: 'corpus-maghreb-hf',
+    nom: 'Hugging Face (3 depots marocains)',
+    fiabilite: 'LICENCE INCONNUE',
+    note: 'aucun tag de licence dans les depots source — risque juridique assume',
   },
 ];
 
@@ -123,6 +143,22 @@ function main() {
     ...SOURCES.filter((s) => parSource[s.nom]).map(
       (s) => `| ${s.nom} | ${parSource[s.nom]} | ${s.fiabilite} — ${s.note} |`),
     '',
+    ...(parSource['Hugging Face (3 depots marocains)'] ? [
+      '## ⚠ Licence : une partie de ce jeu n\'en a pas',
+      '',
+      `${parSource['Hugging Face (3 depots marocains)']} images viennent de trois depots`,
+      'Hugging Face qui **ne declarent aucune licence**. Elles sont le seul volume reel',
+      'trouve pour la cuisine marocaine, et ont ete retenues en connaissance de cause.',
+      '',
+      'Elles sont reconnaissables a leur prefixe `corpus-maghreb-hf__` et vivent dans',
+      'leur propre dossier source : les retirer ne demande pas de refaire le jeu.',
+      '',
+      'Les alternatives ont ete mesurees et sont plus maigres : Open Food Facts est',
+      'hors domaine (photos de produits emballes), Openverse n\'apporte que 40 a 80',
+      'images nouvelles et **aucune** sur neuf des classes rares, Wikipedia recoupe',
+      'largement Wikimedia Commons.',
+      '',
+    ] : []),
     '## ⚠ Ce que ce jeu ne permet pas',
     '',
     `Il compte ${copiees} images pour ${classes.length} classes. **Entrainer un classifieur`,
