@@ -123,3 +123,10 @@ corpus-ia/
 # Corpus de reference cuisine marocaine/MENA (Wikimedia Commons),
 # reconstructible par scripts/construire-corpus-maghreb.js
 corpus-maghreb/
+
+# Corpus d entrainement Food-101 (partition train), reconstructible par
+# scripts/construire-corpus.js --split train
+corpus-entrainement/
+
+# Corpus marocain issu de Hugging Face — LICENCE INCONNUE, cf. le manifeste.
+corpus-maghreb-hf/
