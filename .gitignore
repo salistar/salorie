@@ -130,3 +130,40 @@ corpus-entrainement/
 
 # Corpus marocain issu de Hugging Face — LICENCE INCONNUE, cf. le manifeste.
 corpus-maghreb-hf/
+
+# ── Corpus et artefacts d'entrainement (septembre 2026) ───────────────────────
+# ⚠ 8,3 Go sur 49 000 fichiers. Le depot pese deja 121 Mo ; les y verser le
+# rendrait inclonable. Tout est RECONSTRUCTIBLE par la chaine :
+#     python food4k/chaine.py
+#
+# Ce qui reste versionne, et pourquoi : le modele lui-meme
+# (food4k/food_salorie.tflite et assets/models/food_salorie.tflite, memes
+# octets), ses deux listes d'etiquettes, et les mesures qui ont justifie chaque
+# choix (socles.json, resolutions.json). Sans elles, on refait dans six mois les
+# comparaisons deja faites — et on les refait peut-etre moins bien.
+corpus-maghreb-plus/
+corpus-web/
+
+# Le jeu filtre : une COPIE de salorie-entrainement, refaite a chaque
+# entrainement par entrainer_modele.py. 33 668 fichiers, 3,7 Go.
+food4k/_jeu_filtre/
+
+# Les candidats. Seul celui qui gagne la comparaison est deploye, et c'est
+# alors food4k/food_salorie.tflite qui porte le resultat.
+food4k/modele_entraine/
+food4k/modele_v2/
+food4k/modele_v3/
+food4k/modele_v*/
+
+# Les sauvegardes ecrites par deployer_modele.py avant chaque bascule. Elles
+# servent a revenir en arriere EN LOCAL ; l'historique git fait deja ce travail
+# pour le depot, et 6,4 Mo par bascule s'y accumuleraient pour rien.
+*.precedent
+
+# Verdicts par image : reecrits a chaque passage des controles, propres a une
+# machine et a un instant. Les CONCLUSIONS sont dans les commentaires du code.
+**/verdicts-aliment.json
+**/coherence.json
+food4k/rapport-fuite.json
+food4k/comparaison.json
+food4k/courbe-confiance.json

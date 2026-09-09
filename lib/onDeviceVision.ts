@@ -1,9 +1,15 @@
 // Vision ON-DEVICE partagée (tier 1 de la cascade scan : ON-DEVICE → LOCAL DB → GEMINI).
 // Classifieur on-device partagé (utilisé par scan-analysis, tier 1 de la cascade).
-// Classification TFLite (food_salorie : EfficientNetB0, entree 224x224 float32, SORTIE 172
-// CLASSES — verifie le 13 aout 2026 en chargeant le .tflite, pas d'apres un commentaire.
-// L'ancien commentaire annoncait « 70 classes MobileNetV2 » et contredisait
-// foodSalorieLabels.ts ; c'est bien FOOD_SALORIE_LABELS (172 entrees) qui correspond.)
+// Classification TFLite (food_salorie : MobileNetV3-Large, entree 224x224 float32,
+// SORTIE 170 CLASSES — verifie le 08/09/2026 en chargeant le .tflite, pas d'apres
+// un commentaire. Le code ci-dessous lit de toute facon la forme dans le modele :
+// changer de modele ne demande pas de toucher a ce fichier.
+//
+// ⚠ 170 ET NON PLUS 172. Deux classes ont ete ecartees a l'entrainement faute
+// d'images — `bissara` (18) et `sfenj` (9). Elles ne disparaissent PAS de
+// l'application : le classifieur embarque se tait, et la cascade les traite au
+// palier suivant (serveur, Cloudflare, fournisseurs). Un palier qui se tait
+// laisse passer ; un palier qui repond faux avec assurance ARRETE la cascade.
 // + lookup macros hors-ligne dans assets/data/local-foods.json (FR/AR + k/p/c/f).
 import * as ImageManipulator from 'expo-image-manipulator';
 import { decode as jpegDecode } from 'jpeg-js';
@@ -25,6 +31,18 @@ export type Pred = { label: string; score: number };
  * (`python food4k/valider_modele.py`) :
  *   justesse globale               57,4 %
  *   justesse de ce qui est SERVI   71,9 %
+ *
+ * ⚠ MODELE REMPLACE LE 08/09/2026, et voici la comparaison qui l'a decide —
+ * les DEUX modeles sur LES MEMES 437 images (`food4k/comparer_modeles.py`) :
+ *                        repond   justes   FAUSSES
+ *   nouveau (170 cl.)      189      95        94
+ *   precedent (172 cl.)    289      87       202
+ * Plus de bonnes reponses, et moins de la MOITIE des mauvaises. Il se tait deux
+ * fois plus souvent, et c'est le gain : ce qu'il decline monte au palier suivant,
+ * plus juste que lui. Un palier embarque qui repond faux avec assurance est le
+ * pire cas, puisqu'il empeche la cascade de continuer.
+ *
+ * L'ancien modele est conserve a cote, en `.precedent`.
  *
  * Ce drapeau reste : il donne un endroit unique pour couper le palier si un
  * futur modele se degrade, et `valider_modele.py` dit quand il le faut.

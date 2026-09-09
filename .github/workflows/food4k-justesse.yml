@@ -64,6 +64,15 @@ jobs:
             exit 1
           fi
 
+      # LE MODELE REND DES INDICES ; LES ETIQUETTES LEUR DONNENT UN SENS.
+      # food4k/label_map_172.json sert le serveur, lib/foodSalorieLabels.ts part
+      # dans l'APK. Un decalage d'UN SEUL RANG entre les deux fait dire
+      # « harira » a un tajine, sans lever la moindre erreur : la mesure de
+      # justesse ci-dessous ne lit QUE le fichier du serveur et ne verrait rien.
+      # C'est exactement le genre de defaut qui survit a tous les tests.
+      - name: Verifier que les deux listes d etiquettes concordent rang pour rang
+        run: node scripts/verifier-etiquettes.js
+
       # La barre : la justesse de ce qui est SERVI, c'est-a-dire des seules
       # reponses qui atteignent l'utilisateur.
       - name: Mesurer la justesse

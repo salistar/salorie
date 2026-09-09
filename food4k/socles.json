@@ -1,0 +1,42 @@
+{
+ "par_classe": 30,
+ "classes": 172,
+ "resultats": [
+  {
+   "socle": "EfficientNetB0",
+   "justesse": 0.4912,
+   "top5": 0.7318,
+   "dimensions": 1280
+  },
+  {
+   "socle": "EfficientNetV2B0",
+   "justesse": 0.4887,
+   "top5": 0.7175,
+   "dimensions": 1280
+  },
+  {
+   "socle": "MobileNetV3Large",
+   "justesse": 0.482,
+   "top5": 0.7075,
+   "dimensions": 960
+  },
+  {
+   "socle": "DenseNet121",
+   "justesse": 0.4593,
+   "top5": 0.684,
+   "dimensions": 1024
+  },
+  {
+   "socle": "MobileNetV2",
+   "justesse": 0.4124,
+   "top5": 0.6563,
+   "dimensions": 1280
+  },
+  {
+   "socle": "ResNet50V2",
+   "justesse": 0.3722,
+   "top5": 0.6119,
+   "dimensions": 2048
+  }
+ ]
+}

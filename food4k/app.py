@@ -43,7 +43,12 @@ STD = np.array([0.229, 0.224, 0.225], np.float32)
 # sans lever la moindre erreur.
 classes = json.load(open(os.path.join(HERE, 'label_map_172.json'), encoding='utf-8'))['classes']
 # Nutrition fusionnee : 101 entrees de food101_nutrition + 70 de assets/data/local-foods.json
-# (la base hors-ligne de l'app, 653 entrees FR/AR). 171 des 172 classes sont couvertes.
+# (la base hors-ligne de l'app, 653 entrees FR/AR).
+# Couverture VERIFIEE le 07/09/2026 : 172 classes sur 172, en nutrition comme en
+# libelles. Ce commentaire annoncait « 171 des 172 » ; le trou avait ete comble
+# sans que la phrase soit reprise. `food4k/deployer_modele.py` refait ce controle
+# a chaque deploiement, pour qu'un modele ne puisse pas annoncer un plat dont
+# l'application n'aurait rien a montrer.
 NUTRI = json.load(open(os.path.join(HERE, 'nutrition_172.json'), encoding='utf-8'))
 NAMES = json.load(open(os.path.join(HERE, 'names_172.json'), encoding='utf-8'))  # {label:{en,fr,ar}}
 

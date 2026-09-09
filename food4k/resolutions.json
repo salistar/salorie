@@ -1,0 +1,23 @@
+{
+ "par_classe": 25,
+ "resultats": [
+  {
+   "cote": 224,
+   "justesse": 0.4641,
+   "top5": 0.7229,
+   "ms_par_image": 14.93
+  },
+  {
+   "cote": 288,
+   "justesse": 0.4942,
+   "top5": 0.7529,
+   "ms_par_image": 29.61
+  },
+  {
+   "cote": 320,
+   "justesse": 0.4903,
+   "top5": 0.7461,
+   "ms_par_image": 32.31
+  }
+ ]
+}

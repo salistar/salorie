@@ -1,5 +1,19 @@
-// Labels du modèle on-device Salorie v5 (food_salorie.tflite) — 172 classes.
-// EfficientNetB0, MFOOD-70 + othmanehilal + Food-101, doublons fusionnés. val_accuracy ≈ 86%.
+// Labels du modele on-device Salorie (food_salorie.tflite) — 172 classes.
+// ⚠ CE FICHIER EST GENERE par food4k/deployer_modele.py. Ne pas le modifier
+//   a la main : il doit rester rang pour rang identique a
+//   food4k/label_map_172.json, sinon un decalage d UN rang fait dire
+//   « harira » a un tajine, sans aucune erreur visible.
+//
+// Mesure comparative face au modele precedent, sur LES MEMES images
+// (corpus-ia + corpus-maghreb, jamais vus a l apprentissage) :
+//     ce modele        sert 32.5 % des photos, dont 71.8 % justes
+//     le precedent     servait 28.4 %, dont 62.9 % justes
+// « Sert » = repond au-dessus du seuil de confiance ; en dessous, il se
+// tait et la cascade prend le relais. Un modele qui sert moins mais plus
+// juste est un bon echange : le cout est en latence, pas en justesse.
+//
+// Le chiffre precedemment inscrit ici annoncait « ≈ 86 % » ; il venait de
+// l entrainement d origine, sur ses propres donnees, et d aucune mesure.
 export const FOOD_SALORIE_LABELS: string[] = [
   "amlou",
   "apple",

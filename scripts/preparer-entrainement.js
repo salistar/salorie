@@ -39,16 +39,35 @@ const SOURCES = [
     // `mesurer-reconnaissance.js` et `valider_modele.py`. L'inclure ici
     // reviendrait a donner a l'eleve le sujet de l'examen : le modele afficherait
     // un score flatteur et faux. Les deux corpus ne se croisent jamais.
+    //
+    // DEUX jeux de mesure existent, et aucun n'entre ici : `corpus-ia` pour
+    // l'international, `corpus-maghreb` pour le marocain. `food4k/verifier_fuite.py`
+    // verifie la separation PERCEPTUELLEMENT (dHash) et non par les octets : la
+    // meme photo recompressee a un SHA-256 different et passerait sans lui.
     dossier: 'corpus-entrainement',
     nom: 'Food-101 (ETH Zurich, partition train)',
     fiabilite: 'reference',
     note: 'etiquettes du jeu de donnees, lues et non deduites ; disjointes de la validation',
   },
   {
-    dossier: 'corpus-maghreb',
-    nom: 'Wikimedia Commons',
-    fiabilite: 'moyenne',
-    note: 'rangees par des contributeurs ; provenance `categorie` plus sure que `recherche`',
+    // ⚠⚠ `corpus-maghreb` N'EST PLUS UNE SOURCE D'ENTRAINEMENT. ⚠⚠
+    // Constate le 02/09/2026 : quatre scripts de mesure le lisent comme jeu de
+    // reference de la cuisine marocaine — diagnostic_maghreb.py,
+    // precision_par_famille.py, signal_hors_domaine.py, et valider_modele.py
+    // via --corpus. Il etait EN MEME TEMPS copie ici pour apprendre.
+    //
+    // Entrainer dessus puis mesurer dessus donne un chiffre flatteur et faux,
+    // sur la moitie du sujet qui compte le plus. C'est l'erreur du 29/08/2026
+    // dans une autre robe : croire une verite terrain qu'on a soi-meme
+    // contaminee. Il reste donc dehors, et il est le SEUL juge du marocain.
+    //
+    // Sa remplacante pour apprendre : `corpus-maghreb-plus`, moissonnee avec
+    // 206 requetes au lieu de 71 et deduplicee — par les octets a la moisson,
+    // puis perceptuellement par food4k/verifier_fuite.py contre CE corpus-ci.
+    dossier: 'corpus-maghreb-plus',
+    nom: 'Wikimedia Commons + Openverse (moisson elargie)',
+    fiabilite: 'variable — inscrite image par image',
+    note: '`categorie` > `recherche-nom` > `recherche-descriptive` (etiquette supposee)',
   },
   {
     // ⚠ LICENCE INCONNUE — LE SEUL VOLUME REEL TROUVE POUR LE MAROCAIN.
@@ -64,6 +83,27 @@ const SOURCES = [
     nom: 'Hugging Face (3 depots marocains)',
     fiabilite: 'LICENCE INCONNUE',
     note: 'aucun tag de licence dans les depots source — risque juridique assume',
+  },
+  {
+    // ⚠⚠ AUCUNE LICENCE, ET AUCUNE ETIQUETTE VERIFIEE. ⚠⚠
+    // Images de recherche web, collectees le 05/09/2026 apres avoir mesure que
+    // les sources sous licence ne couvraient pas 44 des 71 classes marocaines
+    // (Openverse annonce 4 images au monde pour `maakouda`, 9 pour `rfissa`).
+    //
+    // Deux risques distincts, et il faut les nommer separement :
+    //   JURIDIQUE  ces photos appartiennent a leurs auteurs, et la collecte
+    //              automatisee contrevient aux conditions des moteurs.
+    //   SCIENTIFIQUE  la seule caution de l'etiquette est qu'un moteur a rendu
+    //              l'image pour la requete. C'est la verite terrain la plus
+    //              faible du projet — plus faible qu'une categorie Wikimedia,
+    //              rangee par un humain.
+    //
+    // Le corpus vit dans SON PROPRE DOSSIER et ses fichiers portent le prefixe
+    // `corpus-web__` : le retirer, c'est supprimer un dossier.
+    dossier: 'corpus-web',
+    nom: 'Recherche d images web',
+    fiabilite: 'AUCUNE LICENCE — etiquettes non verifiees',
+    note: 'la seule caution est qu un moteur a rendu l image pour la requete',
   },
 ];
 
@@ -143,20 +183,32 @@ function main() {
     ...SOURCES.filter((s) => parSource[s.nom]).map(
       (s) => `| ${s.nom} | ${parSource[s.nom]} | ${s.fiabilite} — ${s.note} |`),
     '',
-    ...(parSource['Hugging Face (3 depots marocains)'] ? [
+    ...((parSource['Hugging Face (3 depots marocains)'] || parSource['Recherche d images web']) ? [
       '## ⚠ Licence : une partie de ce jeu n\'en a pas',
       '',
-      `${parSource['Hugging Face (3 depots marocains)']} images viennent de trois depots`,
-      'Hugging Face qui **ne declarent aucune licence**. Elles sont le seul volume reel',
-      'trouve pour la cuisine marocaine, et ont ete retenues en connaissance de cause.',
+      ...(parSource['Hugging Face (3 depots marocains)'] ? [
+        `**${parSource['Hugging Face (3 depots marocains)']} images** viennent de trois depots`,
+        'Hugging Face qui **ne declarent aucune licence**. Prefixe `corpus-maghreb-hf__`.',
+        '',
+      ] : []),
+      ...(parSource['Recherche d images web'] ? [
+        `**${parSource['Recherche d images web']} images** viennent d'une **recherche d'images web**.`,
+        'Elles n\'ont **aucune licence** — droits de leurs auteurs — et la collecte',
+        'automatisee contrevient aux conditions des moteurs. Prefixe `corpus-web__`.',
+        '',
+        'Leur etiquette est aussi la plus faible du jeu : sa **seule** caution est qu\'un',
+        'moteur a rendu l\'image pour la requete. Aucun humain ne les a rangees. Elles ne',
+        'sont utilisables qu\'apres `verifier_images.py` et `detecter_non_aliment.py`.',
+        '',
+      ] : []),
+      'Ces deux sources ont ete retenues **en connaissance de cause** le 05/09/2026,',
+      'apres avoir mesure que les sources sous licence ne couvraient pas 44 des 71',
+      'classes marocaines : Open Food Facts est hors domaine (produits emballes),',
+      'Openverse annonce **4** images au monde pour `maakouda`, 9 pour `rfissa`, 10',
+      'pour `sfenj`, et les 26 000 images alimentaires de Hugging Face sont levantines.',
       '',
-      'Elles sont reconnaissables a leur prefixe `corpus-maghreb-hf__` et vivent dans',
-      'leur propre dossier source : les retirer ne demande pas de refaire le jeu.',
-      '',
-      'Les alternatives ont ete mesurees et sont plus maigres : Open Food Facts est',
-      'hors domaine (photos de produits emballes), Openverse n\'apporte que 40 a 80',
-      'images nouvelles et **aucune** sur neuf des classes rares, Wikipedia recoupe',
-      'largement Wikimedia Commons.',
+      'Chaque source vit dans son propre dossier : les retirer, c\'est supprimer un',
+      'dossier, pas refaire le jeu.',
       '',
     ] : []),
     '## ⚠ Ce que ce jeu ne permet pas',
