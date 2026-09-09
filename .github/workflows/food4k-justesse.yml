@@ -19,6 +19,18 @@ on:
       - 'food4k/label_map*.json'
       - 'food4k/valider_modele.py'
       - 'assets/models/*.tflite'
+      # ⚠ AJOUTES LE 09/09/2026 : LE GARDE-FOU NE COUVRAIT PAS CE QU'IL GARDE.
+      # `verifier-etiquettes.js` existe pour attraper un decalage entre les
+      # listes du serveur et du telephone — un decalage d'UN rang fait dire
+      # « harira » a un tajine, sans lever d'erreur. Mais le declencheur ne
+      # regardait que les fichiers du serveur : editer `foodSalorieLabels.ts`
+      # a la main ne lancait AUCUN controle, et c'est precisement le geste que
+      # le controle doit surveiller. Un garde-fou qu'on peut contourner en
+      # touchant le fichier qu'il protege ne protege rien.
+      - 'lib/foodSalorieLabels.ts'
+      - 'lib/foodSalorieNoms.ts'
+      - 'food4k/names_172.json'
+      - 'scripts/verifier-etiquettes.js'
   workflow_dispatch:
 
 jobs:
