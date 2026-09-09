@@ -31,6 +31,47 @@ lien profond) : `docs/` et l'historique de `metro.config.js`. **C'est la seule
 manière de trouver certaines classes de défauts** — la section « Ce que la
 lecture de code ne trouve pas » plus bas dit pourquoi.
 
+### Trois pièges du build local, tous payés
+
+**1. L'ABI doit correspondre à la cible.** L'APK des releases est **arm64
+seul**. Sur un émulateur x86_64 il démarre puis meurt sur
+`couldn't find DSO to load: libreactnative.so` — SoLoader cherche l'ABI
+*primaire* du système, pas celle que l'émulateur sait traduire.
+
+```bash
+# émulateur                      # téléphone
+-PsalorieAbis=x86_64             -PsalorieAbis=arm64-v8a
+-PreactNativeArchitectures=x86_64 -PreactNativeArchitectures=arm64-v8a
+```
+
+Sans `-PreactNativeArchitectures`, Gradle compile le natif pour les **quatre**
+architectures : 17 minutes au lieu de 3.
+
+**2. `assembleRelease` échoue en local sans jeton Sentry.** Le bundle JS est
+bien produit, puis la tâche `..._SentryUpload_...` tente d'envoyer les source
+maps et sort en erreur — `SENTRY_AUTH_TOKEN` est un secret de CI. Treize
+minutes perdues pour un envoi qui n'a rien à faire sur un poste de dev :
+
+```bash
+SENTRY_DISABLE_AUTO_UPLOAD=true ./gradlew assembleRelease ...
+```
+
+**3. Un dev-client ne tient pas sur un téléphone d'entrée de gamme.** Sur un
+Galaxy A07 (3,6 Go dont 150 Mo libres), le bundle de développement — 26 Mo
+téléchargés puis analysés — provoque un `SocketTimeoutException` puis un ANR.
+Pour ces appareils, construire un **`assembleRelease` signé avec la clé
+debug** : le JS est embarqué, Metro devient inutile.
+
+```bash
+./gradlew assembleRelease -PsalorieAbis=arm64-v8a -PreactNativeArchitectures=arm64-v8a \
+  -PMYAPP_RELEASE_STORE_FILE=debug.keystore -PMYAPP_RELEASE_STORE_PASSWORD=android \
+  -PMYAPP_RELEASE_KEY_ALIAS=androiddebugkey -PMYAPP_RELEASE_KEY_PASSWORD=android
+```
+
+⚠️ Il porte alors la signature *debug* : c'est un binaire de test, jamais
+publiable — et il ne peut pas s'installer par-dessus une version signée avec la
+vraie clé (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`).
+
 ---
 
 # Audit complet — 9 septembre 2026
