@@ -52,10 +52,14 @@ function haversine(a: LatLng, b: LatLng): number {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-function buildHtml(center: LatLng, color: string): string {
+// ⚠ LE FOND ET L'ERREUR VIENNENT DU THEME, PAS D'UNE CONSTANTE.
+// Une WebView n'herite d'aucun contexte React Native : sans ces deux
+// valeurs passees a la main, la carte gardait un fond vert clair
+// (#e8f0e8) et un rouge vif (#b91c1c) au milieu d'un ecran sombre.
+function buildHtml(center: LatLng, color: string, fond: string, erreur: string): string {
   return `<!DOCTYPE html><html><head>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<style>html,body,#map{height:100%;width:100%;margin:0;padding:0;background:#e8f0e8}</style>
+<style>html,body,#map{height:100%;width:100%;margin:0;padding:0;background:${fond}}</style>
 </head><body><div id="map"></div>
 <script>
   var C = ${JSON.stringify(center)};
@@ -72,7 +76,7 @@ function buildHtml(center: LatLng, color: string): string {
     window.resetPath = function(){ window._path=[C]; window._poly.setPath(window._path); window._me.setPosition(C); window._map.setCenter(C); };
     if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage('ready');
   }
-  window.gm_authFailure=function(){ document.body.innerHTML='<div style="color:#b91c1c;font-family:sans-serif;padding:24px;text-align:center">Google Maps key error.</div>'; };
+  window.gm_authFailure=function(){ document.body.innerHTML='<div style="color:${erreur};font-family:sans-serif;padding:24px;text-align:center">Google Maps key error.</div>'; };
 </script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&callback=initMap"></script>
 </body></html>`;
@@ -364,7 +368,7 @@ export default function RunScreen() {
   const tok = useTokens();
   const bg = tok.bg;
 
-  const html = useMemo(() => (center ? buildHtml(center, k.accent) : ''), [center, k]);
+  const html = useMemo(() => (center ? buildHtml(center, k.accent, k.bg, k.danger) : ''), [center, k]);
 
   if (perm === 'denied') {
     return (

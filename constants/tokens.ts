@@ -98,6 +98,16 @@ export const CATEGORIES = {
   musculation: '#8b5cf6',
   activite: '#f43f5e',
   aliments: '#f59e0b',
+
+  // Ajoutee le 09/09/2026, pour la meme raison que les cinq precedentes : elle
+  // etait recopiee TROIS fois dans workout-plans.tsx (une par langue), seule
+  // couleur figee au milieu de trois voisines qui lisaient le theme.
+  //
+  // Elle reste hors du theme, et c'est deliberé : le theme n'expose que des
+  // couleurs SEMANTIQUES — succes, avertissement, danger, info — et les trois
+  // autres categories de seance les ont deja prises. Faire dire « succes » a
+  // « Mobilite » serait un mensonge plus couteux qu'un rose fige.
+  mobilite: '#db2777',
 } as const;
 
 /**

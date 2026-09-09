@@ -563,7 +563,7 @@ export default function ScanBarcodeScreen() {
 
                 {pendingState === 'badphoto' && (
                   <View style={[styles.warnBanner, { borderColor: k.warning, backgroundColor: k.warningSoft }]}>
-                    <AlertTriangle size={16} color="#B45309" />
+                    <AlertTriangle size={16} color={k.warning} />
                     <Text style={styles.warnBannerTxt}>{ox.badPhoto}</Text>
                   </View>
                 )}
@@ -710,7 +710,7 @@ export default function ScanBarcodeScreen() {
           {/* Alerte allergènes (OFF allergens_tags / allergens) */}
           {found.allergens && found.allergens.length > 0 && (
             <View style={styles.allergenBanner}>
-              <AlertTriangle size={16} color="#B45309" />
+              <AlertTriangle size={16} color={k.warning} />
               <Text style={styles.allergenTxt}>{allergensLabel}: {found.allergens.join(', ')}</Text>
             </View>
           )}

@@ -52,10 +52,14 @@ function haversine(a: LatLng, b: LatLng): number {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
+// ⚠ LE FOND ET L'ERREUR VIENNENT DU THEME, PAS D'UNE CONSTANTE.
+// Une WebView n'herite d'aucun contexte React Native : sans ces deux
+// valeurs passees a la main, la carte gardait un fond vert clair
+// (#e8f0e8) et un rouge vif (#b91c1c) au milieu d'un ecran sombre.
 function buildHtml(center: LatLng, k: Tokens): string {
   return `<!DOCTYPE html><html><head>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<style>html,body,#map{height:100%;width:100%;margin:0;padding:0;background:#e8f0e8}
+<style>html,body,#map{height:100%;width:100%;margin:0;padding:0;background:${k.bg}}
 .lbl{font-family:sans-serif;font-size:11px;font-weight:700;color:#111;background:rgba(255,255,255,.9);padding:1px 5px;border-radius:6px;transform:translateY(-6px)}</style>
 </head><body><div id="map"></div>
 <script>
@@ -101,7 +105,7 @@ function buildHtml(center: LatLng, k: Tokens): string {
     window.recenter = function(lat,lng){ window._map.panTo({lat:lat,lng:lng}); };
     if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage('ready');
   }
-  window.gm_authFailure=function(){ document.body.innerHTML='<div style="color:#b91c1c;font-family:sans-serif;padding:24px;text-align:center">Google Maps key error.</div>'; };
+  window.gm_authFailure=function(){ document.body.innerHTML='<div style="color:${k.danger};font-family:sans-serif;padding:24px;text-align:center">Google Maps key error.</div>'; };
 </script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&callback=initMap"></script>
 </body></html>`;

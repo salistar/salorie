@@ -94,8 +94,12 @@ const TXT: any = {
 };
 
 function verdictColor(score: number, k: Tokens) {
+  // Les quatre paliers viennent du theme. Le troisieme etait fige a '#84cc16'
+  // — un vert-jaune qui ne s'eclaircit pas en mode sombre, alors que ses trois
+  // voisins le font : la jauge changeait donc de logique au milieu de son
+  // echelle, ce qui est pire qu'une couleur simplement mal choisie.
   if (score >= 80) return k.success;
-  if (score >= 60) return '#84cc16';
+  if (score >= 60) return k.successSoft;
   if (score >= 40) return k.warning;
   return k.danger;
 }

@@ -104,15 +104,18 @@ const IDENTITE_LIGUES = {
     gold: '#D97706',
     diamond: '#0EA5E9',
   } as Record<Tier, string>,
-  promotion: '#22C55E',
-  relegation: '#EF4444',
 } as const;
 
 const leagueColors = IDENTITE_LIGUES;
 
 const TIER_COLOR: Record<Tier, string> = leagueColors.tier;
-const PROMO_COLOR = leagueColors.promotion;
-const RELEG_COLOR = leagueColors.relegation;
+// ⚠ `promotion` et `relegation` NE SONT PLUS des constantes de module.
+// Elles valaient '#22C55E' et '#EF4444' : un vert et un rouge figes qui ne
+// s'eclaircissent pas en mode sombre, alors que le reste de l'ecran le fait.
+// Elles sont desormais lues dans le composant, ou le theme est disponible.
+// Les couleurs de PALIER, elles, restent figees : bronze, argent, or et diamant
+// sont des couleurs de medaille, pas des couleurs d'interface — un or qui
+// changerait avec le theme ne serait plus de l'or.
 
 function formatLeft(ms: number, lang: Lang): string {
   const totalMin = Math.floor(ms / 60000);
@@ -141,7 +144,13 @@ export default function LeaguesScreen() {
   const text = k.text;
   const sub = k.textMuted;
   const card = k.surface;
-  const bg = isDark ? '#0f1419' : 'transparent';
+  // '#0f1419' etait la valeur EXACTE de `background` du theme sombre, recopiee
+  // a la main : deux sources pour une meme couleur, dont une qui ne suivrait
+  // pas un changement de palette. En clair on garde 'transparent', qui laisse
+  // voir le fond du parent — ce que `k.bg` (#fff en clair) ne ferait pas.
+  const bg = isDark ? k.bg : 'transparent';
+  const PROMO_COLOR = k.success;
+  const RELEG_COLOR = k.danger;
 
   const load = useCallback(async () => {
     if (!email) { setLoading(false); return; }

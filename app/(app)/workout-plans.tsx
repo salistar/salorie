@@ -53,7 +53,14 @@ const plansParLangue = (k: Tokens): Record<string, Plan[]> => ({
       { name: 'Deadlift', detail: '4 × 6' }, { name: 'Squat', detail: '4 × 8' }, { name: 'Bench Press', detail: '4 × 8' }, { name: 'Pull-up', detail: '4 × max' }, { name: 'Barbell Row', detail: '4 × 10' } ] },
     { emoji: '🧘', color: k.info, title: 'Core & Abs', level: 'All levels', duration: '20 min', focus: 'Core', met: 4.5, exercises: [
       { name: 'Plank', detail: '3 × 45s' }, { name: 'Crunches', detail: '3 × 20' }, { name: 'Russian Twist', detail: '3 × 30' }, { name: 'Hanging Knee Raise', detail: '3 × 12' } ] },
-    { emoji: '🤸', color: '#db2777', title: 'Mobility & Stretch', level: 'Recovery', duration: '15 min', focus: 'Flexibility', met: 2.8, exercises: [
+    // ⚠ Cette categorie gardait un rose fige ('#db2777') quand ses trois
+    // voisines lisaient deja le theme : en mode sombre, une carte sur quatre
+    // ne s'eclaircissait pas.
+    //
+    // Elle rejoint CATEGORIES, la palette DECORATIVE des jetons, ou vivent deja
+    // `musculation`, `course` et `exercice` — et ou une couleur peut rester
+    // fixe sans mentir sur un etat.
+    { emoji: '🤸', color: CATEGORIES.mobilite, title: 'Mobility & Stretch', level: 'Recovery', duration: '15 min', focus: 'Flexibility', met: 2.8, exercises: [
       { name: 'Dynamic warm-up', detail: '5 min' }, { name: 'Hip openers', detail: '4 min' }, { name: 'Hamstring stretch', detail: '3 min' }, { name: 'Shoulder mobility', detail: '3 min' } ] },
   ],
   fr: [
@@ -67,7 +74,7 @@ const plansParLangue = (k: Tokens): Record<string, Plan[]> => ({
       { name: 'Soulevé de terre', detail: '4 × 6' }, { name: 'Squat', detail: '4 × 8' }, { name: 'Développé couché', detail: '4 × 8' }, { name: 'Tractions', detail: '4 × max' }, { name: 'Rowing barre', detail: '4 × 10' } ] },
     { emoji: '🧘', color: k.info, title: 'Abdos & Gainage', level: 'Tous niveaux', duration: '20 min', focus: 'Ceinture abdo', met: 4.5, exercises: [
       { name: 'Gainage', detail: '3 × 45s' }, { name: 'Crunchs', detail: '3 × 20' }, { name: 'Russian Twist', detail: '3 × 30' }, { name: 'Relevé de genoux suspendu', detail: '3 × 12' } ] },
-    { emoji: '🤸', color: '#db2777', title: 'Mobilité & Étirements', level: 'Récupération', duration: '15 min', focus: 'Souplesse', met: 2.8, exercises: [
+    { emoji: '🤸', color: CATEGORIES.mobilite, title: 'Mobilité & Étirements', level: 'Récupération', duration: '15 min', focus: 'Souplesse', met: 2.8, exercises: [
       { name: 'Échauffement dynamique', detail: '5 min' }, { name: 'Ouverture des hanches', detail: '4 min' }, { name: 'Étirement ischios', detail: '3 min' }, { name: 'Mobilité épaules', detail: '3 min' } ] },
   ],
   ar: [
@@ -81,7 +88,7 @@ const plansParLangue = (k: Tokens): Record<string, Plan[]> => ({
       { name: 'رفعة ميتة', detail: '4 × 6' }, { name: 'سكوات', detail: '4 × 8' }, { name: 'بنش برس', detail: '4 × 8' }, { name: 'عقلة', detail: '4 × أقصى' }, { name: 'تجديف بار', detail: '4 × 10' } ] },
     { emoji: '🧘', color: k.info, title: 'البطن والثبات', level: 'كل المستويات', duration: '20 د', focus: 'عضلات الcore', met: 4.5, exercises: [
       { name: 'بلانك', detail: '3 × 45ث' }, { name: 'كرنش', detail: '3 × 20' }, { name: 'التواء روسي', detail: '3 × 30' }, { name: 'رفع الركبتين معلقًا', detail: '3 × 12' } ] },
-    { emoji: '🤸', color: '#db2777', title: 'مرونة وإطالة', level: 'استشفاء', duration: '15 د', focus: 'المرونة', met: 2.8, exercises: [
+    { emoji: '🤸', color: CATEGORIES.mobilite, title: 'مرونة وإطالة', level: 'استشفاء', duration: '15 د', focus: 'المرونة', met: 2.8, exercises: [
       { name: 'إحماء ديناميكي', detail: '5 د' }, { name: 'فتح الورك', detail: '4 د' }, { name: 'إطالة أوتار الركبة', detail: '3 د' }, { name: 'مرونة الكتف', detail: '3 د' } ] },
   ],
 });
