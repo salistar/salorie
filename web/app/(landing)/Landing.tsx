@@ -401,7 +401,16 @@ export default function Landing({
             </h1>
             <p style={{ fontSize: 19, color: "var(--muted-2)", lineHeight: 1.6, margin: "0 0 30px 0", maxWidth: 520 }}>{t.heroSub}</p>
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-              <a href={APK_URL} download style={{ ...btnPrimary, boxShadow: `0 10px 30px ${teinte(30)}` }}>
+              {/* ⚠ CE BOUTON POINTAIT SUR `APK_URL`, LE BUILD FIGE DU 9 JUIN 2026.
+                  C'est le bouton le PLUS VISIBLE du site, et le seul des trois
+                  liens de telechargement a n'avoir jamais recu la correction :
+                  la section du bas fait `meta?.apk?.url ?? APK_URL` depuis le
+                  27/08, celui-ci non.
+                  Pire que perime — la ligne suivante affichait deja la TAILLE du
+                  build courant a cote du lien vers l'ancien. Et l'asset v1.0.0
+                  existe toujours, donc le lien repond 200 : rien ne pouvait le
+                  signaler. Constate le 09/09/2026. */}
+              <a href={meta?.apk?.url ?? APK_URL} download style={{ ...btnPrimary, boxShadow: `0 10px 30px ${teinte(30)}` }}>
                 <Download size={18} /> {t.ctaApk}{meta?.apkMB && <span style={{ opacity: 0.8, fontSize: 13 }}>({meta.apkMB} MB)</span>}
               </a>
               <a href={`${APP_URL}/login`} target="_blank" rel="noopener" style={btnGhost}>
