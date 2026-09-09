@@ -25,8 +25,16 @@
 
 export type Produit = {
   id: string;
+  /** Nom francais — la langue de reference du jeu de donnees. */
   n: string;
   ar?: string;
+  /**
+   * Nom anglais. Ajoute le 09/09/2026 : l'ecran affichait son interface en
+   * anglais et ses 50 produits en francais, parce que la donnee n'avait que
+   * deux langues sur trois. Le code etait juste, la table etait incomplete —
+   * un defaut qu'aucun test ni `tsc` ne pouvait voir.
+   */
+  en?: string;
   etal: string;
   unite: string;
   prix: number;
@@ -87,6 +95,51 @@ function grammesParUnite(u: string): number {
 }
 
 /** Protéines par dirham — le critère qui compte quand le budget est serré. */
+/**
+ * Le nom a afficher dans la langue courante, avec repli sur le francais.
+ * ⚠ Une SEULE fonction pour tout le module : le selecteur etait ecrit deux
+ * fois dans l'ecran (une pour l'etal, une pour la ligne), et les deux
+ * ignoraient l'anglais de la meme facon. Deux copies, deux fois le meme oubli.
+ */
+export function nomDans(langue: string, o: { n: string; ar?: string; en?: string }): string {
+  if (langue === 'ar' && o.ar) return o.ar;
+  if (langue === 'en' && o.en) return o.en;
+  return o.n;
+}
+
+/**
+ * L'unite, dans la langue courante.
+ * ---------------------------------------------------------------------------
+ * ⚠ ON NE TRADUIT PAS LA DONNEE, ON TRADUIT L'AFFICHAGE.
+ * `unite` est aussi la CLE que lit `grammesParUnite` pour convertir un achat en
+ * grammes. Ecrire « dozen » dans `prix-souk.json` casserait ce calcul en
+ * silence : la conversion retomberait sur son defaut, et le panier annoncerait
+ * une couverture nutritionnelle fausse. La table vit donc ici.
+ *
+ * Constate le 09/09/2026 sur l'emulateur : apres avoir traduit les 50 noms de
+ * produits, l'ecran anglais affichait encore « 1 douzaine » et « 14 unite ».
+ * L'arabe, lui, les affichait en francais depuis toujours.
+ */
+const UNITES: Record<string, { en: string; ar: string }> = {
+  kg: { en: 'kg', ar: 'كغ' },
+  L: { en: 'L', ar: 'ل' },
+  'unité': { en: 'unit', ar: 'وحدة' },
+  douzaine: { en: 'dozen', ar: 'درزن' },
+  botte: { en: 'bunch', ar: 'حزمة' },
+  pot: { en: 'tub', ar: 'علبة' },
+  sachet: { en: 'packet', ar: 'كيس' },
+  '250g': { en: '250g', ar: '250غ' },
+  '200g': { en: '200g', ar: '200غ' },
+};
+
+export function uniteDans(langue: string, unite: string): string {
+  const u = UNITES[unite];
+  if (!u) return unite;                       // unite inconnue : on l'affiche telle quelle
+  if (langue === 'ar') return u.ar;
+  if (langue === 'en') return u.en;
+  return unite;
+}
+
 export function proteinesParDirham(p: Produit): number {
   if (!p.prix || p.prix <= 0) return 0;
   return ((p.p || 0) * (grammesParUnite(p.unite) / 100)) / p.prix;

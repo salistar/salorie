@@ -19,12 +19,12 @@ import { useTokens } from '../../constants/tokens';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign } from '../../lib/rtl';
 import ScreenTopBar from '../../components/ScreenTopBar';
-import { composerPanier, parEtal, type Produit } from '../../lib/panierSouk';
+import { composerPanier, parEtal, nomDans, uniteDans, type Produit } from '../../lib/panierSouk';
 import TABLE from '../../assets/data/prix-souk.json';
 import { useScreenGate } from '../../components/FeatureGate';
 
 const PRODUITS = (TABLE as any).produits as Produit[];
-const ETALS = (TABLE as any).etals as Record<string, { n: string; ar: string }>;
+const ETALS = (TABLE as any).etals as Record<string, { n: string; ar?: string; en?: string }>;
 
 const T: Record<string, Record<string, string>> = {
   fr: {
@@ -68,8 +68,10 @@ export default function PanierSouk() {
     [budget, personnes],
   );
   const groupes = useMemo(() => parEtal(panier), [panier]);
-  const nomEtal = (id: string) =>
-    language === 'ar' ? ETALS[id]?.ar || id : ETALS[id]?.n || id;
+  const nomEtal = (id: string) => {
+    const e = ETALS[id];
+    return e ? nomDans(String(language), e) : id;
+  };
 
   const s = styles(tok);
   if (!__gate.ok) return __gate.node;
@@ -136,10 +138,10 @@ export default function PanierSouk() {
                 {g.lignes.map((l) => (
                   <View key={l.produit.id} style={[s.ligne, { flexDirection: rowDir(isRTL) }]}>
                     <Text style={[s.ligneNom, { textAlign: txtAlign(isRTL) }]} numberOfLines={1}>
-                      {language === 'ar' && l.produit.ar ? l.produit.ar : l.produit.n}
+                      {nomDans(String(language), l.produit)}
                     </Text>
                     <Text style={s.ligneQte}>
-                      {l.quantite} {l.produit.unite} · {l.cout} {t.dh}
+                      {l.quantite} {uniteDans(String(language), l.produit.unite)} · {l.cout} {t.dh}
                     </Text>
                   </View>
                 ))}

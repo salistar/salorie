@@ -4,8 +4,18 @@ const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
 
-const RACINE = 'https://salorie.com';
-const SORTIE = 'C:/Users/21266/Desktop/salorie_8-26_2026/captures/landing';
+// ⚠ LA CIBLE EST CONFIGURABLE, ET C'EST LE POINT.
+// Elle etait figee sur la production. On ne pouvait donc capturer que ce qui
+// etait DEJA deploye — c'est-a-dire verifier son travail apres l'avoir livre.
+// `SALORIE_URL=http://localhost:3000` capture le code local AVANT le deploiement,
+// et la meme commande sert ensuite a confirmer que la production lui ressemble.
+//
+// Meme raison pour la sortie : deux captures d'une meme page a deux stades
+// different doivent pouvoir coexister, sinon la seconde efface la premiere et
+// la comparaison devient impossible.
+const RACINE = (process.env.SALORIE_URL || 'https://salorie.com').replace(/\/$/, '');
+const SORTIE = process.env.SALORIE_CAPTURES
+  || 'C:/Users/21266/Desktop/salorie_8-26_2026/captures/landing';
 
 const PAGES = [
   ['accueil', '/'],

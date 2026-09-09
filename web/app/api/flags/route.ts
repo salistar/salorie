@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, unauthorized, requireWriter } from '../../../lib/adminGuard';
 import { setFlag, setFlagRich } from '../../../lib/firebaseAdmin';
+import { invaliderFlags } from '../../../lib/invaliderFlags';
 
 export const runtime = 'nodejs';
 
@@ -27,12 +28,14 @@ export async function POST(req: NextRequest) {
         ...(p.config !== undefined ? { config: p.config } : {}),
       };
       await setFlagRich(key, patch, actor);
+      await invaliderFlags();
       return NextResponse.json({ ok: true, key, patch });
     }
 
     // legacy
     const value = !!body?.value;
     await setFlag(key, value);
+    await invaliderFlags();
     return NextResponse.json({ ok: true, key, value });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'erreur' }, { status: 500 });

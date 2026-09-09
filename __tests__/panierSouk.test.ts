@@ -1,4 +1,4 @@
-import { composerPanier, parEtal, proteinesParDirham, type Produit } from '../lib/panierSouk';
+import { composerPanier, parEtal, proteinesParDirham, nomDans, uniteDans, type Produit } from '../lib/panierSouk';
 import table from '../assets/data/prix-souk.json';
 
 const PRODUITS = (table as any).produits as Produit[];
@@ -114,5 +114,72 @@ describe('parEtal', () => {
   it('chaque produit de la table a un étal connu', () => {
     const etals = Object.keys((table as any).etals);
     for (const p of PRODUITS) expect(etals).toContain(p.etal);
+  });
+});
+
+/**
+ * L'application parle TROIS langues. Ce jeu de données n'en parlait que deux.
+ * ---------------------------------------------------------------------------
+ * Constaté le 09/09/2026 sur l'émulateur, et par aucun autre moyen : l'écran
+ * affichait « Souk basket / Weekly budget / People » en anglais, puis
+ * « Œufs · Lait · Farine · Épicier » juste dessous. Le sélecteur faisait
+ * `ar ? ar : n` — l'anglais retombait silencieusement sur le français.
+ *
+ * Le code était juste. C'est la TABLE qui était incomplète, et c'est
+ * exactement ce qu'un test de code ne regarde pas. D'où ce test-ci, qui porte
+ * sur la donnée : un cinquante-et-unième produit ajouté sans son nom anglais
+ * fera échouer la CI au lieu de réapparaître en français chez l'utilisateur.
+ */
+describe('les noms existent dans les trois langues', () => {
+  const ETALS = Object.entries((table as any).etals as Record<string, any>);
+
+  it('les 50 produits ont un nom français, arabe ET anglais', () => {
+    const incomplets = PRODUITS
+      .filter((p) => !p.n?.trim() || !p.ar?.trim() || !p.en?.trim())
+      .map((p) => p.id);
+    expect(incomplets).toEqual([]);
+  });
+
+  it('les étals aussi — c est le titre de chaque groupe', () => {
+    const incomplets = ETALS
+      .filter(([, v]) => !v.n?.trim() || !v.ar?.trim() || !v.en?.trim())
+      .map(([k]) => k);
+    expect(incomplets).toEqual([]);
+  });
+
+  it('nomDans choisit la bonne langue', () => {
+    const o = { n: 'Tomates', ar: 'طماطم', en: 'Tomatoes' };
+    expect(nomDans('fr', o)).toBe('Tomates');
+    expect(nomDans('ar', o)).toBe('طماطم');
+    expect(nomDans('en', o)).toBe('Tomatoes');
+  });
+
+  it('TOUTE unite utilisee par la table est traduite', () => {
+    // Le second etage du meme defaut. Apres avoir traduit les 50 noms, l'ecran
+    // anglais affichait encore « 1 douzaine » et « 14 unite » — et l'arabe les
+    // affichait en francais depuis toujours.
+    //
+    // On mesure par l'ARABE : « kg » et « 250g » restent « kg » et « 250g » en
+    // anglais, donc l'anglais ne prouverait rien. L'arabe change toujours
+    // d'alphabet — une unite qui revient identique est une unite absente de la
+    // table. Le balayage porte sur les unites REELLES du fichier, donc un
+    // produit ajoute avec une unite inedite fera echouer la CI.
+    const utilisees = [...new Set(PRODUITS.map((p) => p.unite))];
+    const nonTraduites = utilisees.filter((u) => uniteDans('ar', u) === u);
+    expect(nonTraduites).toEqual([]);
+  });
+
+  it('une unite inconnue s affiche telle quelle, sans disparaitre', () => {
+    // Mieux vaut « 2 caisse » qu'une ligne d'achat sans unite du tout.
+    expect(uniteDans('en', 'caisse')).toBe('caisse');
+    expect(uniteDans('fr', 'kg')).toBe('kg');
+  });
+
+  it('nomDans retombe sur le français plutôt que de ne rien afficher', () => {
+    // Un nom vide serait pire qu'un nom dans la mauvaise langue : la ligne
+    // d'achat deviendrait « · 2 kg · 14 MAD », sans dire de quoi il s'agit.
+    expect(nomDans('en', { n: 'Semoule' })).toBe('Semoule');
+    expect(nomDans('ar', { n: 'Semoule', en: 'Semolina' })).toBe('Semoule');
+    expect(nomDans('xx', { n: 'Semoule', en: 'Semolina' })).toBe('Semoule');
   });
 });
