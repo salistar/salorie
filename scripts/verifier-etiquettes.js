@@ -62,6 +62,50 @@ function main() {
     process.exit(1);
   }
   console.log('  identiques rang pour rang');
+
+  verifierLesNoms(serveur);
+}
+
+// ── Les NOMS affichables doivent couvrir les memes classes ──────────────────
+// ⚠ UN QUATRIEME FICHIER EST ENTRE DANS LA DANSE LE 09/09/2026.
+// `lib/foodSalorieNoms.ts` porte le nom francais et arabe de chaque classe ;
+// c'est lui qui permet au telephone de retrouver les macros dans une base
+// desormais francisee. S'il prend du retard sur `label_map_172.json`, une classe
+// nouvelle n'a plus de nom affichable et perd ses macros hors ligne EN SILENCE —
+// l'application se contente d'attendre le reseau, sans erreur nulle part.
+//
+// Le projet a deja paye deux fois la divergence entre fichiers censes s'accorder.
+// On la refuse une troisieme fois.
+function verifierLesNoms(serveur) {
+  const NOMS_TS = 'lib/foodSalorieNoms.ts';
+  const NOMS_JSON = 'food4k/names_172.json';
+  const chemin = path.join(RACINE, NOMS_TS);
+  if (!fs.existsSync(chemin)) {
+    console.log(`\n  ECHEC : ${NOMS_TS} manque.`);
+    console.log('    python food4k/generer_noms_telephone.py');
+    process.exit(1);
+  }
+  const source = fs.readFileSync(chemin, 'utf8');
+  const cles = [...source.matchAll(/^ {2}"(.+?)": \{ fr:/gm)].map((m) => m[1]);
+  const json = JSON.parse(fs.readFileSync(path.join(RACINE, NOMS_JSON), 'utf8'));
+
+  console.log(`\n  noms (${NOMS_TS}) : ${cles.length} classes`);
+  const manquantes = serveur.filter((c) => !cles.includes(c));
+  const sansArabe = serveur.filter((c) => !((json[c] || {}).ar || '').trim());
+  const enTrop = cles.filter((c) => !serveur.includes(c));
+
+  if (manquantes.length || enTrop.length) {
+    console.log(`  ECHEC : ${manquantes.length} classe(s) sans nom, `
+      + `${enTrop.length} nom(s) sans classe`);
+    [...manquantes.slice(0, 8), ...enTrop.slice(0, 4)].forEach((c) => console.log(`    ${c}`));
+    console.log('\n  Regenerer : python food4k/generer_noms_telephone.py');
+    process.exit(1);
+  }
+  // Un nom arabe manquant n'empeche pas l'application de tourner : elle affiche
+  // le francais. On le SIGNALE sans faire echouer la CI — bloquer ici punirait
+  // l'ajout d'une classe plutot que de l'encourager.
+  console.log(`  toutes les classes ont un nom francais${
+    sansArabe.length ? ` ; ${sansArabe.length} sans arabe : ${sansArabe.slice(0, 6).join(', ')}` : ' et arabe'}`);
 }
 
 main();

@@ -1,20 +1,26 @@
 // Vision ON-DEVICE partagée (tier 1 de la cascade scan : ON-DEVICE → LOCAL DB → GEMINI).
 // Classifieur on-device partagé (utilisé par scan-analysis, tier 1 de la cascade).
-// Classification TFLite (food_salorie : MobileNetV3-Large, entree 224x224 float32,
-// SORTIE 170 CLASSES — verifie le 08/09/2026 en chargeant le .tflite, pas d'apres
+// Classification TFLite (food_salorie : MobileNetV3-Large, entree 288x288 float32,
+// SORTIE 172 CLASSES — verifie le 09/09/2026 en chargeant le .tflite, pas d'apres
 // un commentaire. Le code ci-dessous lit de toute facon la forme dans le modele :
-// changer de modele ne demande pas de toucher a ce fichier.
+// changer de resolution ou de nombre de classes ne demande pas de toucher ici.
 //
-// ⚠ 170 ET NON PLUS 172. Deux classes ont ete ecartees a l'entrainement faute
-// d'images — `bissara` (18) et `sfenj` (9). Elles ne disparaissent PAS de
-// l'application : le classifieur embarque se tait, et la cascade les traite au
-// palier suivant (serveur, Cloudflare, fournisseurs). Un palier qui se tait
-// laisse passer ; un palier qui repond faux avec assurance ARRETE la cascade.
+// ⚠ 288 px ET NON PLUS 224. Sonde lineaire du 09/09/2026 : +3,0 points de
+// justesse predits, +3,1 obtenus, pour deux fois le temps de calcul. Payable —
+// le palier embarque passe de ~50 a ~100 ms quand un aller-retour reseau en
+// coute 300. 320 px fait MOINS bien que 288 : le rendement s'inverse.
+//
+// ⚠ 172 CLASSES A NOUVEAU. Le modele du 08/09 en avait ecarte deux, trop
+// maigres ; le corpus assaini les a ramenees. Quand une classe est absente, elle
+// ne disparait pas de l'application : le classifieur se tait et la cascade la
+// traite au palier suivant. Un palier qui se tait laisse passer ; un palier qui
+// repond faux avec assurance ARRETE la cascade.
 // + lookup macros hors-ligne dans assets/data/local-foods.json (FR/AR + k/p/c/f).
 import * as ImageManipulator from 'expo-image-manipulator';
 import { decode as jpegDecode } from 'jpeg-js';
 import { Buffer } from 'buffer';
 import { FOOD_SALORIE_LABELS as FOOD_LABELS } from './foodSalorieLabels';
+import { FOOD_SALORIE_NOMS } from './foodSalorieNoms';
 
 export type Pred = { label: string; score: number };
 
@@ -111,9 +117,31 @@ function norm(s: string): string {
 
 export type LocalMacro = { name: string; kcal: number; protein: number; carbs: number; fat: number } | null;
 
-/** Cherche les macros d'un label (on-device) dans la base locale. null si pas de match. */
+/**
+ * Cherche les macros d'un label (on-device) dans la base locale.
+ *
+ * ⚠ ON CHERCHE AVEC LE NOM FRANCAIS, PAS AVEC L'IDENTIFIANT DU MODELE.
+ * Le modele rend `feet of beef` ; la base dit `Pieds de veau` depuis qu'elle a
+ * ete francisee (09/09/2026) — c'est ce que l'utilisateur doit lire. Chercher
+ * l'anglais dans une base francaise faisait perdre leurs macros hors ligne a
+ * 93 classes sur 172. On traduit donc d'abord, et on garde l'anglais en repli
+ * pour les entrees que la base nomme encore ainsi.
+ */
 export function localMacroForLabel(label: string): LocalMacro {
-  const q = norm(label.replace(/_/g, ' '));
+  const brut = label.replace(/_/g, ' ');
+  const traduit = FOOD_SALORIE_NOMS[brut.toLowerCase()];
+  if (traduit) {
+    const parFr = chercherDansBase(norm(traduit.fr));
+    if (parFr) return parFr;
+    if (traduit.ar) {
+      const parAr = chercherDansBase(norm(traduit.ar));
+      if (parAr) return parAr;
+    }
+  }
+  return chercherDansBase(norm(brut));
+}
+
+function chercherDansBase(q: string): LocalMacro {
   if (!q) return null;
   const words = q.split(' ').filter((w) => w.length > 2);
   let best: any = null; let bestScore = 0;
@@ -126,6 +154,6 @@ export function localMacroForLabel(label: string): LocalMacro {
     else { for (const w of words) if (hay.includes(w)) score += 20; }
     if (score > bestScore) { bestScore = score; best = it; }
   }
-  if (!best || bestScore < 40) return null; // pas assez sûr → on laissera Gemini
-  return { name: best.n || label, kcal: Number(best.k) || 0, protein: Number(best.p) || 0, carbs: Number(best.c) || 0, fat: Number(best.f) || 0 };
+  if (!best || bestScore < 40) return null; // pas assez sûr → la cascade prendra le relais
+  return { name: best.n || q, kcal: Number(best.k) || 0, protein: Number(best.p) || 0, carbs: Number(best.c) || 0, fat: Number(best.f) || 0 };
 }

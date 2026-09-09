@@ -208,7 +208,7 @@
 "f": 14
 },
 {
-"n": "Tanjia",
+"n": "Tangia",
 "ar": "الطنجية",
 "k": 210,
 "p": 18,
@@ -216,7 +216,7 @@
 "f": 14.5
 },
 {
-"n": "Mechoui",
+"n": "Méchoui",
 "ar": "المشوي",
 "k": 230,
 "p": 25,
@@ -624,7 +624,7 @@
 "f": 16
 },
 {
-"n": "Mhancha",
+"n": "M'hancha",
 "ar": "المحنشة",
 "k": 450,
 "p": 8,
@@ -2176,7 +2176,7 @@
 "f": 0.5
 },
 {
-"n": "Edamame",
+"n": "Édamame",
 "ar": "الإدامامي",
 "k": 121,
 "p": 11,
@@ -2520,7 +2520,7 @@
 "f": 19
 },
 {
-"n": "Gnocchi",
+"n": "Gnocchis",
 "ar": "النيوكي",
 "k": 156,
 "p": 4,
@@ -4016,48 +4016,48 @@
 "f": 0.5
 },
 {
-"n": "apple",
-"ar": "",
+"n": "Pomme",
+"ar": "تفاح",
 "k": 52.0,
 "p": 0.3,
 "c": 14.0,
 "f": 0.2
 },
 {
-"n": "apple pie",
-"ar": "",
+"n": "Tarte aux pommes",
+"ar": "فطيرة التفاح",
 "k": 265.0,
 "p": 2.4,
 "c": 34.0,
 "f": 14.0
 },
 {
-"n": "baby back ribs",
-"ar": "",
+"n": "Travers de porc",
+"ar": "أضلاع لحم",
 "k": 290.0,
 "p": 21.0,
 "c": 2.0,
 "f": 22.0
 },
 {
-"n": "bahla",
-"ar": "",
+"n": "Ghriba bahla",
+"ar": "غريبة بهلة",
 "k": 480.0,
 "p": 6.0,
 "c": 55.0,
 "f": 26.0
 },
 {
-"n": "baklava",
-"ar": "",
+"n": "Baklava",
+"ar": "بقلاوة",
 "k": 430.0,
 "p": 6.0,
 "c": 50.0,
 "f": 24.0
 },
 {
-"n": "banana",
-"ar": "",
+"n": "Banane",
+"ar": "موز",
 "k": 89.0,
 "p": 1.1,
 "c": 23.0,
@@ -4065,39 +4065,39 @@
 },
 {
 "n": "basbousa",
-"ar": "",
+"ar": "بسبوسة",
 "k": 350.0,
 "p": 5.0,
 "c": 50.0,
 "f": 15.0
 },
 {
-"n": "bastila",
-"ar": "",
+"n": "Pastilla",
+"ar": "بسطيلة",
 "k": 250.0,
 "p": 12.0,
 "c": 20.0,
 "f": 14.0
 },
 {
-"n": "beef carpaccio",
-"ar": "",
+"n": "Carpaccio de bœuf",
+"ar": "كارباتشيو لحم",
 "k": 190.0,
 "p": 20.0,
 "c": 1.0,
 "f": 12.0
 },
 {
-"n": "beef tartare",
-"ar": "",
+"n": "Tartare de bœuf",
+"ar": "تارتار لحم",
 "k": 200.0,
 "p": 19.0,
 "c": 2.0,
 "f": 13.0
 },
 {
-"n": "beet salad",
-"ar": "",
+"n": "Salade de betteraves",
+"ar": "سلطة الشمندر",
 "k": 90.0,
 "p": 2.0,
 "c": 12.0,
@@ -4112,8 +4112,8 @@
 "f": 3.0
 },
 {
-"n": "beignets",
-"ar": "",
+"n": "Beignets",
+"ar": "بينييه",
 "k": 400.0,
 "p": 6.0,
 "c": 45.0,
@@ -4128,192 +4128,192 @@
 "f": 2.0
 },
 {
-"n": "better beldi",
-"ar": "",
+"n": "Smen",
+"ar": "سمن بلدي",
 "k": 717.0,
 "p": 0.9,
 "c": 0.1,
 "f": 81.0
 },
 {
-"n": "bibimbap",
-"ar": "",
+"n": "Bibimbap",
+"ar": "بيبيمباب",
 "k": 140.0,
 "p": 8.0,
 "c": 18.0,
 "f": 4.0
 },
 {
-"n": "bread pudding",
-"ar": "",
+"n": "Pudding au pain",
+"ar": "بودينغ الخبز",
 "k": 290.0,
 "p": 5.0,
 "c": 42.0,
 "f": 11.0
 },
 {
-"n": "breakfast burrito",
-"ar": "",
+"n": "Burrito du petit-déjeuner",
+"ar": "بوريتو الفطور",
 "k": 210.0,
 "p": 9.0,
 "c": 20.0,
 "f": 11.0
 },
 {
-"n": "briouat",
-"ar": "",
+"n": "Briouates",
+"ar": "بريوات",
 "k": 300.0,
 "p": 8.0,
 "c": 28.0,
 "f": 17.0
 },
 {
-"n": "briouate with almonds",
-"ar": "",
+"n": "Briouates aux amandes",
+"ar": "بريوات باللوز",
 "k": 450.0,
 "p": 9.0,
 "c": 45.0,
 "f": 26.0
 },
 {
-"n": "bruschetta",
-"ar": "",
+"n": "Bruschetta",
+"ar": "بروشيتا",
 "k": 200.0,
 "p": 6.0,
 "c": 28.0,
 "f": 7.0
 },
 {
-"n": "caesar salad",
-"ar": "",
+"n": "Salade César",
+"ar": "سلطة سيزر",
 "k": 190.0,
 "p": 6.0,
 "c": 5.0,
 "f": 16.0
 },
 {
-"n": "cannoli",
-"ar": "",
+"n": "Cannoli",
+"ar": "كانولي",
 "k": 380.0,
 "p": 7.0,
 "c": 40.0,
 "f": 21.0
 },
 {
-"n": "caprese salad",
-"ar": "",
+"n": "Salade caprese",
+"ar": "سلطة كابريزي",
 "k": 150.0,
 "p": 8.0,
 "c": 5.0,
 "f": 11.0
 },
 {
-"n": "carrot cake",
-"ar": "",
+"n": "Gâteau aux carottes",
+"ar": "كعكة الجزر",
 "k": 380.0,
 "p": 4.0,
 "c": 48.0,
 "f": 19.0
 },
 {
-"n": "ceviche",
-"ar": "",
+"n": "Ceviche",
+"ar": "سيفيتشي",
 "k": 120.0,
 "p": 18.0,
 "c": 5.0,
 "f": 2.0
 },
 {
-"n": "cheese plate",
-"ar": "",
+"n": "Plateau de fromages",
+"ar": "طبق الجبن",
 "k": 380.0,
 "p": 22.0,
 "c": 3.0,
 "f": 30.0
 },
 {
-"n": "cheesecake",
-"ar": "",
+"n": "Cheesecake",
+"ar": "تشيز كيك",
 "k": 320.0,
 "p": 6.0,
 "c": 26.0,
 "f": 22.0
 },
 {
-"n": "chicken curry",
-"ar": "",
+"n": "Curry de poulet",
+"ar": "كاري الدجاج",
 "k": 150.0,
 "p": 13.0,
 "c": 7.0,
 "f": 8.0
 },
 {
-"n": "chicken basstila",
-"ar": "",
+"n": "Pastilla au poulet",
+"ar": "بسطيلة بالدجاج",
 "k": 250.0,
 "p": 12.0,
 "c": 20.0,
 "f": 14.0
 },
 {
-"n": "chicken nuggets",
-"ar": "",
+"n": "Nuggets de poulet",
+"ar": "قطع الدجاج المقرمشة",
 "k": 296.0,
 "p": 15.0,
 "c": 18.0,
 "f": 18.0
 },
 {
-"n": "chicken quesadilla",
-"ar": "",
+"n": "Quesadilla au poulet",
+"ar": "كساديا الدجاج",
 "k": 280.0,
 "p": 15.0,
 "c": 24.0,
 "f": 14.0
 },
 {
-"n": "chicken wings",
-"ar": "",
+"n": "Ailes de poulet",
+"ar": "أجنحة الدجاج",
 "k": 250.0,
 "p": 22.0,
 "c": 2.0,
 "f": 17.0
 },
 {
-"n": "chocolate cake",
-"ar": "",
+"n": "Gâteau au chocolat",
+"ar": "كعكة الشوكولاتة",
 "k": 370.0,
 "p": 5.0,
 "c": 50.0,
 "f": 17.0
 },
 {
-"n": "chocolate mousse",
-"ar": "",
+"n": "Mousse au chocolat",
+"ar": "موس الشوكولاتة",
 "k": 230.0,
 "p": 4.0,
 "c": 25.0,
 "f": 13.0
 },
 {
-"n": "churros",
-"ar": "",
+"n": "Churros",
+"ar": "تشوروس",
 "k": 380.0,
 "p": 5.0,
 "c": 45.0,
 "f": 20.0
 },
 {
-"n": "clam chowder",
-"ar": "",
+"n": "Chaudrée de palourdes",
+"ar": "حساء المحار",
 "k": 90.0,
 "p": 5.0,
 "c": 9.0,
 "f": 4.0
 },
 {
-"n": "club sandwich",
-"ar": "",
+"n": "Club sandwich",
+"ar": "كلوب ساندويتش",
 "k": 250.0,
 "p": 14.0,
 "c": 22.0,
@@ -4321,207 +4321,207 @@
 },
 {
 "n": "couscous",
-"ar": "",
+"ar": "كسكس",
 "k": 112.0,
 "p": 3.8,
 "c": 23.0,
 "f": 0.6
 },
 {
-"n": "crab cakes",
-"ar": "",
+"n": "Galettes de crabe",
+"ar": "كعك السلطعون",
 "k": 200.0,
 "p": 12.0,
 "c": 10.0,
 "f": 12.0
 },
 {
-"n": "crackers with almonds",
-"ar": "",
+"n": "Craquelins aux amandes",
+"ar": "مقرمشات باللوز",
 "k": 450.0,
 "p": 10.0,
 "c": 55.0,
 "f": 18.0
 },
 {
-"n": "creme brulee",
-"ar": "",
+"n": "Crème brûlée",
+"ar": "كريم بروليه",
 "k": 290.0,
 "p": 5.0,
 "c": 28.0,
 "f": 18.0
 },
 {
-"n": "croque madame",
-"ar": "",
+"n": "Croque-madame",
+"ar": "كروك مدام",
 "k": 280.0,
 "p": 15.0,
 "c": 22.0,
 "f": 14.0
 },
 {
-"n": "cup cakes",
-"ar": "",
+"n": "Cupcakes",
+"ar": "كب كيك",
 "k": 360.0,
 "p": 4.0,
 "c": 52.0,
 "f": 15.0
 },
 {
-"n": "dates",
-"ar": "",
+"n": "Dattes",
+"ar": "تمر",
 "k": 282.0,
 "p": 2.5,
 "c": 75.0,
 "f": 0.4
 },
 {
-"n": "deviled eggs",
-"ar": "",
+"n": "Œufs mimosa",
+"ar": "بيض محشي",
 "k": 180.0,
 "p": 8.0,
 "c": 1.0,
 "f": 15.0
 },
 {
-"n": "donuts",
-"ar": "",
+"n": "Donuts",
+"ar": "دونات",
 "k": 452.0,
 "p": 5.0,
 "c": 51.0,
 "f": 25.0
 },
 {
-"n": "dumplings",
-"ar": "",
+"n": "Raviolis",
+"ar": "دامبلينغ",
 "k": 180.0,
 "p": 8.0,
 "c": 22.0,
 "f": 7.0
 },
 {
-"n": "eggs benedict",
-"ar": "",
+"n": "Œufs bénédicte",
+"ar": "بيض بنديكت",
 "k": 230.0,
 "p": 12.0,
 "c": 12.0,
 "f": 15.0
 },
 {
-"n": "escargots",
-"ar": "",
+"n": "Escargots",
+"ar": "حلزون",
 "k": 170.0,
 "p": 16.0,
 "c": 2.0,
 "f": 11.0
 },
 {
-"n": "feet of beef",
-"ar": "",
+"n": "Pieds de veau",
+"ar": "كوارع",
 "k": 200.0,
 "p": 18.0,
 "c": 1.0,
 "f": 14.0
 },
 {
-"n": "feves with sauce",
-"ar": "",
+"n": "Fèves en sauce",
+"ar": "فول بالصلصة",
 "k": 110.0,
 "p": 8.0,
 "c": 16.0,
 "f": 2.0
 },
 {
-"n": "filet mignon",
-"ar": "",
+"n": "Filet mignon",
+"ar": "فيليه مينيون",
 "k": 270.0,
 "p": 25.0,
 "c": 0.0,
 "f": 19.0
 },
 {
-"n": "fish and chips",
-"ar": "",
+"n": "Fish and chips",
+"ar": "سمك ورقائق",
 "k": 230.0,
 "p": 12.0,
 "c": 22.0,
 "f": 11.0
 },
 {
-"n": "fish and vegetables",
-"ar": "",
+"n": "Poisson aux légumes",
+"ar": "سمك بالخضار",
 "k": 120.0,
 "p": 15.0,
 "c": 6.0,
 "f": 4.0
 },
 {
-"n": "fish basstila",
-"ar": "",
+"n": "Pastilla au poisson",
+"ar": "بسطيلة بالسمك",
 "k": 240.0,
 "p": 14.0,
 "c": 18.0,
 "f": 12.0
 },
 {
-"n": "foie gras",
-"ar": "",
+"n": "Foie gras",
+"ar": "كبد الأوز",
 "k": 460.0,
 "p": 11.0,
 "c": 5.0,
 "f": 44.0
 },
 {
-"n": "french fries",
-"ar": "",
+"n": "Frites",
+"ar": "بطاطس مقلية",
 "k": 312.0,
 "p": 3.4,
 "c": 41.0,
 "f": 15.0
 },
 {
-"n": "french onion soup",
-"ar": "",
+"n": "Soupe à l'oignon",
+"ar": "حساء البصل",
 "k": 80.0,
 "p": 4.0,
 "c": 8.0,
 "f": 4.0
 },
 {
-"n": "french toast",
-"ar": "",
+"n": "Pain perdu",
+"ar": "توست فرنسي",
 "k": 230.0,
 "p": 8.0,
 "c": 26.0,
 "f": 10.0
 },
 {
-"n": "fried calamari",
-"ar": "",
+"n": "Calamars frits",
+"ar": "حبار مقلي",
 "k": 175.0,
 "p": 15.0,
 "c": 8.0,
 "f": 9.0
 },
 {
-"n": "fried rice",
-"ar": "",
+"n": "Riz sauté",
+"ar": "أرز مقلي",
 "k": 170.0,
 "p": 5.0,
 "c": 28.0,
 "f": 5.0
 },
 {
-"n": "frozen yogurt",
-"ar": "",
+"n": "Yaourt glacé",
+"ar": "زبادي مجمد",
 "k": 130.0,
 "p": 4.0,
 "c": 22.0,
 "f": 3.0
 },
 {
-"n": "garlic bread",
-"ar": "",
+"n": "Pain à l'ail",
+"ar": "خبز بالثوم",
 "k": 330.0,
 "p": 8.0,
 "c": 40.0,
@@ -4536,128 +4536,128 @@
 "f": 19.0
 },
 {
-"n": "greek salad",
-"ar": "",
+"n": "Salade grecque",
+"ar": "سلطة يونانية",
 "k": 110.0,
 "p": 3.0,
 "c": 7.0,
 "f": 8.0
 },
 {
-"n": "grilled cheese sandwich",
-"ar": "",
+"n": "Sandwich au fromage grillé",
+"ar": "ساندويتش الجبن",
 "k": 330.0,
 "p": 13.0,
 "c": 28.0,
 "f": 18.0
 },
 {
-"n": "grilled salmon",
-"ar": "",
+"n": "Saumon grillé",
+"ar": "سلمون مشوي",
 "k": 208.0,
 "p": 22.0,
 "c": 0.0,
 "f": 13.0
 },
 {
-"n": "guacamole",
-"ar": "",
+"n": "Guacamole",
+"ar": "غواكامولي",
 "k": 160.0,
 "p": 2.0,
 "c": 9.0,
 "f": 15.0
 },
 {
-"n": "gyoza",
-"ar": "",
+"n": "Gyoza",
+"ar": "غيوزا",
 "k": 180.0,
 "p": 8.0,
 "c": 20.0,
 "f": 7.0
 },
 {
-"n": "hamburger",
-"ar": "",
+"n": "Hamburger",
+"ar": "همبرغر",
 "k": 250.0,
 "p": 13.0,
 "c": 30.0,
 "f": 9.0
 },
 {
-"n": "hot and sour soup",
-"ar": "",
+"n": "Soupe aigre-piquante",
+"ar": "حساء حار وحامض",
 "k": 60.0,
 "p": 4.0,
 "c": 7.0,
 "f": 2.0
 },
 {
-"n": "huevos rancheros",
-"ar": "",
+"n": "Huevos rancheros",
+"ar": "بيض رانشيروس",
 "k": 170.0,
 "p": 9.0,
 "c": 14.0,
 "f": 9.0
 },
 {
-"n": "hummus",
-"ar": "",
+"n": "Houmous",
+"ar": "حمص",
 "k": 166.0,
 "p": 8.0,
 "c": 14.0,
 "f": 10.0
 },
 {
-"n": "ice cream",
-"ar": "",
+"n": "Glace",
+"ar": "آيس كريم",
 "k": 207.0,
 "p": 3.5,
 "c": 24.0,
 "f": 11.0
 },
 {
-"n": "jam",
-"ar": "",
+"n": "Confiture",
+"ar": "مربى",
 "k": 250.0,
 "p": 0.5,
 "c": 65.0,
 "f": 0.0
 },
 {
-"n": "kaab el ghazal",
-"ar": "",
+"n": "Cornes de gazelle",
+"ar": "كعب الغزال",
 "k": 420.0,
 "p": 8.0,
 "c": 55.0,
 "f": 19.0
 },
 {
-"n": "kaak",
-"ar": "",
+"n": "Kaak",
+"ar": "كعك",
 "k": 380.0,
 "p": 9.0,
 "c": 65.0,
 "f": 9.0
 },
 {
-"n": "karan",
-"ar": "",
+"n": "Karan",
+"ar": "كاران",
 "k": 150.0,
 "p": 4.0,
 "c": 20.0,
 "f": 6.0
 },
 {
-"n": "khringo",
-"ar": "",
+"n": "Khringo",
+"ar": "خرينݣو",
 "k": 350.0,
 "p": 6.0,
 "c": 55.0,
 "f": 12.0
 },
 {
-"n": "lasagna",
-"ar": "",
+"n": "Lasagnes",
+"ar": "لازانيا",
 "k": 135.0,
 "p": 8.0,
 "c": 14.0,
@@ -4672,88 +4672,88 @@
 "f": 5.0
 },
 {
-"n": "lentils",
-"ar": "",
+"n": "Lentilles",
+"ar": "عدس",
 "k": 116.0,
 "p": 9.0,
 "c": 20.0,
 "f": 0.4
 },
 {
-"n": "liver with sauce",
-"ar": "",
+"n": "Foie en chermoula",
+"ar": "كبدة مشرملة",
 "k": 175.0,
 "p": 22.0,
 "c": 4.0,
 "f": 7.0
 },
 {
-"n": "lobster bisque",
-"ar": "",
+"n": "Bisque de homard",
+"ar": "حساء الكركند",
 "k": 100.0,
 "p": 6.0,
 "c": 7.0,
 "f": 5.0
 },
 {
-"n": "lobster roll sandwich",
-"ar": "",
+"n": "Sandwich au homard",
+"ar": "ساندويتش الكركند",
 "k": 220.0,
 "p": 14.0,
 "c": 18.0,
 "f": 10.0
 },
 {
-"n": "loubia",
-"ar": "",
+"n": "Haricots blancs",
+"ar": "لوبيا",
 "k": 110.0,
 "p": 6.0,
 "c": 17.0,
 "f": 2.0
 },
 {
-"n": "macaroni and cheese",
-"ar": "",
+"n": "Macaronis au fromage",
+"ar": "معكرونة بالجبن",
 "k": 160.0,
 "p": 6.0,
 "c": 18.0,
 "f": 7.0
 },
 {
-"n": "macarons",
-"ar": "",
+"n": "Macarons",
+"ar": "ماكارون",
 "k": 400.0,
 "p": 7.0,
 "c": 60.0,
 "f": 15.0
 },
 {
-"n": "matbucha",
-"ar": "",
+"n": "Matbucha",
+"ar": "مطبوخة",
 "k": 80.0,
 "p": 2.0,
 "c": 8.0,
 "f": 5.0
 },
 {
-"n": "meat brochettes",
-"ar": "",
+"n": "Brochettes de viande",
+"ar": "أسياخ اللحم",
 "k": 215.0,
 "p": 15.0,
 "c": 3.0,
 "f": 15.0
 },
 {
-"n": "meatball with tomato sauce",
-"ar": "",
+"n": "Kefta à la sauce tomate",
+"ar": "كفتة بالصلصة",
 "k": 170.0,
 "p": 12.0,
 "c": 5.0,
 "f": 11.0
 },
 {
-"n": "miso soup",
-"ar": "",
+"n": "Soupe miso",
+"ar": "حساء ميسو",
 "k": 40.0,
 "p": 3.0,
 "c": 4.0,
@@ -4768,16 +4768,16 @@
 "f": 11.0
 },
 {
-"n": "mussels",
-"ar": "",
+"n": "Moules",
+"ar": "بلح البحر",
 "k": 86.0,
 "p": 12.0,
 "c": 4.0,
 "f": 2.0
 },
 {
-"n": "nachos",
-"ar": "",
+"n": "Nachos",
+"ar": "ناتشوز",
 "k": 310.0,
 "p": 8.0,
 "c": 32.0,
@@ -4785,231 +4785,231 @@
 },
 {
 "n": "nougat",
-"ar": "",
+"ar": "نوغة",
 "k": 400.0,
 "p": 5.0,
 "c": 70.0,
 "f": 12.0
 },
 {
-"n": "omelette",
-"ar": "",
+"n": "Omelette",
+"ar": "أومليت",
 "k": 154.0,
 "p": 11.0,
 "c": 1.0,
 "f": 12.0
 },
 {
-"n": "onion rings",
-"ar": "",
+"n": "Rondelles d'oignon",
+"ar": "حلقات البصل",
 "k": 330.0,
 "p": 4.0,
 "c": 38.0,
 "f": 18.0
 },
 {
-"n": "oysters",
-"ar": "",
+"n": "Huîtres",
+"ar": "محار",
 "k": 80.0,
 "p": 9.0,
 "c": 4.0,
 "f": 2.0
 },
 {
-"n": "pad thai",
-"ar": "",
+"n": "Pad thaï",
+"ar": "باد تاي",
 "k": 150.0,
 "p": 8.0,
 "c": 20.0,
 "f": 5.0
 },
 {
-"n": "paella",
-"ar": "",
+"n": "Paella",
+"ar": "باييا",
 "k": 160.0,
 "p": 9.0,
 "c": 20.0,
 "f": 5.0
 },
 {
-"n": "pancakes",
-"ar": "",
+"n": "Pancakes",
+"ar": "بان كيك",
 "k": 227.0,
 "p": 6.0,
 "c": 28.0,
 "f": 9.0
 },
 {
-"n": "panna cotta",
-"ar": "",
+"n": "Panna cotta",
+"ar": "بانا كوتا",
 "k": 250.0,
 "p": 4.0,
 "c": 22.0,
 "f": 16.0
 },
 {
-"n": "pear",
-"ar": "",
+"n": "Poire",
+"ar": "إجاص",
 "k": 57.0,
 "p": 0.4,
 "c": 15.0,
 "f": 0.1
 },
 {
-"n": "peking duck",
-"ar": "",
+"n": "Canard laqué",
+"ar": "بط بكين",
 "k": 330.0,
 "p": 19.0,
 "c": 3.0,
 "f": 27.0
 },
 {
-"n": "pho",
-"ar": "",
+"n": "Pho",
+"ar": "فو",
 "k": 90.0,
 "p": 7.0,
 "c": 12.0,
 "f": 2.0
 },
 {
-"n": "pizza",
-"ar": "",
+"n": "Pizza",
+"ar": "بيتزا",
 "k": 266.0,
 "p": 11.0,
 "c": 33.0,
 "f": 10.0
 },
 {
-"n": "pork chop",
-"ar": "",
+"n": "Côte de porc",
+"ar": "ريش الخنزير",
 "k": 230.0,
 "p": 25.0,
 "c": 0.0,
 "f": 14.0
 },
 {
-"n": "poutine",
-"ar": "",
+"n": "Poutine",
+"ar": "بوتين",
 "k": 290.0,
 "p": 7.0,
 "c": 30.0,
 "f": 16.0
 },
 {
-"n": "prime rib",
-"ar": "",
+"n": "Côte de bœuf",
+"ar": "ضلع البقر",
 "k": 290.0,
 "p": 23.0,
 "c": 0.0,
 "f": 22.0
 },
 {
-"n": "pulled pork sandwich",
-"ar": "",
+"n": "Sandwich au porc effiloché",
+"ar": "ساندويتش لحم مفروم",
 "k": 260.0,
 "p": 16.0,
 "c": 24.0,
 "f": 11.0
 },
 {
-"n": "ramen",
-"ar": "",
+"n": "Ramen",
+"ar": "رامن",
 "k": 110.0,
 "p": 5.0,
 "c": 16.0,
 "f": 3.0
 },
 {
-"n": "ravioli",
-"ar": "",
+"n": "Raviolis",
+"ar": "رافيولي",
 "k": 160.0,
 "p": 7.0,
 "c": 22.0,
 "f": 5.0
 },
 {
-"n": "red velvet cake",
-"ar": "",
+"n": "Gâteau red velvet",
+"ar": "كعكة ريد فيلفيت",
 "k": 370.0,
 "p": 4.0,
 "c": 50.0,
 "f": 18.0
 },
 {
-"n": "risotto",
-"ar": "",
+"n": "Risotto",
+"ar": "ريزوتو",
 "k": 140.0,
 "p": 4.0,
 "c": 22.0,
 "f": 4.0
 },
 {
-"n": "rghayf",
-"ar": "",
+"n": "Rghaïf",
+"ar": "رغايف",
 "k": 300.0,
 "p": 6.0,
 "c": 45.0,
 "f": 11.0
 },
 {
-"n": "roasted chicken",
-"ar": "",
+"n": "Poulet rôti",
+"ar": "دجاج مشوي",
 "k": 195.0,
 "p": 29.0,
 "c": 0.0,
 "f": 8.0
 },
 {
-"n": "salmon",
-"ar": "",
+"n": "Saumon",
+"ar": "سلمون",
 "k": 208.0,
 "p": 20.0,
 "c": 0.0,
 "f": 13.0
 },
 {
-"n": "samosa",
-"ar": "",
+"n": "Samoussa",
+"ar": "سمبوسة",
 "k": 260.0,
 "p": 5.0,
 "c": 30.0,
 "f": 13.0
 },
 {
-"n": "sashimi",
-"ar": "",
+"n": "Sashimi",
+"ar": "ساشيمي",
 "k": 130.0,
 "p": 22.0,
 "c": 1.0,
 "f": 4.0
 },
 {
-"n": "scallops",
-"ar": "",
+"n": "Saint-Jacques",
+"ar": "اسكالوب",
 "k": 110.0,
 "p": 20.0,
 "c": 3.0,
 "f": 1.0
 },
 {
-"n": "seaweed salad",
-"ar": "",
+"n": "Salade d'algues",
+"ar": "سلطة الأعشاب البحرية",
 "k": 70.0,
 "p": 2.0,
 "c": 9.0,
 "f": 3.0
 },
 {
-"n": "seffa",
-"ar": "",
+"n": "Seffa",
+"ar": "سفة",
 "k": 280.0,
 "p": 8.0,
 "c": 48.0,
 "f": 7.0
 },
 {
-"n": "seffa with rice",
-"ar": "",
+"n": "Seffa au riz",
+"ar": "سفة بالأرز",
 "k": 200.0,
 "p": 5.0,
 "c": 40.0,
@@ -5024,200 +5024,200 @@
 "f": 14.0
 },
 {
-"n": "shakchouka",
-"ar": "",
+"n": "Chakchouka",
+"ar": "شكشوكة",
 "k": 95.0,
 "p": 5.0,
 "c": 7.0,
 "f": 5.0
 },
 {
-"n": "shrimp and grits",
-"ar": "",
+"n": "Crevettes et gruau",
+"ar": "جمبري وجريش",
 "k": 170.0,
 "p": 11.0,
 "c": 15.0,
 "f": 7.0
 },
 {
-"n": "snowballs",
-"ar": "",
+"n": "Boules de neige",
+"ar": "كرات الثلج",
 "k": 450.0,
 "p": 5.0,
 "c": 55.0,
 "f": 24.0
 },
 {
-"n": "spagetti",
-"ar": "",
+"n": "Spaghettis",
+"ar": "سباغيتي",
 "k": 157.0,
 "p": 6.0,
 "c": 31.0,
 "f": 1.0
 },
 {
-"n": "spaghetti bolognese",
-"ar": "",
+"n": "Spaghettis bolognaise",
+"ar": "سباغيتي بولونيز",
 "k": 150.0,
 "p": 7.0,
 "c": 18.0,
 "f": 5.0
 },
 {
-"n": "spaghetti carbonara",
-"ar": "",
+"n": "Spaghettis carbonara",
+"ar": "سباغيتي كاربونارا",
 "k": 200.0,
 "p": 8.0,
 "c": 20.0,
 "f": 9.0
 },
 {
-"n": "spring rolls",
-"ar": "",
+"n": "Rouleaux de printemps",
+"ar": "لفائف الربيع",
 "k": 150.0,
 "p": 5.0,
 "c": 20.0,
 "f": 5.0
 },
 {
-"n": "steak",
-"ar": "",
+"n": "Steak",
+"ar": "ستيك",
 "k": 270.0,
 "p": 26.0,
 "c": 0.0,
 "f": 18.0
 },
 {
-"n": "strawberry shortcake",
-"ar": "",
+"n": "Shortcake aux fraises",
+"ar": "كعكة الفراولة",
 "k": 330.0,
 "p": 4.0,
 "c": 45.0,
 "f": 15.0
 },
 {
-"n": "sushi",
-"ar": "",
+"n": "Sushi",
+"ar": "سوشي",
 "k": 140.0,
 "p": 5.0,
 "c": 28.0,
 "f": 1.0
 },
 {
-"n": "sweet bread",
-"ar": "",
+"n": "Pain brioché",
+"ar": "خبز حلو",
 "k": 300.0,
 "p": 8.0,
 "c": 50.0,
 "f": 7.0
 },
 {
-"n": "tacos",
-"ar": "",
+"n": "Tacos",
+"ar": "تاكو",
 "k": 220.0,
 "p": 9.0,
 "c": 20.0,
 "f": 11.0
 },
 {
-"n": "tagine",
-"ar": "",
+"n": "Tajine",
+"ar": "طاجين",
 "k": 130.0,
 "p": 11.0,
 "c": 7.0,
 "f": 6.0
 },
 {
-"n": "tagine with artichokes and peas",
-"ar": "",
+"n": "Tajine aux artichauts et petits pois",
+"ar": "طاجين بالخرشوف والبازلاء",
 "k": 95.0,
 "p": 4.0,
 "c": 12.0,
 "f": 4.0
 },
 {
-"n": "tagine with beef",
-"ar": "",
+"n": "Tajine au bœuf",
+"ar": "طاجين باللحم",
 "k": 170.0,
 "p": 14.0,
 "c": 5.0,
 "f": 10.0
 },
 {
-"n": "tagine with quince",
-"ar": "",
+"n": "Tajine aux coings",
+"ar": "طاجين بالسفرجل",
 "k": 150.0,
 "p": 11.0,
 "c": 12.0,
 "f": 6.0
 },
 {
-"n": "tagine with vegetables",
-"ar": "",
+"n": "Tajine aux légumes",
+"ar": "طاجين بالخضار",
 "k": 95.0,
 "p": 3.0,
 "c": 12.0,
 "f": 4.0
 },
 {
-"n": "tkalya",
-"ar": "",
+"n": "Tkalya",
+"ar": "تقلية",
 "k": 180.0,
 "p": 15.0,
 "c": 3.0,
 "f": 12.0
 },
 {
-"n": "tomatoes and onion salad",
-"ar": "",
+"n": "Salade de tomates et oignons",
+"ar": "سلطة الطماطم والبصل",
 "k": 40.0,
 "p": 1.0,
 "c": 6.0,
 "f": 1.5
 },
 {
-"n": "traditional bread",
-"ar": "",
+"n": "Pain traditionnel",
+"ar": "خبز تقليدي",
 "k": 265.0,
 "p": 9.0,
 "c": 52.0,
 "f": 2.0
 },
 {
-"n": "traditional macaroon",
-"ar": "",
+"n": "Ghriba",
+"ar": "غريبة",
 "k": 400.0,
 "p": 8.0,
 "c": 50.0,
 "f": 18.0
 },
 {
-"n": "tuna tartare",
-"ar": "",
+"n": "Tartare de thon",
+"ar": "تارتار التونة",
 "k": 150.0,
 "p": 22.0,
 "c": 2.0,
 "f": 6.0
 },
 {
-"n": "waffles",
-"ar": "",
+"n": "Gaufres",
+"ar": "وافل",
 "k": 290.0,
 "p": 7.0,
 "c": 33.0,
 "f": 14.0
 },
 {
-"n": "white beans with tomatoes",
-"ar": "",
+"n": "Haricots blancs à la tomate",
+"ar": "لوبيا بيضاء بالطماطم",
 "k": 110.0,
 "p": 6.0,
 "c": 17.0,
 "f": 2.0
 },
 {
-"n": "zitoun",
-"ar": "",
+"n": "Olives",
+"ar": "زيتون",
 "k": 115.0,
 "p": 0.8,
 "c": 6.0,

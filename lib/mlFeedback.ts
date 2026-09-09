@@ -12,7 +12,12 @@ import { auth } from './firebaseAuth';
 import { getMLConsent } from './alConsent';
 
 const API_URL = (process.env.EXPO_PUBLIC_API_URL || '').trim();
-const MODEL_VERSION = 'food_salorie_v5'; // suivre la dérive entre versions du modèle on-device
+// ⚠ À CHANGER À CHAQUE BASCULE DU MODÈLE EMBARQUÉ, sans quoi les corrections
+// collectées portent une provenance fausse et deviennent inexploitables : on ne
+// sait plus quelle version s'est trompée sur quelle photo, donc plus mesurer si
+// la suivante a corrigé le défaut.
+// v6 = MobileNetV3-Large, 288 px, 172 classes, déployé le 09/09/2026.
+const MODEL_VERSION = 'food_salorie_v6_288px';
 
 export async function submitScanFeedback(p: {
   imageUri: string;
@@ -28,7 +33,11 @@ export async function submitScanFeedback(p: {
     if (!API_URL || !p.imageUri || !p.finalName) return;
     // Gate consentement : pas d'envoi sans opt-in explicite.
     if (!(await getMLConsent())) return;
-    // 384px JPEG q0.6 : assez pour ré-entraîner (entrée modèle 224), léger pour stocker en masse.
+    // 384px JPEG q0.6 : au-dessus de l'entrée du modèle (288 px depuis le
+    // 09/09/2026), donc encore une marge si la résolution remonte ; assez léger
+    // pour stocker des milliers de corrections. Descendre à 288 ferait perdre
+    // cette marge, et ré-entraîner à une résolution supérieure deviendrait
+    // impossible sans re-collecter.
     const manip = await ImageManipulator.manipulateAsync(
       p.imageUri,
       [{ resize: { width: 384 } }],

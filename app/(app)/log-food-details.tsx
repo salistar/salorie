@@ -170,16 +170,27 @@ export default function LogFoodDetailsScreen() {
       // ACTIVE LEARNING : on capture le label FINAL (édité par l'utilisateur = vraie correction)
       // + l'image + ce que le on-device avait prédit -> dataset "or" pour ré-entraîner.
       try {
+        // VRAIE correction = l'utilisateur a modifié le nom proposé (indépendant de la langue).
+        const corrige = name !== ((params.name as string) || '');
         submitScanFeedback({
           imageUri: rawImageUri || '',
           predicted: (params.scanPredicted as string) || null,
           predictedScore: Number(params.scanScore) || 0,
           finalName: name,
           tier: (params.scanTier as string) || 'unknown',
-          // VRAIE correction = l'utilisateur a modifié le nom proposé (indépendant de la langue).
-          userEdited: name !== ((params.name as string) || ''),
+          userEdited: corrige,
           language,
         });
+        // ⚠ LE PIPELINE ÉTAIT VIDE, ET CE N'ÉTAIT PAS UN BUG.
+        // 7 enregistrements, 0 correction au 09/09/2026 : le consentement vit
+        // dans Réglages > Préférences, désactivé par défaut, et personne ne va
+        // l'y chercher. On pose donc la question ici — quand l'utilisateur vient
+        // de corriger un scan, le seul moment où sa contribution est évidente.
+        // Une seule fois, et rien n'est envoyé avant son accord.
+        if (corrige && params.scanTier) {
+          const { proposerConsentementApresCorrection } = require('../../lib/alConsent');
+          proposerConsentementApresCorrection(language);
+        }
       } catch {}
       // Mémorise l'aliment pour le re-logger en 1 tap (Récents).
       try {
