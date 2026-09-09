@@ -60,6 +60,10 @@ export class StravaService {
   private get clientId() { return String(process.env.STRAVA_CLIENT_ID || ''); }
   private get clientSecret() { return String(process.env.STRAVA_CLIENT_SECRET || ''); }
   private get redirect() { return String(process.env.STRAVA_REDIRECT_URI || ''); }
+  /** Le mot de passe que Strava nous renvoie a l'abonnement, pour prouver que
+   *  la requete vient bien de lui. Sans lui, n'importe qui pourrait valider un
+   *  abonnement a notre place. */
+  private get verifyToken() { return String(process.env.STRAVA_VERIFY_TOKEN || ''); }
 
   /** Configuré ou non. Sans cela, l'app afficherait un bouton qui mène à une
    *  page d'erreur Strava — mieux vaut ne pas l'afficher du tout. */
@@ -287,6 +291,78 @@ export class StravaService {
            reste prisonnier d'un lien qu'il a demandé à rompre. */
       }
       await this.ref(uid).delete();
+    }
+    return { ok: true };
+  }
+
+  // ── Webhooks Strava ────────────────────────────────────────────────────────
+  // Strava n'accepte un abonnement qu'apres avoir appele NOTRE URL en GET et
+  // recu son propre defi en echo. C'est une poignee de main, pas une simple
+  // route de sante : elle prouve a Strava que l'URL nous appartient.
+
+  /**
+   * La validation d'abonnement.
+   *
+   * ⚠ ON VERIFIE LE JETON, MEME SI ECHOUER EST « PLUS SIMPLE ».
+   * Renvoyer le defi sans regarder `hub.verify_token` marcherait — Strava
+   * validerait l'abonnement. Mais n'importe qui connaissant l'URL pourrait
+   * alors faire valider un abonnement a notre place et detourner les
+   * evenements. Le jeton est le seul secret partage a ce stade.
+   */
+  validerAbonnement(mode: string, jeton: string, defi: string): { 'hub.challenge': string } {
+    if (!this.verifyToken) {
+      throw new BadRequestException('STRAVA_VERIFY_TOKEN absent : abonnement impossible.');
+    }
+    if (mode !== 'subscribe' || jeton !== this.verifyToken) {
+      throw new BadRequestException('Validation refusee.');
+    }
+    return { 'hub.challenge': String(defi || '') };
+  }
+
+  /**
+   * Un evenement Strava.
+   *
+   * ⚠ ON REPOND TOUJOURS 200, MEME QUAND ON NE FAIT RIEN.
+   * Strava desactive un abonnement dont l'URL renvoie des erreurs de facon
+   * repetee. Une seance inconnue, un athlete qu'on ne suit pas, une panne
+   * Firestore : rien de tout cela ne justifie de perdre l'abonnement entier.
+   * On journalise et on acquitte.
+   *
+   * ⚠ LA DESAUTORISATION EST LE CAS LE PLUS IMPORTANT, PAS LE PLUS RARE.
+   * Quand quelqu'un retire l'acces depuis SON compte Strava, nos jetons
+   * deviennent inutiles — et les garder serait conserver une autorisation qu'on
+   * n'a plus. Strava l'exige, et c'est de toute facon la seule chose correcte.
+   */
+  async evenement(corps: any): Promise<{ ok: true }> {
+    try {
+      const type = String(corps?.object_type || '');
+      const aspect = String(corps?.aspect_type || '');
+      const proprietaire = corps?.owner_id;
+      if (!proprietaire) return { ok: true };
+
+      const q = await this.fb.db().collection('strava_tokens')
+        .where('athleteId', '==', Number(proprietaire)).limit(1).get();
+      if (q.empty) return { ok: true };   // athlete inconnu : rien a faire
+      const doc = q.docs[0];
+
+      // L'utilisateur a coupe l'acces depuis Strava.
+      if (type === 'athlete' && aspect === 'update'
+          && corps?.updates?.authorized === 'false') {
+        await doc.ref.delete();
+        return { ok: true };
+      }
+
+      if (type === 'activity' && (aspect === 'create' || aspect === 'update')) {
+        // ⚠ ON N'IMPORTE PAS ICI, ET C'EST DELIBERE.
+        // Importer dans le webhook demanderait de rafraichir un jeton et
+        // d'appeler Strava dans une requete qu'il faut acquitter vite ; un
+        // ralentissement de leur API deviendrait un abonnement desactive. On
+        // note qu'il y a du nouveau, et `importer()` — qui deduplique deja par
+        // identifiant de seance — le prendra a la prochaine ouverture.
+        await doc.ref.set({ nouveauteLe: Date.now() }, { merge: true });
+      }
+    } catch {
+      /* Voir plus haut : un echec ne doit jamais coûter l'abonnement. */
     }
     return { ok: true };
   }

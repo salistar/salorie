@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Req, Res, Query, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Req, Res, Query, Body, HttpCode, UseGuards, BadRequestException } from '@nestjs/common';
 import { StravaService } from './strava.service';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 
@@ -86,5 +86,38 @@ export class StravaController {
   @Delete('lien')
   delier(@Req() req: any) {
     return this.strava.delier(this.docIdOf(req));
+  }
+
+  // ── Webhooks ───────────────────────────────────────────────────────────────
+  // PUBLIQUES par necessite, comme /retour : c'est Strava qui appelle, et Strava
+  // ne porte aucun jeton Firebase. Ce qui les protege n'est pas un garde mais
+  // un secret partage (`STRAVA_VERIFY_TOKEN`) pour la validation, et le fait que
+  // l'evenement ne declenche AUCUNE action sensible — il note qu'il y a du
+  // nouveau, rien de plus.
+
+  /**
+   * La poignee de main d'abonnement. Strava appelle cette URL en GET et attend
+   * son propre `hub.challenge` en retour, sans quoi il refuse l'abonnement.
+   */
+  @Get('webhook')
+  webhookValidation(
+    @Query('hub.mode') mode: string,
+    @Query('hub.verify_token') jeton: string,
+    @Query('hub.challenge') defi: string,
+  ) {
+    return this.strava.validerAbonnement(mode, jeton, defi);
+  }
+
+  /**
+   * Un evenement : seance creee ou modifiee, ou acces retire par l'utilisateur.
+   *
+   * ⚠ RENVOIE 200 EN TOUTES CIRCONSTANCES. Strava desactive un abonnement dont
+   * l'URL echoue de facon repetee : une seance inconnue ne doit pas coûter la
+   * reception de toutes les suivantes.
+   */
+  @Post('webhook')
+  @HttpCode(200)
+  webhookEvenement(@Body() corps: any) {
+    return this.strava.evenement(corps);
   }
 }

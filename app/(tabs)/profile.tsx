@@ -60,9 +60,9 @@ export default function ProfileScreen() {
   const bgColor = isDark ? tok.bg : 'transparent';
   // Inline trilingual labels for items not yet in the shared i18n file.
   const PSTR: any = {
-    en: { sport_medals: 'Sport & medals', my_medals: 'My medals', achievements: 'Achievements', send_logs: 'Send logs', nutrients: 'Daily nutrients', streaks: 'My streaks', avatar: 'My avatar', amis: 'My friends', family: 'My family', vitals: 'Glucose & blood pressure', referral: 'Referral', doctor_report: 'Doctor report (PDF)' },
-    fr: { sport_medals: 'Sport & médailles', my_medals: 'Mes médailles', achievements: 'Succès', send_logs: 'Envoyer les logs', nutrients: 'Nutriments du jour', streaks: 'Mes séries', avatar: 'Mon avatar', amis: 'Mes amis', family: 'Ma famille', vitals: 'Glycémie & tension', referral: 'Parrainage', doctor_report: 'Rapport médecin (PDF)' },
-    ar: { sport_medals: 'الرياضة والأوسمة', my_medals: 'أوسمتي', achievements: 'الإنجازات', send_logs: 'إرسال السجلات', nutrients: 'عناصر اليوم الغذائية', streaks: 'سلاسلي', avatar: 'بطلي', amis: 'أصدقائي', family: 'عائلتي', vitals: 'سكر الدم والضغط', referral: 'الإحالة', doctor_report: 'تقرير للطبيب (PDF)' },
+    en: { sport_medals: 'Sport & medals', my_medals: 'My medals', achievements: 'Achievements', send_logs: 'Send logs', nutrients: 'Daily nutrients', streaks: 'My streaks', avatar: 'My avatar', amis: 'My friends', family: 'My family', vitals: 'Glucose & blood pressure', referral: 'Referral', doctor_report: 'Doctor report (PDF)', strava: 'Strava' },
+    fr: { sport_medals: 'Sport & médailles', my_medals: 'Mes médailles', achievements: 'Succès', send_logs: 'Envoyer les logs', nutrients: 'Nutriments du jour', streaks: 'Mes séries', avatar: 'Mon avatar', amis: 'Mes amis', family: 'Ma famille', vitals: 'Glycémie & tension', referral: 'Parrainage', doctor_report: 'Rapport médecin (PDF)', strava: 'Strava' },
+    ar: { sport_medals: 'الرياضة والأوسمة', my_medals: 'أوسمتي', achievements: 'الإنجازات', send_logs: 'إرسال السجلات', nutrients: 'عناصر اليوم الغذائية', streaks: 'سلاسلي', avatar: 'بطلي', amis: 'أصدقائي', family: 'عائلتي', vitals: 'سكر الدم والضغط', referral: 'الإحالة', doctor_report: 'تقرير للطبيب (PDF)', strava: 'سترافا' },
   };
   const P_ = (k: string) => (PSTR[String(language)] || PSTR.en)[k] || PSTR.en[k] || k;
 
@@ -349,6 +349,11 @@ export default function ProfileScreen() {
           <GridTile icon={Heart} label={P_('nutrients')} color={CATEGORIES.nutriments} onPress={() => router.push('/nutrients' as any)} />
           <GridTile icon={Activity} label={P_('vitals')} color={CATEGORIES.constantes} onPress={() => router.push('/vitals' as any)} />
           <GridTile icon={HeartPulse} label={P_('doctor_report')} color={CATEGORIES.medical} onPress={() => router.push('/health-export' as any)} />
+          {/* ⚠ AJOUTEE LE 09/09/2026. Le module Strava du backend existait
+              depuis le 31/08 — etat, URL signee en HMAC, retour verifie,
+              import, deliaison, et des tests — mais AUCUN ecran ne l'appelait.
+              Un chemin utilisateur absent rend le travail de securite inutile. */}
+          <GridTile icon={Activity} label={P_('strava')} color={CATEGORIES.exercice} onPress={() => router.push('/strava' as any)} />
           <GridTile icon={Bell} label={t('prefs.notifications')} color={k.accent} onPress={() => router.push('/notifications' as any)} />
           <GridTile icon={Settings} label={t('profile.preferences')} color={CATEGORIES.reglages} onPress={() => router.push('/preferences' as any)} />
           <GridTile icon={CreditCard} label={t('profile.upgrade')} color={CATEGORIES.abonnement} onPress={handleUpgrade} />

@@ -82,3 +82,49 @@ describe('Strava — la signature du state', () => {
     expect(url).toContain('activity%3Aread_all');
   });
 });
+
+/**
+ * Ce qui est mis à l'épreuve ici : LA VALIDATION D'ABONNEMENT AU WEBHOOK.
+ *
+ * Strava n'accepte un abonnement qu'après avoir appelé notre URL et reçu son
+ * propre défi en écho. Renvoyer ce défi sans regarder `hub.verify_token`
+ * marcherait — Strava validerait. Mais alors n'importe qui connaissant l'URL
+ * pourrait faire valider un abonnement à notre place et détourner le flux
+ * d'événements. Le jeton partagé est le seul secret disponible à ce stade, et
+ * ces trois tests sont tout ce qui garantit qu'on le regarde.
+ */
+describe('Strava — la validation du webhook', () => {
+  const avecJeton = (jeton?: string) => {
+    process.env.FEATURES_USER_SECRET = 'secret-de-test';
+    process.env.STRAVA_CLIENT_ID = '12345';
+    process.env.STRAVA_CLIENT_SECRET = 'sc';
+    process.env.STRAVA_REDIRECT_URI = 'https://api.salorie.com/strava/retour';
+    if (jeton === undefined) delete process.env.STRAVA_VERIFY_TOKEN;
+    else process.env.STRAVA_VERIFY_TOKEN = jeton;
+    return new StravaService({ db: () => ({}) } as any);
+  };
+
+  it('renvoie le défi quand le jeton correspond', () => {
+    const s = avecJeton('jeton-partage');
+    expect(s.validerAbonnement('subscribe', 'jeton-partage', 'defi-42'))
+      .toEqual({ 'hub.challenge': 'defi-42' });
+  });
+
+  it('refuse un jeton qui ne correspond pas', () => {
+    const s = avecJeton('jeton-partage');
+    expect(() => s.validerAbonnement('subscribe', 'autre-jeton', 'defi-42')).toThrow();
+  });
+
+  it('refuse un mode autre que « subscribe »', () => {
+    const s = avecJeton('jeton-partage');
+    expect(() => s.validerAbonnement('unsubscribe', 'jeton-partage', 'defi-42')).toThrow();
+  });
+
+  // ⚠ Sans jeton configuré, on REFUSE au lieu de laisser passer. Répondre au
+  // défi « puisqu'il n'y a rien à vérifier » ouvrirait l'abonnement à quiconque
+  // le demande — un serveur mal configuré doit se taire, pas devenir permissif.
+  it('refuse tout tant que STRAVA_VERIFY_TOKEN n’est pas configuré', () => {
+    const s = avecJeton(undefined);
+    expect(() => s.validerAbonnement('subscribe', '', 'defi-42')).toThrow();
+  });
+});
