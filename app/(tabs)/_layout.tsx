@@ -81,7 +81,9 @@ function TabsContent() {
         <Tabs.Screen
           name="analytics"
           options={{
-            tabBarLabel: t('tabs.analytics'),
+            // Affiche court, annonce complet : un lecteur d'ecran doit dire
+            // « Statistiques », pas « Stats ».
+            tabBarLabel: t('tabs.analytics.bref'),
             tabBarAccessibilityLabel: t('tabs.analytics'),
             tabBarIcon: ({ color }) => <BarChart3 size={22} color={color} />,
           }}

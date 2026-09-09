@@ -58,6 +58,8 @@ const translations = {
 
     'tabs.home': 'Home',
     'tabs.analytics': 'Analytics',
+    // Libelle AFFICHE dans la barre. Voir le commentaire cote francais.
+    'tabs.analytics.bref': 'Stats',
     'tabs.profile': 'Profile',
 
     'home.welcome_back': 'Welcome back',
@@ -565,6 +567,13 @@ const translations = {
 
     'tabs.home': 'Accueil',
     'tabs.analytics': 'Statistiques',
+    // ⚠ DEUX CLES, ET C'EST VOLONTAIRE.
+    // « Statistiques » est tronque en « Statisti… » dans la barre a cinq
+    // onglets d'un ecran de 720 px — constate le 09/09/2026 sur un Galaxy A07,
+    // invisible sur l'emulateur 1080 px. On raccourcit ce qui est AFFICHE, mais
+    // pas ce que lit un lecteur d'ecran : `tabs.analytics` reste le mot entier
+    // pour l'accessibilite, `tabs.analytics.bref` sert au rendu.
+    'tabs.analytics.bref': 'Stats',
     'tabs.profile': 'Profil',
 
     'home.welcome_back': 'Bon retour',
@@ -1072,6 +1081,9 @@ const translations = {
 
     'tabs.home': 'الرئيسية',
     'tabs.analytics': 'الإحصائيات',
+    // L'arabe est plus haut ET plus large que le latin a taille egale : si le
+    // francais deborde, celui-ci deborde aussi. Meme forme, sans l'article.
+    'tabs.analytics.bref': 'إحصائيات',
     'tabs.profile': 'الملف',
 
     'home.welcome_back': 'مرحبا بعودتك',
