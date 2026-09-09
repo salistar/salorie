@@ -24,6 +24,7 @@ import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign, flipForRTL } from '../../lib/rtl';
 import { createMatch, listFields, Sport, SPORTS, SportField } from '../../lib/groupSports';
+import { useScreenGate } from '../../components/FeatureGate';
 
 
 const SPORT_EMOJI: Record<Sport, string> = {
@@ -101,6 +102,7 @@ function parseDateTime(dateStr: string, timeStr: string): number | null {
 }
 
 export default function MatchCreateScreen() {
+  const __gate = useScreenGate('group-sports');
   const { user } = useUser();
   const { resolved } = useTheme();
   const k = useTokens();
@@ -185,6 +187,8 @@ export default function MatchCreateScreen() {
       setSubmitting(false);
     }
   };
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>

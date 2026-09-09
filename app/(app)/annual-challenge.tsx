@@ -24,6 +24,7 @@ import { useUser } from '@clerk/clerk-expo';
 // maintenant vers l'espace web, qui n'a aucun autre moyen de la connaitre — et
 // qui peut, lui, reposer l'objectif de l'annee.
 import { pousser, ecrireObjectifLocal, lireLocale } from '../../lib/progression';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const STEP = 50; // pas du stepper (km)
 
@@ -91,6 +92,7 @@ function encourage(t: any, pct: number): string {
 }
 
 export default function AnnualChallenge() {
+  const __gate = useScreenGate('challenge');
   const k = useTokens();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
@@ -154,6 +156,8 @@ export default function AnnualChallenge() {
   const pct = goalKm > 0 ? Math.min(100, Math.round((km / goalKm) * 100)) : 0;
   const remaining = Math.max(0, Math.round((goalKm - km) * 10) / 10);
   const reached = pct >= 100;
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: bg }]}>

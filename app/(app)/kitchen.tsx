@@ -14,29 +14,31 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import {
   BookmarkPlus, ChefHat, ScanText, Receipt, Sparkles, ShoppingCart, Refrigerator,
-  Link2, Replace, Award, UtensilsCrossed, Apple, Timer, Utensils, Upload,
+  Link2, Replace, Award, UtensilsCrossed, Apple, Timer, Utensils, Upload, CalendarDays, Wallet,
 } from 'lucide-react-native';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import PhotoStrip from '../../components/PhotoStrip';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
+import { useFeatureFlags } from '../../lib/featureFlags';
+import { isRouteEnabled } from '../../lib/navFlags';
 
 
 const TXT: any = {
   en: { title: 'Kitchen & meals', sub: 'All your food tools in one place.',
     log: 'Log', plan: 'Plan', analyze: 'Analyze',
     diary: 'Food diary', build: 'Build a meal', templates: 'My meal templates', label: 'Scan label', receipt: 'Receipt scan',
-    aiplan: 'AI meal plan', shopping: 'Shopping list', fridge: 'Fridge → recipes', localRecipes: 'Local recipes', importr: 'Import recipe', importData: 'Import from MFP/Yazio', subs: 'Substitutions',
+    aiplan: 'AI meal plan', weekplan: 'Full-day plan', shopping: 'Shopping list', souk: 'Souk basket', fridge: 'Fridge → recipes', localRecipes: 'Local recipes', importr: 'Import recipe', importData: 'Import from MFP/Yazio', subs: 'Substitutions',
     nutri: 'Nutri-Score', resto: 'Restaurant mode', nutrients: 'Daily nutrients', fasting: 'Intermittent fasting' },
   fr: { title: 'Cuisine & repas', sub: 'Tous tes outils alimentaires au même endroit.',
     log: 'Logger', plan: 'Planifier', analyze: 'Analyser',
     diary: 'Journal alimentaire', build: 'Composer un repas', templates: 'Mes repas types', label: 'Scanner étiquette', receipt: 'Ticket de caisse',
-    aiplan: 'Plan repas IA', shopping: 'Liste de courses', fridge: 'Frigo → recettes', localRecipes: 'Recettes locales', importr: 'Importer recette', importData: 'Importer MFP/Yazio', subs: 'Substitutions',
+    aiplan: 'Plan repas IA', weekplan: 'Plan journee complete', shopping: 'Liste de courses', souk: 'Panier du souk', fridge: 'Frigo → recettes', localRecipes: 'Recettes locales', importr: 'Importer recette', importData: 'Importer MFP/Yazio', subs: 'Substitutions',
     nutri: 'Nutri-Score', resto: 'Mode resto', nutrients: 'Nutriments du jour', fasting: 'Jeûne intermittent' },
   ar: { title: 'المطبخ والوجبات', sub: 'كل أدوات التغذية في مكان واحد.',
     log: 'تسجيل', plan: 'تخطيط', analyze: 'تحليل',
     diary: 'يوميات الطعام', build: 'كوّن وجبة', templates: 'وجباتي المعتادة', label: 'مسح الملصق', receipt: 'مسح الإيصال',
-    aiplan: 'خطة وجبات AI', shopping: 'قائمة التسوق', fridge: 'الثلاجة ← وصفات', localRecipes: 'وصفات محلية', importr: 'استيراد وصفة', importData: 'استيراد من MFP/Yazio', subs: 'بدائل',
+    aiplan: 'خطة وجبات AI', weekplan: 'خطة يوم كامل', shopping: 'قائمة التسوق', souk: 'قفة السوق', fridge: 'الثلاجة ← وصفات', localRecipes: 'وصفات محلية', importr: 'استيراد وصفة', importData: 'استيراد من MFP/Yazio', subs: 'بدائل',
     nutri: 'نوتري-سكور', resto: 'وضع المطعم', nutrients: 'عناصر اليوم', fasting: 'الصيام المتقطع' },
 };
 
@@ -44,6 +46,11 @@ export default function KitchenScreen() {
   const k = useTokens();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
+  // ⚠ CE HUB IGNORAIT LES DRAPEAUX, contrairement a Coach et Defis.
+  // Une fonctionnalite eteinte par l'admin gardait donc sa tuile ici : le
+  // tap menait a FeatureGate, qui bloque — un cul-de-sac, precisement ce
+  // que `navFlags` a ete ecrit pour eviter. 13 des 15 tuiles sont gerables.
+  const flags = useFeatureFlags();
   const t = TXT[language] || TXT.en;
   const isDark = resolved === 'dark';
   const tok = useTokens();
@@ -67,7 +74,18 @@ export default function KitchenScreen() {
     ]},
     { key: t.plan, items: [
       { Icon: Sparkles, label: t.aiplan, route: '/ai-meal-plan' },
+      // ⚠ CETTE TUILE MANQUAIT, ET CE N'ETAIT PAS QU'UN ECRAN MORT.
+      // `/meal-plan` est le SEUL ecrit de `saveMealPlan`. `/meal-plan-history`,
+      // lui, n'etait cite que par `/meal-plan` : la paire entiere etait
+      // injoignable, et l'historique ne pouvait afficher qu'un etat vide.
+      // Constate le 09/09/2026 par scripts/auditer-cablage.js.
+      { Icon: CalendarDays, label: t.weekplan, route: '/meal-plan' },
       { Icon: ShoppingCart, label: t.shopping, route: '/shopping-list' },
+      // Juste apres la liste de courses, et non a sa place : la liste part de ce
+      // qu'on veut cuisiner, le panier du souk de ce qu'on peut depenser. L'ecran,
+      // `lib/panierSouk.ts`, `assets/data/prix-souk.json` et son test existaient
+      // depuis toujours sans qu'aucun lien n'y mene (audit du 09/09/2026).
+      { Icon: Wallet, label: t.souk, route: '/panier-souk' },
       { Icon: Refrigerator, label: t.fridge, route: '/fridge-recipes' },
       { Icon: Utensils, label: t.localRecipes, route: '/healthy-recipes' },
       { Icon: Link2, label: t.importr, route: '/import-recipe' },
@@ -93,7 +111,12 @@ export default function KitchenScreen() {
         <Text style={[styles.sub, { color: sub }, align]}>{t.sub}</Text>
         <PhotoStrip category="food" showTitle={false} />
 
-        {SECTIONS.map((sec) => (
+        {/* Le filtrage se fait AVANT le rendu de la section : sinon un groupe dont
+            toutes les tuiles sont eteintes afficherait son titre au-dessus du vide,
+            ce qui est un cul-de-sac d'un autre genre. */}
+        {SECTIONS.map((sec) => ({ ...sec, items: sec.items.filter((it) => isRouteEnabled(flags, it.route)) }))
+          .filter((sec) => sec.items.length > 0)
+          .map((sec) => (
           <View key={sec.key} style={styles.section}>
             <Text style={[styles.secTitle, { color: sub }, align]}>{sec.key}</Text>
             <View style={styles.grid}>

@@ -88,6 +88,9 @@ import { StravaController } from './strava/strava.controller';
 import { StravaService } from './strava/strava.service';
 import { ReferralService } from './referral/referral.service';
 
+import { FlagsController } from './flags/flags.controller';
+import { FlagsService } from './flags/flags.service';
+
 import { AccountController } from './account/account.controller';
 import { AccountService } from './account/account.service';
 
@@ -121,12 +124,12 @@ import { AccountService } from './account/account.service';
       : []),
     ...PIPELINE_FEATURES,
   ],
-  controllers: [HealthController, SocialController, UsersController, ReferralController, StravaController, AccountController, FilesController, NutritionController, InsightsController, AiController, MlController, ...(HAS_MONGO ? [PipelineController, RacesController, OrgsController, NewsController, SupportMailController, MurController] : [])],
+  controllers: [HealthController, FlagsController, SocialController, UsersController, ReferralController, StravaController, AccountController, FilesController, NutritionController, InsightsController, AiController, MlController, ...(HAS_MONGO ? [PipelineController, RacesController, OrgsController, NewsController, SupportMailController, MurController] : [])],
   providers: [
     // Capture les exceptions non gérées des contrôleurs AVANT que Nest ne les
     // transforme en 500 anonymes. Placé en tête : les filtres déclarés ensuite
     // gardent la main sur ce qu'ils traitent déjà (HttpException, etc.).
     { provide: APP_FILTER, useClass: SentryGlobalFilter },
-    FirebaseService, SecretsService, RedisService, UsersService, ReferralService, StravaService, AccountService, NutritionService, InsightsService, AiService, MlService, FastingGateway, ...(HAS_MONGO ? [PipelineService, PipelineResolver, RacesService, OrgsService, NewsService, SupportMailService, SocialGateway, MurService] : [])],
+    FirebaseService, SecretsService, RedisService, FlagsService, UsersService, ReferralService, StravaService, AccountService, NutritionService, InsightsService, AiService, MlService, FastingGateway, ...(HAS_MONGO ? [PipelineService, PipelineResolver, RacesService, OrgsService, NewsService, SupportMailService, SocialGateway, MurService] : [])],
 })
 export class AppModule {}

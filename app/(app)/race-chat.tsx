@@ -11,6 +11,7 @@ import { useTokens } from '../../constants/tokens';
 import { useTranslation } from '../../lib/i18n';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import RaceChat from '../../components/RaceChat';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const TITRES: Record<string, string> = {
   fr: 'Salon de la course',
@@ -19,10 +20,13 @@ const TITRES: Record<string, string> = {
 };
 
 export default function EcranChatCourse() {
+  const __gate = useScreenGate('races');
   const k = useTokens();
   const tok = useTokens();
   const { language } = useTranslation();
   const { id } = useLocalSearchParams<{ id?: string }>();
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: tok.bg }]}>

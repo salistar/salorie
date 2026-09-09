@@ -28,6 +28,7 @@ import { useTranslation } from '../../lib/i18n';
 import { colorLog, explain } from '../../lib/LocalDataStore';
 import { geminiShim } from '../../lib/aiProxy';
 import { useTokens, Tokens } from '../../constants/tokens';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const { width } = Dimensions.get('window');
 console.log('\x1b[35m[workout-details.tsx] MODULE LOADED\x1b[0m');
@@ -170,6 +171,7 @@ function languageInstruction(lang: 'en' | 'fr' | 'ar'): string {
 }
 
 export default function WorkoutDetailsScreen() {
+  const __gate = useScreenGate('workout-plans');
   const { user } = useUser();
   const params = useLocalSearchParams();
   const type = (params.type as string) || 'run'; // 'run' | 'lifting'
@@ -360,6 +362,8 @@ Output a single integer (e.g. 247). No explanation.`;
   const textMuted = isDark ? colors.gray[400] : k.textMuted;
   const cardBg = k.surfaceSunken;
   const cardBorder = isDark ? colors.gray[200] : k.border;
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: bg }]}>

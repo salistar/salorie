@@ -15,6 +15,7 @@ import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign } from '../../lib/rtl';
 import { REWARDS, Reward, getTotalKm, unlockable, kmRemaining, getGeneratedCodes, generateCode } from '../../lib/rewards';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const TXT: any = {
   en: {
@@ -58,6 +59,7 @@ const TXT: any = {
 const CAT_ICON: Record<Reward['category'], any> = { cafe: Coffee, gym: Dumbbell, grocery: ShoppingBasket };
 
 export default function Rewards() {
+  const __gate = useScreenGate('referral');
   const k = useTokens();
   const s = useMemo(() => makeS(k), [k]);
   const { colors, resolved } = useTheme();
@@ -91,6 +93,8 @@ export default function Rewards() {
     const code = await generateCode(id);
     setCodes((prev) => ({ ...prev, [id]: code }));
   };
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: bg }]}>

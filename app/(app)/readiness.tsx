@@ -25,6 +25,7 @@ import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign } from '../../lib/rtl';
 import { computeReadiness } from '../../lib/readiness';
 import { type } from '../../constants/theme';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const STORE_KEY = 'readiness_v1';
 
@@ -105,6 +106,7 @@ function verdictColor(score: number, k: Tokens) {
 }
 
 export default function ReadinessScreen() {
+  const __gate = useScreenGate('readiness');
   const k = useTokens();
   const { resolved } = useTheme();
   const { language, isRTL } = useTranslation() as any;
@@ -167,6 +169,8 @@ export default function ReadinessScreen() {
       </View>
     </View>
   );
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>

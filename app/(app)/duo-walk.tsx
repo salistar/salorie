@@ -34,6 +34,7 @@ import {
 import { voixDisponible, ouvrirVoix, type SessionVoix } from '../../lib/duoVoix';
 import VueAppelVideo from '../../components/VueAppelVideo';
 import CarteDuo from '../../components/CarteDuo';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const T: Record<string, Record<string, string>> = {
   fr: {
@@ -77,6 +78,7 @@ function metres(a: { lat: number; lng: number }, b: { lat: number; lng: number }
 }
 
 export default function MarcheADeux() {
+  const __gate = useScreenGate('duo-walk');
   const k = useTokens();
   const router = useRouter();
   const tok = useTokens();
@@ -168,6 +170,8 @@ export default function MarcheADeux() {
   };
 
   const s = styles(tok);
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: tok.bg }]}>
       <ScreenTopBar showBack title={t.titre} showNotif={false} />

@@ -22,6 +22,7 @@ import Card from '../../components/ui/Card';
 import { PrimaryButton, SecondaryButton } from '../../components/ui/Button';
 import { spacing, type as typeTokens } from '../../constants/theme';
 import { useTokens, Tokens } from '../../constants/tokens';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const { width: W, height: H } = Dimensions.get('window');
 const FOV = 42; // half horizontal field of view (deg) a label is considered "in front"
@@ -83,6 +84,7 @@ function ArThumb({ challengeId, index }: { challengeId: string; index: number })
 }
 
 export default function ChallengeARScreen() {
+  const __gate = useScreenGate('challenge');
   const k = useTokens();
   const styles = useMemo(() => makeStyles(k), [k]);
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -174,6 +176,8 @@ export default function ChallengeARScreen() {
     const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
     return dirs[Math.round(heading / 45) % 8];
   })();
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <View style={styles.fill}>

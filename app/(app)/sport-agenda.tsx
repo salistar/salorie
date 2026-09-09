@@ -21,6 +21,7 @@ import { logEntry, getEntries, deleteEntry } from '../../lib/tracking';
 import { getActiveRaces } from '../../lib/racesApi';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
+import { useScreenGate } from '../../components/FeatureGate';
 
 
 const TXT: any = {
@@ -30,6 +31,7 @@ const TXT: any = {
 };
 
 export default function SportAgenda() {
+  const __gate = useScreenGate('group-sports');
   const k = useTokens();
   const s = useMemo(() => makeS(k), [k]);
   const { user } = useUser();
@@ -79,6 +81,8 @@ export default function SportAgenda() {
     await deleteEntry(email, 'sport_agenda', id);
     load();
   };
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: bg }]}>

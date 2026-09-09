@@ -28,6 +28,7 @@ import {
 } from '../../lib/amis';
 import { inviterAmi } from '../../lib/social';
 import { useEspaceBasSimple } from '../../lib/espaceBas';
+import { useScreenGate } from '../../components/FeatureGate';
 
 /**
  * Mes amis — la liste, et ce qu'on peut en faire.
@@ -126,6 +127,7 @@ const T: Record<string, Record<string, string>> = {
 };
 
 export default function MesAmis() {
+  const __gate = useScreenGate('social');
   const k = useTokens();
   const tok = useTokens();
   const { language, isRTL } = useTranslation() as any;
@@ -247,6 +249,8 @@ export default function MesAmis() {
   };
 
   const s = styles(tok);
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: tok.bg }]}>
       <ScreenTopBar showBack title={t.titre} showNotif={false} />

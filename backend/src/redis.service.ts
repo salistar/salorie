@@ -22,6 +22,17 @@ export class RedisService implements OnModuleDestroy {
     try { await this.get().set(key, JSON.stringify(value), 'EX', ttlSec); } catch { /* no cache */ }
   }
 
+  /**
+   * Supprime une clé (best-effort). Renvoie true si Redis a répondu.
+   * ⚠ Écrire `null` avec un TTL de 1 s ferait presque la même chose, mais pas
+   * tout à fait : pendant cette seconde, `getJSON` rend `null` et l'appelant ne
+   * distingue plus « vidé » de « jamais écrit ». Une vraie suppression évite
+   * cette fenêtre, et dit ce qu'elle fait.
+   */
+  async del(key: string): Promise<boolean> {
+    try { await this.get().del(key); return true; } catch { return false; }
+  }
+
   /** Incrémente un compteur (best-effort). Renvoie la nouvelle valeur ou null si Redis KO. */
   async incr(key: string, ttlSec?: number): Promise<number | null> {
     try {

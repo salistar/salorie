@@ -28,6 +28,7 @@ import {
   listFields, reserveField, listFieldReservations, proposeField,
   SportField, SportReservation, Sport, SPORTS,
 } from '../../lib/groupSports';
+import { useScreenGate } from '../../components/FeatureGate';
 
 
 const SPORT_EMOJI: Record<Sport, string> = {
@@ -117,6 +118,7 @@ function parseDateTime(dateStr: string, timeStr: string): number | null {
 }
 
 export default function FieldReserveScreen() {
+  const __gate = useScreenGate('field-reserve');
   const { user } = useUser();
   const { resolved } = useTheme();
   const k = useTokens();
@@ -249,6 +251,8 @@ export default function FieldReserveScreen() {
       setProposing(false);
     }
   };
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>

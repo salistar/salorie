@@ -25,6 +25,7 @@ import {
   CommunityRoute, RouteWaypoint,
 } from '../../lib/communityRoutes';
 import { emailToDocId } from '../../lib/firebase';
+import { useScreenGate } from '../../components/FeatureGate';
 
 
 // NOUVELLES chaînes = objet LOCAL trilingue {en,fr,ar}.
@@ -125,6 +126,7 @@ interface DraftStop { name: string; lat: string; lng: string; atKm: string; }
 const emptyStop = (): DraftStop => ({ name: '', lat: '', lng: '', atKm: '' });
 
 export default function CommunityRoutesScreen() {
+  const __gate = useScreenGate('community-routes');
   const { user } = useUser();
   const { resolved } = useTheme();
   const k = useTokens();
@@ -231,6 +233,8 @@ export default function CommunityRoutesScreen() {
     s === 'approved' ? t.statusApproved : s === 'rejected' ? t.statusRejected : t.statusPending;
   const statusColor = (s: CommunityRoute['status']) =>
     s === 'approved' ? k.success : s === 'rejected' ? k.danger : k.warning;
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>

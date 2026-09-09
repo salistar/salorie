@@ -31,6 +31,7 @@ import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { txtAlign } from '../../lib/rtl';
 import { saveCustomProduct } from '../../lib/aiStore';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const TXT: any = {
   en: {
@@ -78,6 +79,7 @@ const TXT: any = {
 };
 
 export default function RegisterProductScreen() {
+  const __gate = useScreenGate('food-database');
   const k = useTokens();
   const { code } = useLocalSearchParams<{ code: string }>();
   const barcode = String(code || '');
@@ -176,6 +178,8 @@ export default function RegisterProductScreen() {
       </View>
     );
   }
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>

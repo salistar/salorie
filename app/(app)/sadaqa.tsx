@@ -17,6 +17,7 @@ import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign } from '../../lib/rtl';
 import { computeSadaqa, getTotalKm, nextMilestones, KM_PER_MEAL, KM_PER_TREE } from '../../lib/sadaqa';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const DONATE_URL = 'https://salorie.com/sadaqa';
 
@@ -69,6 +70,7 @@ const TXT: any = {
 };
 
 export default function Sadaqa() {
+  const __gate = useScreenGate('ramadan');
   const k = useTokens();
   const s = useMemo(() => makeS(k), [k]);
   const { colors, resolved } = useTheme();
@@ -108,6 +110,8 @@ export default function Sadaqa() {
       </View>
     </View>
   );
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: bg }]}>

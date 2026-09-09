@@ -33,6 +33,7 @@ import {
 } from '../../lib/family';
 
 import { useTokens, Tokens , CATEGORIES } from '../../constants/tokens';
+import { useScreenGate } from '../../components/FeatureGate';
 type Lang = 'en' | 'fr' | 'ar';
 
 // Chaînes LOCALES trilingues (convention : pas de clés i18n.tsx pour les NOUVELLES strings).
@@ -97,6 +98,7 @@ const role_color = (k: Tokens): Record<FamilyRole, string> => ({
 });
 
 export default function FamilyScreen() {
+  const __gate = useScreenGate('family');
   const { user } = useUser();
   const { resolved } = useTheme();
   const k = useTokens();
@@ -218,6 +220,8 @@ export default function FamilyScreen() {
 
   const goalReached = weekly.totalKm >= WEEKLY_GOAL_KM;
   const progress = Math.min(1, WEEKLY_GOAL_KM > 0 ? weekly.totalKm / WEEKLY_GOAL_KM : 0);
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>

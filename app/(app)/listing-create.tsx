@@ -31,6 +31,7 @@ import {
   createListing, myListings, markSold, removeListing,
   LISTING_CATEGORIES, ListingCategory, MarketplaceListing,
 } from '../../lib/marketplace';
+import { useScreenGate } from '../../components/FeatureGate';
 
 
 const CAT_EMOJI: Record<ListingCategory, string> = {
@@ -101,6 +102,7 @@ const TXT: Record<string, any> = {
 };
 
 export default function ListingCreateScreen() {
+  const __gate = useScreenGate('marketplace');
   const { user } = useUser();
   const { resolved } = useTheme();
   const k = useTokens();
@@ -228,6 +230,8 @@ export default function ListingCreateScreen() {
   const statusColor = (l: MarketplaceListing) =>
     l.status === 'sold' ? k.warning : l.status === 'removed' ? k.danger
       : !l.approved ? k.warning: k.success;
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>

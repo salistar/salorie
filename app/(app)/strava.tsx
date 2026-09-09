@@ -22,6 +22,7 @@ import { useTokens } from '../../constants/tokens';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir, txtAlign } from '../../lib/rtl';
 import { etatStrava, lienStrava, importerStrava, delierStrava, type EtatStrava, type SeanceImportee } from '../../lib/stravaApi';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const TXT: any = {
   fr: {
@@ -87,6 +88,7 @@ const TXT: any = {
 };
 
 export default function StravaScreen() {
+  const __gate = useScreenGate('strava');
   const k = useTokens();
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[String(language)] || TXT.fr;
@@ -172,6 +174,8 @@ export default function StravaScreen() {
 
   const s = styles(k);
   const align = { textAlign: txtAlign(isRTL) };
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={s.page}>

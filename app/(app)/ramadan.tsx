@@ -40,6 +40,7 @@ import {
   DEFAULT_CITY, DEFAULT_COUNTRY, HYDRATION_TARGET_GLASSES,
   type FastTimes, type SplitBudget, type HydrationSlot,
 } from '../../lib/ramadan';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const TXT: any = {
   en: {
@@ -129,6 +130,7 @@ function fmtCountdown(ms: number): string {
 }
 
 export default function RamadanScreen() {
+  const __gate = useScreenGate('ramadan');
   const k = useTokens();
   const styles = useMemo(() => makeStyles(k), [k]);
   const { user } = useUser();
@@ -338,6 +340,8 @@ export default function RamadanScreen() {
       </View>
     </Card>
   );
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>

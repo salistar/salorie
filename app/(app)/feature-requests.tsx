@@ -42,6 +42,7 @@ import {
 import { db } from '../../lib/firebase';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useTokens, Tokens } from '../../constants/tokens';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const { width, height } = Dimensions.get('window');
 
@@ -56,6 +57,7 @@ interface FeatureRequest {
 }
 
 export default function FeatureRequestsScreen() {
+  const __gate = useScreenGate('feature-requests');
   const { user } = useUser();
   const { colors, resolved } = useTheme();
   const k = useTokens();
@@ -194,6 +196,8 @@ export default function FeatureRequestsScreen() {
       </Animated.View>
     );
   };
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: k.surface }]}>

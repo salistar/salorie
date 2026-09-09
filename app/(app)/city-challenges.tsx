@@ -25,6 +25,7 @@ import {
   CityChallenge, CityStandings, CityMetric,
 } from '../../lib/cityChallenges';
 import { SkeletonCard, Skeleton, EmptyState } from '../../components/ui';
+import { useScreenGate } from '../../components/FeatureGate';
 
 
 // NOUVELLES chaînes = objet LOCAL trilingue {en,fr,ar}.
@@ -95,6 +96,7 @@ const TXT: Record<string, any> = {
 };
 
 export default function CityChallengesScreen() {
+  const __gate = useScreenGate('virtual-races');
   const { user } = useUser();
   const { resolved } = useTheme();
   const k = useTokens();
@@ -199,6 +201,8 @@ export default function CityChallengesScreen() {
       setBusy(null);
     }
   };
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>

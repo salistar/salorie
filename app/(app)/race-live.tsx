@@ -8,7 +8,7 @@ import BrandOverlay from '../../components/BrandOverlay';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
-import { ArrowLeft, Play, Pause, Square, MapPin, Trophy, Users } from 'lucide-react-native';
+import { ArrowLeft, Play, Pause, Square, MapPin, Trophy, Users, MessageCircle } from 'lucide-react-native';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { addNutritionLog, emailToDocId, logEvent } from '../../lib/firebase';
@@ -21,6 +21,7 @@ import {
 import { groupByTeam, hasTeams, setMyTeamName, normalizeTeamName, TeamMember } from '../../lib/raceTeam';
 import { Card, PrimaryButton, SecondaryButton } from '../../components/ui';
 import { spacing, radius } from '../../constants/theme';
+import { useScreenGate } from '../../components/FeatureGate';
 
 // Google Maps JS in a WebView — same approach as run.tsx (the JS API key works in a
 // WebView with a baseUrl; react-native-maps would need a Maps SDK for Android key).
@@ -29,13 +30,13 @@ import { spacing, radius } from '../../constants/theme';
 const GOOGLE_MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY ?? '';
 
 const TXT: Record<string, any> = {
-  en: { title: 'Live Race', perm: 'Location permission is required to join the race.', grant: 'Grant access', dist: 'Distance', time: 'Time', pace: 'Pace', kcal: 'Calories', start: 'Start', pause: 'Pause', resume: 'Resume', finish: 'Finish', saved: 'Race finished', savedMsg: 'kcal added to your activity for today.', waiting: 'Getting your location…', leaderboard: 'Leaderboard', you: 'You', km: 'km', done: 'finished',
+  en: { title: 'Live Race', perm: 'Location permission is required to join the race.', grant: 'Grant access', dist: 'Distance', time: 'Time', pace: 'Pace', kcal: 'Calories', start: 'Start', pause: 'Pause', resume: 'Resume', finish: 'Finish', saved: 'Race finished', savedMsg: 'kcal added to your activity for today.', waiting: 'Getting your location…', leaderboard: 'Leaderboard', chat: 'Race chat', you: 'You', km: 'km', done: 'finished',
     gps: 'Real (GPS)', sim: 'Simulation', mode: 'Choose your mode', gpsHint: 'Moves only when you move', simHint: 'Auto-advances for you', avgPace: 'Avg pace', rank: 'Rank', savedToActivity: 'Saved to your activity', great: 'Great job!', viewActivity: 'View activity', close: 'Close',
     teamMode: 'Team mode (relay)', teamPlaceholder: 'Team name (optional)', teamSave: 'Join team', teamMine: 'Your team', teamBoard: 'Teams', indivBoard: 'Players', teamHint: 'Add a team name to compete by team — distances add up.', teamSaved: 'Team set' },
-  fr: { title: 'Course en direct', perm: 'La permission de localisation est requise pour rejoindre la course.', grant: 'Autoriser', dist: 'Distance', time: 'Temps', pace: 'Allure', kcal: 'Calories', start: 'Démarrer', pause: 'Pause', resume: 'Reprendre', finish: 'Terminer', saved: 'Course terminée', savedMsg: 'kcal ajoutées à ton activité du jour.', waiting: 'Localisation en cours…', leaderboard: 'Classement', you: 'Toi', km: 'km', done: 'terminé',
+  fr: { title: 'Course en direct', perm: 'La permission de localisation est requise pour rejoindre la course.', grant: 'Autoriser', dist: 'Distance', time: 'Temps', pace: 'Allure', kcal: 'Calories', start: 'Démarrer', pause: 'Pause', resume: 'Reprendre', finish: 'Terminer', saved: 'Course terminée', savedMsg: 'kcal ajoutées à ton activité du jour.', waiting: 'Localisation en cours…', leaderboard: 'Classement', chat: 'Salon de la course', you: 'Toi', km: 'km', done: 'terminé',
     gps: 'Réel (GPS)', sim: 'Simulation', mode: 'Choisis ton mode', gpsHint: "N'avance que si tu bouges", simHint: 'Avance toute seule', avgPace: 'Allure moy.', rank: 'Rang', savedToActivity: 'Enregistré dans ton activité', great: 'Bravo !', viewActivity: "Voir l'activité", close: 'Fermer',
     teamMode: 'Mode équipe (relais)', teamPlaceholder: "Nom d'équipe (optionnel)", teamSave: "Rejoindre l'équipe", teamMine: 'Ton équipe', teamBoard: 'Équipes', indivBoard: 'Joueurs', teamHint: 'Ajoute un nom d\'équipe pour jouer en équipe — les distances s\'additionnent.', teamSaved: 'Équipe définie' },
-  ar: { title: 'سباق مباشر', perm: 'إذن الموقع مطلوب للانضمام إلى السباق.', grant: 'السماح', dist: 'المسافة', time: 'الوقت', pace: 'الإيقاع', kcal: 'سعرات', start: 'ابدأ', pause: 'إيقاف', resume: 'استئناف', finish: 'إنهاء', saved: 'انتهى السباق', savedMsg: 'سعرة أُضيفت إلى نشاط اليوم.', waiting: 'جارٍ تحديد موقعك…', leaderboard: 'الترتيب', you: 'أنت', km: 'كم', done: 'منتهٍ',
+  ar: { title: 'سباق مباشر', perm: 'إذن الموقع مطلوب للانضمام إلى السباق.', grant: 'السماح', dist: 'المسافة', time: 'الوقت', pace: 'الإيقاع', kcal: 'سعرات', start: 'ابدأ', pause: 'إيقاف', resume: 'استئناف', finish: 'إنهاء', saved: 'انتهى السباق', savedMsg: 'سعرة أُضيفت إلى نشاط اليوم.', waiting: 'جارٍ تحديد موقعك…', leaderboard: 'الترتيب', chat: 'دردشة السباق', you: 'أنت', km: 'كم', done: 'منتهٍ',
     gps: 'حقيقي (GPS)', sim: 'محاكاة', mode: 'اختر الوضع', gpsHint: 'يتقدّم فقط عند الحركة', simHint: 'يتقدّم تلقائياً', avgPace: 'متوسط الإيقاع', rank: 'الترتيب', savedToActivity: 'حُفظ في نشاطك', great: 'أحسنت!', viewActivity: 'عرض النشاط', close: 'إغلاق',
     teamMode: 'وضع الفريق (تتابع)', teamPlaceholder: 'اسم الفريق (اختياري)', teamSave: 'انضم إلى الفريق', teamMine: 'فريقك', teamBoard: 'الفرق', indivBoard: 'اللاعبون', teamHint: 'أضف اسم فريق للتنافس بالفرق — تُجمع المسافات.', teamSaved: 'تم تحديد الفريق' },
 };
@@ -112,6 +113,7 @@ function buildHtml(center: LatLng, k: Tokens): string {
 }
 
 export default function RaceLiveScreen() {
+  const __gate = useScreenGate('virtual-races');
   const k = useTokens();
   const styles = useMemo(() => makeStyles(k), [k]);
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -323,6 +325,8 @@ export default function RaceLiveScreen() {
     );
   }
 
+  if (!__gate.ok) return __gate.node;
+
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
       <BrandOverlay />
@@ -352,6 +356,23 @@ export default function RaceLiveScreen() {
       <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('retour')} style={[styles.back, { backgroundColor: card }]} onPress={() => router.back()}>
         <View style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}><ArrowLeft size={22} color={text} /></View>
       </TouchableOpacity>
+
+      {/* ⚠ LE SALON DE LA COURSE N'AVAIT AUCUNE PORTE D'ENTREE.
+          `app/(app)/race-chat.tsx` et `components/RaceChat.tsx` existaient, finis,
+          et rien ne les citait : audit du 09/09/2026. Le chat prend un `?id=`, donc
+          sa place est ici — c'est le seul ecran qui detient l'identifiant de course.
+          Place SOUS le bouton retour et non a droite : en lecture arabe le
+          classement bascule a droite (`isRTL && { right: 12 }`) et l'aurait recouvert. */}
+      {!!raceId && (
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={t.chat}
+          style={[styles.chatBtn, { backgroundColor: card }]}
+          onPress={() => router.push(`/race-chat?id=${encodeURIComponent(raceId)}` as any)}
+        >
+          <MessageCircle size={22} color={text} />
+        </TouchableOpacity>
+      )}
 
       {/* Live leaderboard */}
       <View style={[styles.board, { backgroundColor: card }, isRTL && { left: undefined, right: 12 }]}>
@@ -522,6 +543,7 @@ function SumStat({ v, u, l, text, sub }: any) {
 function Stat({ label, value, unit, text, sub }: any) {
   const k = useTokens();
   const styles = useMemo(() => makeStyles(k), [k]);
+
   return (
     <View style={styles.stat}>
       <Text style={[styles.statVal, { color: text }]}>{value}</Text>
@@ -539,6 +561,9 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   primaryBtn: { backgroundColor: k.accent, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
   primaryBtnTxt: { color: k.onAccent, fontSize: 16, fontWeight: '800' },
   back: { position: 'absolute', top: 50, left: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: k.shadow, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
+  // Sous le bouton retour (top 50 + 44 de haut + 8 d'air). Cote gauche dans les
+  // deux sens de lecture : c'est la seule bande que le classement ne prend jamais.
+  chatBtn: { position: 'absolute', top: 102, left: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: k.shadow, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
   board: { position: 'absolute', top: 50, left: 12, width: 220, borderRadius: 18, padding: 12, paddingBottom: 8, shadowColor: k.shadow, shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 },
   // `marginLeft` PHYSIQUE et volontaire : ces 50 px degagent le bouton retour, qui
   // est positionne en absolu a `left: 16` et ne bouge donc pas en arabe. Le passer

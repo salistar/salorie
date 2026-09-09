@@ -26,6 +26,7 @@ import { rowDir, txtAlign, flipForRTL } from '../../lib/rtl';
 import { listListings, LISTING_CATEGORIES, ListingCategory, MarketplaceListing } from '../../lib/marketplace';
 import ModerationSheet from '../../components/ModerationSheet';
 import { getBlockedSet } from '../../lib/moderation';
+import { useScreenGate } from '../../components/FeatureGate';
 
 
 const CAT_EMOJI: Record<ListingCategory, string> = {
@@ -66,6 +67,7 @@ const TXT: Record<string, any> = {
 };
 
 export default function MarketplaceScreen() {
+  const __gate = useScreenGate('marketplace');
   const { user } = useUser();
   const { resolved } = useTheme();
   const k = useTokens();
@@ -109,6 +111,8 @@ export default function MarketplaceScreen() {
 
   const priceLabel = (l: MarketplaceListing) =>
     l.price > 0 ? `${l.price} MAD` : t.free;
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>

@@ -38,6 +38,7 @@ import {
   type RecipeCategory,
   type ScoredRecipe,
 } from '../../lib/localRecipes';
+import { useScreenGate } from '../../components/FeatureGate';
 
 
 const TXT: any = {
@@ -77,6 +78,7 @@ const TXT: any = {
 type Verdict = 'great' | 'ok' | 'avoid';
 
 export default function HealthyRecipesScreen() {
+  const __gate = useScreenGate('healthy-recipes');
   const k = useTokens();
   const styles = useMemo(() => makeStyles(k), [k]);
   const { user } = useUser();
@@ -193,6 +195,8 @@ export default function HealthyRecipesScreen() {
   };
 
   const selectedScore = selected ? scoreRecipe(selected, safeCtx) : null;
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safe, { backgroundColor: bg }]}>

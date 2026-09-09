@@ -27,6 +27,7 @@ import {
   ClaimReason,
   ReferralStats,
 } from '../../lib/referral';
+import { useScreenGate } from '../../components/FeatureGate';
 
 type Lang = 'en' | 'fr' | 'ar';
 
@@ -115,6 +116,7 @@ const TXT: Record<Lang, any> = {
 };
 
 export default function Referral() {
+  const __gate = useScreenGate('referral');
   const k = useTokens();
   const s = useMemo(() => makeS(k), [k]);
   const { colors, resolved } = useTheme();
@@ -203,6 +205,8 @@ export default function Referral() {
   };
 
   const count = stats?.count ?? 0;
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: bg }]}>

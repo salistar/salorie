@@ -248,20 +248,35 @@ export async function loadEngagement(email: string, lang: string = 'en'): Promis
   //   • un gel ne DEMARRE jamais une serie (il ne fait que ponter un trou interne).
   // Le jour gele ne compte pas dans le nombre, mais ne casse pas la chaine.
   const FREEZE = { used: 0, protectedByFreeze: false };
+  // ⚠ MEME CORRECTION QUE `lib/streaks.ts` (09/09/2026), MEME CAUSE.
+  // Le commentaire ci-dessus dit « un gel ne fait que ponter un trou INTERNE ».
+  // Le code ne le faisait pas : en tombant au bout de l'historique, la boucle
+  // depensait un gel avant de s'arreter, et ce gel-la ne pontait rien. Resultat,
+  // `freezesUsed` valait au moins 1 pour toute serie non vide, et `freezeActive`
+  // etait vrai en permanence — deux indicateurs qui ne distinguaient plus rien.
+  //
+  // ⚠ CETTE LOGIQUE EST DUPLIQUEE ICI ET DANS `lib/streaks.ts`. Les deux copies
+  // portaient le meme defaut, et il a fallu le corriger deux fois. Les fusionner
+  // demanderait de reconcilier deux sources de dates differentes ; a defaut, ce
+  // commentaire signale l'autre copie a qui touchera l'une des deux.
   const computeStreak = (offset: number) => {
-    let s = 0, freezes = 0, prevFroze = false, spanned = 0, protectedFlag = false;
+    let s = 0, freezes = 0, enAttente = 0, prevFroze = false, spanned = 0;
     for (let i = offset; ; i++) {
       const d = new Date(today); d.setDate(today.getDate() - i);
       spanned++;
-      if (mealDates.has(ds(d))) { s++; prevFroze = false; }
-      else {
+      if (mealDates.has(ds(d))) {
+        s++;
+        prevFroze = false;
+        freezes += enAttente;                           // trou reellement ponte
+        enAttente = 0;
+      } else {
         if (s === 0) break;                             // pas de gel avant le 1er jour loggue
         const budget = Math.floor((spanned - 1) / 7) + 1;
-        if (!prevFroze && freezes < budget) { freezes++; prevFroze = true; protectedFlag = true; }
+        if (!prevFroze && freezes + enAttente < budget) { enAttente++; prevFroze = true; }
         else break;
       }
     }
-    return { s, freezes, protectedFlag };
+    return { s, freezes, protectedFlag: freezes > 0 };
   };
   let r = computeStreak(0);
   if (r.s === 0) r = computeStreak(1);                  // aujourd hui pas encore logue -> depuis hier

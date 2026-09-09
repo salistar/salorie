@@ -37,6 +37,7 @@ import { getWeather, Weather } from '../../lib/weather';
 import { getHistory } from '../../lib/timeMachine';
 import Medal from '../../components/Medal';
 import { getRace as apiGetRace, joinRace as apiJoinRace, raceProgress as apiProgress } from '../../lib/racesApi';
+import { useScreenGate } from '../../components/FeatureGate';
 
 // Mappe un défi (id) vers un thème de cadre médaille (sinon défaut vert).
 const CHALLENGE_FRAME: Record<string, string> = { 'casa-loop': 'casablanca' };
@@ -304,6 +305,7 @@ function PoiPhoto({ challengeId, index, style, photoUrl }: { challengeId: string
 }
 
 export default function ChallengeScreen() {
+  const __gate = useScreenGate('challenge');
   const { id, src } = useLocalSearchParams<{ id: string; src?: string }>();
   const challengeId = String(id || '');
   // Course admin (Mongo) vs défi hardcodé (Firestore). Mongo = id ObjectId 24 hex OU src=mongo.
@@ -764,6 +766,8 @@ export default function ChallengeScreen() {
 
   const medals = ['🥇', '🥈', '🥉'];
   const mapH = navMode ? 460 : 280;
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>

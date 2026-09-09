@@ -20,6 +20,7 @@ import { aiVision } from '../../lib/aiProxy';
 import { analyzeImageUri } from '../../lib/imageAI';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
+import { useScreenGate } from '../../components/FeatureGate';
 
 
 const TXT: any = {
@@ -29,6 +30,7 @@ const TXT: any = {
 };
 
 export default function EquipmentScan() {
+  const __gate = useScreenGate('equipment-scan');
   const k = useTokens();
   const s = useMemo(() => makeS(k), [k]);
   const { resolved } = useTheme();
@@ -69,6 +71,8 @@ export default function EquipmentScan() {
       if (!m) Alert.alert(t.title, t.err);
     } catch { Alert.alert(t.title, t.err); } finally { setBusy(false); }
   };
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: bg }]}>

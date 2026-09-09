@@ -22,6 +22,7 @@ import Animated, { FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTokens, Tokens } from '../../constants/tokens';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const TXT: Record<string, any> = {
   en: { burned: 'Your workout burned', logWorkout: 'Log Workout', great: 'Great session!', kcal: 'kcal', min: 'min', dur: 'Duration', intensity: 'Intensity', saved: 'It will be added to your activity', share: 'Share', shareTitle: 'My Salorie workout' },
@@ -32,6 +33,7 @@ const TXT: Record<string, any> = {
 const { width } = Dimensions.get('window');
 
 export default function WorkoutResultScreen() {
+  const __gate = useScreenGate('workout-plans');
   const { user } = useUser();
   const { selectedDate, triggerRefresh } = useLogging();
   const { language, isRTL } = useTranslation() as any;
@@ -111,6 +113,8 @@ export default function WorkoutResultScreen() {
       setLoading(false);
     }
   };
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: k.surface }]}>

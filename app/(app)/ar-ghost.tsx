@@ -44,6 +44,7 @@ import {
 } from '../../lib/ghostRoute';
 
 import { useTokens, Tokens } from '../../constants/tokens';
+import { useScreenGate } from '../../components/FeatureGate';
 const { width: W, height: H } = Dimensions.get('window');
 const FOV = 42; // demi-champ horizontal (deg) où le fantôme est "devant" — comme challenge-ar
 const LAST_PACE_KEY = 'ghost_last_pace_sec'; // s/km du dernier run fantôme (preset "mon dernier run")
@@ -113,6 +114,7 @@ function mmss(secs: number): string {
 }
 
 export default function ARGhostScreen() {
+  const __gate = useScreenGate('ar-ghost');
   const k = useTokens();
   const styles = useMemo(() => makeStyles(k), [k]);
   const { user } = useUser();
@@ -405,6 +407,8 @@ export default function ARGhostScreen() {
   const absGap = Math.round(Math.abs(gap));
   const hud = gap > 2 ? t.ahead(absGap) : gap < -2 ? t.behind(absGap) : t.neck;
   const progress = Math.min(1, userDistM / targetM);
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <View style={styles.fill}>

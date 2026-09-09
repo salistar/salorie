@@ -21,6 +21,7 @@ import { rowDir, txtAlign } from '../../lib/rtl';
 import ScreenTopBar from '../../components/ScreenTopBar';
 import { composerPanier, parEtal, type Produit } from '../../lib/panierSouk';
 import TABLE from '../../assets/data/prix-souk.json';
+import { useScreenGate } from '../../components/FeatureGate';
 
 const PRODUITS = (TABLE as any).produits as Produit[];
 const ETALS = (TABLE as any).etals as Record<string, { n: string; ar: string }>;
@@ -53,6 +54,7 @@ const T: Record<string, Record<string, string>> = {
 };
 
 export default function PanierSouk() {
+  const __gate = useScreenGate('panier-souk');
   const k = useTokens();
   const tok = useTokens();
   const { language, isRTL } = useTranslation();
@@ -70,6 +72,8 @@ export default function PanierSouk() {
     language === 'ar' ? ETALS[id]?.ar || id : ETALS[id]?.n || id;
 
   const s = styles(tok);
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: tok.bg }]}>
       <ScreenTopBar showBack title={t.titre} showNotif={false} />

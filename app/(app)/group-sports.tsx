@@ -27,6 +27,7 @@ import {
   listMatches, joinMatch, leaveMatch, SportMatch, Sport, SPORTS,
 } from '../../lib/groupSports';
 import { emailToDocId } from '../../lib/firebase';
+import { useScreenGate } from '../../components/FeatureGate';
 
 
 const SPORT_EMOJI: Record<Sport, string> = {
@@ -86,6 +87,7 @@ const TXT: Record<string, any> = {
 };
 
 export default function GroupSportsScreen() {
+  const __gate = useScreenGate('group-sports');
   const { user } = useUser();
   const { resolved } = useTheme();
   const k = useTokens();
@@ -172,6 +174,8 @@ export default function GroupSportsScreen() {
   };
 
   const filters: Array<Sport | 'all'> = ['all', ...SPORTS];
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>

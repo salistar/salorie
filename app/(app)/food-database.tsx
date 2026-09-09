@@ -25,6 +25,7 @@ import { debounce } from 'lodash';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTokens, Tokens } from '../../constants/tokens';
+import { useScreenGate } from '../../components/FeatureGate';
 
 /** « Per 100g » (FatSecret, toujours en anglais) → « Pour 100g » / « لكل 100g ».
  *  Seul le préfixe est traduit : la quantité et l'unité viennent de l'API et restent
@@ -149,6 +150,7 @@ function topFrequents(map: FreqMap, n: number): ViewedFood[] {
 }
 
 export default function FoodDatabaseScreen() {
+  const __gate = useScreenGate('food-database');
   const { language, isRTL } = useTranslation() as any;
   const t = TXT[language] || TXT.en;
   const { resolved } = useTheme();
@@ -298,6 +300,8 @@ export default function FoodDatabaseScreen() {
   // PERF #19 — keyExtractor stabilisé (sans dépendance) pour une identité stable.
   const keyExtractor = useCallback((item: any) => item.food_id.toString(), []);
 
+  if (!__gate.ok) return __gate.node;
+
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.safeArea, { backgroundColor: k.surface }]}>
       <ScreenTopBar />
@@ -401,6 +405,7 @@ function QuickRow({ f, fav, onLog, onFav, isDark, isRTL, km, language }: any) {
   // Ce composant recevait `isDark` en propriete et n avait acces a aucune
   // couleur : il lit desormais les jetons lui-meme, comme son parent.
   const k = useTokens();
+
   return (
     <TouchableOpacity activeOpacity={0.7} onPress={() => onLog(f)}
       style={[qrStyles.row, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: k.surface, borderColor: k.border }]}>

@@ -18,6 +18,7 @@ import ScreenTopBar from '../../components/ScreenTopBar';
 import { EmptyState, SkeletonCard } from '../../components/ui';
 import { listMealPlans, SavedMealPlan } from '../../lib/aiStore';
 import { useTokens, Tokens } from '../../constants/tokens';
+import { useScreenGate } from '../../components/FeatureGate';
 
 // Libellés locaux à cet écran (trilingues) — pas de clés ajoutées à lib/i18n.
 const TXT = {
@@ -51,6 +52,7 @@ function fmtDate(ts: any, locale: string): string {
 }
 
 export default function MealPlanHistoryScreen() {
+  const __gate = useScreenGate('meal-plan');
   const { user } = useUser();
   const { resolved } = useTheme();
   const k = useTokens();
@@ -78,6 +80,8 @@ export default function MealPlanHistoryScreen() {
       setLoading(false);
     })();
   }, [user]);
+
+  if (!__gate.ok) return __gate.node;
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.container, { backgroundColor: bg }]}>
