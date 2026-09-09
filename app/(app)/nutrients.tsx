@@ -34,7 +34,13 @@ export default function NutrientsScreen() {
   const { user } = useUser();
   const { resolved } = useTheme();
   const k = useTokens();
-  const { t, language } = useTranslation() as any;
+  // ⚠ `isRTL` : l'app n'utilise pas I18nManager.forceRTL (lib/rtl.ts), donc
+  // rien ne se retourne seul. `rang()` applique le retournement a un style de
+  // la feuille, construite hors du composant et donc aveugle a la langue.
+  const { t, language, isRTL } = useTranslation() as any;
+  const rang = (base: any) => (isRTL ? [base, { flexDirection: 'row-reverse' as const }] : base);
+  // Le pourcentage termine la ligne en latin, il la commence en arabe.
+  const alignPct: any = isRTL ? { textAlign: 'left' } : null;
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(k), [k]);
 
@@ -127,7 +133,7 @@ export default function NutrientsScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <ScreenTopBar showBack showBrand={false} showNotif={false} />
 
-        <View style={styles.titleRow}>
+        <View style={rang(styles.titleRow)}>
           <Apple size={26} color={k.accent} />
           <Text style={[styles.title, { color: text }]}>{t('nutrients.title')}</Text>
         </View>
@@ -148,7 +154,7 @@ export default function NutrientsScreen() {
             <Apple size={40} color={k.textFaint} />
             <Text style={[styles.emptyTitle, { color: text }]}>{t('nutrients.empty_title')}</Text>
             <Text style={[styles.emptySub, { color: sub }]}>{t('nutrients.empty_sub')}</Text>
-            <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/food-database' as any)}>
+            <TouchableOpacity style={rang(styles.primaryBtn)} onPress={() => router.push('/food-database' as any)}>
               <Text style={styles.primaryBtnText}>{t('nutrients.log_food')}</Text>
             </TouchableOpacity>
           </View>
@@ -157,7 +163,7 @@ export default function NutrientsScreen() {
         {!loading && error && foods.length > 0 && (
           <View style={[styles.emptyBox, { backgroundColor: card }]}>
             <Text style={{ color: k.danger, fontWeight: '600', textAlign: 'center' }}>{t('nutrients.error')}</Text>
-            <TouchableOpacity style={styles.primaryBtn} onPress={() => run(true)}>
+            <TouchableOpacity style={rang(styles.primaryBtn)} onPress={() => run(true)}>
               <RefreshCw size={18} color={k.onAccent} /><Text style={styles.primaryBtnText}>{t('nutrients.retry')}</Text>
             </TouchableOpacity>
           </View>
@@ -169,30 +175,30 @@ export default function NutrientsScreen() {
 
             <View style={[styles.microCard, { backgroundColor: card }]}>
               {report.micros.map((mi, i) => (
-                <View key={i} style={styles.microRow}>
+                <View key={i} style={rang(styles.microRow)}>
                   <Text style={[styles.microName, { color: text }]} numberOfLines={1}>{mi.name}</Text>
                   <View style={styles.microBarTrack}>
                     <View style={[styles.microBarFill, { width: `${Math.min(100, Math.max(2, mi.pct))}%`, backgroundColor: mi.pct >= 90 ? k.success : mi.pct >= 50 ? k.accent: k.warning }]} />
                   </View>
-                  <Text style={[styles.microPct, { color: sub }]}>{fmtNum(mi.pct)}%</Text>
+                  <Text style={[styles.microPct, alignPct, { color: sub }]}>{fmtNum(mi.pct)}%</Text>
                 </View>
               ))}
             </View>
 
             {!!report.highlight && (
-              <View style={[styles.insightCard, { backgroundColor: k.successSoft }]}>
+              <View style={[rang(styles.insightCard), { backgroundColor: k.successSoft }]}>
                 <TrendingUp size={20} color={k.success} />
                 <Text style={[styles.insightText, { color: k.successInk }]}>{report.highlight}</Text>
               </View>
             )}
             {!!report.gap && (
-              <View style={[styles.insightCard, { backgroundColor: k.warningSoft }]}>
+              <View style={[rang(styles.insightCard), { backgroundColor: k.warningSoft }]}>
                 <AlertTriangle size={20} color={k.warning} />
                 <Text style={[styles.insightText, { color: k.warningInk }]}>{report.gap}</Text>
               </View>
             )}
 
-            <TouchableOpacity style={styles.regenBtn} onPress={() => run(true)}>
+            <TouchableOpacity style={rang(styles.regenBtn)} onPress={() => run(true)}>
               <RefreshCw size={18} color={k.accent} /><Text style={styles.regenText}>{t('nutrients.recalculate')}</Text>
             </TouchableOpacity>
             <Text style={[styles.disclaimer, { color: sub }]}>{t('nutrients.disclaimer')}</Text>

@@ -48,7 +48,13 @@ export default function HomeScreen() {
   const { user } = useUser();
   const espaceBas = useEspaceBas();
   const router = useRouter();
-  const { t, language } = useTranslation() as any;
+  // ⚠ `isRTL` EST NECESSAIRE ICI : l'app N'UTILISE PAS I18nManager.forceRTL
+  // (cf. lib/i18n.tsx et lib/rtl.ts) pour eviter un redemarrage au changement
+  // de langue. Rien ne se retourne donc tout seul : chaque `flexDirection:
+  // 'row'` doit etre retourne a la main, sans quoi l'ecran d'accueil reste en
+  // sens latin pour un lecteur arabe.
+  const { t, language, isRTL } = useTranslation() as any;
+  const rangee: any = isRTL ? { flexDirection: 'row-reverse' } : null;
   const { resolved, colors } = useTheme();
   // Local FR/EN/AR tagline for the brand banner (D2 — replaces stock cover photo).
   const HSTR: Record<string, { sub: string }> = {
@@ -234,7 +240,7 @@ export default function HomeScreen() {
               onPress={() => router.push('/streaks' as any)}
               style={{
                 marginHorizontal: spacing.xl, marginBottom: spacing.md,
-                flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+                flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: spacing.sm,
                 backgroundColor: isDark ? colors.gray[100] : k.warningSoft,
                 borderRadius: radius.lg, paddingVertical: spacing.md, paddingHorizontal: spacing.lg,
                 borderWidth: 1, borderColor: k.warningSoft,
@@ -271,7 +277,7 @@ export default function HomeScreen() {
               accessibilityLabel={label}
               style={{
                 marginHorizontal: spacing.xl, marginBottom: spacing.sm,
-                flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+                flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', justifyContent: 'center',
                 gap: spacing.sm, backgroundColor: colors.primary,
                 borderRadius: radius.lg, paddingVertical: spacing.lg, paddingHorizontal: spacing.lg,
               }}
@@ -295,14 +301,14 @@ export default function HomeScreen() {
           };
           const sx = SHORT[String(language)] || SHORT.en;
           return (
-            <View style={styles.shortcutRow}>
+            <View style={[styles.shortcutRow, rangee]}>
               <Apparition index={0} style={styles.shortcut}>
                 <PressableScale
                   onPress={() => router.push('/diary' as any)}
                   accessibilityRole="button"
                   accessibilityLabel={sx.diary}
                 >
-                  <Card variant="raised" padded={false} style={styles.shortcutCard}>
+                  <Card variant="raised" padded={false} style={[styles.shortcutCard, rangee]}>
                     <View style={[styles.shortcutIcon, { backgroundColor: colors.primaryLight }]}><UtensilsCrossed size={20} color={colors.primary} /></View>
                     <Text style={[styles.shortcutTxt, { color: txt }]} numberOfLines={2}>{sx.diary}</Text>
                   </Card>
@@ -314,7 +320,7 @@ export default function HomeScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={sx.activity}
                 >
-                  <Card variant="raised" padded={false} style={styles.shortcutCard}>
+                  <Card variant="raised" padded={false} style={[styles.shortcutCard, rangee]}>
                     <View style={[styles.shortcutIcon, { backgroundColor: colors.primaryLight }]}><ActivityIcon size={20} color={colors.primary} /></View>
                     <Text style={[styles.shortcutTxt, { color: txt }]} numberOfLines={2}>{sx.activity}</Text>
                   </Card>
@@ -330,7 +336,7 @@ export default function HomeScreen() {
         <DailyHealthScore />
 
         {/* ── Scrollable Content ─────────────────── */}
-        <View style={styles.contentHeader}>
+        <View style={[styles.contentHeader, rangee]}>
           <Text style={[styles.dateLabel, { color: colors.gray[900] }]}>
             {formatDisplayDate(selectedDate)}
           </Text>

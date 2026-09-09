@@ -145,7 +145,12 @@ export default function CoachScreen() {
   const espaceBas = useEspaceBas();
   const { resolved, colors } = useTheme();
   const k = useTokens();
-  const { t, language } = useTranslation();
+  // ⚠ `isRTL` : l'app n'utilise pas I18nManager.forceRTL (lib/rtl.ts), donc
+  // aucune rangee ne se retourne seule. `rang()` applique le retournement a
+  // un style de la feuille, qui est construite une fois hors du composant et
+  // ne peut donc pas connaitre la langue.
+  const { t, language, isRTL } = useTranslation() as any;
+  const rang = (base: any) => (isRTL ? [base, { flexDirection: 'row-reverse' as const }] : base);
   const isDark = resolved === 'dark';
   const styles = useMemo(() => makeStyles(k), [k]);
   const [data, setData] = useState<EngagementData | null>(null);
@@ -245,7 +250,7 @@ export default function CoachScreen() {
       >
         <ScreenTopBar />
 
-        <View style={styles.titleRow}>
+        <View style={rang(styles.titleRow)}>
           <Sparkles size={26} color={colors.primary} />
           <Text style={[styles.title, { color: text }]}>{t('coach.title')}</Text>
         </View>
@@ -258,9 +263,13 @@ export default function CoachScreen() {
           // Variante 'accent' : fond primary-teinté + bordure accent (traitement plus fort).
           // 'control' : rendu actuel inchangé. Différence purement visuelle.
           const accent = tipStyle === 'accent';
+          // Le retournement s'applique aux DEUX variantes : la carte porte une
+          // icone a gauche du texte, qui doit passer a droite en lecture arabe
+          // quel que soit son habillage.
           const tipCardStyle: ViewStyle[] = accent
-            ? [styles.timeTipCard, { backgroundColor: colors.primaryLight, borderWidth: 1.5, borderColor: colors.primary }]
-            : [styles.timeTipCard];
+            ? [styles.timeTipCard, isRTL && { flexDirection: 'row-reverse' as const },
+               { backgroundColor: colors.primaryLight, borderWidth: 1.5, borderColor: colors.primary }]
+            : [styles.timeTipCard, isRTL && { flexDirection: 'row-reverse' as const }];
           return (
             <Card style={tipCardStyle}>
               <View style={[styles.timeTipIcon, { backgroundColor: accent ? colors.primary : colors.primaryLight }]}>
@@ -286,7 +295,7 @@ export default function CoachScreen() {
           >
             {hasPlan ? (
               <>
-                <View style={styles.heroRow}>
+                <View style={rang(styles.heroRow)}>
                   <View style={styles.heroStat}>
                     <Text style={styles.heroStatLabel}>{t('coach.real_burn')}</Text>
                     <Text style={styles.heroStatValue}>{d.adaptiveTDEE} kcal</Text>
@@ -294,7 +303,7 @@ export default function CoachScreen() {
                   <View style={styles.heroDivider} />
                   <View style={styles.heroStat}>
                     <Text style={styles.heroStatLabel}>{t('coach.weight_trend')}</Text>
-                    <View style={styles.trendRow}>
+                    <View style={rang(styles.trendRow)}>
                       <TrendIcon size={16} color={k.onAccent} />
                       <Text style={styles.heroStatValue}>{trend != null ? `${trend > 0 ? '+' : ''}${trend} kg/wk` : '—'}</Text>
                     </View>
@@ -359,7 +368,7 @@ export default function CoachScreen() {
           return (
             <>
               {/* Recherche d'outil */}
-              <View style={[styles.searchBox, { backgroundColor: card }]}>
+              <View style={[rang(styles.searchBox), { backgroundColor: card }]}>
                 <Search size={17} color={sub} />
                 <TextInput style={[styles.searchInput, { color: text }]} placeholder={st.search} placeholderTextColor={sub} value={toolSearch} onChangeText={setToolSearch} />
                 {!!toolSearch && <TouchableOpacity accessibilityRole="button" accessibilityLabel={a11y('fermer')} onPress={() => setToolSearch('')}><X size={16} color={sub} /></TouchableOpacity>}
@@ -368,10 +377,10 @@ export default function CoachScreen() {
               {/* Récents — l'app s'adapte à l'usage */}
               {!q && recents.length > 0 && (
                 <>
-                  <View style={styles.secHeadRow}><History size={15} color={colors.primary} /><Text style={[styles.gridSection, { color: sub, marginTop: 0, marginBottom: 0 }]}>{st.recents}</Text></View>
+                  <View style={rang(styles.secHeadRow)}><History size={15} color={colors.primary} /><Text style={[styles.gridSection, { color: sub, marginTop: 0, marginBottom: 0 }]}>{st.recents}</Text></View>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 6 }}>
                     {recents.map((r) => { const it = allItems.find((i) => i.route === r); if (!it || !isRouteEnabled(flags, it.route)) return null; const I = it.Icon; return (
-                      <TouchableOpacity key={r} style={[styles.recentChip, { backgroundColor: card }]} onPress={() => openTool(r)}>
+                      <TouchableOpacity key={r} style={[rang(styles.recentChip), { backgroundColor: card }]} onPress={() => openTool(r)}>
                         <I size={15} color={colors.primary} /><Text style={[styles.recentTxt, { color: text }]} numberOfLines={1}>{tileLabel(it.route, it.label, language)}</Text>
                       </TouchableOpacity>
                     ); })}
@@ -390,8 +399,8 @@ export default function CoachScreen() {
                 const GIcon = group.Icon;
                 return (
                   <View key={group.key}>
-                    <View style={styles.secHeadRow}><GIcon size={15} color={colors.primary} /><Text style={[styles.gridSection, { color: sub, marginTop: 0, marginBottom: 0 }]}>{st[group.key]}</Text></View>
-                    <View style={styles.featGrid}>
+                    <View style={rang(styles.secHeadRow)}><GIcon size={15} color={colors.primary} /><Text style={[styles.gridSection, { color: sub, marginTop: 0, marginBottom: 0 }]}>{st[group.key]}</Text></View>
+                    <View style={rang(styles.featGrid)}>
                       {visible.map((it) => { const Icon = it.Icon; return (
                         <TouchableOpacity key={it.route} activeOpacity={0.85} onPress={() => openTool(it.route)} style={[styles.featCard, { backgroundColor: card }]}>
                           <View style={[styles.mealCtaIcon, { backgroundColor: colors.primaryLight }]}><Icon size={22} color={colors.primary} /></View>
@@ -417,7 +426,7 @@ export default function CoachScreen() {
         })()}
 
         {/* ── Streak ── */}
-        <View style={[styles.streakCard, { backgroundColor: card }]}>
+        <View style={[rang(styles.streakCard), { backgroundColor: card }]}>
           <View style={styles.streakIcon}><Flame size={28} color={k.warning} /></View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.streakValue, { color: text }]}>{d.streak} {t('coach.streak_suffix')}</Text>
@@ -428,12 +437,12 @@ export default function CoachScreen() {
         </View>
 
         {/* ── Achievements ── */}
-        <View style={styles.sectionRow}>
+        <View style={rang(styles.sectionRow)}>
           <Text style={[styles.section, { color: text }]}>{t('coach.achievements')}</Text>
           <Text style={[styles.sectionCount, { color: sub }]}>{unlocked}/{d.achievements.length}</Text>
         </View>
         <Text style={[styles.achHint, { color: sub }]}>{astr.hint}</Text>
-        <View style={styles.badgeGrid}>
+        <View style={rang(styles.badgeGrid)}>
           {d.achievements.map(a => (
             <TouchableOpacity
               key={a.id}
@@ -460,7 +469,7 @@ export default function CoachScreen() {
               <Text style={styles.modalIcon}>{selAch?.icon}</Text>
               <Text style={[styles.modalTitle, { color: text }]}>{selAch?.title}</Text>
               <Text style={[styles.modalDesc, { color: sub }]}>{selAch?.desc}</Text>
-              <View style={[styles.statusPill, { backgroundColor: selAch?.unlocked ? 'rgba(41,143,80,0.15)' : 'rgba(120,140,130,0.15)' }]}>
+              <View style={[rang(styles.statusPill), { backgroundColor: selAch?.unlocked ? 'rgba(41,143,80,0.15)' : 'rgba(120,140,130,0.15)' }]}>
                 {selAch?.unlocked ? <CheckCircle2 size={16} color={colors.primary} /> : <Lock size={14} color={sub} />}
                 <Text style={[styles.statusText, { color: selAch?.unlocked ? colors.primaryDark : sub }]}>
                   {selAch?.unlocked ? astr.unlocked : astr.locked}
@@ -472,7 +481,7 @@ export default function CoachScreen() {
         </Modal>
 
         {/* ── Daily lesson ── */}
-        <View style={styles.sectionRow}>
+        <View style={rang(styles.sectionRow)}>
           <Text style={[styles.section, { color: text }]}>{t('coach.lesson_title')}</Text>
         </View>
         <View style={[styles.lessonCard, { backgroundColor: card }]}>
