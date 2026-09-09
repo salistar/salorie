@@ -181,6 +181,45 @@ maxSdkVersion=28` — plafonnées, donc hors de la politique Photos et Vidéos.
 5. **Clé RevenueCat de production** + paywall configuré : sans elle, le bouton
    Premium ne fait rien.
 
+## 5 bis. ⚠️ Le binaire proposé au téléchargement date du 29 août, et son paywall est inerte
+
+Constaté le 09/09/2026, et c'est le point le plus important de cet audit.
+
+`android-release.yml` **refuse** de produire un binaire signé si la clé
+RevenueCat est une clé de test — `scripts/verifier-cle-achats.js`, ajouté le
+**31 août** :
+
+> `ECHEC : le build Android partirait avec un paywall INERTE.`
+> `PurchasesService refuse de configurer le SDK sans cle de production,`
+> `et ce refus est invisible : le bouton « s abonner » ne fait rien.`
+
+Le garde-fou a raison et **il n'a pas été contourné**. Mais il est arrivé
+**deux jours après** la dernière release publiée, `build-1053` du 29 août — la
+seule que la landing puisse proposer aujourd'hui. Vérification faite sur le
+binaire lui-même (comptage des préfixes dans `assets/index.android.bundle`,
+aucune valeur extraite) :
+
+```
+occurrences de cle RevenueCat de TEST (test_...)    : 4
+occurrences de cle Android de PRODUCTION (goog_...) : 0
+```
+
+**Conséquence** : quiconque installe Salorie depuis le site obtient un binaire
+antérieur de onze jours au code actuel, et dont le bouton « s'abonner » ne fait
+rien — sans message d'erreur, puisque `PurchasesService` échoue en silence.
+
+**Ce qu'il faut, et que seul le propriétaire du compte peut faire** : poser une
+clé Android de production (elle commence par `goog_`) dans le secret
+`EXPO_PUBLIC_REVENUE_CAT_API_KEY_ANDROID` du dépôt, puis relancer :
+
+```bash
+gh workflow run android-release.yml --ref main -f build_apk=true
+```
+
+Le workflow publiera alors `build-<versionCode>` avec l'AAB et l'APK signés, et
+la landing les résoudra automatiquement — elle pointe déjà sur la dernière
+release `build-*`, plus sur aucune URL figée.
+
 ## 6. Design
 
 Six thèmes (`obsidian`, `ivory`, `blush`, `ocean`, `platinum`, `gold`), jetons
@@ -227,8 +266,10 @@ saut trop tôt).
 
 ## 9. À faire
 
-**Bloquant pour la publication** — les 20 testeurs / 14 jours ; la clé
-RevenueCat de production.
+**Bloquant, et dans cet ordre** — (1) la clé RevenueCat de production : sans
+elle aucun binaire signé ne peut plus être produit (§5 bis), donc le site
+continue de distribuer le build du 29 août ; (2) les 20 testeurs pendant
+14 jours en test fermé.
 
 **Important** — monter Next en 16 (la seule critique) ; monter la couverture
 au-delà de 45/102, en commençant par `/challenge` (1 229 lignes, neuf modules
