@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import SelecteurTheme from "@/components/ui/SelecteurTheme";
-import { Camera, Activity, Brain, TrendingUp, Globe, Shield, Smartphone, ExternalLink, Download, Package, Trophy, Dumbbell, Heart, Sparkles, Quote, ChevronDown, Check, X, LogIn, UserPlus } from "lucide-react";
+import { Camera, Activity, Brain, TrendingUp, Globe, Shield, Smartphone, ExternalLink, Download, Package, Trophy, Dumbbell, Heart, Sparkles, Quote, ChevronDown, Check, X, LogIn, UserPlus, Utensils, Moon } from "lucide-react";
 import type { ReleaseMeta } from "./releaseMeta";
 import { lireTemoin } from "../../lib/temoinPrenom";
 
@@ -42,7 +42,14 @@ const SHOT_SRCS = [
 // Indices used by the auto-playing demo.
 const DEMO_IDX = [0, 1, 2, 3, 5, 6];
 
+// ⚠ AUTANT D'ICONES QUE DE FONCTIONS : le rendu fait `FEAT_ICONS[i]`, donc une
+// fonction ajoutee sans son icone affiche une pastille VIDE — et c'est la
+// premiere carte de la section qui la porterait.
+// Les deux premieres sont les atouts que personne ne peut copier : le modele
+// entraine sur un corpus marocain, et le mode Ramadan. Ils etaient absents de
+// la landing alors qu'ils existent depuis des mois (audit du 10/09/2026).
 const FEAT_ICONS = [
+  <Utensils size={26} key="u" />, <Moon size={26} key="m" />,
   <Camera size={26} key="c" />, <Activity size={26} key="a" />, <Brain size={26} key="b" />,
   <TrendingUp size={26} key="t" />, <Trophy size={26} key="tr" />, <Heart size={26} key="h" />,
   <Dumbbell size={26} key="d" />, <Globe size={26} key="g" />, <Shield size={26} key="s" />,
@@ -61,6 +68,8 @@ const T: Record<Lang, any> = {
     stats: [{ v: "100%", l: "Privé & sécurisé" }, { v: "<2s", l: "Analyse IA" }, { v: "3", l: "Langues · FR/EN/AR" }],
     featTitle: "Tout pour atteindre tes objectifs", featSub: "Une app complète, pensée pour de vrais utilisateurs.",
     features: [
+      { t: "71 plats marocains reconnus", d: "Tajine, harira, rfissa, bastila, msemen… Un modèle entraîné sur un corpus marocain de 13 000 photos. Aucune autre application ne sait le faire." },
+      { t: "Mode Ramadan complet", d: "Horaires de jeûne selon ta ville, budget calorique scindé entre Suhoor et Iftar, et plan d'hydratation pour la nuit." },
       { t: "Scan IA instantané", d: "Photographie ton assiette : l'IA identifie les aliments et calcule les macros en moins de 2 secondes." },
       { t: "Suivi nutritionnel complet", d: "Calories, protéines, glucides, lipides, eau, exercice — centralisés dans un dashboard clair." },
       { t: "Micronutriments + insights", d: "Vitamines, fer, magnésium… estimés par IA, avec recommandations personnalisées en 3 langues." },
@@ -101,6 +110,8 @@ const T: Record<Lang, any> = {
     stats: [{ v: "100%", l: "Private & secure" }, { v: "<2s", l: "AI analysis" }, { v: "3", l: "Languages · EN/FR/AR" }],
     featTitle: "Everything you need to reach your goals", featSub: "A complete app, built for real users.",
     features: [
+      { t: "71 Moroccan dishes recognised", d: "Tajine, harira, rfissa, bastila, msemen… A model trained on a Moroccan corpus of 13,000 photos. No other app can do this." },
+      { t: "Full Ramadan mode", d: "Fasting times for your city, calorie budget split between Suhoor and Iftar, and an overnight hydration plan." },
       { t: "Instant AI scan", d: "Snap your plate: the AI identifies the foods and computes macros in under 2 seconds." },
       { t: "Full nutrition tracking", d: "Calories, protein, carbs, fat, water, exercise — centralized in a clean dashboard." },
       { t: "Micronutrients + insights", d: "Vitamins, iron, magnesium… AI-estimated, with personalized tips in 3 languages." },
@@ -141,6 +152,8 @@ const T: Record<Lang, any> = {
     stats: [{ v: "100%", l: "خاص وآمن" }, { v: "<2 ث", l: "تحليل بالذكاء" }, { v: "3", l: "لغات · ع/إن/فر" }],
     featTitle: "كل ما تحتاجه لتحقيق أهدافك", featSub: "تطبيق متكامل مصمّم لمستخدمين حقيقيين.",
     features: [
+      { t: "71 طبقًا مغربيًا متعرفًا عليه", d: "طاجين، حريرة، رفيسة، بسطيلة، مسمن… نموذج مدرّب على 13 ألف صورة مغربية. لا يوجد تطبيق آخر يفعل ذلك." },
+      { t: "وضع رمضان الكامل", d: "مواقيت الصيام حسب مدينتك، ميزانية سعرات مقسّمة بين السحور والإفطار، وخطة للترطيب ليلًا." },
       { t: "مسح فوري بالذكاء", d: "صوّر طبقك: يتعرّف الذكاء الاصطناعي على الأطعمة ويحسب الماكروز في أقل من ثانيتين." },
       { t: "تتبّع غذائي كامل", d: "السعرات والبروتين والكربوهيدرات والدهون والماء والتمارين — في لوحة واحدة واضحة." },
       { t: "عناصر دقيقة + رؤى", d: "الفيتامينات والحديد والمغنيسيوم… تُقدَّر بالذكاء مع نصائح مخصّصة بثلاث لغات." },
