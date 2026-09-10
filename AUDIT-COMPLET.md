@@ -11,11 +11,13 @@ node scripts/balayage-api.js https://api.salorie.com   # les routes produit rép
 npx jest && (cd backend && npx jest) && (cd web && npx jest)
 ```
 
-**État global** au 10/09/2026, 23 h : **873 tests verts** (636 mobile ·
-194 backend · 43 web), `tsc` et ESLint propres sur les trois projets, 0 écran
+**État global** au 11/09/2026, 1 h : **880 tests verts** (636 mobile ·
+197 backend · 47 web), `tsc` et ESLint propres sur les trois projets, 0 écran
 orphelin, 0 appel vers une route inexistante, 0 drapeau fantôme. Web et landing
-sont en **Next 16**, sans vulnérabilité critique ni haute. Production servie par
-`4f3e041`, égal à `main` — vérifié par `/health`.
+sont en **Next 16**, sans vulnérabilité critique ni haute ; les deux conteneurs
+sont passés de Node 20 (fin de vie) à Node 22. `salorie.salistar.com`, l'ancienne
+landing qui distribuait l'APK du 9 juin, redirige désormais vers `salorie.com`.
+Production servie par `3305233`, égal à `main` — vérifié par `/health`.
 
 ---
 
@@ -71,19 +73,56 @@ rend 401 sans jeton ; `/flags/invalidate` rend 403 sans clé admin.
 | | critique | haute | moyenne |
 |---|---:|---:|---:|
 | mobile | 0 | 21 | 37 |
-| backend | 0 | 4 | 25 |
-| web | ~~1~~ **0** | ~~1~~ **0** | 8 |
+| backend | 0 | ~~4~~ **5** | ~~25~~ **19** |
+| web | ~~1~~ **0** | ~~1~~ **0** | ~~8~~ **2** |
 | landing | ~~1~~ **0** | ~~5~~ **0** | ~~1~~ **0** |
 
 ✅ **Fait le 10/09/2026 — la montée en Next 16.** Les deux critiques étaient
 Next.js, corrigeables seulement par une montée majeure. Elles sont éteintes des
-deux côtés. Ce qui reste au back-office est **une seule** faille, comptée huit
-fois : `uuid` (contrôle de bornes manquant quand `buf` est fourni), tirée par
-`firebase-admin` 12.5.0 ; elle part avec `firebase-admin` 14.4.0, deux majeures
-plus loin — pas fait, et à traiter avec le backend qui dépend du même SDK.
+deux côtés.
 
-La montée elle-même a coûté quatre ruptures d'API, et en a révélé trois
-défauts que personne ne cherchait :
+⚠️ **CORRECTION — CE QUE CET AUDIT ANNONÇAIT ÉTAIT FAUX.** Il disait : « huit
+alertes moyennes, une seule faille (`uuid`), elle part avec `firebase-admin`
+14.4.0 ». Le chiffre venait du `fixAvailable` de npm, qui est **optimiste** : il
+nomme une version sans vérifier l'arbre qu'elle produit. Fait le même jour, et
+mesuré :
+
+- côté **web**, six alertes partent, **`uuid` reste** —
+  `@google-cloud/storage@8` tire encore `gaxios@6`, qui tire `uuid@9` ;
+- côté **backend**, `uuid` est aussi tiré par **Apollo et GraphQL** : le SDK
+  Firebase n'y pouvait rien dès le départ. La vraie sortie est une majeure
+  NestJS 12 / Apollo 5, un chantier à part ;
+- et le backend **gagne** une alerte haute, `glob` — dont le vecteur est
+  l'exécutable `glob -c/--cmd`, que rien ici n'appelle. On échange une alerte
+  inatteignable contre une autre.
+
+**Ce qui justifie quand même la montée** : `firebase-admin` 14 exige
+`node >= 22`, et les deux conteneurs tournaient sur **Node 20, en fin de vie
+depuis avril 2026** — donc sans correctif de sécurité. C'était un problème plus
+sérieux que celui qu'on cherchait à fermer. Vérifié après déploiement :
+`v22.23.2` dans les deux conteneurs, `/flags` rend `"source":"firestore"`,
+c'est-à-dire une vraie lecture par le SDK migré.
+
+⚠️ **Trois pièges de cette montée, dont deux invisibles** :
+
+1. La 14 **supprime l'API à espace de noms** (`admin.auth()`, `admin.apps`,
+   jusqu'aux types). Bruyante, donc inoffensive : le compilateur la signale.
+2. `firebase-admin/auth` tire `jose` 6, **publié en ESM pur**. Jest est en
+   CommonJS : huit suites sur seize ont cessé de **démarrer**, le compte est
+   passé de 194 à 91 tests, et la ligne « 0 failed » restait vraie. Une suite
+   qui rétrécit en silence est pire qu'une suite rouge.
+3. `engines` n'est **pas** appliqué : npm avertit, l'image se construit, le
+   conteneur démarre, et l'incompatibilité se manifeste à l'exécution — ici sur
+   `verifyIdToken`, c'est-à-dire l'authentification de toutes les requêtes
+   mobiles. Deux tests jumeaux comparent désormais le `FROM node:XX` du
+   Dockerfile au `engines` du paquet installé.
+
+⚠️ **Non fait, et assumé** : `server/firebase-token` utilise encore
+`firebase-admin` 13. C'est un troisième service, sur le chemin d'authentification,
+dont la frappe de jetons ne peut pas être testée de bout en bout d'ici.
+
+**Revenons à Next 16.** Cette montée-là a coûté quatre ruptures d'API, et en a
+révélé trois défauts que personne ne cherchait :
 
 1. **Une faille préexistante d'authentification** (voir plus bas).
 2. **Turbopack ne résout rien hors de la racine du projet**, et devinait cette
@@ -102,10 +141,17 @@ solution : **aucun des deux ne peut se voir en local.** Le premier ne se
 manifeste que si la racine est devinée autrement, le second que si le chemin
 change. Les deux passent le build, les tests, et le déploiement.
 
-⚠️ **Dette ouverte** : Next 16 déprécie la convention `middleware` au profit de
-`proxy`. Le fichier concerné est le portail d'authentification du back-office ;
-le renommer déplace aussi un fichier que la purge du VPS ne couvre pas (elle ne
-supprime que des répertoires). À faire, pas en passant.
+✅ **Dette réglée le même jour** : Next 16 dépréciait la convention
+`middleware` au profit de `proxy`. Le fichier renommé est le portail
+d'authentification — et renommer ne suffisait pas : le déploiement **ajoute** des
+fichiers sans jamais en supprimer, et sa purge ne connaît que des répertoires
+entiers. Un `middleware.ts` orphelin serait resté à côté du nouveau `proxy.ts`,
+et Next aurait exécuté **le portail périmé** : celui qui laissait passer
+`/users/<courriel>` sans session. `rm -f web/middleware.ts` a donc été ajouté à
+la purge le même jour. Les deux vont ensemble, ou aucun des deux.
+
+La vérification a du sens : si `proxy.ts` n'était pas exécuté, tout répondrait
+200. En production, `/users/<courriel>` et `/emails` rendent 307.
 
 ---
 
