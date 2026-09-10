@@ -1,3 +1,7 @@
+// ⚠ `params` EST UNE PROMESSE DEPUIS NEXT 15.
+// La signature synchrone ne leve AUCUNE erreur de type — elle est
+// structurellement valide — mais `params.id` vaut alors `undefined` a
+// l'execution, et la requete part vers une URL trouee.
 import { getEmail, setRead } from '../../../lib/supportMail';
 
 export const dynamic = 'force-dynamic';
@@ -11,8 +15,8 @@ function when(iso?: string): string {
 
 // Détail d'un email : affiche le TEXTE uniquement — le HTML des expéditeurs
 // n'est jamais rendu (XSS) ; il reste consultable en source escapée.
-export default async function EmailDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default async function EmailDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const mail = await getEmail(id);
   if (mail && !mail.read) await setRead(id, true);
 

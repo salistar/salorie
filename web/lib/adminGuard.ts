@@ -1,13 +1,18 @@
 // Defense-in-depth : chaque route API admin re-vérifie le cookie JWT elle-même,
 // au lieu de dépendre UNIQUEMENT du middleware Edge (point de défaillance unique).
-// Next 14 -> cookies() synchrone ; verifyToken (jose) asynchrone.
+// ⚠ `cookies()` EST DEVENU ASYNCHRONE EN NEXT 15. Il rendait un objet, il rend
+// desormais une promesse. La fonction etait deja `async`, donc l'ajout d'un
+// `await` suffit — mais sans lui, `.get()` est appele sur la promesse et le
+// jeton vaut `undefined` : chaque route admin se croirait deconnectee, et
+// le back-office serait entierement inaccessible. TypeScript l'attrape ;
+// c'est la seule erreur de type qu'a produite la montee en Next 16.
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { verifyToken, AUTH_COOKIE, type Role, type SessionAdmin } from './jwt';
 import { SECTIONS, peutVoir, type Scope } from './scopes';
 
 export async function requireAdmin(): Promise<SessionAdmin | null> {
-  const token = cookies().get(AUTH_COOKIE)?.value;
+  const token = (await cookies()).get(AUTH_COOKIE)?.value;
   return token ? await verifyToken(token) : null;
 }
 

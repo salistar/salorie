@@ -1,3 +1,7 @@
+// ⚠ `params` EST UNE PROMESSE DEPUIS NEXT 15.
+// La signature synchrone ne leve AUCUNE erreur de type — elle est
+// structurellement valide — mais `params.id` vaut alors `undefined` a
+// l'execution, et la requete part vers une URL trouee.
 import { getUser, getUserLogs, getUserWeights, getUserNotifs, getUserEvents } from '../../../lib/firebaseAdmin';
 import AutoRefresh from '../../AutoRefresh';
 
@@ -19,8 +23,9 @@ function fmt(ts: any): string {
   return '—';
 }
 
-export default async function UserDetail({ params }: { params: { id: string } }) {
-  const id = decodeURIComponent(params.id);
+export default async function UserDetail({ params }: { params: Promise<{ id: string }> }) {
+  const { id: brut } = await params;
+  const id = decodeURIComponent(brut);
   let user: any = null, logs: any[] = [], weights: any[] = [], notifs: any[] = [], events: any[] = [], error: string | null = null;
   try {
     [user, logs, weights, notifs, events] = await Promise.all([

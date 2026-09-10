@@ -22,9 +22,28 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
   // Fichiers publics servis a la racine par la landing (robots.txt, sitemap.xml,
-  // og.png, screenshots/*). Un point dans le DERNIER segment = un fichier statique.
-  const dernier = pathname.split('/').pop() || '';
-  if (dernier.includes('.')) {
+  // og.png, screenshots/*).
+  //
+  // ⚠ LA REGLE ETAIT « UN POINT DANS LE DERNIER SEGMENT = UN FICHIER ».
+  // Elle laissait donc passer SANS AUTHENTIFICATION tout chemin finissant par un
+  // point — et les identifiants d'utilisateur de cette application sont des
+  // ADRESSES COURRIEL. `/users/test@example.com` se termine par « .com » : le
+  // middleware le prenait pour un fichier statique et n'exigeait aucune session.
+  //
+  // Constate le 10/09/2026, en verifiant la montee en Next 16 : `/users` rendait
+  // 307 vers /login, `/users/<courriel>` rendait 200. Le meme comportement
+  // existait en production, donc ce n'est pas une regression de la montee — mais
+  // c'est elle qui l'a fait voir.
+  //
+  // Aucune donnee ne fuyait : `requireAdmin` refuse dans la page elle-meme, et
+  // le corps ne contenait que « unauthorized ». C'est la defense en profondeur
+  // qui a tenu, pas cette regle. Un ecran d'administration qui oublierait son
+  // propre controle serait, lui, entierement ouvert.
+  //
+  // On n'accepte donc plus qu'une EXTENSION CONNUE, en fin de chemin. La liste
+  // est celle des fichiers reellement presents dans `public/`.
+  const EXTENSIONS_PUBLIQUES = /\.(txt|xml|png|jpg|jpeg|svg|ico|webmanifest|md)$/i;
+  if (EXTENSIONS_PUBLIQUES.test(pathname)) {
     return NextResponse.next();
   }
   // Routes publiques : pages d'auth + API d'auth + landing.

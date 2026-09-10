@@ -4,7 +4,11 @@ import { withSentryConfig } from '@sentry/nextjs';
 const nextConfig = {
   reactStrictMode: true,
   // firebase-admin is server-only; keep it out of the client bundle (Next 14 key).
-  experimental: { serverComponentsExternalPackages: ['firebase-admin'] },
+  // ⚠ RENOMME EN NEXT 15 : `experimental.serverComponentsExternalPackages`
+  // est devenu `serverExternalPackages`, a la racine. L'ancienne cle n'est
+  // plus lue — silencieusement — et `firebase-admin` repartait alors dans le
+  // bundle client, ce qui casse le build ou expose du code serveur.
+  serverExternalPackages: ['firebase-admin'],
   // En-têtes de sécurité (anti-clickjacking, anti-sniff, fuite de referrer).
   // CSP stricte volontairement omise (Next + styles/scripts inline) pour ne rien casser.
   async headers() {

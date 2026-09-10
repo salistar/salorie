@@ -1,3 +1,7 @@
+// ⚠ `params` EST UNE PROMESSE DEPUIS NEXT 15.
+// La signature synchrone ne leve AUCUNE erreur de type — elle est
+// structurellement valide — mais `params.id` vaut alors `undefined` a
+// l'execution, et la requete part vers une URL trouee.
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, unauthorized, requireWriter } from '../../../../../lib/adminGuard';
 
@@ -11,13 +15,14 @@ function headers() {
 
 // POST /api/moderation/pending/:id?action=validate|reject
 // Valide ou rejette un produit inconnu (barcode) en attente.
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const { user: _admin, refus } = await requireWriter(); if (refus) return refus;
   const action = req.nextUrl.searchParams.get('action') === 'reject' ? 'reject' : 'validate';
   let body: any = {};
   try { body = await req.json(); } catch { /* corps optionnel */ }
   try {
-    const r = await fetch(`${API}/barcode/admin/pending/${params.id}/${action}`, {
+    const r = await fetch(`${API}/barcode/admin/pending/${id}/${action}`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify(body || {}),
