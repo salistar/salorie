@@ -95,6 +95,11 @@ services:
       # jamais le conteneur — exactement le piege paye avec ADMIN_API_KEY.
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+      # Expose par /health pour repondre a « le serveur porte-t-il bien ce
+      # commit ? ». Sans lui, seul l'uptime etait visible — et un uptime de
+      # 19 heures ne distingue pas « a jour » de « le dernier deploiement a
+      # echoue sans que personne ne regarde ».
+      GIT_COMMIT: ${GIT_COMMIT:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       # Cle Maps SERVEUR pour Routes API, deplacee du telephone vers le backend le
       # 14 aout 2026. Repli seulement : la valeur prioritaire vient de l'admin /ai-keys

@@ -71,11 +71,25 @@ jobs:
             --assets-dest android/app/src/main/res \
             --reset-cache
 
+      # ⚠ UNE SECONDE TENTATIVE, PARCE QUE L'ECHEC VIENT DU RESEAU, PAS DU CODE.
+      # Le 10/09/2026, ce build a echoue en 23 s sur :
+      #   « Could not resolve org.gradle.toolchains:foojay-resolver:0.5.0 »
+      #   plugins.gradle.org injoignable.
+      # Rien dans le depot n'avait change ; la relance manuelle est passee. Un
+      # echec de resolution de depot est transitoire par nature, et le faire
+      # remonter comme une regression apprend a ignorer les alertes rouges.
+      #
+      # On ne reessaie QUE ce cas : `set -o pipefail` garde le vrai code de
+      # sortie, et une erreur de compilation echoue deux fois de suite — donc
+      # elle remonte bien, simplement deux minutes plus tard.
       - name: Gradle assembleDebug
         run: |
+          set -o pipefail
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon \
+            || { echo "::warning::premiere tentative echouee — nouvel essai dans 30 s"; \
+                 sleep 30; ./gradlew assembleDebug --no-daemon; }
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

@@ -22,11 +22,23 @@ export class HealthController {
   ) {}
 
   // Liveness — jamais 503 : le simple fait de répondre prouve que l'event-loop tourne.
+  //
+  // ⚠ `commit` REPOND A UNE QUESTION QUE RIEN D'AUTRE NE POUVAIT TRANCHER.
+  // Le 10/09/2026, en verifiant que « le meme code est en local, sur GitHub et
+  // sur le serveur », rien ne permettait de le SAVOIR : `/health` rendait un
+  // uptime, pas une version. Un uptime de 19 heures peut aussi bien signifier
+  // « a jour depuis hier » que « le dernier deploiement a echoue sans que
+  // personne ne regarde ». La seule facon de conclure etait de croire le
+  // journal du workflow.
+  //
+  // Le SHA vient de l'environnement, pose au deploiement. Absent en local, et
+  // c'est voulu : `inconnu` dit la verite plutot que d'inventer une version.
   @Get()
   health() {
     return {
       status: 'ok',
       service: 'salorie-backend',
+      commit: process.env.GIT_COMMIT || process.env.GITHUB_SHA || 'inconnu',
       uptime: process.uptime(),
       ts: Date.now(),
     };
