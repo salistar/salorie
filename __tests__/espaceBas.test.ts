@@ -60,6 +60,44 @@ describe('les ecrans a onglets degagent la barre ET le bouton', () => {
   });
 });
 
+describe('les ecrans POUSSES ne reservent pas la place deux fois', () => {
+  // ⚠ ICI LA REGLE EST L'INVERSE DE CELLE DES ONGLETS, ET C'EST LE PIEGE.
+  // Un écran à onglets réserve lui-même. Un écran poussé, non : c'est
+  // `app/(app)/_layout.tsx` qui enveloppe TOUT le groupe dans une vue portant
+  // `paddingBottom: barreVisible ? useEspaceBasSimple() : 0`. La réserve est
+  // donc centrale, et une constante ajoutée dans un écran s'AJOUTE à elle.
+  //
+  // Cinq écrans le faisaient — activity, healthy-recipes, kitchen, ramadan,
+  // workout-details — avec 110 ou 130, soit plus de cent points de vide en trop
+  // au bas du défilement. Constaté le 10/09/2026 sur émulateur à 320 dp.
+  //
+  // ⚠ ET CE POINT NE SE VOIT PAS SOUS LA GRÂCE HORS-LIGNE. L'application s'y
+  // croit déconnectée, `PersistentTabBar` rend `null`, `barreVisible` est faux
+  // et le layout ne réserve rien : un balayage visuel dans cet état déclarerait
+  // tout sain. D'où ce test, qui lit le code et pas l'écran.
+  const POUSSES = path.join(RACINE, 'app', '(app)');
+  const ecrans = fs.readdirSync(POUSSES)
+    .filter((f) => f.endsWith('.tsx'))
+    .map((f) => ({ nom: f, source: fs.readFileSync(path.join(POUSSES, f), 'utf8') }));
+
+  it('le layout du groupe reserve bien la place, une fois pour tous', () => {
+    const layout = fs.readFileSync(path.join(POUSSES, '_layout.tsx'), 'utf8');
+    expect(layout).toMatch(/useEspaceBasSimple\s*\(\s*\)/);
+    expect(layout).toMatch(/paddingBottom:\s*barreVisible\s*\?/);
+  });
+
+  it('aucun ecran pousse n ajoute une constante de « meuble »', () => {
+    const fautifs: string[] = [];
+    for (const e of ecrans) {
+      if (e.nom === '_layout.tsx') continue;
+      for (const m of e.source.matchAll(/paddingBottom:\s*(\d+)/g)) {
+        if (Number(m[1]) > 100) fautifs.push(`${e.nom} : paddingBottom: ${m[1]}`);
+      }
+    }
+    expect(fautifs).toEqual([]);
+  });
+});
+
 describe('les valeurs de espaceBas se tiennent', () => {
   const source = fs.readFileSync(path.join(RACINE, 'lib', 'espaceBas.ts'), 'utf8');
   const nombre = (nom: string) => {

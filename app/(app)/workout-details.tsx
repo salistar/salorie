@@ -663,7 +663,12 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
   safeArea: { flex: 1 },
   header: { paddingHorizontal: 20, paddingTop: 4, marginBottom: 4 },
   backBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  content: { paddingHorizontal: 24, paddingBottom: 130 },
+  // ⚠ PAS DE `paddingBottom` DE « MEUBLE » ICI.
+  // `app/(app)/_layout.tsx` enveloppe deja tout ecran pousse dans une vue qui
+  // reserve `useEspaceBasSimple()` quand la barre persistante est affichee. Une
+  // constante ajoutee ici s'AJOUTE a cette reserve : le bas de l'ecran se
+  // retrouve avec plus de cent points de vide en trop. Constate le 10/09/2026.
+  content: { paddingHorizontal: 24 },
   title: { fontSize: 32, fontWeight: '900', letterSpacing: -1, marginBottom: 4 },
   subtitle: { fontSize: 15, fontWeight: '500', marginTop: 2, marginBottom: 20 },
   exerciseTitle: {

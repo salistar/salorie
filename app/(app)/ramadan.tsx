@@ -540,7 +540,12 @@ export default function RamadanScreen() {
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeStyles = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1 },
-  body: { padding: 18, paddingBottom: 130 },
+  // ⚠ PAS DE `paddingBottom` DE « MEUBLE » ICI.
+  // `app/(app)/_layout.tsx` enveloppe deja tout ecran pousse dans une vue qui
+  // reserve `useEspaceBasSimple()` quand la barre persistante est affichee. Une
+  // constante ajoutee ici s'AJOUTE a cette reserve : le bas de l'ecran se
+  // retrouve avec plus de cent points de vide en trop. Constate le 10/09/2026.
+  body: { padding: 18 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   title: { fontSize: 24, fontWeight: '900', letterSpacing: -0.4 },
   intro: { fontSize: 13.5, marginTop: 6, lineHeight: 19 },
