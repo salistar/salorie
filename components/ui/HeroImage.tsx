@@ -55,8 +55,52 @@ export default function HeroImage({ source, height = 150, eyebrow, title, value,
     <View style={{ borderRadius: rounded ? radius.xl : 0, overflow: 'hidden', height }}>
       <ImageBackground source={source} resizeMode="cover" style={StyleSheet.absoluteFillObject as any}>
         <LinearGradient colors={heroScrim} style={StyleSheet.absoluteFillObject as any} />
+        {/* ⚠ UN SECOND VOILE, CALE SUR LE TEXTE — ET EN CALQUE, PAS DANS LE FLUX.
+            `heroScrim` couvre toute la hauteur : presque transparent en haut
+            (5 % de noir), opaque en bas (72 %). Or le bloc de texte est ancre EN
+            BAS et grandit vers le HAUT — un titre sur deux lignes fait remonter
+            l'eyebrow dans la zone claire. Mesure du 10/09/2026 sur l'ecran
+            Progres, photo de brocoli : l'eyebrow blanc rendait 1,33:1, puis
+            2,52:1 une fois l'ombre portee ajoutee. Toujours sous 4,5:1.
+
+            Assombrir `heroScrim` davantage n'est pas la reponse : il faudrait
+            environ 50 % de noir des le haut de l'IMAGE, et la photo ne se
+            verrait plus.
+
+            Deux erreurs avant d'arriver ici, toutes deux vues a l'ecran :
+              un degrade a deux paliers ENVELOPPANT le texte — transparent
+                exactement la ou se pose l'eyebrow, qui n'y gagnait que 0,2 point.
+              trois paliers avec du `paddingTop` pour donner de la course — le
+                degrade devenait juste, mais la marge poussait le bloc hors du
+                bandeau, dont la hauteur est FIXE : la deuxieme ligne du titre se
+                retrouvait coupee. Un defaut echange contre un autre.
+
+            En calque absolu sur les 72 % du bas, il assombrit ce qu'il faut sans
+            toucher a la mise en page. */}
+        <LinearGradient
+          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.52)', 'rgba(0,0,0,0.78)']}
+          locations={[0, 0.45, 1]}
+          style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '72%' }}
+          pointerEvents="none"
+        />
         <View style={{ flex: 1, justifyContent: 'flex-end', padding: spacing.xl }}>
-          {!!eyebrow && <Text style={{ ...(type.eyebrow as TextStyle), ...surPhoto, ...align }}>{eyebrow}</Text>}
+          {/* ⚠ L'EYEBROW PORTE UN HALO PLUS FRANC QUE LE RESTE, ET C'EST DELIBERE.
+              Il est le PREMIER element d'un bloc ancre en bas : quand le titre
+              prend deux lignes, il remonte jusqu'en haut du bandeau, hors de
+              portee du voile. Et sur un hero de 150 px le bloc occupe presque
+              toute la hauteur — il ne reste aucune zone claire a preserver, donc
+              aucun degrade ne peut le couvrir sans noyer la photo entiere.
+              Un halo serre, lui, ne depend pas de la position. */}
+          {!!eyebrow && (
+            <Text style={{
+              ...(type.eyebrow as TextStyle),
+              ...surPhoto,
+              /* eslint-disable-next-line no-restricted-syntax -- meme raison que `surPhoto` */
+              textShadowColor: 'rgba(0,0,0,0.95)',
+              textShadowRadius: 6,
+              ...align,
+            }}>{eyebrow}</Text>
+          )}
           {!!value && (
             <Text style={{ ...(type.hero as TextStyle), ...surPhoto, ...align }}>
               {value}{!!valueUnit && <Text style={{ ...(type.h2 as TextStyle), ...surPhoto }}> {valueUnit}</Text>}
