@@ -81,10 +81,18 @@ export default withSentryConfig(nextConfig, {
   org: 'salistarcompany',
   project: 'salorie-admin',
   silent: !process.env.CI,
-  // Masque le DSN et les requetes Sentry derriere une route du site : les
-  // bloqueurs de publicite coupent les appels vers *.sentry.io, ce qui ferait
-  // disparaitre une partie des erreurs navigateur sans qu'on le sache.
-  tunnelRoute: '/monitoring',
+  // ⚠ `tunnelRoute` A ETE RETIREE D'ICI, ET CE N'EST PAS UN ABANDON.
+  // Le tunnel masque les requetes Sentry derriere une route du site, les
+  // bloqueurs de publicite coupant les appels vers *.sentry.io. Mais cette
+  // option n'agit QUE par le plugin webpack du SDK
+  // (`_sentryRewritesTunnelPath`, defini dans son seul `config/webpack.js`) :
+  // sous Turbopack, elle est lue, acceptee, et sans le moindre effet. La
+  // laisser ici ferait croire a une protection qui n'existe plus.
+  //
+  // Le tunnel est donc ecrit a la main : `app/monitoring/route.ts` pour le
+  // relais, `tunnel: '/monitoring'` dans `instrumentation-client.ts` pour que
+  // le navigateur l'emprunte, et une sortie dediee dans `middleware.ts` pour
+  // qu'il ne finisse pas redirige vers /login.
   // Retire les traces de debogage du SDK du bundle. Remplace `disableLogger`,
   // deprecie et supprime dans une version a venir.
   webpack: {

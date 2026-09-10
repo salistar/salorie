@@ -82,3 +82,37 @@ describe('middleware — ce qui passe sans session', () => {
     expect(EST_FICHIER.test('/og.png/users/secret')).toBe(false);
   });
 });
+
+describe('tunnel Sentry — public par necessite', () => {
+  it('⚠ /monitoring sort AVANT le controle de session', () => {
+    // `tunnelRoute: '/monitoring'` fait passer les rapports du navigateur par
+    // notre domaine, les bloqueurs coupant *.sentry.io. Tombee dans la regle
+    // generale, la route rendait 307 vers /login et le SDK jetait le rapport :
+    // aucune erreur d'un visiteur non connecte n'arrivait — landing, /me et
+    // page de connexion comprises. Verifie en production le 10/09/2026.
+    expect(SOURCE).toMatch(/const TUNNEL_SENTRY = '\/monitoring'/);
+    // Et la sortie doit se faire AVANT la lecture du cookie, sinon elle ne sert
+    // a rien.
+    const sortie = SOURCE.indexOf('TUNNEL_SENTRY + ');
+    const controle = SOURCE.indexOf('req.cookies.get(AUTH_COOKIE)');
+    expect(sortie).toBeGreaterThan(-1);
+    expect(sortie).toBeLessThan(controle);
+  });
+
+  it('les trois pieces du tunnel nomment le MEME chemin', () => {
+    // Le tunnel tient en trois fichiers : le navigateur qui l'emprunte, la
+    // route qui relaie, et la sortie du portail. Les desaccorder rouvrirait le
+    // trou en silence — un rapport perdu ne fait pas d'erreur.
+    const client = fs.readFileSync(path.join(__dirname, '..', 'instrumentation-client.ts'), 'utf8');
+    expect(client).toMatch(/tunnel:\s*'\/monitoring'/);
+    expect(fs.existsSync(path.join(__dirname, '..', 'app', 'monitoring', 'route.ts'))).toBe(true);
+  });
+
+  it('⚠ le fichier client porte le nom que Turbopack lit encore', () => {
+    // `sentry.client.config.ts` n'est plus charge sous Turbopack : le build
+    // passe, et la surveillance navigateur s'arrete sans rien dire. Mesure du
+    // 10/09/2026 : le DSN n'etait dans aucun fichier de `.next/static/`.
+    expect(fs.existsSync(path.join(__dirname, '..', 'instrumentation-client.ts'))).toBe(true);
+    expect(fs.existsSync(path.join(__dirname, '..', 'sentry.client.config.ts'))).toBe(false);
+  });
+});

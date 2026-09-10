@@ -16,8 +16,24 @@ const LANDING = ['/', '/ar', '/en', '/contact', '/privacy', '/terms', '/refund',
 // back-office, Clerk + Firebase pour les utilisateurs.
 const ESPACE_PERSONNEL = '/me';
 
+// ⚠ LE TUNNEL SENTRY DOIT ETRE PUBLIC, SINON IL NE REMONTE RIEN.
+// `tunnelRoute: '/monitoring'` (next.config.mjs) fait transiter les rapports du
+// NAVIGATEUR par notre domaine, parce que les bloqueurs de publicite coupent les
+// appels directs vers *.sentry.io. Mais cette route tombait dans la regle
+// generale : `POST /monitoring` rendait 307 vers /login, et le SDK, qui attend
+// une reponse de Sentry, jetait le rapport.
+//
+// Constate le 10/09/2026, sur les DEUX domaines. Consequence : aucune erreur
+// navigateur d'un visiteur non connecte n'arrivait — c'est-a-dire celles de la
+// landing, de /me et de la page de connexion elle-meme, soit la quasi-totalite
+// du trafic. Le silence de Sentry ressemblait a une absence de bugs.
+const TUNNEL_SENTRY = '/monitoring';
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  if (pathname === TUNNEL_SENTRY || pathname.startsWith(TUNNEL_SENTRY + '/')) {
+    return NextResponse.next();
+  }
   if (pathname === ESPACE_PERSONNEL || pathname.startsWith(ESPACE_PERSONNEL + '/')) {
     return NextResponse.next();
   }
