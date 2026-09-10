@@ -33,8 +33,25 @@ export default function WelcomeScreen() {
   // n'en est pas loin.
   const { width: largeurEcran } = useWindowDimensions();
   const tailleTitre = largeurEcran < 340 ? 21 : 24;
+
+  // ⚠ REDUIRE LA TAILLE N'A PAS SUFFI, ET LA MESURE DISAIT POURQUOI.
+  // A 320 dp le conteneur offre 272 dp, et « تتبع بذكاء، » n'en occupe que 87 —
+  // il y avait donc largement la place. Ce n'etait pas un debordement de
+  // largeur : c'est Android qui MESURAIT faux.
+  //
+  // Deux causes, toutes deux propres a l'arabe :
+  //   `letterSpacing` NEGATIF sur une ecriture LIEE. Le crenage negatif est
+  //     concu pour des lettres separees ; sur l'arabe, dont les glyphes se
+  //     soudent, il fausse la mesure — et il est de toute facon une faute de
+  //     typographie sur cette ecriture.
+  //   `fontWeight: '900'` sans graisse arabe correspondante : Android retombe
+  //     sur une fonte de substitution, plus large, et mesure celle-la.
+  //
+  // On borne donc AUSSI le nombre de lignes : quelle que soit la mesure, le
+  // titre tient en deux lignes et retrecit si besoin.
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation() as any;
+  const titreArabe = String(language) === 'ar';
   const { resolved, colors } = useTheme();
   const k = useTokens();
   const isDark = resolved === 'dark';
@@ -84,7 +101,17 @@ export default function WelcomeScreen() {
           Salorie
         </Animated.Text>
 
-        <Animated.Text entering={FadeInDown.delay(200).duration(600)} style={[styles.title, { color: textColor, fontSize: tailleTitre }]}>
+        <Animated.Text
+          entering={FadeInDown.delay(200).duration(600)}
+          numberOfLines={2}
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}
+          style={[styles.title, {
+            color: textColor,
+            fontSize: tailleTitre,
+            ...(titreArabe ? { letterSpacing: 0, fontWeight: '800' as const } : null),
+          }]}
+        >
           {t('welcome.title')}
         </Animated.Text>
 
