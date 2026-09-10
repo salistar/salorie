@@ -67,12 +67,32 @@ export default function PersistentTabBar() {
   // « Statistiques » sur l'écran d'accueil — « التحليلات » contre « الإحصائيات »
   // en arabe. Vu à l'écran le 16 août 2026. Deux noms pour une seule destination.
   // `defis` n'a pas de clé : il garde son libellé calculé plus haut.
+  // ⚠ ON DEMANDE D'ABORD LA FORME COURTE, PUIS LA LONGUE.
+  // Le 09/09/2026, la barre de `(tabs)/_layout.tsx` est passee a
+  // `tabs.analytics.bref` (« Stats ») parce que « Statistiques » etait tronque a
+  // 320 dp. Celle-ci lisait toujours `tabs.analytics` : le MEME onglet
+  // s'appelait « Stats » sur l'accueil et « Statistiques » ailleurs — la
+  // divergence que ce fichier avait deja corrigee le 16/08, rouverte par le
+  // correctif de l'autre barre. Un seul nom par destination, quelle que soit la
+  // barre qui l'affiche.
   const labelFor = (key: string, fallback: string) => {
     if (key === 'defis') return defisLabel;
     const cle = 'tabs.' + key;
+    const bref = t(cle + '.bref');
+    if (bref !== cle + '.bref') return bref;
     const trad = t(cle);
-    // `t` rend LA CLÉ quand la traduction manque, jamais une valeur vide : sans ce
-    // test, un onglet ajouté sans clé afficherait « tabs.machin » à l'écran.
+    // `t` rend LA CLE quand la traduction manque, jamais une valeur vide : sans ce
+    // test, un onglet ajoute sans cle afficherait « tabs.machin » a l'ecran.
+    return trad === cle ? fallback : trad;
+  };
+
+  // Le nom ENTIER, pour ce qu'annonce un lecteur d'ecran. Defini ici et non dans
+  // la boucle : `TABS.map((t) => ...)` nomme sa variable `t`, qui masque la
+  // fonction de traduction du meme nom.
+  const annonceFor = (key: string, fallback: string) => {
+    if (key === 'defis') return defisLabel;
+    const cle = 'tabs.' + key;
+    const trad = t(cle);
     return trad === cle ? fallback : trad;
   };
 
@@ -89,6 +109,10 @@ export default function PersistentTabBar() {
           const Icon = t.icon;
           return (
             <TouchableOpacity key={t.key} style={styles.item} activeOpacity={0.7}
+              accessibilityRole="button"
+              // Affiche court, annonce complet : un lecteur d'ecran doit dire
+              // « Statistiques », pas « Stats ».
+              accessibilityLabel={annonceFor(t.key, t.label)}
               onPress={() => { try { router.navigate(t.route as any); } catch { router.replace(t.route as any); } }}>
               <Icon size={22} color={k.textFaint} />
               <Text style={styles.label} numberOfLines={1}>{labelFor(t.key, t.label)}</Text>
