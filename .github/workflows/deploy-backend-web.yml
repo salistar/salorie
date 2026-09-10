@@ -104,13 +104,7 @@ jobs:
             # deploiement suivant, sans trace et sans message. On ne remplace desormais que
             # les cles gerees par ce workflow et on preserve tout le reste.
             touch .env
-            grep -vE '^ *(export +)?(FIREBASE_SERVICE_ACCOUNT|GEMINI_API_KEY|USDA_API_KEY|AUTH_SECRET|CF_ACCOUNT_ID|CF_API_TOKEN|NEXT_PUBLIC_GMAP_KEY|MAIL_INGEST_KEY|ADMIN_SETUP_KEY|FOOD4K_MIN_CONF|FOOD4K_MIN_CONF_LOCALE|GIT_COMMIT)( *=| *:)' .env > .env.next || true
-            # Le SHA deploye, relu par /health. C'est la SEULE facon de verifier
-            # depuis l'exterieur que le serveur porte bien le commit attendu :
-            # avant lui, /health ne rendait qu'un uptime, et un uptime de 19 h ne
-            # distingue pas « a jour » de « le dernier deploiement a echoue sans
-            # que personne ne regarde ».
-            printf '%s\n' 'GIT_COMMIT=${{ github.sha }}' >> .env.next
+            grep -vE '^ *(export +)?(FIREBASE_SERVICE_ACCOUNT|GEMINI_API_KEY|USDA_API_KEY|AUTH_SECRET|CF_ACCOUNT_ID|CF_API_TOKEN|NEXT_PUBLIC_GMAP_KEY|MAIL_INGEST_KEY|ADMIN_SETUP_KEY|FOOD4K_MIN_CONF|FOOD4K_MIN_CONF_LOCALE)( *=| *:)' .env > .env.next || true
             printf '%s\n' 'FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' >> .env.next
             printf '%s\n' 'GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}' >> .env.next
             printf '%s\n' 'USDA_API_KEY=${{ secrets.USDA_API_KEY }}' >> .env.next
