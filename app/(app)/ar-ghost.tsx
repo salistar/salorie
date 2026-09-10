@@ -45,6 +45,7 @@ import {
 
 import { useTokens, Tokens } from '../../constants/tokens';
 import { useScreenGate } from '../../components/FeatureGate';
+import { demanderLocalisation } from '../../lib/divulgationPermission';
 const { width: W, height: H } = Dimensions.get('window');
 const FOV = 42; // demi-champ horizontal (deg) où le fantôme est "devant" — comme challenge-ar
 const LAST_PACE_KEY = 'ghost_last_pace_sec'; // s/km du dernier run fantôme (preset "mon dernier run")
@@ -164,8 +165,8 @@ export default function ARGhostScreen() {
     let local: Location.LocationSubscription | null = null;
     (async () => {
       try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') { if (mounted) setLocDenied(true); return; }
+        // Divulgation prealable AVANT la boite du systeme (cf. divulgationPermission).
+        if (!(await demanderLocalisation(language))) { if (mounted) setLocDenied(true); return; }
         local = await Location.watchHeadingAsync((h) => {
           const deg = h.trueHeading >= 0 ? h.trueHeading : h.magHeading;
           setHeading(deg);

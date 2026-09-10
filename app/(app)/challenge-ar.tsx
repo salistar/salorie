@@ -23,6 +23,7 @@ import { PrimaryButton, SecondaryButton } from '../../components/ui/Button';
 import { spacing, type as typeTokens } from '../../constants/theme';
 import { useTokens, Tokens } from '../../constants/tokens';
 import { useScreenGate } from '../../components/FeatureGate';
+import { demanderLocalisation } from '../../lib/divulgationPermission';
 
 const { width: W, height: H } = Dimensions.get('window');
 const FOV = 42; // half horizontal field of view (deg) a label is considered "in front"
@@ -105,8 +106,8 @@ export default function ChallengeARScreen() {
     let sub: Location.LocationSubscription | null = null;
     (async () => {
       try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') { setLocDenied(true); return; }
+        // Divulgation prealable AVANT la boite du systeme (cf. divulgationPermission).
+        if (!(await demanderLocalisation(language))) { setLocDenied(true); return; }
         const cur = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
         setLoc({ lat: cur.coords.latitude, lng: cur.coords.longitude });
         sub = await Location.watchHeadingAsync((h) => {

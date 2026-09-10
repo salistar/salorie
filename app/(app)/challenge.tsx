@@ -38,6 +38,7 @@ import { getHistory } from '../../lib/timeMachine';
 import Medal from '../../components/Medal';
 import { getRace as apiGetRace, joinRace as apiJoinRace, raceProgress as apiProgress } from '../../lib/racesApi';
 import { useScreenGate } from '../../components/FeatureGate';
+import { demanderLocalisation } from '../../lib/divulgationPermission';
 
 // Mappe un défi (id) vers un thème de cadre médaille (sinon défaut vert).
 const CHALLENGE_FRAME: Record<string, string> = { 'casa-loop': 'casablanca' };
@@ -641,8 +642,8 @@ export default function ChallengeScreen() {
   const startReal = async () => {
     if (!mapReady) return;
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') { Alert.alert(t.realMode, t.locNeeded); return; }
+      // Divulgation prealable AVANT la boite du systeme (cf. divulgationPermission).
+      if (!(await demanderLocalisation(language))) { Alert.alert(t.realMode, t.locNeeded); return; }
       setReached({});
       setActivePoi(null);
       setNavKind('real');

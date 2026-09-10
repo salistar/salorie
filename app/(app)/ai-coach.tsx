@@ -29,6 +29,7 @@ import { mlWeightForecast } from '../../lib/mlApi';
 import { useTheme } from '../../lib/ThemeContext';
 import { useTranslation } from '../../lib/i18n';
 import { rowDir } from '../../lib/rtl';
+import { demanderMicro } from '../../lib/divulgationPermission';
 
 const TXT: any = {
   en: {
@@ -211,8 +212,10 @@ export default function AiCoachScreen() {
   // côté whisper/backend) puis envoie le texte comme question au coach.
   const startRec = async () => {
     try {
-      const perm = await Audio.requestPermissionsAsync();
-      if (!perm.granted) return;
+      // Divulgation prealable AVANT la boite du systeme — exigence Google Play.
+      // Voir `lib/divulgationPermission.ts` : c'est la seule porte, et un test
+      // refuse qu'un ecran appelle `Audio.requestPermissionsAsync` en direct.
+      if (!(await demanderMicro(language))) return;
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
       const { recording: rec } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
       recRef.current = rec;

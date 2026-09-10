@@ -26,6 +26,7 @@ import { refreshStepsNotification } from '../../lib/stepsNotif';
 import { isPlausibleMove } from '../../lib/antiCheat';
 import { PrimaryButton, SecondaryButton } from '../../components/ui';
 import { useScreenGate } from '../../components/FeatureGate';
+import { demanderLocalisation } from '../../lib/divulgationPermission';
 
 // Google Maps JS in a WebView — same approach as the Sally apps (the JS API key
 // works in a WebView with a baseUrl; react-native-maps would need a Maps SDK for
@@ -178,8 +179,8 @@ export default function RunScreen() {
           if (p?.weight) setWeight(Number(p.weight) || 70);
         }
       } catch {}
-      const { status: st } = await Location.requestForegroundPermissionsAsync();
-      if (st !== 'granted') { setPerm('denied'); return; }
+      // Divulgation prealable AVANT la boite du systeme (cf. divulgationPermission).
+      if (!(await demanderLocalisation(language))) { setPerm('denied'); return; }
       try {
         const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
         setCenter({ lat: loc.coords.latitude, lng: loc.coords.longitude });
@@ -375,7 +376,7 @@ export default function RunScreen() {
       <View style={[styles.center, { backgroundColor: bg, padding: 32 }]}>
         <MapPin size={48} color={k.accent} />
         <Text style={[styles.permTxt, { color: text }]}>{t.perm}</Text>
-        <TouchableOpacity style={styles.primaryBtn} onPress={() => Location.requestForegroundPermissionsAsync().then((r) => r.status === 'granted' && setPerm('ok'))}>
+        <TouchableOpacity style={styles.primaryBtn} onPress={() => { demanderLocalisation(language).then((ok) => ok && setPerm('ok')); }}>
           <Text style={styles.primaryBtnTxt}>{t.grant}</Text>
         </TouchableOpacity>
       </View>

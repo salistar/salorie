@@ -22,6 +22,7 @@ import { parseMealFromAudio, ParsedMeal } from '../../lib/voiceMeal';
 import { useTranslation } from '../../lib/i18n';
 import { useTheme } from '../../lib/ThemeContext';
 import { useScreenGate } from '../../components/FeatureGate';
+import { demanderMicro } from '../../lib/divulgationPermission';
 
 type Phase = 'idle' | 'recording' | 'analyzing' | 'preview' | 'saved';
 
@@ -86,8 +87,8 @@ export default function VoiceLog() {
   const start = async () => {
     setErr('');
     try {
-      const perm = await Audio.requestPermissionsAsync();
-      if (!perm.granted) { setErr(t.mic_perm); return; }
+      // Divulgation prealable AVANT la boite du systeme (cf. divulgationPermission).
+      if (!(await demanderMicro(language))) { setErr(t.mic_perm); return; }
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
       const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
       recRef.current = recording;

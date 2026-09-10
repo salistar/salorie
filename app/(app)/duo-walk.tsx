@@ -35,6 +35,7 @@ import { voixDisponible, ouvrirVoix, type SessionVoix } from '../../lib/duoVoix'
 import VueAppelVideo from '../../components/VueAppelVideo';
 import CarteDuo from '../../components/CarteDuo';
 import { useScreenGate } from '../../components/FeatureGate';
+import { demanderLocalisation } from '../../lib/divulgationPermission';
 
 const T: Record<string, Record<string, string>> = {
   fr: {
@@ -111,8 +112,9 @@ export default function MarcheADeux() {
       rejoindreDuo(duoId);
       s.on('duo:pos', (p: PositionDuo) => vivant && setAutre(p));
 
-      const perm = await Location.requestForegroundPermissionsAsync();
-      if (perm.status !== 'granted') {
+      // Divulgation prealable AVANT la boite du systeme (cf. divulgationPermission).
+      const accorde = await demanderLocalisation(language);
+      if (!accorde) {
         setErreur(t.permRefusee);
         return;
       }

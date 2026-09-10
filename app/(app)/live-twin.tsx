@@ -34,6 +34,7 @@ import {
   onRoster, onState, onAudio, onFull, leaveTwin, disconnect,
   TwinMember, TwinState,
 } from '../../lib/twinSocket';
+import { demanderMicro } from '../../lib/divulgationPermission';
 
 // NOUVELLES chaînes = objet LOCAL {en,fr,ar}.
 const TXT: any = {
@@ -228,8 +229,8 @@ export default function LiveTwinScreen() {
   // ── Push-to-talk : démarrer l'enregistrement ──
   const startRec = async () => {
     try {
-      const perm = await Audio.requestPermissionsAsync();
-      if (!perm.granted) { Alert.alert(t.title, t.micDenied); return; }
+      // Divulgation prealable AVANT la boite du systeme (cf. divulgationPermission).
+      if (!(await demanderMicro(language))) { Alert.alert(t.title, t.micDenied); return; }
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
       const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
       recRef.current = recording;
