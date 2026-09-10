@@ -81,7 +81,14 @@ export async function flushStepHistory(email: string): Promise<number> {
 // ~0.762 m average stride → ≈1312 steps per km.
 export const STEPS_PER_KM = 1312;
 export function kmToSteps(km: number): number {
-  return Math.max(0, Math.round((km || 0) * STEPS_PER_KM));
+  // ⚠ `km || 0` NE SUFFIT PAS : il rattrape `undefined` et `null`, mais laisse
+  // passer une chaine. `'x' || 0` vaut `'x'`, donc le produit vaut NaN, que
+  // `Math.max(0, NaN)` rend tel quel — et ce NaN se propage ensuite dans le
+  // total du jour et dans le classement d'un defi, sans lever la moindre
+  // erreur. Trouve en ecrivant le test le 10/09/2026.
+  const n = Number(km);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.round(n * STEPS_PER_KM));
 }
 
 export function stepsDay(d: Date = new Date()): string {
