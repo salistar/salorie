@@ -167,3 +167,6 @@ food4k/modele_v*/
 food4k/rapport-fuite.json
 food4k/comparaison.json
 food4k/courbe-confiance.json
+
+# Vidages de pile de Git Bash sous Windows : bruit local, jamais du code.
+*.stackdump
