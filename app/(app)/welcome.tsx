@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -19,6 +20,19 @@ import ScreenTopBar from '../../components/ScreenTopBar';
 import { useTokens, Tokens } from '../../constants/tokens';
 
 export default function WelcomeScreen() {
+  // ⚠ 320 dp EXISTE, ET C'EST UN REGLAGE D'ACCESSIBILITE, PAS UN VIEUX TELEPHONE.
+  // Constate le 10/09/2026 sur un Galaxy A07 : densite physique 300, densite
+  // EFFECTIVE 360 parce que l'utilisateur a agrandi « Taille d'affichage » dans
+  // les reglages Samsung. Les 720 px physiques ne font alors plus 360 dp mais
+  // 320 — et tout ce qui suppose 360 deborde.
+  //
+  // Le titre porte un saut de ligne volontaire pour casser en deux. A 320 dp, la
+  // SECONDE moitie deborde a son tour : « عيش بصحة » devenait « عيش » puis
+  // « بصحة », soit trois lignes au lieu de deux. L'arabe le montre le premier
+  // parce qu'il est plus large que le latin a taille egale, mais le francais
+  // n'en est pas loin.
+  const { width: largeurEcran } = useWindowDimensions();
+  const tailleTitre = largeurEcran < 340 ? 21 : 24;
   const router = useRouter();
   const { t } = useTranslation();
   const { resolved, colors } = useTheme();
@@ -70,7 +84,7 @@ export default function WelcomeScreen() {
           Salorie
         </Animated.Text>
 
-        <Animated.Text entering={FadeInDown.delay(200).duration(600)} style={[styles.title, { color: textColor }]}>
+        <Animated.Text entering={FadeInDown.delay(200).duration(600)} style={[styles.title, { color: textColor, fontSize: tailleTitre }]}>
           {t('welcome.title')}
         </Animated.Text>
 
