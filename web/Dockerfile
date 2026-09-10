@@ -56,10 +56,24 @@ ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \
 RUN npm run build
 
 FROM node:20-alpine
-WORKDIR /app
+# ⚠ LE MEME CHEMIN ABSOLU QUE L'ETAGE DE BUILD, ET CE N'EST PAS NEGOCIABLE.
+# Next 16 depose dans `.next/node_modules/` des liens symboliques ABSOLUS vers
+# les paquets qu'il externalise — `firebase-admin`, `mongoose`,
+# `require-in-the-middle`, `import-in-the-middle` — sous des noms haches
+# (`require-in-the-middle-0b638d63113f337b`). Ces liens pointent vers le chemin
+# qu'avait `node_modules` AU MOMENT DU BUILD.
+#
+# Servir le meme `.next` depuis un autre chemin les fait donc pendre dans le
+# vide. Constate le 10/09/2026 : l'image se construisait, le conteneur
+# demarrait, et TOUTE page rendait 500 —
+# « An error occurred while loading the instrumentation hook:
+#   Cannot find module 'require-in-the-middle-0b638d63113f337b' ».
+#
+# Le meme `.next` servi depuis `/app/web` en local repondait 200 : c'est une
+# panne que seul le conteneur peut montrer, et elle survit au deploiement vert.
+WORKDIR /app/web
 ENV NODE_ENV=production
-# La source vient de `/app/web` (cf. le WORKDIR de l'etage de build) ; l'image
-# finale, elle, n'a plus besoin de `lib/` ni de `assets/` : leur contenu est
+# L'image finale n'a plus besoin de `lib/` ni de `assets/` : leur contenu est
 # deja compile dans `.next`.
 COPY --from=build /app/web/.next ./.next
 COPY --from=build /app/web/node_modules ./node_modules

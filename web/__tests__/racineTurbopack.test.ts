@@ -86,4 +86,20 @@ describe('racine Turbopack — ce qui fait passer le build en conteneur', () => 
       expect(DOCKERFILE).toContain(`COPY --from=build /app/web/${chemin}`);
     }
   });
+
+  it('⚠ les DEUX etages vivent au MEME chemin absolu', () => {
+    // Next 16 depose dans `.next/node_modules/` des liens symboliques ABSOLUS
+    // vers les paquets externalises, sous des noms haches
+    // (`require-in-the-middle-0b638d63113f337b`). Ils pointent vers le chemin
+    // qu'avait `node_modules` au moment du build.
+    //
+    // Servir ce meme `.next` depuis un autre chemin les fait pendre dans le
+    // vide : le 10/09/2026, l'image se construisait, le conteneur demarrait,
+    // et TOUTE page rendait 500 sur « Cannot find module
+    // 'require-in-the-middle-0b638d63113f337b' » — deploiement vert compris.
+    const workdirs = [...DOCKERFILE.matchAll(/^WORKDIR (\S+)/gm)].map((m) => m[1]);
+    expect(workdirs.length).toBe(2);
+    expect(new Set(workdirs).size).toBe(1);
+    expect(workdirs[0]).toBe('/app/web');
+  });
 });
