@@ -1,3 +1,19 @@
+/**
+ * Le portail d'authentification du back-office.
+ * ---------------------------------------------------------------------------
+ * ⚠ CE FICHIER S'APPELAIT `middleware.ts`, ET LE CONCEPT S'APPELLE TOUJOURS
+ * « middleware » un peu partout dans ce dépôt. Next 16 déprécie cette
+ * convention au profit de `proxy` — sa raison est que « middleware » évoque
+ * celui d'Express, qui ne fait pas la même chose. Le fichier doit donc porter
+ * ce nom, et exporter `proxy`, pour continuer d'être exécuté.
+ *
+ * ⚠ RENOMMER UN FICHIER NE SUFFIT PAS ICI : le déploiement synchronise `web/`
+ * sur le VPS sans supprimer les fichiers disparus — sa purge ne connaît que des
+ * RÉPERTOIRES entiers. Un `middleware.ts` orphelin serait resté à côté du
+ * nouveau `proxy.ts`, et Next aurait exécuté l'ancien. D'où la ligne ajoutée à
+ * l'étape « Purge » de `deploy-backend-web.yml`, le même jour que ce
+ * renommage : les deux vont ensemble, ou aucun des deux.
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, AUTH_COOKIE } from './lib/jwt';
 import { sectionDuChemin, peutVoir, sectionsVisibles, peutAppelerApi } from './lib/scopes';
@@ -17,11 +33,12 @@ const LANDING = ['/', '/ar', '/en', '/contact', '/privacy', '/terms', '/refund',
 const ESPACE_PERSONNEL = '/me';
 
 // ⚠ LE TUNNEL SENTRY DOIT ETRE PUBLIC, SINON IL NE REMONTE RIEN.
-// `tunnelRoute: '/monitoring'` (next.config.mjs) fait transiter les rapports du
-// NAVIGATEUR par notre domaine, parce que les bloqueurs de publicite coupent les
-// appels directs vers *.sentry.io. Mais cette route tombait dans la regle
-// generale : `POST /monitoring` rendait 307 vers /login, et le SDK, qui attend
-// une reponse de Sentry, jetait le rapport.
+// `tunnel: '/monitoring'` (instrumentation-client.ts, relaye par
+// app/monitoring/route.ts) fait transiter les rapports du NAVIGATEUR par notre
+// domaine, parce que les bloqueurs de publicite coupent les appels directs vers
+// *.sentry.io. Mais cette route tombait dans la regle generale :
+// `POST /monitoring` rendait 307 vers /login, et le SDK, qui attend une reponse
+// de Sentry, jetait le rapport.
 //
 // Constate le 10/09/2026, sur les DEUX domaines. Consequence : aucune erreur
 // navigateur d'un visiteur non connecte n'arrivait — c'est-a-dire celles de la
@@ -29,7 +46,7 @@ const ESPACE_PERSONNEL = '/me';
 // du trafic. Le silence de Sentry ressemblait a une absence de bugs.
 const TUNNEL_SENTRY = '/monitoring';
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (pathname === TUNNEL_SENTRY || pathname.startsWith(TUNNEL_SENTRY + '/')) {
     return NextResponse.next();

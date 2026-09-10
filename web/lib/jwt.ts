@@ -1,4 +1,4 @@
-// JWT helpers (jose) — compatibles Edge runtime (utilisables dans middleware.ts).
+// JWT helpers (jose) — compatibles Edge runtime (utilisables dans proxy.ts, le portail).
 // Pas de mongoose ici (mongoose n'est pas Edge-safe).
 import { SignJWT, jwtVerify } from 'jose';
 import type { Role, Scope } from './scopes';

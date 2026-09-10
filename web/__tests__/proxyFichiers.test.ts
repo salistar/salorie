@@ -1,12 +1,12 @@
 /**
  * Un point dans l'URL ne fait pas d'elle un fichier public.
  * ---------------------------------------------------------------------------
- * Le middleware laisse passer les fichiers servis à la racine par la landing
+ * Le portail (`proxy.ts`, ex-`middleware.ts`) laisse passer les fichiers servis à la racine par la landing
  * (`robots.txt`, `og.png`, `screenshots/*`) sans exiger de session. La règle
  * était : « un point dans le dernier segment = un fichier statique ».
  *
  * ⚠ LES IDENTIFIANTS D'UTILISATEUR DE CETTE APPLICATION SONT DES COURRIELS.
- * `/users/test@example.com` se termine par « .com ». Le middleware le prenait
+ * `/users/test@example.com` se termine par « .com ». Le portail le prenait
  * donc pour un fichier et n'exigeait **aucune authentification** : `/users`
  * rendait 307 vers `/login`, `/users/<courriel>` rendait 200.
  *
@@ -22,17 +22,17 @@
  * seconde barrière est censée rattraper.
  *
  * Ce test porte sur la RÈGLE, pas sur le rendu : il lit l'expression du
- * middleware et l'exerce sur les deux familles de chemins.
+ * portail et l'exerce sur les deux familles de chemins.
  */
 import fs from 'fs';
 import path from 'path';
 
-const SOURCE = fs.readFileSync(path.join(__dirname, '..', 'middleware.ts'), 'utf8');
+const SOURCE = fs.readFileSync(path.join(__dirname, '..', 'proxy.ts'), 'utf8');
 
 /** Extrait l'expression réellement écrite dans le middleware. */
 function regleFichiers(): RegExp {
   const m = SOURCE.match(/const EXTENSIONS_PUBLIQUES = (\/.+\/[a-z]*);/);
-  if (!m) throw new Error('EXTENSIONS_PUBLIQUES introuvable dans middleware.ts');
+  if (!m) throw new Error('EXTENSIONS_PUBLIQUES introuvable dans proxy.ts');
   const [, corps] = m;
   const dernier = corps.lastIndexOf('/');
   return new RegExp(corps.slice(1, dernier), corps.slice(dernier + 1));
@@ -40,7 +40,7 @@ function regleFichiers(): RegExp {
 
 const EST_FICHIER = regleFichiers();
 
-describe('middleware — ce qui passe sans session', () => {
+describe('portail — ce qui passe sans session', () => {
   it('⚠ un chemin finissant par un domaine n est PAS un fichier', () => {
     // Le défaut d'origine, dans les deux formes qu'il prenait.
     expect(EST_FICHIER.test('/users/test@example.com')).toBe(false);

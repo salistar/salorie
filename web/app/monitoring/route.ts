@@ -14,7 +14,7 @@
  * bloqueur. Constaté le 10/09/2026, après la montée en Next 16.
  *
  * ⚠ CETTE ROUTE EST PUBLIQUE PAR NÉCESSITÉ — elle sort du portail dans
- * `middleware.ts`. Les erreurs à remonter sont justement celles des visiteurs
+ * `proxy.ts`. Les erreurs à remonter sont justement celles des visiteurs
  * NON connectés : la landing, `/me`, et la page de connexion elle-même.
  *
  * ⚠ ELLE NE DOIT DONC RELAYER QUE VERS NOTRE PROJET.

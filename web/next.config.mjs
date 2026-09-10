@@ -1,6 +1,10 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { withSentryConfig } from '@sentry/nextjs';
+// ⚠ IMPORTE DEPUIS `@sentry/nextjs/config`, PAS DEPUIS LA RACINE.
+// Le SDK 10.74 avertit que l'import racine cessera de fonctionner en v11 : la
+// racine embarque le runtime du SDK, ce fichier n'a besoin que du plugin de
+// build.
+import { withSentryConfig } from '@sentry/nextjs/config';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 
@@ -91,7 +95,7 @@ export default withSentryConfig(nextConfig, {
   //
   // Le tunnel est donc ecrit a la main : `app/monitoring/route.ts` pour le
   // relais, `tunnel: '/monitoring'` dans `instrumentation-client.ts` pour que
-  // le navigateur l'emprunte, et une sortie dediee dans `middleware.ts` pour
+  // le navigateur l'emprunte, et une sortie dediee dans `proxy.ts` pour
   // qu'il ne finisse pas redirige vers /login.
   // Retire les traces de debogage du SDK du bundle. Remplace `disableLogger`,
   // deprecie et supprime dans une version a venir.
@@ -100,7 +104,7 @@ export default withSentryConfig(nextConfig, {
   },
   // ── Elagage de Replay : pose, MAIS SANS EFFET MESURABLE ─────────────────
   //
-  // `sentry.client.config.ts` eteint Replay des deux cotes
+  // `instrumentation-client.ts` eteint Replay des deux cotes
   // (`replaysSessionSampleRate` et `replaysOnErrorSampleRate` a 0), et c'est
   // deliberе : l'ecran de moderation affiche des donnees sensibles. Mettre un
   // taux a zero n'ENLEVE toutefois pas le code du bundle, d'ou ces drapeaux.

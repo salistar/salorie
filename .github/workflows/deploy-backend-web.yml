@@ -57,6 +57,15 @@ jobs:
           script: |
             cd ${{ secrets.VPS_APP_DIR }}
             rm -rf web/app web/lib web/public lib assets/data backend/src
+            # ⚠ ET UN FICHIER, PARCE QUE LA REGLE CI-DESSUS NE COUVRE QUE DES
+            # REPERTOIRES. `web/middleware.ts` a ete renomme `web/proxy.ts` le
+            # 10/09/2026 (Next 16 deprecie la convention `middleware`). L'envoi
+            # qui suit AJOUTE des fichiers, il n'en supprime aucun : l'ancien
+            # serait reste a cote du nouveau, et Next aurait execute le PORTAIL
+            # D'AUTHENTIFICATION perime — celui qui laissait passer
+            # `/users/<courriel>` sans session.
+            # A retirer quand plus aucun VPS n'aura connu l'ancien nom.
+            rm -f web/middleware.ts
 
       - name: Copy files to VPS
         uses: appleboy/scp-action@v0.1.7
