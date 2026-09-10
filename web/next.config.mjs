@@ -1,8 +1,30 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { withSentryConfig } from '@sentry/nextjs';
+
+const ICI = path.dirname(fileURLToPath(import.meta.url));
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // ⚠ SANS CETTE LIGNE, LE BUILD PASSE EN LOCAL ET ECHOUE EN CONTENEUR.
+  // Next 16 compile avec Turbopack, qui « ne resout PAS les fichiers hors de la
+  // racine du projet » et devine cette racine en cherchant un fichier de
+  // verrouillage (`package-lock.json`, `pnpm-lock.yaml`, ...).
+  //
+  // Les pages de /me importent les modules de calcul du depot mobile
+  // (`../../../../lib/nutriScore`, `../../../../assets/data/local-foods.json`).
+  //   • En local, `salorie/package-lock.json` existe : la racine devinee est le
+  //     depot entier, et `salorie/lib` est dedans. Le build passe.
+  //   • Dans l'image, seul `web/package-lock.json` est copie : la racine devinee
+  //     est `web/` seul, et les memes imports tombent dehors. Neuf « Module not
+  //     found », build casse — constate le 10/09/2026 au premier deploiement
+  //     apres la montee en Next 16.
+  //
+  // On la fixe donc explicitement au PARENT de `web/`, ce qui donne le depot en
+  // local et `/app` dans l'image : le meme arbre des deux cotes, et plus rien
+  // qui depende de l'endroit ou traine un fichier de verrouillage.
+  turbopack: { root: path.join(ICI, '..') },
   // firebase-admin is server-only; keep it out of the client bundle (Next 14 key).
   // ⚠ RENOMME EN NEXT 15 : `experimental.serverComponentsExternalPackages`
   // est devenu `serverExternalPackages`, a la racine. L'ancienne cle n'est

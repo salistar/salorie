@@ -1,26 +1,31 @@
 # Salorie admin web (Next.js)
 FROM node:20-alpine AS build
-WORKDIR /app
-
-# ⚠ Le contexte de build est la RACINE du depot, pas `web/` (voir docker-compose).
+# ⚠ `web/` VIT DANS `/app/web`, ET CE N'EST PAS COSMETIQUE.
+# Le contexte de build est la RACINE du depot, pas `web/` (voir docker-compose).
 # Raison : les pages de /me importent des modules de CALCUL du depot mobile —
 # `lib/nutriScore`, `lib/readiness`, `lib/panierSouk`, `lib/ramadanAssiettes`,
 # `lib/sadaqaCalcul` — et deux tables de `assets/data/`, au lieu d'en garder des
 # copies qui divergeraient. Ces regles annoncent des chiffres a quelqu'un : un
 # Nutri-Score, un score de forme, un nombre de repas finances.
 #
-# Ces imports s'ecrivent `../../../../lib/...` depuis `web/app/me/<page>/`, donc
-# ils se resolvent a la RACINE du systeme de fichiers une fois `web/` place dans
-# `/app`. D'ou les deux COPY vers `/lib` et `/assets` : ils reconstituent
-# exactement l'arborescence que le build voit en local.
+# Ces imports s'ecrivent `../../../../lib/...` depuis `web/app/me/<page>/`.
+# Jusqu'au 10/09/2026, `web/` etait pose dans `/app` et ces chemins se
+# resolvaient a la RACINE DU SYSTEME DE FICHIERS — d'ou d'anciens `COPY` vers
+# `/lib` et `/assets`. Ca marchait par coincidence, et Next 16 y a mis fin :
+# Turbopack ne resout rien hors de la racine du projet (cf. l'entete de
+# `next.config.mjs`, qui la fixe au parent de `web/`).
+#
+# L'arbre reproduit donc maintenant CELUI DU DEPOT : `/app/web`, `/app/lib`,
+# `/app/assets/data`. Le build voit exactement ce qu'il voit en local.
 #
 # Sans cela le build echoue sur « Module not found » — ce qui est arrive, et a
 # bloque six deploiements d'affilee sans que le build local ne montre rien.
+WORKDIR /app/web
 COPY web/package*.json ./
 RUN npm install
 COPY web/ ./
-COPY lib/ /lib/
-COPY assets/data/ /assets/data/
+COPY lib/ /app/lib/
+COPY assets/data/ /app/assets/data/
 # Next.js FIGE les `NEXT_PUBLIC_*` dans le bundle au moment du build : les passer en
 # `environment:` (runtime) ne les fait PAS arriver jusqu'au navigateur. Il faut donc un
 # ARG de build, alimenté par `args:` dans docker-compose.yml.
@@ -53,9 +58,12 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=build /app/.next ./.next
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/public ./public
+# La source vient de `/app/web` (cf. le WORKDIR de l'etage de build) ; l'image
+# finale, elle, n'a plus besoin de `lib/` ni de `assets/` : leur contenu est
+# deja compile dans `.next`.
+COPY --from=build /app/web/.next ./.next
+COPY --from=build /app/web/node_modules ./node_modules
+COPY --from=build /app/web/package.json ./package.json
+COPY --from=build /app/web/public ./public
 EXPOSE 3000
 CMD ["npm", "run", "start"]
