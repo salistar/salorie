@@ -11,9 +11,11 @@ node scripts/balayage-api.js https://api.salorie.com   # les routes produit rép
 npx jest && (cd backend && npx jest) && (cd web && npx jest)
 ```
 
-**État global** : **825 tests verts** (610 mobile · 194 backend · 21 web), `tsc` et
-ESLint propres sur les trois projets, 0 écran orphelin, 0 appel vers une route
-inexistante, 0 drapeau fantôme.
+**État global** au 10/09/2026, 22 h : **863 tests verts** (636 mobile ·
+194 backend · 33 web), `tsc` et ESLint propres sur les trois projets, 0 écran
+orphelin, 0 appel vers une route inexistante, 0 drapeau fantôme. Web et landing
+sont en **Next 16**, sans vulnérabilité critique ni haute. Production servie par
+`e624085`, égal à `main` — vérifié par `/health`.
 
 ---
 
@@ -70,14 +72,40 @@ rend 401 sans jeton ; `/flags/invalidate` rend 403 sans clé admin.
 |---|---:|---:|---:|
 | mobile | 0 | 21 | 37 |
 | backend | 0 | 4 | 25 |
-| web | **1** | 1 | 8 |
+| web | ~~1~~ **0** | ~~1~~ **0** | 8 |
+| landing | ~~1~~ **0** | ~~5~~ **0** | ~~1~~ **0** |
 
-⚠️ **Sur la critique, la mesure honnête** : c'est Next.js, corrigeable seulement
-par une montée majeure en 16. Son vecteur nommé est un déni de service via
-`images.remotePatterns` de l'Image Optimizer. **Aucun `remotePatterns` n'est
-configuré ici**, et `next/image` n'est utilisé que dans un fichier. L'exposition
-par ce vecteur est nulle. La montée reste à faire ; la présenter comme une
-brèche ouverte serait faux.
+✅ **Fait le 10/09/2026 — la montée en Next 16.** Les deux critiques étaient
+Next.js, corrigeables seulement par une montée majeure. Elles sont éteintes des
+deux côtés. Ce qui reste au back-office est **une seule** faille, comptée huit
+fois : `uuid` (contrôle de bornes manquant quand `buf` est fourni), tirée par
+`firebase-admin` 12.5.0 ; elle part avec `firebase-admin` 14.4.0, deux majeures
+plus loin — pas fait, et à traiter avec le backend qui dépend du même SDK.
+
+La montée elle-même a coûté quatre ruptures d'API, et en a révélé trois
+défauts que personne ne cherchait :
+
+1. **Une faille préexistante d'authentification** (voir plus bas).
+2. **Turbopack ne résout rien hors de la racine du projet**, et devinait cette
+   racine à partir d'un `package-lock.json`. Les pages `/me` importent les
+   modules de calcul du dépôt mobile : le build passait en local et mourait en
+   conteneur sur neuf « Module not found ». Racine désormais fixée
+   explicitement.
+3. **Les liens de `.next/node_modules/` sont ABSOLUS.** Next 16 y dépose des
+   liens symboliques vers les paquets externalisés, pointant vers le chemin du
+   build. Déplacer l'image d'un répertoire les fait pendre : déploiement vert,
+   conteneur démarré, **et toutes les pages en 500** sur
+   « Cannot find module 'require-in-the-middle-0b638d63113f337b' ».
+
+⚠️ Les points 2 et 3 ont un trait commun qu'il vaut mieux retenir que la
+solution : **aucun des deux ne peut se voir en local.** Le premier ne se
+manifeste que si la racine est devinée autrement, le second que si le chemin
+change. Les deux passent le build, les tests, et le déploiement.
+
+⚠️ **Dette ouverte** : Next 16 déprécie la convention `middleware` au profit de
+`proxy`. Le fichier concerné est le portail d'authentification du back-office ;
+le renommer déplace aussi un fichier que la purge du VPS ne couvre pas (elle ne
+supprime que des répertoires). À faire, pas en passant.
 
 ---
 
@@ -355,6 +383,28 @@ Reproductible : `node scripts/liens-landing.js https://salorie.com`
 Seule réserve : les liens de téléchargement pointent sur `build-1053`, qui est
 la dernière release existante. Voir partie 1.
 
+⚠️ **IL Y A UNE SECONDE LANDING, ET ELLE N'EST PAS À JOUR** (constaté le
+10/09/2026). Le dépôt `salistar/salorie-landing` sert toujours
+`salorie.salistar.com` : c'est l'ancêtre de celle qui a été fusionnée dans
+`web/app/(landing)`. Les deux sites se ressemblent, mais pas leurs liens :
+
+| | résolution du binaire | ce qu'un visiteur télécharge |
+|---|---|---|
+| `salorie.com` | `meta?.apk?.url ?? APK_URL` | la dernière release `build-*` |
+| `salorie.salistar.com` | `v1.0.0` **en dur** | l'APK du **9 juin 2026** |
+
+Ce n'est donc pas la partie 1 qui s'applique ici, mais bien pire : une version
+antérieure au consentement d'amitié, au correctif de la faille Premium et à
+Health Connect — exactement le défaut que `releaseMeta.ts` avait corrigé côté
+`salorie.com`, resté entier sur son jumeau.
+
+Ce site a été monté en Next 16 le 10/09/2026 (il portait la même faille
+critique, plus cinq hautes ; il est à **zéro**, transitives comprises). Mais la
+vraie question n'est pas technique : **faut-il encore qu'il existe ?** Deux
+landings, c'est deux fois la maintenance et une chance sur deux de corriger la
+bonne. Une redirection vers `salorie.com` réglerait le fond ; c'est un
+arbitrage, pas un correctif.
+
 ---
 
 ## Partie 10 — Parité local / GitHub / serveur / binaires
@@ -413,6 +463,31 @@ Trois échecs, trois causes différentes, **trois corrigés** :
 propre correction de la partie 10. Trois runs rouges avant de l'isoler. C'est
 la seule façon honnête de présenter ce chiffre — « zéro échec » ne se mesure
 pas sur l'intention.
+
+### Mise à jour du 10/09/2026 — deux échecs de plus, un vrai, un faux
+
+5. **Le déploiement, cassé deux fois par la montée en Next 16** : d'abord neuf
+   « Module not found » (racine Turbopack), puis un rouge encore plus
+   désagréable — **vert au workflow, 500 sur tout le site**, parce que les liens
+   de `.next/node_modules/` sont absolus. Les deux sont analysés en partie 2.
+   Onze tests web les verrouillent désormais.
+
+6. **Le déploiement de `salorie-landing`, rouge alors que tout allait bien chez
+   lui.** Sa vérification interrogeait `https://salorie.com/` — un domaine que
+   Caddy sert par `salorie-web`, un conteneur d'un **autre dépôt**, qu'il ne
+   construit ni ne redémarre. Il a donc échoué quinze fois de suite à cause
+   d'une panne qui n'était pas la sienne, pendant que son propre conteneur
+   servait correctement le nouveau build.
+
+   Vérifié sur la machine plutôt que supposé :
+
+   ```
+   salorie.com            reverse_proxy salorie-web:3000
+   salorie.salistar.com   reverse_proxy salorie-landing:3000
+   ```
+
+   Une vérification qui interroge le voisin ne vérifie rien : elle échoue quand
+   tout va bien chez elle, et passe au vert quand rien ne va.
 
 ### La panne que la sentinelle a trouvée
 
