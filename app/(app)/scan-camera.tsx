@@ -150,7 +150,18 @@ export default function ScanCameraScreen() {
             ? `لقد استخدمت ${freeLimit('scan')} عمليات مسح مجانية اليوم. اشترك في Premium لمسح غير محدود.`
             : `You've used your ${freeLimit('scan')} free scans today. Go Premium for unlimited scans.`,
           [
-            { text: language === 'fr' ? 'Passer Premium' : language === 'ar' ? 'الاشتراك' : 'Go Premium', onPress: () => { PurchasesService.showPaywall(); } },
+            // ⚠ PLUS D'APPEL DIRECT A `showPaywall()`. Il repose sur
+            // `PurchasesUI.presentPaywall`, qui exige une cle RevenueCat de
+            // PRODUCTION et un paywall configure cote tableau de bord. Sans ca,
+            // `showPaywall` sort en silence : l'utilisateur touche « Passer
+            // Premium » apres avoir epuise ses scans gratuits, et il ne se passe
+            // RIEN. C'est le pire moment pour un bouton mort.
+            // Le binaire distribue aujourd'hui est dans ce cas — verifie le
+            // 10/09/2026 : 4 cles `test_`, 0 `goog_`.
+            // `/upgrade` porte notre propre `PaywallView`, qui se referme seul
+            // s'il n'y a aucune offre — jamais une page de vente vide, jamais un
+            // appui sans effet. Meme geste que Profil depuis le 31/08.
+            { text: language === 'fr' ? 'Passer Premium' : language === 'ar' ? 'الاشتراك' : 'Go Premium', onPress: () => { router.push('/(app)/upgrade' as any); } },
             { text: language === 'fr' ? 'Retour' : language === 'ar' ? 'رجوع' : 'Back', style: 'cancel' },
           ],
         );

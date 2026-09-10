@@ -16,7 +16,6 @@ import { useRouter, useSegments } from 'expo-router';
 import { useTheme } from '../lib/ThemeContext';
 import { useTranslation } from '../lib/i18n';
 import { spacing, radius, type } from '../constants/theme';
-import { PurchasesService } from '../lib/PurchasesService';
 import { useFeature, useFlagsCtx } from '../lib/FlagsContext';
 import { flagForRoute } from '../lib/navFlags';
 import { PrimaryButton, SecondaryButton } from './ui/Button';
@@ -24,13 +23,26 @@ import { PrimaryButton, SecondaryButton } from './ui/Button';
 import { useTokens } from '../constants/tokens';
 type GateKind = 'disabled' | 'premium';
 
-/** Ouvre le paywall RevenueCat (tolère les deux API sans crash). */
-function openPaywall() {
-  try {
-    const svc: any = PurchasesService;
-    if (typeof svc.showPaywall === 'function') { svc.showPaywall(); return; }
-    if (typeof svc.showPaywallIfNeeded === 'function') { svc.showPaywallIfNeeded(); }
-  } catch { /* best-effort */ }
+/**
+ * Emmène vers l'offre Premium — par NOTRE écran, jamais par le paywall natif.
+ *
+ * ⚠ CETTE FONCTION APPELAIT `PurchasesService.showPaywall()`, ET NE FAISAIT RIEN.
+ * `showPaywall` repose sur `PurchasesUI.presentPaywall`, qui exige une clé
+ * RevenueCat de PRODUCTION et un paywall configuré côté tableau de bord. Sans
+ * l'un des deux, il sort en silence — et le `try/catch` « best-effort »
+ * ci-dessus rendait ce silence impossible à distinguer d'un succès.
+ *
+ * Le binaire distribué aujourd'hui est exactement dans ce cas : vérifié le
+ * 10/09/2026 dans son bundle, 4 clés `test_` et 0 `goog_`. Chaque écran
+ * verrouillé derrière Premium affichait donc un bouton qui ne menait nulle part.
+ *
+ * `/upgrade` porte notre propre `PaywallView` : s'il n'y a aucune offre à
+ * vendre, il se referme tout seul. Jamais de page de vente vide, jamais un
+ * appui sans effet. C'est le geste retenu pour le Profil le 31/08 ; les trois
+ * chemins vers Premium le suivent désormais.
+ */
+function ouvrirOffrePremium(router: ReturnType<typeof useRouter>) {
+  router.push('/(app)/upgrade' as any);
 }
 
 /**
@@ -71,7 +83,7 @@ export function ScreenDisabled({ kind = 'disabled' }: { kind?: GateKind }) {
           <PrimaryButton
             title={t('feature.go_premium')}
             icon={<Ionicons name="star" size={18} color={k.onAccent} />}
-            onPress={openPaywall}
+            onPress={() => ouvrirOffrePremium(router)}
           />
         )}
         <SecondaryButton
@@ -89,9 +101,10 @@ function InlinePremiumCta() {
   const k = useTokens();
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const router = useRouter();
   return (
     <Pressable
-      onPress={openPaywall}
+      onPress={() => ouvrirOffrePremium(router)}
       style={({ pressed }) => ({
         flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
         backgroundColor: colors.primaryLight, borderRadius: radius.md,
