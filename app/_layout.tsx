@@ -24,6 +24,7 @@ import { signInToFirebase } from '../lib/firebaseAuth';
 import { initLogCapture } from '../lib/logBuffer';
 import * as Sentry from '@sentry/react-native';
 import Constants from 'expo-constants';
+import { masquerEvenement } from '../lib/sentryMasquage';
 
 // Sentry — crashs et erreurs REELS des utilisateurs. Jusqu'ici on ne voyait rien
 // de ce qui casse sur leurs telephones : `initLogCapture` ci-dessous ne sert que
@@ -63,6 +64,12 @@ Sentry.init({
   // Aucune donnee personnelle : l'app manipule des donnees de sante et des photos
   // de repas. On veut la pile d'appel, pas le contenu.
   sendDefaultPii: false,
+
+  // Ce que `sendDefaultPii: false` ne couvre PAS : ce que notre propre code met
+  // dans un message d'erreur. Voir `lib/sentryMasquage.ts` — le module vit a
+  // part parce qu'une fonction qui protege des donnees de sante doit etre
+  // testable, et il l'est (`__tests__/sentryMasquage.test.ts`).
+  beforeSend: (evenement) => masquerEvenement(evenement as any) as any,
 });
 
 // Capture les 50 dernières erreurs/warnings → "Envoyer les logs" (Profil → support web).
