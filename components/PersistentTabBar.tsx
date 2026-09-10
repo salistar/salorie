@@ -105,7 +105,9 @@ export default function PersistentTabBar() {
 
   return (
     <View style={[styles.bar, { paddingBottom: basSur }]} pointerEvents="box-none">
-      <View style={[styles.inner, { backgroundColor: barBg }]}>
+      {/* Meme filet que la barre des onglets, meme raison : sur les themes
+          sombres l'ombre ne separe rien. Les deux barres doivent se ressembler. */}
+      <View style={[styles.inner, { backgroundColor: barBg, borderWidth: 1, borderColor: k.border }]}>
         {TABS.map((t) => {
           const Icon = t.icon;
           return (

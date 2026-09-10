@@ -45,7 +45,17 @@ function TabsContent() {
           // haut de la boîte ; en arabe, plus haut, les mots étaient tranchés net.
           // `max` et non une somme : sur un téléphone à navigation gestuelle le
           // décalage est presque nul, et les 24 px d'origine restent le bon écart.
-          tabBarStyle: [styles.tabBar, { backgroundColor: tabBg, bottom: basBarre }],
+          // ⚠ UN FILET, PARCE QUE L'OMBRE NE SE VOIT PAS SUR FOND SOMBRE.
+          // Mesure du 10/09/2026 sur un Galaxy A07 en theme `ocean` : l'interieur
+          // de la barre et le fond de page rendaient exactement (17, 26, 44) — la
+          // barre flottante n'avait AUCUNE limite visible, les icones semblaient
+          // posees sur la page. La separation ne tenait qu'a `shadowColor` +
+          // `elevation`, et une ombre sur du (11,18,32) ne se voit pas.
+          //
+          // On garde `surface` comme fond : passer a `surface2` eclaircirait la
+          // barre en theme clair, ou le blanc sur blanc cassé marche deja tres
+          // bien. Un filet de bordure, lui, separe dans les six themes.
+          tabBarStyle: [styles.tabBar, { backgroundColor: tabBg, bottom: basBarre, borderWidth: 1, borderColor: k.border }],
           tabBarShowLabel: true,
           tabBarLabelPosition: 'below-icon',
           tabBarLabelStyle: {
