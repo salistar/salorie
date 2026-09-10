@@ -31,7 +31,9 @@ describe('FridgeService.analyze — une seule passe vision', () => {
     const ml = {
       visionLocal: jest.fn(async () => ({ text: reponseVision, engine: 'faux-vlm' })),
     };
-    const ai = { generate: jest.fn(async () => reponseTexte) };
+    // Le parametre est declare pour que TypeScript accepte de le relire dans
+    // `mock.calls[0][0]` : sans lui, il infere un tuple vide.
+    const ai = { generate: jest.fn(async (_prompt: string) => reponseTexte) };
     const scoring = { scoreFood: jest.fn(() => 0.5) };
     return { ml, ai, service: new FridgeService(ml as any, scoring as any, ai as any) };
   }
@@ -82,7 +84,7 @@ describe('FridgeService.analyze — une seule passe vision', () => {
 
   it('la cascade texte tombe : on rend les ingredients, pas une erreur', async () => {
     const ml = { visionLocal: jest.fn(async () => ({ text: '["pain"]', engine: 'faux-vlm' })) };
-    const ai = { generate: jest.fn(async () => { throw new Error('cascade KO'); }) };
+    const ai = { generate: jest.fn(async (_prompt: string) => { throw new Error('cascade KO'); }) };
     const scoring = { scoreFood: jest.fn(() => 0) };
     const service = new FridgeService(ml as any, scoring as any, ai as any);
 

@@ -13,6 +13,13 @@ const dsn =
 if (dsn) {
   Sentry.init({
     dsn,
+    // Voir `backend/src/instrument.ts` : sans release, une erreur n'appartient
+    // a aucune version. Vercel et GitHub exposent chacun le SHA du deploiement.
+    release:
+      process.env.SENTRY_RELEASE
+      || process.env.VERCEL_GIT_COMMIT_SHA
+      || process.env.GITHUB_SHA
+      || undefined,
     environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'development',
     tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0,
     // Le back-office manipule des donnees d'utilisateurs (moderation, feedback,

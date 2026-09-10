@@ -24,6 +24,12 @@ if (dsn) {
   Sentry.init({
     dsn,
     environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'development',
+    // ⚠ SANS `release`, UNE ERREUR N'APPARTIENT A AUCUNE VERSION.
+    // Sentry regroupe et compare par release : sans elle, impossible de dire si
+    // une erreur vient du deploiement d'aujourd'hui ou d'il y a trois semaines,
+    // ni de voir qu'un correctif l'a bien eteinte. GitHub Actions expose le SHA
+    // du commit deploye — c'est l'identifiant le plus sur qu'on ait ici.
+    release: process.env.SENTRY_RELEASE || process.env.GITHUB_SHA || undefined,
     // Échantillonnage des traces : 10 % en production suffit à voir les tendances
     // sans consommer le quota gratuit. Les ERREURS, elles, sont toujours envoyées.
     tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0,

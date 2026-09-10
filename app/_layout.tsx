@@ -23,6 +23,7 @@ import { syncAllUserData, printLogLegend } from '../lib/LocalDataStore';
 import { signInToFirebase } from '../lib/firebaseAuth';
 import { initLogCapture } from '../lib/logBuffer';
 import * as Sentry from '@sentry/react-native';
+import Constants from 'expo-constants';
 
 // Sentry — crashs et erreurs REELS des utilisateurs. Jusqu'ici on ne voyait rien
 // de ce qui casse sur leurs telephones : `initLogCapture` ci-dessous ne sert que
@@ -32,11 +33,29 @@ import * as Sentry from '@sentry/react-native';
 //
 // Le DSN n'est pas un secret (ecriture seule, prevu pour du code client) — il est
 // de toute facon embarque dans le bundle, le cacher n'aurait aucun sens.
+// ⚠ SANS `release`, UNE ERREUR N'APPARTIENT A AUCUNE VERSION.
+// Sentry regroupe et compare par release : sans elle, impossible de dire si un
+// plantage vient du build d'hier ou d'il y a trois semaines, ni de voir qu'une
+// correction a bien eteint une erreur. Le projet distribue en plus DEUX
+// binaires a la fois — celui du Play Store et l'APK de la landing — qui
+// n'avancent pas au meme rythme. Constate le 10/09/2026 : aucun des trois SDK
+// n'en posait.
+//
+// `dist` porte le versionCode : deux builds peuvent partager `1.0.0` et ne pas
+// contenir le meme JavaScript. C'est aussi ce que Sentry associe aux source
+// maps envoyees par le workflow de release.
+const version = Constants.expoConfig?.version || '0.0.0';
+const versionCode = String(
+  (Constants.expoConfig as any)?.android?.versionCode ?? 'dev',
+);
+
 Sentry.init({
   dsn:
     process.env.EXPO_PUBLIC_SENTRY_DSN ||
     'https://46b44f790eea7763f7535c3af306a472@o4509622074081280.ingest.de.sentry.io/4511911730806864',
   environment: __DEV__ ? 'development' : 'production',
+  release: `salorie@${version}+${versionCode}`,
+  dist: versionCode,
   // Rien en developpement : Metro affiche deja tout, et ca polluerait le quota.
   enabled: !__DEV__,
   // Erreurs toujours envoyees ; traces echantillonnees pour tenir dans le palier gratuit.
