@@ -11,7 +11,7 @@ node scripts/balayage-api.js https://api.salorie.com   # les routes produit rép
 npx jest && (cd backend && npx jest) && (cd web && npx jest)
 ```
 
-**État global** : 809 tests verts (600 mobile · 194 backend · 15 web), `tsc` et
+**État global** : **825 tests verts** (610 mobile · 194 backend · 21 web), `tsc` et
 ESLint propres sur les trois projets, 0 écran orphelin, 0 appel vers une route
 inexistante, 0 drapeau fantôme.
 
@@ -152,7 +152,7 @@ restant. `/challenge` est le pire cas : deuxième écran le plus lourd
 **8 pages publiques**, toutes en 200, en trois langues et deux thèmes (24
 captures). **70 pages** dans l'espace membre `/me`. **26 routes API**.
 
-`web` : `tsc` propre, 15 tests verts. Les 7 routes du back-office redirigent
+`web` : `tsc` propre, 21 tests verts. Les 7 routes du back-office redirigent
 correctement vers `/login` sans session.
 
 **Corrigé** : le bouton de téléchargement **le plus visible du site** pointait
@@ -372,8 +372,25 @@ sans que personne ne regarde » — la seule façon de trancher était de croire
 journal du workflow. La route expose désormais `commit`, posé au déploiement.
 
 ```bash
-curl -s https://api.salorie.com/health | jq .commit   # doit valoir le SHA de main
+curl -s https://api.salorie.com/health | jq -r .commit   # doit valoir le SHA de main
+git rev-parse HEAD
 ```
+
+Vérifié : les deux rendent `260f1b054e55e9b8ffba0fb16cb65b5eae26dcf6`.
+
+⚠️ **Ce correctif m'a coûté trois déploiements cassés, et la cause m'échappe
+encore.** Écrire `printf ... 'GIT_COMMIT=${{ github.sha }}'` dans le corps du
+script faisait échouer le workflow **au démarrage** : zéro job, aucun log,
+« cannot be retried », et GitHub affichant le fichier par son chemin au lieu de
+son nom. La ligne était pourtant de forme identique à ses dix voisines — relue
+dans les octets que GitHub *stocke*, sans tabulation ni caractère invisible, et
+le YAML validait.
+
+Je l'ai isolé en deux poussées plutôt qu'en devinant : retirer ce seul `printf`
+en gardant la modification du `grep` a fait repartir le déploiement
+immédiatement. Le SHA passe maintenant par `envs:`, le mécanisme prévu par
+l'action. Je ne sais toujours pas *pourquoi* l'autre forme est refusée — je
+préfère l'écrire que d'inventer une explication.
 
 ---
 
@@ -391,6 +408,11 @@ Trois échecs, trois causes différentes, **trois corrigés** :
    plugins.gradle.org injoignable. Rien dans le dépôt n'avait changé. Une
    seconde tentative après 30 s ; une vraie erreur de compilation échoue deux
    fois et remonte quand même.
+
+**Et un quatrième, que j'ai causé moi-même** : le déploiement, cassé par ma
+propre correction de la partie 10. Trois runs rouges avant de l'isoler. C'est
+la seule façon honnête de présenter ce chiffre — « zéro échec » ne se mesure
+pas sur l'intention.
 
 ### La panne que la sentinelle a trouvée
 
