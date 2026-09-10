@@ -1,18 +1,41 @@
-import admin from 'firebase-admin';
+// ⚠ FIREBASE-ADMIN 14 A SUPPRIME L'API A ESPACE DE NOMS.
+// `admin.apps`, `admin.app()`, `admin.credential`, `admin.firestore()`,
+// `admin.auth()` n'existent plus : seule la forme modulaire subsiste, un point
+// d'entree par service. Le compilateur le dit clairement — c'est la rupture la
+// plus bruyante de cette montee, et donc la moins dangereuse.
+//
+// `FieldValue` vient desormais de `firebase-admin/firestore` au lieu d'etre une
+// propriete de `admin.firestore`.
+import { initializeApp, getApps, getApp, cert, type App } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 
 // Initialise the Firebase Admin SDK once, from the service-account JSON in
 // FIREBASE_SERVICE_ACCOUNT (same key the mobile token service uses).
-function init() {
-  if (admin.apps.length) return admin.app();
+function init(): App {
+  if (getApps().length) return getApp();
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT env is missing');
   const cred = JSON.parse(raw);
-  return admin.initializeApp({ credential: admin.credential.cert(cred) });
+  return initializeApp({ credential: cert(cred) });
 }
 
 export function db() {
-  init();
-  return admin.firestore();
+  return getFirestore(init());
+}
+
+/**
+ * L'application Firebase elle-meme, pour les services que ce module n'expose pas.
+ *
+ * ⚠ LES `getXxx()` MODULAIRES PRENNENT UNE APPLICATION EN ARGUMENT, ET SANS
+ * ELLE ILS VISENT L'APPLICATION PAR DEFAUT — qui n'existe que si quelqu'un l'a
+ * deja initialisee. `getMessaging()` seul dans une route dependrait donc de
+ * l'ORDRE des appels : il marcherait apres une lecture Firestore, et jetterait
+ * « The default Firebase app does not exist » si on le placait avant. Passer
+ * `appFirebase()` supprime cette dependance a l'ordre.
+ */
+export function appFirebase(): App {
+  return init();
 }
 
 /**
@@ -23,8 +46,7 @@ export function db() {
  * permet d'accepter une connexion Google SANS embarquer le SDK serveur de Clerk.
  */
 export function authAdmin() {
-  init();
-  return admin.auth();
+  return getAuth(init());
 }
 
 export interface AdminUser {
@@ -351,7 +373,7 @@ export async function getRecentSportMatches(max = 80): Promise<any[]> {
 
 export async function approveSportField(id: string): Promise<void> {
   await db().collection('sport_fields').doc(id).set(
-    { approved: true, approvedAt: admin.firestore.FieldValue.serverTimestamp() },
+    { approved: true, approvedAt: FieldValue.serverTimestamp() },
     { merge: true },
   );
 }
@@ -380,7 +402,7 @@ export async function getPendingListings(max = 200): Promise<any[]> {
 
 export async function approveListing(id: string): Promise<void> {
   await db().collection('marketplace_listings').doc(id).set(
-    { approved: true, status: 'active', approvedAt: admin.firestore.FieldValue.serverTimestamp() },
+    { approved: true, status: 'active', approvedAt: FieldValue.serverTimestamp() },
     { merge: true },
   );
 }
@@ -388,7 +410,7 @@ export async function approveListing(id: string): Promise<void> {
 export async function rejectListing(id: string): Promise<void> {
   // On ne supprime pas : on marque l'annonce 'removed' (traçabilité).
   await db().collection('marketplace_listings').doc(id).set(
-    { status: 'removed', removedAt: admin.firestore.FieldValue.serverTimestamp() },
+    { status: 'removed', removedAt: FieldValue.serverTimestamp() },
     { merge: true },
   );
 }

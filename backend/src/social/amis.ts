@@ -16,9 +16,11 @@
 //
 // En cas d'erreur de lecture, tout ici répond « pas amis » / liste vide. On
 // montre moins, jamais plus, quand on n'est pas sûr.
-import type * as admin from 'firebase-admin';
+// ⚠ Firebase-admin 14 : les TYPES aussi ont demenage. `admin.firestore.Firestore`
+// n'existe plus, ils viennent de `firebase-admin/firestore`.
+import type { Firestore, DocumentSnapshot } from 'firebase-admin/firestore';
 
-type Base = admin.firestore.Firestore;
+type Base = Firestore;
 
 /**
  * `emailToDocId` côté app est `trim().toLowerCase()`, et RIEN d'autre — vérifié
@@ -28,7 +30,7 @@ type Base = admin.firestore.Firestore;
  */
 export const idDoc = (x: unknown) => String(x ?? '').trim().toLowerCase();
 
-const listeAmis = (snap: admin.firestore.DocumentSnapshot | undefined): string[] =>
+const listeAmis = (snap: DocumentSnapshot | undefined): string[] =>
   ((snap?.data()?.friends as string[]) || []).map(idDoc).filter(Boolean);
 
 /** Ces deux comptes se reconnaissent-ils mutuellement comme amis ? */

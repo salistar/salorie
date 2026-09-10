@@ -15,7 +15,7 @@
     "@sentry/nextjs": "^10.74.0",
     "bcryptjs": "^3.0.3",
     "firebase": "^12.17.1",
-    "firebase-admin": "12.5.0",
+    "firebase-admin": "^14.4.0",
     "jose": "^6.2.3",
     "lucide-react": "^1.33.0",
     "mongoose": "^9.7.0",

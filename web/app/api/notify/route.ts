@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, unauthorized, requireWriter } from '../../../lib/adminGuard';
-import admin from 'firebase-admin';
-import { db, getPushTargets, getFcmTargets, listUsers } from '../../../lib/firebaseAdmin';
+// ⚠ Firebase-admin 14 a supprime l'API a espace de noms : `admin.messaging()`
+// et `admin.firestore.FieldValue` n'existent plus. Un point d'entree par
+// service, et `getMessaging` prend l'application deja initialisee par
+// `lib/firebaseAdmin.ts` — l'initialiser une seconde fois jetterait.
+import { FieldValue } from 'firebase-admin/firestore';
+import { getMessaging } from 'firebase-admin/messaging';
+import { db, getPushTargets, getFcmTargets, listUsers, appFirebase } from '../../../lib/firebaseAdmin';
 
 export const runtime = 'nodejs';
 
@@ -31,7 +36,7 @@ export async function POST(req: NextRequest) {
           data: { kind: 'admin' },
           source: 'admin',
           receivedAt: nowIso,
-          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          timestamp: FieldValue.serverTimestamp(),
         });
         inApp++;
       } catch { /* skip user */ }
@@ -42,7 +47,7 @@ export async function POST(req: NextRequest) {
     let fcmSent = 0;
     const fcmErrors: string[] = [];
     if (fcm.length) {
-      const messaging = admin.messaging();
+      const messaging = getMessaging(appFirebase());
       for (let i = 0; i < fcm.length; i += 500) {
         const tokens = fcm.slice(i, i + 500).map((x) => x.token);
         try {

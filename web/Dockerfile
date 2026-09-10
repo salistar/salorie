@@ -1,5 +1,15 @@
 # Salorie admin web (Next.js)
-FROM node:20-alpine AS build
+# ⚠ NODE 22, ET CE N'EST PAS UN CAPRICE DE VERSION.
+# `firebase-admin` 14 declare `engines: { node: ">=22" }`. La 12 tirait une
+# chaine de huit alertes (firestore, storage, google-gax, retry-request,
+# teeny-request, uuid...) ; la 13 n'en coupait aucune. Passer a la 14 entraine
+# donc Node avec elle.
+# Et ca tombe bien : Node 20 est en FIN DE VIE depuis avril 2026. Ces conteneurs
+# tournaient sur un runtime qui ne recoit plus de correctif de securite — un
+# probleme plus serieux que celui qu'on cherchait a fermer.
+# `web/__tests__/socleNode.test.ts` et `backend/src/socle-node.spec.ts` refusent
+# que ce chiffre et celui de `engines` divergent.
+FROM node:22-alpine AS build
 # ⚠ `web/` VIT DANS `/app/web`, ET CE N'EST PAS COSMETIQUE.
 # Le contexte de build est la RACINE du depot, pas `web/` (voir docker-compose).
 # Raison : les pages de /me importent des modules de CALCUL du depot mobile —
@@ -55,7 +65,7 @@ ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \
     NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN npm run build
 
-FROM node:20-alpine
+FROM node:22-alpine
 # ⚠ LE MEME CHEMIN ABSOLU QUE L'ETAGE DE BUILD, ET CE N'EST PAS NEGOCIABLE.
 # Next 16 depose dans `.next/node_modules/` des liens symboliques ABSOLUS vers
 # les paquets qu'il externalise — `firebase-admin`, `mongoose`,

@@ -1,5 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import * as admin from 'firebase-admin';
+// ⚠ Firebase-admin 14 a supprime l'API a espace de noms : plus de `admin.apps`,
+// `admin.credential.cert` ni `admin.auth()`. Un point d'entree par service.
+import { initializeApp, getApps, getApp, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 
 /**
  * Verifies a Firebase ID token from the `Authorization: Bearer <token>` header.
@@ -35,12 +38,12 @@ export class FirebaseAuthGuard implements CanActivate {
     if (!token) throw new UnauthorizedException('Missing bearer token');
 
     try {
-      if (!admin.apps.length) {
+      if (!getApps().length) {
         const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
         if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT missing');
-        admin.initializeApp({ credential: admin.credential.cert(JSON.parse(raw)) });
+        initializeApp({ credential: cert(JSON.parse(raw)) });
       }
-      req.user = await admin.auth().verifyIdToken(token);
+      req.user = await getAuth(getApp()).verifyIdToken(token);
       return true;
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
