@@ -417,7 +417,8 @@ const makeStyles = (isDark: boolean, tok: Tokens) => StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
-    paddingBottom: 140,
+    // La place du bas vient de `useEspaceBas()`, applique au rendu : elle
+    // depend du decalage systeme, qu'une feuille de style ne peut pas connaitre.
   },
   header: {
     marginTop: 20,

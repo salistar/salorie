@@ -397,7 +397,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   scrollContent: {
-    paddingBottom: 120,
+    // La place du bas vient de `useEspaceBas()`, applique au rendu : elle
+    // depend du decalage systeme, qu'une feuille de style ne peut pas connaitre.
   },
   calendarWrapper: {
     marginTop: 6,

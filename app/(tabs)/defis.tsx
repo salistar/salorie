@@ -29,6 +29,7 @@ import { spacing, radius, type } from '../../constants/theme';
 import { HERO } from '../../constants/heroImages';
 
 import { useTokens, type Tokens } from '../../constants/tokens';
+import { useEspaceBas } from '../../lib/espaceBas';
 const TXT: any = {
   en: { title: 'Challenges', sub: 'Virtual races, medals and news.', league: 'League', races: 'Virtual races', medals: 'My medals', news: 'News', agenda: 'Sport agenda', solo: 'Solo run (GPS)', annual: 'Annual challenge', journal: 'Journal & news', social: 'Social & friends', activity: 'Activity', seeAll: 'See all', km: 'km', noMedals: 'Finish a race to earn your first medal!', join: 'Open', community: 'Community routes', ghost: 'AR ghost run', twin: 'Live twin', fasting: 'Intermittent fasting', groupSports: 'Group sports', marketplace: 'Marketplace', ramadan: 'Ramadan mode', cityChallenges: 'City vs city challenges', more: 'More' },
   fr: { title: 'Défis', sub: 'Courses virtuelles, médailles et actus.', league: 'Ligue', races: 'Courses virtuelles', medals: 'Mes médailles', news: 'Actualités', agenda: 'Agenda sport', solo: 'Course solo (GPS)', annual: 'Défi annuel', journal: 'Journal & actus', social: 'Social & amis', activity: 'Activité', seeAll: 'Voir tout', km: 'km', noMedals: 'Termine une course pour gagner ta première médaille !', join: 'Ouvrir', community: 'Parcours communautaires', ghost: 'Course fantôme AR', twin: 'Jumeau live', fasting: 'Jeûne intermittent', groupSports: 'Sports de groupe', marketplace: 'Marketplace', ramadan: 'Mode Ramadan', cityChallenges: 'Défis inter-villes', more: 'Plus' },
@@ -36,6 +37,14 @@ const TXT: any = {
 };
 
 export default function DefisTab() {
+  // ⚠ CET ECRAN RESERVAIT 130 EN DUR, ET C'ETAIT TROP PEU.
+  // Il etait le SEUL des cinq onglets a ne pas appeler `useEspaceBas()` : les
+  // quatre autres le font. L'en-tete de `lib/espaceBas.ts` decrit exactement ce
+  // defaut — « chaque ecran devinait autre chose : 120, 130, 140, 140. Tous trop
+  // peu, et le bouton + recouvrait la fin des listes au repos ». 130 etait l'une
+  // de ces devinettes ; la valeur calculee vaut pres de 200.
+  // Constate le 10/09/2026 sur emulateur regle a 320 dp.
+  const espaceBas = useEspaceBas();
   const k = useTokens();
   const s = useMemo(() => makeS(k), [k]);
   const { user } = useUser();
@@ -114,7 +123,7 @@ export default function DefisTab() {
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={[s.safe, { backgroundColor: colors.gray[50] }]}>
       <ScreenTopBar />
-      <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[s.body, { paddingBottom: espaceBas }]} showsVerticalScrollIndicator={false}>
         <View style={{ paddingHorizontal: spacing.xl }}>
           <HeroImage source={HERO.defis} height={170} eyebrow={t.sub} title={t.title} />
         </View>
@@ -236,7 +245,9 @@ export default function DefisTab() {
 // couleurs y étaient donc figées sur la palette par défaut, à vie.
 const makeS = (k: Tokens) => StyleSheet.create({
   safe: { flex: 1 },
-  body: { paddingTop: spacing.md, paddingBottom: 130 },
+  // `paddingBottom` vient de `useEspaceBas()`, applique au rendu : il depend
+  // du decalage systeme, qu'une feuille de style ne peut pas connaitre.
+  body: { paddingTop: spacing.md },
   tileRow: { flexDirection: 'row', gap: spacing.md },
   raceCard: { width: 190, height: 130, borderRadius: radius.lg, overflow: 'hidden' },
   raceImg: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },

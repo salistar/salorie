@@ -702,7 +702,8 @@ const makeStyles = (k: Tokens) => StyleSheet.create({
     // Tab bar (~60-80px) overlaps the ScrollView bottom; without extra bottom
     // padding the last Bento cards (Exercise Insight, Monthly, All-time) stay
     // hidden behind it — the data loads fine but the cards are never visible.
-    paddingBottom: 140,
+    // La place du bas vient de `useEspaceBas()`, applique au rendu : elle
+    // depend du decalage systeme, qu'une feuille de style ne peut pas connaitre.
   },
   header: {
     // ScreenTitle porte son propre paddingHorizontal (spacing.xl) ; on l'annule

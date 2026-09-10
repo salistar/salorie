@@ -498,7 +498,8 @@ export default function CoachScreen() {
 // n'existe pas. Le composant l'appelle via useMemo, recalculé au changement de thème.
 const makeStyles = (k: Tokens) => StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: 20, paddingBottom: 130 },
+  // La place du bas vient de `useEspaceBas()`, applique au rendu.
+  content: { paddingHorizontal: 20 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4, marginBottom: 18 },
   title: { fontSize: 30, fontWeight: '900', letterSpacing: -1 },
 
