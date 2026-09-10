@@ -105,10 +105,6 @@ jobs:
             # les cles gerees par ce workflow et on preserve tout le reste.
             touch .env
             grep -vE '^ *(export +)?(FIREBASE_SERVICE_ACCOUNT|GEMINI_API_KEY|USDA_API_KEY|AUTH_SECRET|CF_ACCOUNT_ID|CF_API_TOKEN|NEXT_PUBLIC_GMAP_KEY|MAIL_INGEST_KEY|ADMIN_SETUP_KEY|FOOD4K_MIN_CONF|FOOD4K_MIN_CONF_LOCALE|GIT_COMMIT)( *=| *:)' .env > .env.next || true
-            # Le SHA deploye, relu par GET /health. Sans lui, seul l'uptime etait
-            # visible, et un uptime ne distingue pas "a jour" de "le dernier
-            # deploiement a echoue sans que personne ne regarde".
-            printf '%s\n' 'GIT_COMMIT=${{ github.sha }}' >> .env.next
             printf '%s\n' 'FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' >> .env.next
             printf '%s\n' 'GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}' >> .env.next
             printf '%s\n' 'USDA_API_KEY=${{ secrets.USDA_API_KEY }}' >> .env.next
