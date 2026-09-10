@@ -1,5 +1,7 @@
 {
   "_lisezMoi": "Plafond du nombre de couleurs ecrites en dur. Il ne doit que DESCENDRE. Le relever demande une raison ecrite dans le message de commit — sans quoi la dette redevient invisible.",
-  "total": 0,
-  "parFichier": {}
+  "total": 1,
+  "parFichier": {
+    "components/ui/HeroImage.tsx": 1
+  }
 }

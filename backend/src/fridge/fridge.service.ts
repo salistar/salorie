@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MlService } from '../ml/ml.service';
+import { AiService } from '../ai/ai.service';
 import { ScoringService } from '../objective/scoring.service';
 import {
   FoodCandidate,
@@ -47,6 +48,7 @@ export class FridgeService {
   constructor(
     private readonly ml: MlService,
     private readonly scoring: ScoringService,
+    private readonly ai: AiService,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -156,9 +158,21 @@ export class FridgeService {
         '"kcal":number,"protein":number}]. ' +
         '"uses" = ingredients from the list. "missing" = ingredients to buy. ' +
         'kcal and protein are per serving. No prose, only the JSON array.';
-      // Réutilise le VLM (texte conditionné par l'image du frigo) — reste NON-Gemini.
-      const r2 = await this.ml.visionLocal(prompt2, imageBase64, mime);
-      const parsed = FridgeService.extractJson(r2.text);
+      // ⚠ PASSE 2 EN TEXTE, PAS EN VISION — ET C'EST CE QUI TUAIT LA ROUTE.
+      // Elle repassait l'IMAGE dans le VLM alors que son prompt ne parle que des
+      // ingredients deja detectes : « Given ingredients [...], propose 3 recipes ».
+      // Deux passes vision sur la meme photo, donc deux fois la cascade complete.
+      //
+      // Mesure de la sentinelle du 10/09/2026 : `/ml/vision` seul prend 38 s.
+      // `/fridge/analyze` depassait donc les 90 s du client et rendait TIMEOUT —
+      // « Frigo → recettes » etait mort en production, et l'ecran s'affichait
+      // parfaitement pendant ce temps.
+      //
+      // La cascade TEXTE d'`AiService` fait le meme travail sans reenvoyer
+      // l'image. Le commentaire d'origine disait deja « texte → texte, pas
+      // d'image » — le code, lui, envoyait l'image.
+      const texte2 = await this.ai.generate(prompt2);
+      const parsed = FridgeService.extractJson(texte2);
       rawRecipes = Array.isArray(parsed)
         ? parsed
         : Array.isArray(parsed?.recipes)
