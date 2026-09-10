@@ -58,6 +58,11 @@ const translations = {
 
     'tabs.home': 'Home',
     'tabs.analytics': 'Analytics',
+    // « Challenges » (10 signes) etait tronque en « Challen… » a 320 dp, comme
+    // « Statistiques » l'etait en francais. « Profile » (7) tient : la forme
+    // breve reste sous ce budget.
+    'tabs.defis': 'Challenges',
+    'tabs.defis.bref': 'Compete',
     // Libelle AFFICHE dans la barre. Voir le commentaire cote francais.
     'tabs.analytics.bref': 'Stats',
     'tabs.profile': 'Profile',
@@ -567,6 +572,9 @@ const translations = {
 
     'tabs.home': 'Accueil',
     'tabs.analytics': 'Statistiques',
+    // « Defis » tient deja : la forme breve est la meme que la longue.
+    'tabs.defis': 'Défis',
+    'tabs.defis.bref': 'Défis',
     // ⚠ DEUX CLES, ET C'EST VOLONTAIRE.
     // « Statistiques » est tronque en « Statisti… » dans la barre a cinq
     // onglets d'un ecran de 720 px — constate le 09/09/2026 sur un Galaxy A07,
@@ -1081,6 +1089,8 @@ const translations = {
 
     'tabs.home': 'الرئيسية',
     'tabs.analytics': 'الإحصائيات',
+    'tabs.defis': 'تحديات',
+    'tabs.defis.bref': 'تحديات',
     // L'arabe est plus haut ET plus large que le latin a taille egale : si le
     // francais deborde, celui-ci deborde aussi. Meme forme, sans l'article.
     'tabs.analytics.bref': 'إحصائيات',

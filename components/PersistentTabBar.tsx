@@ -44,12 +44,11 @@ export default function PersistentTabBar() {
   const [kbOpen, setKbOpen] = useState(false);
   const { isSignedIn } = useAuth();
   const { resolved } = useTheme();
-  const { t, language } = useTranslation() as any;
+  const { t } = useTranslation() as any;
   const insets = useSafeAreaInsets();
   const isDark = resolved === 'dark';
   const tok = useTokens();
   const barBg = tok.surface;
-  const defisLabel = language === 'fr' ? 'Défis' : language === 'ar' ? 'تحديات' : 'Challenges';
   useEffect(() => {
     const s = Keyboard.addListener('keyboardDidShow', () => setKbOpen(true));
     const h = Keyboard.addListener('keyboardDidHide', () => setKbOpen(false));
@@ -62,21 +61,24 @@ export default function PersistentTabBar() {
   if (!isSignedIn) return null;
 
   // Les traductions viennent des clés `tabs.*`, celles-là même qu'emploie la barre
-  // d'onglets principale. Elles étaient recopiées ici, et les deux copies avaient
-  // divergé : le même onglet s'appelait « Analyses » sur un écran poussé et
-  // « Statistiques » sur l'écran d'accueil — « التحليلات » contre « الإحصائيات »
-  // en arabe. Vu à l'écran le 16 août 2026. Deux noms pour une seule destination.
-  // `defis` n'a pas de clé : il garde son libellé calculé plus haut.
-  // ⚠ ON DEMANDE D'ABORD LA FORME COURTE, PUIS LA LONGUE.
-  // Le 09/09/2026, la barre de `(tabs)/_layout.tsx` est passee a
-  // `tabs.analytics.bref` (« Stats ») parce que « Statistiques » etait tronque a
-  // 320 dp. Celle-ci lisait toujours `tabs.analytics` : le MEME onglet
-  // s'appelait « Stats » sur l'accueil et « Statistiques » ailleurs — la
-  // divergence que ce fichier avait deja corrigee le 16/08, rouverte par le
-  // correctif de l'autre barre. Un seul nom par destination, quelle que soit la
-  // barre qui l'affiche.
+  // d'onglets principale.
+  //
+  // ⚠ CET ONGLET A DIVERGÉ TROIS FOIS. C'est le sujet de ce bloc.
+  //   16/08/2026 — les libellés étaient recopiés ici : le même onglet s'appelait
+  //     « Analyses » sur un écran poussé et « Statistiques » sur l'accueil
+  //     (« التحليلات » contre « الإحصائيات » en arabe). Corrigé en lisant `tabs.*`.
+  //   09/09/2026 — l'autre barre est passée à `tabs.analytics.bref` (« Stats »)
+  //     parce que « Statistiques » était tronqué à 320 dp. Celle-ci lisait
+  //     toujours la forme longue : « Stats » sur l'accueil, « Statistiques »
+  //     ailleurs. La divergence rouverte par le correctif de sa jumelle.
+  //   10/09/2026 — `defis` échappait encore aux deux : son libellé était calculé
+  //     en dur dans CHACUN des deux fichiers. « Challenges » se faisait tronquer
+  //     en « Challen… » à 320 dp, et le corriger aurait demandé deux éditions.
+  //
+  // D'où la règle : on demande d'abord la forme brève, puis la longue, et AUCUN
+  // onglet n'a de cas particulier. Un seul nom par destination, quelle que soit
+  // la barre qui l'affiche.
   const labelFor = (key: string, fallback: string) => {
-    if (key === 'defis') return defisLabel;
     const cle = 'tabs.' + key;
     const bref = t(cle + '.bref');
     if (bref !== cle + '.bref') return bref;
@@ -90,7 +92,6 @@ export default function PersistentTabBar() {
   // la boucle : `TABS.map((t) => ...)` nomme sa variable `t`, qui masque la
   // fonction de traduction du meme nom.
   const annonceFor = (key: string, fallback: string) => {
-    if (key === 'defis') return defisLabel;
     const cle = 'tabs.' + key;
     const trad = t(cle);
     return trad === cle ? fallback : trad;

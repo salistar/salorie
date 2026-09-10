@@ -13,10 +13,13 @@ import { useBasBarre, useBasBouton } from '../../lib/espaceBas';
 function TabsContent() {
   const { showActionMenu } = useLogging();
   const { colors, resolved } = useTheme();
-  const { t, language } = useTranslation() as any;
+  const { t } = useTranslation() as any;
   const basBarre = useBasBarre();
   const basBouton = useBasBouton();
-  const defisLabel = language === 'fr' ? 'Défis' : language === 'ar' ? 'تحديات' : 'Challenges';
+  // ⚠ CE LIBELLE ETAIT CALCULE EN DUR, ICI ET DANS `PersistentTabBar`.
+  // Deux copies d'une meme table de traduction, dans deux fichiers : c'est
+  // exactement la divergence que ce projet a deja payee deux fois sur cet
+  // onglet. Il vit desormais dans i18n comme les autres.
   const isDark = resolved === 'dark';
   const k = useTokens();
   const styles = useMemo(() => makeStyles(k), [k]);
@@ -73,8 +76,8 @@ function TabsContent() {
         <Tabs.Screen
           name="defis"
           options={{
-            tabBarLabel: defisLabel,
-            tabBarAccessibilityLabel: defisLabel,
+            tabBarLabel: t('tabs.defis.bref'),
+            tabBarAccessibilityLabel: t('tabs.defis'),
             tabBarIcon: ({ color }) => <Trophy size={22} color={color} />,
           }}
         />
