@@ -285,7 +285,12 @@ export default function AnalyticsScreen() {
         <View style={styles.header}>
           <ScreenTitle title={t('analytics.progress')} />
         </View>
-        <HeroImage source={HERO['analytics']} height={140} eyebrow={A_('banner_title')} title={A_('banner_sub')} />
+        {/* ⚠ LES DEUX ROLES ETAIENT INVERSES. `banner_title` (« Ta progression »)
+            partait dans `eyebrow`, et `banner_sub` — une phrase entiere — dans
+            `title`, rendu en h1 avec `numberOfLines={2}`. En arabe le titre se
+            terminait donc par « ورؤى ال. », coupe en plein mot. `defis.tsx` fait
+            l'inverse depuis toujours : eyebrow = la phrase, title = le nom court. */}
+        <HeroImage source={HERO['analytics']} height={140} eyebrow={A_('banner_sub')} title={A_('banner_title')} />
         <View style={{ height: spacing.lg }} />
 
         {/* Insights IA — cascade LOCAL (on-device) → BACKEND (/ml) → GEMINI.

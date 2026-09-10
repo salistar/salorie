@@ -7,10 +7,21 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from '../../lib/i18n';
 import { radius, spacing, type, heroScrim } from '../../constants/theme';
 
+/**
+ * ⚠ QUI VA OU : l'inversion coute cher, et elle a deja eu lieu.
+ *   `eyebrow` — la PHRASE descriptive. Petit corps, plusieurs mots admis.
+ *   `title`   — le NOM COURT de l'ecran. Rendu en h1, borne a DEUX lignes :
+ *               tout ce qui depasse est coupe, sans avertissement.
+ * L'ecran Progres passait l'inverse — « Tendances, series et insights IA de ta
+ * semaine. » en `title` — et le rendu arabe se terminait par « ورؤى ال. »,
+ * tronque en plein mot. Corrige le 10/09/2026 ; `defis.tsx` est la reference.
+ */
 interface Props {
   source: ImageSourcePropType;
   height?: number;
+  /** La phrase descriptive (petit corps). */
   eyebrow?: string;
+  /** Le nom court de l'ecran (h1, DEUX lignes maximum). */
   title?: string;
   value?: string;            // grosse valeur héro (ex: kcal)
   valueUnit?: string;
