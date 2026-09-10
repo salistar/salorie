@@ -11,11 +11,11 @@ node scripts/balayage-api.js https://api.salorie.com   # les routes produit rép
 npx jest && (cd backend && npx jest) && (cd web && npx jest)
 ```
 
-**État global** au 10/09/2026, 22 h : **863 tests verts** (636 mobile ·
-194 backend · 33 web), `tsc` et ESLint propres sur les trois projets, 0 écran
+**État global** au 10/09/2026, 23 h : **873 tests verts** (636 mobile ·
+194 backend · 43 web), `tsc` et ESLint propres sur les trois projets, 0 écran
 orphelin, 0 appel vers une route inexistante, 0 drapeau fantôme. Web et landing
 sont en **Next 16**, sans vulnérabilité critique ni haute. Production servie par
-`e624085`, égal à `main` — vérifié par `/health`.
+`4f3e041`, égal à `main` — vérifié par `/health`.
 
 ---
 
@@ -520,6 +520,59 @@ release, leurs erreurs se mélangent.
 
 **Reste à faire** : un `beforeSend` qui masque les clés connues des données de
 santé, et des `tags` de tri (thème, langue, palier de la cascade).
+
+### Mise à jour du 10/09/2026 — le back-office ne remontait **rien**
+
+Trouvé en vérifiant une redirection après la montée en Next 16. Trois défauts
+empilés, tous silencieux, et le troisième masquait les deux autres.
+
+1. **`sentry.client.config.ts` n'était plus lu.** La convention est dépréciée
+   depuis Next 15.5 et **cesse d'être chargée sous Turbopack**. Mesure : le DSN
+   n'apparaissait dans **aucun** fichier de `.next/static/`. Aucune erreur
+   navigateur du back-office ne pouvait remonter. La landing avait déjà fait ce
+   renommage, le piège écrit en commentaire — évité d'un côté, pas de l'autre.
+
+2. **`tunnelRoute` est une option webpack.** Vérifié dans le SDK 10.74.0 :
+   `_sentryRewritesTunnelPath` n'existe que dans son `config/webpack.js`. Sous
+   Turbopack, la clé est lue, acceptée, sans effet. `/monitoring` rendait 404 et
+   le navigateur repartait droit vers `*.sentry.io` — dans le bloqueur de
+   publicité que ce tunnel devait contourner.
+
+3. **Le portail redirigeait le tunnel.** `POST /monitoring` rendait 307 vers
+   `/login`, sur les deux domaines. Or les erreurs qu'on veut voir sont
+   précisément celles des visiteurs **non connectés** : la landing, `/me`, et la
+   page de connexion elle-même.
+
+Le tunnel est désormais écrit à la main, sur les deux sites, en trois pièces
+qu'un test tient accordées.
+
+⚠️ **Une route publique qui repost le corps reçu est un relais ouvert.**
+L'enveloppe annonce son DSN dans sa première ligne ; on ne lui fait pas
+confiance. Il est comparé au nôtre — hôte **et** numéro de projet — et l'URL
+d'amont est reconstruite depuis le nôtre. Sept tests, dont trois attaques : hôte
+pirate, même SaaS autre région, autre projet du même hôte.
+
+**Vérifié en production**, pas seulement sur le poste :
+
+```bash
+# La route existe et refuse un DSN qui n'est pas le nôtre
+curl -o /dev/null -w '%{http_code}\n' -X POST --data-binary \
+  '{"dsn":"https://k@evil.example.com/123"}' https://salorie.com/monitoring   # 403
+# Et le DSN est bien reparti dans le bundle du navigateur
+curl -s https://app.salorie.com/login | grep -oE '/_next/static/chunks/[^"]+\.js' \
+  | while read c; do curl -s "https://app.salorie.com$c" | grep -q o4509622074081280 \
+  && echo "$c"; done
+```
+
+Les deux domaines répondent 403 au DSN étranger, 405 en `GET`, et le DSN est
+présent dans `1yo0plxxhe1qp.js`.
+
+⚠️ **Ce que ça dit du reste** : trois mécanismes de surveillance étaient en
+panne, et le symptôme était *moins d'erreurs dans Sentry*. Un tableau de bord
+calme n'est pas une preuve de santé — il faut vérifier que le canal transporte
+encore quelque chose. C'est vrai aussi du mobile, dont le `Sentry.init` est
+pourtant le mieux réglé des quatre (release, `dist`, `beforeSend` qui masque),
+mais qui n'a jamais été vérifié depuis un vrai build EAS.
 
 ---
 
