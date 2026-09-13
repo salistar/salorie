@@ -11,7 +11,7 @@ node scripts/balayage-api.js https://api.salorie.com   # les routes produit rép
 npx jest && (cd backend && npx jest) && (cd web && npx jest)
 ```
 
-**État global** au 13/09/2026 : **1 163 tests verts** (919 mobile ·
+**État global** au 13/09/2026 : **1 177 tests verts** (933 mobile ·
 197 backend · 47 web), `tsc` et ESLint propres sur les trois projets, 0 écran
 orphelin, 0 appel vers une route inexistante, 0 drapeau fantôme. Web et landing
 sont en **Next 16**, sans vulnérabilité critique ni haute ; les deux conteneurs
@@ -46,13 +46,17 @@ permissions que le binaire livré n'a pas.
    distribue a donc un bouton « s'abonner » inerte. Aucun nouveau binaire ne
    peut être produit tant que le secret n'est pas corrigé.
 2. 🔴 **20 testeurs pendant 14 jours** en test fermé.
-3. 🟠 **Formulaire Health Connect** : déclaration d'usage + lien vers la
-   politique de confidentialité.
+3. ✅ **Formulaire Health Connect** — texte prêt à recopier dans
+   [`PLAY-CONSOLE.md`](PLAY-CONSOLE.md), avec le parcours à filmer.
 4. 🟠 **Divulgation visible** pour `RECORD_AUDIO` (journal vocal) et
    `ACCESS_FINE_LOCATION` (course GPS) — un écran d'explication *avant* la
    demande système.
-5. 🟠 **Formulaire « Sécurité des données »** : doit correspondre à ce qui est
-   réellement collecté, Sentry et RevenueCat compris.
+5. ✅ **Formulaire « Sécurité des données »** — rempli champ par champ dans
+   [`PLAY-CONSOLE.md`](PLAY-CONSOLE.md), **chaque ligne relevée dans le code**
+   avec la commande qui la vérifie. Le point que les formulaires ratent le plus
+   souvent y est traité : les **photos doivent être déclarées partagées** (elles
+   partent vers un fournisseur de vision), mais **ne sont pas conservées** hors
+   du programme d'amélioration, qui est opt-in et pseudonymisé.
 
 ---
 
@@ -72,7 +76,7 @@ rend 401 sans jeton ; `/flags/invalidate` rend 403 sans clé admin.
 
 | | critique | haute | moyenne |
 |---|---:|---:|---:|
-| mobile | 0 | 21 | 37 |
+| mobile | 0 | ~~21~~ **9** | ~~37~~ **36** |
 | backend | 0 | ~~4~~ **5** | ~~25~~ **19** |
 | web | ~~1~~ **0** | ~~1~~ **0** | ~~8~~ **2** |
 | landing | ~~1~~ **0** | ~~5~~ **0** | ~~1~~ **0** |
@@ -564,8 +568,19 @@ release, leurs erreurs se mélangent.
 - **backend** : `SENTRY_RELEASE` sinon `GITHUB_SHA`.
 - **web** : idem, avec `VERCEL_GIT_COMMIT_SHA` en plus.
 
-**Reste à faire** : un `beforeSend` qui masque les clés connues des données de
-santé, et des `tags` de tri (thème, langue, palier de la cascade).
+✅ **Fait le 13/09/2026 — les `tags` de tri.** Trois axes, et ils ne sont pas
+génériques : ce sont les trois endroits où cette application a déjà cassé.
+`langue` + `rtl` (icônes à l'envers, titres tronqués en plein mot),
+`theme` + `apparence` (deux barres d'onglets invisibles, un titre noir sur noir
+sur les six palettes), et `palier_scan` (la cascade a quatre étages ; sans
+étiquette, il faut lire la pile d'appels pour savoir lequel a répondu).
+
+Une valeur absente vaut `inconnu` et non une étiquette manquante : dans Sentry
+les deux se filtrent différemment, et `inconnu` dit que l'erreur est survenue
+avant que le contexte ne soit prêt — le moment le plus fragile du démarrage.
+
+**Reste à faire** : un `beforeSend` côté web/backend qui masque les clés connues
+des données de santé (le mobile l'a déjà).
 
 ### Mise à jour du 10/09/2026 — le back-office ne remontait **rien**
 
