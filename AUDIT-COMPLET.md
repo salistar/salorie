@@ -11,7 +11,7 @@ node scripts/balayage-api.js https://api.salorie.com   # les routes produit rép
 npx jest && (cd backend && npx jest) && (cd web && npx jest)
 ```
 
-**État global** au 11/09/2026, 1 h : **880 tests verts** (636 mobile ·
+**État global** au 13/09/2026 : **1 155 tests verts** (911 mobile ·
 197 backend · 47 web), `tsc` et ESLint propres sur les trois projets, 0 écran
 orphelin, 0 appel vers une route inexistante, 0 drapeau fantôme. Web et landing
 sont en **Next 16**, sans vulnérabilité critique ni haute ; les deux conteneurs
@@ -630,13 +630,47 @@ n'étaient trouvables **qu'en faisant tourner l'application** ou en interrogeant
 la production — et cinq alertes ont été écartées en mesurant ce que je croyais
 voir.
 
+---
+
+## Ce que les tests du 13/09/2026 ont trouvé
+
+Couvrir les seize écrans nus n'a pas seulement produit des tests : écrire un
+test oblige à dire ce qu'un module **promet**, et c'est là que les écarts
+apparaissent. Un défaut corrigé, huit constats laissés à l'arbitrage.
+
+**Corrigé** — `lib/haptique.ts` : un `return promesse` à l'intérieur d'un `try`
+ne passe pas par le `catch`. Le module annonçait « l'échec est TOUJOURS avalé »
+et ne l'avalait pas. Sans conséquence aujourd'hui (les dix appels sont
+fire-and-forget), mais le premier qui aurait écrit `await haptique.succes()` en
+se fiant à cette promesse aurait vu son action mourir sur une vibration.
+
+**À trancher — ce sont des décisions, pas des correctifs :**
+
+| | |
+|---|---|
+| `bpAlert` | **140/90 pile ne déclenche aucune alerte** (`>` au lieu de `>=`), alors que la borne de la crise juste au-dessus est inclusive. Déplacer un seuil médical change ce que des gens lisent sur leur tension. |
+| `setChallengeProgress` | Si la lecture Firestore échoue, **le cumul entier est crédité à nouveau** — le commentaire dit pourtant l'inverse. Ne rien créditer serait l'erreur symétrique ; le bon remède est sans doute de réessayer la lecture. |
+| `buildHealthReport` | L'apport net **peut être négatif** sur un document médical. Le ramener à zéro masquerait le déséquilibre au lieu de le montrer. |
+| `dietPrefs` | Une préférence abîmée (`halal: null`) **disparaît en silence** — l'inverse de la règle de `lib/halal.ts`, qui refuse de conclure sans preuve. |
+| `updateLocalCollection` | **`upsert` sans identifiant duplique** au lieu de remplacer : le repas s'affiche deux fois et ses calories comptent deux fois. |
+| `freeLimit` | Une feature **inconnue est illimitée** : une faute de frappe dans le nom rend le quota inopérant, sans bruit. |
+| `staticMapUrl` | Ne coerce pas ses coordonnées alors que **sa jumelle `streetViewUrl` le fait**, avec un commentaire expliquant pourquoi. |
+| `profile.tsx` | Supprime `onboarded_${user.id}` — **une clé que rien n'écrit**. La ligne est inerte, et la « réparer » ferait repasser l'onboarding à chaque reconnexion. |
+
+**Et deux de mes propres mesures étaient fausses**, corrigées par le calcul :
+une borne de vitesse que j'annonçais exacte (le flottant l'a démentie) et des
+points d'intérêt « hors bornes » qui n'étaient qu'un artefact de ma fenêtre de
+lecture. Les deux sont consignées dans les tests concernés.
+
 ## Priorités
 
 1. 🔴 **La clé RevenueCat de production** — elle bloque tout binaire, donc la
    publication et la mise à jour du téléchargement.
 2. 🔴 **20 testeurs / 14 jours**.
 3. 🟠 **Next 16** — la seule vulnérabilité critique.
-4. 🟠 **Couverture de tests** au-delà de 45/102, en commençant par `/challenge`.
+4. ✅ **Couverture de tests — fait le 13/09/2026.** 636 → **911 tests**
+   mobile. Écrans touchés par au moins un test : 48 → **72 sur 102**. Écrans
+   portant de la logique **sans aucun test : 16 → 0**.
 5. 🟢 **Mettre en avant ce qui existe déjà** : les 71 plats marocains et le mode
    Ramadan ne sont mentionnés nulle part sur la landing. C'est le seul avantage
    que personne ne peut copier, et il est invisible.
