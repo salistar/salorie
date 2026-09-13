@@ -11,8 +11,8 @@ node scripts/balayage-api.js https://api.salorie.com   # les routes produit rép
 npx jest && (cd backend && npx jest) && (cd web && npx jest)
 ```
 
-**État global** au 13/09/2026 : **1 200 tests verts** (933 mobile ·
-210 backend · 57 web), `tsc` et ESLint propres sur les trois projets, 0 écran
+**État global** au 13/09/2026, après relecture intégrale : **1 200 tests verts**
+(933 mobile · 210 backend · 57 web), `tsc` et ESLint propres sur les trois projets, 0 écran
 orphelin, 0 appel vers une route inexistante, 0 drapeau fantôme. Web et landing
 sont en **Next 16**, sans vulnérabilité critique ni haute ; les deux conteneurs
 sont passés de Node 20 (fin de vie) à Node 22. `salorie.salistar.com`, l'ancienne
@@ -48,9 +48,14 @@ permissions que le binaire livré n'a pas.
 2. 🔴 **20 testeurs pendant 14 jours** en test fermé.
 3. ✅ **Formulaire Health Connect** — texte prêt à recopier dans
    [`PLAY-CONSOLE.md`](PLAY-CONSOLE.md), avec le parcours à filmer.
-4. 🟠 **Divulgation visible** pour `RECORD_AUDIO` (journal vocal) et
-   `ACCESS_FINE_LOCATION` (course GPS) — un écran d'explication *avant* la
-   demande système.
+4. ✅ **Divulgation visible** — faite le 10/09/2026. `lib/divulgationPermission.ts`
+   est la **seule porte** vers le micro et la position ; vérifié le 13/09 :
+   **zéro** appel direct à `Audio.requestPermissionsAsync` ou
+   `Location.requestForegroundPermissionsAsync` subsiste dans `app/` et
+   `components/` (la seule occurrence restante est un commentaire qui le
+   rappelle). Six tests l'interdisent, et exigent que le texte dise les trois
+   choses attendues : **ce qui est lu**, **pourquoi**, et **ce qu'on n'en fait
+   pas** — dans les trois langues.
 5. ✅ **Formulaire « Sécurité des données »** — rempli champ par champ dans
    [`PLAY-CONSOLE.md`](PLAY-CONSOLE.md), **chaque ligne relevée dans le code**
    avec la commande qui la vérifie. Le point que les formulaires ratent le plus
@@ -74,12 +79,36 @@ rend 401 sans jeton ; `/flags/invalidate` rend 403 sans clé admin.
 
 **Vulnérabilités restantes** (dépendances de production) :
 
+Remesuré le 13/09/2026, `--omit=dev`, les cinq projets :
+
 | | critique | haute | moyenne |
 |---|---:|---:|---:|
 | mobile | 0 | ~~21~~ **9** | ~~37~~ **36** |
 | backend | 0 | ~~4~~ **5** | ~~25~~ **19** |
 | web | ~~1~~ **0** | ~~1~~ **0** | ~~8~~ **2** |
 | landing | ~~1~~ **0** | ~~5~~ **0** | ~~1~~ **0** |
+| firebase-token | 0 | ~~1~~ **0** | ~~12~~ **10** |
+
+⚠️ **UN CHIFFRE N'EST PAS UN RISQUE, et les quatorze alertes hautes qui restent
+le montrent.** Chacune a été suivie jusqu'à son point d'entrée réel :
+
+| | atteignable ici ? | |
+|---|---|---|
+| **`multer`** (backend) | **OUI** | `src/files/files.controller.ts` expose un vrai téléversement. Garde-fous en place : jeton Firebase obligatoire, liste blanche MIME + extension, plafond 5 Mo, nom en UUID. Tout utilisateur **inscrit** peut néanmoins l'atteindre. |
+| `@nestjs/platform-express` | — | Agrégat de `body-parser` et `multer`. Même sortie. |
+| `lodash` (backend) | non | `_.template` par injection. **Aucun fichier de `src/` n'importe lodash** : il n'arrive que dans les entrailles d'Apollo. |
+| `ws` (backend) | non | Chemin des *subscriptions* GraphQL. Le temps réel de l'application passe par **socket.io**, qui résout `ws@8.21.3`, hors de la plage vulnérable. |
+| `glob` (backend) | non | Vecteur : l'exécutable `glob -c/--cmd`. Rien ici ne lance ce binaire. |
+| les 9 du **mobile** | non | `@expo/cli`, `metro`, `metro-config`, `metro-transform-worker`, `image-size`, `postcss` : **toutes transitives, aucune importée par `lib/` ou `app/`** — elles fabriquent le binaire, elles n'y entrent pas. |
+
+⚠️ **ET LA SEULE VRAIMENT ATTEIGNABLE NE SE CORRIGE PAS SEULE.** J'ai essayé :
+`multer` est une dépendance **directe**, donc `overrides` est refusé
+(`EOVERRIDE`) ; et la copie vulnérable est de toute façon celle qu'embarque
+`@nestjs/platform-express`. La fermer demande **NestJS 10 → 12**, c'est-à-dire
+Express 4 → 5 — dont `path-to-regexp` 8, qui change la syntaxe des motifs de
+route. Vingt-et-un contrôleurs, une API que l'application mobile utilise en
+production, et un mode d'échec silencieux (une route qui se met à rendre 404).
+C'est un chantier à part, pas une ligne de `npm audit fix`.
 
 ✅ **Fait le 10/09/2026 — la montée en Next 16.** Les deux critiques étaient
 Next.js, corrigeables seulement par une montée majeure. Elles sont éteintes des
@@ -219,9 +248,17 @@ notifications, détails du compte, confidentialité, saisie manuelle, eau, poids
 - Un badge « série protégée » s'affichait chez **tout le monde** : le calcul
   dépensait un gel en tombant au bout de l'historique, sans rien ponter.
 
-⚠️ **45 écrans sur 102 sont touchés par un test.** C'est le principal chantier
-restant. `/challenge` est le pire cas : deuxième écran le plus lourd
-(1 229 lignes), neuf modules métier, **aucun test**.
+✅ **Chantier clos le 13/09/2026.** Les écrans touchés par au moins un test sont
+passés de **45 à 72 sur 102**, et ceux qui portent de la logique **sans aucun
+test** de **16 à 0**. `/challenge`, cité ici comme le pire cas, a été le premier
+traité.
+
+Ce que ce chiffre ne dit pas, et qu'il faut garder en tête : « un test existe »
+n'est pas « le comportement est juste ». Ce qui a été verrouillé, ce sont les
+modules dont **une erreur ne lève rien** — l'anti-triche, le quota gratuit, les
+contraintes de régime, les constantes vitales, le rapport médecin, le miroir
+hors ligne, le crédit de course. Voir « Ce que les tests du 13/09/2026 ont
+trouvé », plus bas.
 
 ---
 
@@ -230,7 +267,7 @@ restant. `/challenge` est le pire cas : deuxième écran le plus lourd
 **8 pages publiques**, toutes en 200, en trois langues et deux thèmes (24
 captures). **70 pages** dans l'espace membre `/me`. **26 routes API**.
 
-`web` : `tsc` propre, 21 tests verts. Les 7 routes du back-office redirigent
+`web` : `tsc` propre, **57 tests verts** (21 le 10/09). Les 7 routes du back-office redirigent
 correctement vers `/login` sans session.
 
 **Corrigé** : le bouton de téléchargement **le plus visible du site** pointait
@@ -249,8 +286,11 @@ contrôle de liens morts l'aurait déclaré sain. Un test interdit désormais la
 `notify`, `orgs`, `premium`, `races`, `register`, `reports`, `sport-fields`,
 `users`.
 
-Toutes protégées par le middleware (cookie JWT admin) **et** un `requireAdmin`
-côté route — la double vérification est intentionnelle. `requireWriter`
+Toutes protégées par le portail (`web/proxy.ts`, cookie JWT admin — le fichier
+s'appelait `middleware.ts` jusqu'au 13/09/2026, Next 16 ayant déprécié cette
+convention) **et** par un `requireAdmin` côté route : la double vérification est
+intentionnelle, et c'est elle qui a tenu le jour où le portail laissait passer
+`/users/<courriel>`. `requireWriter`
 distingue lecture et écriture.
 
 **Corrigé** : un basculement de drapeau depuis la console mettait **jusqu'à
@@ -459,12 +499,46 @@ arbitrage, pas un correctif.
 
 ## Partie 10 — Parité local / GitHub / serveur / binaires
 
+Revérifié de bout en bout le 13/09/2026, **dans les deux sens** :
+
 | | état |
 |---|---|
-| local == `origin/main` | ✅ 0 devant, 0 derrière |
-| serveur == dépôt | ✅ **vérifiable depuis aujourd'hui** |
+| local == `origin/main` | ✅ 0 devant, 0 derrière, **0 fichier non suivi** — sur les deux dépôts |
+| dépôt → serveur | ✅ le déploiement copie ce qu'il annonce |
+| **serveur → dépôt** | ⚠️ **c'est ici qu'il manquait quelque chose** (ci-dessous) |
+| secrets | ✅ 33 secrets GitHub ; 12 des 14 clés du `.env` local y ont leur jumeau |
 | APK/AAB sur GitHub | ✅ présents, **mais du 29 août** |
 | landing → binaires | ✅ résolution dynamique de la dernière release |
+
+⚠️ **`whisper/` N'ÉTAIT DANS AUCUN DÉPÔT.** Deux fichiers, 1,6 Ko, qui vivaient
+uniquement dans `~/apps/salorie-stack/` sur srv3 : le service `faster-whisper`
+qui fait fonctionner le **journal vocal**. Rien dans le dépôt n'y faisait
+référence, sauf un mot dans un commentaire de `docker-compose.override.yml`. Si
+la machine disparaissait, il aurait fallu le réécrire — et d'abord se souvenir
+qu'il existait. Rapatrié, avec un README qui précise qu'il **n'est pas déployé**
+par le workflow, pour que personne ne le modifie en croyant changer la
+production.
+
+C'est le même défaut de fond que le **`Caddyfile`**, qui reste versionné nulle
+part : c'est lui qui décide que `salorie.com` est servi par `salorie-web` et
+`salorie.salistar.com` par `salorie-landing`. **Toujours ouvert.**
+
+⚠️ **ET LE `.env` DE PRODUCTION FAISAIT 1 924 LIGNES POUR 28 CLÉS.** 205 copies
+d'`ADMIN_API_KEY`, 189 de chaque `NEXT_PUBLIC_*` : le workflow réécrivait 22
+clés mais n'en filtrait que 12 avant, donc dix s'empilaient à chaque
+déploiement. `dotenv` retenant la dernière occurrence, la valeur servie restait
+juste — mais le fichier gardait **en clair, sur disque, toute valeur qu'une clé
+a eue dans sa vie**. Faire tourner `ADMIN_API_KEY` n'effaçait donc pas
+l'ancienne. Une rotation qui ne retire pas l'ancien secret n'en est pas une.
+
+Corrigé, et le nettoyage est rétroactif : **28 lignes, 3,9 Ko, zéro doublon**
+après le déploiement suivant. `scripts/verifier-env-deploiement.js` refuse
+désormais qu'une clé réécrite ne soit pas filtrée — éprouvé dans les deux sens.
+
+⚠️ Quatre clés sont **volontairement** hors du filtre, et j'ai failli les y
+mettre : `MONGO_PASS` n'est écrite qu'une fois (la filtrer aurait fait perdre la
+base au backend), `TURN_SECRET` n'est retirée que lors d'une rotation explicite,
+`MONGO_URI` et `MONGO_CMD` font déjà leur propre `sed`.
 
 **Corrigé** : `/health` ne disait pas quel commit tourne. Un uptime de 19 heures
 signifie aussi bien « à jour depuis hier » que « le dernier déploiement a échoué
@@ -478,19 +552,38 @@ git rev-parse HEAD
 
 Vérifié : les deux rendent `260f1b054e55e9b8ffba0fb16cb65b5eae26dcf6`.
 
-⚠️ **Ce correctif m'a coûté trois déploiements cassés, et la cause m'échappe
-encore.** Écrire `printf ... 'GIT_COMMIT=${{ github.sha }}'` dans le corps du
-script faisait échouer le workflow **au démarrage** : zéro job, aucun log,
-« cannot be retried », et GitHub affichant le fichier par son chemin au lieu de
-son nom. La ligne était pourtant de forme identique à ses dix voisines — relue
-dans les octets que GitHub *stocke*, sans tabulation ni caractère invisible, et
-le YAML validait.
+### ✅ L'énigme d'août est résolue — c'était LA TAILLE DU FICHIER
 
-Je l'ai isolé en deux poussées plutôt qu'en devinant : retirer ce seul `printf`
-en gardant la modification du `grep` a fait repartir le déploiement
-immédiatement. Le SHA passe maintenant par `envs:`, le mécanisme prévu par
-l'action. Je ne sais toujours pas *pourquoi* l'autre forme est refusée — je
-préfère l'écrire que d'inventer une explication.
+Trois déploiements cassés en août, et la cause m'échappait depuis : écrire
+`printf ... 'GIT_COMMIT=${{ github.sha }}'` faisait échouer le workflow **au
+démarrage** — zéro job, aucun log, « cannot be retried », GitHub affichant le
+fichier par son **chemin** au lieu de son nom. La ligne était de forme identique
+à ses dix voisines, et le YAML validait.
+
+Le 13/09/2026, le même symptôme est revenu. Bisection en **huit poussées**, en
+mettant cette fois les octets en face des résultats :
+
+```
+32 219 o ✓   32 345 o ✓   32 358 o ✓   32 359 o ✓
+32 503 o ✗   32 643 o ✗   33 662 o ✗   34 265 o ✗
+```
+
+**Séparation parfaite.** GitHub refuse le fichier dès qu'il dépasse une taille
+comprise **entre 32 359 et 32 503 octets**.
+
+⚠️ **Et ce n'est PAS la longueur des lignes**, que j'ai cru et écrit deux fois
+avant de mesurer : une version dont la plus longue ligne faisait 182 caractères
+a été refusée, une autre à 281 est passée. `js-yaml` et le validateur de schéma
+Actions trouvent le fichier valide dans tous les cas — aucun outil local ne voit
+quoi que ce soit.
+
+Ce qui explique août : le fichier était déjà au bord, et la ligne ajoutée le
+faisait basculer. **Ce n'était pas la forme de l'expression, c'était son poids.**
+
+**Corrigé structurellement** : 282 des 530 lignes étaient du commentaire. Elles
+vivent maintenant dans `.github/workflows/deploy-backend-web.md`, le YAML gardant
+un renvoi d'une ligne. Le fichier passe de 33 662 à **16 683 octets** — la moitié
+du seuil. Rien n'est perdu, et il est enfin lisible.
 
 ---
 
@@ -561,6 +654,18 @@ pas sur l'intention.
    ⚠️ Le groupe du build inclut `github.ref`, obligatoirement : le workflow se
    déclenche aussi sur les tags `v*`, et un build de tag produit un binaire
    qu'on garde.
+
+8. **Le workflow de déploiement refusé au démarrage — et la cause enfin
+   isolée.** Détaillée en partie 10 : c'est la **taille du fichier**, pas la
+   forme d'une ligne. Huit poussées de bisection pour l'établir, et deux
+   conclusions fausses de ma part corrigées en chemin par la mesure.
+
+⚠️ **Ce que cette série de huit échecs apprend, et qui vaut plus que les huit
+correctifs** : sur les huit, **deux n'étaient pas des pannes du produit**. Le
+build Android qui rougissait à la publication fonctionnait parfaitement ; le
+déploiement de la landing accusait un conteneur qui n'était pas le sien. Une CI
+qui rougit pour de mauvaises raisons apprend à ignorer le rouge — et c'est ainsi
+qu'on rate le neuvième, qui sera vrai.
 
 ### La panne que la sentinelle a trouvée
 
@@ -723,15 +828,68 @@ une borne de vitesse que j'annonçais exacte (le flottant l'a démentie) et des
 points d'intérêt « hors bornes » qui n'étaient qu'un artefact de ma fenêtre de
 lecture. Les deux sont consignées dans les tests concernés.
 
-## Priorités
+## Priorités — état au 13/09/2026
 
-1. 🔴 **La clé RevenueCat de production** — elle bloque tout binaire, donc la
-   publication et la mise à jour du téléchargement.
-2. 🔴 **20 testeurs / 14 jours**.
-3. 🟠 **Next 16** — la seule vulnérabilité critique.
-4. ✅ **Couverture de tests — fait le 13/09/2026.** 636 → **911 tests**
-   mobile. Écrans touchés par au moins un test : 48 → **72 sur 102**. Écrans
-   portant de la logique **sans aucun test : 16 → 0**.
-5. 🟢 **Mettre en avant ce qui existe déjà** : les 71 plats marocains et le mode
-   Ramadan ne sont mentionnés nulle part sur la landing. C'est le seul avantage
-   que personne ne peut copier, et il est invisible.
+Relecture intégrale des douze parties. **Tout ce qui pouvait être corrigé sans
+arbitrage l'a été** ; ce qui reste est listé ici avec ce qu'il coûte.
+
+### Ce qui bloque encore, et qui n'est pas du code
+
+1. 🔴 **La clé RevenueCat de production.** Elle gèle tout binaire, donc la
+   publication et la mise à jour du téléchargement. **Non touchée, sur consigne.**
+2. 🔴 **20 testeurs pendant 14 jours** en test fermé. Le compteur ne démarre
+   qu'une fois un binaire déposé — donc après le point 1.
+3. 🟠 **Les deux formulaires de la console** sont écrits et vérifiables
+   ([`PLAY-CONSOLE.md`](PLAY-CONSOLE.md)), mais **c'est toi qui les recopies**.
+
+### Ce qui reste ouvert dans le code, et pourquoi
+
+4. 🟠 **NestJS 10 → 12 (avec Express 4 → 5).** C'est la seule façon de fermer
+   `multer`, la **seule alerte haute réellement atteignable** du projet — un vrai
+   endpoint de téléversement, derrière un jeton Firebase. Ce n'est pas un
+   `npm audit fix` : `path-to-regexp` 8 change la syntaxe des motifs de route,
+   vingt-et-un contrôleurs sont concernés, l'API sert l'application mobile en
+   production, et le mode d'échec est silencieux (une route qui rend 404).
+5. 🟠 **Le `Caddyfile` de srv3 n'est versionné nulle part.** C'est lui qui décide
+   quel conteneur sert quel domaine. `whisper/` avait le même défaut et a été
+   rapatrié le 13/09 ; celui-ci demande une décision — le mettre dans quel dépôt,
+   et comment le déployer sans casser les autres sites de la machine.
+6. 🟠 **`/graphql` est en production et personne ne l'appelle.** Endpoint vivant
+   (HTTP 200), resolvers protégés par `FirebaseAuthGuard`, **aucun client du
+   dépôt ne l'utilise**. Le retirer fermerait `lodash` et `ws` (deux hautes) plus
+   quatre moyennes, et réduirait la surface. Mais c'est supprimer une
+   fonctionnalité : à toi de trancher, pas à moi.
+7. 🟠 **`server/firebase-token` reste en `firebase-admin` 13.** La raison est
+   dans son README : la 14 supprime l'API à espace de noms, ce fichier est du
+   `.mjs` **sans compilateur**, et `createCustomToken` ne peut être exercé
+   qu'avec un vrai jeton de session. La vérification passe par toi : se
+   connecter à `/me` après déploiement.
+8. 🟠 **Sentry mobile n'a jamais été vérifié depuis un vrai build EAS.** Ni ses
+   étiquettes de tri, ni son masquage. Les trois autres projets sont vérifiés en
+   production.
+9. 🟢 **`react-native-reanimated` 3.19.5 contre `~4.1.1` attendu** par Expo
+   SDK 54. Écart **préexistant** (mon verrou n'y a pas touché). Monter une
+   majeure d'une bibliothèque d'animation native demande un build et un contrôle
+   visuel.
+
+### Ce qui a été fermé aujourd'hui
+
+| | |
+|---|---|
+| Couverture de tests | 45 → **72 écrans sur 102** ; **16 → 0** sans aucun test |
+| Divulgation préalable | zéro appel direct au système subsiste |
+| Formulaires Play | écrits, chaque ligne relevée dans le code |
+| `beforeSend` Sentry | posé sur les trois runtimes web **et** le backend |
+| Étiquettes Sentry | langue/RTL, thème/apparence, palier de scan |
+| Node 20 (fin de vie) | éliminé partout : 6 workflows + 3 conteneurs |
+| Vulnérabilités mobile | 21 → **9** hautes, sans toucher une version déclarée |
+| `.env` de production | 1 924 → **28 lignes**, zéro doublon |
+| `whisper/` | rapatrié dans le dépôt |
+| Refus au démarrage | **cause isolée** après un mois : la taille du fichier |
+| Les 8 constats des tests | corrigés, chacun documenté |
+
+### Et une chose qui n'est pas un chantier
+
+🟢 **Mettre en avant ce qui existe déjà** — les 71 plats marocains et le mode
+Ramadan. C'était la priorité 5 de cet audit : **elle est faite**, les deux
+figurent maintenant en avant sur la landing, dans les trois langues.
