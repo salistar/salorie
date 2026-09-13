@@ -35,13 +35,29 @@ const CHEMIN = path.join(__dirname, '..', '.github', 'workflows', 'deploy-backen
 const src = fs.readFileSync(CHEMIN, 'utf8');
 
 // 1. Les clés que le filtre retire avant réécriture.
-const filtre = src.match(/grep -vE '\^ \*\(export \+\)\?\(([^)]+)\)/);
-if (!filtre) {
-  console.error('✗ Filtre `grep -vE` introuvable dans le workflow de deploiement.');
-  console.error('  Il construit le .env de production ; sans lui, tout s empile.');
+//
+// ⚠ ELLES SONT ASSEMBLÉES EN PLUSIEURS LIGNES DANS LE WORKFLOW, et pas par
+// coquetterie : sur une seule ligne de 565 caractères, GitHub refusait le
+// fichier AU DÉMARRAGE — zéro job, aucun log, le workflow affiché par son
+// chemin au lieu de son nom. On lit donc les affectations successives de
+// `CLES=` plutôt qu'un unique motif.
+const filtrees = new Set();
+for (const m of src.matchAll(/^\s*CLES=(?:"\$CLES\|)?'?([A-Z_0-9|]+)'?"?\s*$/gm)) {
+  for (const c of m[1].split('|')) if (c) filtrees.add(c);
+}
+if (!filtrees.size) {
+  console.error('✗ Liste `CLES=` introuvable dans le workflow de deploiement.');
+  console.error('  Elle alimente le `grep -vE` qui construit le .env de production ;');
+  console.error('  sans elle, chaque cle reecrite s empile a chaque deploiement.');
   process.exit(1);
 }
-const filtrees = new Set(filtre[1].split('|'));
+
+// Et le filtre doit bien UTILISER cette liste : une liste qu'aucun `grep` ne lit
+// ne protege rien.
+if (!/grep -vE "\^ \*\(export \+\)\?\(\$CLES\)/.test(src)) {
+  console.error('✗ La liste `CLES` existe mais le `grep -vE` ne s en sert pas.');
+  process.exit(1);
+}
 
 // 2. Les clés réécrites à chaque déploiement (destination `.env.next`).
 //
