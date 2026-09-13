@@ -11,8 +11,8 @@ node scripts/balayage-api.js https://api.salorie.com   # les routes produit rép
 npx jest && (cd backend && npx jest) && (cd web && npx jest)
 ```
 
-**État global** au 13/09/2026 : **1 177 tests verts** (933 mobile ·
-197 backend · 47 web), `tsc` et ESLint propres sur les trois projets, 0 écran
+**État global** au 13/09/2026 : **1 200 tests verts** (933 mobile ·
+210 backend · 57 web), `tsc` et ESLint propres sur les trois projets, 0 écran
 orphelin, 0 appel vers une route inexistante, 0 drapeau fantôme. Web et landing
 sont en **Next 16**, sans vulnérabilité critique ni haute ; les deux conteneurs
 sont passés de Node 20 (fin de vie) à Node 22. `salorie.salistar.com`, l'ancienne
@@ -539,6 +539,29 @@ pas sur l'intention.
    Une vérification qui interroge le voisin ne vérifie rien : elle échoue quand
    tout va bien chez elle, et passe au vert quand rien ne va.
 
+### Mise à jour du 13/09/2026 — un build réussi qui partait en rouge
+
+7. **`Salorie Android Build`, échec à la DERNIÈRE étape.** Ce n'était pas le
+   build : l'APK était construit et l'artefact téléversé. C'est la
+   **publication** qui échouait — le workflow republie à chaque poussée le même
+   `app-debug.apk` sous le même tag « latest », et trois runs simultanés se
+   disputaient l'asset : `HttpError`.
+
+   Provoqué en poussant une correction puis sa documentation coup sur coup. Ce
+   qui a mis sur la piste plutôt qu'un aléa réseau : **le commit suivant était
+   vert**.
+
+   Deux garde-fous, volontairement opposés :
+
+   | | |
+   |---|---|
+   | `android-build` | `cancel-in-progress: **true**` — seul le dernier commit compte, l'APK s'appelle « latest ». Supprime la course **et** le gaspillage : 14 minutes de build par commit de documentation. |
+   | `deploy` | `cancel-in-progress: **false**` — interrompre un déploiement est pire que de le laisser finir : entre la purge et la copie, le conteneur serait recréé sans ses sources. Ils font la queue. |
+
+   ⚠️ Le groupe du build inclut `github.ref`, obligatoirement : le workflow se
+   déclenche aussi sur les tags `v*`, et un build de tag produit un binaire
+   qu'on garde.
+
 ### La panne que la sentinelle a trouvée
 
 **« Frigo → recettes » était mort en production.** `analyze()` faisait **deux
@@ -579,8 +602,29 @@ Une valeur absente vaut `inconnu` et non une étiquette manquante : dans Sentry
 les deux se filtrent différemment, et `inconnu` dit que l'erreur est survenue
 avant que le contexte ne soit prêt — le moment le plus fragile du démarrage.
 
-**Reste à faire** : un `beforeSend` côté web/backend qui masque les clés connues
-des données de santé (le mobile l'a déjà).
+✅ **Fait le 13/09/2026 — le `beforeSend` du web et du backend.**
+`sendDefaultPii: false` était posé partout, et c'est le malentendu qui rendait
+le trou invisible : ce réglage empêche le SDK d'ajouter **de lui-même** l'IP, les
+en-têtes et les cookies. Il ne touche pas à ce que notre code écrit — or
+l'identifiant de compte de cette application **est un courriel**, donc il est
+dans la moitié des messages d'erreur.
+
+Le backend était le pire des trois : la cascade de vision renvoie le corps
+d'erreur des fournisseurs, et ceux-ci recopient la clé reçue. `masquerSecrets`
+protégeait déjà la réponse rendue à l'admin, **pas** ce chemin : deux sorties,
+une seule gardée. Une règle pour les préfixes de clés (`sk-`, `AIza`, `goog_`)
+a donc été ajoutée au module partagé.
+
+Côté web, **trois runtimes, trois `Sentry.init`** — serveur, Edge (le portail
+d'authentification y tourne) et navigateur. Les trois importent le module de la
+racine ; aucun n'en fait une copie. Le backend, lui, ne peut pas partager
+(contexte de build `./backend`, `rootDir: "src"`) : c'est une copie, mais **un
+test compare les règles des deux fichiers** et fait échouer la CI à la moindre
+divergence.
+
+**Reste à faire** : rien côté configuration. Le seul angle non couvert est que
+**le mobile n'a jamais été vérifié depuis un vrai build EAS** — ni ses
+étiquettes, ni son masquage.
 
 ### Mise à jour du 10/09/2026 — le back-office ne remontait **rien**
 
