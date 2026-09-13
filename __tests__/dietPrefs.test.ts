@@ -81,19 +81,55 @@ describe('getDietPrefs — lecture et tolerance', () => {
     await expect(setDietPrefs({ ...AUCUNE, halal: true })).resolves.toBeUndefined();
   });
 
-  it('⚠ UNE PREFERENCE ABIMEE DISPARAIT EN SILENCE', () => {
-    // `{...DEFAUTS, ...parsed}` ecrase le defaut par la valeur stockee, quelle
-    // qu'elle soit. Un `halal: null` — ecriture partielle, migration ratee — se
-    // retrouve donc faux, et l'utilisateur recoit des suggestions non halal sans
-    // qu'un ecran ne l'ait prevenu.
+  it('⚠ UNE PREFERENCE ABIMEE NE DISPARAIT PLUS — corrige le 13/09/2026', async () => {
+    // Avant : `{...DEFAUTS, ...parsed}` ecrasait le defaut par la valeur
+    // stockee, quelle qu'elle soit. Un `halal: null` — ecriture partielle,
+    // migration ratee — se retrouvait faux, et l'utilisateur recevait des
+    // suggestions non halal sans qu'un ecran ne l'ait prevenu.
     //
-    // Ce test CONSIGNE le comportement, il ne le benit pas. `lib/halal.ts`, lui,
-    // refuse par principe de conclure sans preuve. Aligner les deux serait un
-    // arbitrage produit : imposer la contrainte en cas de doute ne fait que
-    // retrecir les suggestions, tandis que la perdre fait manger a quelqu'un ce
-    // qu'il refuse. Je le signale plutot que de le changer seul.
-    const abime = { ...AUCUNE, ...(JSON.parse('{"halal":null}') || {}) };
-    expect(dietPromptHint(abime as DietPref, 'fr')).toBe('');
+    // C'est la seule direction d'erreur qui fait manger a quelqu'un ce qu'il
+    // refuse ; l'autre ne fait que retrecir ses suggestions. Une copie de
+    // secours — cinq booleens, rien d'autre — sert desormais de filet.
+    await setDietPrefs({ ...AUCUNE, halal: true });
+    magasin.set(CLE, JSON.stringify({ halal: null, conditions: [] }));
+    const p = await getDietPrefs();
+    expect(p.halal).toBe(true);
+    expect(dietPromptHint(p, 'fr')).toBe('Respecte ces contraintes alimentaires : halal.');
+  });
+
+  it('le filet rattrape aussi un enregistrement principal ILLISIBLE', async () => {
+    // Le cas qui motive le filet : le gros enregistrement porte les conditions
+    // medicales et grossira encore ; plus il est gros, plus une ecriture
+    // interrompue peut le rendre inutilisable.
+    await setDietPrefs({ ...AUCUNE, halal: true, glutenFree: true });
+    magasin.set(CLE, '{pas du json');
+    const p = await getDietPrefs();
+    expect(p.halal).toBe(true);
+    expect(p.glutenFree).toBe(true);
+    expect(p.conditions).toEqual([]);   // elles, sont bien perdues
+  });
+
+  it('et un REFUS explicite reste un refus', async () => {
+    // Le filet ne doit pas ressusciter une contrainte que l'utilisateur vient
+    // de lever : il ne sert que lorsque le principal ne dit RIEN.
+    await setDietPrefs({ ...AUCUNE, halal: true });
+    await setDietPrefs({ ...AUCUNE, halal: false });
+    expect((await getDietPrefs()).halal).toBe(false);
+    // Meme chose quand le principal est lisible et dit `false`.
+    magasin.set(CLE, JSON.stringify({ halal: false, conditions: [] }));
+    expect((await getDietPrefs()).halal).toBe(false);
+  });
+
+  it('une valeur stockee en TEXTE vaut toujours une intention', async () => {
+    // `'true'`, `1` : les formes qu'une migration maladroite laisse derriere
+    // elle. On lit large, du cote qui protege.
+    magasin.set(CLE, JSON.stringify({ halal: 'true', keto: 1, conditions: [] }));
+    const p = await getDietPrefs();
+    expect(p.halal).toBe(true);
+    expect(p.keto).toBe(true);
+    // Mais un « false » ecrit en texte reste un refus.
+    magasin.set(CLE, JSON.stringify({ halal: 'false', conditions: [] }));
+    expect((await getDietPrefs()).halal).toBe(false);
   });
 });
 

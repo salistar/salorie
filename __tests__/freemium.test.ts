@@ -34,7 +34,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 }));
 
 import {
-  FREE_LIMITS, canUseFree, consume, freeLimit, getUsage, remainingFree,
+  FREE_LIMITS, SANS_QUOTA, canUseFree, consume, featureConnue, freeLimit, getUsage, remainingFree,
 } from '../lib/freemium';
 import { ymd } from '../lib/format';
 
@@ -54,14 +54,49 @@ describe('freeLimit — combien d usages gratuits', () => {
     for (const [f, n] of Object.entries(FREE_LIMITS)) expect(freeLimit(f)).toBe(n);
   });
 
-  it('⚠ UNE FEATURE INCONNUE EST ILLIMITEE, PAS BLOQUEE', () => {
-    // `FREE_LIMITS[feature] ?? 0` et « 0 = illimite » se combinent ainsi : une
-    // feature absente du tableau n'a AUCUNE limite. C'est le bon defaut — on ne
-    // veut pas qu'un oubli bloque une fonctionnalite — mais ca veut dire qu'une
-    // FAUTE DE FRAPPE dans le nom rend le quota silencieusement inoperant.
+  it('⚠ UNE FEATURE INCONNUE RESTE ILLIMITEE — mais elle ne passe plus inapercue', () => {
+    // Le defaut permissif est conserve : on ne ferme jamais une porte sur un
+    // doute, et un oubli ne doit pas bloquer une fonctionnalite. Ce qui a
+    // change le 13/09/2026, c'est qu'un nom inconnu n'est plus SILENCIEUX —
+    // il crie en developpement, et le test ci-dessous refuse qu'un ecran en
+    // emploie un.
     expect(freeLimit('scans')).toBe(0);      // pluriel de trop
     expect(freeLimit('ai_coach')).toBe(0);   // tiret bas au lieu du tiret
     expect(freeLimit('')).toBe(0);
+    expect(featureConnue('scans')).toBe(false);
+    expect(featureConnue('scan')).toBe(true);
+  });
+
+  it('⚠ TOUT NOM EMPLOYE PAR UN ECRAN EST DECLARE', () => {
+    // LA vraie protection contre la faute de frappe. On balaie `app/` a la
+    // recherche des noms passes a `canUseFree`, `consume`, `freeLimit` et
+    // `remainingFree`, et on exige que chacun figure soit dans FREE_LIMITS,
+    // soit dans SANS_QUOTA — c'est-a-dire que quelqu'un ait DECIDE.
+    //
+    // Sans ce test, `consume('scans')` au pluriel compilerait, tournerait, et
+    // ne compterait rien : le quota gratuit deviendrait decoratif sans qu'une
+    // seule ligne de journal ne le signale.
+    const fs = require('fs');
+    const path = require('path');
+    const racine = path.join(__dirname, '..', 'app');
+    const fichiers: string[] = [];
+    const parcourir = (d: string) => {
+      for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+        const p2 = path.join(d, e.name);
+        if (e.isDirectory()) parcourir(p2);
+        else if (/\.tsx?$/.test(e.name)) fichiers.push(p2);
+      }
+    };
+    parcourir(racine);
+
+    const inconnus = new Set<string>();
+    for (const f of fichiers) {
+      const src = fs.readFileSync(f, 'utf8');
+      for (const m of src.matchAll(/(?:canUseFree|consume|freeLimit|remainingFree)\(\s*'([^']+)'/g)) {
+        if (!featureConnue(m[1])) inconnus.add(`${path.basename(f)} → « ${m[1]} »`);
+      }
+    }
+    expect([...inconnus]).toEqual([]);
   });
 
   it('un flag peut surcharger le quota a chaud, zero compris', () => {

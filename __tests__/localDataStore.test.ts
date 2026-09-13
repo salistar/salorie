@@ -100,17 +100,24 @@ describe('updateLocalCollection — ajouter sans perdre', () => {
     expect(arr[0]).toEqual({ id: 'a', kcal: 150 });
   });
 
-  it('⚠ UPSERT SANS IDENTIFIANT DUPLIQUE AU LIEU DE REMPLACER', async () => {
-    // `mode === 'upsert' && item.id` : sans `id`, la condition tombe et le code
-    // retombe sur le `else`, c'est-a-dire un ajout en tete. Corriger un repas
-    // qui n'a pas encore recu son identifiant Firestore l'affiche donc DEUX
-    // fois, et les calories du jour sont comptees deux fois avec lui.
+  it('⚠ UPSERT SANS IDENTIFIANT NE DUPLIQUE PLUS — corrige le 13/09/2026', async () => {
+    // Avant : `mode === 'upsert' && item.id` tombait, le code retombait sur un
+    // ajout en tete, et corriger un repas qui n'avait pas encore recu son
+    // identifiant Firestore l'affichait DEUX fois — calories comprises.
     //
-    // Ce test decrit le comportement actuel. La correction n'est pas evidente —
-    // sans identifiant, rien ne dit QUEL element remplacer — mais l'appelant,
-    // lui, peut savoir qu'il doit attendre l'identifiant avant d'appeler.
+    // Sans identifiant, rien ne dit QUEL element remplacer : on ne peut pas
+    // faire un vrai upsert. Ce qu'on peut faire, et qui suffit au cas reel,
+    // c'est refuser d'ajouter un doublon a l'identique.
     await updateLocalCollection(MAIL, 'logs', { nom: 'tajine' } as any, 'upsert');
     await updateLocalCollection(MAIL, 'logs', { nom: 'tajine' } as any, 'upsert');
+    expect(JSON.parse(magasin.get(`logs_${DOC}`)!)).toHaveLength(1);
+  });
+
+  it('mais deux entrees DIFFERENTES sans identifiant coexistent', async () => {
+    // Deux cafes du matin ne sont pas le meme evenement : la deduplication ne
+    // doit porter que sur l'identique.
+    await updateLocalCollection(MAIL, 'logs', { nom: 'cafe' } as any, 'upsert');
+    await updateLocalCollection(MAIL, 'logs', { nom: 'cafe', kcal: 5 } as any, 'upsert');
     expect(JSON.parse(magasin.get(`logs_${DOC}`)!)).toHaveLength(2);
   });
 
@@ -215,16 +222,13 @@ describe('clearAllLocalData — la purge', () => {
     expect([...magasin.keys()]).toEqual(['autre_chose']);
   });
 
-  it('⚠ LE COMPTE RENDU EST SURESTIME D UNE UNITE', async () => {
-    // La liste contient `K.profile(docId)` ET, plus bas, un litteral
-    // `profile_${docId}` — la meme cle deux fois. `multiRemove` s'en moque,
-    // mais la fonction rend `keys.length`, donc 9 pour 8 cles distinctes, et
-    // le journal annonce « 9 cles supprimees ».
-    //
-    // Sans consequence aujourd'hui : personne n'affiche ce nombre a
-    // l'utilisateur. Consigne pour que le jour ou quelqu'un s'en sert comme
-    // mesure, il sache qu'il compte un doublon.
-    expect(await clearAllLocalData(MAIL)).toBe(9);
+  it('le compte rendu est EXACT — corrige le 13/09/2026', async () => {
+    // La liste contenait `K.profile(docId)` ET un litteral `profile_${docId}`
+    // identique : `multiRemove` s'en moquait, mais la fonction rend
+    // `keys.length` et annoncait « 9 cles supprimees » pour 8 distinctes.
+    // Le doublon est retire ; le nombre veut de nouveau dire quelque chose.
+    const n = await clearAllLocalData(MAIL);
+    expect(n).toBe(8);
   });
 
   it('une panne de stockage rend 0 au lieu de jeter', async () => {

@@ -348,10 +348,19 @@ export function bpAlert(
   if (!(sys > 0) || !(dia > 0)) return null;
   const related = (conditions || []).map((c) => String(c).toLowerCase()).includes('hypertension');
   const val = `${Math.round(sys)}/${Math.round(dia)}`;
-  if (sys > BP_SYS_HIGH || dia > BP_DIA_HIGH) {
+  // ⚠ BORNES INCLUSIVES DEPUIS LE 13/09/2026.
+  // C'etait `>` : une tension de 140/90 PILE ne declenchait aucune alerte,
+  // alors que les reperes usuels disent « a partir de 140 ou 90 ». Deux indices
+  // que c'etait un oubli et non un choix : la borne de la crise juste en
+  // dessous est ecrite `>=` (180, 120), et la constante s'appelle BP_SYS_HIGH —
+  // « haut », pas « au-dela duquel ».
+  if (sys >= BP_SYS_HIGH || dia >= BP_DIA_HIGH) {
     const danger = sys >= 180 || dia >= 120; // crise hypertensive
     return { kind: 'bp_high', severity: danger ? 'danger' : 'warning', related, value: val };
   }
+  // Ici la borne reste STRICTE, et ce n'est pas une incoherence : l'hypotension
+  // est definie SOUS 90/60, et 90/60 pile est une tension basse normale. Alerter
+  // dessus ferait crier au moindre releve d'une personne mince et sportive.
   if (sys < BP_SYS_LOW || dia < BP_DIA_LOW) {
     return { kind: 'bp_low', severity: 'warning', related, value: val };
   }

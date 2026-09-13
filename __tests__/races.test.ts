@@ -15,6 +15,14 @@
  *      fois, ou créditer une simulation, fabrique des kilomètres qui n'ont pas
  *      été courus.
  */
+// `races.ts` garde sur l'appareil le dernier cumul REELLEMENT credite : c'est
+// le repli qui evite d'inventer un delta quand Firestore ne repond pas.
+const memoire = new Map<string, string>();
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(async (k: string) => (memoire.has(k) ? memoire.get(k)! : null)),
+  setItem: jest.fn(async (k: string, v: string) => { memoire.set(k, v); }),
+}));
+
 const firestore: any = {};
 let lectureCasse = false;
 let docExistant: any = null;
@@ -59,6 +67,7 @@ import {
 } from '../lib/races';
 
 beforeEach(() => {
+  memoire.clear();
   ecritures.length = 0;
   credites.length = 0;
   publiees.length = 0;
@@ -149,13 +158,18 @@ describe('les URL d images de lieu', () => {
     expect(u).not.toContain('abc');
   });
 
-  it('⚠ staticMapUrl, LUI, N A PAS CETTE PROTECTION', () => {
-    // Meme famille, meme source de donnees, une seule des deux fonctions
-    // coerce. Ce n'est pas exploitable aujourd'hui — les coordonnees viennent
-    // du catalogue fige ci-dessus — mais les deux fonctions se ressemblent
-    // assez pour qu'on croie l'une aussi protegee que l'autre.
+  it('⚠ staticMapUrl EST PROTEGEE PAREIL — aligne le 13/09/2026', () => {
+    // Elle ne coercait pas ses arguments, alors que sa jumelle le faisait AVEC
+    // un commentaire expliquant pourquoi. Deux fonctions qui se ressemblent
+    // autant doivent tenir la meme promesse, sinon on croit l'une aussi sure
+    // que l'autre.
     const u = staticMapUrl('<script>' as any, 0);
-    expect(u).toContain('<script>');
+    expect(u).not.toContain('<script>');
+    expect(u).toContain('center=0,0');
+    // Les dimensions et le zoom aussi.
+    const v = staticMapUrl(1, 2, 'x' as any, null as any, 'abc' as any);
+    expect(v).toContain('size=600x360');
+    expect(v).toContain('zoom=16');
   });
 
   it('les deux restent des URL valides meme sans cle configuree', () => {
@@ -203,24 +217,34 @@ describe('setChallengeProgress — ce qui est credite, et une seule fois', () =>
     expect(credites).toEqual([]);        // mais rien n'est credite
   });
 
-  it('⚠ SI LA LECTURE ECHOUE, LE CUMUL ENTIER EST CREDITE A NOUVEAU', async () => {
-    // Le commentaire du module dit « si la lecture echoue on n'invente pas de
-    // delta ». Le code fait pourtant l'inverse : `prev` reste a 0, donc
-    // `delta = next`, c'est-a-dire le PLUS GRAND credit possible.
+  it('⚠ LECTURE DISTANTE IMPOSSIBLE : LE REPLI LOCAL GARDE LE DELTA JUSTE', async () => {
+    // C'etait le pire defaut de ce module : `prev` restait a 0 quand la lecture
+    // echouait, donc `delta = next`, c'est-a-dire LE PLUS GRAND CREDIT
+    // POSSIBLE. Une coupure au mauvais moment offrait la totalite des
+    // kilometres cumules une seconde fois — defi annuel, XP, et les kilometres
+    // que Sadaqa convertit en repas finances.
     //
-    // Consequence concrete : une coupure reseau au mauvais moment offre a
-    // l'utilisateur la totalite de ses kilometres cumules une seconde fois —
-    // sur le defi annuel, sur l'XP, et sur les kilometres que Sadaqa convertit
-    // en repas finances.
-    //
-    // Je le CONSIGNE plutot que de le corriger seul : ne rien crediter en cas
-    // de lecture ratee ferait perdre des kilometres reels a quelqu'un qui court
-    // hors couverture, ce qui est l'erreur symetrique. Le bon remede est
-    // probablement de reessayer la lecture, et c'est un choix de produit.
+    // Corrige le 13/09/2026 par une seconde memoire, sur l'appareil : le
+    // dernier cumul REELLEMENT credite. Refuser tout credit aurait ete l'erreur
+    // symetrique — perdre des kilometres reels a quelqu'un qui court hors
+    // couverture, ce qui est exactement la situation d'une course.
     docExistant = { cumulativeKm: 100 };
+    await setChallengeProgress('casa-loop', 'a@b.com', 100); // memorise 100
+    credites.length = 0;
+
     lectureCasse = true;
     await setChallengeProgress('casa-loop', 'a@b.com', 105);
-    expect(credites).toEqual([105]); // et non 5
+    expect(credites).toEqual([5]); // le delta reel, et non 105
+  });
+
+  it('⚠ NI DISTANT NI LOCAL : ON NE CREDITE RIEN plutot que d inventer', async () => {
+    // Premiere progression d'un defi, hors ligne, sur un appareil qui n'a rien
+    // retenu. Cas rare, et le seul ou l'on renonce : mieux vaut un credit
+    // manquant qu'un credit invente. Le suivant, lui, sera juste.
+    lectureCasse = true;
+    await setChallengeProgress('casa-loop', 'jamais-vu@b.com', 42);
+    expect(credites).toEqual([]);
+    expect(ecritures).toHaveLength(1); // la progression est quand meme ecrite
   });
 
   it('une distance negative est ramenee a zero', async () => {

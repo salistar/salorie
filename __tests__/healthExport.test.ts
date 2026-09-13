@@ -155,16 +155,29 @@ describe('la nutrition, moyennee sur les jours ENREGISTRES', () => {
     expect((await buildHealthReport(MAIL)).nutrition.calories).toBe(1400);
   });
 
-  it('⚠ ET IL PEUT DONC ETRE NEGATIF', async () => {
-    // Rien ne borne le resultat a zero. Une journee ou l'activite est
-    // enregistree et les repas oublies rend un apport negatif — un chiffre
-    // physiologiquement impossible sur un document medical.
-    //
-    // Consigne, pas corrige : ramener a zero masquerait le desequilibre au lieu
-    // de le montrer, et c'est un arbitrage de presentation qui revient a qui
-    // signe le document.
+  it('⚠ UNE JOURNEE SANS LE MOINDRE APPORT NE COMPTE PLUS — corrige le 13/09/2026', async () => {
+    // Avant : une journee ou la sortie etait enregistree et les repas oublies
+    // produisait « -800 kcal » — une valeur physiologiquement impossible,
+    // presentee comme une mesure sur un document destine a un medecin.
+    // Le defaut n'etait pas la soustraction : c'etait de moyenner une journee
+    // dont on ne connait QUE la depense.
     logsParJour.set(JOUR(0), [{ type: 'activity', calories: 800 }]);
-    expect((await buildHealthReport(MAIL)).nutrition.calories).toBe(-800);
+    const r = await buildHealthReport(MAIL);
+    expect(r.nutrition.days).toBe(0);
+    expect(r.nutrition.calories).toBe(0);
+  });
+
+  it('⚠ MAIS UN DEFICIT REEL RESTE NEGATIF, et c est voulu', async () => {
+    // Une petite assiette apres une longue course EST un deficit reel. Le
+    // masquer par un plancher a zero cacherait au soignant precisement ce qu'il
+    // doit voir. On a ecarte l'artefact de saisie, pas la physiologie.
+    logsParJour.set(JOUR(0), [
+      { type: 'meal', calories: 200 },
+      { type: 'activity', calories: 800 },
+    ]);
+    const r = await buildHealthReport(MAIL);
+    expect(r.nutrition.days).toBe(1);
+    expect(r.nutrition.calories).toBe(-600);
   });
 
   it('⚠ L EAU EST STOCKEE DANS LE CHAMP `calories`', async () => {

@@ -143,6 +143,21 @@ async function buildNutritionAverages(email: string, days: number): Promise<Nutr
     }
     if (!logs || logs.length === 0) continue;
 
+    // ⚠ UNE JOURNEE SANS LE MOINDRE APPORT NE COMPTE PAS.
+    // Le chiffre publie est un apport NET : repas moins activite. Une journee
+    // ou la sortie a ete enregistree et les repas oublies produisait donc un
+    // apport NEGATIF — « -800 kcal » sur un document destine a un medecin,
+    // c'est-a-dire une valeur physiologiquement impossible presentee comme une
+    // mesure. Le defaut n'etait pas la soustraction, c'etait de moyenner une
+    // journee dont on ne connait QUE la depense.
+    //
+    // Un net negatif reste possible, et c'est voulu : une petite assiette apres
+    // une longue course EST un deficit reel, et le masquer par un plancher a
+    // zero cacherait au soignant precisement ce qu'il doit voir. On ecarte
+    // l'artefact de saisie, pas la physiologie. Corrige le 13/09/2026.
+    const auMoinsUnApport = logs.some((l: any) => l?.type !== 'activity');
+    if (!auMoinsUnApport) continue;
+
     const total = logs.reduce(
       (acc, log: any) => {
         if (log.type === 'activity') {

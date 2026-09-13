@@ -10,9 +10,10 @@
  * inquiète pour rien et apprend à ignorer les suivantes), ni moins (une alerte
  * manquée est une hypoglycémie qu'on n'a pas vue passer).
  *
- * ⚠ ET UNE BORNE EST À TRANCHER PAR UN HUMAIN — voir le test marqué plus bas :
- * `140/90` pile ne déclenche AUCUNE alerte de tension, alors que les repères
- * usuels sont « à partir de 140 ou 90 ». Je le consigne, je ne le change pas.
+ * ⚠ UNE BORNE A ÉTÉ DÉPLACÉE LE 13/09/2026 : `140/90` pile ne déclenchait
+ * aucune alerte (`>` au lieu de `>=`), alors que les repères usuels disent
+ * « à partir de ». Les bornes HAUTES sont désormais inclusives ; les bornes
+ * BASSES restent strictes, parce que l'hypotension se définit *sous* 90/60.
  */
 import {
   BP_DIA_HIGH, BP_DIA_LOW, BP_SYS_HIGH, BP_SYS_LOW,
@@ -107,27 +108,28 @@ describe('bpAlert — tension', () => {
     expect(bpAlert(89, 59)?.severity).toBe('warning');
   });
 
-  it('⚠ 140/90 PILE NE DECLENCHE RIEN — A TRANCHER', () => {
-    // `sys > 140 || dia > 90` : la valeur exacte passe entre les mailles. Les
-    // reperes usuels disent « a partir de 140 ou 90 », donc inclusif.
-    //
-    // Deux indices que c'est un oubli et non un choix : la borne de la CRISE
-    // juste au-dessus est ecrite `>=` (180, 120), et les constantes exportees
-    // s'appellent BP_SYS_HIGH — « haut », pas « au-dela duquel ».
-    //
-    // Je NE le corrige PAS de ma propre initiative : deplacer un seuil medical
-    // d'un cran change ce que des gens lisent sur leur tension, et ce n'est pas
-    // une decision technique. Ce test dit ce que fait le code AUJOURD'HUI ; le
-    // jour ou la borne devient inclusive, il echouera, et c'est exactement ce
-    // qu'on veut d'un changement pareil : qu'il soit deliberate.
-    expect(bpAlert(140, 90)).toBeNull();
-    expect(bpAlert(140, 80)).toBeNull();
-    expect(bpAlert(120, 90)).toBeNull();
-    // Un cran au-dessus, l'alerte arrive.
-    expect(bpAlert(141, 90)).not.toBeNull();
-    expect(bpAlert(140, 91)).not.toBeNull();
-    // Les constantes, elles, annoncent bien 140 et 90.
+  it('⚠ 140/90 PILE DECLENCHE L ALERTE — corrige le 13/09/2026', () => {
+    // C'etait `sys > 140 || dia > 90` : la valeur exacte passait entre les
+    // mailles, alors que les reperes usuels disent « A PARTIR DE 140 ou 90 ».
+    // Deux indices que c'etait un oubli : la borne de la CRISE juste au-dessus
+    // etait deja ecrite `>=` (180, 120), et la constante s'appelle BP_SYS_HIGH
+    // — « haut », pas « au-dela duquel ».
+    expect(bpAlert(140, 90)?.kind).toBe('bp_high');
+    expect(bpAlert(140, 80)?.kind).toBe('bp_high');   // systolique seule
+    expect(bpAlert(120, 90)?.kind).toBe('bp_high');   // diastolique seule
+    // Juste en dessous, rien.
+    expect(bpAlert(139, 89)).toBeNull();
+    // Les constantes annoncent bien les memes chiffres que le code applique.
     expect([BP_SYS_HIGH, BP_DIA_HIGH, BP_SYS_LOW, BP_DIA_LOW]).toEqual([140, 90, 90, 60]);
+  });
+
+  it('⚠ MAIS L HYPOTENSION RESTE STRICTE, et ce n est pas une incoherence', () => {
+    // L'hypotension est definie SOUS 90/60 ; 90/60 pile est une tension basse
+    // normale. Rendre cette borne-la inclusive ferait crier a chaque releve
+    // d'une personne mince et sportive — l'inverse du service rendu.
+    expect(bpAlert(90, 60)).toBeNull();
+    expect(bpAlert(89, 60)?.kind).toBe('bp_low');
+    expect(bpAlert(90, 59)?.kind).toBe('bp_low');
   });
 
   it('« hypertension » declaree rend l alerte personnelle', () => {

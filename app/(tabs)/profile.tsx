@@ -128,10 +128,15 @@ export default function ProfileScreen() {
           onPress: async () => {
             // Clear welcome_seen so welcome screen shows again on next login
             await AsyncStorage.removeItem('welcome_seen');
-            // Clear onboarded cache for this user
-            if (user?.id) {
-              await AsyncStorage.removeItem(`onboarded_${user.id}`);
-            }
+            // ⚠ ON NE TOUCHE PAS AU DRAPEAU D'ONBOARDING, ET C'EST VOULU.
+            // Il y avait ici un `removeItem(`onboarded_${user.id}`)` : une cle
+            // indexee sur l'identifiant Clerk, que RIEN n'ecrit jamais (le
+            // drapeau est indexe sur le courriel). La ligne etait donc inerte,
+            // et c'etait une chance — l'ecrire correctement aurait efface le
+            // drapeau a chaque deconnexion, et la reconnexion suivante aurait
+            // renvoye l'utilisateur au debut d'un onboarding deja fait.
+            // Retiree le 13/09/2026. Pour effacer reellement ce cache, il y a
+            // `clearAllLocalData()`, qui le fait explicitement et sur demande.
             console.log('\x1b[32m[API→Clerk] signOut REQUEST\x1b[0m');
             await signOut();
             console.log('\x1b[34m[API←Clerk] signOut OK\x1b[0m');

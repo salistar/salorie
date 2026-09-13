@@ -7,6 +7,7 @@ import {
   collection, doc, setDoc, getDoc, getDocs, onSnapshot, query, where,
   orderBy, serverTimestamp, updateDoc, addDoc, increment, limit,
 } from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db, emailToDocId, logEvent } from './firebase';
 import { creditKm } from './progressHooks';
 import { publishActivity } from './socialFeed';
@@ -104,7 +105,14 @@ export function streetViewUrl(lat: number, lng: number, w = 600, h = 360): strin
 }
 // A satellite/hybrid thumbnail centered on a place — always renders (good fallback).
 export function staticMapUrl(lat: number, lng: number, w = 600, h = 360, zoom = 16): string {
-  return `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=${zoom}&size=${w}x${h}&maptype=hybrid&markers=color:red%7C${lat},${lng}&key=${GOOGLE_MAPS_KEY}`;
+  // Meme coercition que `streetViewUrl` ci-dessus, et pour la meme raison : les
+  // coordonnees peuvent venir d'une saisie du back-office, et rien de ce qui
+  // n'est pas un nombre n'a sa place dans une URL. Les deux fonctions se
+  // ressemblent trop pour qu'une seule soit protegee — on croirait l'autre
+  // sure. Aligne le 13/09/2026.
+  const la = Number(lat) || 0, ln = Number(lng) || 0;
+  const ww = Number(w) || 600, hh = Number(h) || 360, zm = Number(zoom) || 16;
+  return `https://maps.googleapis.com/maps/api/staticmap?center=${la},${ln}&zoom=${zm}&size=${ww}x${hh}&maptype=hybrid&markers=color:red%7C${la},${ln}&key=${GOOGLE_MAPS_KEY}`;
 }
 
 // Preset virtual routes (inspired by The Conqueror). Routes are illustrative paths.
@@ -172,15 +180,46 @@ export async function joinChallenge(challengeId: string, email: string, name: st
 // `credit` = false en mode SIMULATION (fly-through sans GPS) : on écrit la position
 // au classement mais on NE crédite PAS les compteurs réels (anti-triche : pas de km/XP
 // gagnés sans déplacement). Le GPS réel appelle avec credit=true (défaut).
+/**
+ * Le dernier cumul REELLEMENT credite, garde sur l'appareil.
+ *
+ * ⚠ POURQUOI CETTE SECONDE MEMOIRE EXISTE.
+ * Le credit se calcule sur un DELTA : `cumul actuel - cumul precedent`. Le
+ * cumul precedent venait uniquement de Firestore, et quand cette lecture
+ * echouait, `prev` restait a 0 — donc `delta = next`, c'est-a-dire LE PLUS
+ * GRAND CREDIT POSSIBLE. Une coupure reseau au mauvais moment offrait la
+ * totalite des kilometres cumules une seconde fois : defi annuel, XP, et les
+ * kilometres que Sadaqa convertit en repas finances.
+ *
+ * Refuser tout credit en cas de lecture ratee aurait ete l'erreur symetrique —
+ * perdre des kilometres reels a quelqu'un qui court hors couverture, ce qui est
+ * exactement la situation d'une course. D'ou ce repli local : il connait le
+ * dernier cumul credite, donc le delta reste juste meme sans reseau.
+ * Corrige le 13/09/2026.
+ */
+const cleCredite = (challengeId: string, docId: string) => `challenge_credite:${challengeId}:${docId}`;
+
 export async function setChallengeProgress(challengeId: string, email: string, km: number, credit = true) {
   if (!challengeId || !email) return;
-  const ref = doc(db, 'challenges', challengeId, 'participants', emailToDocId(email));
+  const docId = emailToDocId(email);
+  const ref = doc(db, 'challenges', challengeId, 'participants', docId);
   const next = Math.max(0, km);
   let prev = 0;
+  // `prevConnu` distingue « le cumul precedent vaut zero » de « je ne le sais
+  // pas ». Sans cette distinction, les deux cas produisaient le meme delta.
+  let prevConnu = false;
   try {
     const snap = await getDoc(ref);
     prev = snap.exists() ? ((snap.data() as any).cumulativeKm || 0) : 0;
-  } catch { /* best-effort : si la lecture échoue on n'invente pas de delta */ }
+    prevConnu = true;
+  } catch {
+    // Lecture distante impossible : on se rabat sur ce que l'appareil a retenu.
+    try {
+      const brut = await AsyncStorage.getItem(cleCredite(challengeId, docId));
+      const n = brut != null ? parseFloat(brut) : NaN;
+      if (Number.isFinite(n)) { prev = n; prevConnu = true; }
+    } catch { /* ni distant ni local : on ne creditera rien */ }
+  }
   try {
     await setDoc(ref, { cumulativeKm: next, updatedAt: serverTimestamp() }, { merge: true });
   } catch (e) { console.warn('[challenge] setChallengeProgress failed', e); return; }
@@ -188,10 +227,20 @@ export async function setChallengeProgress(challengeId: string, email: string, k
   // ANTI-TRICHE : on ne crédite RIEN si c'est une simulation (credit=false).
   if (!credit) return;
 
+  // ⚠ NI DISTANT NI LOCAL : ON NE CREDITE PAS.
+  // C'est le seul cas ou l'on renonce, et il est rare (premiere progression
+  // d'un defi, hors ligne, sur un appareil qui n'a rien retenu). Mieux vaut un
+  // credit manquant qu'un credit invente : le suivant, lui, sera juste.
+  if (!prevConnu) return;
+
   // Crédite les compteurs (défi annuel, XP avatar, km Sadaqa/récompenses) sur le SEUL
   // delta gagné — best-effort, ne bloque jamais.
   const delta = next - prev;
   if (delta > 0) creditKm(delta).catch(() => {});
+
+  // Retenu meme quand le delta est nul ou negatif : c'est le cumul credite qui
+  // fait foi au prochain appel, pas le dernier delta.
+  try { await AsyncStorage.setItem(cleCredite(challengeId, docId), String(next)); } catch { /* best-effort */ }
 
   // À la COMPLÉTION (atteinte de la distance cible) : publie un résumé NON sensible
   // au feed social, une seule fois (au franchissement du seuil, pas à chaque tick).

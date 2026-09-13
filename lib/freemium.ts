@@ -13,6 +13,29 @@ export const FREE_LIMITS: Record<string, number> = {
   'ai-meal-plan': 1,
 };
 
+/**
+ * Les fonctionnalites SANS quota, declarees exprès.
+ *
+ * ⚠ POURQUOI UNE LISTE PLUTOT QUE RIEN.
+ * `FREE_LIMITS[f] ?? 0` plus « 0 = illimite » faisait qu'une fonctionnalite
+ * ABSENTE du tableau etait illimitee. C'est le bon defaut — un oubli ne doit
+ * pas bloquer une fonctionnalite — mais il rendait une simple FAUTE DE FRAPPE
+ * silencieusement inoffensive : `scans` au pluriel, et le quota ne s'applique
+ * plus a rien.
+ *
+ * Desormais, « pas de quota » se DECLARE. Un nom absent des deux listes reste
+ * permissif en production (on ne ferme jamais une porte sur un doute), mais il
+ * crie en developpement, et `__tests__/freemium.test.ts` refuse qu'un ecran
+ * emploie un nom inconnu.
+ */
+export const SANS_QUOTA: readonly string[] = [];
+
+/** Un nom de fonctionnalite est-il declare quelque part ? */
+export function featureConnue(feature: string): boolean {
+  return Object.prototype.hasOwnProperty.call(FREE_LIMITS, feature)
+    || SANS_QUOTA.includes(feature);
+}
+
 const key = (feature: string, day: string) => `free_usage:${feature}:${day}`;
 
 export async function getUsage(feature: string): Promise<number> {
@@ -27,6 +50,15 @@ export async function getUsage(feature: string): Promise<number> {
 
 /** Limite gratuite pour une feature (0 = illimité). `overrides` = params d'un flag. */
 export function freeLimit(feature: string, overrides?: Record<string, number> | null): number {
+  if (!featureConnue(feature) && typeof __DEV__ !== 'undefined' && __DEV__) {
+    // Bruyant en developpement, muet en production : le defaut permissif est
+    // conserve, mais l'erreur de frappe ne passe plus inapercue chez celui qui
+    // l'ecrit.
+    console.warn(
+      `[freemium] « ${feature} » n'est declare ni dans FREE_LIMITS ni dans `
+      + `SANS_QUOTA : le quota ne s'appliquera PAS. Faute de frappe ?`,
+    );
+  }
   const o = overrides && typeof overrides[feature] === 'number' ? overrides[feature] : undefined;
   return o != null ? o : (FREE_LIMITS[feature] ?? 0);
 }

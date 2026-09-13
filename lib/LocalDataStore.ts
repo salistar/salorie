@@ -120,7 +120,11 @@ export async function clearAllLocalData(email: string): Promise<number> {
     K.profile(docId), K.logs(docId), K.weight(docId),
     K.notifications(docId), K.insights(docId), K.synced(docId),
     `onboarded_${email.toLowerCase()}`, 'last_session_onboarded',
-    `profile_${docId}`,
+    // ⚠ `profile_${docId}` figurait ICI une seconde fois, en doublon de
+    // `K.profile(docId)` plus haut. `multiRemove` s'en moquait, mais la
+    // fonction rend `keys.length` : elle annonçait « 9 cles supprimees » pour
+    // 8 cles distinctes. Retire le 13/09/2026 — le compte rendu est desormais
+    // exact, au cas ou quelqu'un s'en serve comme mesure.
   ];
   colorLog('RED', '[API→AsyncStorage] multiRemove REQUEST', { docId, keys });
   const t0 = Date.now();
@@ -516,6 +520,18 @@ export async function updateLocalCollection<T extends { id?: string }>(
     if (mode === 'upsert' && item.id) {
       arr = arr.filter((x) => x.id !== item.id);
       arr.unshift(item);
+    } else if (mode === 'upsert') {
+      // ⚠ UPSERT SANS IDENTIFIANT : ON NE DUPLIQUE PLUS.
+      // Jusqu'au 13/09/2026, la condition ci-dessus tombait et le code
+      // retombait sur un simple ajout en tete : corriger un repas qui n'avait
+      // pas encore recu son identifiant Firestore l'affichait DEUX fois, et
+      // comptait ses calories deux fois avec lui.
+      //
+      // Sans identifiant, rien ne dit quel element remplacer — on ne peut donc
+      // pas faire un vrai upsert. Ce qu'on peut faire, et qui suffit au cas
+      // reel, c'est refuser d'ajouter un doublon a l'identique.
+      const signature = JSON.stringify(item);
+      if (!arr.some((x) => JSON.stringify(x) === signature)) arr.unshift(item);
     } else if (mode === 'append') {
       arr.push(item);
     } else {
