@@ -1,0 +1,232 @@
+{
+	# Routage TCP selon le SNI, sur le 443 (22/08/2026).
+	# Les reseaux d entreprise qui ne laissent sortir que le 443 sont les seuls
+	# que le TURN sur 5349 ne couvrait pas. Ici, une connexion TLS arrivant sur
+	# 443 est aiguillee AVANT tout dechiffrement : si elle annonce
+	# turn.salorie.com, elle va au relais ; sinon elle va au serveur web.
+	https_port 8443
+	servers {
+		# HTTP/3 desactive : layer4 ne traite que le TCP, et Caddy annoncerait
+		# sinon un service QUIC sur 8443/udp que rien ne publie — chaque
+		# navigateur tenterait puis retomberait sur TCP, en pure perte.
+		protocols h1 h2
+		listener_wrappers {
+			# Sans ceci, tous les visiteurs des 3 sites apparaitraient comme
+			# 127.0.0.1 dans les journaux, puisque le trafic arrive par un relais
+			# local. Le protocole PROXY transporte l adresse reelle.
+			proxy_protocol {
+				allow 127.0.0.1/8
+			}
+			tls
+		}
+	}
+	layer4 {
+		:443 {
+			@turn tls sni turn.salorie.com
+			route @turn {
+				proxy {
+					upstream salorie-coturn:5349
+				}
+			}
+			route {
+				proxy {
+					proxy_protocol v2
+					upstream 127.0.0.1:8443
+				}
+			}
+		}
+	}
+}
+
+api.salorie.salistar.com {
+	encode gzip zstd
+	reverse_proxy salorie-backend:4000
+}
+salorie.salistar.com {
+	encode gzip zstd
+	reverse_proxy salorie-landing:3000
+}
+app.salorie.salistar.com {
+	encode gzip zstd
+	# /me a demenage sur salorie.com le 22/08/2026 avec la bascule du domaine
+	# Clerk. Servi ici, il repondait 200 et restait BLANC : Clerk refuse une cle
+	# de production sur un autre domaine que le sien (« Production Keys are only
+	# allowed for domain salorie.com »). Un favori vers l ancienne adresse menait
+	# donc a une page vide, sans un mot d explication.
+	# Le back-office (/admin, /login) reste servi ICI : il ne depend pas de Clerk
+	# mais d un jeton Mongo, et rien ne l a deplace.
+	@me path /me /me/*
+	redir @me https://salorie.com{uri} 301
+	reverse_proxy salorie-web:3000
+}
+salorie-auth.salistar.com {
+	encode gzip zstd
+	reverse_proxy salorie-firebase-token:8787
+}
+:8080 {
+	reverse_proxy sudoku-landing:80
+}
+:8081 {
+	reverse_proxy sudoku-web:80
+}
+:8082 {
+	reverse_proxy sudoku-api:3001 {
+		header_up X-Forwarded-Proto http
+	}
+}
+:8083 {
+	reverse_proxy sudoku-mongo-ui:8081
+}
+:8084 {
+	reverse_proxy sudoku-redis-ui:8081
+}
+# ──────── sallysudo.com — added 2026-06-18 ────────
+# A records for sallysudo.com / api.sallysudo.com / db.sallysudo.com / cache.sallysudo.com
+# must point to 46.225.77.64 (this server, srv3 salorie-sallysudo).
+# Keep api/db/cache as DNS-only (grey cloud) in Cloudflare so Caddy can issue Let's Encrypt certs.
+sallysudo.com {
+	encode gzip zstd
+	reverse_proxy sudoku-landing:80
+}
+api.sallysudo.com {
+	encode gzip zstd
+	reverse_proxy sudoku-api:3001 {
+		header_up X-Forwarded-Proto https
+	}
+}
+db.sallysudo.com {
+	encode gzip zstd
+	reverse_proxy sudoku-mongo-ui:8081
+}
+cache.sallysudo.com {
+	encode gzip zstd
+	reverse_proxy sudoku-redis-ui:8081
+}
+
+# app.sallysudo.com — web SPA (Expo web build inside sudoku-web container)
+app.sallysudo.com {
+	encode gzip zstd
+	# Block Expo Router dev artifacts (added 2026-06-18 — prod hygiene)
+	@expo_dev path /_sitemap /_sitemap.html /_sitemap/* /+not-found /+not-found.html
+	respond @expo_dev 404
+
+	reverse_proxy sudoku-web:80
+}
+
+# ──────── salorie.com (domaine propre) — added 2026-06-18 ────────
+api.salorie.com {
+	# Videos d'exercices : servies en statique, PAS via le backend Node.
+	# Doit precede le reverse_proxy, sinon tout part au backend.
+	handle_path /videos/* {
+		header Cache-Control "public, max-age=2592000, immutable"
+		header Access-Control-Allow-Origin "*"
+		file_server {
+			root /srv/media/videos
+		}
+	}
+
+	encode gzip zstd
+	reverse_proxy salorie-backend:4000
+}
+app.salorie.com {
+	encode gzip zstd
+	handle /.well-known/assetlinks.json {
+		header Content-Type application/json
+		respond `[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.idriss.kriouile.salorie","sha256_cert_fingerprints":["24:17:D7:12:60:A7:99:21:A4:EE:B9:34:5C:DE:24:32:A9:6C:AE:40:96:26:30:C8:9A:DC:79:15:47:CA:78:5A","8F:97:78:6D:56:97:48:0D:96:FB:18:8E:23:14:94:3B:7B:58:67:C2:8D:6E:7E:FF:E2:7D:6F:B8:A0:65:38:E3"]}}]` 200
+	}
+	handle {
+		reverse_proxy salorie-web:3000
+	}
+}
+salorie.com {
+	encode gzip zstd
+	# /me est servi ICI depuis la bascule du domaine Clerk (22/08/2026) : la
+	# cle publique pointe desormais sur clerk.salorie.com, et l ancienne
+	# redirection vers app.salorie.salistar.com enverrait vers un domaine que
+	# Clerk n autorise plus.
+	redir /duo/* /me{uri} 302
+	reverse_proxy salorie-web:3000
+}
+salorie-auth.salorie.com {
+	encode gzip zstd
+	reverse_proxy salorie-firebase-token:8787
+}
+
+# Interface web Mongo de Salorie (mongo-express), ajoutee le 13 aout 2026.
+# Protegee par l authentification de mongo-express : identifiants dans
+# /home/deploy/secrets/salorie-mongo-ui.env, jamais dans ce fichier.
+# L enregistrement DNS db.salorie.com DOIT rester en nuage GRIS (DNS only),
+# sinon Caddy ne peut pas obtenir son certificat Let s Encrypt.
+db.salorie.com {
+	encode gzip zstd
+	reverse_proxy salorie-mongo-ui:8081
+}
+
+# ============================================================
+# Salifz — ajoute le 18 aout 2026.
+#
+# Les blocs sont ecrits mais l enregistrement DNS n existe pas encore :
+# tant que salifz.salistar.com ne pointe pas vers 46.225.77.64, Caddy
+# echouera a obtenir son certificat et reessaiera periodiquement. Cela
+# n affecte aucun autre site : chaque bloc est independant.
+#
+# Comme pour db.salorie.com, l enregistrement doit rester en nuage GRIS
+# (DNS only) chez Cloudflare, sinon la validation Let s Encrypt echoue.
+#
+# L application web sert aussi l API sur la meme origine (/api/v1) et le
+# websocket (/socket.io) : c est ce que fait la configuration nginx de
+# l image de production, d ou un seul reverse_proxy.
+# ============================================================
+# Les deux noms servent la meme application. Snippet plutot que duplication :
+# une route ajoutee a un seul des deux blocs serait un ecart invisible.
+(salifz_routes) {
+	encode gzip zstd
+
+	# Le websocket doit passer avant la regle generale : sans cela la mise a
+	# niveau de connexion est perdue et le temps reel retombe en long polling.
+	@websocket {
+		header Connection *Upgrade*
+		header Upgrade websocket
+	}
+	reverse_proxy @websocket salifz-api:8088
+
+	handle /api/* {
+		reverse_proxy salifz-api:8088
+	}
+
+	handle /socket.io/* {
+		reverse_proxy salifz-api:8088
+	}
+
+	handle {
+		reverse_proxy salifz-web:80
+	}
+}
+
+# Nom definitif. Tant que l enregistrement DNS n existe pas, Caddy echoue a
+# obtenir ce certificat et reessaie : cela n affecte aucun autre nom, la
+# gestion des certificats etant par nom.
+salifz.salistar.com {
+	import salifz_routes
+}
+
+# Nom de transition. sslip.io resout tout <quelque-chose>.<ip>.sslip.io vers
+# l IP qu il contient : aucun enregistrement a creer, et Let s Encrypt delivre
+# un certificat normal puisque le domaine est publiquement resolvable. Cela
+# donne du HTTPS immediatement, sans acces au fournisseur DNS.
+salifz.46-225-77-64.sslip.io {
+	import salifz_routes
+}
+
+# www : redirection canonique vers l apex — ajoute le 20/08/2026.
+www.salorie.com {
+	redir https://salorie.com{uri} permanent
+}
+
+turn.salorie.com {
+	# Ce bloc ne sert PAS a servir une page : il existe pour que Caddy obtienne et
+	# RENOUVELLE un certificat pour turn.salorie.com, que coturn lira ensuite pour
+	# parler TLS sur 5349. Sans lui, il faudrait un certbot separe a maintenir.
+	# Le defi passe par le port 80, deja publie par Caddy.
+	respond "Salorie TURN" 200
+}

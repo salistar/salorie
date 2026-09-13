@@ -1,0 +1,61 @@
+name: Caddyfile — derive
+
+# La copie de `infra/Caddyfile` n'est PAS deployee (voir infra/README.md) : elle
+# existe pour que la topologie survive a la machine. Sans ce controle, elle se
+# demoderait en silence — et on lirait une topologie qui n'est plus vraie, ce qui
+# est pire que de n'en avoir aucune, parce qu'on lui ferait confiance.
+#
+# Ne publie JAMAIS le contenu du fichier, seulement son empreinte.
+
+on:
+  schedule:
+    - cron: '30 6 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['infra/Caddyfile', '.github/workflows/caddy-derive.yml']
+
+concurrency:
+  group: caddy-derive
+  cancel-in-progress: true
+
+jobs:
+  comparer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Empreinte de la copie du depot
+        id: depot
+        run: echo "sha=$(sha256sum infra/Caddyfile | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Empreinte du fichier servi par Caddy
+        uses: appleboy/ssh-action@v1.0.3
+        id: serveur
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            F=$(docker inspect caddy --format '{{range .Mounts}}{{if eq .Destination "/etc/caddy/Caddyfile"}}{{.Source}}{{end}}{{end}}')
+            sha256sum "$F" | cut -d' ' -f1
+
+      - name: Comparer
+        env:
+          DEPOT: ${{ steps.depot.outputs.sha }}
+          SORTIE: ${{ steps.serveur.outputs.stdout }}
+        run: |
+          SERVEUR=$(printf '%s' "$SORTIE" | tr -d '\r\n ' | grep -oE '[0-9a-f]{64}' | tail -1)
+          echo "depot   : $DEPOT"
+          echo "serveur : ${SERVEUR:-introuvable}"
+          if [ -z "$SERVEUR" ]; then
+            echo "::error::Empreinte du serveur illisible — le conteneur caddy repond-il ?"
+            exit 1
+          fi
+          if [ "$DEPOT" != "$SERVEUR" ]; then
+            echo "::error::Le Caddyfile du serveur a DERIVE de la copie du depot."
+            echo "::error::Quelqu un a modifie la topologie sans la reporter — ou l inverse."
+            echo "::error::Recuperer le fichier servi, le relire, puis mettre infra/Caddyfile a jour."
+            exit 1
+          fi
+          echo "✓ identiques"
