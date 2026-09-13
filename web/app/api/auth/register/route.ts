@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     const token = await signToken(String(email).toLowerCase().trim(), 'owner');
     const res = NextResponse.json({ ok: true });
     res.cookies.set(AUTH_COOKIE, token, {
-      httpOnly: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 7, secure: true,
+      httpOnly: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 7, secure: req.nextUrl.protocol === 'https:',
     });
     return res;
   } catch (e: any) {
