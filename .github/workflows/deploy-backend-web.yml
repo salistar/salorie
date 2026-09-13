@@ -40,6 +40,9 @@ jobs:
       - name: Verifier que code et deploiement disent le meme seuil
         run: node scripts/verifier-seuils.js
 
+      - name: Verifier que le .env de production ne peut pas s empiler
+        run: node scripts/verifier-env-deploiement.js
+
       - name: Build backend
         working-directory: backend
         run: npm install && npm run build
