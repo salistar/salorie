@@ -13,6 +13,20 @@ on:
         type: boolean
         default: false
 
+# ⚠ DEUX DEPLOIEMENTS SIMULTANES ECRIRAIENT DANS LE MEME REPERTOIRE DU VPS.
+# Le job copie les sources puis lance `docker compose up --build` — deux runs
+# qui se chevauchent melangeraient deux arbres de fichiers pendant la copie, et
+# construiraient une image a partir du resultat.
+#
+# ⚠ ET ICI, `cancel-in-progress` EST A FALSE, CONTRAIREMENT AU BUILD ANDROID.
+# Interrompre un deploiement en cours de route est pire que de le laisser
+# finir : on ne sait pas ou il s'est arrete — entre la purge et la copie, le
+# conteneur backend serait recree sans ses sources. Les deploiements font donc
+# la QUEUE, ils ne s'annulent pas.
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
 jobs:
   build-check:
     runs-on: ubuntu-latest

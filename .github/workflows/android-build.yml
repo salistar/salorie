@@ -10,6 +10,27 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# ⚠ TROIS BUILDS EN PARALLELE ECRASAIENT LA MEME RELEASE « latest ».
+# Ce workflow republie a chaque poussee sur main le meme `app-debug.apk`, sous
+# le meme tag. Quand plusieurs commits partent coup sur coup — ce qui arrive
+# des qu'on pousse une correction puis sa documentation — les runs se
+# chevauchent et se disputent l'asset : l'API repond `HttpError`, et un build
+# PARFAITEMENT REUSSI part en rouge a la derniere etape.
+# Constate le 13/09/2026 : l'APK etait construit, l'artefact televerse, et seule
+# la publication a echoue.
+#
+# `cancel-in-progress` supprime la course ET le gaspillage : sur un tag, seul le
+# dernier commit compte, et un build de 14 minutes par commit de documentation
+# n'apprend rien a personne.
+#
+# ⚠ LE GROUPE INCLUT `github.ref`, ET C'EST OBLIGATOIRE ICI. Ce workflow se
+# declenche aussi sur les tags `v*`. Sans le ref dans le groupe, pousser un tag
+# pendant qu'un build de main tourne annulerait l'un des deux — or un build de
+# tag produit un binaire qu'on garde.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build debug APK
