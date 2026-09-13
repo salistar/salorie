@@ -98,3 +98,38 @@ curl -X POST https://api.salistar.com/firebase-token \
   -H "Authorization: Bearer <clerk-session-token>"
 # → { "token": "<firebase custom token>", "uid": "you@example.com" }
 ```
+
+
+---
+
+## ⚠ Pourquoi `firebase-admin` reste en 13 ici (13/09/2026)
+
+Le backend et le web sont passés en **14** le 10/09 — elle exige Node 22, que ce
+service utilise désormais aussi. Ce service-ci est resté en 13, **délibérément**.
+
+La 14 **supprime l'API à espace de noms**. Or `standalone-server.mjs` l'utilise
+à quatre endroits : `admin.apps`, `admin.initializeApp`, `admin.credential.cert`
+et `admin.auth().createCustomToken`. La migration est mécanique — ailleurs, le
+compilateur TypeScript l'a rendue triviale. **Ici, il n'y a pas de compilateur** :
+ce fichier est du `.mjs`, sans types. Une faute de frappe dans `getAuth(...)` ne
+se verrait qu'à l'exécution.
+
+Et « à l'exécution » veut dire quelque chose de précis ici : ce service frappe le
+jeton qui ouvre `/me` **et** l'application mobile. Trois des quatre appels
+tournent au DÉMARRAGE — les casser ferait échouer le `HEALTHCHECK`, donc ça se
+verrait. Le quatrième, `createCustomToken`, n'est atteint qu'après une
+vérification Clerk réussie : **il ne peut pas être exercé sans un vrai jeton de
+session**.
+
+Ce qu'il faut pour faire la montée sereinement, dans cet ordre :
+
+1. migrer les quatre appels vers `firebase-admin/app` et `firebase-admin/auth` ;
+2. déployer ;
+3. **se connecter réellement à `/me`** — c'est le seul test qui touche
+   `createCustomToken`. Si l'espace personnel charge les données Firestore, la
+   frappe fonctionne.
+
+Ce que la 13 laisse ouvert, mesuré : **0 critique, 0 haute, 10 moyennes** — la
+chaîne `@google-cloud/*` et `uuid`, la même qu'ailleurs, et que la 14 ne ferme
+d'ailleurs pas entièrement (cf. `AUDIT-COMPLET.md`, partie 2). L'alerte **haute**
+qui traînait ici (`form-data`) a été fermée le 13/09 sans toucher au SDK.

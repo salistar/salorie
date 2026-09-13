@@ -35,7 +35,7 @@ jobs:
           done
 
       - uses: actions/setup-node@v4
-        with: { node-version: 20 }
+        with: { node-version: 22 }
 
       # ── Les regles font-elles ce qu'elles disent ? ─────────────────────────
       #

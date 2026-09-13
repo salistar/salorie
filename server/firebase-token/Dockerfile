@@ -1,5 +1,10 @@
 # Clerk -> Firebase token endpoint — production image.
-FROM node:20-alpine
+# ⚠ NODE 22 DEPUIS LE 13/09/2026 : Node 20 est en fin de vie depuis avril 2026,
+# donc sans correctif de securite. Ce service frappe les jetons Firebase qui
+# ouvrent l'espace /me et l'application mobile — c'est le dernier endroit ou
+# laisser tourner un runtime qui n'est plus entretenu.
+# `firebase-admin` reste en 13 ici, volontairement : voir le README.
+FROM node:22-alpine
 
 WORKDIR /app
 
