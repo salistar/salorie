@@ -143,6 +143,25 @@ jobs:
             # deploiement suivant, sans trace et sans message. On ne remplace desormais que
             # les cles gerees par ce workflow et on preserve tout le reste.
             touch .env
+            # ⚠ TOUTE CLE REECRITE PLUS BAS DOIT ETRE FILTREE ICI.
+            # Sinon elle n'est jamais retiree et s'empile : le .env de production
+            # faisait 1 924 LIGNES POUR 28 CLES, dont 205 copies d'ADMIN_API_KEY.
+            # dotenv retient la derniere, donc la valeur servie restait juste —
+            # mais le fichier gardait EN CLAIR toute valeur qu'une cle a eue.
+            # Une rotation qui ne retire pas l'ancien secret n'en est pas une.
+            # `scripts/verifier-env-deploiement.js` refuse un oubli, en CI.
+            #
+            # ⚠ ET CETTE LIGNE DOIT RESTER COURTE. A 425 caracteres GitHub REFUSE
+            # le fichier au demarrage : zero job, aucun log, workflow affiche par
+            # son chemin. A 281 il demarre. Isole par bisection le 13/09/2026 —
+            # js-yaml et le validateur de schema Actions le trouvent valide tous
+            # les deux. D'ou la CLASSE `NEXT_PUBLIC_[A-Z_]+` plutot que les dix
+            # noms ecrits un par un.
+            #
+            # ⚠ QUATRE CLES SONT VOLONTAIREMENT ABSENTES : MONGO_PASS (ecrite une
+            # seule fois, la filtrer ferait perdre la base), TURN_SECRET (retiree
+            # seulement lors d'une rotation), MONGO_URI et MONGO_CMD (qui font
+            # deja leur propre sed).
             grep -vE '^ *(export +)?(FIREBASE_SERVICE_ACCOUNT|GEMINI_API_KEY|USDA_API_KEY|AUTH_SECRET|CF_ACCOUNT_ID|CF_API_TOKEN|NEXT_PUBLIC_[A-Z_]+|MAIL_INGEST_KEY|ADMIN_SETUP_KEY|ADMIN_API_KEY|FOOD4K_MIN_CONF|FOOD4K_MIN_CONF_LOCALE|GIT_COMMIT)( *=| *:)' .env > .env.next || true
             printf 'GIT_COMMIT=%s\n' "${SALORIE_SHA:-inconnu}" >> .env.next
             printf '%s\n' 'FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' >> .env.next
