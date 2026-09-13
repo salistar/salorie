@@ -17,6 +17,7 @@ import { Flame, Beef, Wheat, Droplets, FileText } from 'lucide-react-native';
 import { useLogging } from '../../lib/LoggingContext';
 import { addNutritionLog } from '../../lib/firebase';
 import { submitScanFeedback } from '../../lib/mlFeedback';
+import { poserPalierScan } from '../../lib/sentryTags';
 import { useUser } from '@clerk/clerk-expo';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import ScreenTopBar from '../../components/ScreenTopBar';
@@ -170,6 +171,11 @@ export default function LogFoodDetailsScreen() {
       // ACTIVE LEARNING : on capture le label FINAL (édité par l'utilisateur = vraie correction)
       // + l'image + ce que le on-device avait prédit -> dataset "or" pour ré-entraîner.
       try {
+        // Etiquette Sentry : QUEL etage de la cascade a repondu. Posee ici parce
+        // que c'est le premier endroit ou on connait le palier REELLEMENT
+        // utilise — une erreur survenue ensuite portera donc la bonne
+        // provenance, sans qu'on ait a lire la pile d'appels.
+        poserPalierScan((params.scanTier as string) || null);
         // VRAIE correction = l'utilisateur a modifié le nom proposé (indépendant de la langue).
         const corrige = name !== ((params.name as string) || '');
         submitScanFeedback({

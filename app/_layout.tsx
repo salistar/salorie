@@ -87,6 +87,7 @@ import { RouteFlagGate } from '../components/FeatureGate';
 import { StatusBar } from 'expo-status-bar';
 import { ThemeProvider, useTheme } from '../lib/ThemeContext';
 import { I18nProvider, useTranslation } from '../lib/i18n';
+import EtiquettesSentry from '../components/EtiquettesSentry';
 import { NotificationService } from '../lib/NotificationService';
 import { PurchasesService } from '../lib/PurchasesService';
 import LogModal from '../components/LogModal';
@@ -817,6 +818,11 @@ function RootLayout() {
           donc illisible — sur les 95 ecrans. */}
       <BarreEtatDuTheme />
       <I18nProvider>
+        {/* Ne rend rien : tient a jour les etiquettes de tri de Sentry (theme,
+            apparence, langue, rtl). Monte ICI parce qu'il lui faut les DEUX
+            contextes — plus haut, `useTheme()` et `useTranslation()` jetteraient
+            au demarrage. Voir lib/sentryTags.ts pour le choix des axes. */}
+        <EtiquettesSentry />
         <ClerkProvider key={essai} tokenCache={tokenCache} publishableKey={publishableKey}>
           {/* Fallback brandé pendant l'init de Clerk (evite l'ecran BLANC :
               la 1ere init de l'instance prod peut prendre quelques secondes en 4G). */}
