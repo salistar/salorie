@@ -84,7 +84,7 @@ Remesuré le 13/09/2026, `--omit=dev`, les cinq projets :
 | | critique | haute | moyenne |
 |---|---:|---:|---:|
 | mobile | 0 | ~~21~~ **9** | ~~37~~ **36** |
-| backend | 0 | ~~4~~ **5** | ~~25~~ **19** |
+| backend | 0 | ~~5~~ **4** | ~~25~~ **11** |
 | web | ~~1~~ **0** | ~~1~~ **0** | ~~8~~ **2** |
 | landing | ~~1~~ **0** | ~~5~~ **0** | ~~1~~ **0** |
 | firebase-token | 0 | ~~1~~ **0** | ~~12~~ **10** |
@@ -510,6 +510,13 @@ Revérifié de bout en bout le 13/09/2026, **dans les deux sens** :
 | APK/AAB sur GitHub | ✅ présents, **mais du 29 août** |
 | landing → binaires | ✅ résolution dynamique de la dernière release |
 
+✅ **Le `Caddyfile` est versionné depuis le 13/09/2026** — `infra/Caddyfile`,
+avec son empreinte vérifiée au bit près (`ea55ee01…` des deux côtés) et un
+contrôle quotidien qui **échoue si le serveur dérive**. La copie n'est
+volontairement **pas déployée** : ce fichier sert trois projets, Caddy recharge à
+chaud, et un fichier invalide poussé automatiquement couperait tous les sites de
+la machine d'un coup. Il existe pour survivre à la machine, pas pour la piloter.
+
 ⚠️ **`whisper/` N'ÉTAIT DANS AUCUN DÉPÔT.** Deux fichiers, 1,6 Ko, qui vivaient
 uniquement dans `~/apps/salorie-stack/` sur srv3 : le service `faster-whisper`
 qui fait fonctionner le **journal vocal**. Rien dans le dépôt n'y faisait
@@ -519,9 +526,12 @@ qu'il existait. Rapatrié, avec un README qui précise qu'il **n'est pas déploy
 par le workflow, pour que personne ne le modifie en croyant changer la
 production.
 
-C'est le même défaut de fond que le **`Caddyfile`**, qui reste versionné nulle
-part : c'est lui qui décide que `salorie.com` est servi par `salorie-web` et
-`salorie.salistar.com` par `salorie-landing`. **Toujours ouvert.**
+C'était le même défaut de fond que le `Caddyfile` — **les deux sont fermés
+maintenant**. Et ce défaut-là a été payé deux fois dans la journée : j'ai supposé
+que `salorie.com` était servi par `salorie-landing` (c'est `salorie-web`), et le
+workflow du dépôt landing faisait la même supposition, partant en rouge quand le
+voisin allait mal. Une topologie que personne ne peut lire est une topologie que
+tout le monde devine.
 
 ⚠️ **ET LE `.env` DE PRODUCTION FAISAIT 1 924 LIGNES POUR 28 CLÉS.** 205 copies
 d'`ADMIN_API_KEY`, 189 de chaque `NEXT_PUBLIC_*` : le workflow réécrivait 22
@@ -850,24 +860,15 @@ arbitrage l'a été** ; ce qui reste est listé ici avec ce qu'il coûte.
    `npm audit fix` : `path-to-regexp` 8 change la syntaxe des motifs de route,
    vingt-et-un contrôleurs sont concernés, l'API sert l'application mobile en
    production, et le mode d'échec est silencieux (une route qui rend 404).
-5. 🟠 **Le `Caddyfile` de srv3 n'est versionné nulle part.** C'est lui qui décide
-   quel conteneur sert quel domaine. `whisper/` avait le même défaut et a été
-   rapatrié le 13/09 ; celui-ci demande une décision — le mettre dans quel dépôt,
-   et comment le déployer sans casser les autres sites de la machine.
-6. 🟠 **`/graphql` est en production et personne ne l'appelle.** Endpoint vivant
-   (HTTP 200), resolvers protégés par `FirebaseAuthGuard`, **aucun client du
-   dépôt ne l'utilise**. Le retirer fermerait `lodash` et `ws` (deux hautes) plus
-   quatre moyennes, et réduirait la surface. Mais c'est supprimer une
-   fonctionnalité : à toi de trancher, pas à moi.
-7. 🟠 **`server/firebase-token` reste en `firebase-admin` 13.** La raison est
+5. 🟠 **`server/firebase-token` reste en `firebase-admin` 13.** La raison est
    dans son README : la 14 supprime l'API à espace de noms, ce fichier est du
    `.mjs` **sans compilateur**, et `createCustomToken` ne peut être exercé
    qu'avec un vrai jeton de session. La vérification passe par toi : se
    connecter à `/me` après déploiement.
-8. 🟠 **Sentry mobile n'a jamais été vérifié depuis un vrai build EAS.** Ni ses
+6. 🟠 **Sentry mobile n'a jamais été vérifié depuis un vrai build EAS.** Ni ses
    étiquettes de tri, ni son masquage. Les trois autres projets sont vérifiés en
    production.
-9. 🟢 **`react-native-reanimated` 3.19.5 contre `~4.1.1` attendu** par Expo
+7. 🟢 **`react-native-reanimated` 3.19.5 contre `~4.1.1` attendu** par Expo
    SDK 54. Écart **préexistant** (mon verrou n'y a pas touché). Monter une
    majeure d'une bibliothèque d'animation native demande un build et un contrôle
    visuel.
@@ -887,6 +888,9 @@ arbitrage l'a été** ; ce qui reste est listé ici avec ce qu'il coûte.
 | `whisper/` | rapatrié dans le dépôt |
 | Refus au démarrage | **cause isolée** après un mois : la taille du fichier |
 | Les 8 constats des tests | corrigés, chacun documenté |
+| **`/graphql`** | **retiré** — surface en double, aucun client, ferme `ws` |
+| **`minio`** | **retiré** — déclaré, jamais importé ; ferme 3 moyennes |
+| **`Caddyfile`** | **versionné**, avec un contrôle de dérive quotidien |
 
 ### Et une chose qui n'est pas un chantier
 
