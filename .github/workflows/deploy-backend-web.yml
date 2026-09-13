@@ -143,36 +143,7 @@ jobs:
             # deploiement suivant, sans trace et sans message. On ne remplace desormais que
             # les cles gerees par ce workflow et on preserve tout le reste.
             touch .env
-            # ⚠ CETTE LISTE EST CONSTRUITE EN PLUSIEURS LIGNES, ET CE N'EST PAS
-            # QUE POUR LA LISIBILITE. Sur une seule ligne (565 caracteres), GitHub
-            # REFUSE LE FICHIER AU DEMARRAGE : zero job, aucun log, le workflow
-            # affiche par son chemin au lieu de son nom. Isole par bisection le
-            # 13/09/2026 — meme symptome qu'en aout, et `js-yaml` comme le
-            # validateur de schema Actions trouvaient le fichier parfaitement
-            # valide tous les deux.
-            #
-            # Toute cle reecrite plus bas doit figurer ici : sans quoi elle n'est
-            # jamais retiree et s'empile a chaque deploiement. Le .env de
-            # production faisait 1 924 LIGNES POUR 28 CLES quand on s'en est
-            # apercu — dont 205 copies d'ADMIN_API_KEY, conservant en clair
-            # toutes ses valeurs passees. `scripts/verifier-env-deploiement.js`
-            # refuse desormais qu'une cle manque a l'appel.
-            CLES='FIREBASE_SERVICE_ACCOUNT|GEMINI_API_KEY|USDA_API_KEY|AUTH_SECRET'
-            CLES="$CLES|CF_ACCOUNT_ID|CF_API_TOKEN|NEXT_PUBLIC_GMAP_KEY|MAIL_INGEST_KEY"
-            CLES="$CLES|ADMIN_SETUP_KEY|ADMIN_API_KEY|GIT_COMMIT"
-            CLES="$CLES|FOOD4K_MIN_CONF|FOOD4K_MIN_CONF_LOCALE"
-            CLES="$CLES|NEXT_PUBLIC_API_URL|NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
-            CLES="$CLES|NEXT_PUBLIC_FIREBASE_API_KEY|NEXT_PUBLIC_FIREBASE_APP_ID"
-            CLES="$CLES|NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN|NEXT_PUBLIC_FIREBASE_PROJECT_ID"
-            CLES="$CLES|NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID"
-            CLES="$CLES|NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET|NEXT_PUBLIC_FIREBASE_TOKEN_URL"
-            #
-            # ⚠ QUATRE CLES SONT VOLONTAIREMENT ABSENTES. MONGO_PASS n'est ecrite
-            # QU'UNE FOIS (`if ! grep -q`, plus bas) : la filtrer la supprimerait,
-            # le deploiement en regenererait une NOUVELLE, et le backend perdrait
-            # sa base. TURN_SECRET n'est retiree que lors d'une rotation
-            # explicite. MONGO_URI et MONGO_CMD font deja leur propre `sed -i`.
-            grep -vE "^ *(export +)?($CLES)( *=| *:)" .env > .env.next || true
+            grep -vE '^ *(export +)?(FIREBASE_SERVICE_ACCOUNT|GEMINI_API_KEY|USDA_API_KEY|AUTH_SECRET|CF_ACCOUNT_ID|CF_API_TOKEN|NEXT_PUBLIC_GMAP_KEY|MAIL_INGEST_KEY|ADMIN_SETUP_KEY|ADMIN_API_KEY|FOOD4K_MIN_CONF|FOOD4K_MIN_CONF_LOCALE|GIT_COMMIT)( *=| *:)' .env > .env.next || true
             printf 'GIT_COMMIT=%s\n' "${SALORIE_SHA:-inconnu}" >> .env.next
             printf '%s\n' 'FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' >> .env.next
             printf '%s\n' 'GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}' >> .env.next
