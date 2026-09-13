@@ -11,7 +11,7 @@ node scripts/balayage-api.js https://api.salorie.com   # les routes produit rép
 npx jest && (cd backend && npx jest) && (cd web && npx jest)
 ```
 
-**État global** au 13/09/2026 : **1 155 tests verts** (911 mobile ·
+**État global** au 13/09/2026 : **1 163 tests verts** (919 mobile ·
 197 backend · 47 web), `tsc` et ESLint propres sur les trois projets, 0 écran
 orphelin, 0 appel vers une route inexistante, 0 drapeau fantôme. Web et landing
 sont en **Next 16**, sans vulnérabilité critique ni haute ; les deux conteneurs
@@ -644,18 +644,20 @@ et ne l'avalait pas. Sans conséquence aujourd'hui (les dix appels sont
 fire-and-forget), mais le premier qui aurait écrit `await haptique.succes()` en
 se fiant à cette promesse aurait vu son action mourir sur une vibration.
 
-**À trancher — ce sont des décisions, pas des correctifs :**
+**Les huit ont été corrigés le 13/09/2026**, après arbitrage. Pour les trois qui
+touchent à des chiffres lus par des humains, la version retenue est à chaque
+fois celle qui **ne masque rien** :
 
-| | |
+| | corrigé |
 |---|---|
-| `bpAlert` | **140/90 pile ne déclenche aucune alerte** (`>` au lieu de `>=`), alors que la borne de la crise juste au-dessus est inclusive. Déplacer un seuil médical change ce que des gens lisent sur leur tension. |
-| `setChallengeProgress` | Si la lecture Firestore échoue, **le cumul entier est crédité à nouveau** — le commentaire dit pourtant l'inverse. Ne rien créditer serait l'erreur symétrique ; le bon remède est sans doute de réessayer la lecture. |
-| `buildHealthReport` | L'apport net **peut être négatif** sur un document médical. Le ramener à zéro masquerait le déséquilibre au lieu de le montrer. |
-| `dietPrefs` | Une préférence abîmée (`halal: null`) **disparaît en silence** — l'inverse de la règle de `lib/halal.ts`, qui refuse de conclure sans preuve. |
-| `updateLocalCollection` | **`upsert` sans identifiant duplique** au lieu de remplacer : le repas s'affiche deux fois et ses calories comptent deux fois. |
-| `freeLimit` | Une feature **inconnue est illimitée** : une faute de frappe dans le nom rend le quota inopérant, sans bruit. |
-| `staticMapUrl` | Ne coerce pas ses coordonnées alors que **sa jumelle `streetViewUrl` le fait**, avec un commentaire expliquant pourquoi. |
-| `profile.tsx` | Supprime `onboarded_${user.id}` — **une clé que rien n'écrit**. La ligne est inerte, et la « réparer » ferait repasser l'onboarding à chaque reconnexion. |
+| `bpAlert` | **140/90 pile déclenche l'alerte** : bornes hautes inclusives. ⚠️ Les bornes **basses restent strictes** — l'hypotension se définit *sous* 90/60, et 90/60 pile est une tension basse normale. |
+| `setChallengeProgress` | Une **seconde mémoire sur l'appareil** retient le dernier cumul réellement crédité et sert de repli quand Firestore ne répond pas. Ni distant ni local → on ne crédite rien plutôt que d'inventer. |
+| `buildHealthReport` | Une journée **sans le moindre apport** ne compte plus dans la moyenne. ⚠️ Un déficit **réel** reste négatif : un plancher à zéro cacherait au soignant ce qu'il doit voir. |
+| `dietPrefs` | **Copie de secours** de cinq booléens, qui survit au gros enregistrement. Un refus explicite reste un refus : le filet ne sert que si le principal ne dit rien. |
+| `updateLocalCollection` | `upsert` sans identifiant **refuse le doublon à l'identique** au lieu d'empiler. Deux entrées différentes coexistent toujours. Et la purge ne compte plus `profile_` deux fois. |
+| `freeLimit` | `SANS_QUOTA` déclare l'absence de quota, un nom inconnu crie en développement, et **un test balaie `app/`** pour exiger que tout nom employé soit déclaré. Le défaut permissif est conservé. |
+| `staticMapUrl` | Coerce ses arguments **comme sa jumelle**. |
+| `profile.tsx` | La ligne morte est **retirée, pas réparée** : l'écrire correctement aurait effacé le drapeau à chaque déconnexion. |
 
 **Et deux de mes propres mesures étaient fausses**, corrigées par le calcul :
 une borne de vitesse que j'annonçais exacte (le flottant l'a démentie) et des
