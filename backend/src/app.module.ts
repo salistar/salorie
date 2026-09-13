@@ -19,11 +19,8 @@ import { AiController } from './ai/ai.controller';
 import { AiService } from './ai/ai.service';
 import { MlController } from './ml/ml.controller';
 import { MlService } from './ml/ml.service';
-import { GraphQLModule } from '@nestjs/graphql';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { PipelineController } from './pipeline/pipeline.controller';
 import { PipelineService } from './pipeline/pipeline.service';
-import { PipelineResolver } from './pipeline/pipeline.resolver';
 import { MirrorEvent, MirrorEventSchema, MirrorUser, MirrorUserSchema, FeatureStore, FeatureStoreSchema, OutboxItem, OutboxItemSchema } from './pipeline/pipeline.schemas';
 import { RacesController } from './races/races.controller';
 import { RacesService } from './races/races.service';
@@ -74,12 +71,20 @@ const PIPELINE_FEATURES = HAS_MONGO
         { name: GroupeAmis.name, schema: GroupeAmisSchema },
         { name: RaceChatMute.name, schema: RaceChatMuteSchema },
       ]),
-      // Gateway GraphQL (code-first, /graphql) sur le pipeline.
-      GraphQLModule.forRoot<ApolloDriverConfig>({
-        driver: ApolloDriver,
-        autoSchemaFile: true,
-        path: '/graphql',
-      }),
+      // ⚠ LA PASSERELLE GRAPHQL A ÉTÉ RETIRÉE LE 13/09/2026.
+      // Elle exposait `/graphql` avec trois requêtes — statut du pipeline, flux
+      // d'événements, features d'un utilisateur — qui ont TOUTES leur
+      // équivalent REST juste à côté : `GET /pipeline/status`,
+      // `GET /pipeline/events`, `GET /pipeline/features/:userId`. C'était donc
+      // une seconde surface sur le même service, pas une fonctionnalité de plus.
+      //
+      // Aucun client du dépôt ne l'appelait — vérifié dans le mobile et le web.
+      // Elle restait pourtant vivante en production, et il avait déjà fallu lui
+      // poser un correctif d'IDOR : deux portes sur la même donnée, c'est deux
+      // fois l'occasion d'en oublier une.
+      //
+      // Son retrait ferme aussi `lodash` et `ws` (deux alertes hautes) plus
+      // quatre moyennes, qui n'arrivaient que par Apollo.
     ]
   : [];
 
@@ -130,6 +135,6 @@ import { AccountService } from './account/account.service';
     // transforme en 500 anonymes. Placé en tête : les filtres déclarés ensuite
     // gardent la main sur ce qu'ils traitent déjà (HttpException, etc.).
     { provide: APP_FILTER, useClass: SentryGlobalFilter },
-    FirebaseService, SecretsService, RedisService, FlagsService, UsersService, ReferralService, StravaService, AccountService, NutritionService, InsightsService, AiService, MlService, FastingGateway, ...(HAS_MONGO ? [PipelineService, PipelineResolver, RacesService, OrgsService, NewsService, SupportMailService, SocialGateway, MurService] : [])],
+    FirebaseService, SecretsService, RedisService, FlagsService, UsersService, ReferralService, StravaService, AccountService, NutritionService, InsightsService, AiService, MlService, FastingGateway, ...(HAS_MONGO ? [PipelineService, RacesService, OrgsService, NewsService, SupportMailService, SocialGateway, MurService] : [])],
 })
 export class AppModule {}
