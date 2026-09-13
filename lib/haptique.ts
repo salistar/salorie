@@ -20,17 +20,37 @@ async function jouer(style: Style): Promise<void> {
   if (Platform.OS === 'web') return;
   try {
     const H = await import('expo-haptics');
+    // ⚠ `await` ET NON `return` SEC, ET C'EST TOUTE LA DIFFÉRENCE.
+    // Un `return promesse` à l'intérieur d'un `try` rend la promesse SANS
+    // l'attendre : son rejet ne passe donc jamais par le `catch` en dessous.
+    // C'était le cas jusqu'au 13/09/2026 — le module annonçait en en-tête que
+    // « l'échec est TOUJOURS avalé » et ne l'avalait pas. Sur un appareil sans
+    // moteur haptique, ou avec le retour désactivé dans les réglages système,
+    // `expo-haptics` rejette.
+    //
+    // Ce que ça coûtait EXACTEMENT, mesuré plutôt que supposé : les dix points
+    // d'appel écrivent `haptique.succes()` sans `await`, donc le rejet ne
+    // faisait échouer aucune action — il partait en rejet de promesse non
+    // gérée. Le vrai danger était devant nous, pas derrière : le premier
+    // appelant qui aurait écrit `await haptique.succes()`, en se fiant à la
+    // promesse d'en-tête, aurait vu son action mourir sur une vibration.
+    // Trouvé en écrivant `__tests__/haptique.test.ts`, qui le verrouille.
     switch (style) {
       case 'leger':
-        return H.impactAsync(H.ImpactFeedbackStyle.Light);
+        await H.impactAsync(H.ImpactFeedbackStyle.Light);
+        return;
       case 'moyen':
-        return H.impactAsync(H.ImpactFeedbackStyle.Medium);
+        await H.impactAsync(H.ImpactFeedbackStyle.Medium);
+        return;
       case 'succes':
-        return H.notificationAsync(H.NotificationFeedbackType.Success);
+        await H.notificationAsync(H.NotificationFeedbackType.Success);
+        return;
       case 'alerte':
-        return H.notificationAsync(H.NotificationFeedbackType.Warning);
+        await H.notificationAsync(H.NotificationFeedbackType.Warning);
+        return;
       case 'erreur':
-        return H.notificationAsync(H.NotificationFeedbackType.Error);
+        await H.notificationAsync(H.NotificationFeedbackType.Error);
+        return;
     }
   } catch {
     /* pas de moteur haptique, ou retour désactivé : sans conséquence */
