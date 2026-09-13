@@ -12,6 +12,7 @@
 // DSN etait bien dans son bundle. Le meme piege, evite d'un cote et pas de
 // l'autre.
 import * as Sentry from '@sentry/nextjs';
+import { masquerEvenement } from '../lib/sentryMasquage';
 
 const dsn =
   process.env.NEXT_PUBLIC_SENTRY_DSN ||
@@ -44,5 +45,17 @@ if (dsn) {
     replaysSessionSampleRate: 0,
     replaysOnErrorSampleRate: 0,
     sendDefaultPii: false,
+    // ⚠ `sendDefaultPii: false` NE COUVRE PAS CE QUE NOTRE CODE ECRIT.
+    // Ce reglage empeche le SDK d'ajouter DE LUI-MEME l'adresse IP, les
+    // en-tetes et les cookies. Il ne touche pas a ce qu'un `throw new
+    // Error('echec pour ' + email)` place dans le message — et ce back-office
+    // manipule des courriels, des donnees de sante et des cles de fournisseur.
+    //
+    // Le masquage vit dans `lib/sentryMasquage.ts`, A LA RACINE DU DEPOT, et
+    // n'est PAS recopie ici : une regle qui protege des donnees de sante ne
+    // doit pas exister en deux versions qui divergent. C'est le meme module que
+    // l'application mobile, et le meme que les pages /me importent deja pour
+    // leurs calculs.
+    beforeSend: (evenement) => masquerEvenement(evenement as any) as any,
   });
 }

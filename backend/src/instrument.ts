@@ -10,6 +10,7 @@
 // alerte, aucun log consulté — découvert par hasard des semaines plus tard.
 // C'est exactement ce que Sentry est censé attraper.
 import * as Sentry from '@sentry/nestjs';
+import { masquerEvenement } from './sentryMasquage';
 
 // Le DSN n'est PAS un secret : il est en écriture seule et conçu pour être
 // embarqué dans du code client. On le laisse donc en clair, avec une valeur par
@@ -36,5 +37,20 @@ if (dsn) {
     // Ne jamais envoyer le corps des requêtes : on y trouve des photos de repas
     // en base64 et des données de santé. Les en-têtes non plus.
     sendDefaultPii: false,
+    // ⚠ ET `sendDefaultPii: false` NE COUVRE PAS CE QUE NOTRE CODE ÉCRIT.
+    // Le réglage ci-dessus empêche le SDK d'ajouter DE LUI-MÊME l'adresse IP,
+    // les en-têtes et les cookies. Il ne touche pas à ce que nous plaçons nous
+    // mêmes dans un message d'erreur.
+    //
+    // Ce backend est le pire des trois de ce point de vue : la cascade de vision
+    // renvoie le CORPS D'ERREUR des fournisseurs, et ceux-ci recopient volontiers
+    // la clé reçue — « Incorrect API key provided: sk-proj-AbCd… ». Un tel
+    // message partait tel quel vers Sentry, c'est-à-dire chez un tiers, hors du
+    // Maroc, pour une durée de rétention qu'on ne choisit pas.
+    //
+    // `masquerSecrets` de `ml.service.ts` protégeait déjà la réponse HTTP rendue
+    // à l'admin. Elle ne protégeait PAS ce chemin-ci : deux sorties, une seule
+    // gardée.
+    beforeSend: (evenement) => masquerEvenement(evenement as any) as any,
   });
 }

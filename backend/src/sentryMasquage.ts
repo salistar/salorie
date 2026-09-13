@@ -1,25 +1,22 @@
 /**
- * Ce qui ne doit jamais partir vers Sentry.
+ * Ce qui ne doit jamais partir vers Sentry — COPIE DU MODULE MOBILE.
  * ---------------------------------------------------------------------------
- * ⚠ `sendDefaultPii: false` NE COUVRE PAS TOUT, et c'est le malentendu à éviter.
- * Ce réglage empêche le SDK d'ajouter DE LUI-MÊME l'adresse IP, les en-têtes et
- * les cookies. Il ne touche pas à ce que NOTRE code place dans un message
- * d'erreur ou dans un fil d'Ariane.
+ * ⚠ CE FICHIER EST UNE COPIE DE `lib/sentryMasquage.ts`, A LA RACINE DU DEPOT,
+ * ET LA COPIE EST IMPOSEE PAR LA STRUCTURE, PAS CHOISIE.
+ * Le contexte de build du conteneur backend est `./backend` (docker-compose) et
+ * son `tsconfig.build.json` fixe `rootDir: "src"` — deux contraintes posees
+ * deliberement, et documentees la-bas. Importer la racine casserait l'une ou
+ * l'autre, et j'ai deja paye cette semaine ce que coute un changement de
+ * disposition de conteneur.
  *
- * Or cette application manipule des poids, des glycémies, des adresses de
- * courriel et des photos de repas en base64. Un `throw new Error('échec pour '
- * + email)` écrit sans y penser partirait tel quel, et se retrouverait dans un
- * outil tiers, hors du Maroc, pour une durée de rétention qu'on ne choisit pas.
+ * ⚠ MAIS LA DIVERGENCE, ELLE, EST INTERDITE PAR UN TEST.
+ * `sentry-masquage.spec.ts` compare les REGLES des deux fichiers, commentaires
+ * retires. Toute modification de l'un sans l'autre fait echouer la CI. C'est la
+ * difference avec `ml/masquage-secrets.spec.ts`, qui se contente d'un
+ * commentaire demandant de reporter les changements a la main.
  *
- * ⚠ ON MASQUE SUR LA FORME, PAS SUR DES NOMS DE CHAMPS.
- * Une liste de clés sensibles (`email`, `poids`, `glycemie`…) laisserait passer
- * le champ qu'on aurait oublié d'y mettre — et c'est toujours celui-là qui fuit.
- * Reconnaître la FORME d'une adresse ou d'un base64 ne dépend d'aucune liste à
- * tenir à jour.
- *
- * Ce module existe séparément du `Sentry.init` pour une seule raison : une
- * fonction qui protège des données de santé doit être testable. Voir
- * `__tests__/sentryMasquage.test.ts`.
+ * Le reste de l'explication — pourquoi on masque sur la FORME et non sur des
+ * noms de champs — vit dans le fichier d'origine, qui fait foi.
  */
 
 /** Remplace dans `texte` tout ce qui a la forme d'une donnée personnelle. */

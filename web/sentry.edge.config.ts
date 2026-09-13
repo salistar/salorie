@@ -1,6 +1,7 @@
 // Sentry — runtime Edge (middleware). Meme configuration que le serveur, mais
 // Next.js charge un bundle distinct : sans ce fichier, le middleware ne remonte rien.
 import * as Sentry from '@sentry/nextjs';
+import { masquerEvenement } from '../lib/sentryMasquage';
 
 const dsn =
   process.env.SENTRY_DSN ||
@@ -20,5 +21,17 @@ if (dsn) {
     environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'development',
     tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0,
     sendDefaultPii: false,
+    // ⚠ `sendDefaultPii: false` NE COUVRE PAS CE QUE NOTRE CODE ECRIT.
+    // Ce reglage empeche le SDK d'ajouter DE LUI-MEME l'adresse IP, les
+    // en-tetes et les cookies. Il ne touche pas a ce qu'un `throw new
+    // Error('echec pour ' + email)` place dans le message — et ce back-office
+    // manipule des courriels, des donnees de sante et des cles de fournisseur.
+    //
+    // Le masquage vit dans `lib/sentryMasquage.ts`, A LA RACINE DU DEPOT, et
+    // n'est PAS recopie ici : une regle qui protege des donnees de sante ne
+    // doit pas exister en deux versions qui divergent. C'est le meme module que
+    // l'application mobile, et le meme que les pages /me importent deja pour
+    // leurs calculs.
+    beforeSend: (evenement) => masquerEvenement(evenement as any) as any,
   });
 }
