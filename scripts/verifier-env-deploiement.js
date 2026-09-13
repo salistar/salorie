@@ -36,11 +36,6 @@ const src = fs.readFileSync(CHEMIN, 'utf8');
 
 // 1. Les clés que le filtre retire avant réécriture.
 //
-// ⚠ ELLES SONT ASSEMBLÉES EN PLUSIEURS LIGNES DANS LE WORKFLOW, et pas par
-// coquetterie : sur une seule ligne de 565 caractères, GitHub refusait le
-// fichier AU DÉMARRAGE — zéro job, aucun log, le workflow affiché par son
-// chemin au lieu de son nom. On lit donc les affectations successives de
-// `CLES=` plutôt qu'un unique motif.
 // Deux formes sont acceptées, parce que le fichier a porté les deux : la liste
 // écrite d'un bloc dans le `grep -vE`, et la même assemblée en plusieurs
 // affectations `CLES=`. Ce contrôle vérifie un CONTENU, pas une mise en forme.
@@ -74,7 +69,17 @@ for (const ligne of src.split('\n')) {
   for (const m of ligne.matchAll(/\b([A-Z][A-Z_0-9]{2,})=/g)) reecrites.add(m[1]);
 }
 
-const oubliees = [...reecrites].filter((c) => !filtrees.has(c)).sort();
+// ⚠ ON COMPILE LE FILTRE, ON NE COMPARE PAS DES NOMS.
+// La liste contient des CLASSES, pas seulement des noms : `NEXT_PUBLIC_[A-Z_]+`
+// couvre les dix clés `NEXT_PUBLIC_*` d'un coup. Ce raccourci n'est pas
+// cosmétique — écrites une par une, elles portaient la ligne à 565 caractères,
+// et GitHub refusait alors le fichier au démarrage (voir l'en-tête du workflow).
+//
+// Comparer des chaînes ferait donc croire que les dix clés ne sont pas
+// filtrées. On teste ce que `grep` testera : la même expression, appliquée à
+// chaque nom.
+const motif = new RegExp(`^(?:${[...filtrees].join('|')})$`);
+const oubliees = [...reecrites].filter((c) => !motif.test(c)).sort();
 
 if (oubliees.length) {
   console.error('✗ Ces cles sont reecrites a chaque deploiement SANS etre filtrees avant :');
@@ -91,7 +96,12 @@ console.log(`✓ ${reecrites.size} cle(s) reecrite(s) a chaque deploiement, tout
 // 3. Signalé sans faire échouer : les clés filtrées que plus rien ne réécrit.
 // Une clé filtrée mais jamais réécrite est SUPPRIMÉE à chaque déploiement — ce
 // qui est parfois voulu (une clé retirée du projet), parfois un oubli.
-const jamais = [...filtrees].filter((c) => !reecrites.has(c)).sort();
+// Les classes (`NEXT_PUBLIC_[A-Z_]+`) sont écartées de ce relevé : elles ne
+// désignent pas une clé mais une famille, et n'ont donc pas à être « réécrites ».
+const estUneClasse = (c) => /[[\]+*?]/.test(c);
+const jamais = [...filtrees]
+  .filter((c) => !estUneClasse(c) && !reecrites.has(c))
+  .sort();
 if (jamais.length) {
   console.log('');
   console.log('  ℹ Filtrees mais jamais reecrites dans .env.next — donc SUPPRIMEES');
