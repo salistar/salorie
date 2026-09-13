@@ -41,21 +41,22 @@ const src = fs.readFileSync(CHEMIN, 'utf8');
 // fichier AU DÉMARRAGE — zéro job, aucun log, le workflow affiché par son
 // chemin au lieu de son nom. On lit donc les affectations successives de
 // `CLES=` plutôt qu'un unique motif.
+// Deux formes sont acceptées, parce que le fichier a porté les deux : la liste
+// écrite d'un bloc dans le `grep -vE`, et la même assemblée en plusieurs
+// affectations `CLES=`. Ce contrôle vérifie un CONTENU, pas une mise en forme.
 const filtrees = new Set();
+
+const enUnBloc = src.match(/grep -vE '\^ \*\(export \+\)\?\(([^)]+)\)/);
+if (enUnBloc) for (const c of enUnBloc[1].split('|')) if (c) filtrees.add(c);
+
 for (const m of src.matchAll(/^\s*CLES=(?:"\$CLES\|)?'?([A-Z_0-9|]+)'?"?\s*$/gm)) {
   for (const c of m[1].split('|')) if (c) filtrees.add(c);
 }
+
 if (!filtrees.size) {
-  console.error('✗ Liste `CLES=` introuvable dans le workflow de deploiement.');
+  console.error('✗ Liste des cles filtrees introuvable dans le workflow.');
   console.error('  Elle alimente le `grep -vE` qui construit le .env de production ;');
   console.error('  sans elle, chaque cle reecrite s empile a chaque deploiement.');
-  process.exit(1);
-}
-
-// Et le filtre doit bien UTILISER cette liste : une liste qu'aucun `grep` ne lit
-// ne protege rien.
-if (!/grep -vE "\^ \*\(export \+\)\?\(\$CLES\)/.test(src)) {
-  console.error('✗ La liste `CLES` existe mais le `grep -vE` ne s en sert pas.');
   process.exit(1);
 }
 
