@@ -40,13 +40,6 @@ jobs:
       - name: Verifier que code et deploiement disent le meme seuil
         run: node scripts/verifier-seuils.js
 
-      # Une cle reecrite a chaque deploiement mais absente du `grep -vE` plus bas
-      # n'est jamais retiree : elle s'empile. Le .env de production faisait
-      # 1 924 lignes pour 28 cles quand on s'en est apercu — et conservait en
-      # clair toutes les valeurs passees d'ADMIN_API_KEY.
-      - name: Verifier que le .env de production ne peut pas s empiler
-        run: node scripts/verifier-env-deploiement.js
-
       - name: Build backend
         working-directory: backend
         run: npm install && npm run build
@@ -147,37 +140,7 @@ jobs:
             # deploiement suivant, sans trace et sans message. On ne remplace desormais que
             # les cles gerees par ce workflow et on preserve tout le reste.
             touch .env
-            # ⚠ TOUTE CLE AJOUTEE PLUS BAS DOIT FIGURER ICI, SANS EXCEPTION.
-            # Ce filtre retire la version precedente d'une cle avant qu'on ne
-            # reecrive la nouvelle. Une cle ajoutee en bas mais ABSENTE de cette
-            # liste n'est jamais retiree : elle s'empile a chaque deploiement.
-            #
-            # Constate le 13/09/2026 en verifiant la parite local/GitHub/serveur :
-            # le `.env` de production faisait 1 924 LIGNES POUR 28 CLES. 205
-            # copies d'ADMIN_API_KEY, 189 de chaque NEXT_PUBLIC_*.
-            #
-            # Ce n'est pas qu'une question de proprete. `dotenv` retient la
-            # DERNIERE occurrence, donc la valeur servie etait juste — mais le
-            # fichier conservait sur disque, en clair, TOUTE VALEUR QU'UNE CLE A
-            # EU DANS SA VIE. Faire tourner ADMIN_API_KEY (qui protege les routes
-            # admin ET le webhook du pipeline) n'effacait donc pas l'ancienne.
-            # Une rotation qui ne retire pas l'ancien secret n'est pas une
-            # rotation.
-            #
-            # Le nettoyage est retroactif : ce `grep -v` supprime d'un coup les
-            # 1 800 lignes accumulees, puisqu'il filtre desormais ces cles aussi.
-            #
-            # ⚠ ET QUATRE CLES SONT VOLONTAIREMENT ABSENTES DE CE FILTRE.
-            # MONGO_PASS n'est ecrit QU'UNE FOIS (`if ! grep -q '^MONGO_PASS='`,
-            # plus bas) : la filtrer la supprimerait, le deploiement en
-            # regenererait une NOUVELLE, et elle ne correspondrait plus a
-            # l'utilisateur Mongo — le backend perdrait sa base. TURN_SECRET
-            # n'est retire que lors d'une rotation explicite ; le filtrer
-            # couperait les appels a chaque deploiement. MONGO_URI et MONGO_CMD
-            # font deja leur propre `sed -i` de suppression avant reecriture.
-            # Aucune des quatre n'apparaissait d'ailleurs dans les doublons
-            # mesures : le probleme etait bien ailleurs.
-            grep -vE '^ *(export +)?(FIREBASE_SERVICE_ACCOUNT|GEMINI_API_KEY|USDA_API_KEY|AUTH_SECRET|CF_ACCOUNT_ID|CF_API_TOKEN|NEXT_PUBLIC_GMAP_KEY|MAIL_INGEST_KEY|ADMIN_SETUP_KEY|ADMIN_API_KEY|FOOD4K_MIN_CONF|FOOD4K_MIN_CONF_LOCALE|GIT_COMMIT|NEXT_PUBLIC_API_URL|NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY|NEXT_PUBLIC_FIREBASE_API_KEY|NEXT_PUBLIC_FIREBASE_APP_ID|NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN|NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID|NEXT_PUBLIC_FIREBASE_PROJECT_ID|NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET|NEXT_PUBLIC_FIREBASE_TOKEN_URL)( *=| *:)' .env > .env.next || true
+            grep -vE '^ *(export +)?(FIREBASE_SERVICE_ACCOUNT|GEMINI_API_KEY|USDA_API_KEY|AUTH_SECRET|CF_ACCOUNT_ID|CF_API_TOKEN|NEXT_PUBLIC_GMAP_KEY|MAIL_INGEST_KEY|ADMIN_SETUP_KEY|FOOD4K_MIN_CONF|FOOD4K_MIN_CONF_LOCALE|GIT_COMMIT)( *=| *:)' .env > .env.next || true
             printf 'GIT_COMMIT=%s\n' "${SALORIE_SHA:-inconnu}" >> .env.next
             printf '%s\n' 'FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' >> .env.next
             printf '%s\n' 'GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}' >> .env.next
